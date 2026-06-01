@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio - Nguyễn Đức</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "on-error":"#ffffff","surface-bright":"#f9f9ff","on-primary-fixed":"#07006c",
+        "surface-variant":"#d8e3fb","primary-container":"#6063ee","secondary-fixed-dim":"#b3d17a",
+        "inverse-surface":"#263143","tertiary-container":"#c4aa01","primary-fixed-dim":"#c0c1ff",
+        "on-surface":"#111c2d","error-container":"#ffdad6","on-tertiary-fixed":"#211b00",
+        "tertiary":"#6d5e00","surface-tint":"#494bd6","surface-container-high":"#dee8ff",
+        "inverse-on-surface":"#ecf1ff","surface-container-highest":"#d8e3fb","surface-dim":"#cfdaf2",
+        "primary":"#4648d4","on-secondary":"#ffffff","surface-container-lowest":"#ffffff",
+        "on-primary":"#ffffff","on-background":"#111c2d","on-tertiary-fixed-variant":"#524600",
+        "secondary-container":"#ceee93","on-tertiary":"#ffffff","on-primary-fixed-variant":"#2f2ebe",
+        "surface-container":"#e7eeff","secondary-fixed":"#ceee93","outline":"#767586",
+        "secondary":"#4d661c","on-tertiary-container":"#4a3f00","surface-container-low":"#f0f3ff",
+        "on-secondary-container":"#536d22","on-error-container":"#93000a","on-primary-container":"#fffbff",
+        "outline-variant":"#c7c4d7","tertiary-fixed":"#ffe24c","tertiary-fixed-dim":"#e2c62d",
+        "on-secondary-fixed-variant":"#364e03","primary-fixed":"#e1e0ff","surface":"#f9f9ff",
+        "background":"#f9f9ff","inverse-primary":"#c0c1ff","on-surface-variant":"#464554",
+        "error":"#ba1a1a","on-secondary-fixed":"#131f00"
+      },
+      borderRadius: { "DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px","2xl":"1rem","3xl":"1.5rem" },
+      spacing: { "gutter":"20px","max-width":"1280px","section-gap":"80px","unit":"8px","container-padding":"24px" },
+      fontFamily: { "display-lg":["Plus Jakarta Sans"],"body-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"label-bold":["Plus Jakarta Sans"],"body-md":["Plus Jakarta Sans"],"headline-lg":["Plus Jakarta Sans"] },
+      fontSize: {
+        "display-lg":["56px",{"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"800"}],
+        "body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],
+        "headline-md":["24px",{"lineHeight":"1.3","fontWeight":"700"}],
+        "label-bold":["14px",{"lineHeight":"1.0","fontWeight":"700"}],
+        "body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],
+        "headline-lg":["40px",{"lineHeight":"1.2","letterSpacing":"-0.01em","fontWeight":"700"}]
+      }
+    }
+  }
+}
+</script>
+<style>
+.glass-panel { background:rgba(255,255,255,0.7); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.3); }
+.hero-gradient { background:linear-gradient(135deg,#c0c1ff 0%,#ceee93 100%); }
+.inner-glow { box-shadow:inset 0 2px 4px rgba(255,255,255,0.5); }
+.ambient-shadow { box-shadow:0 20px 40px -10px rgba(96,99,238,0.15); }
+</style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
+
+<!-- NAV -->
+<nav class="bg-surface/80 backdrop-blur-xl top-0 sticky z-50 shadow-sm border-b border-outline-variant/20">
+<div class="flex justify-between items-center px-gutter py-4 w-full max-w-max-width mx-auto">
+  <div class="flex items-center gap-8">
+    <a class="text-headline-md font-display-lg font-black tracking-tighter text-primary" href="#" id="nav-brand">Nguyễn Đức</a>
+    <div class="hidden lg:flex items-center gap-1">
+      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-primary bg-primary-container/10" href="#">Trang chủ</a>
+      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all" href="#portfolio">Portfolio</a>
+      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all" href="#courses">Các Khóa Học</a>
+      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all" href="#research">Kiến thức môn học</a>
+      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all" href="#research">Nghiên cứu khoa học</a>
+    </div>
+  </div>
+  <div class="flex items-center gap-3">
+    <button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface">
+      <span class="material-symbols-outlined">search</span>
+    </button>
+    <a href="#contact" class="hidden sm:block bg-primary hover:bg-primary-container text-on-primary text-label-bold font-label-bold py-2.5 px-6 rounded-full transition-all active:scale-95 shadow-lg shadow-primary/20">Bắt Đầu</a>
+    <button class="lg:hidden p-2 rounded-full hover:bg-surface-container">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+  </div>
+</div>
+</nav>
+
+<main class="max-w-max-width mx-auto px-gutter pb-section-gap">
+
+<!-- HERO -->
+<section class="mt-8 md:mt-12 mb-section-gap" id="hero">
+<div class="relative rounded-3xl hero-gradient overflow-hidden min-h-[500px] md:min-h-[600px] flex items-center p-8 md:p-16 ambient-shadow">
+  <div class="absolute top-10 right-10 w-24 h-24 bg-tertiary-fixed rounded-full blur-2xl opacity-60 mix-blend-multiply"></div>
+  <div class="absolute bottom-10 left-10 w-32 h-32 bg-primary rounded-full blur-3xl opacity-40 mix-blend-screen"></div>
+  <div class="relative z-10 grid md:grid-cols-2 gap-12 items-center w-full">
+    <div class="space-y-6 max-w-xl">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel text-label-bold font-label-bold text-primary">
+        <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+        <span id="hero-badge">Nhà Thiết Kế Sáng Tạo</span>
+      </div>
+      <h1 class="text-display-lg font-display-lg text-on-surface leading-tight">
+        <span id="hero-line1">Xin Chào!</span><br>
+        <span id="hero-line2">Tôi là</span> <span class="text-primary" id="hero-name">Nguyễn Đức</span>.
+      </h1>
+      <p class="text-body-lg font-body-lg text-on-surface-variant" id="hero-desc">Kết hợp nghệ thuật, công nghệ và một chút ma thuật để tạo ra những trải nghiệm kỹ thuật số đáng nhớ. Cùng nhau xây dựng những thế giới mới.</p>
+      <div class="flex flex-wrap gap-4 pt-4">
+        <a href="#portfolio" class="bg-on-surface text-surface-bright text-label-bold font-label-bold py-3 px-8 rounded-full hover:bg-primary transition-colors inner-glow" id="hero-btn1">Xem Portfolio</a>
+        <a href="#contact" class="glass-panel text-on-surface text-label-bold font-label-bold py-3 px-8 rounded-full hover:bg-white/90 transition-colors flex items-center gap-2" id="hero-btn2">
+          <span class="material-symbols-outlined">mail</span>Liên Hệ
+        </a>
+      </div>
+    </div>
+    <div class="relative h-full flex justify-center items-center">
+      <div class="w-full max-w-[400px] aspect-square rounded-full glass-panel flex items-center justify-center p-4 ambient-shadow border-4 border-white/50">
+        <img id="hero-avatar" alt="Avatar" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaM6nPg7daWott3BQVpCtvizZFbleVjeMlC6avIkwTE1aCxJeCfNrxwUqwDDxeepGlH0A9kiIbIuZwn3c1tAyUQ3N1-oF88I4_KEbYBnzSFct5eRx6P3kgkL3FQJK90R6DhDZZmmDuzC1EIG5p6E48fc7Iv48OMLM1hl2bjSx66k8493bjfQSxaQCAtMtvkHFHX_NkSPsW_h-5XEt3Auu38gBil8FELSgJxkwLQkCLVCZmoQ1oZz9fnc1TMzsBG8hqdNdUscFbhOQ">
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- SKILLS & EXPERIENCE -->
+<section class="mb-section-gap">
+<div class="mb-10">
+  <h2 class="text-display-lg font-display-lg text-on-surface tracking-tight">Kỹ Năng & Kinh Nghiệm</h2>
+  <p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl mt-2">Chuyên môn và hành trình phát triển sự nghiệp trong lĩnh vực thiết kế sáng tạo.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
+  <div class="space-y-8">
+    <h3 class="text-headline-lg font-headline-lg text-on-surface flex items-center gap-3">
+      <span class="material-symbols-outlined text-primary">psychology</span> Kỹ Năng Cốt Lõi
+    </h3>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4" id="skills-grid"></div>
+  </div>
+  <div class="space-y-8">
+    <h3 class="text-headline-lg font-headline-lg text-on-surface flex items-center gap-3">
+      <span class="material-symbols-outlined text-secondary">work_history</span> Kinh Nghiệm
+    </h3>
+    <div class="border-l-2 border-outline-variant/50 ml-4 pl-8 space-y-10" id="experience-list"></div>
+  </div>
+</div>
+</section>
+
+<!-- PORTFOLIO -->
+<section class="mb-section-gap" id="portfolio">
+<div class="flex justify-between items-end mb-10">
+  <div class="space-y-2">
+    <h2 class="text-display-lg font-display-lg text-on-surface tracking-tight">Dự Án Nổi Bật</h2>
+    <p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl">Những sáng tạo độc bản, kết hợp giữa nghệ thuật thị giác và công nghệ tương tác hiện đại.</p>
+  </div>
+</div>
+<div class="grid grid-cols-1 gap-12" id="portfolio-grid"></div>
+</section>
+
+<!-- COURSES & RESEARCH -->
+<section class="mb-section-gap" id="courses">
+<h2 class="text-headline-lg font-headline-lg text-on-surface mb-8">Học Tập & Khám Phá</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[250px]" id="learn-grid"></div>
+</section>
+
+<!-- CONTACT -->
+<section class="mb-section-gap" id="contact">
+<div class="relative rounded-3xl overflow-hidden bg-inverse-surface p-8 md:p-16 ambient-shadow">
+  <div class="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-3xl opacity-20 -mr-20 -mt-20"></div>
+  <div class="relative z-10 grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      <h2 class="text-display-lg font-display-lg text-inverse-on-surface mb-4">Liên Hệ</h2>
+      <p class="text-body-lg text-inverse-on-surface/70 mb-8">Sẵn sàng hợp tác cho dự án tiếp theo của bạn.</p>
+      <div class="flex flex-col gap-3">
+        <div class="flex items-center gap-3 text-inverse-on-surface/80">
+          <span class="material-symbols-outlined">mail</span>
+          <span id="contact-email">hello@nguyenduc.dev</span>
+        </div>
+        <div class="flex items-center gap-3 text-inverse-on-surface/80">
+          <span class="material-symbols-outlined">location_on</span>
+          <span id="contact-location">Hồ Chí Minh, Việt Nam</span>
+        </div>
+      </div>
+    </div>
+    <div class="glass-panel rounded-2xl p-6">
+      <div class="space-y-4">
+        <input type="text" placeholder="Họ và tên" class="w-full bg-white/80 border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface outline-none focus:border-primary transition-colors">
+        <input type="email" placeholder="Email" class="w-full bg-white/80 border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface outline-none focus:border-primary transition-colors">
+        <textarea rows="4" placeholder="Tin nhắn..." class="w-full bg-white/80 border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface outline-none focus:border-primary transition-colors resize-none"></textarea>
+        <button class="w-full bg-primary text-on-primary font-label-bold py-3 rounded-full hover:bg-primary-container transition-colors">Gửi Tin Nhắn</button>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-on-surface mt-section-gap border-t-8 border-tertiary-container">
+<div class="flex flex-col md:flex-row justify-between items-center px-gutter py-12 w-full max-w-max-width mx-auto">
+  <div class="text-headline-md font-display-lg text-secondary-fixed mb-6 md:mb-0" id="footer-brand">Nguyễn Đức</div>
+  <div class="flex flex-wrap justify-center gap-6 md:gap-8 mb-6 md:mb-0" id="footer-links"></div>
+  <div class="text-surface-bright text-body-md text-center md:text-right" id="footer-copy">© 2024 Nguyễn Đức. All rights reserved.</div>
+</div>
+</footer>
+
+<script>
+const COLOR_MAP = {
+  primary: { bg:'bg-primary-container/10', border:'border-primary-container/20', hover:'hover:bg-primary-container/20', icon:'text-primary', num:'text-primary' },
+  secondary: { bg:'bg-secondary-container/20', border:'border-secondary-container/40', hover:'hover:bg-secondary-container/30', icon:'text-secondary', num:'text-secondary' },
+  tertiary: { bg:'bg-tertiary-container/10', border:'border-tertiary-container/20', hover:'hover:bg-tertiary-container/20', icon:'text-tertiary', num:'text-tertiary' },
+  'primary-container': { bg:'bg-primary-container/10', border:'border-primary-container/20', hover:'hover:bg-primary-container/20', icon:'text-primary-container', num:'text-primary-container' }
+};
+
+async function loadData() {
+  try {
+    const r = await fetch('data/content.json?t=' + Date.now());
+    if (r.ok) return await r.json();
+  } catch(e) {}
+  return null;
+}
+
+function renderBanner(b) {
+  if (!b) return;
+  if (b.badge) document.getElementById('hero-badge').textContent = b.badge;
+  if (b.title_line1) document.getElementById('hero-line1').textContent = b.title_line1;
+  if (b.title_line2) document.getElementById('hero-line2').textContent = b.title_line2;
+  if (b.name) { document.getElementById('hero-name').textContent = b.name; document.title = 'Portfolio - ' + b.name; document.getElementById('nav-brand').textContent = b.name; }
+  if (b.description) document.getElementById('hero-desc').textContent = b.description;
+  if (b.btn_primary) document.getElementById('hero-btn1').textContent = b.btn_primary;
+  if (b.avatar_url) document.getElementById('hero-avatar').src = b.avatar_url;
+}
+
+function renderSkills(skills) {
+  const g = document.getElementById('skills-grid');
+  if (!skills || !skills.length) { g.innerHTML = '<p class="text-on-surface-variant col-span-3">Chưa có kỹ năng.</p>'; return; }
+  g.innerHTML = skills.map(s => {
+    const c = COLOR_MAP[s.color] || COLOR_MAP.primary;
+    return `<div class="aspect-square flex flex-col items-center justify-center p-4 ${c.bg} border ${c.border} rounded-2xl ${c.hover} transition-colors">
+      <span class="material-symbols-outlined ${c.icon} text-4xl mb-3">${s.icon}</span>
+      <span class="text-label-bold font-label-bold text-on-surface text-center">${s.name}</span>
+      <span class="${c.num} text-headline-md font-bold mt-1">${s.percent}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderExperience(exp) {
+  const el = document.getElementById('experience-list');
+  if (!exp || !exp.length) { el.innerHTML = '<p class="text-on-surface-variant">Chưa có kinh nghiệm.</p>'; return; }
+  el.innerHTML = exp.map(e => `
+    <div class="relative">
+      <div class="absolute -left-[41px] top-1 w-5 h-5 rounded-full bg-${e.color} border-4 border-surface shadow-sm"></div>
+      <h4 class="text-headline-md font-headline-md text-on-surface">${e.title}</h4>
+      <p class="text-label-bold font-label-bold text-${e.color} mt-1 mb-3">${e.company} | ${e.period}</p>
+      <p class="text-body-md text-on-surface-variant">${e.desc}</p>
+    </div>
+  `).join('');
+}
+
+function renderPortfolio(items) {
+  const g = document.getElementById('portfolio-grid');
+  if (!items || !items.length) { g.innerHTML = '<div class="rounded-3xl border-2 border-dashed border-outline-variant/40 p-16 text-center text-on-surface-variant">Chưa có dự án nào. Thêm từ trang <a href="admin/" class="text-primary underline">Admin</a>.</div>'; return; }
+  g.innerHTML = items.map(p => {
+    const tagHtml = (p.tags||[]).map((t,i) => {
+      const col = (p.tag_colors||[])[i];
+      return col === 'white'
+        ? `<span class="bg-white/20 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-sm font-bold border border-white/30">${t}</span>`
+        : `<span class="bg-${col||'primary'}/90 backdrop-blur-md text-on-primary px-4 py-1.5 rounded-full text-sm font-bold">${t}</span>`;
+    }).join('');
+    return `<div class="relative group overflow-hidden rounded-[32px] ambient-shadow cursor-pointer border border-white/20">
+      <div class="aspect-[21/9] w-full overflow-hidden">
+        <img alt="${p.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" src="${p.image||''}">
+      </div>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-90 transition-opacity group-hover:opacity-100"></div>
+      <div class="absolute inset-0 flex flex-col justify-end p-8 md:p-12 transition-transform duration-500 transform translate-y-4 group-hover:translate-y-0">
+        <div class="flex items-center gap-3 mb-4">${tagHtml}</div>
+        <h3 class="text-display-lg text-white font-display-lg mb-4">${p.title}</h3>
+        <p class="text-white/80 text-body-lg max-w-2xl mb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">${p.desc}</p>
+        <div class="flex items-center gap-4">
+          <a href="${p.link||'#'}" class="bg-white text-on-surface py-3 px-8 rounded-full font-bold hover:bg-primary hover:text-on-primary transition-colors flex items-center gap-2">
+            View Case Study <span class="material-symbols-outlined">arrow_outward</span>
+          </a>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderLearn(courses, research, community) {
+  const g = document.getElementById('learn-grid');
+  let html = '';
+  // Large course card
+  const c = (courses||[])[0];
+  if (c) {
+    html += `<div class="md:col-span-2 md:row-span-2 rounded-3xl p-8 relative overflow-hidden bg-primary-fixed flex flex-col justify-between ambient-shadow border border-white/40 group">
+      <div class="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-3xl opacity-20 -mr-20 -mt-20 group-hover:opacity-40 transition-opacity duration-700"></div>
+      <div class="relative z-10 flex justify-between items-start">
+        <span class="bg-primary text-on-primary px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">${c.badge}</span>
+        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-primary">
+          <span class="material-symbols-outlined">school</span>
+        </div>
+      </div>
+      <div class="relative z-10 mt-auto">
+        <h3 class="text-headline-lg font-headline-lg text-on-surface mb-3 w-4/5 leading-tight">${c.title}</h3>
+        <p class="text-body-lg font-body-lg text-on-surface-variant mb-6 w-3/4">${c.desc}</p>
+        <a href="${c.link||'#'}" class="bg-on-surface text-surface-bright py-3 px-8 rounded-full font-bold hover:bg-primary transition-colors inline-flex items-center gap-2">
+          ${c.btn} <span class="material-symbols-outlined text-[18px]">arrow_right_alt</span>
+        </a>
+      </div>
+    </div>`;
+  }
+  // Research cards
+  (research||[]).slice(0,1).forEach(r => {
+    html += `<div class="rounded-3xl p-6 bg-secondary-fixed flex flex-col justify-between ambient-shadow relative overflow-hidden">
+      <div class="absolute -right-8 -bottom-8 opacity-20"><span class="material-symbols-outlined text-[120px]">science</span></div>
+      <div>
+        <span class="text-on-secondary-fixed-variant font-bold text-sm uppercase tracking-wider mb-2 block">${r.label}</span>
+        <h4 class="text-headline-md font-headline-md text-on-secondary-fixed leading-tight mb-2">${r.title}</h4>
+      </div>
+      <a class="inline-flex items-center gap-1 text-on-secondary-fixed-variant font-bold mt-4 hover:underline" href="${r.link||'#'}">
+        Đọc Bài Viết <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+      </a>
+    </div>`;
+  });
+  // Community card
+  if (community) {
+    html += `<div class="rounded-3xl p-6 bg-surface-container-high flex flex-col justify-center items-center text-center ambient-shadow border border-outline-variant/30">
+      <div class="w-16 h-16 bg-primary-container rounded-2xl flex items-center justify-center text-on-primary-container mb-4 transform rotate-12 shadow-inner">
+        <span class="material-symbols-outlined text-[32px]">group_add</span>
+      </div>
+      <h4 class="text-headline-md font-headline-md text-on-surface mb-2">${community.title}</h4>
+      <p class="text-body-md text-on-surface-variant mb-4 text-sm">${community.desc}</p>
+      <a href="${community.link||'#'}" class="w-full py-2.5 bg-white rounded-full text-primary font-bold shadow-sm border border-outline-variant/20 hover:bg-surface-bright transition-colors block text-center">${community.btn}</a>
+    </div>`;
+  }
+  g.innerHTML = html || '<div class="col-span-3 text-center text-on-surface-variant p-16">Chưa có nội dung. Thêm từ <a href="admin/" class="text-primary underline">Admin</a>.</div>';
+}
+
+function renderFooter(f) {
+  if (!f) return;
+  if (f.brand) document.getElementById('footer-brand').textContent = f.brand;
+  if (f.copyright) document.getElementById('footer-copy').textContent = f.copyright;
+  if (f.links) {
+    document.getElementById('footer-links').innerHTML = f.links.map(l =>
+      `<a class="text-surface-variant/70 hover:text-tertiary-fixed transition-colors font-bold" href="${l.href}">${l.label}</a>`
+    ).join('');
+  }
+}
+
+async function init() {
+  const data = await loadData();
+  if (!data) return;
+  renderBanner(data.banner);
+  renderSkills(data.skills);
+  renderExperience(data.experience);
+  renderPortfolio(data.portfolio);
+  renderLearn(data.courses, data.research, data.community);
+  renderFooter(data.footer);
+}
+
+init();
+</script>
+</body>
+</html>
