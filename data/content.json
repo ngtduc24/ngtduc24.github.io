@@ -1,12 +1,12 @@
 {
   "banner": {
     "badge": "c",
-    "name": "Andy Nguyá»n",
-    "title_line1": "Xin ChÃ o!",
-    "title_line2": "TÃ´i lÃ",
-    "description": "Káº¿t há»£p nghá» thuáº­t, cÃ´ng nghá» vÃ  má»t chÃºt ma thuáº­t Äá» táº¡o ra nhá»¯ng tráº£i nghiá»m ká»¹ thuáº­t sá» ÄÃ¡ng nhá». CÃ¹ng nhau xÃ¢y dá»±ng nhá»¯ng tháº¿ giá»i má»i.",
+    "name": "Andy N",
+    "title_line1": "Xin ChÃÂ o!",
+    "title_line2": "TÃÂ´i lÃ",
+    "description": "KÃ¡ÂºÂ¿t hÃ¡Â»Â£p nghÃ¡Â»Â thuÃ¡ÂºÂ­t, cÃÂ´ng nghÃ¡Â»Â vÃÂ  mÃ¡Â»Ât chÃÂºt ma thuÃ¡ÂºÂ­t ÃÂÃ¡Â»Â tÃ¡ÂºÂ¡o ra nhÃ¡Â»Â¯ng trÃ¡ÂºÂ£i nghiÃ¡Â»Âm kÃ¡Â»Â¹ thuÃ¡ÂºÂ­t sÃ¡Â»Â ÃÂÃÂ¡ng nhÃ¡Â»Â. CÃÂ¹ng nhau xÃÂ¢y dÃ¡Â»Â±ng nhÃ¡Â»Â¯ng thÃ¡ÂºÂ¿ giÃ¡Â»Âi mÃ¡Â»Âi.",
     "btn_primary": "Xem Portfolio",
-    "btn_secondary": "LiÃªn Há»",
+    "btn_secondary": "LiÃÂªn HÃ¡Â»Â",
     "avatar_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAaM6nPg7daWott3BQVpCtvizZFbleVjeMlC6avIkwTE1aCxJeCfNrxwUqwDDxeepGlH0A9kiIbIuZwn3c1tAyUQ3N1-oF88I4_KEbYBnzSFct5eRx6P3kgkL3FQJK90R6DhDZZmmDuzC1EIG5p6E48fc7Iv48OMLM1hl2bjSx66k8493bjfQSxaQCAtMtvkHFHX_NkSPsW_h-5XEt3Auu38gBil8FELSgJxkwLQkCLVCZmoQ1oZz9fnc1TMzsBG8hqdNdUscFbhOQ"
   },
   "skills": [
@@ -39,29 +39,29 @@
     {
       "title": "Senior Product Designer",
       "company": "TechVision Corp",
-      "period": "2021 - Hiá»n táº¡i",
-      "desc": "Dáº«n dáº¯t Äá»i ngÅ© thiáº¿t káº¿, xÃ¢y dá»±ng há» thá»ng thiáº¿t káº¿ vÃ  cáº£i thiá»n tráº£i nghiá»m ngÆ°á»i dÃ¹ng cho cÃ¡c sáº£n pháº©m chá»§ lá»±c.",
+      "period": "2021 - HiÃ¡Â»Ân tÃ¡ÂºÂ¡i",
+      "desc": "DÃ¡ÂºÂ«n dÃ¡ÂºÂ¯t ÃÂÃ¡Â»Âi ngÃÂ© thiÃ¡ÂºÂ¿t kÃ¡ÂºÂ¿, xÃÂ¢y dÃ¡Â»Â±ng hÃ¡Â»Â thÃ¡Â»Âng thiÃ¡ÂºÂ¿t kÃ¡ÂºÂ¿ vÃÂ  cÃ¡ÂºÂ£i thiÃ¡Â»Ân trÃ¡ÂºÂ£i nghiÃ¡Â»Âm ngÃÂ°Ã¡Â»Âi dÃÂ¹ng cho cÃÂ¡c sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m chÃ¡Â»Â§ lÃ¡Â»Â±c.",
       "color": "primary"
     },
     {
       "title": "UI/UX Designer",
       "company": "Creative Studio",
       "period": "2018 - 2021",
-      "desc": "Thiáº¿t káº¿ giao diá»n website vÃ  á»©ng dá»¥ng di Äá»ng cho cÃ¡c khÃ¡ch hÃ ng doanh nghiá»p quá»c táº¿.",
+      "desc": "ThiÃ¡ÂºÂ¿t kÃ¡ÂºÂ¿ giao diÃ¡Â»Ân website vÃÂ  Ã¡Â»Â©ng dÃ¡Â»Â¥ng di ÃÂÃ¡Â»Âng cho cÃÂ¡c khÃÂ¡ch hÃÂ ng doanh nghiÃ¡Â»Âp quÃ¡Â»Âc tÃ¡ÂºÂ¿.",
       "color": "secondary"
     },
     {
       "title": "Junior Designer",
       "company": "Design Innovators",
       "period": "2016 - 2018",
-      "desc": "Há» trá»£ thiáº¿t káº¿ bá» nháº­n diá»n thÆ°Æ¡ng hiá»u vÃ  cÃ¡c áº¥n pháº©m truyá»n thÃ´ng.",
+      "desc": "HÃ¡Â»Â trÃ¡Â»Â£ thiÃ¡ÂºÂ¿t kÃ¡ÂºÂ¿ bÃ¡Â»Â nhÃ¡ÂºÂ­n diÃ¡Â»Ân thÃÂ°ÃÂ¡ng hiÃ¡Â»Âu vÃÂ  cÃÂ¡c Ã¡ÂºÂ¥n phÃ¡ÂºÂ©m truyÃ¡Â»Ân thÃÂ´ng.",
       "color": "tertiary"
     }
   ],
   "portfolio": [
     {
       "title": "Neon Oasis Identity",
-      "desc": "Há» thá»ng nháº­n diá»n thÆ°Æ¡ng hiá»u Äá»t phÃ¡ cho khÃ´ng gian lÃ m viá»c sá» tÆ°Æ¡ng lai.",
+      "desc": "HÃ¡Â»Â thÃ¡Â»Âng nhÃ¡ÂºÂ­n diÃ¡Â»Ân thÃÂ°ÃÂ¡ng hiÃ¡Â»Âu ÃÂÃ¡Â»Ât phÃÂ¡ cho khÃÂ´ng gian lÃÂ m viÃ¡Â»Âc sÃ¡Â»Â tÃÂ°ÃÂ¡ng lai.",
       "tags": [
         "Branding",
         "Award Winning"
@@ -75,7 +75,7 @@
     },
     {
       "title": "Eco-Tech Visualization",
-      "desc": "NghiÃªn cá»©u hÃ¬nh há»a 3D tá»i giáº£n mÃ´ phá»ng sá»± giao thoa giá»¯a thiÃªn nhiÃªn vÃ  háº¡ táº§ng sá».",
+      "desc": "NghiÃÂªn cÃ¡Â»Â©u hÃÂ¬nh hÃ¡Â»Âa 3D tÃ¡Â»Âi giÃ¡ÂºÂ£n mÃÂ´ phÃ¡Â»Âng sÃ¡Â»Â± giao thoa giÃ¡Â»Â¯a thiÃÂªn nhiÃÂªn vÃÂ  hÃ¡ÂºÂ¡ tÃ¡ÂºÂ§ng sÃ¡Â»Â.",
       "tags": [
         "3D Design"
       ],
@@ -87,7 +87,7 @@
     },
     {
       "title": "FinPlay Dashboard",
-      "desc": "Giao diá»n quáº£n lÃ½ tÃ i chÃ­nh thÃ´ng minh vá»i há» thá»ng gamification kÃ­ch thÃ­ch ngÆ°á»i dÃ¹ng tiáº¿t kiá»m.",
+      "desc": "Giao diÃ¡Â»Ân quÃ¡ÂºÂ£n lÃÂ½ tÃÂ i chÃÂ­nh thÃÂ´ng minh vÃ¡Â»Âi hÃ¡Â»Â thÃ¡Â»Âng gamification kÃÂ­ch thÃÂ­ch ngÃÂ°Ã¡Â»Âi dÃÂ¹ng tiÃ¡ÂºÂ¿t kiÃ¡Â»Âm.",
       "tags": [
         "UI/UX Product"
       ],
@@ -101,37 +101,37 @@
   "courses": [
     {
       "type": "course",
-      "badge": "KhÃ³a Há»c Má»i",
-      "title": "Masterclass Thiáº¿t Káº¿ UI/UX Cáº£m á»¨ng",
-      "desc": "Há»c cÃ¡ch táº¡o ra cÃ¡c giao diá»n mang láº¡i cáº£m giÃ¡c váº­t lÃ½, xÃºc giÃ¡c vá»i ká»¹ thuáº­t Glassmorphism.",
-      "btn": "ÄÄng KÃ½ Ngay",
+      "badge": "KhÃÂ³a HÃ¡Â»Âc MÃ¡Â»Âi",
+      "title": "Masterclass ThiÃ¡ÂºÂ¿t KÃ¡ÂºÂ¿ UI/UX CÃ¡ÂºÂ£m Ã¡Â»Â¨ng",
+      "desc": "HÃ¡Â»Âc cÃÂ¡ch tÃ¡ÂºÂ¡o ra cÃÂ¡c giao diÃ¡Â»Ân mang lÃ¡ÂºÂ¡i cÃ¡ÂºÂ£m giÃÂ¡c vÃ¡ÂºÂ­t lÃÂ½, xÃÂºc giÃÂ¡c vÃ¡Â»Âi kÃ¡Â»Â¹ thuÃ¡ÂºÂ­t Glassmorphism.",
+      "btn": "ÃÂÃÂng KÃÂ½ Ngay",
       "link": "#"
     }
   ],
   "research": [
     {
       "type": "research",
-      "label": "NghiÃªn Cá»©u",
-      "title": "TÃ¢m LÃ½ Há»c MÃ u Sáº¯c Ká»¹ Thuáº­t Sá»",
+      "label": "NghiÃÂªn CÃ¡Â»Â©u",
+      "title": "TÃÂ¢m LÃÂ½ HÃ¡Â»Âc MÃÂ u SÃ¡ÂºÂ¯c KÃ¡Â»Â¹ ThuÃ¡ÂºÂ­t SÃ¡Â»Â",
       "link": "#"
     }
   ],
   "community": {
-    "title": "Tham Gia CÃ¹ng ChÃºng TÃ´i",
-    "desc": "HÆ¡n 2,000 nhÃ  sÃ¡ng táº¡o Äang tháº£o luáº­n má»i ngÃ y.",
-    "btn": "VÃ o Discord",
+    "title": "Tham Gia CÃÂ¹ng ChÃÂºng TÃÂ´i",
+    "desc": "HÃÂ¡n 2,000 nhÃÂ  sÃÂ¡ng tÃ¡ÂºÂ¡o ÃÂang thÃ¡ÂºÂ£o luÃ¡ÂºÂ­n mÃ¡Â»Âi ngÃÂ y.",
+    "btn": "VÃÂ o Discord",
     "link": "#"
   },
   "footer": {
-    "brand": "Andy Nguyá»n",
-    "copyright": "Â© 2024 Andy Nguyá»n. All rights reserved.",
+    "brand": "Andy NguyÃ¡Â»Ân",
+    "copyright": "ÃÂ© 2024 Andy NguyÃ¡Â»Ân. All rights reserved.",
     "links": [
       {
         "label": "Portfolio",
         "href": "#portfolio"
       },
       {
-        "label": "LiÃªn Há»",
+        "label": "LiÃÂªn HÃ¡Â»Â",
         "href": "#contact"
       },
       {
@@ -140,6 +140,6 @@
       }
     ],
     "email": "hello@andynguyen.dev",
-    "location": "Há» ChÃ­ Minh, Viá»t Nam"
+    "location": "HÃ¡Â»Â ChÃÂ­ Minh, ViÃ¡Â»Ât Nam"
   }
 }
