@@ -109,10 +109,10 @@
   "courses": [
     {
       "type": "course",
-      "badge": "KhÃÂ³a HÃ¡Â»Âc MÃ¡Â»Âi",
-      "title": "Masterclass ThiÃ¡ÂºÂ¿t KÃ¡ÂºÂ¿ UI/UX CÃ¡ÂºÂ£m Ã¡Â»Â¨ng",
-      "desc": "HÃ¡Â»Âc cÃÂ¡ch tÃ¡ÂºÂ¡o ra cÃÂ¡c giao diÃ¡Â»Ân mang lÃ¡ÂºÂ¡i cÃ¡ÂºÂ£m giÃÂ¡c vÃ¡ÂºÂ­t lÃÂ½, xÃÂºc giÃÂ¡c vÃ¡Â»Âi kÃ¡Â»Â¹ thuÃ¡ÂºÂ­t Glassmorphism.",
-      "btn": "ÃÂÃÂng KÃÂ½ Ngay",
+      "badge": "1",
+      "btn": "Đăng ký ngay",
+      "title": "Dựng Hình Với Maya",
+      "desc": "modeling maya",
       "link": "#"
     }
   ],
