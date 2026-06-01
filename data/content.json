@@ -1,47 +1,99 @@
 {
   "banner": {
-    "badge": "Nhà Thiết Kế Sáng Tạo",
-    "title_line1": "Xin Chào!",
-    "title_line2": "Tôi là",
-    "name": "Nguyễn Đức",
-    "description": "Kết hợp nghệ thuật, công nghệ và một chút ma thuật để tạo ra những trải nghiệm kỹ thuật số đáng nhớ. Cùng nhau xây dựng những thế giới mới.",
+    "badge": "NhÃ  Thiáº¿t Káº¿ SÃ¡ng Táº¡o",
+    "name": "Andy Nguyễn",
+    "title_line1": "Xin ChÃ o!",
+    "title_line2": "TÃ´i lÃ",
+    "description": "Káº¿t há»£p nghá» thuáº­t, cÃ´ng nghá» vÃ  má»t chÃºt ma thuáº­t Äá» táº¡o ra nhá»¯ng tráº£i nghiá»m ká»¹ thuáº­t sá» ÄÃ¡ng nhá». CÃ¹ng nhau xÃ¢y dá»±ng nhá»¯ng tháº¿ giá»i má»i.",
     "btn_primary": "Xem Portfolio",
-    "btn_secondary": "Liên Hệ",
+    "btn_secondary": "LiÃªn Há»",
     "avatar_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAaM6nPg7daWott3BQVpCtvizZFbleVjeMlC6avIkwTE1aCxJeCfNrxwUqwDDxeepGlH0A9kiIbIuZwn3c1tAyUQ3N1-oF88I4_KEbYBnzSFct5eRx6P3kgkL3FQJK90R6DhDZZmmDuzC1EIG5p6E48fc7Iv48OMLM1hl2bjSx66k8493bjfQSxaQCAtMtvkHFHX_NkSPsW_h-5XEt3Auu38gBil8FELSgJxkwLQkCLVCZmoQ1oZz9fnc1TMzsBG8hqdNdUscFbhOQ"
   },
   "skills": [
-    { "icon": "design_services", "name": "UI/UX Design", "percent": "95%", "color": "primary" },
-    { "icon": "3d_rotation", "name": "3D Modeling", "percent": "85%", "color": "secondary" },
-    { "icon": "palette", "name": "Branding", "percent": "90%", "color": "tertiary" },
-    { "icon": "movie", "name": "Motion Graphics", "percent": "80%", "color": "primary-container" }
+    {
+      "icon": "design_services",
+      "name": "UI/UX Design",
+      "percent": "95%",
+      "color": "primary"
+    },
+    {
+      "icon": "3d_rotation",
+      "name": "3D Modeling",
+      "percent": "85%",
+      "color": "secondary"
+    },
+    {
+      "icon": "palette",
+      "name": "Branding",
+      "percent": "90%",
+      "color": "tertiary"
+    },
+    {
+      "icon": "movie",
+      "name": "Motion Graphics",
+      "percent": "80%",
+      "color": "primary-container"
+    }
   ],
   "experience": [
-    { "title": "Senior Product Designer", "company": "TechVision Corp", "period": "2021 - Hiện tại", "desc": "Dẫn dắt đội ngũ thiết kế, xây dựng hệ thống thiết kế và cải thiện trải nghiệm người dùng cho các sản phẩm chủ lực.", "color": "primary" },
-    { "title": "UI/UX Designer", "company": "Creative Studio", "period": "2018 - 2021", "desc": "Thiết kế giao diện website và ứng dụng di động cho các khách hàng doanh nghiệp quốc tế.", "color": "secondary" },
-    { "title": "Junior Designer", "company": "Design Innovators", "period": "2016 - 2018", "desc": "Hỗ trợ thiết kế bộ nhận diện thương hiệu và các ấn phẩm truyền thông.", "color": "tertiary" }
+    {
+      "title": "Senior Product Designer",
+      "company": "TechVision Corp",
+      "period": "2021 - Hiá»n táº¡i",
+      "desc": "Dáº«n dáº¯t Äá»i ngÅ© thiáº¿t káº¿, xÃ¢y dá»±ng há» thá»ng thiáº¿t káº¿ vÃ  cáº£i thiá»n tráº£i nghiá»m ngÆ°á»i dÃ¹ng cho cÃ¡c sáº£n pháº©m chá»§ lá»±c.",
+      "color": "primary"
+    },
+    {
+      "title": "UI/UX Designer",
+      "company": "Creative Studio",
+      "period": "2018 - 2021",
+      "desc": "Thiáº¿t káº¿ giao diá»n website vÃ  á»©ng dá»¥ng di Äá»ng cho cÃ¡c khÃ¡ch hÃ ng doanh nghiá»p quá»c táº¿.",
+      "color": "secondary"
+    },
+    {
+      "title": "Junior Designer",
+      "company": "Design Innovators",
+      "period": "2016 - 2018",
+      "desc": "Há» trá»£ thiáº¿t káº¿ bá» nháº­n diá»n thÆ°Æ¡ng hiá»u vÃ  cÃ¡c áº¥n pháº©m truyá»n thÃ´ng.",
+      "color": "tertiary"
+    }
   ],
   "portfolio": [
     {
       "title": "Neon Oasis Identity",
-      "desc": "Hệ thống nhận diện thương hiệu đột phá cho không gian làm việc số tương lai.",
-      "tags": ["Branding", "Award Winning"],
-      "tag_colors": ["primary", "white"],
+      "desc": "Há» thá»ng nháº­n diá»n thÆ°Æ¡ng hiá»u Äá»t phÃ¡ cho khÃ´ng gian lÃ m viá»c sá» tÆ°Æ¡ng lai.",
+      "tags": [
+        "Branding",
+        "Award Winning"
+      ],
+      "tag_colors": [
+        "primary",
+        "white"
+      ],
       "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAi-XyIw7n5_qs2gRuVY5tzy8T9kNcTJ7oct3L7pA4uaRSsFv-NXNAqCkD03VG4wVF5M6nhBu2AH5XuLevkbHGhXyfWTTfiZCvB2mWUQGdzB02-oCUBVZ5fBLndUc8knKZjZ0Abr4Pm2x7KCJf57mpVHt8eLzjg4J034tgdWqERPQ-pcm2B2d2mUAy0GBvD6gvk3Qn1es0Kcd5gZKeytqMpF96k5gc2wKpQUR3xXrDdM5-EFqcS1VIg0fSE782XWMstEOcUjUpTk68",
       "link": "#"
     },
     {
       "title": "Eco-Tech Visualization",
-      "desc": "Nghiên cứu hình họa 3D tối giản mô phỏng sự giao thoa giữa thiên nhiên và hạ tầng số.",
-      "tags": ["3D Design"],
-      "tag_colors": ["secondary"],
+      "desc": "NghiÃªn cá»©u hÃ¬nh há»a 3D tá»i giáº£n mÃ´ phá»ng sá»± giao thoa giá»¯a thiÃªn nhiÃªn vÃ  háº¡ táº§ng sá».",
+      "tags": [
+        "3D Design"
+      ],
+      "tag_colors": [
+        "secondary"
+      ],
       "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCiOl3Qa7E3ATwP3qJi6AaUiM8Z06sPDn4IapkN9k_Aah6sVf92fyGujSQG9hPS0N3uwKYMFsvpzoeg24FeDzU2gjL_1T7JRxL9xbwbUi7ufN7cDiRLgkH2Y8SCM4ZQlsSz7LZuLzecITjKEVsXj3utK6FIjaMNUdHcgaXheDr_n7HSaSTJProZ4uK6V97GEtaCqcVqm3cGYxCfeQM-BpRIvjx5vK6Yt_0qUTxJn8bDrYLLFaVG8zI0xqBho4po23kqmZIsbMoBmUo",
       "link": "#"
     },
     {
       "title": "FinPlay Dashboard",
-      "desc": "Giao diện quản lý tài chính thông minh với hệ thống gamification kích thích người dùng tiết kiệm.",
-      "tags": ["UI/UX Product"],
-      "tag_colors": ["tertiary"],
+      "desc": "Giao diá»n quáº£n lÃ½ tÃ i chÃ­nh thÃ´ng minh vá»i há» thá»ng gamification kÃ­ch thÃ­ch ngÆ°á»i dÃ¹ng tiáº¿t kiá»m.",
+      "tags": [
+        "UI/UX Product"
+      ],
+      "tag_colors": [
+        "tertiary"
+      ],
       "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDb-hh5_OixoKQqjPxkFJRveTNePY3u4P6HcNSDmu3DW4OwI2D6Jdp9FI-R7NwFoW1cCqL4zrWxZX2TePWA5HstmDTfr5kgInfw30jO01a0oScu72WPYZOns5Ty0YsgGUKHTjRK_E2e3n755mnkMw2Bn2nKnN2caIgJT_vU9sigfin_SqV44tVA8cO9qabGSs6VjmXoM7Y9OuON_-rmfhQIWCZ20o3jKCtwV6x3LTejJt-TNeBPS1y9n0gQo-3AOYKkxCsb5ucHoxc",
       "link": "#"
     }
@@ -49,34 +101,43 @@
   "courses": [
     {
       "type": "course",
-      "badge": "Khóa Học Mới",
-      "title": "Masterclass Thiết Kế UI/UX Cảm Ứng",
-      "desc": "Học cách tạo ra các giao diện mang lại cảm giác vật lý, xúc giác với kỹ thuật Glassmorphism.",
-      "btn": "Đăng Ký Ngay",
+      "badge": "KhÃ³a Há»c Má»i",
+      "title": "Masterclass Thiáº¿t Káº¿ UI/UX Cáº£m á»¨ng",
+      "desc": "Há»c cÃ¡ch táº¡o ra cÃ¡c giao diá»n mang láº¡i cáº£m giÃ¡c váº­t lÃ½, xÃºc giÃ¡c vá»i ká»¹ thuáº­t Glassmorphism.",
+      "btn": "ÄÄng KÃ½ Ngay",
       "link": "#"
     }
   ],
   "research": [
     {
       "type": "research",
-      "label": "Nghiên Cứu",
-      "title": "Tâm Lý Học Màu Sắc Kỹ Thuật Số",
+      "label": "NghiÃªn Cá»©u",
+      "title": "TÃ¢m LÃ½ Há»c MÃ u Sáº¯c Ká»¹ Thuáº­t Sá»",
       "link": "#"
     }
   ],
   "community": {
-    "title": "Tham Gia Cùng Chúng Tôi",
-    "desc": "Hơn 2,000 nhà sáng tạo đang thảo luận mỗi ngày.",
-    "btn": "Vào Discord",
+    "title": "Tham Gia CÃ¹ng ChÃºng TÃ´i",
+    "desc": "HÆ¡n 2,000 nhÃ  sÃ¡ng táº¡o Äang tháº£o luáº­n má»i ngÃ y.",
+    "btn": "VÃ o Discord",
     "link": "#"
   },
   "footer": {
-    "brand": "Nguyễn Đức",
-    "copyright": "© 2024 Nguyễn Đức. All rights reserved.",
+    "brand": "Nguyá»n Äá»©c",
+    "copyright": "Â© 2024 Nguyá»n Äá»©c. All rights reserved.",
     "links": [
-      { "label": "Portfolio", "href": "#portfolio" },
-      { "label": "Liên Hệ", "href": "#contact" },
-      { "label": "Admin", "href": "admin/" }
+      {
+        "label": "Portfolio",
+        "href": "#portfolio"
+      },
+      {
+        "label": "LiÃªn Há»",
+        "href": "#contact"
+      },
+      {
+        "label": "Admin",
+        "href": "admin/"
+      }
     ]
   }
 }
