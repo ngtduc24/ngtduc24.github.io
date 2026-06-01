@@ -553,6 +553,20 @@ function ghFetch(path, token, opts={}) {
   });
 }
 
+// UTF-8 safe encode/decode for GitHub API
+function toBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  bytes.forEach(b => binary += String.fromCharCode(b));
+  return btoa(binary);
+}
+function fromBase64(b64) {
+  const binary = atob(b64.replace(/\n/g,''));
+  const bytes = new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+
 let _fileSha = null;
 async function loadData() {
   try {
@@ -560,15 +574,16 @@ async function loadData() {
     if (r.ok) {
       const f = await r.json();
       _fileSha = f.sha;
-      DATA = JSON.parse(atob(f.content.replace(/\n/g,'')));
+      DATA = JSON.parse(fromBase64(f.content));
       return;
     }
-  } catch(e){}
+  } catch(e){ console.error('loadData error:',e); }
   DATA = getDefault();
 }
 
 async function saveData() {
-  const content = btoa(unescape(encodeURIComponent(JSON.stringify(DATA,null,2))));
+  const json = JSON.stringify(DATA, null, 2);
+  const content = toBase64(json);
   const body = { message:`Update content [${new Date().toLocaleString('vi-VN')}]`, content };
   if (_fileSha) body.sha = _fileSha;
   const r = await ghFetch(`repos/${AUTH.user}/${AUTH.repo}/contents/data/content.json`, AUTH.token, {method:'PUT',body:JSON.stringify(body)});
