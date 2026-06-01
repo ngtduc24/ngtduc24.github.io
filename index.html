@@ -205,8 +205,11 @@ const COLOR_MAP = {
 async function loadData() {
   try {
     const r = await fetch('data/content.json?t=' + Date.now());
-    if (r.ok) return await r.json();
-  } catch(e) {}
+    if (r.ok) {
+      const text = await r.text();
+      return JSON.parse(text);
+    }
+  } catch(e) { console.error('loadData:', e); }
   return null;
 }
 
