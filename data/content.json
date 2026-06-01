@@ -1,0 +1,17 @@
+{
+  "about": {
+    "name": "Tên của bạn",
+    "bio1": "Xin chào! Tôi là một designer với niềm đam mê tạo ra những thiết kế độc đáo, có chiều sâu và kể được câu chuyện.",
+    "bio2": "Với kinh nghiệm trong Brand Identity, UI/UX và Visual Design, tôi mang đến giải pháp thị giác toàn diện cho mỗi dự án.",
+    "photo": "",
+    "email": "hello@yourname.com",
+    "skills": ["Brand Identity", "UI/UX Design", "Typography", "Motion Design", "Figma", "Adobe Suite"],
+    "stats": [
+      { "num": "5+", "label": "Năm kinh nghiệm" },
+      { "num": "60+", "label": "Dự án hoàn thành" },
+      { "num": "30+", "label": "Khách hàng" }
+    ]
+  },
+  "projects": [],
+  "blog": []
+}

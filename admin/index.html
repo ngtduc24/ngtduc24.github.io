@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a; --bg2: #111; --bg3: #1a1a1a;
+    --accent: #e8ff47; --accent2: #ff6b35;
+    --text: #f0ede8; --text2: #888; --border: rgba(255,255,255,0.08);
+    --red: #ff4444; --green: #4eff91;
+    --radius: 10px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-weight: 300;
+    min-height: 100vh; display: flex;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px; min-height: 100vh; background: var(--bg2);
+    border-right: 1px solid var(--border); padding: 2rem 1.5rem;
+    position: fixed; top: 0; left: 0; bottom: 0;
+    display: flex; flex-direction: column;
+  }
+  .sidebar-logo {
+    font-size: 1rem; font-weight: 500; color: var(--text);
+    margin-bottom: 0.25rem;
+  }
+  .sidebar-sub { font-size: 0.75rem; color: var(--text2); margin-bottom: 2.5rem; }
+  .sidebar-nav { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; }
+  .nav-item {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.6rem 0.75rem; border-radius: 8px;
+    color: var(--text2); font-size: 0.875rem; cursor: pointer;
+    transition: background 0.15s, color 0.15s; border: none;
+    background: none; text-align: left; width: 100%;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: rgba(232,255,71,0.1); color: var(--accent); }
+  .nav-icon { font-size: 1rem; width: 1.25rem; text-align: center; }
+  .sidebar-footer { padding-top: 1.5rem; border-top: 1px solid var(--border); }
+  .sidebar-user { font-size: 0.8rem; color: var(--text2); margin-bottom: 0.75rem; }
+  .sidebar-user span { color: var(--accent); font-family: 'DM Mono', monospace; font-size: 0.75rem; }
+
+  /* MAIN */
+  .main { margin-left: 240px; flex: 1; padding: 2rem 2.5rem; min-height: 100vh; }
+
+  /* LOGIN */
+  #loginView {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 100vh;
+    background: var(--bg);
+  }
+  .login-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: calc(var(--radius)*2); padding: 3rem; width: 100%; max-width: 420px;
+  }
+  .login-title { font-size: 1.5rem; font-weight: 500; margin-bottom: 0.5rem; }
+  .login-sub { font-size: 0.85rem; color: var(--text2); margin-bottom: 2rem; line-height: 1.6; }
+  .login-sub a { color: var(--accent); }
+  .form-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+  .form-group label { font-size: 0.8rem; color: var(--text2); }
+  input, textarea, select {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.75rem 1rem;
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem; outline: none; width: 100%;
+    transition: border-color 0.2s; resize: vertical;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  .btn {
+    padding: 0.75rem 1.5rem; border-radius: 999px; font-size: 0.875rem;
+    font-weight: 500; cursor: pointer; border: none; transition: opacity 0.2s, transform 0.15s;
+  }
+  .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-primary { background: var(--accent); color: #0a0a0a; }
+  .btn-danger { background: rgba(255,68,68,0.15); color: var(--red); border: 1px solid rgba(255,68,68,0.3); }
+  .btn-ghost { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+  .btn-sm { padding: 0.4rem 0.875rem; font-size: 0.78rem; }
+  .login-error { color: var(--red); font-size: 0.82rem; margin-top: 0.5rem; display: none; }
+
+  /* APP (after login) */
+  #appView { display: none; }
+
+  /* TAB VIEWS */
+  .tab-view { display: none; }
+  .tab-view.active { display: block; }
+
+  /* PAGE HEADER */
+  .page-header { margin-bottom: 2rem; }
+  .page-header h1 { font-size: 1.4rem; font-weight: 500; margin-bottom: 0.25rem; }
+  .page-header p { font-size: 0.85rem; color: var(--text2); }
+  .page-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+
+  /* CARDS */
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem;
+  }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+  .card-title { font-size: 0.95rem; font-weight: 500; }
+  .card-sub { font-size: 0.78rem; color: var(--text2); margin-top: 0.2rem; }
+  .card-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
+  /* ABOUT FORM */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .form-section { margin-bottom: 1.5rem; }
+  .form-section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text2); margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  .tags-input { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; cursor: text; }
+  .tag-item { display: flex; align-items: center; gap: 0.4rem; background: rgba(232,255,71,0.1); color: var(--accent); padding: 0.2rem 0.5rem 0.2rem 0.75rem; border-radius: 999px; font-size: 0.78rem; }
+  .tag-remove { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 1rem; line-height: 1; padding: 0; opacity: 0.6; }
+  .tag-remove:hover { opacity: 1; }
+  .tag-add-input { background: none; border: none; color: var(--text); font-size: 0.78rem; outline: none; min-width: 80px; padding: 0.2rem 0; font-family: 'DM Sans', sans-serif; }
+
+  /* STATUS */
+  .status-badge {
+    font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 999px;
+    font-family: 'DM Mono', monospace;
+  }
+  .status-saved { background: rgba(78,255,145,0.12); color: var(--green); }
+  .status-draft { background: rgba(232,255,71,0.1); color: var(--accent); }
+
+  /* STATS ROW */
+  .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 2rem; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+  .stat-num { font-size: 2rem; font-weight: 500; color: var(--accent); line-height: 1; margin-bottom: 0.25rem; }
+  .stat-label { font-size: 0.78rem; color: var(--text2); }
+
+  /* ALERT */
+  .alert {
+    padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem;
+    margin-bottom: 1rem; display: none;
+  }
+  .alert-success { background: rgba(78,255,145,0.1); color: var(--green); border: 1px solid rgba(78,255,145,0.2); }
+  .alert-error { background: rgba(255,68,68,0.1); color: var(--red); border: 1px solid rgba(255,68,68,0.2); }
+  .alert.show { display: block; }
+
+  /* GITHUB INFO BOX */
+  .info-box {
+    background: rgba(232,255,71,0.05); border: 1px solid rgba(232,255,71,0.15);
+    border-radius: 8px; padding: 1rem; font-size: 0.82rem; color: var(--text2);
+    margin-bottom: 1.5rem; line-height: 1.7;
+  }
+  .info-box strong { color: var(--accent); }
+  .info-box code { background: var(--bg3); padding: 0.1rem 0.4rem; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--text); }
+
+  /* MODAL FORM */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); z-index: 300;
+    align-items: center; justify-content: center; padding: 2rem;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal-form {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: calc(var(--radius)*2); padding: 2rem;
+    width: 100%; max-width: 560px; max-height: 85vh; overflow-y: auto;
+    position: relative;
+  }
+  .modal-form h3 { font-size: 1.1rem; font-weight: 500; margin-bottom: 1.5rem; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 3rem; color: var(--text2); font-size: 0.875rem; border: 1px dashed var(--border); border-radius: var(--radius); }
+
+  @media(max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 1.5rem; }
+    .stats-row, .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginView">
+  <div class="login-card">
+    <div class="login-title">🔐 Admin Login</div>
+    <p class="login-sub">
+      Đăng nhập bằng <strong>GitHub Personal Access Token</strong> để quản lý nội dung portfolio.<br><br>
+      Tạo token tại: <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a><br>
+      Cần quyền: <strong>repo</strong> (read &amp; write contents)
+    </p>
+    <div class="form-group">
+      <label>GitHub Username</label>
+      <input type="text" id="loginUsername" placeholder="your-github-username">
+    </div>
+    <div class="form-group">
+      <label>Repository Name</label>
+      <input type="text" id="loginRepo" placeholder="your-repo-name">
+    </div>
+    <div class="form-group">
+      <label>GitHub Token (PAT)</label>
+      <input type="password" id="loginToken" placeholder="ghp_xxxxxxxxxxxx">
+    </div>
+    <div class="login-error" id="loginError">Token không hợp lệ hoặc không có quyền truy cập.</div>
+    <button class="btn btn-primary" onclick="doLogin()" style="width:100%; margin-top:0.5rem">Đăng nhập →</button>
+    <p style="font-size:0.75rem; color:var(--text2); margin-top:1rem; text-align:center">Token được lưu local, không gửi đi đâu ngoài GitHub API</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appView">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">⚙ Admin Panel</div>
+    <div class="sidebar-sub">Portfolio Manager</div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="switchTab('dashboard')"><span class="nav-icon">◈</span> Dashboard</button>
+      <button class="nav-item" onclick="switchTab('about')"><span class="nav-icon">○</span> Giới thiệu</button>
+      <button class="nav-item" onclick="switchTab('projects')"><span class="nav-icon">◻</span> Dự án</button>
+      <button class="nav-item" onclick="switchTab('blog')"><span class="nav-icon">◇</span> Blog</button>
+      <button class="nav-item" onclick="switchTab('settings')"><span class="nav-icon">⊙</span> Cài đặt</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">Đăng nhập:<br><span id="sidebarUser"></span></div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()" style="width:100%">Đăng xuất</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div id="alertBox" class="alert"></div>
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="tab-view active">
+      <div class="page-header"><h1>Dashboard</h1><p>Tổng quan nội dung portfolio</p></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num" id="dashProjects">0</div><div class="stat-label">Dự án</div></div>
+        <div class="stat-card"><div class="stat-num" id="dashBlog">0</div><div class="stat-label">Bài viết</div></div>
+        <div class="stat-card"><div class="stat-num" id="dashSkills">0</div><div class="stat-label">Skills</div></div>
+      </div>
+      <div class="info-box">
+        <strong>Cách hoạt động:</strong> Mọi thay đổi bạn lưu sẽ được đẩy lên file <code>data/content.json</code> trong GitHub repo. Portfolio tại <code>index.html</code> tự động đọc file này mỗi khi tải trang.
+        <br><br>
+        <strong>Deploy:</strong> Bật <code>GitHub Pages</code> trong Settings → Pages → Source: <code>main branch</code>. Portfolio sẽ có địa chỉ <code>https://[username].github.io/[repo]/</code>
+      </div>
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">Nhanh: Đăng bài blog</div><div class="card-sub">Tạo bài viết mới ngay</div></div></div>
+        <div class="form-group"><label>Tiêu đề</label><input type="text" id="quickTitle" placeholder="Tiêu đề bài viết..."></div>
+        <div class="form-group"><label>Nội dung</label><textarea id="quickContent" rows="4" placeholder="Nội dung bài viết..."></textarea></div>
+        <button class="btn btn-primary btn-sm" onclick="quickPost()">Đăng ngay →</button>
+      </div>
+    </div>
+
+    <!-- ABOUT -->
+    <div id="tab-about" class="tab-view">
+      <div class="page-header"><h1>Giới thiệu bản thân</h1><p>Chỉnh sửa thông tin hiển thị trên trang chủ</p></div>
+      <div class="card">
+        <div class="form-section">
+          <div class="form-section-title">Thông tin cơ bản</div>
+          <div class="form-row">
+            <div class="form-group"><label>Tên</label><input type="text" id="aName" placeholder="Tên của bạn"></div>
+            <div class="form-group"><label>Email liên hệ</label><input type="email" id="aEmail" placeholder="hello@yourname.com"></div>
+          </div>
+          <div class="form-group"><label>Đoạn giới thiệu 1</label><textarea id="aBio1" rows="3"></textarea></div>
+          <div class="form-group"><label>Đoạn giới thiệu 2</label><textarea id="aBio2" rows="3"></textarea></div>
+          <div class="form-group"><label>Ảnh đại diện (URL)</label><input type="url" id="aPhoto" placeholder="https://..."></div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">Skills (nhấn Enter để thêm)</div>
+          <div class="tags-input" id="skillsInput" onclick="document.getElementById('skillTagInput').focus()">
+            <input class="tag-add-input" id="skillTagInput" placeholder="Thêm skill..." onkeydown="addTag(event,'skills')">
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">Thống kê (Stats)</div>
+          <div id="statsEditor"></div>
+          <button class="btn btn-ghost btn-sm" onclick="addStat()" style="margin-top:0.75rem">+ Thêm stat</button>
+        </div>
+        <button class="btn btn-primary" onclick="saveAbout()">Lưu thay đổi</button>
+      </div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div id="tab-projects" class="tab-view">
+      <div class="page-header"><h1>Dự án</h1><p>Thêm và quản lý portfolio projects</p></div>
+      <div class="page-actions">
+        <span id="projectCount" style="font-size:0.85rem; color:var(--text2)"></span>
+        <button class="btn btn-primary btn-sm" onclick="openProjectModal()">+ Thêm dự án</button>
+      </div>
+      <div id="projectsList"></div>
+    </div>
+
+    <!-- BLOG -->
+    <div id="tab-blog" class="tab-view">
+      <div class="page-header"><h1>Blog</h1><p>Quản lý bài viết</p></div>
+      <div class="page-actions">
+        <span id="blogCount" style="font-size:0.85rem; color:var(--text2)"></span>
+        <button class="btn btn-primary btn-sm" onclick="openBlogModal()">+ Bài viết mới</button>
+      </div>
+      <div id="blogList"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="tab-settings" class="tab-view">
+      <div class="page-header"><h1>Cài đặt</h1><p>Cấu hình GitHub repo và trang portfolio</p></div>
+      <div class="card">
+        <div class="form-section-title" style="margin-bottom:1rem">GitHub Connection</div>
+        <div class="form-row">
+          <div class="form-group"><label>Username</label><input type="text" id="setUsername" readonly></div>
+          <div class="form-group"><label>Repository</label><input type="text" id="setRepo" readonly></div>
+        </div>
+        <div class="form-group">
+          <label>Token (ẩn)</label>
+          <input type="password" id="setToken" readonly value="••••••••••••••••">
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="doLogout()">Đổi tài khoản / Đăng xuất</button>
+      </div>
+      <div class="card">
+        <div class="form-section-title" style="margin-bottom:1rem">Hướng dẫn deploy GitHub Pages</div>
+        <div style="font-size:0.85rem; color:var(--text2); line-height:2;">
+          1. Vào repo → <strong style="color:var(--text)">Settings</strong><br>
+          2. Chọn <strong style="color:var(--text)">Pages</strong> ở menu trái<br>
+          3. Source: <strong style="color:var(--accent)">Deploy from a branch</strong><br>
+          4. Branch: <strong style="color:var(--accent)">main</strong>, Folder: <strong style="color:var(--accent)">/ (root)</strong><br>
+          5. Save → Sau vài phút portfolio live tại:<br>
+          <code style="font-family:'DM Mono',monospace; color:var(--accent); font-size:0.8rem;" id="siteUrl"></code>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /appView -->
+
+<!-- PROJECT MODAL -->
+<div class="modal-overlay" id="projectModal">
+  <div class="modal-form">
+    <h3 id="projectModalTitle">Thêm dự án mới</h3>
+    <input type="hidden" id="projectEditIdx" value="-1">
+    <div class="form-group"><label>Tên dự án *</label><input type="text" id="pTitle"></div>
+    <div class="form-group"><label>Mô tả</label><textarea id="pDesc" rows="3"></textarea></div>
+    <div class="form-group"><label>Ảnh (URL)</label><input type="url" id="pImage" placeholder="https://..."></div>
+    <div class="form-group"><label>Link dự án</label><input type="url" id="pLink" placeholder="https://..."></div>
+    <div class="form-group">
+      <label>Tags (nhấn Enter)</label>
+      <div class="tags-input" id="pTagsInput" onclick="document.getElementById('pTagInput').focus()">
+        <input class="tag-add-input" id="pTagInput" placeholder="UI Design, Branding..." onkeydown="addTag(event,'project')">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('projectModal')">Huỷ</button>
+      <button class="btn btn-primary" onclick="saveProject()">Lưu dự án</button>
+    </div>
+  </div>
+</div>
+
+<!-- BLOG MODAL -->
+<div class="modal-overlay" id="blogModal">
+  <div class="modal-form">
+    <h3 id="blogModalTitle">Bài viết mới</h3>
+    <input type="hidden" id="blogEditIdx" value="-1">
+    <div class="form-group"><label>Tiêu đề *</label><input type="text" id="bTitle"></div>
+    <div class="form-group"><label>Tóm tắt (excerpt)</label><input type="text" id="bExcerpt" placeholder="Tóm tắt ngắn hiển thị trong danh sách..."></div>
+    <div class="form-group"><label>Nội dung đầy đủ</label><textarea id="bContent" rows="10" placeholder="Viết nội dung bài (xuống dòng = đoạn mới)..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('blogModal')">Huỷ</button>
+      <button class="btn btn-primary" onclick="saveBlogPost()">Đăng bài</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---- STATE ----
+  let AUTH = null; // {username, repo, token}
+  let DATA = { about: {}, projects: [], blog: [] };
+  let _skillTags = [];
+  let _projectTags = [];
+
+  // ---- LOGIN ----
+  function doLogin() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const repo = document.getElementById('loginRepo').value.trim();
+    const token = document.getElementById('loginToken').value.trim();
+    if (!username || !repo || !token) { showLoginError('Vui lòng điền đầy đủ thông tin.'); return; }
+
+    // Test token by fetching repo info
+    fetch(`https://api.github.com/repos/${username}/${repo}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+    }).then(r => {
+      if (!r.ok) throw new Error('Unauthorized');
+      return r.json();
+    }).then(() => {
+      AUTH = { username, repo, token };
+      localStorage.setItem('portfolio_auth', JSON.stringify(AUTH));
+      startApp();
+    }).catch(() => showLoginError('Token không hợp lệ hoặc không có quyền truy cập repo này.'));
+  }
+
+  function showLoginError(msg) {
+    const el = document.getElementById('loginError');
+    el.textContent = msg; el.style.display = 'block';
+  }
+
+  function doLogout() {
+    localStorage.removeItem('portfolio_auth');
+    AUTH = null; DATA = { about:{}, projects:[], blog:[] };
+    document.getElementById('loginView').style.display = 'flex';
+    document.getElementById('appView').style.display = 'none';
+  }
+
+  // ---- STARTUP ----
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('portfolio_auth');
+    if (saved) {
+      try { AUTH = JSON.parse(saved); startApp(); } catch(e) {}
+    }
+  });
+
+  async function startApp() {
+    document.getElementById('loginView').style.display = 'none';
+    document.getElementById('appView').style.display = 'flex';
+    document.getElementById('sidebarUser').textContent = AUTH.username;
+    document.getElementById('setUsername').value = AUTH.username;
+    document.getElementById('setRepo').value = AUTH.repo;
+    document.getElementById('siteUrl').textContent = `https://${AUTH.username}.github.io/${AUTH.repo}/`;
+    await loadContentFromGitHub();
+    refreshUI();
+  }
+
+  // ---- GITHUB API ----
+  async function loadContentFromGitHub() {
+    try {
+      const r = await fetch(
+        `https://api.github.com/repos/${AUTH.username}/${AUTH.repo}/contents/data/content.json`,
+        { headers: { Authorization: `token ${AUTH.token}` } }
+      );
+      if (!r.ok) { DATA = getDefaultData(); return; }
+      const file = await r.json();
+      const decoded = atob(file.content.replace(/\n/g,''));
+      DATA = JSON.parse(decoded);
+      window._fileSha = file.sha;
+    } catch(e) { DATA = getDefaultData(); }
+  }
+
+  async function saveToGitHub() {
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(DATA, null, 2))));
+    const body = {
+      message: `Update content.json [${new Date().toISOString()}]`,
+      content: content
+    };
+    if (window._fileSha) body.sha = window._fileSha;
+
+    const r = await fetch(
+      `https://api.github.com/repos/${AUTH.username}/${AUTH.repo}/contents/data/content.json`,
+      { method: 'PUT', headers: { Authorization: `token ${AUTH.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+    );
+    if (!r.ok) throw new Error('Save failed');
+    const res = await r.json();
+    window._fileSha = res.content.sha;
+  }
+
+  function getDefaultData() {
+    return {
+      about: { name:'', bio1:'', bio2:'', photo:'', email:'', skills:[], stats:[{num:'0+',label:'Năm KN'},{num:'0+',label:'Dự án'},{num:'0+',label:'Khách hàng'}] },
+      projects: [],
+      blog: []
+    };
+  }
+
+  // ---- ALERTS ----
+  function showAlert(msg, type='success') {
+    const el = document.getElementById('alertBox');
+    el.textContent = msg;
+    el.className = `alert alert-${type} show`;
+    setTimeout(() => el.classList.remove('show'), 3500);
+  }
+
+  // ---- TABS ----
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-view').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    event.currentTarget.classList.add('active');
+    if (tab === 'about') loadAboutForm();
+    if (tab === 'projects') renderProjectsList();
+    if (tab === 'blog') renderBlogList();
+  }
+
+  // ---- REFRESH ----
+  function refreshUI() {
+    document.getElementById('dashProjects').textContent = DATA.projects.length;
+    document.getElementById('dashBlog').textContent = DATA.blog.length;
+    document.getElementById('dashSkills').textContent = (DATA.about.skills || []).length;
+  }
+
+  // ---- ABOUT ----
+  function loadAboutForm() {
+    const a = DATA.about || {};
+    document.getElementById('aName').value = a.name || '';
+    document.getElementById('aEmail').value = a.email || '';
+    document.getElementById('aBio1').value = a.bio1 || '';
+    document.getElementById('aBio2').value = a.bio2 || '';
+    document.getElementById('aPhoto').value = a.photo || '';
+    _skillTags = [...(a.skills || [])];
+    renderSkillTags();
+    renderStatsEditor(a.stats || []);
+  }
+
+  function renderSkillTags() {
+    const container = document.getElementById('skillsInput');
+    const input = document.getElementById('skillTagInput');
+    container.innerHTML = '';
+    _skillTags.forEach((s, i) => {
+      const span = document.createElement('span'); span.className = 'tag-item';
+      span.innerHTML = `${s} <button class="tag-remove" onclick="_skillTags.splice(${i},1);renderSkillTags()">×</button>`;
+      container.appendChild(span);
+    });
+    container.appendChild(input);
+  }
+
+  function addTag(e, type) {
+    if (e.key !== 'Enter' && e.key !== ',') return;
+    e.preventDefault();
+    const val = e.target.value.trim().replace(/,$/, '');
+    if (!val) return;
+    if (type === 'skills') { _skillTags.push(val); e.target.value=''; renderSkillTags(); }
+    if (type === 'project') { _projectTags.push(val); e.target.value=''; renderProjectTags(); }
+  }
+
+  function renderStatsEditor(stats) {
+    const container = document.getElementById('statsEditor');
+    container.innerHTML = stats.map((s, i) => `
+      <div style="display:flex; gap:0.75rem; align-items:center; margin-bottom:0.5rem">
+        <input type="text" value="${s.num}" placeholder="5+" style="width:80px" id="statNum${i}" oninput="updateStat(${i})">
+        <input type="text" value="${s.label}" placeholder="Label" id="statLabel${i}" oninput="updateStat(${i})">
+        <button class="btn btn-danger btn-sm" onclick="removeStat(${i})">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function updateStat(i) {
+    DATA.about.stats[i] = {
+      num: document.getElementById('statNum' + i).value,
+      label: document.getElementById('statLabel' + i).value
+    };
+  }
+
+  function addStat() {
+    if (!DATA.about.stats) DATA.about.stats = [];
+    DATA.about.stats.push({num:'0+', label:'Label'});
+    renderStatsEditor(DATA.about.stats);
+  }
+
+  function removeStat(i) { DATA.about.stats.splice(i, 1); renderStatsEditor(DATA.about.stats); }
+
+  async function saveAbout() {
+    DATA.about = {
+      ...DATA.about,
+      name: document.getElementById('aName').value,
+      email: document.getElementById('aEmail').value,
+      bio1: document.getElementById('aBio1').value,
+      bio2: document.getElementById('aBio2').value,
+      photo: document.getElementById('aPhoto').value,
+      skills: _skillTags
+    };
+    try { await saveToGitHub(); showAlert('✓ Đã lưu và cập nhật GitHub!'); refreshUI(); }
+    catch(e) { showAlert('Lỗi khi lưu: ' + e.message, 'error'); }
+  }
+
+  // ---- PROJECTS ----
+  function renderProjectsList() {
+    const el = document.getElementById('projectsList');
+    document.getElementById('projectCount').textContent = `${DATA.projects.length} dự án`;
+    if (!DATA.projects.length) { el.innerHTML = '<div class="empty">Chưa có dự án nào. Nhấn "+ Thêm dự án" để bắt đầu.</div>'; return; }
+    el.innerHTML = DATA.projects.map((p, i) => `
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">${p.title}</div>
+            <div class="card-sub">${(p.tags||[]).join(' · ') || 'Chưa có tag'}</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-ghost btn-sm" onclick="editProject(${i})">Sửa</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteProject(${i})">Xoá</button>
+          </div>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text2)">${p.description || 'Chưa có mô tả'}</p>
+      </div>
+    `).join('');
+  }
+
+  function openProjectModal(idx) {
+    _projectTags = [];
+    document.getElementById('projectEditIdx').value = idx !== undefined ? idx : -1;
+    document.getElementById('projectModalTitle').textContent = idx !== undefined ? 'Sửa dự án' : 'Thêm dự án mới';
+    if (idx !== undefined) {
+      const p = DATA.projects[idx];
+      document.getElementById('pTitle').value = p.title || '';
+      document.getElementById('pDesc').value = p.description || '';
+      document.getElementById('pImage').value = p.image || '';
+      document.getElementById('pLink').value = p.link || '';
+      _projectTags = [...(p.tags || [])];
+    } else {
+      ['pTitle','pDesc','pImage','pLink'].forEach(id => document.getElementById(id).value = '');
+    }
+    renderProjectTags();
+    document.getElementById('projectModal').classList.add('active');
+  }
+
+  function editProject(i) { openProjectModal(i); }
+
+  function renderProjectTags() {
+    const container = document.getElementById('pTagsInput');
+    const input = document.getElementById('pTagInput');
+    container.innerHTML = '';
+    _projectTags.forEach((t, i) => {
+      const span = document.createElement('span'); span.className = 'tag-item';
+      span.innerHTML = `${t} <button class="tag-remove" onclick="_projectTags.splice(${i},1);renderProjectTags()">×</button>`;
+      container.appendChild(span);
+    });
+    container.appendChild(input);
+  }
+
+  async function saveProject() {
+    const title = document.getElementById('pTitle').value.trim();
+    if (!title) { alert('Vui lòng nhập tên dự án'); return; }
+    const p = { title, description: document.getElementById('pDesc').value, image: document.getElementById('pImage').value, link: document.getElementById('pLink').value, tags: _projectTags };
+    const idx = parseInt(document.getElementById('projectEditIdx').value);
+    if (idx >= 0) DATA.projects[idx] = p; else DATA.projects.unshift(p);
+    try { await saveToGitHub(); closeModal('projectModal'); renderProjectsList(); showAlert('✓ Dự án đã được lưu!'); refreshUI(); }
+    catch(e) { showAlert('Lỗi: ' + e.message, 'error'); }
+  }
+
+  async function deleteProject(i) {
+    if (!confirm('Xoá dự án này?')) return;
+    DATA.projects.splice(i, 1);
+    try { await saveToGitHub(); renderProjectsList(); showAlert('Đã xoá dự án.'); refreshUI(); }
+    catch(e) { showAlert('Lỗi: ' + e.message, 'error'); }
+  }
+
+  // ---- BLOG ----
+  function renderBlogList() {
+    const el = document.getElementById('blogList');
+    document.getElementById('blogCount').textContent = `${DATA.blog.length} bài viết`;
+    if (!DATA.blog.length) { el.innerHTML = '<div class="empty">Chưa có bài viết. Nhấn "+ Bài viết mới" để bắt đầu.</div>'; return; }
+    el.innerHTML = DATA.blog.map((p, i) => `
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">${p.title}</div>
+            <div class="card-sub">${p.date ? new Date(p.date).toLocaleDateString('vi-VN') : ''}</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-ghost btn-sm" onclick="editBlog(${i})">Sửa</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteBlog(${i})">Xoá</button>
+          </div>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text2)">${p.excerpt || p.content.substring(0,100)}...</p>
+      </div>
+    `).join('');
+  }
+
+  function openBlogModal(idx) {
+    document.getElementById('blogEditIdx').value = idx !== undefined ? idx : -1;
+    document.getElementById('blogModalTitle').textContent = idx !== undefined ? 'Sửa bài viết' : 'Bài viết mới';
+    if (idx !== undefined) {
+      const p = DATA.blog[idx];
+      document.getElementById('bTitle').value = p.title || '';
+      document.getElementById('bExcerpt').value = p.excerpt || '';
+      document.getElementById('bContent').value = p.content || '';
+    } else {
+      ['bTitle','bExcerpt','bContent'].forEach(id => document.getElementById(id).value = '');
+    }
+    document.getElementById('blogModal').classList.add('active');
+  }
+
+  function editBlog(i) { openBlogModal(i); }
+
+  async function saveBlogPost() {
+    const title = document.getElementById('bTitle').value.trim();
+    if (!title) { alert('Vui lòng nhập tiêu đề'); return; }
+    const p = { title, excerpt: document.getElementById('bExcerpt').value, content: document.getElementById('bContent').value, date: new Date().toISOString() };
+    const idx = parseInt(document.getElementById('blogEditIdx').value);
+    if (idx >= 0) DATA.blog[idx] = p; else DATA.blog.unshift(p);
+    try { await saveToGitHub(); closeModal('blogModal'); renderBlogList(); showAlert('✓ Bài viết đã được đăng!'); refreshUI(); }
+    catch(e) { showAlert('Lỗi: ' + e.message, 'error'); }
+  }
+
+  async function deleteBlog(i) {
+    if (!confirm('Xoá bài viết này?')) return;
+    DATA.blog.splice(i, 1);
+    try { await saveToGitHub(); renderBlogList(); showAlert('Đã xoá bài viết.'); refreshUI(); }
+    catch(e) { showAlert('Lỗi: ' + e.message, 'error'); }
+  }
+
+  // QUICK POST
+  async function quickPost() {
+    const title = document.getElementById('quickTitle').value.trim();
+    const content = document.getElementById('quickContent').value.trim();
+    if (!title || !content) { showAlert('Vui lòng nhập tiêu đề và nội dung', 'error'); return; }
+    DATA.blog.unshift({ title, excerpt: content.substring(0, 100), content, date: new Date().toISOString() });
+    try { await saveToGitHub(); document.getElementById('quickTitle').value=''; document.getElementById('quickContent').value=''; showAlert('✓ Bài viết đã được đăng!'); refreshUI(); }
+    catch(e) { showAlert('Lỗi: ' + e.message, 'error'); }
+  }
+
+  // MODALS
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+  document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target === e.currentTarget) closeModal(e.target.id); }));
+</script>
+</body>
+</html>
