@@ -95,15 +95,15 @@
     },
     {
       "title": "FinPlay Dashboard",
-      "desc": "Giao diÃ¡Â»Ân quÃ¡ÂºÂ£n lÃÂ½ tÃÂ i chÃÂ­nh thÃÂ´ng minh vÃ¡Â»Âi hÃ¡Â»Â thÃ¡Â»Âng gamification kÃÂ­ch thÃÂ­ch ngÃÂ°Ã¡Â»Âi dÃÂ¹ng tiÃ¡ÂºÂ¿t kiÃ¡Â»Âm.",
+      "desc": "w",
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDb-hh5_OixoKQqjPxkFJRveTNePY3u4P6HcNSDmu3DW4OwI2D6Jdp9FI-R7NwFoW1cCqL4zrWxZX2TePWA5HstmDTfr5kgInfw30jO01a0oScu72WPYZOns5Ty0YsgGUKHTjRK_E2e3n755mnkMw2Bn2nKnN2caIgJT_vU9sigfin_SqV44tVA8cO9qabGSs6VjmXoM7Y9OuON_-rmfhQIWCZ20o3jKCtwV6x3LTejJt-TNeBPS1y9n0gQo-3AOYKkxCsb5ucHoxc",
+      "link": "#",
       "tags": [
         "UI/UX Product"
       ],
       "tag_colors": [
-        "tertiary"
-      ],
-      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDb-hh5_OixoKQqjPxkFJRveTNePY3u4P6HcNSDmu3DW4OwI2D6Jdp9FI-R7NwFoW1cCqL4zrWxZX2TePWA5HstmDTfr5kgInfw30jO01a0oScu72WPYZOns5Ty0YsgGUKHTjRK_E2e3n755mnkMw2Bn2nKnN2caIgJT_vU9sigfin_SqV44tVA8cO9qabGSs6VjmXoM7Y9OuON_-rmfhQIWCZ20o3jKCtwV6x3LTejJt-TNeBPS1y9n0gQo-3AOYKkxCsb5ucHoxc",
-      "link": "#"
+        "primary"
+      ]
     }
   ],
   "courses": [
