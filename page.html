@@ -149,25 +149,33 @@ function buildMenu(menus, currentSlug) {
     wrapper.style.cssText = 'position:relative;display:inline-block;';
     
     const link = document.createElement('a');
-    link.href = item.type === 'page' ? 'page.html?slug=' + item.slug : (item.href || '#');
+    if (item.type === 'fixed' && item.link) {
+      link.href = item.link;
+    } else if (item.slug === 'home') {
+      link.href = 'index.html';
+    } else {
+      link.href = 'page.html?slug=' + item.slug;
+    }
     link.textContent = item.label;
     link.className = 'px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all';
     
-    // Active state
     if (item.slug === currentSlug) {
       link.className = 'px-4 py-2 rounded-full text-label-bold font-label-bold text-primary bg-primary-container/10';
     }
     
     wrapper.appendChild(link);
     
-    // Submenu
     if (item.children && item.children.length > 0) {
       const dropdown = document.createElement('div');
       dropdown.className = 'dropdown-menu';
       
       item.children.forEach(function(child) {
         const childLink = document.createElement('a');
-        childLink.href = child.type === 'page' ? 'page.html?slug=' + child.slug : (child.href || '#');
+        if (child.type === 'fixed' && child.link) {
+          childLink.href = child.link;
+        } else {
+          childLink.href = 'page.html?slug=' + child.slug;
+        }
         childLink.textContent = child.label;
         dropdown.appendChild(childLink);
       });
