@@ -1172,7 +1172,7 @@ async function saveMenuItem(){
 }
 
 async function deleteMenuItem(idx){
-  if(!confirm('Xoá menu này? (Trang sẽ không bị xoá)'))) return;
+  if(!confirm('Xoá menu này? (Trang sẽ không bị xoá)')) return;
   DATA.menus.splice(idx, 1);
   await trySave(null);
   renderPagesTab();
