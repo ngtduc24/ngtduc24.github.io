@@ -22,8 +22,6 @@
   --shadow:0 4px 20px rgba(70,72,212,0.08);
 }
 body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:15px;}
-
-/* SIDEBAR */
 .sidebar{width:260px;min-height:100vh;background:var(--primary);padding:0;position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:100;}
 .sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.15);}
 .sidebar-logo .brand{font-size:1.2rem;font-weight:800;color:#fff;letter-spacing:-0.02em;}
@@ -39,18 +37,12 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .user-info .uname{color:#fff;font-weight:700;font-size:0.875rem;}
 .btn-logout{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.8);border:none;cursor:pointer;font-size:0.8rem;font-weight:500;transition:background 0.15s;}
 .btn-logout:hover{background:rgba(255,255,255,0.2);color:#fff;}
-
-/* MAIN */
 .main{margin-left:260px;flex:1;padding:28px 32px;min-height:100vh;}
-
-/* LOGIN */
 #loginView{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px;}
 .login-card{background:var(--surface);border-radius:var(--radius-lg);padding:40px;width:100%;max-width:440px;box-shadow:var(--shadow);border:1px solid var(--border-lt);}
 .login-logo{font-size:1.4rem;font-weight:800;color:var(--primary);margin-bottom:4px;}
 .login-sub{font-size:0.85rem;color:var(--text2);margin-bottom:28px;line-height:1.6;}
 .login-sub a{color:var(--primary);}
-
-/* FORMS */
 .form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
 .form-group label{font-size:0.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;}
 input[type=text],input[type=email],input[type=url],input[type=password],input[type=number],textarea,select{
@@ -61,8 +53,6 @@ input[type=text],input[type=email],input[type=url],input[type=password],input[ty
 input:focus,textarea:focus,select:focus{border-color:var(--primary);}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
-
-/* BUTTONS */
 .btn{padding:10px 20px;border-radius:999px;font-size:0.875rem;font-weight:700;cursor:pointer;border:none;transition:opacity 0.15s,transform 0.1s;display:inline-flex;align-items:center;gap:6px;text-decoration:none;}
 .btn:hover{opacity:0.85;transform:translateY(-1px);}
 .btn:active{transform:scale(0.97);}
@@ -73,52 +63,34 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
 .btn-sm{padding:6px 14px;font-size:0.8rem;}
 .btn-icon{padding:8px;border-radius:8px;}
 .login-btn{width:100%;justify-content:center;margin-top:6px;padding:12px;}
-
-/* PAGE HEADER */
 .page-header{margin-bottom:24px;}
 .page-header h1{font-size:1.5rem;font-weight:800;margin-bottom:4px;}
 .page-header p{font-size:0.875rem;color:var(--text2);}
 .page-actions{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
-
-/* CARDS */
 .card{background:var(--surface);border-radius:var(--radius);padding:20px;margin-bottom:14px;border:1px solid var(--border-lt);box-shadow:var(--shadow);}
 .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
 .card-title{font-size:0.95rem;font-weight:700;margin-bottom:2px;}
 .card-sub{font-size:0.78rem;color:var(--text3);}
 .card-actions{display:flex;gap:6px;flex-shrink:0;}
-
-/* STATS */
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
 .stat-card{background:var(--surface);border-radius:var(--radius);padding:18px;border:1px solid var(--border-lt);box-shadow:var(--shadow);}
 .stat-num{font-size:1.75rem;font-weight:800;color:var(--primary);line-height:1;margin-bottom:4px;}
 .stat-label{font-size:0.78rem;color:var(--text3);}
-
-/* SECTION TITLE IN CARD */
 .section-title{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:12px;padding-bottom:8px;border-bottom:1.5px solid var(--border-lt);}
-
-/* ALERT */
 .alert{padding:12px 16px;border-radius:10px;font-size:0.85rem;margin-bottom:16px;display:none;align-items:center;gap:8px;}
 .alert.show{display:flex;}
 .alert-success{background:var(--green-lt);color:var(--green);border:1.5px solid rgba(77,102,28,0.25);}
 .alert-error{background:var(--red-lt);color:var(--red);border:1.5px solid rgba(186,26,26,0.25);}
-
-/* INFO BOX */
 .info-box{background:var(--primary-lt);border:1.5px solid var(--primary-dim);border-radius:10px;padding:14px 16px;font-size:0.82rem;color:var(--primary);margin-bottom:20px;line-height:1.7;}
 .info-box code{background:rgba(70,72,212,0.1);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:0.78rem;}
-
-/* TABS */
 .tab-view{display:none;}
 .tab-view.active{display:block;}
-
-/* TAG INPUT */
 .tags-input{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;cursor:text;min-height:44px;align-items:center;}
 .tags-input:focus-within{border-color:var(--primary);}
 .tag-chip{display:inline-flex;align-items:center;gap:4px;background:var(--primary-lt);color:var(--primary);padding:3px 8px 3px 10px;border-radius:999px;font-size:0.78rem;font-weight:700;}
 .tag-remove{background:none;border:none;color:var(--primary);cursor:pointer;font-size:14px;line-height:1;padding:0;opacity:0.6;}
 .tag-remove:hover{opacity:1;}
 .tag-input-field{background:none;border:none;color:var(--text);font-size:0.82rem;outline:none;min-width:80px;padding:2px;font-family:'Plus Jakarta Sans',sans-serif;}
-
-/* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
 .modal-overlay.active{display:flex;}
 .modal-box{background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:580px;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.2);}
@@ -127,32 +99,21 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
 .modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1.5px solid var(--border-lt);}
 .modal-close-btn{position:absolute;top:16px;right:16px;background:var(--surface3);border:1.5px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--text2);}
 .modal-close-btn:hover{background:var(--border-lt);}
-
-/* EMPTY STATE */
 .empty-state{text-align:center;padding:40px;color:var(--text3);border:2px dashed var(--border);border-radius:var(--radius);font-size:0.875rem;}
-
-/* COLOR DOT */
 .color-dot{width:12px;height:12px;border-radius:50%;display:inline-block;flex-shrink:0;}
 .color-primary{background:#4648d4;}.color-secondary{background:#4d661c;}.color-tertiary{background:#6d5e00;}.color-primary-container{background:#6063ee;}
-
-/* IMAGE PREVIEW */
 .img-preview{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-top:8px;border:1px solid var(--border);display:none;}
 .img-preview.show{display:block;}
-
-/* UPLOAD AREA */
 .upload-area{border:2px dashed var(--border);border-radius:12px;padding:30px;text-align:center;cursor:pointer;transition:border-color 0.2s;margin-bottom:12px;}
 .upload-area:hover{border-color:var(--primary);}
 .upload-area .icon{font-size:40px;color:var(--text3);margin-bottom:8px;}
 .upload-area p{font-size:0.85rem;color:var(--text3);}
 .upload-area input{display:none;}
-
-/* MENU ITEM CARD */
 .menu-item-card{border:1px solid var(--border-lt);border-radius:10px;padding:14px;margin-bottom:8px;background:var(--surface2);display:flex;justify-content:space-between;align-items:center;}
 .menu-item-card .info{flex:1;}
 .menu-item-card .name{font-weight:700;font-size:0.9rem;}
 .menu-item-card .slug{font-size:0.75rem;color:var(--text3);}
 .menu-children{margin-left:24px;}
-
 @media(max-width:768px){
   .sidebar{display:none;}
   .main{margin-left:0;padding:16px;}
@@ -230,7 +191,6 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
     </button>
   </div>
 </div>
-
 <!-- MAIN -->
 <div class="main" id="mainArea" style="display:none">
   <div id="alertBox" class="alert"></div>
@@ -245,7 +205,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
       <div class="stat-card"><div class="stat-num" id="d-research">0</div><div class="stat-label">Nghiên cứu</div></div>
     </div>
     <div class="info-box">
-      <strong>Cách hoạt động:</strong> Mọi thay đổi sẽ lưu vào file <code>Data/content.json</code> trên GitHub repo của bạn. Trang chủ tự động đọc file này mỗi khi tải → nội dung cập nhật ngay lập tức sau khi lưu.
+      <strong>Cách hoạt động:</strong> Mọi thay đổi sẽ lưu vào file <code>Data/content.json</code> trên GitHub repo. Trang chủ tự động đọc file này mỗi khi tải.
     </div>
     <div class="card">
       <div class="card-header"><div><div class="card-title">🚀 Đăng dự án nhanh</div><div class="card-sub">Thêm vào mục Portfolio</div></div></div>
@@ -254,9 +214,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
         <div class="form-group"><label>Link ảnh</label><input type="url" id="qImage" placeholder="https://..."></div>
       </div>
       <div class="form-group"><label>Mô tả ngắn</label><textarea id="qDesc" rows="2" placeholder="Mô tả dự án..."></textarea></div>
-      <button class="btn btn-primary btn-sm" onclick="quickAddProject()">
-        <span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm ngay
-      </button>
+      <button class="btn btn-primary btn-sm" onclick="quickAddProject()"><span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm ngay</button>
     </div>
     <div class="card">
       <div class="card-header"><div><div class="card-title">📝 Thêm nghiên cứu nhanh</div><div class="card-sub">Thêm vào mục Nghiên cứu khoa học</div></div></div>
@@ -265,9 +223,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
         <div class="form-group"><label>Nhãn</label><input type="text" id="qRLabel" placeholder="Nghiên Cứu"></div>
       </div>
       <div class="form-group"><label>Link bài viết</label><input type="url" id="qRLink" placeholder="https://..."></div>
-      <button class="btn btn-primary btn-sm" onclick="quickAddResearch()">
-        <span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm ngay
-      </button>
+      <button class="btn btn-primary btn-sm" onclick="quickAddResearch()"><span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm ngay</button>
     </div>
   </div>
 
@@ -284,26 +240,38 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
         <div class="form-group"><label>Dòng tiêu đề 1</label><input type="text" id="b-line1" placeholder="Xin Chào!"></div>
         <div class="form-group"><label>Dòng tiêu đề 2 (trước tên)</label><input type="text" id="b-line2" placeholder="Tôi là"></div>
       </div>
-      <div class="form-group"><label>Mô tả / Giới thiệu</label><textarea id="b-desc" rows="3" placeholder="Kết hợp nghệ thuật, công nghệ..."></textarea></div>
+      <div class="form-group">
+        <label>Mô tả / Giới thiệu</label>
+        <textarea id="b-desc" rows="3" placeholder="Kết hợp nghệ thuật, công nghệ..."></textarea>
+        <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="openBannerEditor()"><span class="material-symbols-outlined" style="font-size:16px;">edit</span> Soạn thảo nâng cao</button>
+      </div>
       <div class="form-row">
         <div class="form-group"><label>Nút chính (Portfolio)</label><input type="text" id="b-btn1" placeholder="Xem Portfolio"></div>
         <div class="form-group"><label>Nút phụ (Liên hệ)</label><input type="text" id="b-btn2" placeholder="Liên Hệ"></div>
       </div>
-   <div class="form-group">
-  <label>Ảnh đại diện</label>
-  <div style="display:flex;align-items:center;gap:10px;">
-    <input type="text" id="b-avatar" placeholder="URL ảnh (tự động điền sau khi upload)" readonly style="flex:1;">
-    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('bannerFileUpload').click()">
-      <span class="material-symbols-outlined" style="font-size:16px;">cloud_upload</span> Upload
-    </button>
-    <input type="file" id="bannerFileUpload" accept="image/*" onchange="uploadBannerImage(event)" style="display:none;">
-  </div>
-  <div id="bannerUploadProgress" style="display:none;margin-top:8px;font-size:0.85rem;color:var(--primary)">Đang upload...</div>
-  <img id="b-avatar-preview" class="img-preview" alt="Preview">
-</div>
-      <button class="btn btn-primary" onclick="saveBanner()">
-        <span class="material-symbols-outlined" style="font-size:18px">save</span> Lưu Banner
-      </button>
+      <div class="form-group">
+        <label>Ảnh đại diện</label>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="text" id="b-avatar" placeholder="URL ảnh (tự động sau khi upload)" readonly style="flex:1;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('bannerFileUpload').click()"><span class="material-symbols-outlined" style="font-size:16px;">cloud_upload</span> Upload</button>
+          <input type="file" id="bannerFileUpload" accept="image/*" onchange="uploadBannerImage(event)" style="display:none;">
+        </div>
+        <div id="bannerUploadProgress" style="display:none;margin-top:8px;font-size:0.85rem;color:var(--primary)">Đang upload...</div>
+        <img id="b-avatar-preview" class="img-preview" alt="Preview">
+      </div>
+      <div class="form-row" style="margin-bottom:14px;">
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="b-show-text" checked style="width:auto;cursor:pointer;"> Hiển thị text trên banner
+          </label>
+        </div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="b-show-badge" checked style="width:auto;cursor:pointer;"> Hiển thị badge
+          </label>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveBanner()"><span class="material-symbols-outlined" style="font-size:18px">save</span> Lưu Banner</button>
     </div>
   </div>
 
@@ -312,9 +280,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
     <div class="page-header"><h1>Kỹ Năng Cốt Lõi</h1><p>Quản lý các kỹ năng hiển thị trong phần Skills</p></div>
     <div class="page-actions">
       <span id="skills-count" style="font-size:0.85rem;color:var(--text3)"></span>
-      <button class="btn btn-primary btn-sm" onclick="openSkillModal()">
-        <span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm kỹ năng
-      </button>
+      <button class="btn btn-primary btn-sm" onclick="openSkillModal()"><span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm kỹ năng</button>
     </div>
     <div id="skills-list"></div>
   </div>
@@ -324,9 +290,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
     <div class="page-header"><h1>Kinh Nghiệm</h1><p>Quản lý timeline kinh nghiệm làm việc</p></div>
     <div class="page-actions">
       <span id="exp-count" style="font-size:0.85rem;color:var(--text3)"></span>
-      <button class="btn btn-primary btn-sm" onclick="openExpModal()">
-        <span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm kinh nghiệm
-      </button>
+      <button class="btn btn-primary btn-sm" onclick="openExpModal()"><span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm kinh nghiệm</button>
     </div>
     <div id="exp-list"></div>
   </div>
@@ -336,9 +300,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
     <div class="page-header"><h1>Portfolio / Dự Án</h1><p>Quản lý các dự án nổi bật</p></div>
     <div class="page-actions">
       <span id="portfolio-count" style="font-size:0.85rem;color:var(--text3)"></span>
-      <button class="btn btn-primary btn-sm" onclick="openProjectModal()">
-        <span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm dự án
-      </button>
+      <button class="btn btn-primary btn-sm" onclick="openProjectModal()"><span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm dự án</button>
     </div>
     <div id="portfolio-list"></div>
   </div>
@@ -348,9 +310,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
     <div class="page-header"><h1>Các Khóa Học</h1><p>Quản lý khóa học hiển thị trong phần Học Tập & Khám Phá</p></div>
     <div class="page-actions">
       <span id="courses-count" style="font-size:0.85rem;color:var(--text3)"></span>
-      <button class="btn btn-primary btn-sm" onclick="openCourseModal()">
-        <span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm khóa học
-      </button>
+      <button class="btn btn-primary btn-sm" onclick="openCourseModal()"><span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm khóa học</button>
     </div>
     <div id="courses-list"></div>
   </div>
@@ -360,9 +320,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
     <div class="page-header"><h1>Nghiên Cứu Khoa Học</h1><p>Quản lý bài nghiên cứu và bài viết kiến thức</p></div>
     <div class="page-actions">
       <span id="research-count" style="font-size:0.85rem;color:var(--text3)"></span>
-      <button class="btn btn-primary btn-sm" onclick="openResearchModal()">
-        <span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm bài viết
-      </button>
+      <button class="btn btn-primary btn-sm" onclick="openResearchModal()"><span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm bài viết</button>
     </div>
     <div id="research-list"></div>
   </div>
@@ -378,34 +336,22 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
         <div class="form-group"><label>Nút bấm</label><input type="text" id="com-btn" placeholder="Vào Discord"></div>
         <div class="form-group"><label>Link</label><input type="url" id="com-link" placeholder="https://discord.gg/..."></div>
       </div>
-      <button class="btn btn-primary" onclick="saveCommunity()">
-        <span class="material-symbols-outlined" style="font-size:18px">save</span> Lưu
-      </button>
+      <button class="btn btn-primary" onclick="saveCommunity()"><span class="material-symbols-outlined" style="font-size:18px">save</span> Lưu</button>
     </div>
   </div>
 
-  <!-- PAGES & MENU (NEW) -->
+  <!-- PAGES & MENU -->
   <div id="tab-pages" class="tab-view">
     <div class="page-header"><h1>Menu & Trang</h1><p>Quản lý menu và nội dung các trang con</p></div>
     <div class="page-actions">
       <span id="pages-count" style="font-size:0.85rem;color:var(--text3)"></span>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-secondary btn-sm" onclick="openMenuModal()">
-          <span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm Menu
-        </button>
-        <button class="btn btn-primary btn-sm" onclick="openPageModal()">
-          <span class="material-symbols-outlined" style="font-size:16px">add</span> Tạo Trang Mới
-        </button>
+        <button class="btn btn-secondary btn-sm" onclick="openMenuModal()"><span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm Menu</button>
+        <button class="btn btn-primary btn-sm" onclick="openPageModal()"><span class="material-symbols-outlined" style="font-size:16px">add</span> Tạo Trang Mới</button>
       </div>
     </div>
-    <div class="card">
-      <div class="section-title">Menu hiện tại</div>
-      <div id="menu-tree"></div>
-    </div>
-    <div class="card" style="margin-top:14px;">
-      <div class="section-title">Danh sách trang</div>
-      <div id="pages-list"></div>
-    </div>
+    <div class="card"><div class="section-title">Menu hiện tại</div><div id="menu-tree"></div></div>
+    <div class="card" style="margin-top:14px;"><div class="section-title">Danh sách trang</div><div id="pages-list"></div></div>
   </div>
 
   <!-- FOOTER -->
@@ -419,20 +365,16 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
       </div>
     </div>
     <div class="card">
-      <div class="section-title">Thông tin liên hệ (hiện trong trang)</div>
+      <div class="section-title">Thông tin liên hệ</div>
       <div class="form-row">
         <div class="form-group"><label>Email</label><input type="email" id="f-email" placeholder="hello@nguyenduc.dev"></div>
         <div class="form-group"><label>Địa điểm</label><input type="text" id="f-location" placeholder="Hồ Chí Minh, Việt Nam"></div>
       </div>
-      <button class="btn btn-primary" onclick="saveFooter()">
-        <span class="material-symbols-outlined" style="font-size:18px">save</span> Lưu Footer
-      </button>
+      <button class="btn btn-primary" onclick="saveFooter()"><span class="material-symbols-outlined" style="font-size:18px">save</span> Lưu Footer</button>
     </div>
   </div>
 
 </div><!-- /main -->
-
-<!-- MODALS -->
 
 <!-- SKILL MODAL -->
 <div class="modal-overlay" id="skillModal">
@@ -445,20 +387,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
     <div class="form-group"><label>Phần trăm</label><input type="text" id="sk-percent" placeholder="95%"></div>
   </div>
   <div class="form-row">
-    <div class="form-group">
-      <label>Icon (Material Symbols)</label>
-      <input type="text" id="sk-icon" placeholder="design_services">
-      <small style="color:var(--text3);font-size:0.75rem">Xem icon tại <a href="https://fonts.google.com/icons" target="_blank" style="color:var(--primary)">fonts.google.com/icons</a></small>
-    </div>
-    <div class="form-group">
-      <label>Màu sắc</label>
-      <select id="sk-color">
-        <option value="primary">Tím (Primary)</option>
-        <option value="secondary">Xanh lá (Secondary)</option>
-        <option value="tertiary">Vàng (Tertiary)</option>
-        <option value="primary-container">Tím nhạt</option>
-      </select>
-    </div>
+    <div class="form-group"><label>Icon (Material Symbols)</label><input type="text" id="sk-icon" placeholder="design_services"><small style="color:var(--text3);font-size:0.75rem">Xem tại <a href="https://fonts.google.com/icons" target="_blank" style="color:var(--primary)">fonts.google.com/icons</a></small></div>
+    <div class="form-group"><label>Màu sắc</label><select id="sk-color"><option value="primary">Tím</option><option value="secondary">Xanh lá</option><option value="tertiary">Vàng</option><option value="primary-container">Tím nhạt</option></select></div>
   </div>
   <div class="modal-footer">
     <button class="btn btn-ghost" onclick="closeModal('skillModal')">Huỷ</button>
@@ -481,7 +411,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
     <div class="form-group"><label>Công ty</label><input type="text" id="ex-company" placeholder="TechVision Corp"></div>
     <div class="form-group"><label>Thời gian</label><input type="text" id="ex-period" placeholder="2021 - Hiện tại"></div>
   </div>
-  <div class="form-group"><label>Mô tả công việc</label><textarea id="ex-desc" rows="3" placeholder="Mô tả công việc..."></textarea></div>
+  <div class="form-group"><label>Mô tả</label><textarea id="ex-desc" rows="3" placeholder="Mô tả..."></textarea></div>
   <div class="modal-footer">
     <button class="btn btn-ghost" onclick="closeModal('expModal')">Huỷ</button>
     <button class="btn btn-primary" onclick="saveExperience()">Lưu</button>
@@ -496,19 +426,10 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
   <h3 id="projectModalTitle">Thêm dự án mới</h3>
   <input type="hidden" id="project-edit-idx" value="-1">
   <div class="form-group"><label>Tên dự án *</label><input type="text" id="p-title" placeholder="Neon Oasis Identity"></div>
-  <div class="form-group"><label>Mô tả</label><textarea id="p-desc" rows="3" placeholder="Mô tả dự án..."></textarea></div>
-  <div class="form-group">
-    <label>URL ảnh bìa *</label>
-    <input type="url" id="p-image" placeholder="https://..." oninput="previewImg('p-image','p-img-preview')">
-    <img id="p-img-preview" class="img-preview" alt="Preview">
-  </div>
+  <div class="form-group"><label>Mô tả</label><textarea id="p-desc" rows="3" placeholder="Mô tả..."></textarea></div>
+  <div class="form-group"><label>URL ảnh bìa *</label><input type="url" id="p-image" placeholder="https://..." oninput="previewImg('p-image','p-img-preview')"><img id="p-img-preview" class="img-preview" alt="Preview"></div>
   <div class="form-group"><label>Link dự án</label><input type="url" id="p-link" placeholder="https://..."></div>
-  <div class="form-group">
-    <label>Tags (nhấn Enter để thêm)</label>
-    <div class="tags-input" id="p-tags-input" onclick="document.getElementById('p-tag-field').focus()">
-      <input class="tag-input-field" id="p-tag-field" placeholder="Branding, UI/UX..." onkeydown="addChip(event,'p')">
-    </div>
-  </div>
+  <div class="form-group"><label>Tags (Enter để thêm)</label><div class="tags-input" id="p-tags-input" onclick="document.getElementById('p-tag-field').focus()"><input class="tag-input-field" id="p-tag-field" placeholder="Branding, UI/UX..." onkeydown="addChip(event,'p')"></div></div>
   <div class="modal-footer">
     <button class="btn btn-ghost" onclick="closeModal('projectModal')">Huỷ</button>
     <button class="btn btn-primary" onclick="saveProject()">Lưu dự án</button>
@@ -526,8 +447,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
     <div class="form-group"><label>Badge</label><input type="text" id="c-badge" placeholder="Khóa Học Mới"></div>
     <div class="form-group"><label>Nút đăng ký</label><input type="text" id="c-btn" placeholder="Đăng Ký Ngay"></div>
   </div>
-  <div class="form-group"><label>Tiêu đề khóa học *</label><input type="text" id="c-title" placeholder="Masterclass Thiết Kế UI/UX"></div>
-  <div class="form-group"><label>Mô tả</label><textarea id="c-desc" rows="3" placeholder="Mô tả nội dung khóa học..."></textarea></div>
+  <div class="form-group"><label>Tiêu đề *</label><input type="text" id="c-title" placeholder="Masterclass UI/UX"></div>
+  <div class="form-group"><label>Mô tả</label><textarea id="c-desc" rows="3" placeholder="Mô tả..."></textarea></div>
   <div class="form-group"><label>Link đăng ký</label><input type="url" id="c-link" placeholder="https://..."></div>
   <div class="modal-footer">
     <button class="btn btn-ghost" onclick="closeModal('courseModal')">Huỷ</button>
@@ -543,10 +464,10 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
   <h3 id="researchModalTitle">Thêm bài nghiên cứu</h3>
   <input type="hidden" id="research-edit-idx" value="-1">
   <div class="form-row">
-    <div class="form-group"><label>Nhãn (Label)</label><input type="text" id="r-label" placeholder="Nghiên Cứu"></div>
+    <div class="form-group"><label>Nhãn</label><input type="text" id="r-label" placeholder="Nghiên Cứu"></div>
     <div class="form-group"><label>Link bài viết</label><input type="url" id="r-link" placeholder="https://..."></div>
   </div>
-  <div class="form-group"><label>Tiêu đề *</label><input type="text" id="r-title" placeholder="Tâm Lý Học Màu Sắc Kỹ Thuật Số"></div>
+  <div class="form-group"><label>Tiêu đề *</label><input type="text" id="r-title" placeholder="Tâm Lý Học Màu Sắc..."></div>
   <div class="modal-footer">
     <button class="btn btn-ghost" onclick="closeModal('researchModal')">Huỷ</button>
     <button class="btn btn-primary" onclick="saveResearch()">Lưu</button>
@@ -554,7 +475,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
 </div>
 </div>
 
-<!-- MENU MODAL (NEW) -->
+<!-- MENU MODAL -->
 <div class="modal-overlay" id="menuModal">
 <div class="modal-box">
   <button class="modal-close-btn" onclick="closeModal('menuModal')">✕</button>
@@ -562,11 +483,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
   <input type="hidden" id="menu-edit-idx" value="-1">
   <input type="hidden" id="menu-parent-idx" value="-1">
   <div class="form-group"><label>Tên menu</label><input type="text" id="mu-label" placeholder="Ví dụ: Giới thiệu"></div>
-  <div class="form-group"><label>Slug (tên URL)</label><input type="text" id="mu-slug" placeholder="vi-du-gioi-thieu"></div>
-  <div class="form-group">
-    <label>Menu cha (để trống nếu là menu chính)</label>
-    <select id="mu-parent"><option value="">-- Menu chính --</option></select>
-  </div>
+  <div class="form-group"><label>Slug (tên URL)</label><input type="text" id="mu-slug" placeholder="gioi-thieu"></div>
+  <div class="form-group"><label>Menu cha</label><select id="mu-parent"><option value="">-- Menu chính --</option></select></div>
   <div class="modal-footer">
     <button class="btn btn-ghost" onclick="closeModal('menuModal')">Huỷ</button>
     <button class="btn btn-primary" onclick="saveMenuItem()">Lưu Menu</button>
@@ -574,7 +492,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
 </div>
 </div>
 
-<!-- PAGE EDITOR MODAL (NEW - with TinyMCE + Upload) -->
+<!-- PAGE EDITOR MODAL -->
 <div class="modal-overlay" id="pageModal">
 <div class="modal-box wide">
   <button class="modal-close-btn" onclick="closeModal('pageModal')">✕</button>
@@ -585,16 +503,12 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
     <div class="form-group"><label>Slug (URL)</label><input type="text" id="pg-slug" placeholder="ten-trang"></div>
   </div>
   <div class="form-group"><label>Mô tả SEO</label><input type="text" id="pg-meta-desc" placeholder="Mô tả ngắn cho SEO"></div>
+  <div class="form-group"><label>Nội dung</label><textarea id="pg-content"></textarea></div>
   <div class="form-group">
-    <label>Nội dung</label>
-    <textarea id="pg-content"></textarea>
-  </div>
-  <div class="form-group">
-    <label>Upload ảnh lên trang</label>
-    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileUpload').click()">
+    <label>Upload ảnh</label>
+    <div class="upload-area" onclick="document.getElementById('fileUpload').click()">
       <span class="material-symbols-outlined icon">cloud_upload</span>
-      <p>Click để chọn ảnh hoặc kéo thả vào đây</p>
-      <p style="font-size:0.75rem;color:var(--text3)">Ảnh sẽ được upload lên thư mục pages/ trên GitHub</p>
+      <p>Click để chọn ảnh</p>
       <input type="file" id="fileUpload" accept="image/*" onchange="uploadImage(event)" style="display:none;">
     </div>
     <div id="uploadProgress" style="display:none;margin-top:8px;font-size:0.85rem;color:var(--primary)">Đang upload...</div>
@@ -607,6 +521,18 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
 </div>
 </div>
 
+<!-- BANNER EDITOR MODAL -->
+<div class="modal-overlay" id="bannerEditorModal">
+<div class="modal-box wide">
+  <button class="modal-close-btn" onclick="closeBannerEditor()">✕</button>
+  <h3>Soạn thảo mô tả Banner</h3>
+  <textarea id="banner-editor-content"></textarea>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeBannerEditor()">Huỷ</button>
+    <button class="btn btn-primary" onclick="saveBannerEditor()">Áp dụng</button>
+  </div>
+</div>
+</div>
 <script>
 let AUTH = null;
 let DATA = {};
@@ -618,7 +544,9 @@ async function doLogin() {
   const user = v('lUser'), repo = v('lRepo'), token = v('lToken');
   if (!user||!repo||!token) { loginErr('Vui lòng điền đầy đủ.'); return; }
   try {
-    const r = await ghFetch(`repos/${user}/${repo}`, token);
+    const r = await fetch(`https://api.github.com/repos/${user}/${repo}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+    });
     if (!r.ok) throw new Error();
     AUTH = {user,repo,token};
     localStorage.setItem('nd_auth', JSON.stringify(AUTH));
@@ -652,14 +580,13 @@ async function startApp() {
 }
 
 // ── GITHUB API ──
-function ghFetch(path, token, opts={}) {
+function ghFetch(path, opts={}) {
   return fetch(`https://api.github.com/${path}`, {
     ...opts,
-    headers:{ Authorization:`token ${token||AUTH.token}`, Accept:'application/vnd.github.v3+json', 'Content-Type':'application/json', ...(opts.headers||{}) }
+    headers:{ Authorization:`token ${AUTH.token}`, Accept:'application/vnd.github.v3+json', 'Content-Type':'application/json', ...(opts.headers||{}) }
   });
 }
 
-// UTF-8 safe encode/decode for GitHub API
 function toBase64(str) {
   const bytes = new TextEncoder().encode(str);
   let binary = '';
@@ -676,7 +603,7 @@ function fromBase64(b64) {
 let _fileSha = null;
 async function loadData() {
   try {
-    const r = await ghFetch(`repos/${AUTH.user}/${AUTH.repo}/contents/Data/content.json`, AUTH.token);
+    const r = await ghFetch(`repos/${AUTH.user}/${AUTH.repo}/contents/Data/content.json`);
     if (r.ok) {
       const f = await r.json();
       _fileSha = f.sha;
@@ -690,9 +617,9 @@ async function loadData() {
 async function saveData() {
   const json = JSON.stringify(DATA, null, 2);
   const content = toBase64(json);
-  const body = { message:`Update content [${new Date().toLocaleString('vi-VN')}]`, content };
+  const body = { message:`Update [${new Date().toLocaleString('vi-VN')}]`, content };
   if (_fileSha) body.sha = _fileSha;
-  const r = await ghFetch(`repos/${AUTH.user}/${AUTH.repo}/contents/Data/content.json`, AUTH.token, {method:'PUT',body:JSON.stringify(body)});
+  const r = await ghFetch(`repos/${AUTH.user}/${AUTH.repo}/contents/Data/content.json`, {method:'PUT',body:JSON.stringify(body)});
   if (!r.ok) { const e=await r.json(); throw new Error(e.message||'Lỗi lưu file'); }
   const res = await r.json();
   _fileSha = res.content.sha;
@@ -702,7 +629,7 @@ async function trySave(cb) {
   try {
     if (cb) cb();
     await saveData();
-    showAlert('✓ Đã lưu và cập nhật GitHub thành công!','success');
+    showAlert('✓ Đã lưu thành công!','success');
     refreshDashboard();
   } catch(e) { showAlert('❌ Lỗi: '+e.message,'error'); }
 }
@@ -718,10 +645,7 @@ function showAlert(msg,type){
 function openModal(id){document.getElementById(id).classList.add('active');}
 function closeModal(id){
   document.getElementById(id).classList.remove('active');
-  if(id==='pageModal' && tinyEditor){
-    tinyEditor.remove();
-    tinyEditor = null;
-  }
+  if(id==='pageModal' && tinyEditor){ tinyEditor.remove(); tinyEditor = null; }
 }
 function previewImg(inputId,previewId){
   const url=v(inputId),img=document.getElementById(previewId);
@@ -737,7 +661,7 @@ function goTab(tab,btn){
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal(e.target.id);}));
 
 function getDefault(){
-  return {banner:{badge:'Nhà Thiết Kế Sáng Tạo',title_line1:'Xin Chào!',title_line2:'Tôi là',name:'Nguyễn Đức',description:'',btn_primary:'Xem Portfolio',btn_secondary:'Liên Hệ',avatar_url:''},skills:[],experience:[],portfolio:[],courses:[],research:[],community:{title:'Tham Gia Cùng Chúng Tôi',desc:'',btn:'Vào Discord',link:''},footer:{brand:'Nguyễn Đức',copyright:'© 2024 Nguyễn Đức.',links:[],email:'',location:''},menus:[],pages:{}};
+  return {banner:{badge:'',title_line1:'',title_line2:'',name:'',description:'',btn_primary:'',btn_secondary:'',avatar_url:'',show_text:true,show_badge:true},skills:[],experience:[],portfolio:[],courses:[],research:[],community:{title:'',desc:'',btn:'',link:''},footer:{brand:'',copyright:'',links:[],email:'',location:''},menus:[],pages:{}};
 }
 
 // ── DASHBOARD ──
@@ -747,15 +671,13 @@ function refreshDashboard(){
   document.getElementById('d-exp').textContent=(DATA.experience||[]).length;
   document.getElementById('d-research').textContent=(DATA.research||[]).length;
 }
-
 async function quickAddProject(){
   const title=v('qTitle'),desc=v('qDesc'),image=v('qImage');
-  if(!title){showAlert('Nhập tên dự án!','error');return;}
+  if(!title){showAlert('Nhập tên!','error');return;}
   if(!DATA.portfolio)DATA.portfolio=[];
   DATA.portfolio.unshift({title,desc,image,link:'#',tags:[],tag_colors:[]});
   await trySave(null);
-  set('qTitle','');set('qDesc','');set('qImage','');
-  renderPortfolioList();
+  set('qTitle','');set('qDesc','');set('qImage','');renderPortfolioList();
 }
 async function quickAddResearch(){
   const title=v('qRTitle'),label=v('qRLabel')||'Nghiên Cứu',link=v('qRLink');
@@ -763,8 +685,7 @@ async function quickAddResearch(){
   if(!DATA.research)DATA.research=[];
   DATA.research.unshift({title,label,link});
   await trySave(null);
-  set('qRTitle','');set('qRLabel','');set('qRLink','');
-  renderResearchList();
+  set('qRTitle','');set('qRLabel','');set('qRLink','');renderResearchList();
 }
 
 // ── BANNER ──
@@ -772,601 +693,152 @@ function loadBannerForm(){
   const b=DATA.banner||{};
   set('b-badge',b.badge);set('b-name',b.name);set('b-line1',b.title_line1);set('b-line2',b.title_line2);
   set('b-desc',b.description);set('b-btn1',b.btn_primary);set('b-btn2',b.btn_secondary);set('b-avatar',b.avatar_url);
+  document.getElementById('b-show-text').checked = b.show_text !== false;
+  document.getElementById('b-show-badge').checked = b.show_badge !== false;
   if(b.avatar_url){const img=document.getElementById('b-avatar-preview');img.src=b.avatar_url;img.classList.add('show');}
 }
 async function saveBanner(){
-  DATA.banner={badge:v('b-badge'),name:v('b-name'),title_line1:v('b-line1'),title_line2:v('b-line2'),description:v('b-desc'),btn_primary:v('b-btn1'),btn_secondary:v('b-btn2'),avatar_url:v('b-avatar')};
-  await trySave(null);
-}
-
-// ── SKILLS ──
-function renderSkillsList(){
-  const el=document.getElementById('skills-list');
-  const skills=DATA.skills||[];
-  document.getElementById('skills-count').textContent=skills.length+' kỹ năng';
-  if(!skills.length){el.innerHTML='<div class="empty-state">Chưa có kỹ năng nào.</div>';return;}
-  el.innerHTML=skills.map((s,i)=>`
-    <div class="card">
-      <div class="card-header">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span class="material-symbols-outlined" style="font-size:24px;color:var(--primary)">${s.icon||'star'}</span>
-          <div><div class="card-title">${s.name}</div><div class="card-sub">${s.percent} · ${s.color}</div></div>
-        </div>
-        <div class="card-actions">
-          <button class="btn btn-ghost btn-sm btn-icon" onclick="editSkill(${i})"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('skills',${i})"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>
-        </div>
-      </div>
-    </div>`).join('');
-}
-function openSkillModal(){
-  document.getElementById('skill-edit-idx').value=-1;
-  document.getElementById('skillModalTitle').textContent='Thêm kỹ năng mới';
-  ['sk-name','sk-percent','sk-icon'].forEach(id=>set(id,''));
-  set('sk-color','primary');
-  openModal('skillModal');
-}
-function editSkill(i){
-  const s=DATA.skills[i];
-  document.getElementById('skill-edit-idx').value=i;
-  document.getElementById('skillModalTitle').textContent='Sửa kỹ năng';
-  set('sk-name',s.name);set('sk-percent',s.percent);set('sk-icon',s.icon);set('sk-color',s.color);
-  openModal('skillModal');
-}
-async function saveSkill(){
-  const name=v('sk-name');if(!name){showAlert('Nhập tên kỹ năng!','error');return;}
-  const item={name,percent:v('sk-percent'),icon:v('sk-icon')||'star',color:v('sk-color')};
-  const idx=parseInt(document.getElementById('skill-edit-idx').value);
-  if(!DATA.skills)DATA.skills=[];
-  if(idx>=0)DATA.skills[idx]=item;else DATA.skills.push(item);
-  await trySave(null);closeModal('skillModal');renderSkillsList();
-}
-
-// ── EXPERIENCE ──
-function renderExpList(){
-  const el=document.getElementById('exp-list');
-  const exp=DATA.experience||[];
-  document.getElementById('exp-count').textContent=exp.length+' mục';
-  if(!exp.length){el.innerHTML='<div class="empty-state">Chưa có kinh nghiệm.</div>';return;}
-  el.innerHTML=exp.map((e,i)=>`
-    <div class="card">
-      <div class="card-header">
-        <div><div class="card-title">${e.title}</div><div class="card-sub">${e.company} · ${e.period}</div></div>
-        <div class="card-actions">
-          <button class="btn btn-ghost btn-sm btn-icon" onclick="editExp(${i})"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('experience',${i})"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>
-        </div>
-      </div>
-      <p style="font-size:0.85rem;color:var(--text2)">${e.desc}</p>
-    </div>`).join('');
-}
-function openExpModal(){
-  document.getElementById('exp-edit-idx').value=-1;
-  document.getElementById('expModalTitle').textContent='Thêm kinh nghiệm';
-  ['ex-title','ex-company','ex-period','ex-desc'].forEach(id=>set(id,''));
-  set('ex-color','primary');openModal('expModal');
-}
-function editExp(i){
-  const e=DATA.experience[i];
-  document.getElementById('exp-edit-idx').value=i;
-  document.getElementById('expModalTitle').textContent='Sửa kinh nghiệm';
-  set('ex-title',e.title);set('ex-company',e.company);set('ex-period',e.period);set('ex-desc',e.desc);set('ex-color',e.color);
-  openModal('expModal');
-}
-async function saveExperience(){
-  const title=v('ex-title');if(!title){showAlert('Nhập chức danh!','error');return;}
-  const item={title,company:v('ex-company'),period:v('ex-period'),desc:v('ex-desc'),color:v('ex-color')};
-  const idx=parseInt(document.getElementById('exp-edit-idx').value);
-  if(!DATA.experience)DATA.experience=[];
-  if(idx>=0)DATA.experience[idx]=item;else DATA.experience.push(item);
-  await trySave(null);closeModal('expModal');renderExpList();
-}
-
-// ── PORTFOLIO ──
-function renderPortfolioList(){
-  const el=document.getElementById('portfolio-list');
-  const items=DATA.portfolio||[];
-  document.getElementById('portfolio-count').textContent=items.length+' dự án';
-  if(!items.length){el.innerHTML='<div class="empty-state">Chưa có dự án.</div>';return;}
-  el.innerHTML=items.map((p,i)=>`
-    <div class="card">
-      <div class="card-header">
-        <div style="display:flex;align-items:center;gap:12px">
-          ${p.image?`<img src="${p.image}" style="width:60px;height:40px;object-fit:cover;border-radius:8px;border:1px solid var(--border)" onerror="this.style.display='none'">`:''}
-          <div><div class="card-title">${p.title}</div><div class="card-sub">${(p.tags||[]).join(' · ')||'Chưa có tag'}</div></div>
-        </div>
-        <div class="card-actions">
-          <button class="btn btn-ghost btn-sm btn-icon" onclick="editProject(${i})"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('portfolio',${i})"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>
-        </div>
-      </div>
-      <p style="font-size:0.85rem;color:var(--text2)">${p.desc||p.description||''}</p>
-    </div>`).join('');
-}
-function openProjectModal(){
-  document.getElementById('project-edit-idx').value=-1;
-  document.getElementById('projectModalTitle').textContent='Thêm dự án mới';
-  ['p-title','p-desc','p-image','p-link'].forEach(id=>set(id,''));
-  _pTags=[];renderPTags();
-  document.getElementById('p-img-preview').classList.remove('show');
-  openModal('projectModal');
-}
-function editProject(i){
-  const p=DATA.portfolio[i];
-  document.getElementById('project-edit-idx').value=i;
-  document.getElementById('projectModalTitle').textContent='Sửa dự án';
-  set('p-title',p.title);set('p-desc',p.desc||p.description);set('p-image',p.image);set('p-link',p.link);
-  _pTags=[...(p.tags||[])];renderPTags();
-  if(p.image){const img=document.getElementById('p-img-preview');img.src=p.image;img.classList.add('show');}
-  openModal('projectModal');
-}
-function addChip(e,prefix){
-  if(e.key!=='Enter'&&e.key!==',')return;e.preventDefault();
-  const val=e.target.value.trim().replace(/,$/,'');
-  if(!val)return;
-  if(prefix==='p'){_pTags.push(val);e.target.value='';renderPTags();}
-}
-function renderPTags(){
-  const c=document.getElementById('p-tags-input'),input=document.getElementById('p-tag-field');
-  c.innerHTML='';
-  _pTags.forEach((t,i)=>{
-    const s=document.createElement('span');s.className='tag-chip';
-    s.innerHTML=`${t}<button class="tag-remove" onclick="_pTags.splice(${i},1);renderPTags()">×</button>`;
-    c.appendChild(s);
-  });
-  c.appendChild(input);
-}
-async function saveProject(){
-  const title=v('p-title');if(!title){showAlert('Nhập tên dự án!','error');return;}
-  const item={title,desc:v('p-desc'),image:v('p-image'),link:v('p-link')||'#',tags:_pTags,tag_colors:_pTags.map((_,i)=>['primary','secondary','tertiary'][i%3])};
-  const idx=parseInt(document.getElementById('project-edit-idx').value);
-  if(!DATA.portfolio)DATA.portfolio=[];
-  if(idx>=0)DATA.portfolio[idx]=item;else DATA.portfolio.unshift(item);
-  await trySave(null);closeModal('projectModal');renderPortfolioList();
-}
-
-// ── COURSES ──
-function renderCoursesList(){
-  const el=document.getElementById('courses-list');
-  const items=DATA.courses||[];
-  document.getElementById('courses-count').textContent=items.length+' khóa học';
-  if(!items.length){el.innerHTML='<div class="empty-state">Chưa có khóa học.</div>';return;}
-  el.innerHTML=items.map((c,i)=>`
-    <div class="card">
-      <div class="card-header">
-        <div><div class="card-title">${c.title}</div><div class="card-sub">Badge: ${c.badge}</div></div>
-        <div class="card-actions">
-          <button class="btn btn-ghost btn-sm btn-icon" onclick="editCourse(${i})"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('courses',${i})"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>
-        </div>
-      </div>
-      <p style="font-size:0.85rem;color:var(--text2)">${c.desc}</p>
-    </div>`).join('');
-}
-function openCourseModal(){
-  document.getElementById('course-edit-idx').value=-1;
-  document.getElementById('courseModalTitle').textContent='Thêm khóa học';
-  ['c-badge','c-btn','c-title','c-desc','c-link'].forEach(id=>set(id,''));
-  openModal('courseModal');
-}
-function editCourse(i){
-  const c=DATA.courses[i];
-  document.getElementById('course-edit-idx').value=i;
-  document.getElementById('courseModalTitle').textContent='Sửa khóa học';
-  set('c-badge',c.badge);set('c-btn',c.btn);set('c-title',c.title);set('c-desc',c.desc);set('c-link',c.link);
-  openModal('courseModal');
-}
-async function saveCourse(){
-  const title=v('c-title');if(!title){showAlert('Nhập tiêu đề!','error');return;}
-  const item={type:'course',badge:v('c-badge')||'Khóa Học',btn:v('c-btn')||'Đăng Ký',title,desc:v('c-desc'),link:v('c-link')||'#'};
-  const idx=parseInt(document.getElementById('course-edit-idx').value);
-  if(!DATA.courses)DATA.courses=[];
-  if(idx>=0)DATA.courses[idx]=item;else DATA.courses.unshift(item);
-  await trySave(null);closeModal('courseModal');renderCoursesList();
-}
-
-// ── RESEARCH ──
-function renderResearchList(){
-  const el=document.getElementById('research-list');
-  const items=DATA.research||[];
-  document.getElementById('research-count').textContent=items.length+' bài viết';
-  if(!items.length){el.innerHTML='<div class="empty-state">Chưa có bài nghiên cứu.</div>';return;}
-  el.innerHTML=items.map((r,i)=>`
-    <div class="card">
-      <div class="card-header">
-        <div><div class="card-title">${r.title}</div><div class="card-sub">${r.label||'Nghiên Cứu'}</div></div>
-        <div class="card-actions">
-          <button class="btn btn-ghost btn-sm btn-icon" onclick="editResearch(${i})"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('research',${i})"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>
-        </div>
-      </div>
-    </div>`).join('');
-}
-function openResearchModal(){
-  document.getElementById('research-edit-idx').value=-1;
-  document.getElementById('researchModalTitle').textContent='Thêm bài nghiên cứu';
-  ['r-label','r-link','r-title'].forEach(id=>set(id,''));
-  openModal('researchModal');
-}
-function editResearch(i){
-  const r=DATA.research[i];
-  document.getElementById('research-edit-idx').value=i;
-  document.getElementById('researchModalTitle').textContent='Sửa bài viết';
-  set('r-label',r.label);set('r-link',r.link);set('r-title',r.title);
-  openModal('researchModal');
-}
-async function saveResearch(){
-  const title=v('r-title');if(!title){showAlert('Nhập tiêu đề!','error');return;}
-  const item={type:'research',label:v('r-label')||'Nghiên Cứu',title,link:v('r-link')||'#'};
-  const idx=parseInt(document.getElementById('research-edit-idx').value);
-  if(!DATA.research)DATA.research=[];
-  if(idx>=0)DATA.research[idx]=item;else DATA.research.unshift(item);
-  await trySave(null);closeModal('researchModal');renderResearchList();
-}
-
-// ── COMMUNITY ──
-function loadCommunityForm(){
-  const c=DATA.community||{};
-  set('com-title',c.title);set('com-desc',c.desc);set('com-btn',c.btn);set('com-link',c.link);
-}
-async function saveCommunity(){
-  DATA.community={title:v('com-title'),desc:v('com-desc'),btn:v('com-btn'),link:v('com-link')};
-  await trySave(null);
-}
-
-// ── FOOTER ──
-function loadFooterForm(){
-  const f=DATA.footer||{};
-  set('f-brand',f.brand);set('f-copy',f.copyright);set('f-email',f.email);set('f-location',f.location);
-}
-async function saveFooter(){
-  DATA.footer={...DATA.footer,brand:v('f-brand'),copyright:v('f-copy'),email:v('f-email'),location:v('f-location'),links:[{label:'Portfolio',href:'#portfolio'},{label:'Liên Hệ',href:'#contact'},{label:'Admin',href:'admin/'}]};
-  DATA.contact_email=v('f-email');DATA.contact_location=v('f-location');
-  await trySave(null);
-}
-
-// ── DELETE ──
-async function deleteItem(key,idx){
-  if(!confirm('Xoá mục này?'))return;
-  DATA[key].splice(idx,1);
-  await trySave(null);
-  if(key==='skills')renderSkillsList();
-  if(key==='experience')renderExpList();
-  if(key==='portfolio')renderPortfolioList();
-  if(key==='courses')renderCoursesList();
-  if(key==='research')renderResearchList();
-  if(key==='menus')renderPagesTab();
-}
-
-// =============================================
-//  NEW: PAGES & MENU MANAGEMENT
-// =============================================
-
-function renderPagesTab(){
-  if(!DATA.menus) DATA.menus = [];
-  if(!DATA.pages) DATA.pages = {};
-  
-  renderMenuTree();
-  renderPagesList();
-}
-
-// ── MENU TREE ──
-function renderMenuTree(){
-  const el = document.getElementById('menu-tree');
-  const menus = DATA.menus || [];
-  document.getElementById('pages-count').textContent = menus.length + ' menu';
-  
-  if(!menus.length){
-    el.innerHTML = '<div class="empty-state">Chưa có menu nào. Bấm "Thêm Menu" để tạo.</div>';
-    return;
-  }
-  
-  function buildMenuHtml(items, level = 0){
-    return items.map((m, i) => `
-      <div class="menu-item-card" style="margin-left:${level*24}px;">
-        <div class="info">
-          <div class="name">${m.label}</div>
-          <div class="slug">/${m.slug} → page.html?slug=${m.slug}</div>
-        </div>
-        <div class="card-actions">
-          <button class="btn btn-ghost btn-sm btn-icon" onclick="editMenuItem(${i}, ${level})"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="addSubMenuItem(${i})"><span class="material-symbols-outlined" style="font-size:16px">subdirectory_arrow_right</span></button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteMenuItem(${i})"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>
-        </div>
-      </div>
-      ${m.children && m.children.length > 0 ? buildMenuHtml(m.children, level + 1) : ''}
-    `).join('');
-  }
-  
-  el.innerHTML = buildMenuHtml(menus);
-}
-
-// ── PAGES LIST ──
-function renderPagesList(){
-  const el = document.getElementById('pages-list');
-  const pages = DATA.pages || {};
-  const keys = Object.keys(pages);
-  
-  if(!keys.length){
-    el.innerHTML = '<div class="empty-state">Chưa có trang nào. Bấm "Tạo Trang Mới" để tạo.</div>';
-    return;
-  }
-  
-  el.innerHTML = keys.map(slug => `
-    <div class="menu-item-card">
-      <div class="info">
-        <div class="name">${pages[slug].title || slug}</div>
-        <div class="slug">slug: ${slug}</div>
-      </div>
-      <div class="card-actions">
-        <button class="btn btn-ghost btn-sm btn-icon" onclick="editPageContent('${slug}')"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>
-        <button class="btn btn-danger btn-sm btn-icon" onclick="deletePage('${slug}')"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>
-      </div>
-    </div>
-  `).join('');
-}
-
-// ── OPEN MENU MODAL ──
-function openMenuModal(parentIdx = -1){
-  document.getElementById('menu-edit-idx').value = -1;
-  document.getElementById('menu-parent-idx').value = parentIdx;
-  document.getElementById('menuModalTitle').textContent = parentIdx >= 0 ? 'Thêm Menu Con' : 'Thêm Menu Mới';
-  set('mu-label','');
-  set('mu-slug','');
-  
-  // Build parent select
-  const parentSelect = document.getElementById('mu-parent');
-  parentSelect.innerHTML = '<option value="">-- Menu chính --</option>';
-  (DATA.menus||[]).forEach((m, i) => {
-    parentSelect.innerHTML += `<option value="${i}">${m.label}</option>`;
-  });
-  if(parentIdx >= 0) parentSelect.value = parentIdx;
-  
-  openModal('menuModal');
-}
-
-function addSubMenuItem(parentIdx){
-  openMenuModal(parentIdx);
-}
-
-function editMenuItem(idx, level){
-  // Find the menu item in nested structure
-  let item = DATA.menus[idx];
-  document.getElementById('menu-edit-idx').value = idx;
-  document.getElementById('menu-parent-idx').value = -1;
-  document.getElementById('menuModalTitle').textContent = 'Sửa Menu';
-  set('mu-label', item.label);
-  set('mu-slug', item.slug);
-  openModal('menuModal');
-}
-
-async function saveMenuItem(){
-  const label = v('mu-label');
-  const slug = v('mu-slug');
-  if(!label || !slug){ showAlert('Nhập đầy đủ tên và slug!','error'); return; }
-  
-  const newItem = { label, slug, type: 'page', children: [] };
-  const editIdx = parseInt(document.getElementById('menu-edit-idx').value);
-  const parentIdx = parseInt(document.getElementById('menu-parent-idx').value);
-  
-  if(editIdx >= 0){
-    // Editing existing - preserve children
-    newItem.children = DATA.menus[editIdx].children || [];
-    DATA.menus[editIdx] = newItem;
-  } else if(parentIdx >= 0){
-    // Adding as child
-    if(!DATA.menus[parentIdx].children) DATA.menus[parentIdx].children = [];
-    DATA.menus[parentIdx].children.push(newItem);
-  } else {
-    // Adding to top level
-    DATA.menus.push(newItem);
-  }
-  
-  // Auto-create page if not exists
-  if(!DATA.pages[slug]){
-    DATA.pages[slug] = {
-      title: label,
-      content: `<h2>${label}</h2><p>Nội dung trang ${label}.</p>`,
-      meta: { description: '', keywords: '' },
-      created: new Date().toISOString(),
-      updated: new Date().toISOString()
-    };
-  }
-  
-  await trySave(null);
-  closeModal('menuModal');
-  renderPagesTab();
-}
-
-async function deleteMenuItem(idx){
-  if(!confirm('Xoá menu này? (Trang sẽ không bị xoá)')) return;
-  DATA.menus.splice(idx, 1);
-  await trySave(null);
-  renderPagesTab();
-}
-
-// ── PAGE EDITOR ──
-function openPageModal(existingSlug = null){
-  document.getElementById('page-edit-slug').value = existingSlug || '';
-  document.getElementById('pageModalTitle').textContent = existingSlug ? 'Sửa Trang' : 'Tạo Trang Mới';
-  
-  if(existingSlug && DATA.pages[existingSlug]){
-    const page = DATA.pages[existingSlug];
-    set('pg-title', page.title);
-    set('pg-slug', existingSlug);
-    set('pg-meta-desc', page.meta?.description || '');
-    set('pg-content', page.content || '');
-  } else {
-    set('pg-title','');
-    set('pg-slug','');
-    set('pg-meta-desc','');
-    set('pg-content','');
-  }
-  
-  openModal('pageModal');
-  
-  // Init TinyMCE after modal opens
-  setTimeout(() => {
-    if(tinyEditor) tinyEditor.remove();
-    tinymce.init({
-      selector: '#pg-content',
-      height: 400,
-      menubar: false,
-      plugins: 'link image code lists table',
-      toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image | code',
-      setup: function(editor){
-        tinyEditor = editor;
-      }
-    });
-  }, 300);
-}
-
-function editPageContent(slug){
-  openPageModal(slug);
-}
-
-async function savePage(){
-  const slug = v('pg-slug');
-  const title = v('pg-title');
-  if(!slug || !title){ showAlert('Nhập tiêu đề và slug!','error'); return; }
-  
-  const content = tinyEditor ? tinyEditor.getContent() : v('pg-content');
-  
-  if(!DATA.pages) DATA.pages = {};
-  DATA.pages[slug] = {
-    title: title,
-    content: content,
-    meta: {
-      description: v('pg-meta-desc'),
-      keywords: ''
-    },
-    updated: new Date().toISOString()
+  DATA.banner={
+    badge:v('b-badge'),name:v('b-name'),title_line1:v('b-line1'),title_line2:v('b-line2'),
+    description:v('b-desc'),btn_primary:v('b-btn1'),btn_secondary:v('b-btn2'),avatar_url:v('b-avatar'),
+    show_text: document.getElementById('b-show-text').checked,
+    show_badge: document.getElementById('b-show-badge').checked
   };
-  
-  // Add to menu if not exists
-  if(!DATA.menus) DATA.menus = [];
-  const existsInMenu = DATA.menus.some(m => m.slug === slug);
-  if(!existsInMenu){
-    DATA.menus.push({ label: title, slug: slug, type: 'page', children: [] });
-  }
-  
   await trySave(null);
-  closeModal('pageModal');
-  renderPagesTab();
 }
 
-async function deletePage(slug){
-  if(!confirm(`Xoá trang "${slug}"?`)) return;
-  delete DATA.pages[slug];
-  // Also remove from menus
-  DATA.menus = (DATA.menus||[]).filter(m => m.slug !== slug);
-  await trySave(null);
-  renderPagesTab();
-}
-
-// ── IMAGE UPLOAD ──
-async function uploadImage(event){
-  const file = event.target.files[0];
-  if(!file) return;
-  
-  const progressEl = document.getElementById('uploadProgress');
-  const resultEl = document.getElementById('uploadResult');
-  progressEl.style.display = 'block';
-  resultEl.innerHTML = '';
-  
-  try {
-    // Convert to base64
-    const reader = new FileReader();
-    reader.onload = async function(e){
-      const base64Content = e.target.result.split(',')[1];
-      const fileName = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const path = `pages/${fileName}`;
-      
-      // Upload to GitHub
-      const body = {
-        message: `Upload image ${fileName}`,
-        content: base64Content
-      };
-      
-      const r = await ghFetch(`repos/${AUTH.user}/${AUTH.repo}/contents/${path}`, AUTH.token, {
-        method: 'PUT',
-        body: JSON.stringify(body)
-      });
-      
-      if(!r.ok) throw new Error('Upload failed');
-      
-      const res = await r.json();
-      const imageUrl = res.content.download_url;
-      
-      progressEl.style.display = 'none';
-      resultEl.innerHTML = `
-        <div style="background:var(--green-lt);padding:10px;border-radius:8px;font-size:0.85rem;color:var(--green);margin-top:8px;">
-          ✓ Upload thành công!<br>
-          <strong>URL:</strong> <input type="text" value="${imageUrl}" style="width:100%;margin-top:4px;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:0.8rem;" onclick="this.select()" readonly>
-          <button class="btn btn-primary btn-sm" style="margin-top:6px;" onclick="insertImageToEditor('${imageUrl}')">Chèn vào bài viết</button>
-        </div>
-      `;
-    };
-    reader.readAsDataURL(file);
-  } catch(e){
-    progressEl.style.display = 'none';
-    resultEl.innerHTML = `<div style="color:var(--red);font-size:0.85rem;">❌ Lỗi upload: ${e.message}</div>`;
-  }
-}
-
-function insertImageToEditor(url){
-  if(tinyEditor){
-    tinyEditor.execCommand('mceInsertContent', false, `<img src="${url}" alt="Image" style="max-width:100%;">`);
-  }
-  showAlert('✓ Đã chèn ảnh vào trình soạn thảo!','success');
-}
-  // ── BANNER IMAGE UPLOAD ──
+// ── BANNER IMAGE UPLOAD ──
 async function uploadBannerImage(event){
   const file = event.target.files[0];
   if(!file) return;
-  
-  const progressEl = document.getElementById('bannerUploadProgress');
-  progressEl.style.display = 'block';
-  
+  document.getElementById('bannerUploadProgress').style.display='block';
   try {
     const reader = new FileReader();
     reader.onload = async function(e){
       const base64Content = e.target.result.split(',')[1];
-      const fileName = 'banner_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const fileName = 'banner_'+Date.now()+'_'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
       const path = `pages/${fileName}`;
-      
-      const body = {
-        message: `Upload banner image ${fileName}`,
-        content: base64Content
-      };
-      
-      const r = await ghFetch(`repos/${AUTH.user}/${AUTH.repo}/contents/${path}`, AUTH.token, {
-        method: 'PUT',
-        body: JSON.stringify(body)
+      const body = { message:`Upload banner ${fileName}`, content: base64Content };
+      const r = await fetch(`https://api.github.com/repos/${AUTH.user}/${AUTH.repo}/contents/${path}`, {
+        method:'PUT',
+        headers:{'Authorization':`token ${AUTH.token}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
+        body:JSON.stringify(body)
       });
-      
       if(!r.ok) throw new Error('Upload failed');
-      
       const res = await r.json();
-      const imageUrl = res.content.download_url;
-      
-      // Tự động điền URL vào input
-      set('b-avatar', imageUrl);
-      
-      // Hiển thị preview
-      const img = document.getElementById('b-avatar-preview');
-      img.src = imageUrl;
-      img.classList.add('show');
-      
-      progressEl.style.display = 'none';
+      set('b-avatar', res.content.download_url);
+      document.getElementById('b-avatar-preview').src = res.content.download_url;
+      document.getElementById('b-avatar-preview').classList.add('show');
+      document.getElementById('bannerUploadProgress').style.display='none';
       showAlert('✓ Upload ảnh banner thành công!','success');
     };
     reader.readAsDataURL(file);
-  } catch(e){
-    progressEl.style.display = 'none';
-    showAlert('❌ Lỗi upload: '+e.message,'error');
-  }
+  } catch(e){ document.getElementById('bannerUploadProgress').style.display='none'; showAlert('❌ Lỗi: '+e.message,'error'); }
 }
+
+// ── BANNER EDITOR ──
+let bannerEditor = null;
+function openBannerEditor(){
+  openModal('bannerEditorModal');
+  setTimeout(() => {
+    if(bannerEditor) bannerEditor.remove();
+    tinymce.init({
+      selector:'#banner-editor-content',height:300,menubar:false,
+      plugins:'link image code lists',toolbar:'undo redo | bold italic | bullist numlist | link | code',
+      setup:function(editor){bannerEditor=editor;editor.on('init',function(){editor.setContent(v('b-desc')||'');});}
+    });
+  },300);
+}
+function closeBannerEditor(){if(bannerEditor)bannerEditor.remove();bannerEditor=null;closeModal('bannerEditorModal');}
+function saveBannerEditor(){if(bannerEditor)set('b-desc',bannerEditor.getContent());closeBannerEditor();showAlert('✓ Đã áp dụng!','success');}
+
+// ── SKILLS ──
+function renderSkillsList(){
+  const el=document.getElementById('skills-list'),skills=DATA.skills||[];
+  document.getElementById('skills-count').textContent=skills.length+' kỹ năng';
+  if(!skills.length){el.innerHTML='<div class="empty-state">Chưa có kỹ năng.</div>';return;}
+  el.innerHTML=skills.map((s,i)=>`<div class="card"><div class="card-header"><div style="display:flex;align-items:center;gap:10px"><span class="material-symbols-outlined" style="font-size:24px;color:var(--primary)">${s.icon||'star'}</span><div><div class="card-title">${s.name}</div><div class="card-sub">${s.percent} · ${s.color}</div></div></div><div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="editSkill(${i})"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button><button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('skills',${i})"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button></div></div></div>`).join('');
+}
+function openSkillModal(){document.getElementById('skill-edit-idx').value=-1;document.getElementById('skillModalTitle').textContent='Thêm kỹ năng';['sk-name','sk-percent','sk-icon'].forEach(id=>set(id,''));set('sk-color','primary');openModal('skillModal');}
+function editSkill(i){const s=DATA.skills[i];document.getElementById('skill-edit-idx').value=i;document.getElementById('skillModalTitle').textContent='Sửa kỹ năng';set('sk-name',s.name);set('sk-percent',s.percent);set('sk-icon',s.icon);set('sk-color',s.color);openModal('skillModal');}
+async function saveSkill(){const name=v('sk-name');if(!name){showAlert('Nhập tên!','error');return;}const item={name,percent:v('sk-percent'),icon:v('sk-icon')||'star',color:v('sk-color')};const idx=parseInt(document.getElementById('skill-edit-idx').value);if(!DATA.skills)DATA.skills=[];if(idx>=0)DATA.skills[idx]=item;else DATA.skills.push(item);await trySave(null);closeModal('skillModal');renderSkillsList();}
+
+// ── EXPERIENCE ──
+function renderExpList(){const el=document.getElementById('exp-list'),exp=DATA.experience||[];document.getElementById('exp-count').textContent=exp.length+' mục';if(!exp.length){el.innerHTML='<div class="empty-state">Chưa có.</div>';return;}el.innerHTML=exp.map((e,i)=>`<div class="card"><div class="card-header"><div><div class="card-title">${e.title}</div><div class="card-sub">${e.company} · ${e.period}</div></div><div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="editExp(${i})"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button><button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('experience',${i})"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button></div></div><p style="font-size:0.85rem;color:var(--text2)">${e.desc}</p></div>`).join('');}
+function openExpModal(){document.getElementById('exp-edit-idx').value=-1;document.getElementById('expModalTitle').textContent='Thêm kinh nghiệm';['ex-title','ex-company','ex-period','ex-desc'].forEach(id=>set(id,''));set('ex-color','primary');openModal('expModal');}
+function editExp(i){const e=DATA.experience[i];document.getElementById('exp-edit-idx').value=i;document.getElementById('expModalTitle').textContent='Sửa';set('ex-title',e.title);set('ex-company',e.company);set('ex-period',e.period);set('ex-desc',e.desc);set('ex-color',e.color);openModal('expModal');}
+async function saveExperience(){const title=v('ex-title');if(!title){showAlert('Nhập chức danh!','error');return;}const item={title,company:v('ex-company'),period:v('ex-period'),desc:v('ex-desc'),color:v('ex-color')};const idx=parseInt(document.getElementById('exp-edit-idx').value);if(!DATA.experience)DATA.experience=[];if(idx>=0)DATA.experience[idx]=item;else DATA.experience.push(item);await trySave(null);closeModal('expModal');renderExpList();}
+
+// ── PORTFOLIO ──
+function renderPortfolioList(){const el=document.getElementById('portfolio-list'),items=DATA.portfolio||[];document.getElementById('portfolio-count').textContent=items.length+' dự án';if(!items.length){el.innerHTML='<div class="empty-state">Chưa có.</div>';return;}el.innerHTML=items.map((p,i)=>`<div class="card"><div class="card-header"><div style="display:flex;align-items:center;gap:12px">${p.image?`<img src="${p.image}" style="width:60px;height:40px;object-fit:cover;border-radius:8px;">`:''}<div><div class="card-title">${p.title}</div><div class="card-sub">${(p.tags||[]).join(' · ')||'Chưa có tag'}</div></div></div><div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="editProject(${i})"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button><button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('portfolio',${i})"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button></div></div></div>`).join('');}
+function openProjectModal(){document.getElementById('project-edit-idx').value=-1;document.getElementById('projectModalTitle').textContent='Thêm dự án';['p-title','p-desc','p-image','p-link'].forEach(id=>set(id,''));_pTags=[];renderPTags();openModal('projectModal');}
+function editProject(i){const p=DATA.portfolio[i];document.getElementById('project-edit-idx').value=i;document.getElementById('projectModalTitle').textContent='Sửa';set('p-title',p.title);set('p-desc',p.desc);set('p-image',p.image);set('p-link',p.link);_pTags=[...(p.tags||[])];renderPTags();openModal('projectModal');}
+function addChip(e){if(e.key!=='Enter'&&e.key!==',')return;e.preventDefault();const val=e.target.value.trim().replace(/,$/,'');if(!val)return;_pTags.push(val);e.target.value='';renderPTags();}
+function renderPTags(){const c=document.getElementById('p-tags-input'),input=document.getElementById('p-tag-field');c.innerHTML='';_pTags.forEach((t,i)=>{const s=document.createElement('span');s.className='tag-chip';s.innerHTML=`${t}<button class="tag-remove" onclick="_pTags.splice(${i},1);renderPTags()">×</button>`;c.appendChild(s);});c.appendChild(input);}
+async function saveProject(){const title=v('p-title');if(!title){showAlert('Nhập tên!','error');return;}const item={title,desc:v('p-desc'),image:v('p-image'),link:v('p-link')||'#',tags:_pTags,tag_colors:_pTags.map((_,i)=>['primary','secondary','tertiary'][i%3])};const idx=parseInt(document.getElementById('project-edit-idx').value);if(!DATA.portfolio)DATA.portfolio=[];if(idx>=0)DATA.portfolio[idx]=item;else DATA.portfolio.unshift(item);await trySave(null);closeModal('projectModal');renderPortfolioList();}
+
+// ── COURSES ──
+function renderCoursesList(){const el=document.getElementById('courses-list'),items=DATA.courses||[];document.getElementById('courses-count').textContent=items.length+' khóa học';if(!items.length){el.innerHTML='<div class="empty-state">Chưa có.</div>';return;}el.innerHTML=items.map((c,i)=>`<div class="card"><div class="card-header"><div><div class="card-title">${c.title}</div><div class="card-sub">${c.badge}</div></div><div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="editCourse(${i})"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button><button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('courses',${i})"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button></div></div></div>`).join('');}
+function openCourseModal(){document.getElementById('course-edit-idx').value=-1;['c-badge','c-btn','c-title','c-desc','c-link'].forEach(id=>set(id,''));openModal('courseModal');}
+function editCourse(i){const c=DATA.courses[i];document.getElementById('course-edit-idx').value=i;set('c-badge',c.badge);set('c-btn',c.btn);set('c-title',c.title);set('c-desc',c.desc);set('c-link',c.link);openModal('courseModal');}
+async function saveCourse(){const title=v('c-title');if(!title){showAlert('Nhập tiêu đề!','error');return;}const item={badge:v('c-badge')||'Khóa Học',btn:v('c-btn')||'Đăng Ký',title,desc:v('c-desc'),link:v('c-link')||'#'};const idx=parseInt(document.getElementById('course-edit-idx').value);if(!DATA.courses)DATA.courses=[];if(idx>=0)DATA.courses[idx]=item;else DATA.courses.unshift(item);await trySave(null);closeModal('courseModal');renderCoursesList();}
+
+// ── RESEARCH ──
+function renderResearchList(){const el=document.getElementById('research-list'),items=DATA.research||[];document.getElementById('research-count').textContent=items.length+' bài';if(!items.length){el.innerHTML='<div class="empty-state">Chưa có.</div>';return;}el.innerHTML=items.map((r,i)=>`<div class="card"><div class="card-header"><div><div class="card-title">${r.title}</div><div class="card-sub">${r.label}</div></div><div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="editResearch(${i})"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button><button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('research',${i})"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button></div></div></div>`).join('');}
+function openResearchModal(){document.getElementById('research-edit-idx').value=-1;['r-label','r-link','r-title'].forEach(id=>set(id,''));openModal('researchModal');}
+function editResearch(i){const r=DATA.research[i];document.getElementById('research-edit-idx').value=i;set('r-label',r.label);set('r-link',r.link);set('r-title',r.title);openModal('researchModal');}
+async function saveResearch(){const title=v('r-title');if(!title){showAlert('Nhập tiêu đề!','error');return;}const item={label:v('r-label')||'Nghiên Cứu',title,link:v('r-link')||'#'};const idx=parseInt(document.getElementById('research-edit-idx').value);if(!DATA.research)DATA.research=[];if(idx>=0)DATA.research[idx]=item;else DATA.research.unshift(item);await trySave(null);closeModal('researchModal');renderResearchList();}
+
+// ── COMMUNITY ──
+function loadCommunityForm(){const c=DATA.community||{};set('com-title',c.title);set('com-desc',c.desc);set('com-btn',c.btn);set('com-link',c.link);}
+async function saveCommunity(){DATA.community={title:v('com-title'),desc:v('com-desc'),btn:v('com-btn'),link:v('com-link')};await trySave(null);}
+
+// ── FOOTER ──
+function loadFooterForm(){const f=DATA.footer||{};set('f-brand',f.brand);set('f-copy',f.copyright);set('f-email',f.email);set('f-location',f.location);}
+async function saveFooter(){DATA.footer={...DATA.footer,brand:v('f-brand'),copyright:v('f-copy'),email:v('f-email'),location:v('f-location'),links:[{label:'Portfolio',href:'#portfolio'},{label:'Liên Hệ',href:'#contact'}]};await trySave(null);}
+
+// ── DELETE ──
+async function deleteItem(key,idx){if(!confirm('Xoá?'))return;DATA[key].splice(idx,1);await trySave(null);if(key==='skills')renderSkillsList();if(key==='experience')renderExpList();if(key==='portfolio')renderPortfolioList();if(key==='courses')renderCoursesList();if(key==='research')renderResearchList();if(key==='menus')renderPagesTab();}
+
+// ── PAGES & MENU ──
+function renderPagesTab(){if(!DATA.menus)DATA.menus=[];if(!DATA.pages)DATA.pages={};renderMenuTree();renderPagesList();}
+function renderMenuTree(){const el=document.getElementById('menu-tree'),menus=DATA.menus||[];document.getElementById('pages-count').textContent=menus.length+' menu';if(!menus.length){el.innerHTML='<div class="empty-state">Chưa có menu.</div>';return;}function build(items,level){return items.map((m,i)=>`<div class="menu-item-card" style="margin-left:${level*24}px;"><div class="info"><div class="name">${m.label}</div><div class="slug">/${m.slug}</div></div><div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="editMenuItem(${i})"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button><button class="btn btn-secondary btn-sm btn-icon" onclick="addSubMenuItem(${i})"><span class="material-symbols-outlined" style="font-size:16px">subdirectory_arrow_right</span></button><button class="btn btn-danger btn-sm btn-icon" onclick="deleteMenuItem(${i})"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button></div></div>${m.children&&m.children.length?build(m.children,level+1):''}`).join('');}el.innerHTML=build(menus,0);}
+function renderPagesList(){const el=document.getElementById('pages-list'),pages=DATA.pages||{},keys=Object.keys(pages);if(!keys.length){el.innerHTML='<div class="empty-state">Chưa có trang.</div>';return;}el.innerHTML=keys.map(slug=>`<div class="menu-item-card"><div class="info"><div class="name">${pages[slug].title||slug}</div><div class="slug">${slug}</div></div><div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="editPageContent('${slug}')"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button><button class="btn btn-danger btn-sm btn-icon" onclick="deletePage('${slug}')"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button></div></div>`).join('');}
+function openMenuModal(pIdx){document.getElementById('menu-edit-idx').value=-1;document.getElementById('menu-parent-idx').value=pIdx>=0?pIdx:-1;document.getElementById('menuModalTitle').textContent=pIdx>=0?'Thêm Menu Con':'Thêm Menu Mới';set('mu-label','');set('mu-slug','');const ps=document.getElementById('mu-parent');ps.innerHTML='<option value="">-- Menu chính --</option>';(DATA.menus||[]).forEach((m,i)=>{ps.innerHTML+=`<option value="${i}">${m.label}</option>`;});if(pIdx>=0)ps.value=pIdx;openModal('menuModal');}
+function addSubMenuItem(i){openMenuModal(i);}
+function editMenuItem(i){const item=DATA.menus[i];document.getElementById('menu-edit-idx').value=i;document.getElementById('menu-parent-idx').value=-1;document.getElementById('menuModalTitle').textContent='Sửa Menu';set('mu-label',item.label);set('mu-slug',item.slug);openModal('menuModal');}
+async function saveMenuItem(){const label=v('mu-label'),slug=v('mu-slug');if(!label||!slug){showAlert('Nhập đủ!','error');return;}const newItem={label,slug,type:'page',children:[]};const eIdx=parseInt(document.getElementById('menu-edit-idx').value);const pIdx=parseInt(document.getElementById('menu-parent-idx').value);if(eIdx>=0){newItem.children=DATA.menus[eIdx].children||[];DATA.menus[eIdx]=newItem;}else if(pIdx>=0){if(!DATA.menus[pIdx].children)DATA.menus[pIdx].children=[];DATA.menus[pIdx].children.push(newItem);}else{DATA.menus.push(newItem);}if(!DATA.pages[slug]){DATA.pages[slug]={title:label,content:`<h2>${label}</h2><p>Nội dung trang.</p>`,meta:{description:''},updated:new Date().toISOString()};}await trySave(null);closeModal('menuModal');renderPagesTab();}
+async function deleteMenuItem(i){if(!confirm('Xoá menu này?'))return;DATA.menus.splice(i,1);await trySave(null);renderPagesTab();}
+function openPageModal(slug){document.getElementById('page-edit-slug').value=slug||'';document.getElementById('pageModalTitle').textContent=slug?'Sửa Trang':'Tạo Trang Mới';if(slug&&DATA.pages[slug]){const p=DATA.pages[slug];set('pg-title',p.title);set('pg-slug',slug);set('pg-meta-desc',p.meta?.description||'');set('pg-content',p.content||'');}else{set('pg-title','');set('pg-slug','');set('pg-meta-desc','');set('pg-content','');}openModal('pageModal');setTimeout(()=>{if(tinyEditor)tinyEditor.remove();tinymce.init({selector:'#pg-content',height:400,menubar:false,plugins:'link image code lists table',toolbar:'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image | code',setup:function(e){tinyEditor=e;}});},300);}
+function editPageContent(slug){openPageModal(slug);}
+async function savePage(){const slug=v('pg-slug'),title=v('pg-title');if(!slug||!title){showAlert('Nhập đủ!','error');return;}const content=tinyEditor?tinyEditor.getContent():v('pg-content');if(!DATA.pages)DATA.pages={};DATA.pages[slug]={title,content,meta:{description:v('pg-meta-desc')},updated:new Date().toISOString()};if(!DATA.menus)DATA.menus=[];if(!DATA.menus.some(m=>m.slug===slug)){DATA.menus.push({label:title,slug,type:'page',children:[]});}await trySave(null);closeModal('pageModal');renderPagesTab();}
+async function deletePage(slug){if(!confirm('Xoá trang?'))return;delete DATA.pages[slug];DATA.menus=(DATA.menus||[]).filter(m=>m.slug!==slug);await trySave(null);renderPagesTab();}
+
+// ── IMAGE UPLOAD ──
+async function uploadImage(event){
+  const file=event.target.files[0];if(!file)return;
+  document.getElementById('uploadProgress').style.display='block';
+  document.getElementById('uploadResult').innerHTML='';
+  try{
+    const reader=new FileReader();
+    reader.onload=async function(e){
+      const base64=e.target.result.split(',')[1];
+      const fname=Date.now()+'_'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+      const path=`pages/${fname}`;
+      const body={message:`Upload ${fname}`,content:base64};
+      const r=await fetch(`https://api.github.com/repos/${AUTH.user}/${AUTH.repo}/contents/${path}`,{
+        method:'PUT',headers:{'Authorization':`token ${AUTH.token}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(body)
+      });
+      if(!r.ok)throw new Error('Upload failed');
+      const res=await r.json();
+      const url=res.content.download_url;
+      document.getElementById('uploadProgress').style.display='none';
+      document.getElementById('uploadResult').innerHTML=`<div style="background:var(--green-lt);padding:10px;border-radius:8px;font-size:0.85rem;color:var(--green);margin-top:8px;">✓ Upload OK!<br><input type="text" value="${url}" style="width:100%;margin-top:4px;padding:6px;border-radius:6px;font-size:0.8rem;" onclick="this.select()" readonly><button class="btn btn-primary btn-sm" style="margin-top:6px;" onclick="insertImageToEditor('${url}')">Chèn vào bài</button></div>`;
+    };
+    reader.readAsDataURL(file);
+  }catch(e){document.getElementById('uploadProgress').style.display='none';document.getElementById('uploadResult').innerHTML=`<div style="color:var(--red)">Lỗi: ${e.message}</div>`;}
+}
+function insertImageToEditor(url){if(tinyEditor)tinyEditor.execCommand('mceInsertContent',false,`<img src="${url}" style="max-width:100%;">`);showAlert('✓ Đã chèn ảnh!','success');}
 </script>
 </body>
 </html>
