@@ -1320,6 +1320,53 @@ function insertImageToEditor(url){
   }
   showAlert('✓ Đã chèn ảnh vào trình soạn thảo!','success');
 }
+  // ── BANNER IMAGE UPLOAD ──
+async function uploadBannerImage(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  
+  const progressEl = document.getElementById('bannerUploadProgress');
+  progressEl.style.display = 'block';
+  
+  try {
+    const reader = new FileReader();
+    reader.onload = async function(e){
+      const base64Content = e.target.result.split(',')[1];
+      const fileName = 'banner_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `pages/${fileName}`;
+      
+      const body = {
+        message: `Upload banner image ${fileName}`,
+        content: base64Content
+      };
+      
+      const r = await ghFetch(`repos/${AUTH.user}/${AUTH.repo}/contents/${path}`, AUTH.token, {
+        method: 'PUT',
+        body: JSON.stringify(body)
+      });
+      
+      if(!r.ok) throw new Error('Upload failed');
+      
+      const res = await r.json();
+      const imageUrl = res.content.download_url;
+      
+      // Tự động điền URL vào input
+      set('b-avatar', imageUrl);
+      
+      // Hiển thị preview
+      const img = document.getElementById('b-avatar-preview');
+      img.src = imageUrl;
+      img.classList.add('show');
+      
+      progressEl.style.display = 'none';
+      showAlert('✓ Upload ảnh banner thành công!','success');
+    };
+    reader.readAsDataURL(file);
+  } catch(e){
+    progressEl.style.display = 'none';
+    showAlert('❌ Lỗi upload: '+e.message,'error');
+  }
+}
 </script>
 </body>
 </html>
