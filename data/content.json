@@ -88,6 +88,23 @@
   ],
   "courses": [
     {
+      "id": "mpw0a7y5nv7",
+      "title": "Adva",
+      "author": "",
+      "category": "",
+      "date": "2026-06-02",
+      "read_time": 5,
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAi-XyIw7n5_qs2gRuVY5tzy8T9kNcTJ7oct3L7pA4uaRSsFv-NXNAqCkD03VG4wVF5M6nhBu2AH5XuLevkbHGhXyfWTTfiZCvB2mWUQGdzB02-oCUBVZ5fBLndUc8knKZjZ0Abr4Pm2x7KCJf57mpVHt8eLzjg4J034tgdWqERPQ-pcm2B2d2mUAy0GBvD6gvk3Qn1es0Kcd5gZKeytqMpF96k5gc2wKpQUR3xXrDdM5-EFqcS1VIg0fSE782XWMstEOcUjUpTk68",
+      "excerpt": "",
+      "content": "",
+      "tags": [],
+      "status": "open",
+      "link": "#",
+      "featured": true,
+      "lessons": 12,
+      "duration": "8 Tuần"
+    },
+    {
       "id": "c1",
       "title": "Advanced UI/UX Masterclass",
       "desc": "Làm chủ quy trình thiết kế từ Research đến Prototyping nâng cao. Xây dựng hệ thống thiết kế linh hoạt và tương tác vi...",
