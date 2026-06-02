@@ -2,359 +2,1746 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portfolio - Nguyễn Đức</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-<script id="tailwind-config">
-tailwind.config = {
-  darkMode: "class",
-  theme: {
-    extend: {
-      colors: {
-        "on-error":"#ffffff","surface-bright":"#f9f9ff","on-primary-fixed":"#07006c",
-        "surface-variant":"#d8e3fb","primary-container":"#6063ee","secondary-fixed-dim":"#b3d17a",
-        "inverse-surface":"#263143","tertiary-container":"#c4aa01","primary-fixed-dim":"#c0c1ff",
-        "on-surface":"#111c2d","error-container":"#ffdad6","on-tertiary-fixed":"#211b00",
-        "tertiary":"#6d5e00","surface-tint":"#494bd6","surface-container-high":"#dee8ff",
-        "inverse-on-surface":"#ecf1ff","surface-container-highest":"#d8e3fb","surface-dim":"#cfdaf2",
-        "primary":"#4648d4","on-secondary":"#ffffff","surface-container-lowest":"#ffffff",
-        "on-primary":"#ffffff","on-background":"#111c2d","on-tertiary-fixed-variant":"#524600",
-        "secondary-container":"#ceee93","on-tertiary":"#ffffff","on-primary-fixed-variant":"#2f2ebe",
-        "surface-container":"#e7eeff","secondary-fixed":"#ceee93","outline":"#767586",
-        "secondary":"#4d661c","on-tertiary-container":"#4a3f00","surface-container-low":"#f0f3ff",
-        "on-secondary-container":"#536d22","on-error-container":"#93000a","on-primary-container":"#fffbff",
-        "outline-variant":"#c7c4d7","tertiary-fixed":"#ffe24c","tertiary-fixed-dim":"#e2c62d",
-        "on-secondary-fixed-variant":"#364e03","primary-fixed":"#e1e0ff","surface":"#f9f9ff",
-        "background":"#f9f9ff","inverse-primary":"#c0c1ff","on-surface-variant":"#464554",
-        "error":"#ba1a1a","on-secondary-fixed":"#131f00"
-      },
-      borderRadius: { "DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px","2xl":"1rem","3xl":"1.5rem" },
-      spacing: { "gutter":"20px","max-width":"1280px","section-gap":"80px","unit":"8px","container-padding":"24px" },
-      fontFamily: { "display-lg":["Plus Jakarta Sans"],"body-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"label-bold":["Plus Jakarta Sans"],"body-md":["Plus Jakarta Sans"],"headline-lg":["Plus Jakarta Sans"] },
-      fontSize: {
-        "display-lg":["56px",{"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"800"}],
-        "body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],
-        "headline-md":["24px",{"lineHeight":"1.3","fontWeight":"700"}],
-        "label-bold":["14px",{"lineHeight":"1.0","fontWeight":"700"}],
-        "body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],
-        "headline-lg":["40px",{"lineHeight":"1.2","letterSpacing":"-0.01em","fontWeight":"700"}]
-      }
-    }
-  }
-}
-</script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin — CreativeHub CMS</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap" rel="stylesheet">
 <style>
-.glass-panel { background:rgba(255,255,255,0.7); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.3); }
-.hero-gradient { background:linear-gradient(135deg,#c0c1ff 0%,#ceee93 100%); }
-.inner-glow { box-shadow:inset 0 2px 4px rgba(255,255,255,0.5); }
-.ambient-shadow { box-shadow:0 20px 40px -10px rgba(96,99,238,0.15); }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;font-family:"Plus Jakarta Sans",sans-serif}
+:root{
+  --pri:#4648d4;--pri-lt:#e1e0ff;--pri-dim:#c0c1ff;
+  --sec:#4d661c;--sec-lt:#ceee93;
+  --ter:#6d5e00;--ter-lt:#ffe24c;
+  --bg:#f0f3ff;--sur:#fff;--sur2:#f7f9ff;--sur3:#eef1fb;
+  --txt:#111c2d;--txt2:#464554;--txt3:#767586;
+  --bdr:#c7c4d7;--bdr-lt:#e7eeff;
+  --red:#ba1a1a;--red-lt:#ffdad6;
+  --grn:#4d661c;--grn-lt:#ceee93;
+  --r:12px;--rl:20px;
+  --shadow:0 4px 20px rgba(70,72,212,0.08);
+}
+body{background:var(--bg);color:var(--txt);display:flex;min-height:100vh;font-size:15px}
+
+/* SIDEBAR */
+.sidebar{width:260px;min-height:100vh;background:var(--pri);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:100}
+.sb-logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.15)}
+.sb-brand{font-size:1.25rem;font-weight:800;color:#fff;letter-spacing:-.02em}
+.sb-sub{font-size:.7rem;color:rgba(255,255,255,.55);margin-top:3px}
+.sb-nav{padding:16px 12px;flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
+.sb-section{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);padding:12px 8px 5px;margin-top:4px}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:rgba(255,255,255,.72);font-size:.875rem;font-weight:500;cursor:pointer;transition:all .15s;border:none;background:none;text-align:left;width:100%;margin-bottom:2px}
+.nav-btn:hover{background:rgba(255,255,255,.12);color:#fff}
+.nav-btn.active{background:rgba(255,255,255,.2);color:#fff;font-weight:700}
+.nav-btn .mi{font-size:20px;flex-shrink:0}
+.sb-footer{padding:16px 12px;border-top:1px solid rgba(255,255,255,.15)}
+.sb-user{padding:8px 12px;color:rgba(255,255,255,.75);font-size:.78rem;margin-bottom:8px}
+.sb-user b{color:#fff;display:block;font-size:.85rem;margin-top:2px}
+.btn-logout{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:none;cursor:pointer;font-size:.8rem;font-weight:500;transition:background .15s}
+.btn-logout:hover{background:rgba(255,255,255,.2);color:#fff}
+
+/* MAIN */
+.main{margin-left:260px;flex:1;padding:28px 32px;min-height:100vh}
+
+/* LOGIN */
+#loginView{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px}
+.login-card{background:var(--sur);border-radius:var(--rl);padding:40px;width:100%;max-width:440px;box-shadow:var(--shadow);border:1px solid var(--bdr-lt)}
+.login-logo{font-size:1.4rem;font-weight:800;color:var(--pri);margin-bottom:4px}
+.login-sub{font-size:.85rem;color:var(--txt2);margin-bottom:28px;line-height:1.6}
+.login-sub a{color:var(--pri)}
+
+/* FORMS */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field label{font-size:.72rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em}
+input[type=text],input[type=url],input[type=email],input[type=password],input[type=number],input[type=date],textarea,select{background:var(--sur2);border:1.5px solid var(--bdr);border-radius:9px;padding:9px 13px;color:var(--txt);font-size:.875rem;outline:none;width:100%;transition:border-color .2s;resize:vertical}
+input:focus,textarea:focus,select:focus{border-color:var(--pri)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* BUTTONS */
+.btn{padding:9px 20px;border-radius:999px;font-size:.875rem;font-weight:700;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{opacity:.85;transform:translateY(-1px)}
+.btn-primary{background:var(--pri);color:#fff;box-shadow:0 4px 12px rgba(70,72,212,.25)}
+.btn-secondary{background:var(--pri-lt);color:var(--pri)}
+.btn-ghost{background:var(--sur2);color:var(--txt);border:1.5px solid var(--bdr)}
+.btn-danger{background:var(--red-lt);color:var(--red);border:1.5px solid rgba(186,26,26,.2)}
+.btn-sm{padding:6px 14px;font-size:.8rem}
+.btn-full{width:100%;justify-content:center;padding:12px}
+.btn-icon{width:34px;height:34px;padding:0;border-radius:8px;justify-content:center}
+
+/* PAGE HEADER */
+.page-header{margin-bottom:24px}
+.page-header h1{font-size:1.5rem;font-weight:800;color:var(--txt);margin-bottom:4px}
+.page-header p{font-size:.875rem;color:var(--txt3)}
+.page-actions{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+
+/* CARDS */
+.card{background:var(--sur);border-radius:var(--r);padding:20px;margin-bottom:12px;border:1px solid var(--bdr-lt);box-shadow:var(--shadow)}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.card-title{font-size:.95rem;font-weight:700;color:var(--txt)}
+.card-sub{font-size:.76rem;color:var(--txt3);margin-top:2px}
+.card-actions{display:flex;gap:6px;flex-shrink:0}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.stat-card{background:var(--sur);border-radius:var(--r);padding:18px;border:1px solid var(--bdr-lt);box-shadow:var(--shadow)}
+.stat-num{font-size:1.8rem;font-weight:800;color:var(--pri);line-height:1;margin-bottom:4px}
+.stat-label{font-size:.76rem;color:var(--txt3)}
+
+/* TABS */
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* INFO BOX */
+.info-box{background:var(--pri-lt);border:1.5px solid var(--pri-dim);border-radius:var(--r);padding:14px 16px;font-size:.8rem;color:var(--pri);margin-bottom:20px;line-height:1.7}
+.info-box code{background:rgba(70,72,212,.1);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:.76rem}
+
+/* ALERT */
+.alert{padding:12px 16px;border-radius:10px;font-size:.85rem;margin-bottom:16px;display:none;align-items:center;gap:8px}
+.alert.show{display:flex}
+.alert-success{background:var(--grn-lt);color:var(--grn);border:1.5px solid rgba(77,102,28,.3)}
+.alert-error{background:var(--red-lt);color:var(--red);border:1.5px solid rgba(186,26,26,.3)}
+
+/* SECTION TITLE */
+.section-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);margin-bottom:12px;padding-bottom:8px;border-bottom:1.5px solid var(--bdr-lt)}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:40px;color:var(--txt3);border:2px dashed var(--bdr);border-radius:var(--r);font-size:.875rem}
+
+/* TAGS INPUT */
+.tags-input{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;background:var(--sur2);border:1.5px solid var(--bdr);border-radius:9px;cursor:text;min-height:44px;align-items:center;transition:border-color .2s}
+.tags-input:focus-within{border-color:var(--pri)}
+.tag-chip{display:inline-flex;align-items:center;gap:4px;background:var(--pri-lt);color:var(--pri);padding:3px 10px 3px 12px;border-radius:999px;font-size:.76rem;font-weight:700}
+.tag-chip button{background:none;border:none;color:var(--pri);cursor:pointer;font-size:14px;line-height:1;padding:0;opacity:.6}
+.tag-chip button:hover{opacity:1}
+.tag-input-field{background:none;border:none;color:var(--txt);font-size:.82rem;outline:none;min-width:80px;padding:2px;flex:1}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--sur);border-radius:var(--rl);padding:28px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-box h3{font-size:1.1rem;font-weight:800;margin-bottom:20px;color:var(--txt)}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1.5px solid var(--bdr-lt)}
+.modal-close{position:absolute;top:16px;right:16px;background:var(--sur3);border:1.5px solid var(--bdr);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--txt2);transition:background .15s}
+.modal-close:hover{background:var(--bdr-lt)}
+
+/* IMAGE UPLOAD */
+.img-upload-area{border:2px dashed var(--bdr);border-radius:var(--r);padding:24px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--sur2)}
+.img-upload-area:hover{border-color:var(--pri);background:var(--pri-lt)}
+.img-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-upload-area .upload-icon{font-size:32px;color:var(--txt3);margin-bottom:8px;display:block}
+.img-upload-area p{font-size:.82rem;color:var(--txt3)}
+.img-preview{width:100%;max-height:180px;object-fit:cover;border-radius:var(--r);margin-top:8px;display:none;border:1px solid var(--bdr)}
+.img-preview.show{display:block}
+.img-url-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+.img-url-row input{flex:1}
+.upload-tabs{display:flex;gap:0;margin-bottom:10px;border:1.5px solid var(--bdr);border-radius:9px;overflow:hidden}
+.upload-tab{flex:1;padding:7px 12px;font-size:.8rem;font-weight:700;border:none;cursor:pointer;background:var(--sur2);color:var(--txt2);transition:all .15s}
+.upload-tab.active{background:var(--pri);color:#fff}
+
+/* RICH TEXT EDITOR */
+.editor-toolbar{display:flex;flex-wrap:wrap;gap:4px;padding:8px 10px;background:var(--sur2);border:1.5px solid var(--bdr);border-radius:9px 9px 0 0;border-bottom:none}
+.editor-btn{padding:5px 9px;border:none;background:transparent;cursor:pointer;border-radius:6px;font-size:.8rem;color:var(--txt2);transition:all .15s;font-weight:600}
+.editor-btn:hover,.editor-btn.active{background:var(--pri-lt);color:var(--pri)}
+.editor-sep{width:1px;height:20px;background:var(--bdr);margin:0 2px;align-self:center}
+.editor-area{min-height:200px;padding:14px;background:var(--sur);border:1.5px solid var(--bdr);border-radius:0 0 9px 9px;outline:none;font-size:.875rem;line-height:1.7;color:var(--txt)}
+.editor-area:focus{border-color:var(--pri)}
+.editor-area h2{font-size:1.1rem;font-weight:700;margin:1rem 0 .5rem}
+.editor-area h3{font-size:1rem;font-weight:700;margin:.8rem 0 .4rem}
+.editor-area p{margin-bottom:.75rem}
+.editor-area ul,.editor-area ol{padding-left:1.5rem;margin-bottom:.75rem}
+.editor-area blockquote{border-left:4px solid var(--pri);padding:.5rem 1rem;background:var(--pri-lt);border-radius:0 8px 8px 0;margin:.75rem 0;font-style:italic;color:var(--txt2)}
+.editor-area a{color:var(--pri);text-decoration:underline}
+
+/* MENU MANAGER */
+.menu-item-row{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--sur);border:1.5px solid var(--bdr-lt);border-radius:var(--r);margin-bottom:8px;transition:box-shadow .2s}
+.menu-item-row:hover{box-shadow:var(--shadow)}
+.menu-drag{color:var(--txt3);cursor:grab;flex-shrink:0}
+.menu-item-label{flex:1;font-weight:600;font-size:.9rem}
+.menu-item-href{font-size:.78rem;color:var(--txt3);font-family:monospace}
+
+/* ARTICLE LIST */
+.article-row{display:flex;gap:12px;align-items:start;padding:14px;background:var(--sur);border:1px solid var(--bdr-lt);border-radius:var(--r);margin-bottom:10px;transition:box-shadow .2s}
+.article-row:hover{box-shadow:var(--shadow)}
+.article-thumb{width:80px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--sur3)}
+.article-info{flex:1}
+.article-title{font-weight:700;font-size:.9rem;margin-bottom:3px;color:var(--txt)}
+.article-meta{font-size:.76rem;color:var(--txt3)}
+.article-actions{display:flex;gap:5px;flex-shrink:0}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:.72rem;font-weight:700}
+.badge-pri{background:var(--pri-lt);color:var(--pri)}
+.badge-sec{background:var(--sec-lt);color:var(--sec)}
+.badge-ter{background:var(--ter-lt);color:var(--ter)}
+.badge-gray{background:var(--sur3);color:var(--txt2)}
+
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{margin-left:0;padding:14px}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .row2,.row3{grid-template-columns:1fr}
+}
 </style>
-
-<!-- SHARED NAV (cũng được dùng ở courses.html, knowledge.html, research.html) -->
-<script src="_nav.js"></script>
 </head>
-<body class="bg-background text-on-background font-body-md antialiased overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
+<body>
 
-<!-- NAV -->
-<nav class="bg-surface/80 backdrop-blur-xl top-0 sticky z-50 shadow-sm border-b border-outline-variant/20">
-<div class="flex justify-between items-center px-gutter py-4 w-full max-w-max-width mx-auto">
-  <div class="flex items-center gap-8">
-    <a class="text-headline-md font-display-lg font-black tracking-tighter text-primary" href="#" id="nav-brand">Nguyễn Đức</a>
-    <div class="hidden lg:flex items-center gap-1">
-      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-primary bg-primary-container/10" href="#">Trang chủ</a>
-      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all" href="#portfolio">Portfolio</a>
-      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all" href="courses.html">Các Khóa Học</a>
-      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all" href="knowledge.html">Kiến thức môn học</a>
-      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all" href="research.html">Nghiên cứu khoa học</a>
-    </div>
-  </div>
-  <div class="flex items-center gap-3">
-    <button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface">
-      <span class="material-symbols-outlined">search</span>
-    </button>
-    <a href="#contact" class="hidden sm:block bg-primary hover:bg-primary-container text-on-primary text-label-bold font-label-bold py-2.5 px-6 rounded-full transition-all active:scale-95 shadow-lg shadow-primary/20">Bắt Đầu</a>
-    <button class="lg:hidden p-2 rounded-full hover:bg-surface-container">
-      <span class="material-symbols-outlined">menu</span>
+<!-- ═══ LOGIN ═══ -->
+<div id="loginView">
+  <div class="login-card">
+    <div class="login-logo">🎨 CreativeHub CMS</div>
+    <p class="login-sub">Đăng nhập bằng <strong>GitHub Personal Access Token</strong>.<br>
+    Tạo tại: <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a> → chọn quyền <strong>repo</strong>.</p>
+    <div class="field"><label>GitHub Username</label><input type="text" id="lUser" placeholder="ngtduc24"></div>
+    <div class="field"><label>Repository</label><input type="text" id="lRepo" placeholder="ngtduc24.github.io"></div>
+    <div class="field"><label>Personal Access Token</label><input type="password" id="lToken" placeholder="ghp_xxxxxxxx"></div>
+    <div id="lErr" style="color:var(--red);font-size:.8rem;margin-bottom:8px;display:none"></div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">
+      <span class="material-symbols-outlined" style="font-size:18px">login</span> Đăng nhập
     </button>
   </div>
 </div>
-</nav>
 
-<main class="max-w-max-width mx-auto px-gutter pb-section-gap">
+<!-- ═══ SIDEBAR ═══ -->
+<div class="sidebar" id="sidebar" style="display:none">
+  <div class="sb-logo">
+    <div class="sb-brand">CreativeHub CMS</div>
+    <div class="sb-sub">Content Management System</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Tổng quan</div>
+    <button class="nav-btn active" onclick="goTab('dash',this)">
+      <span class="material-symbols-outlined mi">dashboard</span>Dashboard
+    </button>
 
-<!-- HERO -->
-<section class="mt-8 md:mt-12 mb-section-gap" id="hero">
-<div class="relative rounded-3xl hero-gradient overflow-hidden min-h-[500px] md:min-h-[600px] flex items-center p-8 md:p-16 ambient-shadow">
-  <div class="absolute top-10 right-10 w-24 h-24 bg-tertiary-fixed rounded-full blur-2xl opacity-60 mix-blend-multiply"></div>
-  <div class="absolute bottom-10 left-10 w-32 h-32 bg-primary rounded-full blur-3xl opacity-40 mix-blend-screen"></div>
-  <div class="relative z-10 grid md:grid-cols-2 gap-12 items-center w-full">
-    <div class="space-y-6 max-w-xl">
-      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel text-label-bold font-label-bold text-primary">
-        <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
-        <span id="hero-badge">Nhà Thiết Kế Sáng Tạo</span>
+    <div class="sb-section">Nội dung</div>
+    <button class="nav-btn" onclick="goTab('posts',this)">
+      <span class="material-symbols-outlined mi">article</span>Tất cả bài viết
+    </button>
+    <button class="nav-btn" onclick="goTab('new-post',this)">
+      <span class="material-symbols-outlined mi">add_circle</span>Thêm bài viết
+    </button>
+
+    <div class="sb-section">Quản lý trang</div>
+    <button class="nav-btn" onclick="goTab('home',this)">
+      <span class="material-symbols-outlined mi">web</span>Trang chủ
+    </button>
+    <button class="nav-btn" onclick="goTab('portfolio',this)">
+      <span class="material-symbols-outlined mi">grid_view</span>Portfolio
+    </button>
+    <button class="nav-btn" onclick="goTab('courses',this)">
+      <span class="material-symbols-outlined mi">school</span>Các Khóa Học
+    </button>
+    <button class="nav-btn" onclick="goTab('knowledge',this)">
+      <span class="material-symbols-outlined mi">menu_book</span>Kiến thức môn học
+    </button>
+    <button class="nav-btn" onclick="goTab('research',this)">
+      <span class="material-symbols-outlined mi">science</span>Nghiên cứu khoa học
+    </button>
+
+    <div class="sb-section">Cài đặt</div>
+    <button class="nav-btn" onclick="goTab('menus',this)">
+      <span class="material-symbols-outlined mi">menu</span>Quản lý Menu
+    </button>
+    <button class="nav-btn" onclick="goTab('settings',this)">
+      <span class="material-symbols-outlined mi">settings</span>Cài đặt
+    </button>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-user">Đã đăng nhập:<b id="sbUser"></b></div>
+    <button class="btn-logout" onclick="doLogout()">
+      <span class="material-symbols-outlined" style="font-size:18px">logout</span>Đăng xuất
+    </button>
+  </div>
+</div>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<div class="main" id="mainArea" style="display:none">
+  <div id="alertBox" class="alert"></div>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dash" class="tab-pane active">
+    <div class="page-header"><h1>Dashboard</h1><p>Tổng quan nội dung website</p></div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num" id="d-port">0</div><div class="stat-label">Dự án Portfolio</div></div>
+      <div class="stat-card"><div class="stat-num" id="d-cour">0</div><div class="stat-label">Khóa Học</div></div>
+      <div class="stat-card"><div class="stat-num" id="d-know">0</div><div class="stat-label">Bài Kiến thức</div></div>
+      <div class="stat-card"><div class="stat-num" id="d-rese">0</div><div class="stat-label">Nghiên cứu</div></div>
+    </div>
+    <div class="info-box">
+      <strong>📝 Cách hoạt động:</strong> Mọi thay đổi lưu vào <code>data/content.json</code> trên GitHub repo.
+      Các trang công khai tự động cập nhật sau ~1 phút (GitHub Pages deploy).<br>
+      <strong>🖼️ Upload ảnh:</strong> Ảnh được mã hóa Base64 và lưu trực tiếp trong <code>content.json</code>.
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">Đăng bài nhanh</div><div class="card-sub">Thêm nội dung vào bất kỳ mục nào</div></div>
       </div>
-      <h1 class="text-display-lg font-display-lg text-on-surface leading-tight">
-        <span id="hero-line1">Xin Chào!</span><br>
-        <span id="hero-line2">Tôi là</span> <span class="text-primary" id="hero-name">Nguyễn Đức</span>.
-      </h1>
-      <p class="text-body-lg font-body-lg text-on-surface-variant" id="hero-desc">Kết hợp nghệ thuật, công nghệ và một chút ma thuật để tạo ra những trải nghiệm kỹ thuật số đáng nhớ. Cùng nhau xây dựng những thế giới mới.</p>
-      <div class="flex flex-wrap gap-4 pt-4">
-        <a href="#portfolio" class="bg-on-surface text-surface-bright text-label-bold font-label-bold py-3 px-8 rounded-full hover:bg-primary transition-colors inner-glow" id="hero-btn1">Xem Portfolio</a>
-        <a href="#contact" class="glass-panel text-on-surface text-label-bold font-label-bold py-3 px-8 rounded-full hover:bg-white/90 transition-colors flex items-center gap-2" id="hero-btn2">
-          <span class="material-symbols-outlined">mail</span>Liên Hệ
+      <div class="row2">
+        <div class="field"><label>Chọn mục đăng</label>
+          <select id="qSection">
+            <option value="knowledge">Kiến thức môn học</option>
+            <option value="research">Nghiên cứu khoa học</option>
+            <option value="portfolio">Portfolio</option>
+            <option value="courses">Khóa học</option>
+          </select>
+        </div>
+        <div class="field"><label>Tiêu đề *</label><input type="text" id="qTitle" placeholder="Nhập tiêu đề..."></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Tác giả</label><input type="text" id="qAuthor" placeholder="Nguyễn Văn A"></div>
+        <div class="field"><label>Tóm tắt</label><input type="text" id="qExcerpt" placeholder="Mô tả ngắn..."></div>
+      </div>
+      <div class="field">
+        <label>Ảnh đại diện</label>
+        <div class="upload-tabs">
+          <button class="upload-tab active" onclick="switchUploadTab('q','url',this)">🔗 URL</button>
+          <button class="upload-tab" onclick="switchUploadTab('q','file',this)">📁 Upload ảnh</button>
+        </div>
+        <div id="q-url-tab">
+          <input type="url" id="qImageUrl" placeholder="https://..." oninput="previewFromUrl('qImageUrl','qImgPrev')">
+        </div>
+        <div id="q-file-tab" style="display:none">
+          <div class="img-upload-area" onclick="document.getElementById('qImageFile').click()">
+            <span class="material-symbols-outlined upload-icon">cloud_upload</span>
+            <p>Nhấn để chọn ảnh hoặc kéo thả vào đây</p>
+            <p style="font-size:.72rem;margin-top:4px">JPG, PNG, WebP, GIF — tối đa 2MB</p>
+            <input type="file" id="qImageFile" accept="image/*" style="display:none" onchange="handleFileUpload(this,'qImgPrev','qImageData')">
+          </div>
+        </div>
+        <input type="hidden" id="qImageData">
+        <img id="qImgPrev" class="img-preview" alt="Preview">
+      </div>
+      <button class="btn btn-primary" onclick="quickPost()">
+        <span class="material-symbols-outlined" style="font-size:17px">add</span> Đăng ngay
+      </button>
+    </div>
+  </div>
+
+  <!-- TẤT CẢ BÀI VIẾT -->
+  <div id="tab-posts" class="tab-pane">
+    <div class="page-header"><h1>Tất cả bài viết</h1><p>Quản lý toàn bộ nội dung</p></div>
+    <div class="page-actions">
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="filterSection" style="width:auto;padding:8px 12px" onchange="renderAllPosts()">
+          <option value="all">Tất cả</option>
+          <option value="portfolio">Portfolio</option>
+          <option value="courses">Khóa học</option>
+          <option value="knowledge">Kiến thức</option>
+          <option value="research">Nghiên cứu</option>
+        </select>
+        <span id="postsCount" style="font-size:.83rem;color:var(--txt3)"></span>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="goTabByName('new-post')">
+        <span class="material-symbols-outlined" style="font-size:15px">add</span> Thêm bài viết
+      </button>
+    </div>
+    <div id="allPostsList"></div>
+  </div>
+
+  <!-- THÊM BÀI VIẾT MỚI -->
+  <div id="tab-new-post" class="tab-pane">
+    <div class="page-header">
+      <h1 id="newPostPageTitle">Thêm bài viết mới</h1>
+      <p>Tạo và xuất bản nội dung mới vào website</p>
+    </div>
+    <input type="hidden" id="editPostSection" value="">
+    <input type="hidden" id="editPostIdx" value="-1">
+
+    <div class="card">
+      <div class="section-title">Thông tin cơ bản</div>
+      <div class="row2">
+        <div class="field">
+          <label>Đăng vào mục *</label>
+          <select id="npSection" onchange="updateNewPostForm()">
+            <option value="knowledge">📚 Kiến thức môn học</option>
+            <option value="research">🔬 Nghiên cứu khoa học</option>
+            <option value="portfolio">🎨 Portfolio / Dự án</option>
+            <option value="courses">🎓 Khóa học</option>
+          </select>
+        </div>
+        <div class="field"><label>Tiêu đề *</label><input type="text" id="npTitle" placeholder="Tiêu đề bài viết..."></div>
+      </div>
+      <div class="row3" id="npMetaRow">
+        <div class="field"><label>Tác giả</label><input type="text" id="npAuthor" placeholder="Nguyễn Văn A"></div>
+        <div class="field" id="npDateField"><label>Ngày đăng</label><input type="date" id="npDate"></div>
+        <div class="field" id="npReadField"><label>Thời gian đọc</label><input type="number" id="npReadTime" placeholder="5" min="1"></div>
+      </div>
+      <div class="row2" id="npCatRow">
+        <div class="field"><label>Danh mục</label><input type="text" id="npCategory" placeholder="UI/UX Design, Typography..."></div>
+        <div class="field" id="npStatusField"><label>Trạng thái</label>
+          <select id="npStatus"><option value="active">Hoạt động</option><option value="open">Đang mở đăng ký</option><option value="upcoming">Sắp khai giảng</option><option value="soon">Sắp ra mắt</option></select>
+        </div>
+      </div>
+      <div class="row2" id="npCourseExtra" style="display:none">
+        <div class="field"><label>Số bài học</label><input type="number" id="npLessons" placeholder="12" min="1"></div>
+        <div class="field"><label>Thời lượng</label><input type="text" id="npDuration" placeholder="8 Tuần"></div>
+      </div>
+      <div class="field">
+        <label>Tags (nhấn Enter hoặc dấu phẩy)</label>
+        <div class="tags-input" id="npTagsInput" onclick="document.getElementById('npTagField').focus()">
+          <input class="tag-input-field" id="npTagField" placeholder="Thêm tag..." onkeydown="handleTagKey(event,'np')">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Ảnh đại diện</div>
+      <div class="upload-tabs">
+        <button class="upload-tab active" onclick="switchUploadTab('np','url',this)">🔗 Dán URL ảnh</button>
+        <button class="upload-tab" onclick="switchUploadTab('np','file',this)">📁 Upload từ máy tính</button>
+      </div>
+      <div id="np-url-tab">
+        <div class="field">
+          <label>URL ảnh</label>
+          <input type="url" id="npImageUrl" placeholder="https://..." oninput="previewFromUrl('npImageUrl','npImgPrev')">
+        </div>
+      </div>
+      <div id="np-file-tab" style="display:none">
+        <div class="img-upload-area" onclick="document.getElementById('npImageFile').click()">
+          <span class="material-symbols-outlined upload-icon">cloud_upload</span>
+          <p>Nhấn để chọn ảnh hoặc kéo thả vào đây</p>
+          <p style="font-size:.72rem;margin-top:4px">JPG, PNG, WebP, GIF — tối đa 2MB. Ảnh sẽ được mã hóa và lưu vào GitHub.</p>
+          <input type="file" id="npImageFile" accept="image/*" style="display:none" onchange="handleFileUpload(this,'npImgPrev','npImageData')">
+        </div>
+      </div>
+      <input type="hidden" id="npImageData">
+      <img id="npImgPrev" class="img-preview" alt="Preview">
+    </div>
+
+    <div class="card">
+      <div class="section-title">Tóm tắt</div>
+      <div class="field">
+        <textarea id="npExcerpt" rows="3" placeholder="Mô tả ngắn hiển thị trong danh sách bài viết..."></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Nội dung bài viết</div>
+      <!-- Toolbar -->
+      <div class="editor-toolbar" id="npEditorToolbar">
+        <button class="editor-btn" onclick="execCmd('bold')" title="In đậm"><b>B</b></button>
+        <button class="editor-btn" onclick="execCmd('italic')" title="In nghiêng"><i>I</i></button>
+        <button class="editor-btn" onclick="execCmd('underline')" title="Gạch chân"><u>U</u></button>
+        <div class="editor-sep"></div>
+        <button class="editor-btn" onclick="execFmt('h2')" title="Tiêu đề 2">H2</button>
+        <button class="editor-btn" onclick="execFmt('h3')" title="Tiêu đề 3">H3</button>
+        <button class="editor-btn" onclick="execFmt('p')" title="Đoạn văn">¶</button>
+        <div class="editor-sep"></div>
+        <button class="editor-btn" onclick="execCmd('insertUnorderedList')" title="Danh sách">• List</button>
+        <button class="editor-btn" onclick="execCmd('insertOrderedList')" title="Danh sách đánh số">1. List</button>
+        <button class="editor-btn" onclick="insertBlockquote()" title="Trích dẫn">" Quote</button>
+        <div class="editor-sep"></div>
+        <button class="editor-btn" onclick="insertLink()" title="Thêm link">🔗</button>
+        <button class="editor-btn" onclick="execCmd('removeFormat')" title="Xóa định dạng">✕</button>
+      </div>
+      <div class="editor-area" id="npEditor" contenteditable="true" 
+        oninput="autoSaveDraft()"
+        style="min-height:280px"
+        data-placeholder="Nhập nội dung bài viết tại đây..."></div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:8px">
+      <button class="btn btn-primary" onclick="savePost()">
+        <span class="material-symbols-outlined" style="font-size:17px">publish</span> Xuất bản
+      </button>
+      <button class="btn btn-ghost" onclick="saveDraft()">
+        <span class="material-symbols-outlined" style="font-size:17px">save</span> Lưu nháp
+      </button>
+      <button class="btn btn-ghost" onclick="clearNewPost()">Huỷ</button>
+    </div>
+    <div id="draftNotice" style="font-size:.76rem;color:var(--txt3);margin-top:8px;display:none">
+      ✓ Đã lưu nháp tự động vào trình duyệt
+    </div>
+  </div>
+
+  <!-- TRANG CHỦ -->
+  <!-- ═══ TAB BANNER (TRANG CHỦ) ═══ -->
+  <div id="tab-banner" class="tab-pane">
+    <div class="page-header"><h1>Trang chủ — Banner</h1><p>Chỉnh sửa hero section trên trang chủ</p></div>
+    <div class="card">
+      <div class="section-title">Nội dung Hero</div>
+      <div class="row2">
+        <div class="field"><label>Badge / Chức danh</label><input type="text" id="banBadge" placeholder="Nhà Thiết Kế Sáng Tạo"></div>
+        <div class="field"><label>Tên hiển thị</label><input type="text" id="banName" placeholder="Nguyễn Đức"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Dòng tiêu đề 1</label><input type="text" id="banLine1" placeholder="Xin Chào!"></div>
+        <div class="field"><label>Dòng tiêu đề 2 (trước tên)</label><input type="text" id="banLine2" placeholder="Tôi là"></div>
+      </div>
+      <div class="field"><label>Mô tả</label><textarea id="banDesc" rows="3"></textarea></div>
+      <div class="row2">
+        <div class="field"><label>Nút chính</label><input type="text" id="banBtn1" placeholder="Xem Portfolio"></div>
+        <div class="field"><label>Nút phụ</label><input type="text" id="banBtn2" placeholder="Liên Hệ"></div>
+      </div>
+      <div class="field">
+        <label>Ảnh đại diện</label>
+        <div class="upload-tabs">
+          <button class="upload-tab active" onclick="switchUploadTab('ban','url',this)">🔗 URL</button>
+          <button class="upload-tab" onclick="switchUploadTab('ban','file',this)">📁 Upload</button>
+        </div>
+        <div id="ban-url-tab"><input type="url" id="banAvatarUrl" placeholder="https://..." oninput="previewFromUrl('banAvatarUrl','banImgPrev')"></div>
+        <div id="ban-file-tab" style="display:none">
+          <div class="img-upload-area" onclick="document.getElementById('banAvatarFile').click()">
+            <span class="material-symbols-outlined upload-icon">cloud_upload</span>
+            <p>Chọn ảnh đại diện</p>
+            <input type="file" id="banAvatarFile" accept="image/*" style="display:none" onchange="handleFileUpload(this,'banImgPrev','banAvatarData')">
+          </div>
+        </div>
+        <input type="hidden" id="banAvatarData">
+        <img id="banImgPrev" class="img-preview" alt="Preview">
+      </div>
+      <button class="btn btn-primary" onclick="saveBanner()">
+        <span class="material-symbols-outlined" style="font-size:17px">save</span> Lưu Banner
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ TAB KỸ NĂNG & KINH NGHIỆM ═══ -->
+  <div id="tab-skills" class="tab-pane">
+    <div class="page-header"><h1>Kỹ Năng &amp; Kinh Nghiệm</h1><p>Quản lý kỹ năng cốt lõi và lịch sử công tác</p></div>
+
+    <!-- KỸ NĂNG -->
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">Kỹ năng cốt lõi</div><div class="card-sub">Hiển thị dạng lưới trên trang chủ</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openSkillModal(-1)">
+          <span class="material-symbols-outlined" style="font-size:15px">add</span> Thêm kỹ năng
+        </button>
+      </div>
+      <div id="skillsList"></div>
+    </div>
+
+    <!-- KINH NGHIỆM -->
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">Kinh nghiệm làm việc</div><div class="card-sub">Hiển thị dạng timeline trên trang chủ</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openExpModal(-1)">
+          <span class="material-symbols-outlined" style="font-size:15px">add</span> Thêm kinh nghiệm
+        </button>
+      </div>
+      <div id="expList"></div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB CỘNG ĐỒNG & FOOTER ═══ -->
+  <div id="tab-community" class="tab-pane">
+    <div class="page-header"><h1>Cộng đồng &amp; Footer</h1><p>Card cộng đồng và thông tin cuối trang</p></div>
+    <div class="card">
+      <div class="section-title">Card Cộng Đồng (trong section Học Tập)</div>
+      <div class="row2">
+        <div class="field"><label>Tiêu đề</label><input type="text" id="comTitle" placeholder="Cộng Đồng Sáng Tạo"></div>
+        <div class="field"><label>Label nút</label><input type="text" id="comBtn" placeholder="Tham Gia Ngay"></div>
+      </div>
+      <div class="field"><label>Mô tả</label><textarea id="comDesc" rows="2" placeholder="Tham gia cộng đồng 500+ designer..."></textarea></div>
+      <div class="field"><label>Link</label><input type="url" id="comLink" placeholder="https://..."></div>
+      <button class="btn btn-primary" onclick="saveCommunity()">
+        <span class="material-symbols-outlined" style="font-size:17px">save</span> Lưu
+      </button>
+    </div>
+    <div class="card">
+      <div class="section-title">Footer</div>
+      <div class="row2">
+        <div class="field"><label>Tên thương hiệu</label><input type="text" id="footBrand" placeholder="Nguyễn Đức"></div>
+        <div class="field"><label>Bản quyền</label><input type="text" id="footCopy" placeholder="© 2024 Nguyễn Đức. All rights reserved."></div>
+      </div>
+      <div class="field">
+        <label>Link footer (mỗi dòng: Tên|url)</label>
+        <textarea id="footLinks" rows="5" placeholder="Trang chủ|index.html&#10;Portfolio|index.html#portfolio&#10;Liên hệ|index.html#contact"></textarea>
+        <p style="font-size:.72rem;color:var(--txt3);margin-top:4px">Mỗi dòng 1 link, định dạng: <code>Tên|url</code></p>
+      </div>
+      <button class="btn btn-primary" onclick="saveFooter()">
+        <span class="material-symbols-outlined" style="font-size:17px">save</span> Lưu Footer
+      </button>
+    </div>
+  </div>
+
+  <!-- tab-home cũ giữ lại để không lỗi reference -->
+  <div id="tab-home" class="tab-pane">
+    <div class="page-header"><h1>Trang chủ</h1><p>Chỉnh sửa nội dung trang chủ</p></div>
+    <div class="card">
+      <div class="section-title">Hero Banner</div>
+      <div class="row2">
+        <div class="field"><label>Badge</label><input type="text" id="hBadge" placeholder="Mới Nhất"></div>
+        <div class="field"><label>Tên / Slogan</label><input type="text" id="hName" placeholder="Andy Nguyễn"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Dòng tiêu đề 1</label><input type="text" id="hL1" placeholder="Trở thành Master"></div>
+        <div class="field"><label>Dòng tiêu đề 2</label><input type="text" id="hL2" placeholder="trong Kỷ nguyên số"></div>
+      </div>
+      <div class="field"><label>Mô tả ngắn</label><textarea id="hDesc" rows="3"></textarea></div>
+      <div class="field">
+        <label>Ảnh đại diện</label>
+        <div class="upload-tabs">
+          <button class="upload-tab active" onclick="switchUploadTab('h','url',this)">🔗 URL</button>
+          <button class="upload-tab" onclick="switchUploadTab('h','file',this)">📁 Upload</button>
+        </div>
+        <div id="h-url-tab"><input type="url" id="hAvatarUrl" placeholder="https://..." oninput="previewFromUrl('hAvatarUrl','hImgPrev')"></div>
+        <div id="h-file-tab" style="display:none">
+          <div class="img-upload-area" onclick="document.getElementById('hAvatarFile').click()">
+            <span class="material-symbols-outlined upload-icon">cloud_upload</span>
+            <p>Chọn ảnh đại diện</p>
+            <input type="file" id="hAvatarFile" accept="image/*" style="display:none" onchange="handleFileUpload(this,'hImgPrev','hAvatarData')">
+          </div>
+        </div>
+        <input type="hidden" id="hAvatarData">
+        <img id="hImgPrev" class="img-preview" alt="Preview">
+      </div>
+      <button class="btn btn-primary" onclick="saveHome()">
+        <span class="material-symbols-outlined" style="font-size:17px">save</span> Lưu trang chủ
+      </button>
+    </div>
+  </div>
+
+  <!-- PORTFOLIO -->
+  <div id="tab-portfolio" class="tab-pane">
+    <div class="page-header"><h1>Portfolio</h1><p>Quản lý dự án</p></div>
+    <div class="page-actions">
+      <span id="portCount" style="font-size:.83rem;color:var(--txt3)"></span>
+      <button class="btn btn-primary btn-sm" onclick="openEditModal('portfolio',-1)">
+        <span class="material-symbols-outlined" style="font-size:15px">add</span> Thêm dự án
+      </button>
+    </div>
+    <div id="portList"></div>
+  </div>
+
+  <!-- COURSES -->
+  <div id="tab-courses" class="tab-pane">
+    <div class="page-header"><h1>Các Khóa Học</h1><p>Quản lý khóa học</p></div>
+    <div class="page-actions">
+      <span id="courCount" style="font-size:.83rem;color:var(--txt3)"></span>
+      <button class="btn btn-primary btn-sm" onclick="openEditModal('courses',-1)">
+        <span class="material-symbols-outlined" style="font-size:15px">add</span> Thêm khóa học
+      </button>
+    </div>
+    <div id="courList"></div>
+  </div>
+
+  <!-- KNOWLEDGE -->
+  <div id="tab-knowledge" class="tab-pane">
+    <div class="page-header"><h1>Kiến thức môn học</h1><p>Quản lý bài viết kiến thức</p></div>
+    <div class="page-actions">
+      <span id="knowCount" style="font-size:.83rem;color:var(--txt3)"></span>
+      <button class="btn btn-primary btn-sm" onclick="openEditModal('knowledge',-1)">
+        <span class="material-symbols-outlined" style="font-size:15px">add</span> Thêm bài viết
+      </button>
+    </div>
+    <div id="knowList"></div>
+  </div>
+
+  <!-- RESEARCH -->
+  <div id="tab-research" class="tab-pane">
+    <div class="page-header"><h1>Nghiên cứu khoa học</h1><p>Quản lý công trình nghiên cứu</p></div>
+    <div class="page-actions">
+      <span id="reseCount" style="font-size:.83rem;color:var(--txt3)"></span>
+      <button class="btn btn-primary btn-sm" onclick="openEditModal('research',-1)">
+        <span class="material-symbols-outlined" style="font-size:15px">add</span> Thêm nghiên cứu
+      </button>
+    </div>
+    <div id="reseList"></div>
+  </div>
+
+  <!-- MENU MANAGER -->
+  <div id="tab-menus" class="tab-pane">
+    <div class="page-header"><h1>Quản lý Menu</h1><p>Đổi tên, thêm, xóa và sắp xếp các mục menu trên thanh điều hướng</p></div>
+    <div class="card">
+      <div class="section-title">Logo &amp; Thanh điều hướng</div>
+      <p style="font-size:.82rem;color:var(--txt2);margin-bottom:14px">
+        Thay đổi logo và tên hiển thị trên thanh menu của tất cả các trang.
+      </p>
+      <div class="row2">
+        <div class="field">
+          <label>Tên thương hiệu (hiển thị khi chưa có logo ảnh)</label>
+          <input type="text" id="navBrand" placeholder="Nguyễn Đức">
+        </div>
+        <div class="field">
+          <label>Label nút CTA (góc phải menu)</label>
+          <input type="text" id="navCta" placeholder="Bắt Đầu">
+        </div>
+      </div>
+      <div class="field">
+        <label>Logo ảnh — URL hoặc upload file</label>
+        <div class="upload-tabs">
+          <button class="upload-tab active" onclick="switchUploadTab('logo','url',this)">🔗 URL ảnh</button>
+          <button class="upload-tab" onclick="switchUploadTab('logo','file',this)">📁 Upload file</button>
+        </div>
+        <div id="logo-url-tab">
+          <input type="url" id="navLogoUrl" placeholder="https://... (SVG, PNG, JPG)" oninput="previewFromUrl('navLogoUrl','navLogoPrev')">
+          <p style="font-size:.74rem;color:var(--txt3);margin-top:4px">Để trống = hiển thị chữ. Khuyến nghị ảnh nền trong suốt (PNG/SVG), chiều cao ~40px.</p>
+        </div>
+        <div id="logo-file-tab" style="display:none">
+          <div class="img-upload-area" onclick="document.getElementById('navLogoFile').click()">
+            <span class="material-symbols-outlined upload-icon">cloud_upload</span>
+            <p>Chọn file logo (PNG, SVG, JPG)</p>
+            <input type="file" id="navLogoFile" accept="image/*,image/svg+xml" style="display:none" onchange="handleFileUpload(this,'navLogoPrev','navLogoData')">
+          </div>
+        </div>
+        <input type="hidden" id="navLogoData">
+        <img id="navLogoPrev" class="img-preview" alt="Logo preview" style="max-height:60px;width:auto;object-fit:contain">
+      </div>
+      <!-- Preview nav -->
+      <div style="background:rgba(249,249,255,0.85);backdrop-filter:blur(12px);padding:12px 20px;border-radius:12px;border:1.5px solid var(--bdr-lt);margin-top:8px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div id="navPreviewLogo" style="font-size:1.1rem;font-weight:800;color:#4648d4;letter-spacing:-0.02em">Nguyễn Đức</div>
+          <div style="display:flex;gap:6px;font-size:13px;font-weight:700">
+            <span style="padding:6px 12px;border-radius:999px;color:#4648d4;background:rgba(70,72,212,0.1)" id="navPreviewActive">Trang chủ</span>
+            <span style="padding:6px 12px;border-radius:999px;color:#464554">Portfolio</span>
+            <span style="padding:6px 12px;border-radius:999px;color:#464554">Các Khóa Học</span>
+          </div>
+        </div>
+        <span id="navPreviewCta" style="background:#4648d4;color:#fff;font-size:13px;font-weight:700;padding:8px 18px;border-radius:999px">Bắt Đầu</span>
+      </div>
+      <button class="btn btn-primary btn-sm" style="margin-top:14px" onclick="saveNavBrand()">
+        <span class="material-symbols-outlined" style="font-size:15px">save</span> Lưu Logo &amp; Brand
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Menu hiện tại (kéo để sắp xếp)</div>
+      <div id="menuList"></div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr-lt)">
+        <div class="section-title">Thêm mục menu mới</div>
+        <div class="row3">
+          <div class="field"><label>Tên hiển thị *</label><input type="text" id="newMenuLabel" placeholder="Tên trang..."></div>
+          <div class="field"><label>Liên kết (href) *</label><input type="text" id="newMenuHref" placeholder="ten-trang.html"></div>
+          <div class="field"><label>Biểu tượng</label>
+            <select id="newMenuIcon">
+              <option value="">— Không có —</option>
+              <option value="home">🏠 Trang chủ</option>
+              <option value="grid_view">⊞ Portfolio</option>
+              <option value="school">🎓 Khóa học</option>
+              <option value="menu_book">📚 Kiến thức</option>
+              <option value="science">🔬 Nghiên cứu</option>
+              <option value="info">ℹ️ Thông tin</option>
+              <option value="contact_page">📞 Liên hệ</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="addMenuItem()">
+          <span class="material-symbols-outlined" style="font-size:15px">add</span> Thêm vào menu
+        </button>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn btn-primary" onclick="saveMenus()">
+          <span class="material-symbols-outlined" style="font-size:17px">save</span> Lưu cấu hình menu
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Tạo trang nội dung mới</div>
+      <p style="font-size:.83rem;color:var(--txt2);margin-bottom:14px">Tạo một trang mới và thêm vào menu. Bài viết sẽ được liên kết tới menu này.</p>
+      <div class="row2">
+        <div class="field"><label>Tên trang *</label><input type="text" id="newPageName" placeholder="Tên trang hiển thị"></div>
+        <div class="field"><label>Slug (tên file) *</label><input type="text" id="newPageSlug" placeholder="ten-trang" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'-')"></div>
+      </div>
+      <div class="field"><label>Mô tả trang</label><input type="text" id="newPageDesc" placeholder="Mô tả ngắn..."></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" onclick="createNewPage()">
+          <span class="material-symbols-outlined" style="font-size:15px">add_box</span> Tạo trang & thêm menu
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="tab-settings" class="tab-pane">
+    <div class="page-header"><h1>Cài đặt</h1><p>Thông tin kết nối và cấu hình</p></div>
+    <div class="card">
+      <div class="section-title">Kết nối GitHub</div>
+      <div class="row2">
+        <div class="field"><label>Username</label><input type="text" id="setUser" readonly></div>
+        <div class="field"><label>Repository</label><input type="text" id="setRepo" readonly></div>
+      </div>
+      <p style="font-size:.82rem;color:var(--txt3);margin:8px 0">URL website: <strong id="siteUrl" style="color:var(--pri)"></strong></p>
+      <div style="margin-top:16px;display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="doLogout()">Đổi tài khoản</button>
+        <a href="../" target="_blank" class="btn btn-secondary btn-sm">
+          <span class="material-symbols-outlined" style="font-size:15px">open_in_new</span> Xem website
         </a>
       </div>
     </div>
-    <div class="relative h-full flex justify-center items-center">
-      <div class="w-full max-w-[400px] aspect-square rounded-full glass-panel flex items-center justify-center p-4 ambient-shadow border-4 border-white/50">
-        <img id="hero-avatar" alt="Avatar" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaM6nPg7daWott3BQVpCtvizZFbleVjeMlC6avIkwTE1aCxJeCfNrxwUqwDDxeepGlH0A9kiIbIuZwn3c1tAyUQ3N1-oF88I4_KEbYBnzSFct5eRx6P3kgkL3FQJK90R6DhDZZmmDuzC1EIG5p6E48fc7Iv48OMLM1hl2bjSx66k8493bjfQSxaQCAtMtvkHFHX_NkSPsW_h-5XEt3Auu38gBil8FELSgJxkwLQkCLVCZmoQ1oZz9fnc1TMzsBG8hqdNdUscFbhOQ">
+    <div class="card">
+      <div class="section-title">Backup & Restore</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="downloadBackup()">
+          <span class="material-symbols-outlined" style="font-size:15px">download</span> Tải backup JSON
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('restoreFile').click()">
+          <span class="material-symbols-outlined" style="font-size:15px">upload</span> Khôi phục từ file
+        </button>
+        <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreBackup(this)">
       </div>
     </div>
   </div>
 </div>
-</section>
 
-<!-- SKILLS & EXPERIENCE -->
-<section class="mb-section-gap">
-<div class="mb-10">
-  <h2 class="text-display-lg font-display-lg text-on-surface tracking-tight">Kỹ Năng & Kinh Nghiệm</h2>
-  <p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl mt-2">Chuyên môn và hành trình phát triển sự nghiệp trong lĩnh vực thiết kế sáng tạo.</p>
-</div>
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
-  <div class="space-y-8">
-    <h3 class="text-headline-lg font-headline-lg text-on-surface flex items-center gap-3">
-      <span class="material-symbols-outlined text-primary">psychology</span> Kỹ Năng Cốt Lõi
-    </h3>
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4" id="skills-grid"></div>
-  </div>
-  <div class="space-y-8">
-    <h3 class="text-headline-lg font-headline-lg text-on-surface flex items-center gap-3">
-      <span class="material-symbols-outlined text-secondary">work_history</span> Kinh Nghiệm
-    </h3>
-    <div class="border-l-2 border-outline-variant/50 ml-4 pl-8 space-y-10" id="experience-list"></div>
-  </div>
-</div>
-</section>
+<!-- ═══ EDIT MODAL (dùng chung cho portfolio, courses, knowledge, research) ═══ -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box" style="max-width:720px">
+    <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    <h3 id="editModalTitle">Chỉnh sửa</h3>
+    <input type="hidden" id="editModalSection">
+    <input type="hidden" id="editModalIdx" value="-1">
 
-<!-- PORTFOLIO -->
-<section class="mb-section-gap" id="portfolio">
-<div class="flex justify-between items-end mb-10">
-  <div class="space-y-2">
-    <h2 class="text-display-lg font-display-lg text-on-surface tracking-tight">Dự Án Nổi Bật</h2>
-    <p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl">Những sáng tạo độc bản, kết hợp giữa nghệ thuật thị giác và công nghệ tương tác hiện đại.</p>
-  </div>
-</div>
-<div class="grid grid-cols-1 gap-12" id="portfolio-grid"></div>
-</section>
-
-<!-- COURSES & RESEARCH -->
-<section class="mb-section-gap" id="courses">
-<h2 class="text-headline-lg font-headline-lg text-on-surface mb-8">Học Tập & Khám Phá</h2>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[250px]" id="learn-grid"></div>
-</section>
-
-<!-- CONTACT -->
-<section class="mb-section-gap" id="contact">
-<div class="relative rounded-3xl overflow-hidden bg-inverse-surface p-8 md:p-16 ambient-shadow">
-  <div class="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-3xl opacity-20 -mr-20 -mt-20"></div>
-  <div class="relative z-10 grid md:grid-cols-2 gap-12 items-center">
-    <div>
-      <h2 class="text-display-lg font-display-lg text-inverse-on-surface mb-4">Liên Hệ</h2>
-      <p class="text-body-lg text-inverse-on-surface/70 mb-8">Sẵn sàng hợp tác cho dự án tiếp theo của bạn.</p>
-      <div class="flex flex-col gap-3">
-        <div class="flex items-center gap-3 text-inverse-on-surface/80">
-          <span class="material-symbols-outlined">mail</span>
-          <span id="contact-email">hello@nguyenduc.dev</span>
-        </div>
-        <div class="flex items-center gap-3 text-inverse-on-surface/80">
-          <span class="material-symbols-outlined">location_on</span>
-          <span id="contact-location">Hồ Chí Minh, Việt Nam</span>
+    <div class="card" style="margin-bottom:0;box-shadow:none;padding:0;border:none">
+      <div class="row2">
+        <div class="field"><label>Tiêu đề *</label><input type="text" id="em-title"></div>
+        <div class="field" id="em-author-field"><label>Tác giả</label><input type="text" id="em-author"></div>
+      </div>
+      <div class="row2" id="em-extra1">
+        <div class="field" id="em-category-field"><label>Danh mục</label><input type="text" id="em-category"></div>
+        <div class="field" id="em-status-field"><label>Trạng thái</label>
+          <select id="em-status"><option value="active">Hoạt động / Nổi bật</option><option value="open">Đang mở</option><option value="upcoming">Sắp khai giảng</option><option value="soon">Sắp ra mắt</option></select>
         </div>
       </div>
-    </div>
-    <div class="glass-panel rounded-2xl p-6">
-      <div class="space-y-4">
-        <input type="text" placeholder="Họ và tên" class="w-full bg-white/80 border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface outline-none focus:border-primary transition-colors">
-        <input type="email" placeholder="Email" class="w-full bg-white/80 border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface outline-none focus:border-primary transition-colors">
-        <textarea rows="4" placeholder="Tin nhắn..." class="w-full bg-white/80 border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface outline-none focus:border-primary transition-colors resize-none"></textarea>
-        <button class="w-full bg-primary text-on-primary font-label-bold py-3 rounded-full hover:bg-primary-container transition-colors">Gửi Tin Nhắn</button>
+      <div class="row2" id="em-course-extra" style="display:none">
+        <div class="field"><label>Số bài học</label><input type="number" id="em-lessons"></div>
+        <div class="field"><label>Thời lượng</label><input type="text" id="em-duration"></div>
       </div>
+      <div class="row2" id="em-dates">
+        <div class="field"><label>Ngày đăng</label><input type="date" id="em-date"></div>
+        <div class="field"><label>Phút đọc</label><input type="number" id="em-readtime"></div>
+      </div>
+      <div class="field">
+        <label>Tags</label>
+        <div class="tags-input" id="emTagsInput" onclick="document.getElementById('emTagField').focus()">
+          <input class="tag-input-field" id="emTagField" placeholder="Thêm tag..." onkeydown="handleTagKey(event,'em')">
+        </div>
+      </div>
+
+      <!-- Image upload -->
+      <div class="field">
+        <label>Ảnh đại diện</label>
+        <div class="upload-tabs">
+          <button class="upload-tab active" onclick="switchUploadTab('em','url',this)">🔗 URL</button>
+          <button class="upload-tab" onclick="switchUploadTab('em','file',this)">📁 Upload từ máy</button>
+        </div>
+        <div id="em-url-tab"><input type="url" id="em-imageUrl" placeholder="https://..." oninput="previewFromUrl('em-imageUrl','emImgPrev')"></div>
+        <div id="em-file-tab" style="display:none">
+          <div class="img-upload-area" onclick="document.getElementById('emImageFile').click()">
+            <span class="material-symbols-outlined upload-icon">cloud_upload</span>
+            <p>Nhấn để chọn ảnh</p>
+            <input type="file" id="emImageFile" accept="image/*" style="display:none" onchange="handleFileUpload(this,'emImgPrev','emImageData')">
+          </div>
+        </div>
+        <input type="hidden" id="emImageData">
+        <img id="emImgPrev" class="img-preview" alt="">
+      </div>
+
+      <div class="field"><label>Tóm tắt</label><textarea id="em-excerpt" rows="3"></textarea></div>
+
+      <!-- Rich text editor in modal -->
+      <div class="field">
+        <label>Nội dung</label>
+        <div class="editor-toolbar">
+          <button class="editor-btn" onclick="execCmdEM('bold')"><b>B</b></button>
+          <button class="editor-btn" onclick="execCmdEM('italic')"><i>I</i></button>
+          <button class="editor-btn" onclick="execCmdEM('underline')"><u>U</u></button>
+          <div class="editor-sep"></div>
+          <button class="editor-btn" onclick="execFmtEM('h2')">H2</button>
+          <button class="editor-btn" onclick="execFmtEM('h3')">H3</button>
+          <button class="editor-btn" onclick="execFmtEM('p')">¶</button>
+          <div class="editor-sep"></div>
+          <button class="editor-btn" onclick="execCmdEM('insertUnorderedList')">• List</button>
+          <button class="editor-btn" onclick="insertQuoteEM()">" Quote</button>
+          <div class="editor-sep"></div>
+          <button class="editor-btn" onclick="insertLinkEM()">🔗</button>
+        </div>
+        <div class="editor-area" id="em-editor" contenteditable="true" style="min-height:200px"></div>
+      </div>
+      <div class="field" id="em-link-field"><label>Link / URL</label><input type="url" id="em-link" placeholder="https://..."></div>
+      <div class="field" id="em-featured-field"><label>Featured</label>
+        <select id="em-featured"><option value="true">Có — hiển thị nổi bật</option><option value="false">Không</option></select>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('editModal')">Huỷ</button>
+      <button class="btn btn-primary" onclick="saveEditModal()">
+        <span class="material-symbols-outlined" style="font-size:17px">save</span> Lưu thay đổi
+      </button>
     </div>
   </div>
 </div>
-</section>
-
-</main>
-
-<!-- FOOTER -->
-<footer class="bg-on-surface mt-section-gap border-t-8 border-tertiary-container">
-<div class="flex flex-col md:flex-row justify-between items-center px-gutter py-12 w-full max-w-max-width mx-auto">
-  <div class="text-headline-md font-display-lg text-secondary-fixed mb-6 md:mb-0" id="footer-brand">Nguyễn Đức</div>
-  <div class="flex flex-wrap justify-center gap-6 md:gap-8 mb-6 md:mb-0" id="footer-links"></div>
-  <div class="text-surface-bright text-body-md text-center md:text-right" id="footer-copy">© 2024 Nguyễn Đức. All rights reserved.</div>
-</div>
-</footer>
 
 <script>
-const COLOR_MAP = {
-  primary: { bg:'bg-primary-container/10', border:'border-primary-container/20', hover:'hover:bg-primary-container/20', icon:'text-primary', num:'text-primary' },
-  secondary: { bg:'bg-secondary-container/20', border:'border-secondary-container/40', hover:'hover:bg-secondary-container/30', icon:'text-secondary', num:'text-secondary' },
-  tertiary: { bg:'bg-tertiary-container/10', border:'border-tertiary-container/20', hover:'hover:bg-tertiary-container/20', icon:'text-tertiary', num:'text-tertiary' },
-  'primary-container': { bg:'bg-primary-container/10', border:'border-primary-container/20', hover:'hover:bg-primary-container/20', icon:'text-primary-container', num:'text-primary-container' }
-};
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let AUTH = null, DATA = {}, _sha = null;
+const npTags = [], emTags = [];
+const DEFAULT_MENUS = [
+  {label:'Trang chủ', href:'index.html'},
+  {label:'Portfolio', href:'portfolio.html'},
+  {label:'Các Khóa Học', href:'courses.html'},
+  {label:'Kiến thức môn học', href:'knowledge.html'},
+  {label:'Nghiên cứu khoa học', href:'research.html'},
+];
 
-async function loadData() {
-  try {
-    const r = await fetch('data/content.json?t=' + Date.now());
-    if (r.ok) {
-      const text = await r.text();
-      return JSON.parse(text);
+// ═══════════════════════════════════════════
+// UTF-8 BASE64
+// ═══════════════════════════════════════════
+function toB64(s){const b=new TextEncoder().encode(s);let r='';b.forEach(x=>r+=String.fromCharCode(x));return btoa(r);}
+function fromB64(s){const b=atob(s.replace(/\n/g,''));const a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return new TextDecoder('utf-8').decode(a);}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+const $ = id => document.getElementById(id);
+function gv(id){return $(id)?.value?.trim()||'';}
+function sv(id,val){const el=$(id);if(el)el.value=val||'';}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+function fmt(d){return d?new Date(d).toLocaleDateString('vi-VN',{day:'2-digit',month:'long',year:'numeric'}):''}
+function today(){return new Date().toISOString().split('T')[0];}
+function showAlert(msg,type='success'){
+  const el=$('alertBox');el.textContent=msg;
+  el.className='alert '+(type==='success'?'alert-success':'alert-error')+' show';
+  setTimeout(()=>el.classList.remove('show'),4500);
+}
+function openModal(id){$(id).classList.add('open');}
+function closeModal(id){$(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal(e.target.id);}));
+
+// ═══════════════════════════════════════════
+// IMAGE UPLOAD — FILE → BASE64
+// ═══════════════════════════════════════════
+function handleFileUpload(input, previewId, dataId) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 2*1024*1024) {
+    showAlert('Ảnh quá lớn! Tối đa 2MB','error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
+    $(previewId).src = dataUrl;
+    $(previewId).classList.add('show');
+    $(dataId).value = dataUrl; // Store as data URL
+  };
+  reader.readAsDataURL(file);
+}
+
+function previewFromUrl(urlId, previewId) {
+  const url = gv(urlId);
+  const prev = $(previewId);
+  if (url) {
+    prev.src = url;
+    prev.classList.add('show');
+    prev.onerror = () => prev.classList.remove('show');
+  } else {
+    prev.classList.remove('show');
+  }
+}
+
+function switchUploadTab(prefix, tab, btn) {
+  const urlTab = $(prefix+'-url-tab');
+  const fileTab = $(prefix+'-file-tab');
+  if (urlTab) urlTab.style.display = tab==='url' ? '' : 'none';
+  if (fileTab) fileTab.style.display = tab==='file' ? '' : 'none';
+  // Update tab buttons
+  btn.closest('.upload-tabs')?.querySelectorAll('.upload-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// Get image value: data URL or remote URL
+function getImageValue(urlId, dataId) {
+  const data = $(dataId)?.value;
+  if (data && data.startsWith('data:')) return data;
+  return gv(urlId);
+}
+
+function setImagePreview(urlId, dataId, previewId, value) {
+  if (!value) return;
+  if (value.startsWith('data:')) {
+    sv(dataId, value);
+    $(previewId).src = value;
+    $(previewId).classList.add('show');
+  } else {
+    sv(urlId, value);
+    $(previewId).src = value;
+    $(previewId).classList.add('show');
+  }
+}
+
+// ═══════════════════════════════════════════
+// RICH TEXT EDITOR
+// ═══════════════════════════════════════════
+function execCmd(cmd){document.execCommand(cmd,false,null);$('npEditor').focus();}
+function execFmt(tag){document.execCommand('formatBlock',false,tag);$('npEditor').focus();}
+function execCmdEM(cmd){document.execCommand(cmd,false,null);$('em-editor').focus();}
+function execFmtEM(tag){document.execCommand('formatBlock',false,tag);$('em-editor').focus();}
+function insertBlockquote(){
+  const sel=window.getSelection();
+  const text=sel&&sel.toString()?sel.toString():'Trích dẫn tại đây...';
+  document.execCommand('insertHTML',false,`<blockquote>${text}</blockquote>`);
+}
+function insertQuoteEM(){
+  const sel=window.getSelection();
+  const text=sel&&sel.toString()?sel.toString():'Trích dẫn...';
+  document.execCommand('insertHTML',false,`<blockquote>${text}</blockquote>`);
+}
+function insertLink(){
+  const url=prompt('Nhập URL:');
+  if(url) document.execCommand('createLink',false,url);
+}
+function insertLinkEM(){
+  const url=prompt('Nhập URL:');
+  if(url) document.execCommand('createLink',false,url);
+}
+let draftTimeout;
+function autoSaveDraft(){
+  clearTimeout(draftTimeout);
+  draftTimeout=setTimeout(()=>{
+    saveDraft(true);
+  },2000);
+}
+function saveDraft(silent=false){
+  const draft={
+    section:gv('npSection'),title:gv('npTitle'),author:gv('npAuthor'),
+    excerpt:gv('npExcerpt'),content:$('npEditor').innerHTML,
+    tags:[...npTags],date:gv('npDate'),image:getImageValue('npImageUrl','npImageData')
+  };
+  localStorage.setItem('ch_draft',JSON.stringify(draft));
+  if(!silent){$('draftNotice').style.display='block';setTimeout(()=>$('draftNotice').style.display='none',2000);}
+}
+function loadDraft(){
+  try{
+    const d=JSON.parse(localStorage.getItem('ch_draft')||'{}');
+    if(d.title){
+      sv('npSection',d.section);sv('npTitle',d.title);sv('npAuthor',d.author);
+      sv('npExcerpt',d.excerpt);$('npEditor').innerHTML=d.content||'';
+      sv('npDate',d.date);
+      if(d.image) setImagePreview('npImageUrl','npImageData','npImgPrev',d.image);
+      npTags.length=0;(d.tags||[]).forEach(t=>{npTags.push(t);});
+      renderTags('np',npTags);
+      $('draftNotice').style.display='block';
+      $('draftNotice').textContent='✓ Đã nạp nháp lưu trước đó';
     }
-  } catch(e) { console.error('loadData:', e); }
-  return null;
+  }catch(e){}
+}
+function clearNewPost(){
+  sv('npTitle','');sv('npAuthor','');sv('npExcerpt','');sv('npDate',today());
+  sv('npImageUrl','');sv('npImageData','');$('npEditor').innerHTML='';
+  npTags.length=0;renderTags('np',npTags);
+  $('npImgPrev').classList.remove('show');
+  sv('editPostSection','');sv('editPostIdx','-1');
+  $('newPostPageTitle').textContent='Thêm bài viết mới';
+  localStorage.removeItem('ch_draft');
 }
 
-function renderBanner(b) {
-  if (!b) return;
-  if (b.badge) document.getElementById('hero-badge').textContent = b.badge;
-  if (b.title_line1) document.getElementById('hero-line1').textContent = b.title_line1;
-  if (b.title_line2) document.getElementById('hero-line2').textContent = b.title_line2;
-  if (b.name) { document.getElementById('hero-name').textContent = b.name; document.title = 'Portfolio - ' + b.name; document.getElementById('nav-brand').textContent = b.name; }
-  if (b.description) document.getElementById('hero-desc').textContent = b.description;
-  if (b.btn_primary) document.getElementById('hero-btn1').textContent = b.btn_primary;
-  if (b.avatar_url) document.getElementById('hero-avatar').src = b.avatar_url;
+// ═══════════════════════════════════════════
+// TAGS
+// ═══════════════════════════════════════════
+function handleTagKey(e,prefix){
+  if(e.key!=='Enter'&&e.key!==',')return;
+  e.preventDefault();
+  const val=e.target.value.trim().replace(/,$/,'');
+  if(!val)return;
+  const arr=prefix==='np'?npTags:emTags;
+  if(!arr.includes(val)){arr.push(val);}
+  e.target.value='';
+  renderTags(prefix,arr);
 }
-
-function renderSkills(skills) {
-  const g = document.getElementById('skills-grid');
-  if (!skills || !skills.length) { g.innerHTML = '<p class="text-on-surface-variant col-span-3">Chưa có kỹ năng.</p>'; return; }
-  g.innerHTML = skills.map(s => {
-    const c = COLOR_MAP[s.color] || COLOR_MAP.primary;
-    return `<div class="aspect-square flex flex-col items-center justify-center p-4 ${c.bg} border ${c.border} rounded-2xl ${c.hover} transition-colors">
-      <span class="material-symbols-outlined ${c.icon} text-4xl mb-3">${s.icon}</span>
-      <span class="text-label-bold font-label-bold text-on-surface text-center">${s.name}</span>
-      <span class="${c.num} text-headline-md font-bold mt-1">${s.percent}</span>
-    </div>`;
-  }).join('');
-}
-
-function renderExperience(exp) {
-  const el = document.getElementById('experience-list');
-  if (!exp || !exp.length) { el.innerHTML = '<p class="text-on-surface-variant">Chưa có kinh nghiệm.</p>'; return; }
-  el.innerHTML = exp.map(e => `
-    <div class="relative">
-      <div class="absolute -left-[41px] top-1 w-5 h-5 rounded-full bg-${e.color} border-4 border-surface shadow-sm"></div>
-      <h4 class="text-headline-md font-headline-md text-on-surface">${e.title}</h4>
-      <p class="text-label-bold font-label-bold text-${e.color} mt-1 mb-3">${e.company} | ${e.period}</p>
-      <p class="text-body-md text-on-surface-variant">${e.desc}</p>
-    </div>
-  `).join('');
-}
-
-function renderPortfolio(items) {
-  const g = document.getElementById('portfolio-grid');
-  if (!items || !items.length) { g.innerHTML = '<div class="rounded-3xl border-2 border-dashed border-outline-variant/40 p-16 text-center text-on-surface-variant">Chưa có dự án nào. Thêm từ trang <a href="admin/" class="text-primary underline">Admin</a>.</div>'; return; }
-  g.innerHTML = items.map(p => {
-    const tagHtml = (p.tags||[]).map((t,i) => {
-      const col = (p.tag_colors||[])[i];
-      return col === 'white'
-        ? `<span class="bg-white/20 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-sm font-bold border border-white/30">${t}</span>`
-        : `<span class="bg-${col||'primary'}/90 backdrop-blur-md text-on-primary px-4 py-1.5 rounded-full text-sm font-bold">${t}</span>`;
-    }).join('');
-    return `<div class="relative group overflow-hidden rounded-[32px] ambient-shadow cursor-pointer border border-white/20">
-      <div class="aspect-[21/9] w-full overflow-hidden">
-        <img alt="${p.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" src="${p.image||''}">
-      </div>
-      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-90 transition-opacity group-hover:opacity-100"></div>
-      <div class="absolute inset-0 flex flex-col justify-end p-8 md:p-12 transition-transform duration-500 transform translate-y-4 group-hover:translate-y-0">
-        <div class="flex items-center gap-3 mb-4">${tagHtml}</div>
-        <h3 class="text-display-lg text-white font-display-lg mb-4">${p.title}</h3>
-        <p class="text-white/80 text-body-lg max-w-2xl mb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">${p.desc}</p>
-        <div class="flex items-center gap-4">
-          <a href="${p.link||'#'}" class="bg-white text-on-surface py-3 px-8 rounded-full font-bold hover:bg-primary hover:text-on-primary transition-colors flex items-center gap-2">
-            View Case Study <span class="material-symbols-outlined">arrow_outward</span>
-          </a>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderLearn(courses, research, community) {
-  const g = document.getElementById('learn-grid');
-  let html = '';
-  // Large course card
-  const c = (courses||[])[0];
-  if (c) {
-    html += `<div class="md:col-span-2 md:row-span-2 rounded-3xl p-8 relative overflow-hidden bg-primary-fixed flex flex-col justify-between ambient-shadow border border-white/40 group">
-      <div class="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-3xl opacity-20 -mr-20 -mt-20 group-hover:opacity-40 transition-opacity duration-700"></div>
-      <div class="relative z-10 flex justify-between items-start">
-        <span class="bg-primary text-on-primary px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">${c.badge}</span>
-        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-primary">
-          <span class="material-symbols-outlined">school</span>
-        </div>
-      </div>
-      <div class="relative z-10 mt-auto">
-        <h3 class="text-headline-lg font-headline-lg text-on-surface mb-3 w-4/5 leading-tight">${c.title}</h3>
-        <p class="text-body-lg font-body-lg text-on-surface-variant mb-6 w-3/4">${c.desc}</p>
-        <a href="${c.link||'#'}" class="bg-on-surface text-surface-bright py-3 px-8 rounded-full font-bold hover:bg-primary transition-colors inline-flex items-center gap-2">
-          ${c.btn} <span class="material-symbols-outlined text-[18px]">arrow_right_alt</span>
-        </a>
-      </div>
-    </div>`;
-  }
-  // Research cards
-  (research||[]).slice(0,1).forEach(r => {
-    html += `<div class="rounded-3xl p-6 bg-secondary-fixed flex flex-col justify-between ambient-shadow relative overflow-hidden">
-      <div class="absolute -right-8 -bottom-8 opacity-20"><span class="material-symbols-outlined text-[120px]">science</span></div>
-      <div>
-        <span class="text-on-secondary-fixed-variant font-bold text-sm uppercase tracking-wider mb-2 block">${r.label}</span>
-        <h4 class="text-headline-md font-headline-md text-on-secondary-fixed leading-tight mb-2">${r.title}</h4>
-      </div>
-      <a class="inline-flex items-center gap-1 text-on-secondary-fixed-variant font-bold mt-4 hover:underline" href="${r.link||'#'}">
-        Đọc Bài Viết <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-      </a>
-    </div>`;
+function renderTags(prefix,arr){
+  const wrap=$(prefix==='np'?'npTagsInput':'emTagsInput');
+  const inp=$(prefix==='np'?'npTagField':'emTagField');
+  wrap.innerHTML='';
+  arr.forEach((t,i)=>{
+    const s=document.createElement('span');s.className='tag-chip';
+    s.innerHTML=t+`<button onclick="removTag('${prefix}',${i})">×</button>`;
+    wrap.appendChild(s);
   });
-  // Community card
-  if (community) {
-    html += `<div class="rounded-3xl p-6 bg-surface-container-high flex flex-col justify-center items-center text-center ambient-shadow border border-outline-variant/30">
-      <div class="w-16 h-16 bg-primary-container rounded-2xl flex items-center justify-center text-on-primary-container mb-4 transform rotate-12 shadow-inner">
-        <span class="material-symbols-outlined text-[32px]">group_add</span>
+  wrap.appendChild(inp);
+}
+function removTag(prefix,i){
+  const arr=prefix==='np'?npTags:emTags;
+  arr.splice(i,1);renderTags(prefix,arr);
+}
+
+// ═══════════════════════════════════════════
+// LOGIN / AUTH
+// ═══════════════════════════════════════════
+async function doLogin(){
+  const user=gv('lUser'),repo=gv('lRepo'),token=gv('lToken');
+  if(!user||!repo||!token){lErr('Điền đầy đủ thông tin.');return;}
+  try{
+    const r=await ghFetch('repos/'+user+'/'+repo,token);
+    if(!r.ok)throw new Error();
+    AUTH={user,repo,token};
+    localStorage.setItem('ch_auth',JSON.stringify(AUTH));
+    startApp();
+  }catch{lErr('Token không hợp lệ hoặc không có quyền repo.');}
+}
+function lErr(m){const e=$('lErr');e.textContent=m;e.style.display='block';}
+function doLogout(){localStorage.removeItem('ch_auth');location.reload();}
+window.addEventListener('DOMContentLoaded',()=>{
+  const s=localStorage.getItem('ch_auth');
+  if(s){try{AUTH=JSON.parse(s);startApp();}catch(e){}}
+});
+
+// ═══════════════════════════════════════════
+// GITHUB API
+// ═══════════════════════════════════════════
+function ghFetch(path,token,opts={}){
+  return fetch('https://api.github.com/'+path,{
+    ...opts,
+    headers:{Authorization:'token '+(token||AUTH.token),Accept:'application/vnd.github.v3+json','Content-Type':'application/json',...(opts.headers||{})}
+  });
+}
+async function loadData(){
+  try{
+    const r=await ghFetch('repos/'+AUTH.user+'/'+AUTH.repo+'/contents/data/content.json');
+    if(r.ok){const f=await r.json();_sha=f.sha;DATA=JSON.parse(fromB64(f.content));return;}
+  }catch(e){console.error(e);}
+  DATA={home:{},portfolio:[],courses:[],knowledge:[],research:[],menus:DEFAULT_MENUS,pages:[]};
+}
+async function saveData(){
+  if(!DATA.menus) DATA.menus=DEFAULT_MENUS;
+  const body={message:'Update content ['+new Date().toLocaleString('vi-VN')+']',content:toB64(JSON.stringify(DATA,null,2))};
+  if(_sha)body.sha=_sha;
+  const r=await ghFetch('repos/'+AUTH.user+'/'+AUTH.repo+'/contents/data/content.json',AUTH.token,{method:'PUT',body:JSON.stringify(body)});
+  if(!r.ok){const e=await r.json();throw new Error(e.message||'Lỗi lưu');}
+  const res=await r.json();_sha=res.content.sha;
+}
+async function trySave(){
+  try{await saveData();showAlert('✓ Đã lưu và cập nhật GitHub thành công!');refreshStats();}
+  catch(e){showAlert('❌ Lỗi: '+e.message,'error');}
+}
+
+// ═══════════════════════════════════════════
+// APP START
+// ═══════════════════════════════════════════
+async function startApp(){
+  $('loginView').style.display='none';
+  $('sidebar').style.display='flex';
+  $('mainArea').style.display='block';
+  $('sbUser').textContent=AUTH.user+'/'+AUTH.repo;
+  await loadData();
+  if(!DATA.menus)DATA.menus=[...DEFAULT_MENUS];
+  refreshStats();
+}
+
+function refreshStats(){
+  $('d-port').textContent=(DATA.portfolio||[]).length;
+  $('d-cour').textContent=(DATA.courses||[]).length;
+  $('d-know').textContent=(DATA.knowledge||[]).length;
+  $('d-rese').textContent=(DATA.research||[]).length;
+}
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+function goTab(tab,btn){
+  document.querySelectorAll('.tab-pane').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  $('tab-'+tab).classList.add('active');
+  if(btn)btn.classList.add('active');
+
+  if(tab==='home')loadHomeForm();
+  if(tab==='banner')loadBannerForm();
+  if(tab==='skills'){renderSkillsList();renderExpList();}
+  if(tab==='community')loadCommunityForm();
+  if(tab==='portfolio'){renderSection('portfolio');renderList('port','portfolio');}
+  if(tab==='courses'){renderSection('courses');renderList('cour','courses');}
+  if(tab==='knowledge'){renderSection('knowledge');renderList('know','knowledge');}
+  if(tab==='research'){renderSection('research');renderList('rese','research');}
+  if(tab==='menus')renderMenus();
+  if(tab==='posts')renderAllPosts();
+  if(tab==='new-post'){loadDraft();sv('npDate',today());}
+  if(tab==='settings'){sv('setUser',AUTH.user);sv('setRepo',AUTH.repo);$('siteUrl').textContent='https://'+AUTH.user+'.github.io/';}
+}
+function goTabByName(tab){
+  const btn=document.querySelector(`.nav-btn[onclick*="${tab}"]`);
+  goTab(tab,btn);
+}
+
+// ═══════════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════════
+function loadHomeForm(){
+  const h=DATA.home||{};
+  sv('hBadge',h.badge);sv('hName',h.name||h.title_line1);sv('hL1',h.title_line1);sv('hL2',h.title_line2);sv('hDesc',h.description);
+  if(h.avatar_url) setImagePreview('hAvatarUrl','hAvatarData','hImgPrev',h.avatar_url);
+}
+async function saveHome(){
+  DATA.home={...DATA.home,badge:gv('hBadge'),name:gv('hName'),title_line1:gv('hL1'),title_line2:gv('hL2'),description:gv('hDesc'),avatar_url:getImageValue('hAvatarUrl','hAvatarData')};
+  await trySave();
+}
+
+// ═══════════════════════════════════════════
+// RENDER LISTS
+// ═══════════════════════════════════════════
+function sectionLabel(s){return{portfolio:'Portfolio',courses:'Khóa học',knowledge:'Kiến thức',research:'Nghiên cứu'}[s]||s;}
+function renderSection(s){
+  const items=DATA[s]||[];
+  $( {portfolio:'portCount',courses:'courCount',knowledge:'knowCount',research:'reseCount'}[s] ).textContent = items.length+' mục';
+}
+function renderList(prefix, section){
+  const items=DATA[section]||[];
+  const el=$(prefix+'List');
+  if(!items.length){el.innerHTML='<div class="empty-state">Chưa có nội dung. Nhấn "Thêm" để bắt đầu.</div>';return;}
+  el.innerHTML=items.map((item,i)=>`
+    <div class="article-row">
+      <img class="article-thumb" src="${item.image||''}" alt="" onerror="this.style.background='var(--sur3)'">
+      <div class="article-info">
+        <div class="article-title">${item.title||'Không có tiêu đề'}</div>
+        <div class="article-meta">${item.author||''} ${item.date?'• '+fmt(item.date):''} ${item.status?'• <span class=badge-pri>'+item.status+'</span>':''}</div>
+        ${item.excerpt?`<div style="font-size:.8rem;color:var(--txt3);margin-top:4px;line-clamp:1;overflow:hidden;max-height:1.5em">${item.excerpt.substring(0,120)}</div>`:''}
       </div>
-      <h4 class="text-headline-md font-headline-md text-on-surface mb-2">${community.title}</h4>
-      <p class="text-body-md text-on-surface-variant mb-4 text-sm">${community.desc}</p>
-      <a href="${community.link||'#'}" class="w-full py-2.5 bg-white rounded-full text-primary font-bold shadow-sm border border-outline-variant/20 hover:bg-surface-bright transition-colors block text-center">${community.btn}</a>
-    </div>`;
-  }
-  g.innerHTML = html || '<div class="col-span-3 text-center text-on-surface-variant p-16">Chưa có nội dung. Thêm từ <a href="admin/" class="text-primary underline">Admin</a>.</div>';
+      <div class="article-actions">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="openEditModal('${section}',${i})" title="Sửa">
+          <span class="material-symbols-outlined" style="font-size:16px">edit</span>
+        </button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('${section}',${i})" title="Xoá">
+          <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+        </button>
+      </div>
+    </div>`).join('');
 }
 
-function renderFooter(f) {
-  if (!f) return;
-  if (f.brand) document.getElementById('footer-brand').textContent = f.brand;
-  if (f.copyright) document.getElementById('footer-copy').textContent = f.copyright;
+// All posts view
+function renderAllPosts(){
+  const filter=gv('filterSection')||'all';
+  let all=[];
+  const sections=['portfolio','courses','knowledge','research'];
+  sections.forEach(s=>{
+    (DATA[s]||[]).forEach((item,i)=>{
+      if(filter==='all'||filter===s) all.push({...item,_section:s,_idx:i});
+    });
+  });
+  $('postsCount').textContent=all.length+' bài viết';
+  const el=$('allPostsList');
+  if(!all.length){el.innerHTML='<div class="empty-state">Chưa có bài viết nào</div>';return;}
+  el.innerHTML=all.map(item=>`
+    <div class="article-row">
+      <img class="article-thumb" src="${item.image||''}" alt="" onerror="this.style.background='var(--sur3)'">
+      <div class="article-info">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span class="badge badge-pri">${sectionLabel(item._section)}</span>
+          ${item.status?`<span class="badge badge-gray">${item.status}</span>`:''}
+        </div>
+        <div class="article-title">${item.title||'Không có tiêu đề'}</div>
+        <div class="article-meta">${item.author||''} ${item.date?'• '+fmt(item.date):''}</div>
+      </div>
+      <div class="article-actions">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="openEditModal('${item._section}',${item._idx})" title="Sửa">
+          <span class="material-symbols-outlined" style="font-size:16px">edit</span>
+        </button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('${item._section}',${item._idx})" title="Xoá">
+          <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// QUICK POST
+// ═══════════════════════════════════════════
+async function quickPost(){
+  const title=gv('qTitle');
+  if(!title){showAlert('Nhập tiêu đề!','error');return;}
+  const section=gv('qSection');
+  const image=getImageValue('qImageUrl','qImageData');
+  const item={id:uid(),title,author:gv('qAuthor'),excerpt:gv('qExcerpt'),content:'',date:today(),image,tags:[],views:0,likes:0,comments:0};
+  if(!DATA[section])DATA[section]=[];
+  DATA[section].unshift(item);
+  await trySave();
+  ['qTitle','qAuthor','qExcerpt','qImageUrl'].forEach(id=>sv(id,''));
+  sv('qImageData','');$('qImgPrev').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════
+// NEW POST FORM
+// ═══════════════════════════════════════════
+function updateNewPostForm(){
+  const s=gv('npSection');
+  const isCourse=s==='courses';
+  const isPort=s==='portfolio';
+  $('npCourseExtra').style.display=isCourse?'grid':'none';
+  $('npCatRow').style.display=(isCourse||isPort)?'none':'grid';
+  $('em-course-extra')&&($('em-course-extra').style.display=isCourse?'grid':'none');
+}
+
+async function savePost(){
+  const title=gv('npTitle');
+  if(!title){showAlert('Nhập tiêu đề!','error');return;}
+  const section=gv('npSection');
+  const idx=parseInt(gv('editPostIdx')||'-1');
+  const image=getImageValue('npImageUrl','npImageData');
+
+  const item={
+    id:uid(),title,author:gv('npAuthor'),category:gv('npCategory'),
+    date:gv('npDate')||today(),read_time:parseInt(gv('npReadTime'))||5,
+    image,excerpt:gv('npExcerpt'),content:$('npEditor').innerHTML,
+    tags:[...npTags],status:gv('npStatus'),
+    lessons:parseInt(gv('npLessons'))||undefined,duration:gv('npDuration')||undefined,
+    views:0,likes:0,comments:0
+  };
+  // Clean undefined
+  Object.keys(item).forEach(k=>{if(item[k]===undefined)delete item[k];});
+
+  if(!DATA[section])DATA[section]=[];
+  if(idx>=0)DATA[section][idx]={...DATA[section][idx],...item,id:DATA[section][idx].id};
+  else DATA[section].unshift(item);
+
+  await trySave();
+  clearNewPost();
+  localStorage.removeItem('ch_draft');
+  showAlert('✓ Đã xuất bản bài viết vào mục '+sectionLabel(section)+'!');
+}
+
+// ═══════════════════════════════════════════
+// EDIT MODAL
+// ═══════════════════════════════════════════
+function openEditModal(section, idx){
+  sv('editModalSection',section);
+  sv('editModalIdx',idx);
+  $('editModalTitle').textContent = idx<0 ? 'Thêm '+sectionLabel(section) : 'Sửa '+sectionLabel(section);
+
+  const isCourse=section==='courses';
+  const isPort=section==='portfolio';
+  $('em-course-extra').style.display=isCourse?'grid':'none';
+  $('em-author-field').style.display=isPort?'none':'block';
+  $('em-dates').style.display=isPort?'none':'grid';
+  $('em-featured-field').style.display=isPort?'block':'none';
+  $('em-status-field').style.display=(isCourse||isPort)?'block':'none';
+
+  emTags.length=0;
+  // Reset
+  ['em-title','em-author','em-category','em-excerpt','em-imageUrl','em-imageData','em-date','em-readtime','em-link','em-lessons','em-duration'].forEach(id=>sv(id,''));
+  $('em-editor').innerHTML='';
+  $('emImgPrev').classList.remove('show');
+
+  if(idx>=0){
+    const item=DATA[section][idx];
+    sv('em-title',item.title);
+    sv('em-author',item.author);
+    sv('em-category',item.category);
+    sv('em-excerpt',item.excerpt);
+    sv('em-date',item.date);
+    sv('em-readtime',item.read_time);
+    sv('em-link',item.link);
+    sv('em-lessons',item.lessons);
+    sv('em-duration',item.duration);
+    sv('em-status',item.status||'active');
+    sv('em-featured',item.featured===false?'false':'true');
+    $('em-editor').innerHTML=item.content||'';
+    if(item.image) setImagePreview('em-imageUrl','emImageData','emImgPrev',item.image);
+    (item.tags||[]).forEach(t=>emTags.push(t));
+    renderTags('em',emTags);
+  }
+  openModal('editModal');
+}
+async function saveEditModal(){
+  const section=gv('editModalSection');
+  const idx=parseInt(gv('editModalIdx'));
+  const title=gv('em-title');
+  if(!title){showAlert('Nhập tiêu đề!','error');return;}
+  const image=getImageValue('em-imageUrl','emImageData');
+  const item={
+    id:idx>=0?DATA[section][idx].id:uid(),
+    title,author:gv('em-author'),category:gv('em-category'),
+    date:gv('em-date')||today(),read_time:parseInt(gv('em-readtime'))||5,
+    image,excerpt:gv('em-excerpt'),content:$('em-editor').innerHTML,
+    tags:[...emTags],status:gv('em-status'),link:gv('em-link')||'#',
+    featured:gv('em-featured')==='true',
+    lessons:parseInt(gv('em-lessons'))||undefined,duration:gv('em-duration')||undefined,
+  };
+  Object.keys(item).forEach(k=>{if(item[k]===undefined)delete item[k];});
+  if(!DATA[section])DATA[section]=[];
+  if(idx>=0)DATA[section][idx]=item;
+  else DATA[section].unshift(item);
+  await trySave();
+  closeModal('editModal');
+  renderList({portfolio:'port',courses:'cour',knowledge:'know',research:'rese'}[section],section);
+}
+
+async function deleteItem(section,idx){
+  if(!confirm('Xoá mục "'+((DATA[section]||[])[idx]?.title||'')+'". Không thể hoàn tác!'))return;
+  DATA[section].splice(idx,1);
+  await trySave();
+  const prefix={portfolio:'port',courses:'cour',knowledge:'know',research:'rese'}[section];
+  renderSection(section);
+  renderList(prefix,section);
+  renderAllPosts();
+}
+
+// ═══════════════════════════════════════════
+// MENU MANAGER
+// ═══════════════════════════════════════════
+function renderMenus(){
+  const menus=DATA.menus||DEFAULT_MENUS;
+  const el=$('menuList');
+  el.innerHTML=menus.map((m,i)=>`
+    <div class="menu-item-row" id="menuRow${i}">
+      <span class="material-symbols-outlined menu-drag" style="font-size:20px">drag_indicator</span>
+      <input type="text" value="${m.label}" id="ml_${i}" style="width:200px;padding:6px 10px;font-size:.875rem" oninput="DATA.menus[${i}].label=this.value">
+      <input type="text" value="${m.href}" id="mh_${i}" style="flex:1;padding:6px 10px;font-size:.82rem;font-family:monospace" oninput="DATA.menus[${i}].href=this.value">
+      <button class="btn btn-danger btn-sm btn-icon" onclick="removeMenuItem(${i})">
+        <span class="material-symbols-outlined" style="font-size:15px">delete</span>
+      </button>
+    </div>`).join('');
+}
+function addMenuItem(){
+  const label=gv('newMenuLabel'),href=gv('newMenuHref');
+  if(!label||!href){showAlert('Nhập tên và liên kết!','error');return;}
+  if(!DATA.menus)DATA.menus=[...DEFAULT_MENUS];
+  DATA.menus.push({label,href:href.endsWith('.html')?href:href+'.html'});
+  sv('newMenuLabel','');sv('newMenuHref','');
+  renderMenus();
+}
+function removeMenuItem(i){
+  if(!confirm('Xoá mục menu "'+DATA.menus[i]?.label+'"?'))return;
+  DATA.menus.splice(i,1);renderMenus();
+}
+async function saveMenus(){
+  await trySave();
+  showAlert('✓ Đã lưu cấu hình menu!');
+}
+
+async function createNewPage(){
+  const name=gv('newPageName'),slug=gv('newPageSlug');
+  if(!name||!slug){showAlert('Nhập tên và slug!','error');return;}
+  const href=slug+'.html';
+  if(!DATA.menus)DATA.menus=[...DEFAULT_MENUS];
+  DATA.menus.push({label:name,href});
+  if(!DATA.pages)DATA.pages=[];
+  DATA.pages.push({name,href,slug,desc:gv('newPageDesc'),created:today()});
+  await trySave();
+  sv('newPageName','');sv('newPageSlug','');sv('newPageDesc','');
+  renderMenus();
+  showAlert('✓ Đã tạo trang "'+name+'" và thêm vào menu!');
+}
+
+// ═══════════════════════════════════════════
+// BACKUP / RESTORE
+// ═══════════════════════════════════════════
+function downloadBackup(){
+  const blob=new Blob([JSON.stringify(DATA,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='creativehub-backup-'+today()+'.json';
+  a.click();
+}
+function restoreBackup(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    try{
+      DATA=JSON.parse(e.target.result);
+      await trySave();
+      showAlert('✓ Đã khôi phục dữ liệu!');
+      refreshStats();
+    }catch{showAlert('File không hợp lệ!','error');}
+  };
+  reader.readAsText(file);
+}
+
+
+// ══════════════════════════════════════════════════
+// BANNER
+// ══════════════════════════════════════════════════
+function loadBannerForm() {
+  const b = DATA.banner || {};
+  sv('banBadge', b.badge); sv('banName', b.name);
+  sv('banLine1', b.title_line1); sv('banLine2', b.title_line2);
+  sv('banDesc', b.description);
+  sv('banBtn1', b.btn_primary); sv('banBtn2', b.btn_secondary);
+  if (b.avatar_url) setImagePreview('banAvatarUrl','banAvatarData','banImgPrev', b.avatar_url);
+}
+async function saveBanner() {
+  DATA.banner = {
+    badge: gv('banBadge'), name: gv('banName'),
+    title_line1: gv('banLine1'), title_line2: gv('banLine2'),
+    description: gv('banDesc'),
+    btn_primary: gv('banBtn1'), btn_secondary: gv('banBtn2'),
+    avatar_url: getImageValue('banAvatarUrl','banAvatarData')
+  };
+  // Đồng bộ nav_brand với tên banner
+  if (DATA.banner.name) DATA.nav_brand = DATA.banner.name;
+  await trySave();
+}
+
+// ══════════════════════════════════════════════════
+// SKILLS
+// ══════════════════════════════════════════════════
+function renderSkillsList() {
+  const items = DATA.skills || [];
+  const el = $('skillsList');
+  if (!items.length) { el.innerHTML = '<div class="empty-state">Chưa có kỹ năng nào.</div>'; return; }
+  const COLOR_LABEL = {primary:'Tím', secondary:'Xanh lá', tertiary:'Vàng', 'primary-container':'Tím nhạt'};
+  el.innerHTML = items.map((s,i) => `
+    <div class="article-row">
+      <div style="width:44px;height:44px;border-radius:12px;background:var(--pri-lt);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span class="material-symbols-outlined" style="font-size:22px;color:var(--pri)">${s.icon||'star'}</span>
+      </div>
+      <div class="article-info">
+        <div class="article-title">${s.name}</div>
+        <div class="article-meta">${s.percent||''} · ${COLOR_LABEL[s.color]||s.color}</div>
+      </div>
+      <div class="article-actions">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="openSkillModal(${i})">
+          <span class="material-symbols-outlined" style="font-size:16px">edit</span>
+        </button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteSkill(${i})">
+          <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+        </button>
+      </div>
+    </div>`).join('');
+}
+function openSkillModal(idx) {
+  sv('skillIdx', idx);
+  $('skillModalTitle').textContent = idx < 0 ? 'Thêm kỹ năng' : 'Sửa kỹ năng';
+  if (idx >= 0) {
+    const s = (DATA.skills||[])[idx];
+    sv('skName', s.name); sv('skPercent', s.percent); sv('skIcon', s.icon); sv('skColor', s.color);
+  } else {
+    ['skName','skPercent','skIcon'].forEach(id => sv(id,''));
+    sv('skColor','primary');
+  }
+  openModal('skillModal');
+}
+async function saveSkill() {
+  const name = gv('skName'); if (!name) { showAlert('Nhập tên kỹ năng!','error'); return; }
+  const item = { name, percent: gv('skPercent'), icon: gv('skIcon')||'star', color: gv('skColor') };
+  if (!DATA.skills) DATA.skills = [];
+  const idx = parseInt(gv('skillIdx'));
+  if (idx >= 0) DATA.skills[idx] = item; else DATA.skills.push(item);
+  await trySave();
+  closeModal('skillModal');
+  renderSkillsList();
+}
+async function deleteSkill(i) {
+  if (!confirm('Xoá kỹ năng "' + DATA.skills[i].name + '"?')) return;
+  DATA.skills.splice(i, 1);
+  await trySave(); renderSkillsList();
+}
+
+// ══════════════════════════════════════════════════
+// EXPERIENCE
+// ══════════════════════════════════════════════════
+function renderExpList() {
+  const items = DATA.experience || [];
+  const el = $('expList');
+  if (!items.length) { el.innerHTML = '<div class="empty-state">Chưa có kinh nghiệm nào.</div>'; return; }
+  el.innerHTML = items.map((e,i) => `
+    <div class="article-row">
+      <div style="width:44px;height:44px;border-radius:12px;background:var(--sec-lt);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span class="material-symbols-outlined" style="font-size:20px;color:var(--sec)">work</span>
+      </div>
+      <div class="article-info">
+        <div class="article-title">${e.title}</div>
+        <div class="article-meta">${e.company||''} · ${e.period||''}</div>
+        ${e.desc ? `<div style="font-size:.8rem;color:var(--txt3);margin-top:3px;max-height:1.5em;overflow:hidden">${e.desc}</div>` : ''}
+      </div>
+      <div class="article-actions">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="openExpModal(${i})">
+          <span class="material-symbols-outlined" style="font-size:16px">edit</span>
+        </button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteExp(${i})">
+          <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+        </button>
+      </div>
+    </div>`).join('');
+}
+function openExpModal(idx) {
+  sv('expIdx', idx);
+  $('expModalTitle').textContent = idx < 0 ? 'Thêm kinh nghiệm' : 'Sửa kinh nghiệm';
+  if (idx >= 0) {
+    const e = (DATA.experience||[])[idx];
+    sv('expTitle', e.title); sv('expCompany', e.company);
+    sv('expPeriod', e.period); sv('expDesc', e.desc); sv('expColor', e.color||'primary');
+  } else {
+    ['expTitle','expCompany','expPeriod','expDesc'].forEach(id => sv(id,''));
+    sv('expColor','primary');
+  }
+  openModal('expModal');
+}
+async function saveExp() {
+  const title = gv('expTitle'); if (!title) { showAlert('Nhập chức vụ!','error'); return; }
+  const item = { title, company: gv('expCompany'), period: gv('expPeriod'), desc: gv('expDesc'), color: gv('expColor') };
+  if (!DATA.experience) DATA.experience = [];
+  const idx = parseInt(gv('expIdx'));
+  if (idx >= 0) DATA.experience[idx] = item; else DATA.experience.push(item);
+  await trySave(); closeModal('expModal'); renderExpList();
+}
+async function deleteExp(i) {
+  if (!confirm('Xoá kinh nghiệm "' + DATA.experience[i].title + '"?')) return;
+  DATA.experience.splice(i, 1);
+  await trySave(); renderExpList();
+}
+
+// ══════════════════════════════════════════════════
+// COMMUNITY & FOOTER
+// ══════════════════════════════════════════════════
+function loadCommunityForm() {
+  const c = DATA.community || {};
+  sv('comTitle', c.title); sv('comDesc', c.desc); sv('comBtn', c.btn); sv('comLink', c.link);
+  const f = DATA.footer || {};
+  sv('footBrand', f.brand || DATA.nav_brand);
+  sv('footCopy', f.copyright);
   if (f.links) {
-    document.getElementById('footer-links').innerHTML = f.links.map(l =>
-      `<a class="text-surface-variant/70 hover:text-tertiary-fixed transition-colors font-bold" href="${l.href}">${l.label}</a>`
-    ).join('');
+    $('footLinks').value = f.links.map(l => l.label + '|' + l.href).join('\n');
   }
 }
-
-async function init() {
-  const data = await loadData();
-  if (!data) return;
-  renderBanner(data.banner);
-  renderSkills(data.skills);
-  renderExperience(data.experience);
-  renderPortfolio(data.portfolio);
-  renderLearn(data.courses, data.research, data.community);
-  renderFooter(data.footer);
+async function saveCommunity() {
+  DATA.community = { title: gv('comTitle'), desc: gv('comDesc'), btn: gv('comBtn'), link: gv('comLink')||'#' };
+  await trySave();
+}
+async function saveFooter() {
+  DATA.footer = {
+    brand: gv('footBrand'),
+    copyright: gv('footCopy'),
+    links: gv('footLinks').split('\n').filter(Boolean).map(l => {
+      const [label, href] = l.split('|');
+      return { label: (label||'').trim(), href: (href||'#').trim() };
+    })
+  };
+  if (DATA.footer.brand) DATA.nav_brand = DATA.footer.brand;
+  await trySave();
 }
 
-init();
+// ══════════════════════════════════════════════════
+// PATCH goTab để load các form mới
+// ══════════════════════════════════════════════════
+// ── NAV BRAND MANAGEMENT ──
+function loadNavBrandForm() {
+  sv('navBrand', DATA.nav_brand || '');
+  sv('navCta', DATA.nav_cta || 'Bắt Đầu');
+  const logo = DATA.nav_logo || '';
+  sv('navLogoUrl', logo && !logo.startsWith('data:') ? logo : '');
+  if (logo) setImagePreview('navLogoUrl', 'navLogoData', 'navLogoPrev', logo);
+  updateNavPreview();
+}
+
+function updateNavPreview() {
+  const brand = gv('navBrand') || DATA.nav_brand || 'Nguyễn Đức';
+  const cta = gv('navCta') || DATA.nav_cta || 'Bắt Đầu';
+  const logoData = $('navLogoData')?.value;
+  const logoUrl = gv('navLogoUrl');
+  const logo = logoData || logoUrl;
+
+  const brandEl = $('navPreviewLogo');
+  if (brandEl) {
+    brandEl.innerHTML = logo
+      ? `<img src="${logo}" style="height:32px;width:auto;object-fit:contain" alt="logo">`
+      : brand;
+  }
+  const ctaEl = $('navPreviewCta');
+  if (ctaEl) ctaEl.textContent = cta;
+}
+
+// Update preview realtime
+['navBrand','navCta','navLogoUrl'].forEach(id => {
+  const el = $(id);
+  if (el) el.addEventListener('input', updateNavPreview);
+});
+
+async function saveNavBrand() {
+  DATA.nav_brand = gv('navBrand') || DATA.nav_brand;
+  DATA.nav_cta = gv('navCta') || 'Bắt Đầu';
+  const logoData = $('navLogoData')?.value;
+  const logoUrl = gv('navLogoUrl');
+  DATA.nav_logo = logoData || logoUrl || '';
+  await trySave();
+  showAlert('✓ Đã lưu Logo & Brand! Tất cả trang sẽ cập nhật sau 1 phút.');
+}
+
+// Patch goTab to load nav form
+const _origGoTab = goTab;
+window.goTab = function(tab, btn) {
+  _origGoTab(tab, btn);
+  if (tab === 'menus')      loadNavBrandForm();
+  if (tab === 'banner')     loadBannerForm();
+  if (tab === 'skills')     { renderSkillsList(); renderExpList(); }
+  if (tab === 'community')  loadCommunityForm();
+};
 </script>
+
+<!-- ═══ MODAL: KỸ NĂNG ═══ -->
+<div class="modal-overlay" id="skillModal">
+  <div class="modal-box" style="max-width:460px">
+    <button class="modal-close" onclick="closeModal('skillModal')">✕</button>
+    <h3 id="skillModalTitle">Thêm kỹ năng</h3>
+    <input type="hidden" id="skillIdx" value="-1">
+    <div class="row2">
+      <div class="field">
+        <label>Tên kỹ năng *</label>
+        <input type="text" id="skName" placeholder="UI/UX Design">
+      </div>
+      <div class="field">
+        <label>Phần trăm</label>
+        <input type="text" id="skPercent" placeholder="95%">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Icon (Material Symbols)</label>
+        <input type="text" id="skIcon" placeholder="design_services">
+        <p style="font-size:.72rem;color:var(--txt3);margin-top:3px">
+          Xem icon tại <a href="https://fonts.google.com/icons" target="_blank" style="color:var(--pri)">fonts.google.com/icons</a>
+        </p>
+      </div>
+      <div class="field">
+        <label>Màu sắc</label>
+        <select id="skColor">
+          <option value="primary">Tím (primary)</option>
+          <option value="secondary">Xanh lá (secondary)</option>
+          <option value="tertiary">Vàng (tertiary)</option>
+          <option value="primary-container">Tím nhạt</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('skillModal')">Huỷ</button>
+      <button class="btn btn-primary" onclick="saveSkill()">
+        <span class="material-symbols-outlined" style="font-size:16px">save</span> Lưu kỹ năng
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: KINH NGHIỆM ═══ -->
+<div class="modal-overlay" id="expModal">
+  <div class="modal-box" style="max-width:520px">
+    <button class="modal-close" onclick="closeModal('expModal')">✕</button>
+    <h3 id="expModalTitle">Thêm kinh nghiệm</h3>
+    <input type="hidden" id="expIdx" value="-1">
+    <div class="row2">
+      <div class="field">
+        <label>Chức vụ *</label>
+        <input type="text" id="expTitle" placeholder="Senior UI/UX Designer">
+      </div>
+      <div class="field">
+        <label>Công ty / Tổ chức</label>
+        <input type="text" id="expCompany" placeholder="Creative Studio">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Thời gian</label>
+        <input type="text" id="expPeriod" placeholder="2022 - Hiện tại">
+      </div>
+      <div class="field">
+        <label>Màu điểm timeline</label>
+        <select id="expColor">
+          <option value="primary">Tím</option>
+          <option value="secondary">Xanh lá</option>
+          <option value="tertiary">Vàng</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Mô tả công việc</label>
+      <textarea id="expDesc" rows="3" placeholder="Mô tả công việc và thành tích đạt được..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('expModal')">Huỷ</button>
+      <button class="btn btn-primary" onclick="saveExp()">
+        <span class="material-symbols-outlined" style="font-size:16px">save</span> Lưu kinh nghiệm
+      </button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
