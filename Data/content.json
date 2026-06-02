@@ -41,12 +41,6 @@
       "slug": "Admin",
       "type": "page",
       "children": []
-    },
-    {
-      "label": "Admin",
-      "slug": "Admin",
-      "type": "page",
-      "children": []
     }
   ],
   "pages": {
