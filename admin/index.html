@@ -289,11 +289,18 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
         <div class="form-group"><label>Nút chính (Portfolio)</label><input type="text" id="b-btn1" placeholder="Xem Portfolio"></div>
         <div class="form-group"><label>Nút phụ (Liên hệ)</label><input type="text" id="b-btn2" placeholder="Liên Hệ"></div>
       </div>
-      <div class="form-group">
-        <label>URL ảnh đại diện</label>
-        <input type="url" id="b-avatar" placeholder="https://..." oninput="previewImg('b-avatar','b-avatar-preview')">
-        <img id="b-avatar-preview" class="img-preview" alt="Preview">
-      </div>
+   <div class="form-group">
+  <label>Ảnh đại diện</label>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <input type="text" id="b-avatar" placeholder="URL ảnh (tự động điền sau khi upload)" readonly style="flex:1;">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('bannerFileUpload').click()">
+      <span class="material-symbols-outlined" style="font-size:16px;">cloud_upload</span> Upload
+    </button>
+    <input type="file" id="bannerFileUpload" accept="image/*" onchange="uploadBannerImage(event)" style="display:none;">
+  </div>
+  <div id="bannerUploadProgress" style="display:none;margin-top:8px;font-size:0.85rem;color:var(--primary)">Đang upload...</div>
+  <img id="b-avatar-preview" class="img-preview" alt="Preview">
+</div>
       <button class="btn btn-primary" onclick="saveBanner()">
         <span class="material-symbols-outlined" style="font-size:18px">save</span> Lưu Banner
       </button>
