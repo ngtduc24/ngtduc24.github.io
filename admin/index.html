@@ -1656,5 +1656,92 @@ window.goTab = function(tab, btn) {
   if (tab === 'community')  loadCommunityForm();
 };
 </script>
+
+<!-- ═══ MODAL: KỸ NĂNG ═══ -->
+<div class="modal-overlay" id="skillModal">
+  <div class="modal-box" style="max-width:460px">
+    <button class="modal-close" onclick="closeModal('skillModal')">✕</button>
+    <h3 id="skillModalTitle">Thêm kỹ năng</h3>
+    <input type="hidden" id="skillIdx" value="-1">
+    <div class="row2">
+      <div class="field">
+        <label>Tên kỹ năng *</label>
+        <input type="text" id="skName" placeholder="UI/UX Design">
+      </div>
+      <div class="field">
+        <label>Phần trăm</label>
+        <input type="text" id="skPercent" placeholder="95%">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Icon (Material Symbols)</label>
+        <input type="text" id="skIcon" placeholder="design_services">
+        <p style="font-size:.72rem;color:var(--txt3);margin-top:3px">
+          Xem icon tại <a href="https://fonts.google.com/icons" target="_blank" style="color:var(--pri)">fonts.google.com/icons</a>
+        </p>
+      </div>
+      <div class="field">
+        <label>Màu sắc</label>
+        <select id="skColor">
+          <option value="primary">Tím (primary)</option>
+          <option value="secondary">Xanh lá (secondary)</option>
+          <option value="tertiary">Vàng (tertiary)</option>
+          <option value="primary-container">Tím nhạt</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('skillModal')">Huỷ</button>
+      <button class="btn btn-primary" onclick="saveSkill()">
+        <span class="material-symbols-outlined" style="font-size:16px">save</span> Lưu kỹ năng
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: KINH NGHIỆM ═══ -->
+<div class="modal-overlay" id="expModal">
+  <div class="modal-box" style="max-width:520px">
+    <button class="modal-close" onclick="closeModal('expModal')">✕</button>
+    <h3 id="expModalTitle">Thêm kinh nghiệm</h3>
+    <input type="hidden" id="expIdx" value="-1">
+    <div class="row2">
+      <div class="field">
+        <label>Chức vụ *</label>
+        <input type="text" id="expTitle" placeholder="Senior UI/UX Designer">
+      </div>
+      <div class="field">
+        <label>Công ty / Tổ chức</label>
+        <input type="text" id="expCompany" placeholder="Creative Studio">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Thời gian</label>
+        <input type="text" id="expPeriod" placeholder="2022 - Hiện tại">
+      </div>
+      <div class="field">
+        <label>Màu điểm timeline</label>
+        <select id="expColor">
+          <option value="primary">Tím</option>
+          <option value="secondary">Xanh lá</option>
+          <option value="tertiary">Vàng</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Mô tả công việc</label>
+      <textarea id="expDesc" rows="3" placeholder="Mô tả công việc và thành tích đạt được..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('expModal')">Huỷ</button>
+      <button class="btn btn-primary" onclick="saveExp()">
+        <span class="material-symbols-outlined" style="font-size:16px">save</span> Lưu kinh nghiệm
+      </button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
