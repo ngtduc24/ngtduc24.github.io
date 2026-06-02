@@ -1,153 +1,34 @@
 {
-  "banner": {
-    "badge": "c",
-    "name": "Andy N",
-    "title_line1": "Xin chào",
-    "title_line2": "Rt",
-    "description": "Sibuet",
-    "btn_primary": "Xem Portfolio",
-    "btn_secondary": "LiÃÂªn HÃ¡Â»Â",
+  "site": { "name": "CreativeHub", "tagline": "Nền tảng học tập và sáng tạo Multimedia" },
+  "home": {
+    "badge": "Nhà Thiết Kế Sáng Tạo",
+    "title_line1": "Xin Chào!",
+    "title_line2": "Tôi là",
+    "name": "Andy Nguyễn",
+    "description": "Kết hợp nghệ thuật, công nghệ và một chút ma thuật để tạo ra những trải nghiệm kỹ thuật số đáng nhớ. Cùng nhau xây dựng những thế giới mới.",
     "avatar_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAaM6nPg7daWott3BQVpCtvizZFbleVjeMlC6avIkwTE1aCxJeCfNrxwUqwDDxeepGlH0A9kiIbIuZwn3c1tAyUQ3N1-oF88I4_KEbYBnzSFct5eRx6P3kgkL3FQJK90R6DhDZZmmDuzC1EIG5p6E48fc7Iv48OMLM1hl2bjSx66k8493bjfQSxaQCAtMtvkHFHX_NkSPsW_h-5XEt3Auu38gBil8FELSgJxkwLQkCLVCZmoQ1oZz9fnc1TMzsBG8hqdNdUscFbhOQ"
   },
-  "skills": [
-    {
-      "icon": "design_services",
-      "name": "UI/UX Design",
-      "percent": "95%",
-      "color": "primary"
-    },
-    {
-      "icon": "3d_rotation",
-      "name": "3D Modeling",
-      "percent": "85%",
-      "color": "secondary"
-    },
-    {
-      "icon": "palette",
-      "name": "Branding",
-      "percent": "90%",
-      "color": "tertiary"
-    },
-    {
-      "icon": "movie",
-      "name": "Motion Graphics",
-      "percent": "80%",
-      "color": "primary-container"
-    }
-  ],
-  "experience": [
-    {
-      "title": "Hoạ sĩ 3D",
-      "company": "Glass Egg",
-      "period": "2020",
-      "desc": "Hoạ sĩ 3D cho các dự án game AAA",
-      "color": "primary"
-    },
-    {
-      "title": "Designer",
-      "company": "Công Ty TNHH TM DV Quảng Cáo Hải Lưu",
-      "period": "2018 - 2019",
-      "desc": "Thiết kế và chịu trách nhiệm thiết kế khi in ấn",
-      "color": "secondary"
-    },
-    {
-      "title": "Video Editor",
-      "company": "Công Ty Truyền Thông Quốc Thiên",
-      "period": "2018",
-      "desc": "Dựng phim và biên tập phóng sự, tin tức, chương trình truyền hình",
-      "color": "tertiary"
-    }
-  ],
   "portfolio": [
-    {
-      "title": "kkk",
-      "desc": "",
-      "image": "",
-      "link": "#",
-      "tags": [],
-      "tag_colors": []
-    },
-    {
-      "title": "Neon Oasis Identity",
-      "desc": "w",
-      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAi-XyIw7n5_qs2gRuVY5tzy8T9kNcTJ7oct3L7pA4uaRSsFv-NXNAqCkD03VG4wVF5M6nhBu2AH5XuLevkbHGhXyfWTTfiZCvB2mWUQGdzB02-oCUBVZ5fBLndUc8knKZjZ0Abr4Pm2x7KCJf57mpVHt8eLzjg4J034tgdWqERPQ-pcm2B2d2mUAy0GBvD6gvk3Qn1es0Kcd5gZKeytqMpF96k5gc2wKpQUR3xXrDdM5-EFqcS1VIg0fSE782XWMstEOcUjUpTk68",
-      "link": "#",
-      "tags": [
-        "Branding",
-        "Award Winning"
-      ],
-      "tag_colors": [
-        "primary",
-        "secondary"
-      ]
-    },
-    {
-      "title": "Eco-Tech Visualization",
-      "desc": "w",
-      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCiOl3Qa7E3ATwP3qJi6AaUiM8Z06sPDn4IapkN9k_Aah6sVf92fyGujSQG9hPS0N3uwKYMFsvpzoeg24FeDzU2gjL_1T7JRxL9xbwbUi7ufN7cDiRLgkH2Y8SCM4ZQlsSz7LZuLzecITjKEVsXj3utK6FIjaMNUdHcgaXheDr_n7HSaSTJProZ4uK6V97GEtaCqcVqm3cGYxCfeQM-BpRIvjx5vK6Yt_0qUTxJn8bDrYLLFaVG8zI0xqBho4po23kqmZIsbMoBmUo",
-      "link": "#",
-      "tags": [
-        "3D Design"
-      ],
-      "tag_colors": [
-        "primary"
-      ]
-    },
-    {
-      "title": "FinPlay Dashboard",
-      "desc": "w",
-      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDb-hh5_OixoKQqjPxkFJRveTNePY3u4P6HcNSDmu3DW4OwI2D6Jdp9FI-R7NwFoW1cCqL4zrWxZX2TePWA5HstmDTfr5kgInfw30jO01a0oScu72WPYZOns5Ty0YsgGUKHTjRK_E2e3n755mnkMw2Bn2nKnN2caIgJT_vU9sigfin_SqV44tVA8cO9qabGSs6VjmXoM7Y9OuON_-rmfhQIWCZ20o3jKCtwV6x3LTejJt-TNeBPS1y9n0gQo-3AOYKkxCsb5ucHoxc",
-      "link": "#",
-      "tags": [
-        "UI/UX Product"
-      ],
-      "tag_colors": [
-        "primary"
-      ]
-    }
+    {"id":"p1","title":"Project Nexus Rebrand","desc":"Hệ thống nhận diện thương hiệu toàn diện cho startup công nghệ tiên phong.","tags":["UX/UI Design","3D Motion"],"image":"https://lh3.googleusercontent.com/aida-public/AB6AXuAi-XyIw7n5_qs2gRuVY5tzy8T9kNcTJ7oct3L7pA4uaRSsFv-NXNAqCkD03VG4wVF5M6nhBu2AH5XuLevkbHGhXyfWTTfiZCvB2mWUQGdzB02-oCUBVZ5fBLndUc8knKZjZ0Abr4Pm2x7KCJf57mpVHt8eLzjg4J034tgdWqERPQ-pcm2B2d2mUAy0GBvD6gvk3Qn1es0Kcd5gZKeytqMpF96k5gc2wKpQUR3xXrDdM5-EFqcS1VIg0fSE782XWMstEOcUjUpTk68","date":"Tháng 10, 2024","featured":true,"link":"#"},
+    {"id":"p2","title":"Lumina Learning App","desc":"Nền tảng học tập tương tác với tính năng gamification theo dõi tiến độ.","tags":["UI/UX"],"image":"https://lh3.googleusercontent.com/aida-public/AB6AXuCiOl3Qa7E3ATwP3qJi6AaUiM8Z06sPDn4IapkN9k_Aah6sVf92fyGujSQG9hPS0N3uwKYMFsvpzoeg24FeDzU2gjL_1T7JRxL9xbwbUi7ufN7cDiRLgkH2Y8SCM4ZQlsSz7LZuLzecITjKEVsXj3utK6FIjaMNUdHcgaXheDr_n7HSaSTJProZ4uK6V97GEtaCqcVqm3cGYxCfeQM-BpRIvjx5vK6Yt_0qUTxJn8bDrYLLFaVG8zI0xqBho4po23kqmZIsbMoBmUo","date":"Tháng 8, 2024","featured":true,"link":"#"},
+    {"id":"p3","title":"Echo Sound System","desc":"Giao diện thương mại điện tử với trực quan hoá âm thanh không gian.","tags":["E-commerce"],"image":"https://lh3.googleusercontent.com/aida-public/AB6AXuDb-hh5_OixoKQqjPxkFJRveTNePY3u4P6HcNSDmu3DW4OwI2D6Jdp9FI-R7NwFoW1cCqL4zrWxZX2TePWA5HstmDTfr5kgInfw30jO01a0oScu72WPYZOns5Ty0YsgGUKHTjRK_E2e3n755mnkMw2Bn2nKnN2caIgJT_vU9sigfin_SqV44tVA8cO9qabGSs6VjmXoM7Y9OuON_-rmfhQIWCZ20o3jKCtwV6x3LTejJt-TNeBPS1y9n0gQo-3AOYKkxCsb5ucHoxc","date":"Tháng 6, 2024","featured":true,"link":"#"},
+    {"id":"p4","title":"Aura Wellness Identity","desc":"Nhận diện thương hiệu hoàn chỉnh bao gồm thiết kế logo, bảng màu và tài sản kỹ thuật số.","tags":["Branding"],"image":"https://lh3.googleusercontent.com/aida-public/AB6AXuAq4Sc9Mkc4Lm65GdeWrSNLUiRkIRNpDXjhUGWPSn4_JgxJE33XuD8-Ml-NR2sj_sJX-cJ7_RpwOvEHC_BijLtN2BxuKqH3pcHAxAO_Ehe0vHMM_thQ3sP9FVticszvj_novBtiRwR9TrM6dT4MIgFu_etnwZMfLvZY5Pzwcpg7BzBZCyQVMrVilBgTkgRHv3A_N8tDcLoOFS1MEAcgJYawMm1PeKxrRj-tOlwt-hjTilo_IXqtYC2DC4_mRSg1XN8TISXgdHxLrfE","date":"Tháng 10, 2023","featured":false,"link":"#"},
+    {"id":"p5","title":"FinTech Analytics Dashboard","desc":"Giao diện trực quan hoá dữ liệu phức tạp được thiết kế để đơn giản hoá việc theo dõi tài chính.","tags":["Data Viz"],"image":"https://lh3.googleusercontent.com/aida-public/AB6AXuAtSMGUfdAfYlzixh9P4br8HnAvZEeB3ByhcizHSzVazDcRMq2w4G0UvCaK1PShCcMdFDG6bMsvEa2_yL-TCMG3YVF6QwSzhZbD20dF3Q3N5KwpBULHlRtjpMcU1vE_VFlp_IFY9MFgoP1vo2ZRAkUiwGqylyCTADY3expz1B59miSOtn7CTTIIvoL4NlVpBjToI5GHinmO-kKtfqc2EBpbeNwLekOBaTT8ZHdfEIKcoX8FZrUrvrdlyaShjbSoS1-dUX_3B5MwQQY","date":"Tháng 8, 2023","featured":false,"link":"#"},
+    {"id":"p6","title":"Urban Mobility App Research","desc":"Nghiên cứu UX chuyên sâu, wireframing và kiểm thử prototype cho ứng dụng giao thông đô thị.","tags":["Strategy"],"image":"https://lh3.googleusercontent.com/aida-public/AB6AXuDq6m3w9unPoVSRzILpMX8fgskRPpF2CdhxfxRGDLUs_POWBCd7tfO2btJcY7dzQiymS1GfJvlTWagO-D6V5Vu3cw067PQwu3rBhwWNCbg92xTusGMDLUiPBQAM2cyzAzlVYokPVaDFnlT1QtLFMtlnHTyF988qyMBC5bATGGimAzX_0fe8w68Gdi1qNiegrkvkJudoAyDM34qNqA5htRnL5NlD82YNyehdTJZvvpolnDxf8M38SmR_EVK7pAH7ygjtNOb5XzJs-vU","date":"Tháng 5, 2023","featured":false,"link":"#"}
   ],
   "courses": [
-    {
-      "type": "course",
-      "badge": "1",
-      "btn": "Đăng ký ngay",
-      "title": "Dựng Hình Với Maya",
-      "desc": "modeling maya",
-      "link": "#"
-    }
+    {"id":"c1","title":"Advanced UI/UX Masterclass","desc":"Làm chủ quy trình thiết kế từ Research đến Prototyping nâng cao. Xây dựng hệ thống thiết kế linh hoạt và tương tác vi...","lessons":12,"duration":"8 Tuần","status":"open","badge":"Nổi bật","image":"https://lh3.googleusercontent.com/aida-public/AB6AXuAi-XyIw7n5_qs2gRuVY5tzy8T9kNcTJ7oct3L7pA4uaRSsFv-NXNAqCkD03VG4wVF5M6nhBu2AH5XuLevkbHGhXyfWTTfiZCvB2mWUQGdzB02-oCUBVZ5fBLndUc8knKZjZ0Abr4Pm2x7KCJf57mpVHt8eLzjg4J034tgdWqERPQ-pcm2B2d2mUAy0GBvD6gvk3Qn1es0Kcd5gZKeytqMpF96k5gc2wKpQUR3xXrDdM5-EFqcS1VIg0fSE782XWMstEOcUjUpTk68","link":"#"},
+    {"id":"c2","title":"3D Motion Foundation","desc":"Nhập môn chuyển động 3D với Blender. Tạo hiệu ứng thị giác mạnh mẽ.","lessons":8,"duration":"4 Tuần","status":"upcoming","badge":"Sắp khai giảng","image":"https://lh3.googleusercontent.com/aida-public/AB6AXuCiOl3Qa7E3ATwP3qJi6AaUiM8Z06sPDn4IapkN9k_Aah6sVf92fyGujSQG9hPS0N3uwKYMFsvpzoeg24FeDzU2gjL_1T7JRxL9xbwbUi7ufN7cDiRLgkH2Y8SCM4ZQlsSz7LZuLzecITjKEVsXj3utK6FIjaMNUdHcgaXheDr_n7HSaSTJProZ4uK6V97GEtaCqcVqm3cGYxCfeQM-BpRIvjx5vK6Yt_0qUTxJn8bDrYLLFaVG8zI0xqBho4po23kqmZIsbMoBmUo","link":"#"},
+    {"id":"c3","title":"Graphic Design Fundamentals","desc":"Nắm vững các nguyên tắc thiết kế cơ bản: Bố cục, Màu sắc, Typography. Thực hành trực tiếp trên Adobe Illustrator và Photoshop.","lessons":12,"launch":"15/11/2024","status":"open","badge":"Đang mở đăng ký","image":"https://lh3.googleusercontent.com/aida-public/AB6AXuDb-hh5_OixoKQqjPxkFJRveTNePY3u4P6HcNSDmu3DW4OwI2D6Jdp9FI-R7NwFoW1cCqL4zrWxZX2TePWA5HstmDTfr5kgInfw30jO01a0oScu72WPYZOns5Ty0YsgGUKHTjRK_E2e3n755mnkMw2Bn2nKnN2caIgJT_vU9sigfin_SqV44tVA8cO9qabGSs6VjmXoM7Y9OuON_-rmfhQIWCZ20o3jKCtwV6x3LTejJt-TNeBPS1y9n0gQo-3AOYKkxCsb5ucHoxc","link":"#"},
+    {"id":"c4","title":"Creative Coding for Designers","desc":"Sử dụng code (HTML/CSS/JS cơ bản) như một công cụ thiết kế. Biến các ý tưởng tĩnh thành các trải nghiệm web động.","lessons":10,"launch":"Tháng 12","status":"upcoming","badge":"Sắp ra mắt","image":"https://lh3.googleusercontent.com/aida-public/AB6AXuAq4Sc9Mkc4Lm65GdeWrSNLUiRkIRNpDXjhUGWPSn4_JgxJE33XuD8-Ml-NR2sj_sJX-cJ7_RpwOvEHC_BijLtN2BxuKqH3pcHAxAO_Ehe0vHMM_thQ3sP9FVticszvj_novBtiRwR9TrM6dT4MIgFu_etnwZMfLvZY5Pzwcpg7BzBZCyQVMrVilBgTkgRHv3A_N8tDcLoOFS1MEAcgJYawMm1PeKxrRj-tOlwt-hjTilo_IXqtYC2DC4_mRSg1XN8TISXgdHxLrfE","link":"#"}
+  ],
+  "knowledge": [
+    {"id":"k1","title":"Tương Lai Của Glassmorphism Trong Thiết Kế Giao Diện Đa Phương Tiện","excerpt":"Glassmorphism không chỉ là một trào lưu nhất thời; nó đã trở thành một ngôn ngữ thiết kế quan trọng trong việc xây dựng các không gian số có chiều sâu và tính tương tác cao.","content":"Glassmorphism không chỉ là một trào lưu nhất thời; nó đã trở thành một ngôn ngữ thiết kế quan trọng trong việc xây dựng các không gian số có chiều sâu và tính tương tác cao. Bằng cách sử dụng các lớp vật liệu trong suốt với độ mờ (blur) thích hợp, các nhà thiết kế có thể tạo ra cảm giác về không gian vật lý ngay trên màn hình phẳng.\n\nTrong hệ thống thiết kế hiện đại, việc phân cấp bằng các lớp màu và bóng đổ mềm là rất quan trọng. Thay vì sử dụng những đường viền sắc nét, chúng ta chuyển sang cảm giác mượt mà hơn, nơi các yếu tố dường như nổi lên từ bề mặt.\n\nSử dụng khoảng trắng một cách hào phóng là bắt buộc. Các yếu tố không bao giờ được cảm thấy chật chội; bố cục sử dụng đơn vị cơ bản 8px, nhưng các phần chính được tách biệt bởi khoảng trống lớn để mắt có thể nghỉ ngơi giữa các khối màu cường độ cao.","category":"Thiết kế UI/UX","tags":["UI/UX Design","Trend 2024"],"author":"Nguyễn Văn A","date":"2024-05-12","read_time":8,"image":"https://lh3.googleusercontent.com/aida-public/AB6AXuAi-XyIw7n5_qs2gRuVY5tzy8T9kNcTJ7oct3L7pA4uaRSsFv-NXNAqCkD03VG4wVF5M6nhBu2AH5XuLevkbHGhXyfWTTfiZCvB2mWUQGdzB02-oCUBVZ5fBLndUc8knKZjZ0Abr4Pm2x7KCJf57mpVHt8eLzjg4J034tgdWqERPQ-pcm2B2d2mUAy0GBvD6gvk3Qn1es0Kcd5gZKeytqMpF96k5gc2wKpQUR3xXrDdM5-EFqcS1VIg0fSE782XWMstEOcUjUpTk68","views":1240,"likes":245,"comments":42},
+    {"id":"k2","title":"Ứng Dụng Tâm Lý Học Màu Sắc vào Thiết Kế Giao Diện","excerpt":"Khám phá cách não bộ phản ứng với các dải màu khác nhau và cách áp dụng chúng để điều hướng hành vi người dùng một cách tinh tế.","content":"Khám phá cách não bộ phản ứng với các dải màu khác nhau và cách áp dụng chúng để điều hướng hành vi người dùng một cách tinh tế trong thiết kế web và app. Màu sắc không chỉ là yếu tố thẩm mỹ — chúng còn là công cụ tâm lý mạnh mẽ giúp dẫn dắt người dùng qua giao diện một cách tự nhiên.","category":"Kiến thức nền tảng","tags":["UI/UX","Tâm lý học"],"author":"Trần Thị B","date":"2024-10-12","read_time":6,"image":"https://lh3.googleusercontent.com/aida-public/AB6AXuCiOl3Qa7E3ATwP3qJi6AaUiM8Z06sPDn4IapkN9k_Aah6sVf92fyGujSQG9hPS0N3uwKYMFsvpzoeg24FeDzU2gjL_1T7JRxL9xbwbUi7ufN7cDiRLgkH2Y8SCM4ZQlsSz7LZuLzecITjKEVsXj3utK6FIjaMNUdHcgaXheDr_n7HSaSTJProZ4uK6V97GEtaCqcVqm3cGYxCfeQM-BpRIvjx5vK6Yt_0qUTxJn8bDrYLLFaVG8zI0xqBho4po23kqmZIsbMoBmUo","views":980,"likes":178,"comments":31},
+    {"id":"k3","title":"Xây Dựng Hệ Thống Typography Cơ Bản cho Website","excerpt":"Hướng dẫn chi tiết cách thiết lập hierarchy, scale tỷ lệ chữ và chọn font chữ phù hợp để đảm bảo tính dễ đọc và truyền tải đúng tinh thần thương hiệu.","content":"Hướng dẫn chi tiết cách thiết lập hierarchy, scale tỷ lệ chữ và chọn font chữ phù hợp để đảm bảo tính dễ đọc và truyền tải đúng tinh thần thương hiệu. Typography là xương sống của mọi giao diện tốt — khi được làm đúng, người dùng sẽ không chú ý đến nó; khi làm sai, đó là điều đầu tiên họ nhận ra.","category":"Typography","tags":["Typography","Web Design"],"author":"Lê Minh C","date":"2024-10-08","read_time":5,"image":"https://lh3.googleusercontent.com/aida-public/AB6AXuDb-hh5_OixoKQqjPxkFJRveTNePY3u4P6HcNSDmu3DW4OwI2D6Jdp9FI-R7NwFoW1cCqL4zrWxZX2TePWA5HstmDTfr5kgInfw30jO01a0oScu72WPYZOns5Ty0YsgGUKHTjRK_E2e3n755mnkMw2Bn2nKnN2caIgJT_vU9sigfin_SqV44tVA8cO9qabGSs6VjmXoM7Y9OuON_-rmfhQIWCZ20o3jKCtwV6x3LTejJt-TNeBPS1y9n0gQo-3AOYKkxCsb5ucHoxc","views":750,"likes":132,"comments":18}
   ],
   "research": [
-    {
-      "type": "research",
-      "label": "Báo KH",
-      "title": "Ứng dụng hoa văn đông sơn vào thiét kế game",
-      "link": "#"
-    }
-  ],
-  "community": {
-    "title": "Tham Gia CÃÂ¹ng ChÃÂºng TÃÂ´i",
-    "desc": "HÃÂ¡n 2,000 nhÃÂ  sÃÂ¡ng tÃ¡ÂºÂ¡o ÃÂang thÃ¡ÂºÂ£o luÃ¡ÂºÂ­n mÃ¡Â»Âi ngÃÂ y.",
-    "btn": "VÃÂ o Discord",
-    "link": "#"
-  },
-  "footer": {
-    "brand": "Andy NguyÃ¡Â»Ân",
-    "copyright": "ÃÂ© 2024 Andy NguyÃ¡Â»Ân. All rights reserved.",
-    "links": [
-      {
-        "label": "Portfolio",
-        "href": "#portfolio"
-      },
-      {
-        "label": "LiÃÂªn HÃ¡Â»Â",
-        "href": "#contact"
-      },
-      {
-        "label": "Admin",
-        "href": "admin/"
-      }
-    ],
-    "email": "hello@andynguyen.dev",
-    "location": "HÃ¡Â»Â ChÃÂ­ Minh, ViÃ¡Â»Ât Nam"
-  }
+    {"id":"r1","title":"Tối ưu hóa Cognitive Load trong Giao diện Học tập Trực tuyến","excerpt":"Nghiên cứu này đề xuất một framework thiết kế mới nhằm giảm tải nhận thức (cognitive load) cho sinh viên khi sử dụng các hệ thống quản lý học tập (LMS).","content":"Nghiên cứu này đề xuất một framework thiết kế mới nhằm giảm tải nhận thức cho sinh viên khi sử dụng các hệ thống quản lý học tập. Thông qua các thử nghiệm A/B trên 500 người dùng, kết quả cho thấy việc áp dụng nguyên lý thiết kế Glassmorphism kết hợp phân cấp thị giác rõ ràng giúp tăng 24% mức độ tập trung.","tags":["UI/UX Design","Cognitive Load"],"author":"TS. Nguyễn Văn A","date":"2024-10-15","image":"https://lh3.googleusercontent.com/aida-public/AB6AXuAq4Sc9Mkc4Lm65GdeWrSNLUiRkIRNpDXjhUGWPSn4_JgxJE33XuD8-Ml-NR2sj_sJX-cJ7_RpwOvEHC_BijLtN2BxuKqH3pcHAxAO_Ehe0vHMM_thQ3sP9FVticszvj_novBtiRwR9TrM6dT4MIgFu_etnwZMfLvZY5Pzwcpg7BzBZCyQVMrVilBgTkgRHv3A_N8tDcLoOFS1MEAcgJYawMm1PeKxrRj-tOlwt-hjTilo_IXqtYC2DC4_mRSg1XN8TISXgdHxLrfE"},
+    {"id":"r2","title":"Ứng dụng Generative AI trong Tạo hình 3D Tự động","excerpt":"Bài báo trình bày một phương pháp tiếp cận mới sử dụng mạng nơ-ron sinh đối kháng (GANs) để tạo ra các mô hình 3D phức tạp từ văn bản mô tả.","content":"Bài báo trình bày một phương pháp tiếp cận mới sử dụng mạng nơ-ron sinh đối kháng (GANs) để tạo ra các mô hình 3D phức tạp từ văn bản mô tả. So sánh với các phương pháp truyền thống, mô hình đề xuất giảm thiểu thời gian kết xuất xuống 40% trong khi vẫn giữ được độ chi tiết bề mặt.","tags":["Generative AI","3D Modeling"],"author":"ThS. Trần Thị B","date":"2024-09-02","image":"https://lh3.googleusercontent.com/aida-public/AB6AXuCiOl3Qa7E3ATwP3qJi6AaUiM8Z06sPDn4IapkN9k_Aah6sVf92fyGujSQG9hPS0N3uwKYMFsvpzoeg24FeDzU2gjL_1T7JRxL9xbwbUi7ufN7cDiRLgkH2Y8SCM4ZQlsSz7LZuLzecITjKEVsXj3utK6FIjaMNUdHcgaXheDr_n7HSaSTJProZ4uK6V97GEtaCqcVqm3cGYxCfeQM-BpRIvjx5vK6Yt_0qUTxJn8bDrYLLFaVG8zI0xqBho4po23kqmZIsbMoBmUo"}
+  ]
 }
