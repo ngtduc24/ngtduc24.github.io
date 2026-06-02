@@ -2,10 +2,10 @@
 <html lang="vi"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>CreativeHub - Portfolio</title>
+<title>Portfolio - CreativeHub</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
 tailwind.config = {
   darkMode: "class",
@@ -61,7 +61,7 @@ tailwind.config = {
 </head>
 <body class="bg-background text-on-background font-body-md antialiased min-h-screen flex flex-col pt-20">
 
-<!-- HEADER - ĐỒNG BỘ MENU ĐỘNG -->
+<!-- HEADER -->
 <header class="bg-surface/80 backdrop-blur-md shadow-[0_20px_40px_rgba(70,72,212,0.1)] fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-padding h-20 max-w-max-width mx-auto">
 <div class="flex items-center gap-8">
   <a href="index.html" class="font-display-lg text-headline-md font-extrabold text-primary" id="navBrand">CreativeHub</a>
@@ -72,70 +72,20 @@ tailwind.config = {
 </div>
 </header>
 
-<main class="flex-grow w-full max-w-max-width mx-auto px-container-padding py-12 flex flex-col gap-section-gap">
-<!-- Featured Hero Section -->
-<section class="flex flex-col gap-8">
-<div class="flex justify-between items-end">
-<h1 class="font-display-lg text-display-lg text-primary">Featured Work</h1>
-</div>
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-<div class="lg:col-span-8 bg-surface-container-lowest rounded-[24px] overflow-hidden ambient-shadow-heavy group cursor-pointer relative">
-<div class="h-[400px] w-full overflow-hidden relative">
-<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsvQh3STzyciJrT9xQvKBsZ5PWHmd7533Sg0rjITNJu6xqL3KSGnNuCkURXnuTWwAF_J-V6dKuD03lAMtfvRwXa5d4JDoXqVmor47IaT6GwNzU3aGQLOvDjtroZw6B5hSN3sGl6tqeWLPHTI7bdybhXiI-Hke25uWvUithkxjypdJkXNcbTswYejm_tKHsytxWGtpe9VoIlzwGltck1dceE9eqeNb1V72HNc2bIdzfjoNLhRNimjz5bBi6d8RSo6NiingN4WvGDeA"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-<div class="absolute bottom-6 left-6 flex gap-2">
-<span class="bg-gradient-lime text-on-secondary-container font-label-bold text-label-bold px-4 py-1.5 rounded-full shadow-sm">UX/UI Design</span>
-<span class="bg-surface/90 text-primary font-label-bold text-label-bold px-4 py-1.5 rounded-full shadow-sm backdrop-blur-sm">3D Motion</span>
-</div>
-</div>
-<div class="p-8 bg-surface-container-lowest relative z-10">
-<h2 class="font-headline-lg text-headline-lg text-on-surface mb-2 group-hover:text-primary transition-colors">Project Nexus Rebrand</h2>
-<p class="font-body-md text-body-md text-on-surface-variant">A comprehensive visual identity and platform redesign for a forward-thinking tech startup.</p>
-</div>
-</div>
-<div class="lg:col-span-4 flex flex-col gap-8">
-<div class="flex-1 bg-surface-container-lowest rounded-[20px] overflow-hidden ambient-shadow group cursor-pointer relative flex flex-col">
-<div class="h-[200px] w-full overflow-hidden"><img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFR7WagebVHWASIwAp0j-WUDyNejn4mM1xZY1BGEfNq0vms_vjY7atX-tMh6BWPzeUbMC4iRVWw8mD2IREDcdvzqYi1yeB6F2AaBsW5yXs23TiW2et2wuK1i5ZLu3qbxqfbKZaRYwOun_3-d-lRm0xUzOI9kD_LUbpY8vhNvbDL4OOFPo5eH5R8wQwSi8IC5VeegW4dW4v84LnDz2AUG_NxYO4pJD-BQ1bTvZ2MuiWZFPAG7X0kOAr73DPkGdzgiDv-jA5BSU56t4"/></div>
-<div class="p-6 flex-grow flex flex-col justify-between">
-<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Lumina Learning App</h3>
-<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">Interactive educational platform featuring gamified progress tracking.</p>
-</div>
-</div>
-<div class="flex-1 bg-surface-container-lowest rounded-[20px] overflow-hidden ambient-shadow group cursor-pointer relative flex flex-col">
-<div class="h-[200px] w-full overflow-hidden"><img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChuwxPtRliadfzRS3QNetF8qXU9wzNXV_BTiK3TyggaKH4euqbBH6BjmkvappKycKEbQl8QqabEW2uwf0zlFN5odEwjB2j1aL32zUUueiw2eFxCCxzEeGe9J5NOERmPSXAyZ-QucVCpRtHMCVC1NSUO_8VhXCXinH1U5EvOVWkvP9pTrIw5iT_vaPYhdWBvuTqgJtke_IT4dR5ZEGtJwIJIbU_0lgfoLU2fRd5a7jXVswiy974M8SOhtF42Cr_JJCinzoVIDZ8pDg"/></div>
-<div class="p-6 flex-grow flex flex-col justify-between">
-<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Echo Sound System</h3>
-<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">E-commerce interface with spatial audio visualization.</p>
-</div>
-</div>
-</div>
-</div>
-</section>
-
-<!-- Project Fields Showcase -->
-<div class="flex flex-col gap-12">
-<section class="flex flex-col gap-6">
-<div class="flex justify-between items-center">
-<h2 class="font-display-lg text-headline-lg text-on-surface border-l-4 border-primary pl-4">3D</h2>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<div class="bg-surface-container-lowest rounded-2xl overflow-hidden ambient-shadow hover:scale-[1.02] transition-transform duration-300"><div class="h-48 overflow-hidden relative"><img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsvQh3STzyciJrT9xQvKBsZ5PWHmd7533Sg0rjITNJu6xqL3KSGnNuCkURXnuTWwAF_J-V6dKuD03lAMtfvRwXa5d4JDoXqVmor47IaT6GwNzU3aGQLOvDjtroZw6B5hSN3sGl6tqeWLPHTI7bdybhXiI-Hke25uWvUithkxjypdJkXNcbTswYejm_tKHsytxWGtpe9VoIlzwGltck1dceE9eqeNb1V72HNc2bIdzfjoNLhRNimjz5bBi6d8RSo6NiingN4WvGDeA"/></div><div class="p-5"><h4 class="font-headline-md text-body-lg font-bold mb-2">Nexus Spatial Visuals</h4><p class="text-on-surface-variant text-body-md line-clamp-2">Exploring spatial design and 3D depth.</p></div></div>
-<div class="bg-surface-container-lowest rounded-2xl overflow-hidden ambient-shadow hover:scale-[1.02] transition-transform duration-300"><div class="h-48 overflow-hidden relative"><img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAq4Sc9Mkc4Lm65GdeWrSNLUiRkIRNpDXjhUGWPSn4_JgxJE33XuD8-Ml-NR2sj_sJX-cJ7_RpwOvEHC_BijLtN2BxuKqH3pcHAxAO_Ehe0vHMM_thQ3sP9FVticszvj_novBtiRwR9TrM6dT4MIgFu_etnwZMfLvZY5Pzwcpg7BzBZCyQVMrVilBgTkgRHv3A_N8tDcLoOFS1MEAcgJYawMm1PeKxrRj-tOlwt-hjTilo_IXqtYC2DC4_mRSg1XN8TISXgdHxLrfE"/></div><div class="p-5"><h4 class="font-headline-md text-body-lg font-bold mb-2">3D Identity System</h4><p class="text-on-surface-variant text-body-md line-clamp-2">Abstract 3D elements for brand identity.</p></div></div>
-<div class="bg-surface-container-lowest rounded-2xl overflow-hidden ambient-shadow hover:scale-[1.02] transition-transform duration-300"><div class="h-48 overflow-hidden relative"><img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtSMGUfdAfYlzixh9P4br8HnAvZEeB3ByhcizHSzVazDcRMq2w4G0UvCaK1PShCcMdFDG6bMsvEa2_yL-TCMG3YVF6QwSzhZbD20dF3Q3N5KwpBULHlRtjpMcU1vE_VFlp_IFY9MFgoP1vo2ZRAkUiwGqylyCTADY3expz1B59miSOtn7CTTIIvoL4NlVpBjToI5GHinmO-kKtfqc2EBpbeNwLekOBaTT8ZHdfEIKcoX8FZrUrvrdlyaShjbSoS1-dUX_3B5MwQQY"/></div><div class="p-5"><h4 class="font-headline-md text-body-lg font-bold mb-2">FinTech 3D Surfaces</h4><p class="text-on-surface-variant text-body-md line-clamp-2">Layered glassmorphism dashboards.</p></div></div>
-</div>
-</section>
-</div>
+<main class="flex-grow w-full max-w-max-width mx-auto px-container-padding py-12 flex flex-col gap-section-gap" id="portfolioMain">
+  <div class="flex items-center gap-3 text-on-surface-variant py-20 justify-center">
+    <span class="material-symbols-outlined animate-spin">progress_activity</span>
+    Đang tải dữ liệu...
+  </div>
 </main>
 
-<!-- FOOTER - ĐỒNG BỘ -->
+<!-- FOOTER -->
 <footer class="bg-surface-container-low w-full py-section-gap px-container-padding grid grid-cols-1 md:grid-cols-4 gap-gutter rounded-t-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)] mt-auto max-w-max-width mx-auto">
-<div class="flex flex-col gap-4 col-span-1 md:col-span-1">
+<div class="flex flex-col gap-4 col-span-1">
   <span class="font-display-lg text-headline-md font-extrabold text-primary" id="footerBrand">CreativeHub</span>
-  <p class="font-body-md text-body-md text-on-surface-variant">Empowering creativity through interactive digital experiences.</p>
+  <p class="font-body-md text-body-md text-on-surface-variant">Empowering creativity.</p>
 </div>
-<div class="flex flex-col gap-3" id="footerLinks">
-  <h4 class="font-label-bold text-label-bold text-on-surface">Links</h4>
-</div>
+<div class="flex flex-col gap-3" id="footerLinks"><h4 class="font-label-bold text-label-bold text-on-surface">Links</h4></div>
 <div class="col-span-1 md:col-span-4 mt-8 pt-8 border-t border-outline-variant/30 text-center">
   <p class="font-body-md text-body-md text-on-surface-variant text-sm" id="footerCopy">© 2024</p>
 </div>
@@ -164,7 +114,7 @@ function buildMenu(menus) {
     else link.href = 'page.html?slug=' + item.slug;
     link.textContent = item.label;
     link.className = 'font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors hover:scale-105 duration-300';
-    if (item.label === 'Portfolio') link.className = 'font-body-md text-body-md text-primary font-bold border-b-2 border-primary pb-1 scale-95 transition-transform duration-200';
+    if (item.label === 'Portfolio') link.className = 'font-body-md text-body-md text-primary font-bold border-b-2 border-primary pb-1';
     wrapper.appendChild(link);
     if (item.children && item.children.length > 0) {
       const dropdown = document.createElement('div');
@@ -182,18 +132,81 @@ function buildMenu(menus) {
   });
 }
 
+function groupByTag(items) {
+  const groups = {};
+  items.forEach(function(item) {
+    const mainTag = (item.tags && item.tags.length > 0) ? item.tags[0] : 'Khác';
+    if (!groups[mainTag]) groups[mainTag] = [];
+    groups[mainTag].push(item);
+  });
+  return groups;
+}
+
+function renderPortfolio(data) {
+  const items = data.portfolio || [];
+  const main = document.getElementById('portfolioMain');
+  
+  if (!items.length) {
+    main.innerHTML = '<div class="text-center py-20 text-on-surface-variant"><span class="material-symbols-outlined text-6xl">grid_view</span><p class="mt-4 text-body-lg">Chưa có dự án nào. Vào <a href="admin/" class="text-primary underline">Admin</a> để thêm.</p></div>';
+    return;
+  }
+
+  const groups = groupByTag(items);
+  const groupNames = Object.keys(groups);
+  const firstItem = items[0];
+
+  let html = '';
+
+  // Featured Hero
+  html += `<section class="flex flex-col gap-8"><div class="flex justify-between items-end"><h1 class="font-display-lg text-display-lg text-primary">Featured Work</h1></div>`;
+  html += `<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">`;
+  html += `<div class="lg:col-span-8 bg-surface-container-lowest rounded-[24px] overflow-hidden ambient-shadow-heavy group cursor-pointer relative">`;
+  html += `<div class="h-[400px] w-full overflow-hidden relative"><img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="${firstItem.image||''}" alt="${firstItem.title}"/>`;
+  html += `<div class="absolute bottom-6 left-6 flex gap-2">${(firstItem.tags||[]).map(function(t,i){const cols=['bg-gradient-lime text-on-secondary-container','bg-surface/90 text-primary backdrop-blur-sm','bg-tertiary-container text-on-tertiary-container'];return '<span class="'+ (cols[i%3]) +' font-label-bold text-label-bold px-4 py-1.5 rounded-full shadow-sm">'+t+'</span>';}).join('')}</div></div>`;
+  html += `<div class="p-8 bg-surface-container-lowest relative z-10"><h2 class="font-headline-lg text-headline-lg text-on-surface mb-2 group-hover:text-primary transition-colors">${firstItem.title}</h2><p class="font-body-md text-body-md text-on-surface-variant">${firstItem.desc||''}</p></div></div>`;
+
+  // Side cards (items 1-2)
+  html += `<div class="lg:col-span-4 flex flex-col gap-8">`;
+  for (let i = 1; i <= 2; i++) {
+    if (items[i]) {
+      html += `<div class="flex-1 bg-surface-container-lowest rounded-[20px] overflow-hidden ambient-shadow group cursor-pointer relative flex flex-col"><div class="h-[200px] w-full overflow-hidden"><img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="${items[i].image||''}" alt="${items[i].title}"/></div><div class="p-6 flex-grow flex flex-col justify-between"><h3 class="font-headline-md text-headline-md text-on-surface mb-2">${items[i].title}</h3><p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">${items[i].desc||''}</p></div></div>`;
+    }
+  }
+  html += `</div></div></section>`;
+
+  // Category sections
+  html += `<div class="flex flex-col gap-12">`;
+  const borderColors = ['border-primary','border-secondary','border-tertiary','border-error'];
+  groupNames.forEach(function(groupName, gi) {
+    const groupItems = groups[groupName];
+    html += `<section class="flex flex-col gap-6"><div class="flex justify-between items-center"><h2 class="font-display-lg text-headline-lg text-on-surface border-l-4 ${borderColors[gi%4]} pl-4">${groupName}</h2></div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-6">`;
+    groupItems.forEach(function(p) {
+      html += `<div class="bg-surface-container-lowest rounded-2xl overflow-hidden ambient-shadow hover:scale-[1.02] transition-transform duration-300"><div class="h-48 overflow-hidden relative"><img class="w-full h-full object-cover" src="${p.image||''}" alt="${p.title}"/><div class="absolute bottom-2 left-2 glass-panel px-3 py-1 rounded-full text-primary font-label-bold text-[10px]">${p.title.substring(0,20)}</div></div><div class="p-5"><h4 class="font-headline-md text-body-lg font-bold mb-2">${p.title}</h4><p class="text-on-surface-variant text-body-md line-clamp-2">${p.desc||''}</p></div></div>`;
+    });
+    html += `</div></section>`;
+  });
+  html += `</div>`;
+
+  main.innerHTML = html;
+}
+
 async function init() {
   const data = await loadContentJson();
-  if (!data) return;
+  if (!data) {
+    document.getElementById('portfolioMain').innerHTML = '<p class="text-center text-red-500 py-20">Không thể tải dữ liệu.</p>';
+    return;
+  }
   document.getElementById('navBrand').textContent = data.banner?.name || data.site?.name || 'CreativeHub';
   document.getElementById('footerBrand').textContent = data.footer?.brand || 'CreativeHub';
   document.getElementById('footerCopy').textContent = data.footer?.copyright || '© 2024';
   if (data.menus) buildMenu(data.menus);
   if (data.footer?.links) {
-    document.getElementById('footerLinks').innerHTML += data.footer.links.map(l => 
-      `<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="${l.href}">${l.label}</a>`
-    ).join('');
+    document.getElementById('footerLinks').innerHTML = '<h4 class="font-label-bold text-label-bold text-on-surface">Links</h4>' + data.footer.links.map(function(l) {
+      return '<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="'+l.href+'">'+l.label+'</a>';
+    }).join('');
   }
+  renderPortfolio(data);
 }
 document.addEventListener('DOMContentLoaded', init);
 </script>
