@@ -1,64 +1,4 @@
-// ============================================
-// BUILD MENU TỪ content.json
-// ============================================
-function buildMenuFromJson(menus) {
-    const navMenu = document.getElementById('navMenu');
-    if (!navMenu || !menus) return;
-    
-    navMenu.innerHTML = '';
-    
-    menus.forEach(function(item) {
-        const wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:relative;display:inline-block;';
-        
-        const link = document.createElement('a');
-        // Xác định link dựa vào type
-        if (item.type === 'fixed' && item.link) {
-            link.href = item.link;
-        } else if (item.slug === 'home') {
-            link.href = 'index.html';
-        } else {
-            link.href = 'page.html?slug=' + item.slug;
-        }
-        link.textContent = item.label;
-        link.className = 'px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all';
-        
-        if (item.slug === 'home' && (window.location.pathname.includes('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/'))) {
-            link.classList.add('text-primary', 'bg-primary-container/10');
-        }
-        
-        wrapper.appendChild(link);
-        
-        // Submenu
-        if (item.children && item.children.length > 0) {
-            const dropdown = document.createElement('div');
-            dropdown.className = 'dropdown-menu';
-            dropdown.style.cssText = 'display:none;position:absolute;top:100%;left:0;min-width:200px;background:white;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.15);padding:8px 0;z-index:60;';
-            
-            item.children.forEach(function(child) {
-                const childLink = document.createElement('a');
-                if (child.type === 'fixed' && child.link) {
-                    childLink.href = child.link;
-                } else {
-                    childLink.href = 'page.html?slug=' + child.slug;
-                }
-                childLink.textContent = child.label;
-                childLink.style.cssText = 'display:block;padding:10px 20px;color:#111c2d;font-weight:600;font-size:14px;white-space:nowrap;text-decoration:none;';
-                childLink.onmouseover = function() { this.style.background = '#eef2ff'; this.style.color = '#4648d4'; };
-                childLink.onmouseout = function() { this.style.background = ''; this.style.color = '#111c2d'; };
-                dropdown.appendChild(childLink);
-            });
-            
-            wrapper.appendChild(dropdown);
-            wrapper.onmouseenter = function() { dropdown.style.display = 'block'; };
-            wrapper.onmouseleave = function() { dropdown.style.display = 'none'; };
-        }
-        
-        navMenu.appendChild(wrapper);
-    });
-}
-
-// ============================================
+// =============================================
 // COLOR MAP
 // ============================================
 const COLOR_MAP = {
@@ -77,11 +17,6 @@ async function loadData() {
     if (r.ok) {
       const text = await r.text();
       const data = JSON.parse(text);
-      
-      // Xây menu từ dữ liệu
-      if (data.menus) {
-        buildMenuFromJson(data.menus);
-      }
       
       return data;
     }

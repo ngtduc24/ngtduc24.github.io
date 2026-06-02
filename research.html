@@ -1,1 +1,214 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nghiên Cứu Khoa Học</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script id="tailwind-config">
+tailwind.config = {
+  theme: { extend: {
+    colors: {
+      "primary":"#4648d4","on-primary":"#ffffff","primary-container":"#6063ee","primary-fixed":"#e1e0ff","primary-fixed-dim":"#c0c1ff","on-primary-fixed":"#07006c",
+      "secondary":"#4d661c","on-secondary":"#ffffff","secondary-container":"#ceee93","secondary-fixed":"#ceee93","secondary-fixed-dim":"#b3d17a",
+      "tertiary":"#6d5e00","on-tertiary":"#ffffff","tertiary-container":"#c4aa01","tertiary-fixed":"#ffe24c","tertiary-fixed-dim":"#e2c62d",
+      "surface":"#f9f9ff","surface-bright":"#f9f9ff","surface-dim":"#cfdaf2","surface-variant":"#d8e3fb",
+      "surface-container-lowest":"#ffffff","surface-container-low":"#f0f3ff","surface-container":"#e7eeff","surface-container-high":"#dee8ff","surface-container-highest":"#d8e3fb",
+      "on-surface":"#111c2d","on-surface-variant":"#464554","on-background":"#111c2d","background":"#f9f9ff",
+      "outline":"#767586","outline-variant":"#c7c4d7",
+      "inverse-surface":"#263143","inverse-on-surface":"#ecf1ff","inverse-primary":"#c0c1ff",
+      "on-secondary-container":"#536d22","on-secondary-fixed":"#131f00","on-secondary-fixed-variant":"#364e03",
+      "on-tertiary-container":"#4a3f00","on-tertiary-fixed":"#211b00","on-tertiary-fixed-variant":"#524600",
+      "on-primary-container":"#fffbff","on-primary-fixed-variant":"#2f2ebe",
+      "error":"#ba1a1a","on-error":"#ffffff","error-container":"#ffdad6","on-error-container":"#93000a",
+      "surface-tint":"#494bd6"
+    },
+    borderRadius: {"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px","2xl":"1rem","3xl":"1.5rem"},
+    spacing: {"gutter":"20px","max-width":"1280px","section-gap":"80px","unit":"8px","container-padding":"24px"},
+    fontFamily: {"display-lg":["Plus Jakarta Sans"],"headline-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"body-lg":["Plus Jakarta Sans"],"body-md":["Plus Jakarta Sans"],"label-bold":["Plus Jakarta Sans"]},
+    fontSize: {
+      "display-lg":["56px",{"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"800"}],
+      "headline-lg":["40px",{"lineHeight":"1.2","letterSpacing":"-0.01em","fontWeight":"700"}],
+      "headline-md":["24px",{"lineHeight":"1.3","fontWeight":"700"}],
+      "body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],
+      "body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],
+      "label-bold":["14px",{"lineHeight":"1.0","fontWeight":"700"}]
+    }
+  }}
+}
+</script>
+<style>
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+.glass-panel{background:rgba(255,255,255,0.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.3)}
+.hero-gradient{background:linear-gradient(135deg,#c0c1ff 0%,#ceee93 100%)}
+.ambient-shadow{box-shadow:0 20px 40px -10px rgba(96,99,238,0.15)}
+.soft-shadow{box-shadow:0 8px 32px rgba(70,72,212,0.10)}
+.skeleton{background:linear-gradient(90deg,#e7eeff 25%,#dee8ff 50%,#e7eeff 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:1.5rem}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+</style>
+</head>
+<body class="bg-background text-on-background antialiased overflow-x-hidden">
+<script src="_nav.js"></script>
 
+<main class="max-w-max-width mx-auto px-gutter pb-section-gap">
+
+  <!-- HERO -->
+  <section class="mt-8 md:mt-10 mb-section-gap">
+    <div class="relative rounded-3xl overflow-hidden hero-gradient min-h-[280px] flex flex-col justify-between p-8 md:p-14 ambient-shadow">
+      <div class="absolute top-0 right-0 w-64 h-64 bg-secondary rounded-full blur-3xl opacity-20 -mr-20 -mt-20"></div>
+      <div class="absolute bottom-0 left-0 w-48 h-48 bg-primary rounded-full blur-3xl opacity-15 -ml-16 -mb-16"></div>
+      <div class="relative z-10 flex flex-col gap-3 max-w-2xl">
+        <span class="inline-flex w-fit items-center gap-2 bg-secondary text-on-secondary px-4 py-1.5 rounded-full text-label-bold font-label-bold shadow-sm">
+          <span class="material-symbols-outlined text-[16px]">science</span>
+          Nghiên Cứu Khoa Học
+        </span>
+        <h1 class="text-display-lg font-display-lg text-on-surface leading-tight tracking-tight" style="font-size:clamp(2rem,5vw,3.5rem)">
+          Khám Phá &amp; Nghiên Cứu
+        </h1>
+        <p class="text-body-lg font-body-lg text-on-surface-variant max-w-lg">
+          Tổng hợp các bài nghiên cứu, bài viết kiến thức chuyên sâu về thiết kế, công nghệ và sáng tạo đa phương tiện.
+        </p>
+      </div>
+      <div class="relative z-10 flex flex-wrap gap-4 mt-8">
+        <div class="flex items-center gap-3 glass-panel px-5 py-3 rounded-2xl">
+          <span class="material-symbols-outlined text-secondary">article</span>
+          <div><div class="text-headline-md font-headline-md text-on-surface font-bold" id="stat-research">–</div><div class="text-sm text-on-surface-variant">Nghiên cứu</div></div>
+        </div>
+        <div class="flex items-center gap-3 glass-panel px-5 py-3 rounded-2xl">
+          <span class="material-symbols-outlined text-primary">menu_book</span>
+          <div><div class="text-headline-md font-headline-md text-on-surface font-bold" id="stat-knowledge">–</div><div class="text-sm text-on-surface-variant">Kiến thức</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESEARCH PAPERS -->
+  <section class="mb-section-gap" id="section-research">
+    <div class="flex justify-between items-end mb-8">
+      <div>
+        <h2 class="text-headline-lg font-headline-lg text-on-surface">Nghiên Cứu Nổi Bật</h2>
+        <p class="text-body-md text-on-surface-variant mt-1">Các công trình nghiên cứu và bài báo khoa học</p>
+      </div>
+    </div>
+    <div id="research-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="skeleton h-64"></div>
+      <div class="skeleton h-64"></div>
+    </div>
+  </section>
+
+  <!-- KNOWLEDGE / BÀI VIẾT -->
+  <section class="mb-section-gap" id="section-knowledge">
+    <div class="flex justify-between items-end mb-8">
+      <div>
+        <h2 class="text-headline-lg font-headline-lg text-on-surface">Kiến Thức Môn Học</h2>
+        <p class="text-body-md text-on-surface-variant mt-1">Bài viết chia sẻ kiến thức chuyên sâu</p>
+      </div>
+    </div>
+    <div id="knowledge-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="skeleton h-52"></div>
+      <div class="skeleton h-52"></div>
+      <div class="skeleton h-52"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-on-surface border-t-8 border-tertiary-container">
+  <div class="flex flex-col md:flex-row justify-between items-center px-gutter py-12 w-full max-w-max-width mx-auto">
+    <div class="text-headline-md font-display-lg text-secondary-fixed mb-6 md:mb-0" id="footer-brand">Nguyễn Đức</div>
+    <div class="flex flex-wrap justify-center gap-6 md:gap-8 mb-6 md:mb-0" id="footer-links"></div>
+    <div class="text-surface-bright text-body-md text-center md:text-right" id="footer-copy">© 2024. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+async function loadData() {
+  try {
+    const r = await fetch('Data/content.json?t=' + Date.now());
+    if (r.ok) return await r.json();
+  } catch(e) {}
+  return null;
+}
+
+function renderResearch(items) {
+  const g = document.getElementById('research-grid');
+  document.getElementById('stat-research').textContent = items.length;
+  if (!items.length) {
+    g.innerHTML = '<div class="col-span-2 text-center py-16 text-on-surface-variant"><span class="material-symbols-outlined text-5xl block mb-3">science</span>Chưa có bài nghiên cứu.</div>';
+    return;
+  }
+  g.innerHTML = items.map(r => `
+    <article class="bg-surface-container-lowest rounded-2xl overflow-hidden soft-shadow hover:scale-[1.01] transition-transform duration-300 flex flex-col">
+      ${r.image ? `<div class="h-48 overflow-hidden"><img src="${r.image}" alt="${r.title}" class="w-full h-full object-cover"></div>` : ''}
+      <div class="p-6 flex flex-col flex-1">
+        <div class="flex flex-wrap gap-2 mb-3">
+          ${(r.tags||[]).map(t => `<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-xs font-bold">${t}</span>`).join('')}
+        </div>
+        <h3 class="text-headline-md font-headline-md text-on-surface mb-2 leading-snug">${r.title}</h3>
+        <p class="text-body-md text-on-surface-variant mb-4 flex-1">${r.excerpt || r.content?.substring(0,120) || ''}</p>
+        <div class="flex items-center justify-between mt-auto pt-4 border-t border-outline-variant/30">
+          <div class="flex items-center gap-2 text-sm text-on-surface-variant">
+            <span class="material-symbols-outlined text-[16px]">person</span>${r.author || ''}
+            <span class="mx-1">·</span>
+            <span class="material-symbols-outlined text-[16px]">calendar_today</span>${r.date || ''}
+          </div>
+          ${r.link && r.link !== '#' ? `<a href="${r.link}" target="_blank" class="flex items-center gap-1 text-primary font-bold text-sm hover:underline">Đọc thêm <span class="material-symbols-outlined text-[14px]">open_in_new</span></a>` : ''}
+        </div>
+      </div>
+    </article>
+  `).join('');
+}
+
+function renderKnowledge(items) {
+  const g = document.getElementById('knowledge-grid');
+  document.getElementById('stat-knowledge').textContent = items.length;
+  if (!items.length) {
+    g.innerHTML = '<div class="col-span-3 text-center py-16 text-on-surface-variant"><span class="material-symbols-outlined text-5xl block mb-3">menu_book</span>Chưa có bài viết nào.</div>';
+    return;
+  }
+  g.innerHTML = items.map(k => `
+    <article class="bg-surface-container-lowest rounded-2xl overflow-hidden soft-shadow hover:scale-[1.02] transition-transform duration-300 flex flex-col cursor-pointer">
+      ${k.image ? `<div class="h-40 overflow-hidden"><img src="${k.image}" alt="${k.title}" class="w-full h-full object-cover"></div>` : ''}
+      <div class="p-5 flex flex-col flex-1">
+        <span class="text-xs font-bold text-primary uppercase tracking-wider mb-2">${k.category || ''}</span>
+        <h3 class="text-body-lg font-bold text-on-surface mb-2 leading-snug">${k.title}</h3>
+        <p class="text-body-md text-on-surface-variant text-sm flex-1 line-clamp-3">${k.excerpt || ''}</p>
+        <div class="flex items-center gap-3 mt-4 pt-3 border-t border-outline-variant/30 text-xs text-on-surface-variant">
+          <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">schedule</span>${k.read_time || 5} phút đọc</span>
+          <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">visibility</span>${k.views || 0}</span>
+          <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">favorite</span>${k.likes || 0}</span>
+        </div>
+      </div>
+    </article>
+  `).join('');
+}
+
+async function init() {
+  const data = await loadData();
+  if (!data) return;
+
+  const name = data.nav_brand || data.banner?.name || 'Nguyễn Đức';
+  if (data.footer?.brand) document.getElementById('footer-brand').textContent = data.footer.brand;
+  else document.getElementById('footer-brand').textContent = name;
+  if (data.footer?.copyright) document.getElementById('footer-copy').textContent = data.footer.copyright;
+
+  if (data.menus) {
+    document.getElementById('footer-links').innerHTML = data.menus
+      .filter(m => m.type === 'fixed' || m.slug === 'home')
+      .map(m => {
+        const href = m.slug === 'home' ? 'index.html' : (m.link || 'page.html?slug=' + m.slug);
+        return `<a class="text-surface-variant/70 hover:text-tertiary-fixed transition-colors font-bold" href="${href}">${m.label}</a>`;
+      }).join('');
+  }
+
+  renderResearch(data.research || []);
+  renderKnowledge(data.knowledge || []);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

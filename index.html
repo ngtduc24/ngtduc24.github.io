@@ -87,26 +87,7 @@ tailwind.config = {
 </head>
 <body class="bg-background text-on-background font-body-md antialiased overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
 
-<!-- NAV -->
-<nav class="bg-surface/80 backdrop-blur-xl top-0 sticky z-50 shadow-sm border-b border-outline-variant/20">
-<div class="flex justify-between items-center px-gutter py-4 w-full max-w-max-width mx-auto">
-  <div class="flex items-center gap-8">
-    <a class="text-headline-md font-display-lg font-black tracking-tighter text-primary" href="index.html" id="nav-brand">Nguyễn Đức</a>
-    <div class="hidden lg:flex items-center gap-1" id="navMenu">
-      <!-- Menu sẽ được tải tự động từ Data/content.json -->
-    </div>
-  </div>
-  <div class="flex items-center gap-3">
-    <button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface">
-      <span class="material-symbols-outlined">search</span>
-    </button>
-    <a href="#contact" class="hidden sm:block bg-primary hover:bg-primary-container text-on-primary text-label-bold font-label-bold py-2.5 px-6 rounded-full transition-all active:scale-95 shadow-lg shadow-primary/20">Bắt Đầu</a>
-    <button class="lg:hidden p-2 rounded-full hover:bg-surface-container" id="menuToggle">
-      <span class="material-symbols-outlined">menu</span>
-    </button>
-  </div>
-</div>
-</nav>
+<script src="_nav.js"></script>
 
 <main class="max-w-max-width mx-auto px-gutter pb-section-gap">
 
@@ -249,7 +230,7 @@ function renderBanner(b) {
   if (b.badge) document.getElementById('hero-badge').textContent = b.badge;
   if (b.title_line1) document.getElementById('hero-line1').textContent = b.title_line1;
   if (b.title_line2) document.getElementById('hero-line2').textContent = b.title_line2;
-  if (b.name) { document.getElementById('hero-name').textContent = b.name; document.title = 'Portfolio - ' + b.name; document.getElementById('nav-brand').textContent = b.name; }
+  if (b.name) { document.getElementById('hero-name').textContent = b.name; document.title = 'Portfolio - ' + b.name; }
   if (b.description) document.getElementById('hero-desc').textContent = b.description;
   if (b.btn_primary) document.getElementById('hero-btn1').textContent = b.btn_primary;
   if (b.avatar_url) document.getElementById('hero-avatar').src = b.avatar_url;
@@ -336,7 +317,7 @@ function renderLearn(courses, research, community) {
     html += `<div class="rounded-3xl p-6 bg-secondary-fixed flex flex-col justify-between ambient-shadow relative overflow-hidden">
       <div class="absolute -right-8 -bottom-8 opacity-20"><span class="material-symbols-outlined text-[120px]">science</span></div>
       <div>
-        <span class="text-on-secondary-fixed-variant font-bold text-sm uppercase tracking-wider mb-2 block">${r.label}</span>
+        <span class="text-on-secondary-fixed-variant font-bold text-sm uppercase tracking-wider mb-2 block">${r.label || r.category || 'Nghiên Cứu'}</span>
         <h4 class="text-headline-md font-headline-md text-on-secondary-fixed leading-tight mb-2">${r.title}</h4>
       </div>
       <a class="inline-flex items-center gap-1 text-on-secondary-fixed-variant font-bold mt-4 hover:underline" href="${r.link||'#'}">
@@ -375,7 +356,9 @@ async function init() {
   renderSkills(data.skills);
   renderExperience(data.experience);
   renderPortfolio(data.portfolio);
-  renderLearn(data.courses, data.research, data.community);
+  // research card: ưu tiên data.research, fallback data.knowledge
+  const researchForHome = (data.research && data.research.length) ? data.research : (data.knowledge || []);
+  renderLearn(data.courses, researchForHome, data.community);
   renderFooter(data.footer);
 }
 

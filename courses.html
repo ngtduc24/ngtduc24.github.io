@@ -140,7 +140,7 @@ tailwind.config = {
 // ── Hàm load data (giống index.html) ──
 async function loadData() {
   try {
-    const r = await fetch('data/content.json?t=' + Date.now());
+    const r = await fetch('Data/content.json?t=' + Date.now());
     if (r.ok) { const t = await r.text(); return JSON.parse(t); }
   } catch(e) { console.error(e); }
   return null;

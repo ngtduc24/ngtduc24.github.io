@@ -65,26 +65,7 @@ tailwind.config = {
 </head>
 <body class="bg-background text-on-background font-body-md antialiased overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
 
-<!-- NAV - GIỐNG HỆT TRANG CHỦ -->
-<nav class="bg-surface/80 backdrop-blur-xl top-0 sticky z-50 shadow-sm border-b border-outline-variant/20">
-<div class="flex justify-between items-center px-gutter py-4 w-full max-w-max-width mx-auto">
-  <div class="flex items-center gap-8">
-    <a class="text-headline-md font-display-lg font-black tracking-tighter text-primary" href="index.html" id="nav-brand">Nguyễn Đức</a>
-    <div class="hidden lg:flex items-center gap-1" id="navMenu">
-      <!-- Menu sẽ được tải tự động từ Data/content.json -->
-    </div>
-  </div>
-  <div class="flex items-center gap-3">
-    <button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface">
-      <span class="material-symbols-outlined">search</span>
-    </button>
-    <a href="index.html#contact" class="hidden sm:block bg-primary hover:bg-primary-container text-on-primary text-label-bold font-label-bold py-2.5 px-6 rounded-full transition-all active:scale-95 shadow-lg shadow-primary/20">Bắt Đầu</a>
-    <button class="lg:hidden p-2 rounded-full hover:bg-surface-container" id="menuToggle">
-      <span class="material-symbols-outlined">menu</span>
-    </button>
-  </div>
-</div>
-</nav>
+<script src="_nav.js"></script>
 
 <!-- MAIN CONTENT -->
 <main class="max-w-max-width mx-auto px-gutter pb-section-gap">
@@ -138,54 +119,6 @@ function getSlugFromUrl() {
   return params.get('slug') || 'home';
 }
 
-function buildMenu(menus, currentSlug) {
-  const navMenu = document.getElementById('navMenu');
-  if (!navMenu || !menus) return;
-  
-  navMenu.innerHTML = '';
-  
-  menus.forEach(function(item) {
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'position:relative;display:inline-block;';
-    
-    const link = document.createElement('a');
-    if (item.type === 'fixed' && item.link) {
-      link.href = item.link;
-    } else if (item.slug === 'home') {
-      link.href = 'index.html';
-    } else {
-      link.href = 'page.html?slug=' + item.slug;
-    }
-    link.textContent = item.label;
-    link.className = 'px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all';
-    
-    if (item.slug === currentSlug) {
-      link.className = 'px-4 py-2 rounded-full text-label-bold font-label-bold text-primary bg-primary-container/10';
-    }
-    
-    wrapper.appendChild(link);
-    
-    if (item.children && item.children.length > 0) {
-      const dropdown = document.createElement('div');
-      dropdown.className = 'dropdown-menu';
-      
-      item.children.forEach(function(child) {
-        const childLink = document.createElement('a');
-        if (child.type === 'fixed' && child.link) {
-          childLink.href = child.link;
-        } else {
-          childLink.href = 'page.html?slug=' + child.slug;
-        }
-        childLink.textContent = child.label;
-        dropdown.appendChild(childLink);
-      });
-      
-      wrapper.appendChild(dropdown);
-    }
-    
-    navMenu.appendChild(wrapper);
-  });
-}
 
 async function initPage() {
   const data = await loadContentJson();
@@ -203,9 +136,6 @@ async function initPage() {
   document.getElementById('footer-copy').textContent = data.footer?.copyright || '© 2024';
   
   // Menu
-  if (data.menus) {
-    buildMenu(data.menus, slug);
-  }
   
   // Footer links
   if (data.footer?.links) {
@@ -231,24 +161,6 @@ async function initPage() {
     document.getElementById('pageContent').innerHTML = '<p>Trang này không tồn tại.</p><a href="index.html" class="text-primary underline mt-4 inline-block">Quay về trang chủ</a>';
   }
   
-  // Mobile menu
-  document.getElementById('menuToggle').addEventListener('click', function() {
-    const menu = document.getElementById('navMenu');
-    if (menu.style.display === 'flex') {
-      menu.style.display = 'none';
-    } else {
-      menu.style.display = 'flex';
-      menu.style.flexDirection = 'column';
-      menu.style.position = 'absolute';
-      menu.style.top = '70px';
-      menu.style.left = '0';
-      menu.style.right = '0';
-      menu.style.background = 'white';
-      menu.style.padding = '20px';
-      menu.style.boxShadow = '0 4px 10px rgba(0,0,0,0.1)';
-      menu.style.zIndex = '50';
-    }
-  });
 }
 
 document.addEventListener('DOMContentLoaded', initPage);

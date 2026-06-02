@@ -52,29 +52,12 @@ tailwind.config = {
 .glass-panel { background: rgba(255,255,255,0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.5); }
 .bg-gradient-electric { background: linear-gradient(135deg, #6063ee 0%, #4648d4 100%); }
 .bg-gradient-lime { background: linear-gradient(135deg, #ceee93 0%, #b3d17a 100%); }
-/* Dropdown menu giống trang chủ */
-#navMenu > div { position: relative; display: inline-block; }
-#navMenu .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; min-width: 200px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); padding: 8px 0; z-index: 60; }
-#navMenu > div:hover .dropdown-menu { display: block; }
-#navMenu .dropdown-menu a { display: block; padding: 10px 20px; color: #111c2d; font-weight: 600; font-size: 14px; white-space: nowrap; text-decoration: none; }
-#navMenu .dropdown-menu a:hover { background: #eef2ff; color: #4648d4; }
+/* nav styles handled by _nav.js */
 </style>
 </head>
-<body class="bg-background text-on-background font-body-md antialiased min-h-screen flex flex-col pt-20">
+<body class="bg-background text-on-background font-body-md antialiased min-h-screen flex flex-col">
 
-<!-- HEADER - Menu giống hệt trang chủ -->
-<header class="bg-surface/80 backdrop-blur-md shadow-[0_20px_40px_rgba(70,72,212,0.1)] fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-padding h-20 max-w-max-width mx-auto">
-<div class="flex items-center gap-8">
-  <a href="index.html" class="text-headline-md font-display-lg font-black tracking-tighter text-primary" id="navBrand">CreativeHub</a>
-  <div class="hidden lg:flex items-center gap-1" id="navMenu"></div>
-</div>
-<div class="flex items-center gap-3">
-  <button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface">
-    <span class="material-symbols-outlined">search</span>
-  </button>
-  <a href="index.html#contact" class="hidden sm:block bg-primary hover:bg-primary-container text-on-primary text-label-bold font-label-bold py-2.5 px-6 rounded-full transition-all active:scale-95 shadow-lg shadow-primary/20">Bắt Đầu</a>
-</div>
-</header>
+<script src="_nav.js"></script>
 
 <main class="flex-grow w-full max-w-max-width mx-auto px-container-padding py-12 flex flex-col gap-section-gap" id="portfolioMain">
   <div class="flex items-center gap-3 text-on-surface-variant py-20 justify-center">
@@ -100,56 +83,6 @@ async function loadContentJson() {
     if (r.ok) { const text = await r.text(); return JSON.parse(text); }
   } catch(e) { console.error(e); }
   return null;
-}
-
-function buildMenu(menus) {
-  const navMenu = document.getElementById('navMenu');
-  if (!navMenu || !menus) return;
-  navMenu.innerHTML = '';
-  
-  menus.forEach(function(item) {
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'position:relative;display:inline-block;';
-    
-    const link = document.createElement('a');
-    if (item.type === 'fixed' && item.link) link.href = item.link;
-    else if (item.slug === 'home') link.href = 'index.html';
-    else link.href = 'page.html?slug=' + item.slug;
-    
-    link.textContent = item.label;
-    link.className = 'px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all';
-    
-    // Active menu Portfolio
-    if (item.label === 'Portfolio') {
-      link.className = 'px-4 py-2 rounded-full text-label-bold font-label-bold text-primary bg-primary-container/10';
-    }
-    
-    wrapper.appendChild(link);
-    
-    // Submenu
-    if (item.children && item.children.length > 0) {
-      const dropdown = document.createElement('div');
-      dropdown.className = 'dropdown-menu';
-      dropdown.style.cssText = 'display:none;position:absolute;top:100%;left:0;min-width:200px;background:white;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.15);padding:8px 0;z-index:60;';
-      
-      item.children.forEach(function(child) {
-        const childLink = document.createElement('a');
-        if (child.type === 'fixed' && child.link) childLink.href = child.link;
-        else childLink.href = 'page.html?slug=' + child.slug;
-        childLink.textContent = child.label;
-        childLink.style.cssText = 'display:block;padding:10px 20px;color:#111c2d;font-weight:600;font-size:14px;white-space:nowrap;text-decoration:none;';
-        childLink.onmouseover = function() { this.style.background = '#eef2ff'; this.style.color = '#4648d4'; };
-        childLink.onmouseout = function() { this.style.background = ''; this.style.color = '#111c2d'; };
-        dropdown.appendChild(childLink);
-      });
-      
-      wrapper.appendChild(dropdown);
-      wrapper.onmouseenter = function() { dropdown.style.display = 'block'; };
-      wrapper.onmouseleave = function() { dropdown.style.display = 'none'; };
-    }
-    
-    navMenu.appendChild(wrapper);
-  });
 }
 
 function groupByTag(items) {
@@ -224,10 +157,8 @@ async function init() {
     document.getElementById('portfolioMain').innerHTML = '<p class="text-center text-red-500 py-20">Không thể tải dữ liệu.</p>';
     return;
   }
-  document.getElementById('navBrand').textContent = data.banner?.name || data.site?.name || 'CreativeHub';
   document.getElementById('footerBrand').textContent = data.footer?.brand || 'CreativeHub';
   document.getElementById('footerCopy').textContent = data.footer?.copyright || '© 2024';
-  if (data.menus) buildMenu(data.menus);
   if (data.footer?.links) {
     document.getElementById('footerLinks').innerHTML = data.footer.links.map(function(l) {
       return '<a class="text-surface-variant/70 hover:text-tertiary-fixed transition-colors font-bold" href="'+l.href+'">'+l.label+'</a>';
