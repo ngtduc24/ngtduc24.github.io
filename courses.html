@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Các Khóa Học - CreativeHub</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="twcfg">
+tailwind.config={theme:{extend:{colors:{"outline-variant":"#c7c4d7","surface-container-high":"#dee8ff","surface":"#f9f9ff","primary":"#4648d4","surface-container-lowest":"#ffffff","on-primary":"#ffffff","background":"#f9f9ff","primary-fixed":"#e1e0ff","on-surface-variant":"#464554","surface-container-low":"#f0f3ff","on-error":"#ffffff","surface-container":"#e7eeff","primary-container":"#6063ee","secondary-fixed":"#ceee93","on-surface":"#111c2d","outline":"#767586","surface-container-highest":"#d8e3fb","tertiary":"#6d5e00","inverse-surface":"#263143","secondary":"#4d661c","secondary-container":"#ceee93","on-secondary-container":"#536d22"},borderRadius:{DEFAULT:"0.25rem",lg:"0.5rem",xl:"0.75rem",full:"9999px"},fontFamily:{"label-bold":["Plus Jakarta Sans"],"body-md":["Plus Jakarta Sans"],"headline-lg":["Plus Jakarta Sans"],"display-lg":["Plus Jakarta Sans"],"body-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"]},fontSize:{"label-bold":["14px",{"lineHeight":"1.0","fontWeight":"700"}],"body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],"headline-lg":["40px",{"lineHeight":"1.2","letterSpacing":"-0.01em","fontWeight":"700"}],"display-lg":["56px",{"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"800"}],"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],"headline-md":["24px",{"lineHeight":"1.3","fontWeight":"700"}]}}}}
+</script>
+<style>
+*{font-family:"Plus Jakarta Sans",sans-serif}
+.material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 400,"GRAD" 0,"opsz" 24}
+.glass-panel{background:rgba(255,255,255,0.6);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.4)}
+.soft-shadow{box-shadow:0 20px 40px rgba(70,72,212,0.08)}
+.soft-shadow-heavy{box-shadow:0 30px 60px rgba(70,72,212,0.12)}
+.bg-grad-primary{background:linear-gradient(135deg,#6063ee 0%,#4648d4 100%)}
+.bg-grad-lime{background:linear-gradient(135deg,#ceee93 0%,#b3d17a 100%)}
+
+/* NAV — Giống hệt tất cả trang khác */
+#site-nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(249,249,255,0.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(199,196,215,0.3);height:72px}
+.nav-inner{max-width:1280px;margin:0 auto;padding:0 24px;height:100%;display:flex;align-items:center;gap:8px}
+.nav-logo{font-size:1.25rem;font-weight:800;color:#4648d4;text-decoration:none;letter-spacing:-0.02em;margin-right:16px;white-space:nowrap}
+.nav-links{display:flex;gap:4px;align-items:center;flex:1}
+.nav-link{font-size:15px;font-weight:500;color:#464554;text-decoration:none;padding:8px 12px;border-radius:8px;transition:all .2s;white-space:nowrap}
+.nav-link:hover{color:#4648d4;background:rgba(70,72,212,0.06)}
+.nav-link.active{color:#4648d4;font-weight:700;position:relative}
+.nav-link.active::after{content:"";position:absolute;bottom:-1px;left:12px;right:12px;height:2px;background:#4648d4;border-radius:2px}
+.nav-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.nav-icon{width:36px;height:36px;border-radius:8px;background:none;border:none;color:#464554;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.nav-icon:hover{background:rgba(70,72,212,0.08);color:#4648d4}
+.nav-signin{background:linear-gradient(135deg,#6063ee,#4648d4);color:#fff;font-weight:700;font-size:14px;padding:9px 22px;border-radius:999px;text-decoration:none;transition:opacity .2s}
+.nav-signin:hover{opacity:.88}
+@media(max-width:860px){.nav-links{display:none}}
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col" style="padding-top:72px">
+
+<!-- HEADER — đồng nhất với tất cả trang -->
+<header id="site-nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">MultimediaPlay</a>
+    <nav class="nav-links" id="navLinks">
+      <!-- Được render bởi JS từ content.json menus -->
+      <a href="index.html" class="nav-link">Trang chủ</a>
+      <a href="portfolio.html" class="nav-link">Portfolio</a>
+      <a href="courses.html" class="nav-link active">Các Khóa Học</a>
+      <a href="knowledge.html" class="nav-link">Kiến thức môn học</a>
+      <a href="research.html" class="nav-link">Nghiên cứu khoa học</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="nav-icon" title="Tìm kiếm">
+        <span class="material-symbols-outlined" style="font-size:20px">search</span>
+      </button>
+      <button class="nav-icon" title="Thông báo">
+        <span class="material-symbols-outlined" style="font-size:20px">notifications</span>
+      </button>
+      <button class="nav-icon" title="Tài khoản">
+        <span class="material-symbols-outlined" style="font-size:20px">account_circle</span>
+      </button>
+      <a href="admin/index.html" class="nav-signin">Bắt đầu</a>
+    </div>
+  </div>
+</header>
+
+<main class="flex-grow w-full max-w-[1280px] mx-auto px-6 py-12 flex flex-col gap-[80px]">
+
+  <!-- HERO SECTION — Featured Courses -->
+  <section class="flex flex-col gap-8">
+    <!-- Hero Text -->
+    <div class="flex flex-col gap-3">
+      <div id="heroBadge" class="inline-flex w-fit">
+        <span class="bg-primary text-on-primary font-label-bold text-label-bold px-3 py-1 rounded-full">Mới Nhất</span>
+      </div>
+      <h1 id="heroTitle" class="font-display-lg text-display-lg text-on-surface" style="font-size:clamp(2rem,5vw,3.5rem);font-weight:800;line-height:1.1;letter-spacing:-0.02em">
+        Trở thành Master<br>trong Kỷ nguyên số
+      </h1>
+      <p id="heroDesc" class="font-body-lg text-body-lg text-on-surface-variant max-w-xl">
+        Khám phá các masterclass độc quyền được thiết kế bởi các chuyên gia đầu ngành. Nâng tầm kỹ năng sáng tạo của bạn ngay hôm nay.
+      </p>
+    </div>
+
+    <!-- Featured Grid — giống hệt ảnh screenshot -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6" id="featuredGrid">
+      <div class="md:col-span-12 text-center py-16 text-on-surface-variant">Đang tải khóa học...</div>
+    </div>
+  </section>
+
+  <!-- ALL COURSES LIST -->
+  <section class="flex flex-col gap-8">
+    <div class="flex justify-between items-end border-b border-outline-variant/50 pb-4">
+      <h2 class="font-headline-lg text-headline-lg text-on-surface">Tất cả khóa học</h2>
+      <div class="flex gap-2">
+        <button class="px-4 py-2 rounded-full bg-surface-container text-on-surface flex items-center gap-2 hover:bg-surface-container-high transition-colors font-label-bold text-label-bold text-sm">
+          <span class="material-symbols-outlined text-sm">tune</span> Lọc
+        </button>
+      </div>
+    </div>
+    <div class="flex flex-col gap-6" id="courseList">
+      <div class="text-center py-12 text-on-surface-variant">Đang tải...</div>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-surface-container-low w-full py-16 px-6 mt-auto">
+  <div class="max-w-[1280px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+    <div>
+      <span class="font-display-lg text-xl font-extrabold text-primary block mb-3">CreativeHub</span>
+      <p class="font-body-md text-body-md text-on-surface-variant text-sm">Nền tảng học tập và sáng tạo Multimedia hàng đầu.</p>
+    </div>
+    <div class="flex flex-col gap-2">
+      <p class="font-label-bold text-label-bold text-on-surface mb-2">Liên kết</p>
+      <a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">About Us</a>
+      <a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">Contact</a>
+      <a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">Privacy Policy</a>
+      <a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">Terms of Service</a>
+    </div>
+    <div class="flex flex-col gap-2">
+      <p class="font-label-bold text-label-bold text-on-surface mb-2">Kết nối</p>
+      <a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">Facebook</a>
+      <a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">Instagram</a>
+      <a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">LinkedIn</a>
+      <a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">YouTube</a>
+    </div>
+    <div class="md:col-span-4 border-t border-outline-variant/30 pt-6 text-center">
+      <p class="font-body-md text-sm text-on-surface-variant">© 2024 Creative Multimedia LMS. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Load nav menu từ content.json (hỗ trợ menu động)
+async function loadNav() {
+  try {
+    const r = await fetch('data/content.json?t='+Date.now());
+    if (!r.ok) return;
+    const txt = await r.text();
+    const d = JSON.parse(txt);
+    if (d.menus && d.menus.length) {
+      const cur = location.pathname.split('/').pop()||'index.html';
+      document.getElementById('navLinks').innerHTML = d.menus.map(m => {
+        const active = cur === m.href;
+        return `<a href="${m.href}" class="nav-link${active?' active':''}">${m.label}</a>`;
+      }).join('');
+    }
+  } catch(e) {}
+}
+
+// Decode UTF-8 base64 (dùng cho ảnh upload trong tương lai)
+function fromB64(s) {
+  const b = atob(s.replace(/\n/g,''));
+  const a = new Uint8Array(b.length);
+  for(let i=0;i<b.length;i++) a[i]=b.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(a);
+}
+
+function statusBadge(status, badge) {
+  const label = badge || status;
+  const styles = {
+    active: 'bg-primary text-on-primary',
+    open: 'bg-secondary-container text-on-secondary-container',
+    upcoming: 'bg-secondary-container text-on-secondary-container',
+    soon: 'bg-surface-container-high text-on-surface',
+  };
+  const cls = styles[status] || 'bg-surface-container text-on-surface';
+  return `<span class="inline-flex items-center justify-center px-3 py-1 rounded-full font-label-bold text-label-bold text-sm ${cls}">${label}</span>`;
+}
+
+async function init() {
+  await loadNav();
+  
+  let data;
+  try {
+    const r = await fetch('data/content.json?t='+Date.now());
+    const txt = await r.text();
+    data = JSON.parse(txt);
+  } catch(e) {
+    document.getElementById('featuredGrid').innerHTML = '<div class="md:col-span-12 text-center py-16 text-on-surface-variant opacity-50">Không tải được dữ liệu</div>';
+    return;
+  }
+
+  // Hero content
+  const h = data.home || {};
+  if (h.badge) document.getElementById('heroBadge').querySelector('span').textContent = h.badge;
+  if (h.title_line1 || h.title_line2) {
+    document.getElementById('heroTitle').innerHTML = 
+      (h.title_line1||'') + (h.title_line2 ? '<br>'+h.title_line2 : '');
+  }
+  if (h.description) document.getElementById('heroDesc').textContent = h.description;
+
+  const courses = data.courses || [];
+  
+  // Featured: 2 khóa đầu
+  const featured = courses.filter(c => c.featured !== false).slice(0, 2);
+  if (!featured.length && courses.length) featured.push(...courses.slice(0,2));
+  
+  const fg = document.getElementById('featuredGrid');
+  if (featured.length === 0) {
+    fg.innerHTML = '<div class="md:col-span-12 text-center py-16 text-on-surface-variant opacity-50">Chưa có khóa học nổi bật</div>';
+  } else {
+    const f1 = featured[0];
+    const f2 = featured[1];
+    fg.innerHTML = `
+      <!-- Card lớn bên trái — giống ảnh -->
+      <div class="md:col-span-8 bg-surface-container-lowest rounded-[20px] overflow-hidden soft-shadow-heavy flex flex-col md:flex-row group cursor-pointer hover:-translate-y-1 transition-transform duration-300">
+        <div class="md:w-80 flex-shrink-0 relative overflow-hidden" style="min-height:280px">
+          <img src="${f1.image||''}" alt="${f1.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" style="min-height:280px">
+          <div class="absolute top-4 left-4">
+            ${statusBadge(f1.status||'active', f1.badge||'Nổi bật')}
+          </div>
+        </div>
+        <div class="flex-grow p-6 flex flex-col justify-between">
+          <div>
+            <h3 class="font-headline-md text-headline-md text-on-surface mb-2 group-hover:text-primary transition-colors">${f1.title}</h3>
+            <p class="font-body-md text-body-md text-on-surface-variant line-clamp-3">${f1.desc||f1.description||''}</p>
+          </div>
+          <div class="flex items-center justify-between mt-4">
+            <div class="flex items-center gap-2 text-on-surface-variant">
+              <span class="material-symbols-outlined text-sm">schedule</span>
+              <span class="font-body-md text-body-md">${f1.duration||''}</span>
+            </div>
+            <a href="${f1.link||'#'}" class="bg-grad-primary text-on-primary px-6 py-2 rounded-full font-label-bold text-label-bold hover:scale-105 transition-transform shadow-md inline-block">
+              Tham gia ngay
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card nhỏ bên phải -->
+      <div class="md:col-span-4 glass-panel rounded-[20px] p-6 soft-shadow flex flex-col justify-between hover:-translate-y-1 transition-transform duration-300 group cursor-pointer">
+        ${f2 ? `
+        <div>
+          <div class="w-12 h-12 bg-surface-container-high rounded-full flex items-center justify-center mb-4 text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+            <span class="material-symbols-outlined">play_circle</span>
+          </div>
+          <h3 class="font-headline-md text-headline-md text-on-surface mb-2">${f2.title}</h3>
+          <p class="font-body-md text-body-md text-on-surface-variant">${(f2.desc||'').substring(0,100)}${(f2.desc||'').length>100?'...':''}</p>
+        </div>
+        <div class="mt-6 flex items-center justify-between border-t border-outline-variant/30 pt-4">
+          ${statusBadge(f2.status||'upcoming', f2.badge||'Sắp khai giảng')}
+        </div>` : '<div class="text-on-surface-variant opacity-40 text-sm">Không có khóa học</div>'}
+      </div>`;
+  }
+
+  // All courses list — giống ảnh chính xác
+  const cl = document.getElementById('courseList');
+  if (!courses.length) {
+    cl.innerHTML = '<div class="text-center py-12 text-on-surface-variant opacity-50">Chưa có khóa học nào</div>';
+    return;
+  }
+
+  cl.innerHTML = courses.map(c => {
+    const isDisabled = c.status === 'soon';
+    const btnLabel = c.status === 'open' ? 'Chi tiết' : c.status === 'soon' ? 'Nhận thông báo' : 'Chi tiết';
+    const btnCls = isDisabled 
+      ? 'px-6 py-2 rounded-full bg-surface-container text-on-surface-variant cursor-not-allowed font-label-bold text-label-bold text-sm'
+      : 'px-6 py-2 rounded-full border-2 border-primary text-primary hover:bg-primary hover:text-on-primary transition-colors font-label-bold text-label-bold text-sm';
+    
+    const meta = [];
+    if (c.lessons) meta.push(`<div class="flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">menu_book</span>${c.lessons} Bài học</div>`);
+    if (c.launch) meta.push(`<div class="flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">calendar_month</span>Khai giảng: ${c.launch}</div>`);
+    else if (c.duration) meta.push(`<div class="flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">schedule</span>${c.duration}</div>`);
+
+    return `
+    <div class="bg-surface-container-lowest rounded-xl p-3 flex flex-col md:flex-row gap-6 items-center soft-shadow hover:shadow-[0_20px_40px_rgba(70,72,212,0.15)] transition-shadow duration-300 border border-outline-variant/20">
+      <div class="w-full md:w-64 h-48 md:h-40 flex-shrink-0 rounded-lg overflow-hidden">
+        <img src="${c.image||''}" alt="${c.title}" class="w-full h-full object-cover hover:scale-110 transition-transform duration-700">
+      </div>
+      <div class="flex-grow flex flex-col justify-center py-2">
+        <div class="flex justify-between items-start mb-2 gap-3">
+          <h3 class="font-headline-md text-headline-md text-on-surface">${c.title}</h3>
+          ${statusBadge(c.status||'open', c.badge)}
+        </div>
+        <p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">${c.desc||c.description||''}</p>
+        <div class="flex items-center gap-4 text-sm text-outline font-label-bold text-label-bold">
+          ${meta.join('')}
+        </div>
+      </div>
+      <div class="w-full md:w-auto px-4 md:px-6 flex justify-end md:border-l md:border-outline-variant/30">
+        <a href="${c.link||'#'}" class="${btnCls}"${isDisabled?' onclick="return false"':''}>${btnLabel}</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+init();
+</script>
+</body>
+</html>
