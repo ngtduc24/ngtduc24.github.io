@@ -18,105 +18,99 @@ tailwind.config = {
   theme: {
     extend: {
       "colors": {
-        "on-primary-fixed": "#07006c","error-container": "#ffdad6","outline-variant": "#c7c4d7",
-        "tertiary-fixed-dim": "#e2c62d","on-secondary-container": "#536d22","surface-container-high": "#dee8ff",
-        "tertiary-container": "#c4aa01","surface": "#f9f9ff","primary": "#4648d4",
-        "surface-container-lowest": "#ffffff","secondary-fixed-dim": "#b3d17a","tertiary-fixed": "#ffe24c",
-        "on-primary": "#ffffff","error": "#ba1a1a","background": "#f9f9ff","primary-fixed": "#e1e0ff",
-        "on-tertiary-container": "#4a3f00","on-surface-variant": "#464554","surface-container-low": "#f0f3ff",
-        "on-secondary-fixed": "#131f00","on-error": "#ffffff","surface-container": "#e7eeff",
-        "primary-container": "#6063ee","on-secondary-fixed-variant": "#364e03","on-primary-fixed-variant": "#2f2ebe",
-        "secondary-fixed": "#ceee93","on-surface": "#111c2d","on-background": "#111c2d",
-        "surface-dim": "#cfdaf2","secondary-container": "#ceee93","surface-bright": "#f9f9ff",
-        "outline": "#767586","on-error-container": "#93000a","on-tertiary": "#ffffff",
-        "surface-container-highest": "#d8e3fb","tertiary": "#6d5e00","surface-variant": "#d8e3fb",
-        "inverse-primary": "#c0c1ff","surface-tint": "#494bd6","on-primary-container": "#fffbff",
-        "on-secondary": "#ffffff","inverse-on-surface": "#ecf1ff","inverse-surface": "#263143",
-        "secondary": "#4d661c","primary-fixed-dim": "#c0c1ff","on-tertiary-fixed": "#211b00",
-        "on-tertiary-fixed-variant": "#524600"
+        "on-error":"#ffffff","surface-bright":"#f9f9ff","on-primary-fixed":"#07006c",
+        "surface-variant":"#d8e3fb","primary-container":"#6063ee","secondary-fixed-dim":"#b3d17a",
+        "inverse-surface":"#263143","tertiary-container":"#c4aa01","primary-fixed-dim":"#c0c1ff",
+        "on-surface":"#111c2d","error-container":"#ffdad6","on-tertiary-fixed":"#211b00",
+        "tertiary":"#6d5e00","surface-tint":"#494bd6","surface-container-high":"#dee8ff",
+        "inverse-on-surface":"#ecf1ff","surface-container-highest":"#d8e3fb","surface-dim":"#cfdaf2",
+        "primary":"#4648d4","on-secondary":"#ffffff","surface-container-lowest":"#ffffff",
+        "on-primary":"#ffffff","on-background":"#111c2d","on-tertiary-fixed-variant":"#524600",
+        "secondary-container":"#ceee93","on-tertiary":"#ffffff","on-primary-fixed-variant":"#2f2ebe",
+        "surface-container":"#e7eeff","secondary-fixed":"#ceee93","outline":"#767586",
+        "secondary":"#4d661c","on-tertiary-container":"#4a3f00","surface-container-low":"#f0f3ff",
+        "on-secondary-container":"#536d22","on-error-container":"#93000a","on-primary-container":"#fffbff",
+        "outline-variant":"#c7c4d7","tertiary-fixed":"#ffe24c","tertiary-fixed-dim":"#e2c62d",
+        "on-secondary-fixed-variant":"#364e03","primary-fixed":"#e1e0ff","surface":"#f9f9ff",
+        "background":"#f9f9ff","inverse-primary":"#c0c1ff","on-surface-variant":"#464554",
+        "error":"#ba1a1a","on-secondary-fixed":"#131f00"
       },
-      "borderRadius": { "DEFAULT": "0.25rem","lg": "0.5rem","xl": "0.75rem","full": "9999px" },
-      "spacing": { "section-gap": "80px","max-width": "1280px","container-padding": "24px","unit": "8px","gutter": "20px" },
-      "fontFamily": {
-        "label-bold": ["Plus Jakarta Sans"],"body-md": ["Plus Jakarta Sans"],"headline-lg": ["Plus Jakarta Sans"],
-        "display-lg": ["Plus Jakarta Sans"],"body-lg": ["Plus Jakarta Sans"],"headline-md": ["Plus Jakarta Sans"]
-      },
-      "fontSize": {
-        "label-bold": ["14px",{"lineHeight":"1.0","fontWeight":"700"}],
-        "body-md": ["16px",{"lineHeight":"1.5","fontWeight":"400"}],
-        "headline-lg": ["40px",{"lineHeight":"1.2","letterSpacing":"-0.01em","fontWeight":"700"}],
-        "display-lg": ["56px",{"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"800"}],
-        "body-lg": ["18px",{"lineHeight":"1.6","fontWeight":"400"}],
-        "headline-md": ["24px",{"lineHeight":"1.3","fontWeight":"700"}]
+      borderRadius: { "DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px","2xl":"1rem","3xl":"1.5rem" },
+      spacing: { "gutter":"20px","max-width":"1280px","section-gap":"80px","unit":"8px","container-padding":"24px" },
+      fontFamily: { "display-lg":["Plus Jakarta Sans"],"body-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"label-bold":["Plus Jakarta Sans"],"body-md":["Plus Jakarta Sans"],"headline-lg":["Plus Jakarta Sans"] },
+      fontSize: {
+        "display-lg":["56px",{"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"800"}],
+        "body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],
+        "headline-md":["24px",{"lineHeight":"1.3","fontWeight":"700"}],
+        "label-bold":["14px",{"lineHeight":"1.0","fontWeight":"700"}],
+        "body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],
+        "headline-lg":["40px",{"lineHeight":"1.2","letterSpacing":"-0.01em","fontWeight":"700"}]
       }
     }
   }
 }
 </script>
 <style>
-.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-.material-symbols-outlined.fill { font-variation-settings: 'FILL' 1; }
-.glass-panel { background: rgba(255,255,255,0.6); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.4); }
-.soft-shadow { box-shadow: 0 20px 40px rgba(70,72,212,0.08); }
-.text-gradient { background: linear-gradient(135deg, #4648d4, #c4aa01); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.bg-gradient-vibrant { background: linear-gradient(135deg, #f0f3ff 0%, #dee8ff 50%, #e1e0ff 100%); }
-/* Dropdown menu */
-.nav-item { position: relative; }
-.nav-item .dropdown { display: none; position: absolute; top: 100%; left: 0; min-width: 200px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); padding: 8px 0; z-index: 60; }
-.nav-item:hover .dropdown { display: block; }
-.nav-item .dropdown a { display: block; padding: 10px 20px; color: #111c2d; font-weight: 600; font-size: 14px; white-space: nowrap; text-decoration: none; border-radius: 8px; }
-.nav-item .dropdown a:hover { background: #eef2ff; color: #4648d4; }
+.glass-panel { background:rgba(255,255,255,0.7); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.3); }
+.hero-gradient { background:linear-gradient(135deg,#c0c1ff 0%,#ceee93 100%); }
+.inner-glow { box-shadow:inset 0 2px 4px rgba(255,255,255,0.5); }
+.ambient-shadow { box-shadow:0 20px 40px -10px rgba(96,99,238,0.15); }
+/* Dropdown menu - GIỐNG TRANG CHỦ */
+#navMenu > div { position: relative; display: inline-block; }
+#navMenu .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; min-width: 200px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); padding: 8px 0; z-index: 60; }
+#navMenu > div:hover .dropdown-menu { display: block; }
+#navMenu .dropdown-menu a { display: block; padding: 10px 20px; color: #111c2d; font-weight: 600; font-size: 14px; white-space: nowrap; text-decoration: none; }
+#navMenu .dropdown-menu a:hover { background: #eef2ff; color: #4648d4; }
 </style>
 </head>
-<body class="bg-surface text-on-surface font-body-md antialiased pt-20">
+<body class="bg-background text-on-background font-body-md antialiased overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
 
-<!-- HEADER (ĐỒNG BỘ VỚI TRANG CHỦ) -->
-<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-padding h-20 mx-auto bg-surface/80 backdrop-blur-md shadow-[0_20px_40px_rgba(70,72,212,0.1)]">
-<div class="flex items-center gap-gutter">
-  <a href="index.html" class="font-display-lg text-headline-md font-extrabold text-primary" id="navBrand">CreativeHub</a>
-</div>
-<nav class="hidden md:flex gap-gutter items-center" id="navMenu">
-  <!-- Menu sẽ được tải từ content.json -->
-</nav>
-<div class="flex items-center gap-unit">
-  <button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
-    <span class="material-symbols-outlined">notifications</span>
-  </button>
-  <button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
-    <span class="material-symbols-outlined">account_circle</span>
-  </button>
-  <button class="bg-primary text-on-primary px-4 py-2 rounded-full font-label-bold text-label-bold hover:scale-105 transition-transform duration-200 shadow-md flex items-center justify-center">
-    Sign In
-  </button>
-</div>
-</header>
-
-<!-- MAIN CONTENT -->
-<main class="w-full max-w-max-width mx-auto flex flex-col gap-section-gap pb-section-gap">
-<section class="relative w-full rounded-xl overflow-hidden mt-8 px-container-padding">
-  <div class="absolute inset-0 bg-gradient-vibrant rounded-xl -z-10"></div>
-  <div class="pt-16 pb-12 px-8 md:px-16 relative z-10">
-    <div class="max-w-3xl mx-auto">
-      <h1 class="font-display-lg text-headline-lg text-on-surface mb-4" id="pageHeading">Loading...</h1>
-      <article id="pageContent" class="prose max-w-none">
-        <div class="text-center py-12">
-          <span class="material-symbols-outlined text-4xl text-outline animate-spin">progress_activity</span>
-          <p class="text-on-surface-variant mt-4">Đang tải nội dung...</p>
-        </div>
-      </article>
+<!-- NAV - GIỐNG HỆT TRANG CHỦ -->
+<nav class="bg-surface/80 backdrop-blur-xl top-0 sticky z-50 shadow-sm border-b border-outline-variant/20">
+<div class="flex justify-between items-center px-gutter py-4 w-full max-w-max-width mx-auto">
+  <div class="flex items-center gap-8">
+    <a class="text-headline-md font-display-lg font-black tracking-tighter text-primary" href="index.html" id="nav-brand">Nguyễn Đức</a>
+    <div class="hidden lg:flex items-center gap-1" id="navMenu">
+      <!-- Menu sẽ được tải tự động từ Data/content.json -->
     </div>
   </div>
-</section>
+  <div class="flex items-center gap-3">
+    <button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface">
+      <span class="material-symbols-outlined">search</span>
+    </button>
+    <a href="index.html#contact" class="hidden sm:block bg-primary hover:bg-primary-container text-on-primary text-label-bold font-label-bold py-2.5 px-6 rounded-full transition-all active:scale-95 shadow-lg shadow-primary/20">Bắt Đầu</a>
+    <button class="lg:hidden p-2 rounded-full hover:bg-surface-container" id="menuToggle">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+  </div>
+</div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="max-w-max-width mx-auto px-gutter pb-section-gap">
+  <section class="mt-8 md:mt-12 mb-section-gap">
+    <div class="relative rounded-3xl hero-gradient overflow-hidden min-h-[300px] flex items-center p-8 md:p-16 ambient-shadow">
+      <div class="absolute top-10 right-10 w-24 h-24 bg-tertiary-fixed rounded-full blur-2xl opacity-60 mix-blend-multiply"></div>
+      <div class="absolute bottom-10 left-10 w-32 h-32 bg-primary rounded-full blur-3xl opacity-40 mix-blend-screen"></div>
+      <div class="relative z-10 w-full">
+        <h1 class="text-display-lg font-display-lg text-on-surface leading-tight mb-4" id="pageHeading">Loading...</h1>
+        <article id="pageContent" class="text-body-lg font-body-lg text-on-surface-variant max-w-3xl">
+          <div class="flex items-center gap-3 text-on-surface-variant">
+            <span class="material-symbols-outlined animate-spin">progress_activity</span>
+            Đang tải nội dung...
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
 </main>
 
-<!-- FOOTER (ĐỒNG BỘ VỚI TRANG CHỦ) -->
-<footer class="bg-surface-container-low w-full py-section-gap px-container-padding grid grid-cols-1 md:grid-cols-4 gap-gutter full-width rounded-t-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)] mx-auto max-w-max-width mt-auto">
-<div class="col-span-1">
-  <span class="font-display-lg text-headline-md font-extrabold text-primary mb-4 block" id="footerBrand">CreativeHub</span>
-  <p class="font-body-md text-body-md text-on-surface-variant" id="footerCopy">© 2024 CreativeHub. All rights reserved.</p>
-</div>
-<div class="col-span-1 md:col-span-3 flex flex-wrap gap-8 md:justify-end items-start" id="footerLinks">
-  <!-- Footer links sẽ được tải từ content.json -->
+<!-- FOOTER - GIỐNG TRANG CHỦ -->
+<footer class="bg-on-surface mt-section-gap border-t-8 border-tertiary-container">
+<div class="flex flex-col md:flex-row justify-between items-center px-gutter py-12 w-full max-w-max-width mx-auto">
+  <div class="text-headline-md font-display-lg text-secondary-fixed mb-6 md:mb-0" id="footer-brand">Nguyễn Đức</div>
+  <div class="flex flex-wrap justify-center gap-6 md:gap-8 mb-6 md:mb-0" id="footer-links"></div>
+  <div class="text-surface-bright text-body-md text-center md:text-right" id="footer-copy">© 2024 Nguyễn Đức. All rights reserved.</div>
 </div>
 </footer>
 
@@ -126,14 +120,10 @@ tailwind.config = {
 // ============================================
 async function loadContentJson() {
   try {
-    const r = await fetch('../Data/content.json?t=' + Date.now());
+    let r = await fetch('Data/content.json?t=' + Date.now());
     if (!r.ok) {
-      const r2 = await fetch('Data/content.json?t=' + Date.now());
-      if (r2.ok) {
-        const text = await r2.text();
-        return JSON.parse(text);
-      }
-      throw new Error('Cannot load content.json');
+      r = await fetch('../Data/content.json?t=' + Date.now());
+      if (!r.ok) throw new Error('Cannot load');
     }
     const text = await r.text();
     return JSON.parse(text);
@@ -154,18 +144,18 @@ function buildMenu(menus, currentSlug) {
   
   navMenu.innerHTML = '';
   
-  menus.forEach(item => {
+  menus.forEach(function(item) {
     const wrapper = document.createElement('div');
-    wrapper.className = 'nav-item';
+    wrapper.style.cssText = 'position:relative;display:inline-block;';
     
     const link = document.createElement('a');
-    link.href = item.type === 'page' ? `page.html?slug=${item.slug}` : (item.href || '#');
+    link.href = item.type === 'page' ? 'page.html?slug=' + item.slug : (item.href || '#');
     link.textContent = item.label;
-    link.className = 'text-on-surface-variant hover:text-primary transition-colors hover:scale-105 duration-300 font-label-bold text-label-bold';
+    link.className = 'px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all';
     
     // Active state
     if (item.slug === currentSlug) {
-      link.className = 'text-primary font-bold border-b-2 border-primary pb-1 hover:scale-105 transition-all duration-300 font-label-bold text-label-bold';
+      link.className = 'px-4 py-2 rounded-full text-label-bold font-label-bold text-primary bg-primary-container/10';
     }
     
     wrapper.appendChild(link);
@@ -173,13 +163,15 @@ function buildMenu(menus, currentSlug) {
     // Submenu
     if (item.children && item.children.length > 0) {
       const dropdown = document.createElement('div');
-      dropdown.className = 'dropdown';
-      item.children.forEach(child => {
+      dropdown.className = 'dropdown-menu';
+      
+      item.children.forEach(function(child) {
         const childLink = document.createElement('a');
-        childLink.href = child.type === 'page' ? `page.html?slug=${child.slug}` : (child.href || '#');
+        childLink.href = child.type === 'page' ? 'page.html?slug=' + child.slug : (child.href || '#');
         childLink.textContent = child.label;
         dropdown.appendChild(childLink);
       });
+      
       wrapper.appendChild(dropdown);
     }
     
@@ -190,35 +182,36 @@ function buildMenu(menus, currentSlug) {
 async function initPage() {
   const data = await loadContentJson();
   if (!data) {
-    document.getElementById('pageContent').innerHTML = '<p class="text-center text-red-500">Không thể tải dữ liệu. Vui lòng thử lại sau.</p>';
+    document.getElementById('pageContent').innerHTML = '<p class="text-red-500">Không thể tải dữ liệu.</p>';
     return;
   }
   
   const slug = getSlugFromUrl();
   
-  // Update brand
-  document.getElementById('navBrand').textContent = data.site?.name || 'CreativeHub';
-  document.getElementById('footerBrand').textContent = data.footer?.brand || data.site?.name || 'CreativeHub';
-  document.getElementById('footerCopy').textContent = data.footer?.copyright || '© 2024 CreativeHub';
+  // Brand
+  const brandName = data.banner?.name || data.site?.name || 'Nguyễn Đức';
+  document.getElementById('nav-brand').textContent = brandName;
+  document.getElementById('footer-brand').textContent = data.footer?.brand || brandName;
+  document.getElementById('footer-copy').textContent = data.footer?.copyright || '© 2024';
   
-  // Build menu
+  // Menu
   if (data.menus) {
     buildMenu(data.menus, slug);
   }
   
   // Footer links
   if (data.footer?.links) {
-    document.getElementById('footerLinks').innerHTML = data.footer.links.map(l =>
-      `<a class="text-on-surface-variant hover:text-secondary-container transition-colors font-body-md text-body-md" href="${l.href}">${l.label}</a>`
-    ).join('');
+    document.getElementById('footer-links').innerHTML = data.footer.links.map(function(l) {
+      return '<a class="text-surface-variant/70 hover:text-tertiary-fixed transition-colors font-bold" href="' + l.href + '">' + l.label + '</a>';
+    }).join('');
   }
   
-  // Display page content
+  // Page content
   const page = data.pages?.[slug];
   if (page) {
     document.getElementById('pageHeading').textContent = page.title;
     document.getElementById('pageContent').innerHTML = page.content || '<p>Chưa có nội dung.</p>';
-    document.title = page.title + ' - ' + (data.site?.name || 'CreativeHub');
+    document.title = page.title + ' - ' + brandName;
     if (page.meta?.description) {
       document.getElementById('metaDescription').content = page.meta.description;
     }
@@ -227,15 +220,27 @@ async function initPage() {
     document.getElementById('pageContent').innerHTML = '<p>Chào mừng đến với trang chủ.</p>';
   } else {
     document.getElementById('pageHeading').textContent = '404 - Không tìm thấy';
-    document.getElementById('pageContent').innerHTML = `
-      <div class="text-center py-16">
-        <span class="material-symbols-outlined text-6xl text-outline">search_off</span>
-        <h2 class="text-headline-md mt-4 mb-2">Trang không tồn tại</h2>
-        <p class="text-on-surface-variant mb-6">Trang bạn tìm kiếm chưa được tạo hoặc đã bị xóa.</p>
-        <a href="index.html" class="inline-block bg-primary text-on-primary px-6 py-3 rounded-full font-label-bold text-label-bold hover:scale-105 transition-transform">Quay về trang chủ</a>
-      </div>
-    `;
+    document.getElementById('pageContent').innerHTML = '<p>Trang này không tồn tại.</p><a href="index.html" class="text-primary underline mt-4 inline-block">Quay về trang chủ</a>';
   }
+  
+  // Mobile menu
+  document.getElementById('menuToggle').addEventListener('click', function() {
+    const menu = document.getElementById('navMenu');
+    if (menu.style.display === 'flex') {
+      menu.style.display = 'none';
+    } else {
+      menu.style.display = 'flex';
+      menu.style.flexDirection = 'column';
+      menu.style.position = 'absolute';
+      menu.style.top = '70px';
+      menu.style.left = '0';
+      menu.style.right = '0';
+      menu.style.background = 'white';
+      menu.style.padding = '20px';
+      menu.style.boxShadow = '0 4px 10px rgba(0,0,0,0.1)';
+      menu.style.zIndex = '50';
+    }
+  });
 }
 
 document.addEventListener('DOMContentLoaded', initPage);
