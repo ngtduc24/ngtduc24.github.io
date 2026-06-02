@@ -452,6 +452,107 @@ input:focus,textarea:focus,select:focus{border-color:var(--pri)}
   </div>
 
   <!-- TRANG CHỦ -->
+  <!-- ═══ TAB BANNER (TRANG CHỦ) ═══ -->
+  <div id="tab-banner" class="tab-pane">
+    <div class="page-header"><h1>Trang chủ — Banner</h1><p>Chỉnh sửa hero section trên trang chủ</p></div>
+    <div class="card">
+      <div class="section-title">Nội dung Hero</div>
+      <div class="row2">
+        <div class="field"><label>Badge / Chức danh</label><input type="text" id="banBadge" placeholder="Nhà Thiết Kế Sáng Tạo"></div>
+        <div class="field"><label>Tên hiển thị</label><input type="text" id="banName" placeholder="Nguyễn Đức"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Dòng tiêu đề 1</label><input type="text" id="banLine1" placeholder="Xin Chào!"></div>
+        <div class="field"><label>Dòng tiêu đề 2 (trước tên)</label><input type="text" id="banLine2" placeholder="Tôi là"></div>
+      </div>
+      <div class="field"><label>Mô tả</label><textarea id="banDesc" rows="3"></textarea></div>
+      <div class="row2">
+        <div class="field"><label>Nút chính</label><input type="text" id="banBtn1" placeholder="Xem Portfolio"></div>
+        <div class="field"><label>Nút phụ</label><input type="text" id="banBtn2" placeholder="Liên Hệ"></div>
+      </div>
+      <div class="field">
+        <label>Ảnh đại diện</label>
+        <div class="upload-tabs">
+          <button class="upload-tab active" onclick="switchUploadTab('ban','url',this)">🔗 URL</button>
+          <button class="upload-tab" onclick="switchUploadTab('ban','file',this)">📁 Upload</button>
+        </div>
+        <div id="ban-url-tab"><input type="url" id="banAvatarUrl" placeholder="https://..." oninput="previewFromUrl('banAvatarUrl','banImgPrev')"></div>
+        <div id="ban-file-tab" style="display:none">
+          <div class="img-upload-area" onclick="document.getElementById('banAvatarFile').click()">
+            <span class="material-symbols-outlined upload-icon">cloud_upload</span>
+            <p>Chọn ảnh đại diện</p>
+            <input type="file" id="banAvatarFile" accept="image/*" style="display:none" onchange="handleFileUpload(this,'banImgPrev','banAvatarData')">
+          </div>
+        </div>
+        <input type="hidden" id="banAvatarData">
+        <img id="banImgPrev" class="img-preview" alt="Preview">
+      </div>
+      <button class="btn btn-primary" onclick="saveBanner()">
+        <span class="material-symbols-outlined" style="font-size:17px">save</span> Lưu Banner
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ TAB KỸ NĂNG & KINH NGHIỆM ═══ -->
+  <div id="tab-skills" class="tab-pane">
+    <div class="page-header"><h1>Kỹ Năng &amp; Kinh Nghiệm</h1><p>Quản lý kỹ năng cốt lõi và lịch sử công tác</p></div>
+
+    <!-- KỸ NĂNG -->
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">Kỹ năng cốt lõi</div><div class="card-sub">Hiển thị dạng lưới trên trang chủ</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openSkillModal(-1)">
+          <span class="material-symbols-outlined" style="font-size:15px">add</span> Thêm kỹ năng
+        </button>
+      </div>
+      <div id="skillsList"></div>
+    </div>
+
+    <!-- KINH NGHIỆM -->
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">Kinh nghiệm làm việc</div><div class="card-sub">Hiển thị dạng timeline trên trang chủ</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openExpModal(-1)">
+          <span class="material-symbols-outlined" style="font-size:15px">add</span> Thêm kinh nghiệm
+        </button>
+      </div>
+      <div id="expList"></div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB CỘNG ĐỒNG & FOOTER ═══ -->
+  <div id="tab-community" class="tab-pane">
+    <div class="page-header"><h1>Cộng đồng &amp; Footer</h1><p>Card cộng đồng và thông tin cuối trang</p></div>
+    <div class="card">
+      <div class="section-title">Card Cộng Đồng (trong section Học Tập)</div>
+      <div class="row2">
+        <div class="field"><label>Tiêu đề</label><input type="text" id="comTitle" placeholder="Cộng Đồng Sáng Tạo"></div>
+        <div class="field"><label>Label nút</label><input type="text" id="comBtn" placeholder="Tham Gia Ngay"></div>
+      </div>
+      <div class="field"><label>Mô tả</label><textarea id="comDesc" rows="2" placeholder="Tham gia cộng đồng 500+ designer..."></textarea></div>
+      <div class="field"><label>Link</label><input type="url" id="comLink" placeholder="https://..."></div>
+      <button class="btn btn-primary" onclick="saveCommunity()">
+        <span class="material-symbols-outlined" style="font-size:17px">save</span> Lưu
+      </button>
+    </div>
+    <div class="card">
+      <div class="section-title">Footer</div>
+      <div class="row2">
+        <div class="field"><label>Tên thương hiệu</label><input type="text" id="footBrand" placeholder="Nguyễn Đức"></div>
+        <div class="field"><label>Bản quyền</label><input type="text" id="footCopy" placeholder="© 2024 Nguyễn Đức. All rights reserved."></div>
+      </div>
+      <div class="field">
+        <label>Link footer (mỗi dòng: Tên|url)</label>
+        <textarea id="footLinks" rows="5" placeholder="Trang chủ|index.html&#10;Portfolio|index.html#portfolio&#10;Liên hệ|index.html#contact"></textarea>
+        <p style="font-size:.72rem;color:var(--txt3);margin-top:4px">Mỗi dòng 1 link, định dạng: <code>Tên|url</code></p>
+      </div>
+      <button class="btn btn-primary" onclick="saveFooter()">
+        <span class="material-symbols-outlined" style="font-size:17px">save</span> Lưu Footer
+      </button>
+    </div>
+  </div>
+
+  <!-- tab-home cũ giữ lại để không lỗi reference -->
   <div id="tab-home" class="tab-pane">
     <div class="page-header"><h1>Trang chủ</h1><p>Chỉnh sửa nội dung trang chủ</p></div>
     <div class="card">
@@ -1035,6 +1136,9 @@ function goTab(tab,btn){
   if(btn)btn.classList.add('active');
 
   if(tab==='home')loadHomeForm();
+  if(tab==='banner')loadBannerForm();
+  if(tab==='skills'){renderSkillsList();renderExpList();}
+  if(tab==='community')loadCommunityForm();
   if(tab==='portfolio'){renderSection('portfolio');renderList('port','portfolio');}
   if(tab==='courses'){renderSection('courses');renderList('cour','courses');}
   if(tab==='knowledge'){renderSection('knowledge');renderList('know','knowledge');}
@@ -1332,6 +1436,173 @@ function restoreBackup(input){
   reader.readAsText(file);
 }
 
+
+// ══════════════════════════════════════════════════
+// BANNER
+// ══════════════════════════════════════════════════
+function loadBannerForm() {
+  const b = DATA.banner || {};
+  sv('banBadge', b.badge); sv('banName', b.name);
+  sv('banLine1', b.title_line1); sv('banLine2', b.title_line2);
+  sv('banDesc', b.description);
+  sv('banBtn1', b.btn_primary); sv('banBtn2', b.btn_secondary);
+  if (b.avatar_url) setImagePreview('banAvatarUrl','banAvatarData','banImgPrev', b.avatar_url);
+}
+async function saveBanner() {
+  DATA.banner = {
+    badge: gv('banBadge'), name: gv('banName'),
+    title_line1: gv('banLine1'), title_line2: gv('banLine2'),
+    description: gv('banDesc'),
+    btn_primary: gv('banBtn1'), btn_secondary: gv('banBtn2'),
+    avatar_url: getImageValue('banAvatarUrl','banAvatarData')
+  };
+  // Đồng bộ nav_brand với tên banner
+  if (DATA.banner.name) DATA.nav_brand = DATA.banner.name;
+  await trySave();
+}
+
+// ══════════════════════════════════════════════════
+// SKILLS
+// ══════════════════════════════════════════════════
+function renderSkillsList() {
+  const items = DATA.skills || [];
+  const el = $('skillsList');
+  if (!items.length) { el.innerHTML = '<div class="empty-state">Chưa có kỹ năng nào.</div>'; return; }
+  const COLOR_LABEL = {primary:'Tím', secondary:'Xanh lá', tertiary:'Vàng', 'primary-container':'Tím nhạt'};
+  el.innerHTML = items.map((s,i) => `
+    <div class="article-row">
+      <div style="width:44px;height:44px;border-radius:12px;background:var(--pri-lt);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span class="material-symbols-outlined" style="font-size:22px;color:var(--pri)">${s.icon||'star'}</span>
+      </div>
+      <div class="article-info">
+        <div class="article-title">${s.name}</div>
+        <div class="article-meta">${s.percent||''} · ${COLOR_LABEL[s.color]||s.color}</div>
+      </div>
+      <div class="article-actions">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="openSkillModal(${i})">
+          <span class="material-symbols-outlined" style="font-size:16px">edit</span>
+        </button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteSkill(${i})">
+          <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+        </button>
+      </div>
+    </div>`).join('');
+}
+function openSkillModal(idx) {
+  sv('skillIdx', idx);
+  $('skillModalTitle').textContent = idx < 0 ? 'Thêm kỹ năng' : 'Sửa kỹ năng';
+  if (idx >= 0) {
+    const s = (DATA.skills||[])[idx];
+    sv('skName', s.name); sv('skPercent', s.percent); sv('skIcon', s.icon); sv('skColor', s.color);
+  } else {
+    ['skName','skPercent','skIcon'].forEach(id => sv(id,''));
+    sv('skColor','primary');
+  }
+  openModal('skillModal');
+}
+async function saveSkill() {
+  const name = gv('skName'); if (!name) { showAlert('Nhập tên kỹ năng!','error'); return; }
+  const item = { name, percent: gv('skPercent'), icon: gv('skIcon')||'star', color: gv('skColor') };
+  if (!DATA.skills) DATA.skills = [];
+  const idx = parseInt(gv('skillIdx'));
+  if (idx >= 0) DATA.skills[idx] = item; else DATA.skills.push(item);
+  await trySave();
+  closeModal('skillModal');
+  renderSkillsList();
+}
+async function deleteSkill(i) {
+  if (!confirm('Xoá kỹ năng "' + DATA.skills[i].name + '"?')) return;
+  DATA.skills.splice(i, 1);
+  await trySave(); renderSkillsList();
+}
+
+// ══════════════════════════════════════════════════
+// EXPERIENCE
+// ══════════════════════════════════════════════════
+function renderExpList() {
+  const items = DATA.experience || [];
+  const el = $('expList');
+  if (!items.length) { el.innerHTML = '<div class="empty-state">Chưa có kinh nghiệm nào.</div>'; return; }
+  el.innerHTML = items.map((e,i) => `
+    <div class="article-row">
+      <div style="width:44px;height:44px;border-radius:12px;background:var(--sec-lt);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span class="material-symbols-outlined" style="font-size:20px;color:var(--sec)">work</span>
+      </div>
+      <div class="article-info">
+        <div class="article-title">${e.title}</div>
+        <div class="article-meta">${e.company||''} · ${e.period||''}</div>
+        ${e.desc ? `<div style="font-size:.8rem;color:var(--txt3);margin-top:3px;max-height:1.5em;overflow:hidden">${e.desc}</div>` : ''}
+      </div>
+      <div class="article-actions">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="openExpModal(${i})">
+          <span class="material-symbols-outlined" style="font-size:16px">edit</span>
+        </button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteExp(${i})">
+          <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+        </button>
+      </div>
+    </div>`).join('');
+}
+function openExpModal(idx) {
+  sv('expIdx', idx);
+  $('expModalTitle').textContent = idx < 0 ? 'Thêm kinh nghiệm' : 'Sửa kinh nghiệm';
+  if (idx >= 0) {
+    const e = (DATA.experience||[])[idx];
+    sv('expTitle', e.title); sv('expCompany', e.company);
+    sv('expPeriod', e.period); sv('expDesc', e.desc); sv('expColor', e.color||'primary');
+  } else {
+    ['expTitle','expCompany','expPeriod','expDesc'].forEach(id => sv(id,''));
+    sv('expColor','primary');
+  }
+  openModal('expModal');
+}
+async function saveExp() {
+  const title = gv('expTitle'); if (!title) { showAlert('Nhập chức vụ!','error'); return; }
+  const item = { title, company: gv('expCompany'), period: gv('expPeriod'), desc: gv('expDesc'), color: gv('expColor') };
+  if (!DATA.experience) DATA.experience = [];
+  const idx = parseInt(gv('expIdx'));
+  if (idx >= 0) DATA.experience[idx] = item; else DATA.experience.push(item);
+  await trySave(); closeModal('expModal'); renderExpList();
+}
+async function deleteExp(i) {
+  if (!confirm('Xoá kinh nghiệm "' + DATA.experience[i].title + '"?')) return;
+  DATA.experience.splice(i, 1);
+  await trySave(); renderExpList();
+}
+
+// ══════════════════════════════════════════════════
+// COMMUNITY & FOOTER
+// ══════════════════════════════════════════════════
+function loadCommunityForm() {
+  const c = DATA.community || {};
+  sv('comTitle', c.title); sv('comDesc', c.desc); sv('comBtn', c.btn); sv('comLink', c.link);
+  const f = DATA.footer || {};
+  sv('footBrand', f.brand || DATA.nav_brand);
+  sv('footCopy', f.copyright);
+  if (f.links) {
+    $('footLinks').value = f.links.map(l => l.label + '|' + l.href).join('\n');
+  }
+}
+async function saveCommunity() {
+  DATA.community = { title: gv('comTitle'), desc: gv('comDesc'), btn: gv('comBtn'), link: gv('comLink')||'#' };
+  await trySave();
+}
+async function saveFooter() {
+  DATA.footer = {
+    brand: gv('footBrand'),
+    copyright: gv('footCopy'),
+    links: gv('footLinks').split('\n').filter(Boolean).map(l => {
+      const [label, href] = l.split('|');
+      return { label: (label||'').trim(), href: (href||'#').trim() };
+    })
+  };
+  if (DATA.footer.brand) DATA.nav_brand = DATA.footer.brand;
+  await trySave();
+}
+
+// ══════════════════════════════════════════════════
+// PATCH goTab để load các form mới
+// ══════════════════════════════════════════════════
 // ── NAV BRAND MANAGEMENT ──
 function loadNavBrandForm() {
   sv('navBrand', DATA.nav_brand || '');
@@ -1379,9 +1650,10 @@ async function saveNavBrand() {
 const _origGoTab = goTab;
 window.goTab = function(tab, btn) {
   _origGoTab(tab, btn);
-  if (tab === 'menus') {
-    loadNavBrandForm();
-  }
+  if (tab === 'menus')      loadNavBrandForm();
+  if (tab === 'banner')     loadBannerForm();
+  if (tab === 'skills')     { renderSkillsList(); renderExpList(); }
+  if (tab === 'community')  loadCommunityForm();
 };
 </script>
 </body>
