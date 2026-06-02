@@ -7,15 +7,23 @@ function buildMenuFromJson(menus) {
     
     navMenu.innerHTML = '';
     
-    function createMenuItem(item) {
+    menus.forEach(function(item) {
         const wrapper = document.createElement('div');
         wrapper.style.cssText = 'position:relative;display:inline-block;';
         
         const link = document.createElement('a');
-        link.href = item.type === 'page' ? `page.html?slug=${item.slug}` : (item.href || '#');
+        // Xác định link dựa vào type
+        if (item.type === 'fixed' && item.link) {
+            link.href = item.link;
+        } else if (item.slug === 'home') {
+            link.href = 'index.html';
+        } else {
+            link.href = 'page.html?slug=' + item.slug;
+        }
         link.textContent = item.label;
         link.className = 'px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all';
-        if (item.slug === 'home' && (window.location.pathname.includes('index.html') || window.location.pathname === '/')) {
+        
+        if (item.slug === 'home' && (window.location.pathname.includes('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/'))) {
             link.classList.add('text-primary', 'bg-primary-container/10');
         }
         
@@ -29,7 +37,11 @@ function buildMenuFromJson(menus) {
             
             item.children.forEach(function(child) {
                 const childLink = document.createElement('a');
-                childLink.href = child.type === 'page' ? `page.html?slug=${child.slug}` : (child.href || '#');
+                if (child.type === 'fixed' && child.link) {
+                    childLink.href = child.link;
+                } else {
+                    childLink.href = 'page.html?slug=' + child.slug;
+                }
                 childLink.textContent = child.label;
                 childLink.style.cssText = 'display:block;padding:10px 20px;color:#111c2d;font-weight:600;font-size:14px;white-space:nowrap;text-decoration:none;';
                 childLink.onmouseover = function() { this.style.background = '#eef2ff'; this.style.color = '#4648d4'; };
@@ -42,11 +54,7 @@ function buildMenuFromJson(menus) {
             wrapper.onmouseleave = function() { dropdown.style.display = 'none'; };
         }
         
-        return wrapper;
-    }
-    
-    menus.forEach(function(item) {
-        navMenu.appendChild(createMenuItem(item));
+        navMenu.appendChild(wrapper);
     });
 }
 
