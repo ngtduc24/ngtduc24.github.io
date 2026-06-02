@@ -13,24 +13,6 @@
   },
   "portfolio": [
     {
-      "id": "mpvzckhzc6i",
-      "title": "Project Nexus Rebrandaaa",
-      "author": "",
-      "category": "",
-      "date": "2026-06-02",
-      "read_time": 5,
-      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAi-XyIw7n5_qs2gRuVY5tzy8T9kNcTJ7oct3L7pA4uaRSsFv-NXNAqCkD03VG4wVF5M6nhBu2AH5XuLevkbHGhXyfWTTfiZCvB2mWUQGdzB02-oCUBVZ5fBLndUc8knKZjZ0Abr4Pm2x7KCJf57mpVHt8eLzjg4J034tgdWqERPQ-pcm2B2d2mUAy0GBvD6gvk3Qn1es0Kcd5gZKeytqMpF96k5gc2wKpQUR3xXrDdM5-EFqcS1VIg0fSE782XWMstEOcUjUpTk68",
-      "excerpt": "",
-      "content": "",
-      "tags": [
-        "UX/UI Design",
-        "3D Motion"
-      ],
-      "status": "active",
-      "link": "#",
-      "featured": true
-    },
-    {
       "id": "p1",
       "title": "Project Nexus Rebrand",
       "desc": "Hệ thống nhận diện thương hiệu toàn diện cho startup công nghệ tiên phong.",
@@ -258,5 +240,97 @@
       "label": "Nghiên cứu khoa học",
       "href": "research.html"
     }
-  ]
+  ],
+  "banner": {
+    "badge": "Nhà Thiết Kế Sáng Tạo",
+    "title_line1": "Xin Chào!",
+    "title_line2": "Tôi là",
+    "name": "Andy Nguyễn",
+    "description": "Kết hợp nghệ thuật, công nghệ và một chút ma thuật để tạo ra những trải nghiệm kỹ thuật số đáng nhớ. Cùng nhau xây dựng những thế giới mới.",
+    "avatar_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAaM6nPg7daWott3BQVpCtvizZFbleVjeMlC6avIkwTE1aCxJeCfNrxwUqwDDxeepGlH0A9kiIbIuZwn3c1tAyUQ3N1-oF88I4_KEbYBnzSFct5eRx6P3kgkL3FQJK90R6DhDZZmmDuzC1EIG5p6E48fc7Iv48OMLM1hl2bjSx66k8493bjfQSxaQCAtMtvkHFHX_NkSPsW_h-5XEt3Auu38gBil8FELSgJxkwLQkCLVCZmoQ1oZz9fnc1TMzsBG8hqdNdUscFbhOQ",
+    "btn_primary": "Xem Portfolio",
+    "btn_secondary": "Liên Hệ"
+  },
+  "skills": [
+    {
+      "name": "UI/UX Design",
+      "icon": "design_services",
+      "percent": "95%",
+      "color": "primary"
+    },
+    {
+      "name": "3D Motion",
+      "icon": "animation",
+      "percent": "88%",
+      "color": "secondary"
+    },
+    {
+      "name": "Figma",
+      "icon": "brush",
+      "percent": "92%",
+      "color": "primary"
+    },
+    {
+      "name": "Blender",
+      "icon": "view_in_ar",
+      "percent": "80%",
+      "color": "tertiary"
+    },
+    {
+      "name": "After Effects",
+      "icon": "movie",
+      "percent": "85%",
+      "color": "secondary"
+    },
+    {
+      "name": "Photoshop",
+      "icon": "image",
+      "percent": "90%",
+      "color": "primary"
+    }
+  ],
+  "experience": [
+    {
+      "title": "Senior UI/UX Designer",
+      "company": "Creative Studio",
+      "period": "2022 - Hiện tại",
+      "desc": "Thiết kế giao diện và trải nghiệm người dùng cho các sản phẩm kỹ thuật số.",
+      "color": "primary"
+    },
+    {
+      "title": "Motion Designer",
+      "company": "Media Agency",
+      "period": "2020 - 2022",
+      "desc": "Tạo ra các hiệu ứng chuyển động và đồ họa tương tác cho các chiến dịch quảng cáo.",
+      "color": "secondary"
+    }
+  ],
+  "community": {
+    "title": "Cộng Đồng Sáng Tạo",
+    "desc": "Tham gia cộng đồng 500+ designer và multimedia artist.",
+    "btn": "Tham Gia Ngay",
+    "link": "#"
+  },
+  "footer": {
+    "brand": "Andy Nguyễn",
+    "copyright": "© 2024 Nguyễn Đức. All rights reserved.",
+    "links": [
+      {
+        "label": "Trang chủ",
+        "href": "index.html"
+      },
+      {
+        "label": "Portfolio",
+        "href": "index.html#portfolio"
+      },
+      {
+        "label": "Các Khóa Học",
+        "href": "courses.html"
+      },
+      {
+        "label": "Liên hệ",
+        "href": "index.html#contact"
+      }
+    ]
+  }
 }
