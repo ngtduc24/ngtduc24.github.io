@@ -29,7 +29,7 @@ tailwind.config = {
         "secondary":"#4d661c","primary-fixed-dim":"#c0c1ff","on-tertiary-fixed":"#211b00",
         "on-tertiary-fixed-variant":"#524600"
       },
-      borderRadius: { "DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px" },
+      borderRadius: { "DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px","2xl":"1rem","3xl":"1.5rem" },
       spacing: { "section-gap":"80px","max-width":"1280px","container-padding":"24px","unit":"8px","gutter":"20px" },
       fontFamily: { "label-bold":["Plus Jakarta Sans"],"body-md":["Plus Jakarta Sans"],"headline-lg":["Plus Jakarta Sans"],"display-lg":["Plus Jakarta Sans"],"body-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"] },
       fontSize: {
@@ -52,6 +52,7 @@ tailwind.config = {
 .glass-panel { background: rgba(255,255,255,0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.5); }
 .bg-gradient-electric { background: linear-gradient(135deg, #6063ee 0%, #4648d4 100%); }
 .bg-gradient-lime { background: linear-gradient(135deg, #ceee93 0%, #b3d17a 100%); }
+/* Dropdown menu giống trang chủ */
 #navMenu > div { position: relative; display: inline-block; }
 #navMenu .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; min-width: 200px; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); padding: 8px 0; z-index: 60; }
 #navMenu > div:hover .dropdown-menu { display: block; }
@@ -61,14 +62,17 @@ tailwind.config = {
 </head>
 <body class="bg-background text-on-background font-body-md antialiased min-h-screen flex flex-col pt-20">
 
-<!-- HEADER -->
+<!-- HEADER - Menu giống hệt trang chủ -->
 <header class="bg-surface/80 backdrop-blur-md shadow-[0_20px_40px_rgba(70,72,212,0.1)] fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-padding h-20 max-w-max-width mx-auto">
 <div class="flex items-center gap-8">
-  <a href="index.html" class="font-display-lg text-headline-md font-extrabold text-primary" id="navBrand">CreativeHub</a>
-  <nav class="hidden md:flex gap-1 items-center" id="navMenu"></nav>
+  <a href="index.html" class="text-headline-md font-display-lg font-black tracking-tighter text-primary" id="navBrand">CreativeHub</a>
+  <div class="hidden lg:flex items-center gap-1" id="navMenu"></div>
 </div>
-<div class="flex items-center gap-4">
-  <button class="bg-gradient-electric text-on-primary font-label-bold text-label-bold px-6 py-3 rounded-full inner-glow hover:scale-105 transition-transform duration-300 shadow-md">Sign In</button>
+<div class="flex items-center gap-3">
+  <button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface">
+    <span class="material-symbols-outlined">search</span>
+  </button>
+  <a href="index.html#contact" class="hidden sm:block bg-primary hover:bg-primary-container text-on-primary text-label-bold font-label-bold py-2.5 px-6 rounded-full transition-all active:scale-95 shadow-lg shadow-primary/20">Bắt Đầu</a>
 </div>
 </header>
 
@@ -79,15 +83,12 @@ tailwind.config = {
   </div>
 </main>
 
-<!-- FOOTER -->
-<footer class="bg-surface-container-low w-full py-section-gap px-container-padding grid grid-cols-1 md:grid-cols-4 gap-gutter rounded-t-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)] mt-auto max-w-max-width mx-auto">
-<div class="flex flex-col gap-4 col-span-1">
-  <span class="font-display-lg text-headline-md font-extrabold text-primary" id="footerBrand">CreativeHub</span>
-  <p class="font-body-md text-body-md text-on-surface-variant">Empowering creativity.</p>
-</div>
-<div class="flex flex-col gap-3" id="footerLinks"><h4 class="font-label-bold text-label-bold text-on-surface">Links</h4></div>
-<div class="col-span-1 md:col-span-4 mt-8 pt-8 border-t border-outline-variant/30 text-center">
-  <p class="font-body-md text-body-md text-on-surface-variant text-sm" id="footerCopy">© 2024</p>
+<!-- FOOTER - Giống trang chủ -->
+<footer class="bg-on-surface mt-section-gap border-t-8 border-tertiary-container">
+<div class="flex flex-col md:flex-row justify-between items-center px-gutter py-12 w-full max-w-max-width mx-auto">
+  <div class="text-headline-md font-display-lg text-secondary-fixed mb-6 md:mb-0" id="footerBrand">CreativeHub</div>
+  <div class="flex flex-wrap justify-center gap-6 md:gap-8 mb-6 md:mb-0" id="footerLinks"></div>
+  <div class="text-surface-bright text-body-md text-center md:text-right" id="footerCopy">© 2024</div>
 </div>
 </footer>
 
@@ -105,29 +106,48 @@ function buildMenu(menus) {
   const navMenu = document.getElementById('navMenu');
   if (!navMenu || !menus) return;
   navMenu.innerHTML = '';
+  
   menus.forEach(function(item) {
     const wrapper = document.createElement('div');
     wrapper.style.cssText = 'position:relative;display:inline-block;';
+    
     const link = document.createElement('a');
     if (item.type === 'fixed' && item.link) link.href = item.link;
     else if (item.slug === 'home') link.href = 'index.html';
     else link.href = 'page.html?slug=' + item.slug;
+    
     link.textContent = item.label;
-    link.className = 'font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors hover:scale-105 duration-300';
-    if (item.label === 'Portfolio') link.className = 'font-body-md text-body-md text-primary font-bold border-b-2 border-primary pb-1';
+    link.className = 'px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all';
+    
+    // Active menu Portfolio
+    if (item.label === 'Portfolio') {
+      link.className = 'px-4 py-2 rounded-full text-label-bold font-label-bold text-primary bg-primary-container/10';
+    }
+    
     wrapper.appendChild(link);
+    
+    // Submenu
     if (item.children && item.children.length > 0) {
       const dropdown = document.createElement('div');
       dropdown.className = 'dropdown-menu';
+      dropdown.style.cssText = 'display:none;position:absolute;top:100%;left:0;min-width:200px;background:white;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.15);padding:8px 0;z-index:60;';
+      
       item.children.forEach(function(child) {
         const childLink = document.createElement('a');
         if (child.type === 'fixed' && child.link) childLink.href = child.link;
         else childLink.href = 'page.html?slug=' + child.slug;
         childLink.textContent = child.label;
+        childLink.style.cssText = 'display:block;padding:10px 20px;color:#111c2d;font-weight:600;font-size:14px;white-space:nowrap;text-decoration:none;';
+        childLink.onmouseover = function() { this.style.background = '#eef2ff'; this.style.color = '#4648d4'; };
+        childLink.onmouseout = function() { this.style.background = ''; this.style.color = '#111c2d'; };
         dropdown.appendChild(childLink);
       });
+      
       wrapper.appendChild(dropdown);
+      wrapper.onmouseenter = function() { dropdown.style.display = 'block'; };
+      wrapper.onmouseleave = function() { dropdown.style.display = 'none'; };
     }
+    
     navMenu.appendChild(wrapper);
   });
 }
@@ -158,41 +178,48 @@ function renderPortfolio(data) {
   let html = '';
 
   // Featured Hero
-  html += `<section class="flex flex-col gap-8"><div class="flex justify-between items-end"><h1 class="font-display-lg text-display-lg text-primary">Featured Work</h1></div>`;
-  html += `<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">`;
-  html += `<div class="lg:col-span-8 bg-surface-container-lowest rounded-[24px] overflow-hidden ambient-shadow-heavy group cursor-pointer relative">`;
-  html += `<div class="h-[400px] w-full overflow-hidden relative"><img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="${firstItem.image||''}" alt="${firstItem.title}"/>`;
-  html += `<div class="absolute bottom-6 left-6 flex gap-2">${(firstItem.tags||[]).map(function(t,i){const cols=['bg-gradient-lime text-on-secondary-container','bg-surface/90 text-primary backdrop-blur-sm','bg-tertiary-container text-on-tertiary-container'];return '<span class="'+ (cols[i%3]) +' font-label-bold text-label-bold px-4 py-1.5 rounded-full shadow-sm">'+t+'</span>';}).join('')}</div></div>`;
-  html += `<div class="p-8 bg-surface-container-lowest relative z-10"><h2 class="font-headline-lg text-headline-lg text-on-surface mb-2 group-hover:text-primary transition-colors">${firstItem.title}</h2><p class="font-body-md text-body-md text-on-surface-variant">${firstItem.desc||''}</p></div></div>`;
+  html += '<section class="flex flex-col gap-8"><div class="flex justify-between items-end"><h1 class="font-display-lg text-display-lg text-primary">Featured Work</h1></div>';
+  html += '<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">';
+  
+  // Featured lớn
+  html += '<div class="lg:col-span-8 bg-surface-container-lowest rounded-[24px] overflow-hidden ambient-shadow-heavy group cursor-pointer relative">';
+  html += '<div class="h-[400px] w-full overflow-hidden relative"><img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="'+(firstItem.image||'')+'" alt="'+firstItem.title+'"/>';
+  html += '<div class="absolute bottom-6 left-6 flex gap-2">';
+  (firstItem.tags||[]).forEach(function(t,i){
+    var cols = ['bg-gradient-lime text-on-secondary-container','bg-surface/90 text-primary backdrop-blur-sm','bg-tertiary-container text-on-tertiary-container'];
+    html += '<span class="'+ (cols[i%3]) +' font-label-bold text-label-bold px-4 py-1.5 rounded-full shadow-sm">'+t+'</span>';
+  });
+  html += '</div></div>';
+  html += '<div class="p-8 bg-surface-container-lowest relative z-10"><h2 class="font-headline-lg text-headline-lg text-on-surface mb-2 group-hover:text-primary transition-colors">'+firstItem.title+'</h2><p class="font-body-md text-body-md text-on-surface-variant">'+(firstItem.desc||'')+'</p></div></div>';
 
   // Side cards (items 1-2)
-  html += `<div class="lg:col-span-4 flex flex-col gap-8">`;
-  for (let i = 1; i <= 2; i++) {
+  html += '<div class="lg:col-span-4 flex flex-col gap-8">';
+  for (var i = 1; i <= 2; i++) {
     if (items[i]) {
-      html += `<div class="flex-1 bg-surface-container-lowest rounded-[20px] overflow-hidden ambient-shadow group cursor-pointer relative flex flex-col"><div class="h-[200px] w-full overflow-hidden"><img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="${items[i].image||''}" alt="${items[i].title}"/></div><div class="p-6 flex-grow flex flex-col justify-between"><h3 class="font-headline-md text-headline-md text-on-surface mb-2">${items[i].title}</h3><p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">${items[i].desc||''}</p></div></div>`;
+      html += '<div class="flex-1 bg-surface-container-lowest rounded-[20px] overflow-hidden ambient-shadow group cursor-pointer relative flex flex-col"><div class="h-[200px] w-full overflow-hidden"><img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="'+(items[i].image||'')+'" alt="'+items[i].title+'"/></div><div class="p-6 flex-grow flex flex-col justify-between"><h3 class="font-headline-md text-headline-md text-on-surface mb-2">'+items[i].title+'</h3><p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">'+(items[i].desc||'')+'</p></div></div>';
     }
   }
-  html += `</div></div></section>`;
+  html += '</div></div></section>';
 
   // Category sections
-  html += `<div class="flex flex-col gap-12">`;
-  const borderColors = ['border-primary','border-secondary','border-tertiary','border-error'];
+  html += '<div class="flex flex-col gap-12">';
+  var borderColors = ['border-primary','border-secondary','border-tertiary','border-error'];
   groupNames.forEach(function(groupName, gi) {
-    const groupItems = groups[groupName];
-    html += `<section class="flex flex-col gap-6"><div class="flex justify-between items-center"><h2 class="font-display-lg text-headline-lg text-on-surface border-l-4 ${borderColors[gi%4]} pl-4">${groupName}</h2></div>`;
-    html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-6">`;
+    var groupItems = groups[groupName];
+    html += '<section class="flex flex-col gap-6"><div class="flex justify-between items-center"><h2 class="font-display-lg text-headline-lg text-on-surface border-l-4 '+borderColors[gi%4]+' pl-4">'+groupName+'</h2></div>';
+    html += '<div class="grid grid-cols-1 md:grid-cols-3 gap-6">';
     groupItems.forEach(function(p) {
-      html += `<div class="bg-surface-container-lowest rounded-2xl overflow-hidden ambient-shadow hover:scale-[1.02] transition-transform duration-300"><div class="h-48 overflow-hidden relative"><img class="w-full h-full object-cover" src="${p.image||''}" alt="${p.title}"/><div class="absolute bottom-2 left-2 glass-panel px-3 py-1 rounded-full text-primary font-label-bold text-[10px]">${p.title.substring(0,20)}</div></div><div class="p-5"><h4 class="font-headline-md text-body-lg font-bold mb-2">${p.title}</h4><p class="text-on-surface-variant text-body-md line-clamp-2">${p.desc||''}</p></div></div>`;
+      html += '<div class="bg-surface-container-lowest rounded-2xl overflow-hidden ambient-shadow hover:scale-[1.02] transition-transform duration-300"><div class="h-48 overflow-hidden relative"><img class="w-full h-full object-cover" src="'+(p.image||'')+'" alt="'+p.title+'"/><div class="absolute bottom-2 left-2 glass-panel px-3 py-1 rounded-full text-primary font-label-bold text-[10px]">'+p.title.substring(0,20)+'</div></div><div class="p-5"><h4 class="font-headline-md text-body-lg font-bold mb-2">'+p.title+'</h4><p class="text-on-surface-variant text-body-md line-clamp-2">'+(p.desc||'')+'</p></div></div>';
     });
-    html += `</div></section>`;
+    html += '</div></section>';
   });
-  html += `</div>`;
+  html += '</div>';
 
   main.innerHTML = html;
 }
 
 async function init() {
-  const data = await loadContentJson();
+  var data = await loadContentJson();
   if (!data) {
     document.getElementById('portfolioMain').innerHTML = '<p class="text-center text-red-500 py-20">Không thể tải dữ liệu.</p>';
     return;
@@ -202,8 +229,8 @@ async function init() {
   document.getElementById('footerCopy').textContent = data.footer?.copyright || '© 2024';
   if (data.menus) buildMenu(data.menus);
   if (data.footer?.links) {
-    document.getElementById('footerLinks').innerHTML = '<h4 class="font-label-bold text-label-bold text-on-surface">Links</h4>' + data.footer.links.map(function(l) {
-      return '<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="'+l.href+'">'+l.label+'</a>';
+    document.getElementById('footerLinks').innerHTML = data.footer.links.map(function(l) {
+      return '<a class="text-surface-variant/70 hover:text-tertiary-fixed transition-colors font-bold" href="'+l.href+'">'+l.label+'</a>';
     }).join('');
   }
   renderPortfolio(data);
