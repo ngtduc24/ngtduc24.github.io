@@ -218,13 +218,15 @@
     {
       "label": "Portfolio",
       "slug": "portfolio",
-      "type": "page",
+      "type": "fixed",
+      "link": "portfolio.html",
       "children": []
     },
     {
       "label": "Các Khóa Học",
       "slug": "courses",
-      "type": "page",
+      "type": "fixed",
+      "link": "courses.html",
       "children": [
         {
           "label": "UI/UX Masterclass",
@@ -249,7 +251,8 @@
     {
       "label": "Nghiên cứu khoa học",
       "slug": "research",
-      "type": "page",
+      "type": "fixed",
+      "link": "research.html",
       "children": []
     }
   ],
@@ -264,26 +267,6 @@
       "created": "2024-01-01T00:00:00Z",
       "updated": "2024-01-01T00:00:00Z"
     },
-    "portfolio": {
-      "title": "Portfolio - Andy Nguyễn",
-      "content": "<h2>Dự án nổi bật</h2><p>Xem các dự án của tôi tại trang chủ.</p>",
-      "meta": {
-        "description": "Portfolio dự án",
-        "keywords": "portfolio, projects"
-      },
-      "created": "2024-01-01T00:00:00Z",
-      "updated": "2024-01-01T00:00:00Z"
-    },
-    "courses": {
-      "title": "Các Khóa Học - Andy Nguyễn",
-      "content": "<h2>Khóa học</h2><p>Danh sách các khóa học.</p>",
-      "meta": {
-        "description": "Các khóa học multimedia",
-        "keywords": "courses, học tập"
-      },
-      "created": "2024-01-01T00:00:00Z",
-      "updated": "2024-01-01T00:00:00Z"
-    },
     "knowledge": {
       "title": "Kiến thức môn học - Andy Nguyễn",
       "content": "<h2>Kiến thức môn học</h2><p>Bài viết chia sẻ kiến thức.</p>",
@@ -294,15 +277,17 @@
       "created": "2024-01-01T00:00:00Z",
       "updated": "2024-01-01T00:00:00Z"
     },
-    "research": {
-      "title": "Nghiên cứu khoa học - Andy Nguyễn",
-      "content": "<h2>Nghiên cứu khoa học</h2><p>Các bài nghiên cứu.</p>",
-      "meta": {
-        "description": "Nghiên cứu khoa học",
-        "keywords": "nghiên cứu, khoa học"
-      },
-      "created": "2024-01-01T00:00:00Z",
-      "updated": "2024-01-01T00:00:00Z"
+    "uiux-masterclass": {
+      "title": "UI/UX Masterclass",
+      "content": "<h2>UI/UX Masterclass</h2><p>Nội dung khóa học.</p>",
+      "meta": { "description": "" },
+      "updated": "2026-06-02T12:55:55.268Z"
+    },
+    "3d-motion": {
+      "title": "3D Motion",
+      "content": "<h2>3D Motion</h2><p>Nội dung khóa học.</p>",
+      "meta": { "description": "" },
+      "updated": "2026-06-02T12:55:55.268Z"
     }
   },
   "banner": {
@@ -313,7 +298,9 @@
     "description": "Kết hợp nghệ thuật, công nghệ và một chút ma thuật để tạo ra những trải nghiệm kỹ thuật số đáng nhớ. Cùng nhau xây dựng những thế giới mới.",
     "avatar_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAaM6nPg7daWott3BQVpCtvizZFbleVjeMlC6avIkwTE1aCxJeCfNrxwUqwDDxeepGlH0A9kiIbIuZwn3c1tAyUQ3N1-oF88I4_KEbYBnzSFct5eRx6P3kgkL3FQJK90R6DhDZZmmDuzC1EIG5p6E48fc7Iv48OMLM1hl2bjSx66k8493bjfQSxaQCAtMtvkHFHX_NkSPsW_h-5XEt3Auu38gBil8FELSgJxkwLQkCLVCZmoQ1oZz9fnc1TMzsBG8hqdNdUscFbhOQ",
     "btn_primary": "Xem Portfolio",
-    "btn_secondary": "Liên Hệ"
+    "btn_secondary": "Liên Hệ",
+    "show_text": true,
+    "show_badge": true
   },
   "skills": [
     {
@@ -341,4 +328,51 @@
       "color": "tertiary"
     },
     {
-      "name":
+      "name": "After Effects",
+      "icon": "movie",
+      "percent": "85%",
+      "color": "secondary"
+    },
+    {
+      "name": "Photoshop",
+      "icon": "image",
+      "percent": "90%",
+      "color": "primary"
+    }
+  ],
+  "experience": [
+    {
+      "title": "Senior UI/UX Designer",
+      "company": "Creative Studio",
+      "period": "2022 - Hiện tại",
+      "desc": "Thiết kế giao diện và trải nghiệm người dùng cho các sản phẩm kỹ thuật số.",
+      "color": "primary"
+    },
+    {
+      "title": "Motion Designer",
+      "company": "Media Agency",
+      "period": "2020 - 2022",
+      "desc": "Tạo ra các hiệu ứng chuyển động và đồ họa tương tác cho các chiến dịch quảng cáo.",
+      "color": "secondary"
+    },
+    {
+      "title": "s",
+      "company": "",
+      "period": "",
+      "desc": "",
+      "color": "tertiary"
+    }
+  ],
+  "community": {
+    "title": "Cộng Đồng Sáng Tạo",
+    "desc": "Tham gia cộng đồng 500+ designer và multimedia artist.",
+    "btn": "Tham Gia Ngay",
+    "link": "#"
+  },
+  "footer": {
+    "brand": "Andy Nguyễn",
+    "copyright": "© 2024 Nguyễn Đức. All rights reserved.",
+    "email": "",
+    "location": "",
+    "links": [
+      { "label": "Tr
