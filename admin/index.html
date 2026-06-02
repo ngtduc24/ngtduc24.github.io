@@ -219,8 +219,17 @@ input:focus,textarea:focus,select:focus{border-color:var(--pri)}
     </button>
 
     <div class="sb-section">Quản lý trang</div>
-    <button class="nav-btn" onclick="goTab('home',this)">
-      <span class="material-symbols-outlined mi">web</span>Trang chủ
+    <button class="nav-btn" onclick="goTab('banner',this)">
+      <span class="material-symbols-outlined mi">web</span>Trang chủ (Banner)
+    </button>
+    <button class="nav-btn" onclick="goTab('skills',this)">
+      <span class="material-symbols-outlined mi">psychology</span>Kỹ Năng
+    </button>
+    <button class="nav-btn" onclick="goTab('experience',this)">
+      <span class="material-symbols-outlined mi">work_history</span>Kinh Nghiệm
+    </button>
+    <button class="nav-btn" onclick="goTab('community',this)">
+      <span class="material-symbols-outlined mi">group_add</span>Cộng đồng &amp; Footer
     </button>
     <button class="nav-btn" onclick="goTab('portfolio',this)">
       <span class="material-symbols-outlined mi">grid_view</span>Portfolio
@@ -259,7 +268,9 @@ input:focus,textarea:focus,select:focus{border-color:var(--pri)}
   <div id="tab-dash" class="tab-pane active">
     <div class="page-header"><h1>Dashboard</h1><p>Tổng quan nội dung website</p></div>
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-num" id="d-port">0</div><div class="stat-label">Dự án Portfolio</div></div>
+      <div class="stat-card"><div class="stat-num" id="d-skills" style="font-size:1.5rem;font-weight:800;color:var(--pri)">0</div><div class="stat-label">Kỹ năng</div></div>
+      <div class="sc"><div class="stat-num" id="d-exp" style="font-size:1.5rem;font-weight:800;color:var(--pri)">0</div><div class="stat-label">Kinh nghiệm</div></div>
+      <div class="sc"><div class="stat-num" id="d-port">0</div><div class="stat-label">Dự án Portfolio</div></div>
       <div class="stat-card"><div class="stat-num" id="d-cour">0</div><div class="stat-label">Khóa Học</div></div>
       <div class="stat-card"><div class="stat-num" id="d-know">0</div><div class="stat-label">Bài Kiến thức</div></div>
       <div class="stat-card"><div class="stat-num" id="d-rese">0</div><div class="stat-label">Nghiên cứu</div></div>
@@ -518,6 +529,30 @@ input:focus,textarea:focus,select:focus{border-color:var(--pri)}
       </div>
       <div id="expList"></div>
     </div>
+  </div>
+
+  <!-- TAB: KỸ NĂNG -->
+  <div id="tab-skills" class="tab-pane">
+    <div class="page-header"><h1>Kỹ Năng Cốt Lõi</h1><p>Quản lý các kỹ năng hiển thị trong phần Skills</p></div>
+    <div class="page-actions">
+      <span id="skills-count" style="font-size:.83rem;color:var(--txt3)"></span>
+      <button class="btn btn-primary btn-sm" id="btnAddSkill">
+        <span class="material-symbols-outlined" style="font-size:15px">add</span> Thêm kỹ năng
+      </button>
+    </div>
+    <div id="skills-list"></div>
+  </div>
+
+  <!-- TAB: KINH NGHIỆM -->
+  <div id="tab-experience" class="tab-pane">
+    <div class="page-header"><h1>Kinh Nghiệm</h1><p>Quản lý timeline kinh nghiệm làm việc</p></div>
+    <div class="page-actions">
+      <span id="exp-count" style="font-size:.83rem;color:var(--txt3)"></span>
+      <button class="btn btn-primary btn-sm" id="btnAddExp">
+        <span class="material-symbols-outlined" style="font-size:15px">add</span> Thêm kinh nghiệm
+      </button>
+    </div>
+    <div id="exp-list"></div>
   </div>
 
   <!-- ═══ TAB CỘNG ĐỒNG & FOOTER ═══ -->
@@ -1137,7 +1172,8 @@ function goTab(tab,btn){
 
   if(tab==='home')loadHomeForm();
   if(tab==='banner')loadBannerForm();
-  if(tab==='skills'){renderSkillsList();renderExpList();}
+  if(tab==='skills'){renderSkillsList();}
+  if(tab==='experience'){renderExpList();}
   if(tab==='community')loadCommunityForm();
   if(tab==='portfolio'){renderSection('portfolio');renderList('port','portfolio');}
   if(tab==='courses'){renderSection('courses');renderList('cour','courses');}
@@ -1464,52 +1500,6 @@ async function saveBanner() {
 // ══════════════════════════════════════════════════
 // SKILLS
 // ══════════════════════════════════════════════════
-function renderSkillsList() {
-  const items = DATA.skills || [];
-  const el = $('skillsList');
-  if (!items.length) { el.innerHTML = '<div class="empty-state">Chưa có kỹ năng nào.</div>'; return; }
-  const COLOR_LABEL = {primary:'Tím', secondary:'Xanh lá', tertiary:'Vàng', 'primary-container':'Tím nhạt'};
-  el.innerHTML = items.map((s,i) => `
-    <div class="article-row">
-      <div style="width:44px;height:44px;border-radius:12px;background:var(--pri-lt);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <span class="material-symbols-outlined" style="font-size:22px;color:var(--pri)">${s.icon||'star'}</span>
-      </div>
-      <div class="article-info">
-        <div class="article-title">${s.name}</div>
-        <div class="article-meta">${s.percent||''} · ${COLOR_LABEL[s.color]||s.color}</div>
-      </div>
-      <div class="article-actions">
-        <button class="btn btn-ghost btn-sm btn-icon" onclick="openSkillModal(${i})">
-          <span class="material-symbols-outlined" style="font-size:16px">edit</span>
-        </button>
-        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteSkill(${i})">
-          <span class="material-symbols-outlined" style="font-size:16px">delete</span>
-        </button>
-      </div>
-    </div>`).join('');
-}
-function openSkillModal(idx) {
-  sv('skillIdx', idx);
-  $('skillModalTitle').textContent = idx < 0 ? 'Thêm kỹ năng' : 'Sửa kỹ năng';
-  if (idx >= 0) {
-    const s = (DATA.skills||[])[idx];
-    sv('skName', s.name); sv('skPercent', s.percent); sv('skIcon', s.icon); sv('skColor', s.color);
-  } else {
-    ['skName','skPercent','skIcon'].forEach(id => sv(id,''));
-    sv('skColor','primary');
-  }
-  openModal('skillModal');
-}
-async function saveSkill() {
-  const name = gv('skName'); if (!name) { showAlert('Nhập tên kỹ năng!','error'); return; }
-  const item = { name, percent: gv('skPercent'), icon: gv('skIcon')||'star', color: gv('skColor') };
-  if (!DATA.skills) DATA.skills = [];
-  const idx = parseInt(gv('skillIdx'));
-  if (idx >= 0) DATA.skills[idx] = item; else DATA.skills.push(item);
-  await trySave();
-  closeModal('skillModal');
-  renderSkillsList();
-}
 async function deleteSkill(i) {
   if (!confirm('Xoá kỹ năng "' + DATA.skills[i].name + '"?')) return;
   DATA.skills.splice(i, 1);
@@ -1519,43 +1509,6 @@ async function deleteSkill(i) {
 // ══════════════════════════════════════════════════
 // EXPERIENCE
 // ══════════════════════════════════════════════════
-function renderExpList() {
-  const items = DATA.experience || [];
-  const el = $('expList');
-  if (!items.length) { el.innerHTML = '<div class="empty-state">Chưa có kinh nghiệm nào.</div>'; return; }
-  el.innerHTML = items.map((e,i) => `
-    <div class="article-row">
-      <div style="width:44px;height:44px;border-radius:12px;background:var(--sec-lt);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <span class="material-symbols-outlined" style="font-size:20px;color:var(--sec)">work</span>
-      </div>
-      <div class="article-info">
-        <div class="article-title">${e.title}</div>
-        <div class="article-meta">${e.company||''} · ${e.period||''}</div>
-        ${e.desc ? `<div style="font-size:.8rem;color:var(--txt3);margin-top:3px;max-height:1.5em;overflow:hidden">${e.desc}</div>` : ''}
-      </div>
-      <div class="article-actions">
-        <button class="btn btn-ghost btn-sm btn-icon" onclick="openExpModal(${i})">
-          <span class="material-symbols-outlined" style="font-size:16px">edit</span>
-        </button>
-        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteExp(${i})">
-          <span class="material-symbols-outlined" style="font-size:16px">delete</span>
-        </button>
-      </div>
-    </div>`).join('');
-}
-function openExpModal(idx) {
-  sv('expIdx', idx);
-  $('expModalTitle').textContent = idx < 0 ? 'Thêm kinh nghiệm' : 'Sửa kinh nghiệm';
-  if (idx >= 0) {
-    const e = (DATA.experience||[])[idx];
-    sv('expTitle', e.title); sv('expCompany', e.company);
-    sv('expPeriod', e.period); sv('expDesc', e.desc); sv('expColor', e.color||'primary');
-  } else {
-    ['expTitle','expCompany','expPeriod','expDesc'].forEach(id => sv(id,''));
-    sv('expColor','primary');
-  }
-  openModal('expModal');
-}
 async function saveExp() {
   const title = gv('expTitle'); if (!title) { showAlert('Nhập chức vụ!','error'); return; }
   const item = { title, company: gv('expCompany'), period: gv('expPeriod'), desc: gv('expDesc'), color: gv('expColor') };
@@ -1603,6 +1556,114 @@ async function saveFooter() {
 // ══════════════════════════════════════════════════
 // PATCH goTab để load các form mới
 // ══════════════════════════════════════════════════
+
+// ══════════════════════════════════
+// KỸ NĂNG — lấy từ admin-old
+// ══════════════════════════════════
+function renderSkillsList(){
+  const el=document.getElementById('skills-list');
+  const skills=DATA.skills||[];
+  const countEl=document.getElementById('skills-count');
+  if(countEl) countEl.textContent=skills.length+' kỹ năng';
+  if(!skills.length){el.innerHTML='<div class="empty-state">Chưa có kỹ năng nào.</div>';return;}
+  el.innerHTML=skills.map((s,i)=>`
+    <div class="card">
+      <div class="ch">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="material-symbols-outlined" style="font-size:24px;color:var(--pri)">${s.icon||'star'}</span>
+          <div><div class="ct">${s.name}</div><div class="cs">${s.percent||''} · ${s.color||''}</div></div>
+        </div>
+        <div class="ca">
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="editSkill(${i})"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteSkillItem(${i})"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function openSkillModal(){
+  sv('skill-edit-idx','-1');
+  document.getElementById('skillModalTitle').textContent='Thêm kỹ năng mới';
+  ['sk-name','sk-percent','sk-icon'].forEach(id=>sv(id,''));
+  sv('sk-color','primary');
+  openModal('skillModal');
+}
+function editSkill(i){
+  const s=DATA.skills[i];
+  sv('skill-edit-idx',i);
+  document.getElementById('skillModalTitle').textContent='Sửa kỹ năng';
+  sv('sk-name',s.name);sv('sk-percent',s.percent);sv('sk-icon',s.icon||'');sv('sk-color',s.color||'primary');
+  openModal('skillModal');
+}
+async function saveSkill(){
+  const name=gv('sk-name');if(!name){showAlert('Nhập tên kỹ năng!','error');return;}
+  const item={name,percent:gv('sk-percent'),icon:gv('sk-icon')||'star',color:gv('sk-color')};
+  const idx=parseInt(gv('skill-edit-idx'));
+  if(!DATA.skills)DATA.skills=[];
+  if(idx>=0)DATA.skills[idx]=item;else DATA.skills.push(item);
+  await trySave();closeModal('skillModal');renderSkillsList();
+}
+async function deleteSkillItem(i){
+  if(!confirm('Xoá kỹ năng "'+DATA.skills[i].name+'"?'))return;
+  DATA.skills.splice(i,1);await trySave();renderSkillsList();
+  const c=document.getElementById('skills-count');if(c)c.textContent=DATA.skills.length+' kỹ năng';
+}
+
+// ══════════════════════════════════
+// KINH NGHIỆM — lấy từ admin-old
+// ══════════════════════════════════
+function renderExpList(){
+  const el=document.getElementById('exp-list');
+  const exp=DATA.experience||[];
+  const countEl=document.getElementById('exp-count');
+  if(countEl) countEl.textContent=exp.length+' mục';
+  if(!exp.length){el.innerHTML='<div class="empty-state">Chưa có kinh nghiệm.</div>';return;}
+  el.innerHTML=exp.map((e,i)=>`
+    <div class="card">
+      <div class="ch">
+        <div><div class="ct">${e.title}</div><div class="cs">${e.company||''} · ${e.period||''}</div></div>
+        <div class="ca">
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="editExp(${i})"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteExpItem(${i})"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>
+        </div>
+      </div>
+      <p style="font-size:.85rem;color:var(--txt2);margin-top:6px">${e.desc||''}</p>
+    </div>`).join('');
+}
+function openExpModal(){
+  sv('exp-edit-idx','-1');
+  document.getElementById('expModalTitle').textContent='Thêm kinh nghiệm';
+  ['ex-title','ex-company','ex-period','ex-desc'].forEach(id=>sv(id,''));
+  sv('ex-color','primary');openModal('expModal');
+}
+function editExp(i){
+  const e=DATA.experience[i];
+  sv('exp-edit-idx',i);
+  document.getElementById('expModalTitle').textContent='Sửa kinh nghiệm';
+  sv('ex-title',e.title);sv('ex-company',e.company||'');sv('ex-period',e.period||'');sv('ex-desc',e.desc||'');sv('ex-color',e.color||'primary');
+  openModal('expModal');
+}
+async function saveExperience(){
+  const title=gv('ex-title');if(!title){showAlert('Nhập chức danh!','error');return;}
+  const item={title,company:gv('ex-company'),period:gv('ex-period'),desc:gv('ex-desc'),color:gv('ex-color')};
+  const idx=parseInt(gv('exp-edit-idx'));
+  if(!DATA.experience)DATA.experience=[];
+  if(idx>=0)DATA.experience[idx]=item;else DATA.experience.push(item);
+  await trySave();closeModal('expModal');renderExpList();
+}
+async function deleteExpItem(i){
+  if(!confirm('Xoá kinh nghiệm "'+DATA.experience[i].title+'"?'))return;
+  DATA.experience.splice(i,1);await trySave();renderExpList();
+  const c=document.getElementById('exp-count');if(c)c.textContent=DATA.experience.length+' mục';
+}
+
+// Wire buttons sau DOMContentLoaded
+window.addEventListener('DOMContentLoaded',function(){
+  const btnSkill=document.getElementById('btnAddSkill');
+  if(btnSkill) btnSkill.onclick=openSkillModal;
+  const btnExp=document.getElementById('btnAddExp');
+  if(btnExp) btnExp.onclick=openExpModal;
+});
+
 // ── NAV BRAND MANAGEMENT ──
 function loadNavBrandForm() {
   sv('navBrand', DATA.nav_brand || '');
@@ -1652,7 +1713,8 @@ window.goTab = function(tab, btn) {
   _origGoTab(tab, btn);
   if (tab === 'menus')      loadNavBrandForm();
   if (tab === 'banner')     loadBannerForm();
-  if (tab === 'skills')     { renderSkillsList(); renderExpList(); }
+  if (tab === 'skills')     { renderSkillsList(); }
+  if (tab === 'experience')  { renderExpList(); }
   if (tab === 'community')  loadCommunityForm();
 };
 </script>
@@ -1743,5 +1805,65 @@ window.goTab = function(tab, btn) {
   </div>
 </div>
 
+
+<!-- MODAL: KỸ NĂNG -->
+<div class="modal-overlay" id="skillModal">
+<div class="modal-box" style="max-width:460px">
+  <button class="modal-close" onclick="closeModal('skillModal')">✕</button>
+  <h3 id="skillModalTitle">Thêm kỹ năng mới</h3>
+  <input type="hidden" id="skill-edit-idx" value="-1">
+  <div class="row2">
+    <div class="field"><label>Tên kỹ năng *</label><input type="text" id="sk-name" placeholder="UI/UX Design"></div>
+    <div class="field"><label>Phần trăm</label><input type="text" id="sk-percent" placeholder="95%"></div>
+  </div>
+  <div class="row2">
+    <div class="field">
+      <label>Icon (Material Symbols)</label>
+      <input type="text" id="sk-icon" placeholder="design_services">
+      <p style="font-size:.72rem;color:var(--txt3);margin-top:3px">Xem tại <a href="https://fonts.google.com/icons" target="_blank" style="color:var(--pri)">fonts.google.com/icons</a></p>
+    </div>
+    <div class="field"><label>Màu sắc</label>
+      <select id="sk-color">
+        <option value="primary">Tím (Primary)</option>
+        <option value="secondary">Xanh lá (Secondary)</option>
+        <option value="tertiary">Vàng (Tertiary)</option>
+        <option value="primary-container">Tím nhạt</option>
+      </select>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('skillModal')">Huỷ</button>
+    <button class="btn btn-primary" onclick="saveSkill()">Lưu kỹ năng</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL: KINH NGHIỆM -->
+<div class="modal-overlay" id="expModal">
+<div class="modal-box" style="max-width:520px">
+  <button class="modal-close" onclick="closeModal('expModal')">✕</button>
+  <h3 id="expModalTitle">Thêm kinh nghiệm</h3>
+  <input type="hidden" id="exp-edit-idx" value="-1">
+  <div class="row2">
+    <div class="field"><label>Chức danh *</label><input type="text" id="ex-title" placeholder="Senior Product Designer"></div>
+    <div class="field"><label>Màu dot timeline</label>
+      <select id="ex-color">
+        <option value="primary">Tím</option>
+        <option value="secondary">Xanh lá</option>
+        <option value="tertiary">Vàng</option>
+      </select>
+    </div>
+  </div>
+  <div class="row2">
+    <div class="field"><label>Công ty</label><input type="text" id="ex-company" placeholder="TechVision Corp"></div>
+    <div class="field"><label>Thời gian</label><input type="text" id="ex-period" placeholder="2021 - Hiện tại"></div>
+  </div>
+  <div class="field"><label>Mô tả công việc</label><textarea id="ex-desc" rows="3" placeholder="Mô tả công việc..."></textarea></div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal('expModal')">Huỷ</button>
+    <button class="btn btn-primary" onclick="saveExperience()">Lưu kinh nghiệm</button>
+  </div>
+</div>
+</div>
 </body>
 </html>
