@@ -10,7 +10,15 @@
     "avatar_url": ""
   },
   "skills": [],
-  "experience": [],
+  "experience": [
+    {
+      "title": "Đánh lộn",
+      "company": "",
+      "period": "",
+      "desc": "Năm lớp 9",
+      "color": "primary"
+    }
+  ],
   "portfolio": [],
   "courses": [],
   "research": [],
@@ -28,6 +36,12 @@
     "location": ""
   },
   "menus": [
+    {
+      "label": "Admin",
+      "slug": "Admin",
+      "type": "page",
+      "children": []
+    },
     {
       "label": "Admin",
       "slug": "Admin",
