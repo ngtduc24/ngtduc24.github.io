@@ -375,4 +375,10 @@
     "email": "",
     "location": "",
     "links": [
-      { "label": "Tr
+      { "label": "Trang chủ", "href": "index.html" },
+      { "label": "Portfolio", "href": "portfolio.html" },
+      { "label": "Các Khóa Học", "href": "courses.html" },
+      { "label": "Liên hệ", "href": "index.html#contact" }
+    ]
+  }
+}
