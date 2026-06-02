@@ -7,47 +7,46 @@ function buildMenuFromJson(menus) {
     
     navMenu.innerHTML = '';
     
-    menus.forEach(item => {
-        // Tạo link menu cha
+    function createMenuItem(item) {
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position:relative;display:inline-block;';
+        
         const link = document.createElement('a');
         link.href = item.type === 'page' ? `page.html?slug=${item.slug}` : (item.href || '#');
         link.textContent = item.label;
         link.className = 'px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all';
-        
-        // Active menu home
-        if (item.slug === 'home') {
+        if (item.slug === 'home' && (window.location.pathname.includes('index.html') || window.location.pathname === '/')) {
             link.classList.add('text-primary', 'bg-primary-container/10');
         }
         
-        // Nếu có menu con
+        wrapper.appendChild(link);
+        
+        // Submenu
         if (item.children && item.children.length > 0) {
-            const wrapper = document.createElement('div');
-            wrapper.style.cssText = 'position:relative;display:inline-block;';
-            
-            // Thêm icon mũi tên
-            link.innerHTML = item.label + ' <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">expand_more</span>';
-            
             const dropdown = document.createElement('div');
+            dropdown.className = 'dropdown-menu';
             dropdown.style.cssText = 'display:none;position:absolute;top:100%;left:0;min-width:200px;background:white;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.15);padding:8px 0;z-index:60;';
             
-            item.children.forEach(child => {
-                const childA = document.createElement('a');
-                childA.href = child.type === 'page' ? `page.html?slug=${child.slug}` : (child.href || '#');
-                childA.textContent = child.label;
-                childA.style.cssText = 'display:block;padding:10px 20px;color:#111c2d;font-weight:600;font-size:14px;white-space:nowrap;text-decoration:none;border-radius:8px;';
-                childA.onmouseover = function() { this.style.background = '#eef2ff'; this.style.color = '#4648d4'; };
-                childA.onmouseout = function() { this.style.background = ''; this.style.color = '#111c2d'; };
-                dropdown.appendChild(childA);
+            item.children.forEach(function(child) {
+                const childLink = document.createElement('a');
+                childLink.href = child.type === 'page' ? `page.html?slug=${child.slug}` : (child.href || '#');
+                childLink.textContent = child.label;
+                childLink.style.cssText = 'display:block;padding:10px 20px;color:#111c2d;font-weight:600;font-size:14px;white-space:nowrap;text-decoration:none;';
+                childLink.onmouseover = function() { this.style.background = '#eef2ff'; this.style.color = '#4648d4'; };
+                childLink.onmouseout = function() { this.style.background = ''; this.style.color = '#111c2d'; };
+                dropdown.appendChild(childLink);
             });
             
-            wrapper.appendChild(link);
             wrapper.appendChild(dropdown);
             wrapper.onmouseenter = function() { dropdown.style.display = 'block'; };
             wrapper.onmouseleave = function() { dropdown.style.display = 'none'; };
-            navMenu.appendChild(wrapper);
-        } else {
-            navMenu.appendChild(link);
         }
+        
+        return wrapper;
+    }
+    
+    menus.forEach(function(item) {
+        navMenu.appendChild(createMenuItem(item));
     });
 }
 
