@@ -51,6 +51,9 @@ tailwind.config = {
 .inner-glow { box-shadow:inset 0 2px 4px rgba(255,255,255,0.5); }
 .ambient-shadow { box-shadow:0 20px 40px -10px rgba(96,99,238,0.15); }
 </style>
+
+<!-- SHARED NAV (cũng được dùng ở courses.html, knowledge.html, research.html) -->
+<script src="_nav.js"></script>
 </head>
 <body class="bg-background text-on-background font-body-md antialiased overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
 
@@ -62,9 +65,9 @@ tailwind.config = {
     <div class="hidden lg:flex items-center gap-1">
       <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-primary bg-primary-container/10" href="#">Trang chủ</a>
       <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all" href="#portfolio">Portfolio</a>
-      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all" href="#courses">Các Khóa Học</a>
-      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all" href="#research">Kiến thức môn học</a>
-      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all" href="#research">Nghiên cứu khoa học</a>
+      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all" href="courses.html">Các Khóa Học</a>
+      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all" href="knowledge.html">Kiến thức môn học</a>
+      <a class="px-4 py-2 rounded-full text-label-bold font-label-bold text-on-surface-variant hover:bg-surface-container transition-all" href="research.html">Nghiên cứu khoa học</a>
     </div>
   </div>
   <div class="flex items-center gap-3">
