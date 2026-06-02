@@ -16,10 +16,7 @@
       "id": "p1",
       "title": "Project Nexus Rebrand",
       "desc": "Hệ thống nhận diện thương hiệu toàn diện cho startup công nghệ tiên phong.",
-      "tags": [
-        "UX/UI Design",
-        "3D Motion"
-      ],
+      "tags": ["UX/UI Design", "3D Motion"],
       "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAi-XyIw7n5_qs2gRuVY5tzy8T9kNcTJ7oct3L7pA4uaRSsFv-NXNAqCkD03VG4wVF5M6nhBu2AH5XuLevkbHGhXyfWTTfiZCvB2mWUQGdzB02-oCUBVZ5fBLndUc8knKZjZ0Abr4Pm2x7KCJf57mpVHt8eLzjg4J034tgdWqERPQ-pcm2B2d2mUAy0GBvD6gvk3Qn1es0Kcd5gZKeytqMpF96k5gc2wKpQUR3xXrDdM5-EFqcS1VIg0fSE782XWMstEOcUjUpTk68",
       "date": "Tháng 10, 2024",
       "featured": true,
@@ -29,9 +26,7 @@
       "id": "p2",
       "title": "Lumina Learning App",
       "desc": "Nền tảng học tập tương tác với tính năng gamification theo dõi tiến độ.",
-      "tags": [
-        "UI/UX"
-      ],
+      "tags": ["UI/UX"],
       "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCiOl3Qa7E3ATwP3qJi6AaUiM8Z06sPDn4IapkN9k_Aah6sVf92fyGujSQG9hPS0N3uwKYMFsvpzoeg24FeDzU2gjL_1T7JRxL9xbwbUi7ufN7cDiRLgkH2Y8SCM4ZQlsSz7LZuLzecITjKEVsXj3utK6FIjaMNUdHcgaXheDr_n7HSaSTJProZ4uK6V97GEtaCqcVqm3cGYxCfeQM-BpRIvjx5vK6Yt_0qUTxJn8bDrYLLFaVG8zI0xqBho4po23kqmZIsbMoBmUo",
       "date": "Tháng 8, 2024",
       "featured": true,
@@ -41,9 +36,7 @@
       "id": "p3",
       "title": "Echo Sound System",
       "desc": "Giao diện thương mại điện tử với trực quan hoá âm thanh không gian.",
-      "tags": [
-        "E-commerce"
-      ],
+      "tags": ["E-commerce"],
       "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDb-hh5_OixoKQqjPxkFJRveTNePY3u4P6HcNSDmu3DW4OwI2D6Jdp9FI-R7NwFoW1cCqL4zrWxZX2TePWA5HstmDTfr5kgInfw30jO01a0oScu72WPYZOns5Ty0YsgGUKHTjRK_E2e3n755mnkMw2Bn2nKnN2caIgJT_vU9sigfin_SqV44tVA8cO9qabGSs6VjmXoM7Y9OuON_-rmfhQIWCZ20o3jKCtwV6x3LTejJt-TNeBPS1y9n0gQo-3AOYKkxCsb5ucHoxc",
       "date": "Tháng 6, 2024",
       "featured": true,
@@ -53,9 +46,7 @@
       "id": "p4",
       "title": "Aura Wellness Identity",
       "desc": "Nhận diện thương hiệu hoàn chỉnh bao gồm thiết kế logo, bảng màu và tài sản kỹ thuật số.",
-      "tags": [
-        "Branding"
-      ],
+      "tags": ["Branding"],
       "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAq4Sc9Mkc4Lm65GdeWrSNLUiRkIRNpDXjhUGWPSn4_JgxJE33XuD8-Ml-NR2sj_sJX-cJ7_RpwOvEHC_BijLtN2BxuKqH3pcHAxAO_Ehe0vHMM_thQ3sP9FVticszvj_novBtiRwR9TrM6dT4MIgFu_etnwZMfLvZY5Pzwcpg7BzBZCyQVMrVilBgTkgRHv3A_N8tDcLoOFS1MEAcgJYawMm1PeKxrRj-tOlwt-hjTilo_IXqtYC2DC4_mRSg1XN8TISXgdHxLrfE",
       "date": "Tháng 10, 2023",
       "featured": false,
@@ -65,9 +56,7 @@
       "id": "p5",
       "title": "FinTech Analytics Dashboard",
       "desc": "Giao diện trực quan hoá dữ liệu phức tạp được thiết kế để đơn giản hoá việc theo dõi tài chính.",
-      "tags": [
-        "Data Viz"
-      ],
+      "tags": ["Data Viz"],
       "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAtSMGUfdAfYlzixh9P4br8HnAvZEeB3ByhcizHSzVazDcRMq2w4G0UvCaK1PShCcMdFDG6bMsvEa2_yL-TCMG3YVF6QwSzhZbD20dF3Q3N5KwpBULHlRtjpMcU1vE_VFlp_IFY9MFgoP1vo2ZRAkUiwGqylyCTADY3expz1B59miSOtn7CTTIIvoL4NlVpBjToI5GHinmO-kKtfqc2EBpbeNwLekOBaTT8ZHdfEIKcoX8FZrUrvrdlyaShjbSoS1-dUX_3B5MwQQY",
       "date": "Tháng 8, 2023",
       "featured": false,
@@ -77,9 +66,7 @@
       "id": "p6",
       "title": "Urban Mobility App Research",
       "desc": "Nghiên cứu UX chuyên sâu, wireframing và kiểm thử prototype cho ứng dụng giao thông đô thị.",
-      "tags": [
-        "Strategy"
-      ],
+      "tags": ["Strategy"],
       "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDq6m3w9unPoVSRzILpMX8fgskRPpF2CdhxfxRGDLUs_POWBCd7tfO2btJcY7dzQiymS1GfJvlTWagO-D6V5Vu3cw067PQwu3rBhwWNCbg92xTusGMDLUiPBQAM2cyzAzlVYokPVaDFnlT1QtLFMtlnHTyF988qyMBC5bATGGimAzX_0fe8w68Gdi1qNiegrkvkJudoAyDM34qNqA5htRnL5NlD82YNyehdTJZvvpolnDxf8M38SmR_EVK7pAH7ygjtNOb5XzJs-vU",
       "date": "Tháng 5, 2023",
       "featured": false,
@@ -156,10 +143,7 @@
       "excerpt": "Glassmorphism không chỉ là một trào lưu nhất thời; nó đã trở thành một ngôn ngữ thiết kế quan trọng trong việc xây dựng các không gian số có chiều sâu và tính tương tác cao.",
       "content": "Glassmorphism không chỉ là một trào lưu nhất thời; nó đã trở thành một ngôn ngữ thiết kế quan trọng trong việc xây dựng các không gian số có chiều sâu và tính tương tác cao. Bằng cách sử dụng các lớp vật liệu trong suốt với độ mờ (blur) thích hợp, các nhà thiết kế có thể tạo ra cảm giác về không gian vật lý ngay trên màn hình phẳng.\n\nTrong hệ thống thiết kế hiện đại, việc phân cấp bằng các lớp màu và bóng đổ mềm là rất quan trọng. Thay vì sử dụng những đường viền sắc nét, chúng ta chuyển sang cảm giác mượt mà hơn, nơi các yếu tố dường như nổi lên từ bề mặt.\n\nSử dụng khoảng trắng một cách hào phóng là bắt buộc. Các yếu tố không bao giờ được cảm thấy chật chội; bố cục sử dụng đơn vị cơ bản 8px, nhưng các phần chính được tách biệt bởi khoảng trống lớn để mắt có thể nghỉ ngơi giữa các khối màu cường độ cao.",
       "category": "Thiết kế UI/UX",
-      "tags": [
-        "UI/UX Design",
-        "Trend 2024"
-      ],
+      "tags": ["UI/UX Design", "Trend 2024"],
       "author": "Nguyễn Văn A",
       "date": "2024-05-12",
       "read_time": 8,
@@ -174,10 +158,7 @@
       "excerpt": "Khám phá cách não bộ phản ứng với các dải màu khác nhau và cách áp dụng chúng để điều hướng hành vi người dùng một cách tinh tế.",
       "content": "Khám phá cách não bộ phản ứng với các dải màu khác nhau và cách áp dụng chúng để điều hướng hành vi người dùng một cách tinh tế trong thiết kế web và app. Màu sắc không chỉ là yếu tố thẩm mỹ — chúng còn là công cụ tâm lý mạnh mẽ giúp dẫn dắt người dùng qua giao diện một cách tự nhiên.",
       "category": "Kiến thức nền tảng",
-      "tags": [
-        "UI/UX",
-        "Tâm lý học"
-      ],
+      "tags": ["UI/UX", "Tâm lý học"],
       "author": "Trần Thị B",
       "date": "2024-10-12",
       "read_time": 6,
@@ -192,10 +173,7 @@
       "excerpt": "Hướng dẫn chi tiết cách thiết lập hierarchy, scale tỷ lệ chữ và chọn font chữ phù hợp để đảm bảo tính dễ đọc và truyền tải đúng tinh thần thương hiệu.",
       "content": "Hướng dẫn chi tiết cách thiết lập hierarchy, scale tỷ lệ chữ và chọn font chữ phù hợp để đảm bảo tính dễ đọc và truyền tải đúng tinh thần thương hiệu. Typography là xương sống của mọi giao diện tốt — khi được làm đúng, người dùng sẽ không chú ý đến nó; khi làm sai, đó là điều đầu tiên họ nhận ra.",
       "category": "Typography",
-      "tags": [
-        "Typography",
-        "Web Design"
-      ],
+      "tags": ["Typography", "Web Design"],
       "author": "Lê Minh C",
       "date": "2024-10-08",
       "read_time": 5,
@@ -211,10 +189,7 @@
       "title": "Tối ưu hóa Cognitive Load trong Giao diện Học tập Trực tuyến",
       "excerpt": "Nghiên cứu này đề xuất một framework thiết kế mới nhằm giảm tải nhận thức (cognitive load) cho sinh viên khi sử dụng các hệ thống quản lý học tập (LMS).",
       "content": "Nghiên cứu này đề xuất một framework thiết kế mới nhằm giảm tải nhận thức cho sinh viên khi sử dụng các hệ thống quản lý học tập. Thông qua các thử nghiệm A/B trên 500 người dùng, kết quả cho thấy việc áp dụng nguyên lý thiết kế Glassmorphism kết hợp phân cấp thị giác rõ ràng giúp tăng 24% mức độ tập trung.",
-      "tags": [
-        "UI/UX Design",
-        "Cognitive Load"
-      ],
+      "tags": ["UI/UX Design", "Cognitive Load"],
       "author": "TS. Nguyễn Văn A",
       "date": "2024-10-15",
       "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAq4Sc9Mkc4Lm65GdeWrSNLUiRkIRNpDXjhUGWPSn4_JgxJE33XuD8-Ml-NR2sj_sJX-cJ7_RpwOvEHC_BijLtN2BxuKqH3pcHAxAO_Ehe0vHMM_thQ3sP9FVticszvj_novBtiRwR9TrM6dT4MIgFu_etnwZMfLvZY5Pzwcpg7BzBZCyQVMrVilBgTkgRHv3A_N8tDcLoOFS1MEAcgJYawMm1PeKxrRj-tOlwt-hjTilo_IXqtYC2DC4_mRSg1XN8TISXgdHxLrfE"
@@ -224,10 +199,7 @@
       "title": "Ứng dụng Generative AI trong Tạo hình 3D Tự động",
       "excerpt": "Bài báo trình bày một phương pháp tiếp cận mới sử dụng mạng nơ-ron sinh đối kháng (GANs) để tạo ra các mô hình 3D phức tạp từ văn bản mô tả.",
       "content": "Bài báo trình bày một phương pháp tiếp cận mới sử dụng mạng nơ-ron sinh đối kháng (GANs) để tạo ra các mô hình 3D phức tạp từ văn bản mô tả. So sánh với các phương pháp truyền thống, mô hình đề xuất giảm thiểu thời gian kết xuất xuống 40% trong khi vẫn giữ được độ chi tiết bề mặt.",
-      "tags": [
-        "Generative AI",
-        "3D Modeling"
-      ],
+      "tags": ["Generative AI", "3D Modeling"],
       "author": "ThS. Trần Thị B",
       "date": "2024-09-02",
       "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCiOl3Qa7E3ATwP3qJi6AaUiM8Z06sPDn4IapkN9k_Aah6sVf92fyGujSQG9hPS0N3uwKYMFsvpzoeg24FeDzU2gjL_1T7JRxL9xbwbUi7ufN7cDiRLgkH2Y8SCM4ZQlsSz7LZuLzecITjKEVsXj3utK6FIjaMNUdHcgaXheDr_n7HSaSTJProZ4uK6V97GEtaCqcVqm3cGYxCfeQM-BpRIvjx5vK6Yt_0qUTxJn8bDrYLLFaVG8zI0xqBho4po23kqmZIsbMoBmUo"
@@ -239,29 +211,100 @@
   "menus": [
     {
       "label": "Trang chủ",
-      "href": "index.html"
+      "slug": "home",
+      "type": "page",
+      "children": []
     },
     {
       "label": "Portfolio",
-      "href": "index.html#portfolio"
+      "slug": "portfolio",
+      "type": "page",
+      "children": []
     },
     {
       "label": "Các Khóa Học",
-      "href": "courses.html"
+      "slug": "courses",
+      "type": "page",
+      "children": [
+        {
+          "label": "UI/UX Masterclass",
+          "slug": "uiux-masterclass",
+          "type": "page",
+          "children": []
+        },
+        {
+          "label": "3D Motion",
+          "slug": "3d-motion",
+          "type": "page",
+          "children": []
+        }
+      ]
     },
     {
       "label": "Kiến thức môn học",
-      "href": "knowledge.html"
+      "slug": "knowledge",
+      "type": "page",
+      "children": []
     },
     {
       "label": "Nghiên cứu khoa học",
-      "href": "research.html"
-    },
-    {
-      "label": "as",
-      "href": "ss.html"
+      "slug": "research",
+      "type": "page",
+      "children": []
     }
   ],
+  "pages": {
+    "home": {
+      "title": "Trang chủ - Andy Nguyễn",
+      "content": "<h2>Chào mừng đến với trang chủ</h2><p>Đây là nội dung trang chủ.</p>",
+      "meta": {
+        "description": "Portfolio của Andy Nguyễn",
+        "keywords": "portfolio, design, multimedia"
+      },
+      "created": "2024-01-01T00:00:00Z",
+      "updated": "2024-01-01T00:00:00Z"
+    },
+    "portfolio": {
+      "title": "Portfolio - Andy Nguyễn",
+      "content": "<h2>Dự án nổi bật</h2><p>Xem các dự án của tôi tại trang chủ.</p>",
+      "meta": {
+        "description": "Portfolio dự án",
+        "keywords": "portfolio, projects"
+      },
+      "created": "2024-01-01T00:00:00Z",
+      "updated": "2024-01-01T00:00:00Z"
+    },
+    "courses": {
+      "title": "Các Khóa Học - Andy Nguyễn",
+      "content": "<h2>Khóa học</h2><p>Danh sách các khóa học.</p>",
+      "meta": {
+        "description": "Các khóa học multimedia",
+        "keywords": "courses, học tập"
+      },
+      "created": "2024-01-01T00:00:00Z",
+      "updated": "2024-01-01T00:00:00Z"
+    },
+    "knowledge": {
+      "title": "Kiến thức môn học - Andy Nguyễn",
+      "content": "<h2>Kiến thức môn học</h2><p>Bài viết chia sẻ kiến thức.</p>",
+      "meta": {
+        "description": "Kiến thức môn học",
+        "keywords": "kiến thức, học tập"
+      },
+      "created": "2024-01-01T00:00:00Z",
+      "updated": "2024-01-01T00:00:00Z"
+    },
+    "research": {
+      "title": "Nghiên cứu khoa học - Andy Nguyễn",
+      "content": "<h2>Nghiên cứu khoa học</h2><p>Các bài nghiên cứu.</p>",
+      "meta": {
+        "description": "Nghiên cứu khoa học",
+        "keywords": "nghiên cứu, khoa học"
+      },
+      "created": "2024-01-01T00:00:00Z",
+      "updated": "2024-01-01T00:00:00Z"
+    }
+  },
   "banner": {
     "badge": "Nhà Thiết Kế Sáng Tạo",
     "title_line1": "Xin Chào!",
@@ -298,67 +341,4 @@
       "color": "tertiary"
     },
     {
-      "name": "After Effects",
-      "icon": "movie",
-      "percent": "85%",
-      "color": "secondary"
-    },
-    {
-      "name": "Photoshop",
-      "icon": "image",
-      "percent": "90%",
-      "color": "primary"
-    }
-  ],
-  "experience": [
-    {
-      "title": "Senior UI/UX Designer",
-      "company": "Creative Studio",
-      "period": "2022 - Hiện tại",
-      "desc": "Thiết kế giao diện và trải nghiệm người dùng cho các sản phẩm kỹ thuật số.",
-      "color": "primary"
-    },
-    {
-      "title": "Motion Designer",
-      "company": "Media Agency",
-      "period": "2020 - 2022",
-      "desc": "Tạo ra các hiệu ứng chuyển động và đồ họa tương tác cho các chiến dịch quảng cáo.",
-      "color": "secondary"
-    },
-    {
-      "title": "s",
-      "company": "",
-      "period": "",
-      "desc": "",
-      "color": "tertiary"
-    }
-  ],
-  "community": {
-    "title": "Cộng Đồng Sáng Tạo",
-    "desc": "Tham gia cộng đồng 500+ designer và multimedia artist.",
-    "btn": "Tham Gia Ngay",
-    "link": "#"
-  },
-  "footer": {
-    "brand": "Andy Nguyễn",
-    "copyright": "© 2024 Nguyễn Đức. All rights reserved.",
-    "links": [
-      {
-        "label": "Trang chủ",
-        "href": "index.html"
-      },
-      {
-        "label": "Portfolio",
-        "href": "index.html#portfolio"
-      },
-      {
-        "label": "Các Khóa Học",
-        "href": "courses.html"
-      },
-      {
-        "label": "Liên hệ",
-        "href": "index.html#contact"
-      }
-    ]
-  }
-}
+      "name":
