@@ -13,6 +13,24 @@
   },
   "portfolio": [
     {
+      "id": "mpvzckhzc6i",
+      "title": "Project Nexus Rebrandaaa",
+      "author": "",
+      "category": "",
+      "date": "2026-06-02",
+      "read_time": 5,
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAi-XyIw7n5_qs2gRuVY5tzy8T9kNcTJ7oct3L7pA4uaRSsFv-NXNAqCkD03VG4wVF5M6nhBu2AH5XuLevkbHGhXyfWTTfiZCvB2mWUQGdzB02-oCUBVZ5fBLndUc8knKZjZ0Abr4Pm2x7KCJf57mpVHt8eLzjg4J034tgdWqERPQ-pcm2B2d2mUAy0GBvD6gvk3Qn1es0Kcd5gZKeytqMpF96k5gc2wKpQUR3xXrDdM5-EFqcS1VIg0fSE782XWMstEOcUjUpTk68",
+      "excerpt": "",
+      "content": "",
+      "tags": [
+        "UX/UI Design",
+        "3D Motion"
+      ],
+      "status": "active",
+      "link": "#",
+      "featured": true
+    },
+    {
       "id": "p1",
       "title": "Project Nexus Rebrand",
       "desc": "Hệ thống nhận diện thương hiệu toàn diện cho startup công nghệ tiên phong.",
