@@ -540,6 +540,58 @@ input:focus,textarea:focus,select:focus{border-color:var(--pri)}
   <div id="tab-menus" class="tab-pane">
     <div class="page-header"><h1>Quản lý Menu</h1><p>Đổi tên, thêm, xóa và sắp xếp các mục menu trên thanh điều hướng</p></div>
     <div class="card">
+      <div class="section-title">Logo &amp; Thanh điều hướng</div>
+      <p style="font-size:.82rem;color:var(--txt2);margin-bottom:14px">
+        Thay đổi logo và tên hiển thị trên thanh menu của tất cả các trang.
+      </p>
+      <div class="row2">
+        <div class="field">
+          <label>Tên thương hiệu (hiển thị khi chưa có logo ảnh)</label>
+          <input type="text" id="navBrand" placeholder="Nguyễn Đức">
+        </div>
+        <div class="field">
+          <label>Label nút CTA (góc phải menu)</label>
+          <input type="text" id="navCta" placeholder="Bắt Đầu">
+        </div>
+      </div>
+      <div class="field">
+        <label>Logo ảnh — URL hoặc upload file</label>
+        <div class="upload-tabs">
+          <button class="upload-tab active" onclick="switchUploadTab('logo','url',this)">🔗 URL ảnh</button>
+          <button class="upload-tab" onclick="switchUploadTab('logo','file',this)">📁 Upload file</button>
+        </div>
+        <div id="logo-url-tab">
+          <input type="url" id="navLogoUrl" placeholder="https://... (SVG, PNG, JPG)" oninput="previewFromUrl('navLogoUrl','navLogoPrev')">
+          <p style="font-size:.74rem;color:var(--txt3);margin-top:4px">Để trống = hiển thị chữ. Khuyến nghị ảnh nền trong suốt (PNG/SVG), chiều cao ~40px.</p>
+        </div>
+        <div id="logo-file-tab" style="display:none">
+          <div class="img-upload-area" onclick="document.getElementById('navLogoFile').click()">
+            <span class="material-symbols-outlined upload-icon">cloud_upload</span>
+            <p>Chọn file logo (PNG, SVG, JPG)</p>
+            <input type="file" id="navLogoFile" accept="image/*,image/svg+xml" style="display:none" onchange="handleFileUpload(this,'navLogoPrev','navLogoData')">
+          </div>
+        </div>
+        <input type="hidden" id="navLogoData">
+        <img id="navLogoPrev" class="img-preview" alt="Logo preview" style="max-height:60px;width:auto;object-fit:contain">
+      </div>
+      <!-- Preview nav -->
+      <div style="background:rgba(249,249,255,0.85);backdrop-filter:blur(12px);padding:12px 20px;border-radius:12px;border:1.5px solid var(--bdr-lt);margin-top:8px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div id="navPreviewLogo" style="font-size:1.1rem;font-weight:800;color:#4648d4;letter-spacing:-0.02em">Nguyễn Đức</div>
+          <div style="display:flex;gap:6px;font-size:13px;font-weight:700">
+            <span style="padding:6px 12px;border-radius:999px;color:#4648d4;background:rgba(70,72,212,0.1)" id="navPreviewActive">Trang chủ</span>
+            <span style="padding:6px 12px;border-radius:999px;color:#464554">Portfolio</span>
+            <span style="padding:6px 12px;border-radius:999px;color:#464554">Các Khóa Học</span>
+          </div>
+        </div>
+        <span id="navPreviewCta" style="background:#4648d4;color:#fff;font-size:13px;font-weight:700;padding:8px 18px;border-radius:999px">Bắt Đầu</span>
+      </div>
+      <button class="btn btn-primary btn-sm" style="margin-top:14px" onclick="saveNavBrand()">
+        <span class="material-symbols-outlined" style="font-size:15px">save</span> Lưu Logo &amp; Brand
+      </button>
+    </div>
+
+    <div class="card">
       <div class="section-title">Menu hiện tại (kéo để sắp xếp)</div>
       <div id="menuList"></div>
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr-lt)">
@@ -1279,6 +1331,58 @@ function restoreBackup(input){
   };
   reader.readAsText(file);
 }
+
+// ── NAV BRAND MANAGEMENT ──
+function loadNavBrandForm() {
+  sv('navBrand', DATA.nav_brand || '');
+  sv('navCta', DATA.nav_cta || 'Bắt Đầu');
+  const logo = DATA.nav_logo || '';
+  sv('navLogoUrl', logo && !logo.startsWith('data:') ? logo : '');
+  if (logo) setImagePreview('navLogoUrl', 'navLogoData', 'navLogoPrev', logo);
+  updateNavPreview();
+}
+
+function updateNavPreview() {
+  const brand = gv('navBrand') || DATA.nav_brand || 'Nguyễn Đức';
+  const cta = gv('navCta') || DATA.nav_cta || 'Bắt Đầu';
+  const logoData = $('navLogoData')?.value;
+  const logoUrl = gv('navLogoUrl');
+  const logo = logoData || logoUrl;
+
+  const brandEl = $('navPreviewLogo');
+  if (brandEl) {
+    brandEl.innerHTML = logo
+      ? `<img src="${logo}" style="height:32px;width:auto;object-fit:contain" alt="logo">`
+      : brand;
+  }
+  const ctaEl = $('navPreviewCta');
+  if (ctaEl) ctaEl.textContent = cta;
+}
+
+// Update preview realtime
+['navBrand','navCta','navLogoUrl'].forEach(id => {
+  const el = $(id);
+  if (el) el.addEventListener('input', updateNavPreview);
+});
+
+async function saveNavBrand() {
+  DATA.nav_brand = gv('navBrand') || DATA.nav_brand;
+  DATA.nav_cta = gv('navCta') || 'Bắt Đầu';
+  const logoData = $('navLogoData')?.value;
+  const logoUrl = gv('navLogoUrl');
+  DATA.nav_logo = logoData || logoUrl || '';
+  await trySave();
+  showAlert('✓ Đã lưu Logo & Brand! Tất cả trang sẽ cập nhật sau 1 phút.');
+}
+
+// Patch goTab to load nav form
+const _origGoTab = goTab;
+window.goTab = function(tab, btn) {
+  _origGoTab(tab, btn);
+  if (tab === 'menus') {
+    loadNavBrandForm();
+  }
+};
 </script>
 </body>
 </html>
