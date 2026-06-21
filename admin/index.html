@@ -6,574 +6,251 @@
 <title>Admin — Portfolio</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#f0f3ff;--surface:#fff;--surface2:#f7f9ff;--surface3:#eef1fb;
-  --primary:#4648d4;--primary-lt:#e1e0ff;--primary-dim:#c0c1ff;
-  --secondary:#4d661c;--secondary-lt:#ceee93;
-  --tertiary:#6d5e00;--tertiary-lt:#ffe24c;
-  --text:#111c2d;--text2:#464554;--text3:#767586;
-  --border:#c7c4d7;--border-lt:#e7eeff;
-  --green:#4d661c;--green-lt:#ceee93;
-  --red:#ba1a1a;--red-lt:#ffdad6;
-  --radius:12px;--radius-lg:20px;
-  --shadow:0 4px 20px rgba(70,72,212,0.08);
-}
-body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:15px;}
-.sidebar{width:260px;min-height:100vh;background:var(--primary);padding:0;position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:100;}
-.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.15);}
-.sidebar-logo .brand{font-size:1.2rem;font-weight:800;color:#fff;letter-spacing:-0.02em;}
-.sidebar-logo .sub{font-size:0.72rem;color:rgba(255,255,255,0.6);margin-top:2px;}
-.sidebar-nav{padding:16px 12px;flex:1;overflow-y:auto;}
-.nav-section{font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.45);padding:12px 8px 6px;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:rgba(255,255,255,0.75);font-size:0.875rem;font-weight:500;cursor:pointer;transition:background 0.15s,color 0.15s;border:none;background:none;text-align:left;width:100%;margin-bottom:2px;}
-.nav-item:hover{background:rgba(255,255,255,0.12);color:#fff;}
-.nav-item.active{background:rgba(255,255,255,0.2);color:#fff;font-weight:700;}
-.nav-item .icon{font-size:20px;flex-shrink:0;}
-.sidebar-footer{padding:16px 12px;border-top:1px solid rgba(255,255,255,0.15);}
-.user-info{padding:10px 12px;color:rgba(255,255,255,0.8);font-size:0.8rem;margin-bottom:8px;}
-.user-info .uname{color:#fff;font-weight:700;font-size:0.875rem;}
-.btn-logout{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.8);border:none;cursor:pointer;font-size:0.8rem;font-weight:500;transition:background 0.15s;}
-.btn-logout:hover{background:rgba(255,255,255,0.2);color:#fff;}
-.main{margin-left:260px;flex:1;padding:28px 32px;min-height:100vh;}
-#loginView{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px;}
-.login-card{background:var(--surface);border-radius:var(--radius-lg);padding:40px;width:100%;max-width:440px;box-shadow:var(--shadow);border:1px solid var(--border-lt);}
-.login-logo{font-size:1.4rem;font-weight:800;color:var(--primary);margin-bottom:4px;}
-.login-sub{font-size:0.85rem;color:var(--text2);margin-bottom:28px;line-height:1.6;}
-.login-sub a{color:var(--primary);}
-.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
-.form-group label{font-size:0.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;}
-input[type=text],input[type=email],input[type=url],input[type=password],input[type=number],textarea,select{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:0.875rem;outline:none;width:100%;transition:border-color 0.2s;resize:vertical;}
-input:focus,textarea:focus,select:focus{border-color:var(--primary);}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.btn{padding:10px 20px;border-radius:999px;font-size:0.875rem;font-weight:700;cursor:pointer;border:none;transition:opacity 0.15s,transform 0.1s;display:inline-flex;align-items:center;gap:6px;text-decoration:none;}
-.btn:hover{opacity:0.85;transform:translateY(-1px);}
-.btn:active{transform:scale(0.97);}
-.btn-primary{background:var(--primary);color:#fff;}
-.btn-secondary{background:var(--primary-lt);color:var(--primary);}
-.btn-danger{background:var(--red-lt);color:var(--red);border:1.5px solid rgba(186,26,26,0.2);}
-.btn-ghost{background:var(--surface3);color:var(--text);border:1.5px solid var(--border);}
-.btn-sm{padding:6px 14px;font-size:0.8rem;}
-.btn-icon{padding:8px;border-radius:8px;}
-.login-btn{width:100%;justify-content:center;margin-top:6px;padding:12px;}
-.page-header{margin-bottom:24px;}
-.page-header h1{font-size:1.5rem;font-weight:800;margin-bottom:4px;}
-.page-header p{font-size:0.875rem;color:var(--text2);}
-.page-actions{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
-.card{background:var(--surface);border-radius:var(--radius);padding:20px;margin-bottom:14px;border:1px solid var(--border-lt);box-shadow:var(--shadow);}
-.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
-.card-title{font-size:0.95rem;font-weight:700;margin-bottom:2px;}
-.card-sub{font-size:0.78rem;color:var(--text3);}
-.card-actions{display:flex;gap:6px;flex-shrink:0;}
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
-.stat-card{background:var(--surface);border-radius:var(--radius);padding:18px;border:1px solid var(--border-lt);box-shadow:var(--shadow);}
-.stat-num{font-size:1.75rem;font-weight:800;color:var(--primary);line-height:1;margin-bottom:4px;}
-.stat-label{font-size:0.78rem;color:var(--text3);}
-.section-title{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin-bottom:12px;padding-bottom:8px;border-bottom:1.5px solid var(--border-lt);}
-.alert{padding:12px 16px;border-radius:10px;font-size:0.85rem;margin-bottom:16px;display:none;align-items:center;gap:8px;position:sticky;top:0;z-index:10;}
-.alert.show{display:flex;}
-.alert-success{background:var(--green-lt);color:var(--green);border:1.5px solid rgba(77,102,28,0.25);}
-.alert-error{background:var(--red-lt);color:var(--red);border:1.5px solid rgba(186,26,26,0.25);}
-.info-box{background:var(--primary-lt);border:1.5px solid var(--primary-dim);border-radius:10px;padding:14px 16px;font-size:0.82rem;color:var(--primary);margin-bottom:20px;line-height:1.7;}
-.info-box code{background:rgba(70,72,212,0.1);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:0.78rem;}
-.tab-view{display:none;}
-.tab-view.active{display:block;}
-.tags-input{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;cursor:text;min-height:44px;align-items:center;}
-.tags-input:focus-within{border-color:var(--primary);}
-.tag-chip{display:inline-flex;align-items:center;gap:4px;background:var(--primary-lt);color:var(--primary);padding:3px 8px 3px 10px;border-radius:999px;font-size:0.78rem;font-weight:700;}
-.tag-remove{background:none;border:none;color:var(--primary);cursor:pointer;font-size:14px;line-height:1;padding:0;opacity:0.6;}
-.tag-remove:hover{opacity:1;}
-.tag-input-field{background:none;border:none;color:var(--text);font-size:0.82rem;outline:none;min-width:80px;padding:2px;font-family:'Plus Jakarta Sans',sans-serif;}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
-.modal-overlay.active{display:flex;}
-.modal-box{background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:580px;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.2);}
-.modal-box.wide{max-width:900px;}
-.modal-box h3{font-size:1.1rem;font-weight:800;margin-bottom:20px;}
-.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1.5px solid var(--border-lt);}
-.modal-close-btn{position:absolute;top:16px;right:16px;background:var(--surface3);border:1.5px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--text2);}
-.modal-close-btn:hover{background:var(--border-lt);}
-.empty-state{text-align:center;padding:40px;color:var(--text3);border:2px dashed var(--border);border-radius:var(--radius);font-size:0.875rem;}
-.img-preview{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-top:8px;border:1px solid var(--border);display:none;}
-.img-preview.show{display:block;}
-.menu-item-card{border:1px solid var(--border-lt);border-radius:10px;padding:14px;margin-bottom:8px;background:var(--surface2);display:flex;justify-content:space-between;align-items:center;}
-.menu-item-card .info{flex:1;}
-.menu-item-card .name{font-weight:700;font-size:0.9rem;}
-.menu-item-card .slug{font-size:0.75rem;color:var(--text3);margin-top:2px;}
-.menu-children{margin-left:24px;}
-.badge-type{display:inline-block;font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px;text-transform:uppercase;}
-.badge-page{background:var(--primary-lt);color:var(--primary);}
-.badge-fixed{background:var(--secondary-lt);color:var(--secondary);}
-@media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;padding:16px;}.stats-row{grid-template-columns:1fr 1fr;}.form-row{grid-template-columns:1fr;}}
+:root{--bg:#f0f3ff;--surface:#fff;--surface2:#f7f9ff;--surface3:#eef1fb;--primary:#4648d4;--primary-lt:#e1e0ff;--primary-dim:#c0c1ff;--secondary:#4d661c;--secondary-lt:#ceee93;--tertiary:#6d5e00;--tertiary-lt:#ffe24c;--text:#111c2d;--text2:#464554;--text3:#767586;--border:#c7c4d7;--border-lt:#e7eeff;--green:#4d661c;--green-lt:#ceee93;--red:#ba1a1a;--red-lt:#ffdad6;--radius:12px;--radius-lg:20px;--shadow:0 4px 20px rgba(70,72,212,0.08)}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:15px}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+
+/* SIDEBAR */
+.sidebar{width:250px;min-height:100vh;background:var(--primary);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:100}
+.sb-logo{padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.15)}
+.sb-logo .brand{font-size:1.1rem;font-weight:800;color:#fff}
+.sb-logo .sub{font-size:.7rem;color:rgba(255,255,255,.55);margin-top:2px}
+.sb-nav{padding:12px 10px;flex:1;overflow-y:auto}
+.sb-section{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);padding:10px 8px 4px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;color:rgba(255,255,255,.7);font-size:.82rem;font-weight:500;cursor:pointer;border:none;background:none;text-align:left;width:100%;margin-bottom:1px;transition:background .12s,color .12s}
+.sb-item:hover{background:rgba(255,255,255,.1);color:#fff}
+.sb-item.active{background:rgba(255,255,255,.18);color:#fff;font-weight:700}
+.sb-item .icon{font-size:18px;flex-shrink:0}
+.sb-footer{padding:12px 10px;border-top:1px solid rgba(255,255,255,.15)}
+.sb-user{padding:8px 10px;color:rgba(255,255,255,.75);font-size:.75rem;margin-bottom:6px}
+.sb-user b{color:#fff;font-size:.8rem;display:block}
+.btn-logout{display:flex;align-items:center;gap:6px;width:100%;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:none;cursor:pointer;font-size:.75rem;transition:background .12s}
+.btn-logout:hover{background:rgba(255,255,255,.18);color:#fff}
+
+/* MAIN */
+.main{margin-left:250px;flex:1;padding:24px 28px;min-height:100vh}
+
+/* LOGIN */
+#loginView{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px}
+.login-card{background:var(--surface);border-radius:var(--radius-lg);padding:36px;width:100%;max-width:420px;box-shadow:var(--shadow);border:1px solid var(--border-lt)}
+.login-card .logo{font-size:1.3rem;font-weight:800;color:var(--primary);margin-bottom:4px}
+.login-card .sub{font-size:.82rem;color:var(--text2);margin-bottom:24px;line-height:1.6}
+.login-card .sub a{color:var(--primary)}
+
+/* FORMS */
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.fg label{font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+input[type=text],input[type=email],input[type=url],input[type=password],input[type=number],textarea,select{background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:inherit;font-size:.82rem;outline:none;width:100%;transition:border-color .15s;resize:vertical}
+input:focus,textarea:focus,select:focus{border-color:var(--primary)}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* BUTTONS */
+.btn{padding:8px 18px;border-radius:999px;font-size:.82rem;font-weight:700;cursor:pointer;border:none;transition:opacity .12s;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{opacity:.85}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-secondary{background:var(--primary-lt);color:var(--primary)}
+.btn-danger{background:var(--red-lt);color:var(--red)}
+.btn-ghost{background:var(--surface3);color:var(--text);border:1.5px solid var(--border)}
+.btn-sm{padding:5px 12px;font-size:.75rem}
+.btn-icon{padding:6px;border-radius:6px}
+.login-btn{width:100%;justify-content:center;padding:11px;margin-top:6px}
+
+/* CARDS & LAYOUT */
+.page-header{margin-bottom:20px}
+.page-header h1{font-size:1.4rem;font-weight:800;margin-bottom:3px}
+.page-header p{font-size:.82rem;color:var(--text2)}
+.page-actions{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.card{background:var(--surface);border-radius:var(--radius);padding:18px;margin-bottom:12px;border:1px solid var(--border-lt);box-shadow:var(--shadow)}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.card-title{font-size:.9rem;font-weight:700;margin-bottom:2px}
+.card-sub{font-size:.72rem;color:var(--text3)}
+.card-actions{display:flex;gap:4px;flex-shrink:0}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border-lt);box-shadow:var(--shadow)}
+.stat-num{font-size:1.6rem;font-weight:800;color:var(--primary);line-height:1;margin-bottom:3px}
+.stat-label{font-size:.72rem;color:var(--text3)}
+.section-title{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:10px;padding-bottom:6px;border-bottom:1.5px solid var(--border-lt)}
+.alert{padding:10px 14px;border-radius:8px;font-size:.82rem;margin-bottom:14px;display:none;align-items:center;gap:6px;position:sticky;top:0;z-index:10}
+.alert.show{display:flex}
+.alert-success{background:var(--green-lt);color:var(--green);border:1.5px solid rgba(77,102,28,.2)}
+.alert-error{background:var(--red-lt);color:var(--red);border:1.5px solid rgba(186,26,26,.2)}
+.tab-view{display:none}
+.tab-view.active{display:block}
+.empty-state{text-align:center;padding:36px;color:var(--text3);border:2px dashed var(--border);border-radius:var(--radius);font-size:.82rem}
+
+/* MODALS */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+.modal-overlay.active{display:flex}
+.modal-box{background:var(--surface);border-radius:var(--radius-lg);padding:24px;width:100%;max-width:560px;max-height:85vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.18)}
+.modal-box h3{font-size:1rem;font-weight:800;margin-bottom:16px}
+.modal-footer{display:flex;justify-content:flex-end;gap:6px;margin-top:16px;padding-top:12px;border-top:1.5px solid var(--border-lt)}
+.modal-close{position:absolute;top:14px;right:14px;background:var(--surface3);border:1.5px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.modal-close:hover{background:var(--border-lt)}
+
+/* MENU TREE ITEM */
+.mt-item{border:1px solid var(--border-lt);border-radius:8px;padding:10px 12px;margin-bottom:6px;background:var(--surface2);display:flex;justify-content:space-between;align-items:center}
+.mt-item .info{flex:1}
+.mt-item .name{font-weight:700;font-size:.85rem}
+.mt-item .slug{font-size:.7rem;color:var(--text3);margin-top:1px}
+.badge-type{display:inline-block;font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:999px;margin-left:5px;text-transform:uppercase}
+.badge-article{background:var(--secondary-lt);color:var(--secondary)}
+.badge-project{background:var(--primary-lt);color:var(--primary)}
+.badge-elearning{background:var(--tertiary-lt);color:var(--tertiary)}
+
+/* Tags input */
+.tags-wrap{display:flex;flex-wrap:wrap;gap:5px;padding:7px 10px;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;cursor:text;min-height:38px;align-items:center}
+.tags-wrap:focus-within{border-color:var(--primary)}
+.tag-chip{display:inline-flex;align-items:center;gap:3px;background:var(--primary-lt);color:var(--primary);padding:2px 7px 2px 9px;border-radius:999px;font-size:.72rem;font-weight:700}
+.tag-chip button{background:none;border:none;color:var(--primary);cursor:pointer;font-size:12px;padding:0;opacity:.6}
+.tag-chip button:hover{opacity:1}
+.tag-input{background:none;border:none;color:var(--text);font-size:.78rem;outline:none;min-width:60px;padding:2px;font-family:inherit}
+
+@media(max-width:768px){.sidebar{display:none}.main{margin-left:0;padding:14px}.stats-row{grid-template-columns:1fr 1fr}.fr{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
 <!-- LOGIN -->
 <div id="loginView">
-  <div class="login-card">
-    <div class="login-logo">🎨 Portfolio Admin</div>
-    <p class="login-sub">
-      Đăng nhập bằng <strong>GitHub Personal Access Token</strong>.<br>
-      Tạo tại: <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a> → chọn quyền <strong>repo</strong>.
-    </p>
-    <div class="form-group"><label>GitHub Username</label><input type="text" id="lUser" placeholder="ngtduc24"></div>
-    <div class="form-group"><label>Repository Name</label><input type="text" id="lRepo" placeholder="ngtduc24.github.io"></div>
-    <div class="form-group"><label>Personal Access Token</label><input type="password" id="lToken" placeholder="ghp_xxxxxxxxxxxxxxxx"></div>
-    <div id="loginErr" style="color:var(--red);font-size:0.82rem;margin-bottom:8px;display:none;padding:8px 12px;background:var(--red-lt);border-radius:8px;"></div>
-    <button class="btn btn-primary login-btn" onclick="doLogin()">
-      <span class="material-symbols-outlined" style="font-size:18px">login</span> Đăng nhập
-    </button>
-  </div>
+<div class="login-card">
+  <div class="logo">🎨 Portfolio Admin</div>
+  <p class="sub">Đăng nhập bằng <strong>GitHub Personal Access Token</strong>.<br>Tạo tại <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a> → chọn quyền <strong>repo</strong>.</p>
+  <div class="fg"><label>GitHub Username</label><input type="text" id="lUser" placeholder="username"></div>
+  <div class="fg"><label>Repository</label><input type="text" id="lRepo" placeholder="username.github.io"></div>
+  <div class="fg"><label>Token</label><input type="password" id="lToken" placeholder="ghp_xxxxxxxx"></div>
+  <div id="loginErr" style="color:var(--red);font-size:.78rem;display:none;padding:6px 10px;background:var(--red-lt);border-radius:6px;margin-bottom:6px"></div>
+  <button class="btn btn-primary login-btn" onclick="doLogin()"><span class="material-symbols-outlined" style="font-size:16px">login</span> Đăng nhập</button>
+</div>
 </div>
 
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar" style="display:none">
-  <div class="sidebar-logo">
-    <div class="brand">Portfolio Admin</div>
-    <div class="sub" id="sidebarUser">Chưa đăng nhập</div>
-  </div>
-  <nav class="sidebar-nav">
-    <div class="nav-section">Tổng quan</div>
-    <button class="nav-item active" onclick="goTab('dashboard',this)">
-      <span class="material-symbols-outlined icon">dashboard</span> Dashboard
-    </button>
-    <div class="nav-section">Nội dung</div>
-    <button class="nav-item" onclick="goTab('banner',this)">
-      <span class="material-symbols-outlined icon">web</span> Banner đầu trang
-    </button>
-    <button class="nav-item" onclick="goTab('skills',this)">
-      <span class="material-symbols-outlined icon">psychology</span> Kỹ năng
-    </button>
-    <button class="nav-item" onclick="goTab('experience',this)">
-      <span class="material-symbols-outlined icon">work_history</span> Kinh nghiệm
-    </button>
-    <button class="nav-item" onclick="goTab('portfolio',this)">
-      <span class="material-symbols-outlined icon">grid_view</span> Portfolio / Dự án
-    </button>
-    <button class="nav-item" onclick="goTab('courses',this)">
-      <span class="material-symbols-outlined icon">school</span> Các Khóa Học
-    </button>
-    <button class="nav-item" onclick="goTab('research',this)">
-      <span class="material-symbols-outlined icon">science</span> Nghiên cứu / Kiến thức
-    </button>
-    <button class="nav-item" onclick="goTab('community',this)">
-      <span class="material-symbols-outlined icon">group_add</span> Cộng đồng
-    </button>
-    <div class="nav-section">Trang cố định</div>
-    <button class="nav-item" onclick="goTab('fixed-pages',this)">
-      <span class="material-symbols-outlined icon">web_asset</span> Trang Cố Định
-    </button>
-    <div class="nav-section">Quản lý trang</div>
-    <button class="nav-item" onclick="goTab('pages',this)">
-      <span class="material-symbols-outlined icon">description</span> Menu & Trang động
-    </button>
-    <div class="nav-section">Cài đặt</div>
-    <button class="nav-item" onclick="goTab('footer',this)">
-      <span class="material-symbols-outlined icon">settings</span> Footer & Liên hệ
-    </button>
+  <div class="sb-logo"><div class="brand">Portfolio Admin</div><div class="sub" id="sbUser">—</div></div>
+  <nav class="sb-nav">
+    <div class="sb-section">Tổng quan</div>
+    <button class="sb-item active" onclick="goTab('dashboard',this)"><span class="material-symbols-outlined icon">dashboard</span>Dashboard</button>
+    <div class="sb-section">Trang chủ</div>
+    <button class="sb-item" onclick="goTab('banner',this)"><span class="material-symbols-outlined icon">web</span>Banner & Hero</button>
+    <button class="sb-item" onclick="goTab('personal',this)"><span class="material-symbols-outlined icon">person</span>Thông tin cá nhân</button>
+    <div class="sb-section">Nội dung</div>
+    <button class="sb-item" onclick="goTab('menus',this)"><span class="material-symbols-outlined icon">menu_open</span>Menu & Trang</button>
+    <div class="sb-section">Cài đặt</div>
+    <button class="sb-item" onclick="goTab('settings',this)"><span class="material-symbols-outlined icon">settings</span>Liên hệ & Footer</button>
   </nav>
-  <div class="sidebar-footer">
-    <div class="user-info">Đã đăng nhập:<br><span class="uname" id="sidebarUserName"></span></div>
-    <button class="btn-logout" onclick="doLogout()">
-      <span class="material-symbols-outlined" style="font-size:18px">logout</span> Đăng xuất
-    </button>
+  <div class="sb-footer">
+    <div class="sb-user"><b id="sbName">—</b></div>
+    <button class="btn-logout" onclick="doLogout()"><span class="material-symbols-outlined" style="font-size:16px">logout</span>Đăng xuất</button>
   </div>
 </div>
 
 <!-- MAIN -->
 <div class="main" id="mainArea" style="display:none">
-  <div id="alertBox" class="alert"></div>
+<div id="alertBox" class="alert"></div>
 
-  <!-- DASHBOARD -->
-  <div id="tab-dashboard" class="tab-view active">
-    <div class="page-header"><h1>Dashboard</h1><p>Tổng quan nội dung portfolio của bạn</p></div>
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-num" id="d-portfolio">0</div><div class="stat-label">Dự án Portfolio</div></div>
-      <div class="stat-card"><div class="stat-num" id="d-skills">0</div><div class="stat-label">Kỹ năng</div></div>
-      <div class="stat-card"><div class="stat-num" id="d-exp">0</div><div class="stat-label">Kinh nghiệm</div></div>
-      <div class="stat-card"><div class="stat-num" id="d-research">0</div><div class="stat-label">Nghiên cứu</div></div>
+<!-- DASHBOARD -->
+<div id="tab-dashboard" class="tab-view active">
+  <div class="page-header"><h1>Dashboard</h1><p>Tổng quan nội dung portfolio</p></div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num" id="d-projects">0</div><div class="stat-label">Dự án</div></div>
+    <div class="stat-card"><div class="stat-num" id="d-articles">0</div><div class="stat-label">Bài viết</div></div>
+    <div class="stat-card"><div class="stat-num" id="d-courses">0</div><div class="stat-label">Khóa học</div></div>
+    <div class="stat-card"><div class="stat-num" id="d-menus">0</div><div class="stat-label">Menu</div></div>
+  </div>
+</div>
+
+<!-- BANNER -->
+<div id="tab-banner" class="tab-view">
+  <div class="page-header"><h1>Banner & Hero</h1><p>Chỉnh sửa phần đầu trang chủ</p></div>
+  <div class="card">
+    <div class="section-title">Thông tin hiển thị</div>
+    <div class="fr">
+      <div class="fg"><label>Badge</label><input type="text" id="b-badge"></div>
+      <div class="fg"><label>Tên</label><input type="text" id="b-name"></div>
     </div>
-    <div class="info-box">
-      <strong>Cách hoạt động:</strong> Mọi thay đổi lưu vào <code>Data/content.json</code> trên GitHub. Trang chủ tự đọc file này mỗi lần tải trang.
+    <div class="fr">
+      <div class="fg"><label>Dòng 1</label><input type="text" id="b-line1"></div>
+      <div class="fg"><label>Dòng 2</label><input type="text" id="b-line2"></div>
     </div>
-    <div class="card">
-      <div class="card-header"><div><div class="card-title">🚀 Thêm dự án nhanh</div><div class="card-sub">Thêm vào mục Portfolio ngay</div></div></div>
-      <div class="form-row">
-        <div class="form-group"><label>Tên dự án *</label><input type="text" id="qTitle" placeholder="Tên dự án..."></div>
-        <div class="form-group"><label>Link ảnh bìa</label><input type="url" id="qImage" placeholder="https://..."></div>
-      </div>
-      <div class="form-group"><label>Mô tả ngắn</label><textarea id="qDesc" rows="2" placeholder="Mô tả dự án..."></textarea></div>
-      <button class="btn btn-primary btn-sm" onclick="quickAddProject()"><span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm ngay</button>
+    <div class="fg"><label>Mô tả</label><textarea id="b-desc" rows="2"></textarea></div>
+    <div class="fr">
+      <div class="fg"><label>Nút chính</label><input type="text" id="b-btn1"></div>
+      <div class="fg"><label>Nút phụ</label><input type="text" id="b-btn2"></div>
     </div>
+    <div class="fg"><label>URL ảnh đại diện</label><input type="url" id="b-avatar"></div>
+    <button class="btn btn-primary" onclick="saveBanner()"><span class="material-symbols-outlined" style="font-size:16px">save</span>Lưu Banner</button>
+  </div>
+</div>
+
+<!-- PERSONAL -->
+<div id="tab-personal" class="tab-view">
+  <div class="page-header"><h1>Thông Tin Cá Nhân</h1><p>Kỹ năng, kinh nghiệm, học vấn</p></div>
+
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Kỹ Năng</div></div><button class="btn btn-primary btn-sm" onclick="openItemModal('skill')"><span class="material-symbols-outlined" style="font-size:14px">add</span>Thêm</button></div>
+    <div id="skillsList"></div>
   </div>
 
-  <!-- BANNER -->
-  <div id="tab-banner" class="tab-view">
-    <div class="page-header"><h1>Banner đầu trang</h1><p>Chỉnh sửa nội dung phần Hero</p></div>
-    <div class="card">
-      <div class="section-title">Thông tin hiển thị</div>
-      <div class="form-row">
-        <div class="form-group"><label>Badge / Chức danh</label><input type="text" id="b-badge" placeholder="Nhà Thiết Kế Sáng Tạo"></div>
-        <div class="form-group"><label>Tên hiển thị</label><input type="text" id="b-name" placeholder="Nguyễn Đức"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Dòng tiêu đề 1</label><input type="text" id="b-line1" placeholder="Xin Chào!"></div>
-        <div class="form-group"><label>Dòng tiêu đề 2 (trước tên)</label><input type="text" id="b-line2" placeholder="Tôi là"></div>
-      </div>
-      <div class="form-group">
-        <label>Mô tả / Giới thiệu</label>
-        <textarea id="b-desc" rows="3" placeholder="Kết hợp nghệ thuật, công nghệ..."></textarea>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Nút chính</label><input type="text" id="b-btn1" placeholder="Xem Portfolio"></div>
-        <div class="form-group"><label>Nút phụ</label><input type="text" id="b-btn2" placeholder="Liên Hệ"></div>
-      </div>
-      <div class="form-group">
-        <label>Ảnh đại diện</label>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <input type="url" id="b-avatar" placeholder="URL ảnh..." style="flex:1;" oninput="previewImg('b-avatar','b-avatar-preview')">
-          <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('bannerFileUpload').click()">
-            <span class="material-symbols-outlined" style="font-size:16px">cloud_upload</span> Upload
-          </button>
-          <input type="file" id="bannerFileUpload" accept="image/*" onchange="uploadBannerImage(event)" style="display:none">
-        </div>
-        <div id="bannerUploadProgress" style="display:none;margin-top:8px;font-size:0.85rem;color:var(--primary)">⏳ Đang upload...</div>
-        <img id="b-avatar-preview" class="img-preview" alt="Preview">
-      </div>
-      <button class="btn btn-primary" onclick="saveBanner()"><span class="material-symbols-outlined" style="font-size:18px">save</span> Lưu Banner</button>
-    </div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Kinh Nghiệm</div></div><button class="btn btn-primary btn-sm" onclick="openItemModal('exp')"><span class="material-symbols-outlined" style="font-size:14px">add</span>Thêm</button></div>
+    <div id="expList"></div>
   </div>
 
-  <!-- SKILLS -->
-  <div id="tab-skills" class="tab-view">
-    <div class="page-header"><h1>Kỹ Năng Cốt Lõi</h1><p>Quản lý các kỹ năng hiển thị</p></div>
-    <div class="page-actions">
-      <span id="skills-count" style="font-size:0.85rem;color:var(--text3)"></span>
-      <button class="btn btn-primary btn-sm" onclick="openSkillModal()"><span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm kỹ năng</button>
-    </div>
-    <div id="skills-list"></div>
+  <div class="card">
+    <div class="card-header"><div><div class="card-title">Học Vấn</div></div><button class="btn btn-primary btn-sm" onclick="openItemModal('edu')"><span class="material-symbols-outlined" style="font-size:14px">add</span>Thêm</button></div>
+    <div id="eduList"></div>
   </div>
+</div>
 
-  <!-- EXPERIENCE -->
-  <div id="tab-experience" class="tab-view">
-    <div class="page-header"><h1>Kinh Nghiệm</h1><p>Quản lý timeline kinh nghiệm</p></div>
-    <div class="page-actions">
-      <span id="exp-count" style="font-size:0.85rem;color:var(--text3)"></span>
-      <button class="btn btn-primary btn-sm" onclick="openExpModal()"><span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm</button>
-    </div>
-    <div id="exp-list"></div>
+<!-- MENUS & PAGES -->
+<div id="tab-menus" class="tab-view">
+  <div class="page-header"><h1>Menu & Trang</h1><p>Quản lý menu, trang và nội dung</p></div>
+  <div class="page-actions">
+    <span id="menuCount" style="font-size:.82rem;color:var(--text3)"></span>
+    <button class="btn btn-primary btn-sm" onclick="openMenuModal()"><span class="material-symbols-outlined" style="font-size:14px">add</span>Thêm Menu</button>
   </div>
+  <div id="menuTree"></div>
+</div>
 
-  <!-- PORTFOLIO -->
-  <div id="tab-portfolio" class="tab-view">
-    <div class="page-header"><h1>Portfolio / Dự Án</h1><p>Quản lý các dự án nổi bật</p></div>
-    <div class="page-actions">
-      <span id="portfolio-count" style="font-size:0.85rem;color:var(--text3)"></span>
-      <button class="btn btn-primary btn-sm" onclick="openProjectModal()"><span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm dự án</button>
+<!-- SETTINGS -->
+<div id="tab-settings" class="tab-view">
+  <div class="page-header"><h1>Liên Hệ & Footer</h1><p>Cài đặt thông tin liên hệ và footer</p></div>
+  <div class="card">
+    <div class="section-title">Liên hệ</div>
+    <div class="fr">
+      <div class="fg"><label>Email</label><input type="email" id="s-email"></div>
+      <div class="fg"><label>Địa điểm</label><input type="text" id="s-location"></div>
     </div>
-    <div id="portfolio-list"></div>
+    <div class="section-title" style="margin-top:14px">Footer</div>
+    <div class="fr">
+      <div class="fg"><label>Tên thương hiệu</label><input type="text" id="s-brand"></div>
+      <div class="fg"><label>Bản quyền</label><input type="text" id="s-copy"></div>
+    </div>
+    <div class="section-title" style="margin-top:14px">Navigation</div>
+    <div class="fr">
+      <div class="fg"><label>CTA Label</label><input type="text" id="s-cta-label"></div>
+      <div class="fg"><label>CTA Link</label><input type="text" id="s-cta-link"></div>
+    </div>
+    <button class="btn btn-primary" onclick="saveSettings()"><span class="material-symbols-outlined" style="font-size:16px">save</span>Lưu</button>
   </div>
-
-  <!-- COURSES -->
-  <div id="tab-courses" class="tab-view">
-    <div class="page-header"><h1>Các Khóa Học</h1><p>Quản lý khóa học</p></div>
-    <div class="page-actions">
-      <span id="courses-count" style="font-size:0.85rem;color:var(--text3)"></span>
-      <button class="btn btn-primary btn-sm" onclick="openCourseModal()"><span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm khóa học</button>
-    </div>
-    <div id="courses-list"></div>
-  </div>
-
-  <!-- RESEARCH -->
-  <div id="tab-research" class="tab-view">
-    <div class="page-header"><h1>Nghiên Cứu / Kiến Thức</h1><p>Quản lý bài nghiên cứu và bài viết</p></div>
-    <div class="page-actions">
-      <span id="research-count" style="font-size:0.85rem;color:var(--text3)"></span>
-      <button class="btn btn-primary btn-sm" onclick="openResearchModal()"><span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm bài viết</button>
-    </div>
-    <div id="research-list"></div>
-  </div>
-
-  <!-- COMMUNITY -->
-  <div id="tab-community" class="tab-view">
-    <div class="page-header"><h1>Cộng Đồng</h1><p>Chỉnh sửa card cộng đồng</p></div>
-    <div class="card">
-      <div class="form-group"><label>Tiêu đề</label><input type="text" id="com-title" placeholder="Tham Gia Cùng Chúng Tôi"></div>
-      <div class="form-group"><label>Mô tả</label><input type="text" id="com-desc" placeholder="Hơn 500 nhà sáng tạo..."></div>
-      <div class="form-row">
-        <div class="form-group"><label>Nút bấm</label><input type="text" id="com-btn" placeholder="Tham Gia Ngay"></div>
-        <div class="form-group"><label>Link</label><input type="url" id="com-link" placeholder="https://..."></div>
-      </div>
-      <button class="btn btn-primary" onclick="saveCommunity()"><span class="material-symbols-outlined" style="font-size:18px">save</span> Lưu</button>
-    </div>
-  </div>
-
-  <!-- TRANG CỐ ĐỊNH -->
-  <div id="tab-fixed-pages" class="tab-view">
-    <div class="page-header">
-      <h1>Trang Cố Định</h1>
-      <p>3 trang này có giao diện riêng, không thay đổi được qua Admin. Bạn chỉ quản lý dữ liệu hiển thị trên mỗi trang.</p>
-    </div>
-
-    <!-- Card Portfolio -->
-    <div class="card" style="border-left:4px solid var(--primary)">
-      <div class="card-header">
-        <div>
-          <div class="card-title" style="font-size:1.1rem">🎨 Portfolio / Dự Án</div>
-          <div class="card-sub">File: <code style="background:var(--surface3);padding:2px 6px;border-radius:4px">portfolio.html</code> · Menu: Portfolio</div>
-        </div>
-        <div class="card-actions">
-          <a href="../portfolio.html" target="_blank" class="btn btn-ghost btn-sm"><span class="material-symbols-outlined" style="font-size:16px">open_in_new</span> Xem trang</a>
-          <button class="btn btn-primary btn-sm" onclick="goTab('portfolio', document.querySelector('[onclick=\'goTab(\'portfolio\',this)\']'))">Quản lý dữ liệu</button>
-        </div>
-      </div>
-      <p style="font-size:0.85rem;color:var(--text2);margin-bottom:12px">Hiển thị danh sách dự án từ mục <strong>Portfolio / Dự Án</strong> trong Admin. Giao diện trang do bạn thiết kế riêng.</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <div style="background:var(--primary-lt);border-radius:8px;padding:10px 16px;font-size:0.82rem;color:var(--primary);font-weight:700" id="fp-portfolio-count">– dự án</div>
-        <button class="btn btn-secondary btn-sm" onclick="jumpToTab('portfolio')"><span class="material-symbols-outlined" style="font-size:15px">add</span> Thêm dự án mới</button>
-      </div>
-    </div>
-
-    <!-- Card Courses -->
-    <div class="card" style="border-left:4px solid var(--secondary)">
-      <div class="card-header">
-        <div>
-          <div class="card-title" style="font-size:1.1rem">📚 Các Khóa Học</div>
-          <div class="card-sub">File: <code style="background:var(--surface3);padding:2px 6px;border-radius:4px">courses.html</code> · Menu: Các Khóa Học</div>
-        </div>
-        <div class="card-actions">
-          <a href="../courses.html" target="_blank" class="btn btn-ghost btn-sm"><span class="material-symbols-outlined" style="font-size:16px">open_in_new</span> Xem trang</a>
-          <button class="btn btn-primary btn-sm" onclick="jumpToTab('courses')">Quản lý dữ liệu</button>
-        </div>
-      </div>
-      <p style="font-size:0.85rem;color:var(--text2);margin-bottom:12px">Hiển thị danh sách khóa học từ mục <strong>Các Khóa Học</strong> trong Admin.</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <div style="background:var(--secondary-lt);border-radius:8px;padding:10px 16px;font-size:0.82rem;color:var(--secondary);font-weight:700" id="fp-courses-count">– khóa học</div>
-        <button class="btn btn-secondary btn-sm" onclick="jumpToTab('courses')"><span class="material-symbols-outlined" style="font-size:15px">add</span> Thêm khóa học mới</button>
-      </div>
-    </div>
-
-    <!-- Card Research -->
-    <div class="card" style="border-left:4px solid var(--tertiary)">
-      <div class="card-header">
-        <div>
-          <div class="card-title" style="font-size:1.1rem">🔬 Nghiên Cứu Khoa Học</div>
-          <div class="card-sub">File: <code style="background:var(--surface3);padding:2px 6px;border-radius:4px">research.html</code> · Menu: Nghiên Cứu</div>
-        </div>
-        <div class="card-actions">
-          <a href="../research.html" target="_blank" class="btn btn-ghost btn-sm"><span class="material-symbols-outlined" style="font-size:16px">open_in_new</span> Xem trang</a>
-          <button class="btn btn-primary btn-sm" onclick="jumpToTab('research')">Quản lý dữ liệu</button>
-        </div>
-      </div>
-      <p style="font-size:0.85rem;color:var(--text2);margin-bottom:12px">Hiển thị bài nghiên cứu và bài viết kiến thức từ mục <strong>Nghiên Cứu / Kiến Thức</strong> trong Admin.</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <div style="background:var(--tertiary-lt);border-radius:8px;padding:10px 16px;font-size:0.82rem;color:var(--tertiary);font-weight:700" id="fp-research-count">– bài viết</div>
-        <button class="btn btn-secondary btn-sm" onclick="jumpToTab('research')"><span class="material-symbols-outlined" style="font-size:15px">add</span> Thêm bài viết mới</button>
-      </div>
-    </div>
-
-    <div class="info-box">
-      <strong>Lưu ý:</strong> 3 trang này luôn hiện trên menu chính. Khi bạn cần thay đổi giao diện trang, hãy chỉnh trực tiếp file HTML tương ứng. Để thêm menu mới khác, dùng <strong>Menu &amp; Trang động</strong>.
-    </div>
-  </div>
-
-  <!-- PAGES & MENU -->
-  <div id="tab-pages" class="tab-view">
-    <div class="page-header"><h1>Menu &amp; Trang Động</h1><p>Quản lý các menu và trang nội dung tự do (không phải 3 trang cố định Portfolio, Courses, Research)</p></div>
-    <div class="page-actions">
-      <span id="pages-count" style="font-size:0.85rem;color:var(--text3)"></span>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-secondary btn-sm" onclick="openMenuModal(-1)">
-          <span class="material-symbols-outlined" style="font-size:16px">add</span> Thêm Menu
-        </button>
-        <button class="btn btn-primary btn-sm" onclick="openPageModal('')">
-          <span class="material-symbols-outlined" style="font-size:16px">article</span> Tạo Trang Mới
-        </button>
-      </div>
-    </div>
-    <div class="card">
-      <div class="section-title">Cây Menu</div>
-      <div id="menu-tree"></div>
-    </div>
-    <div class="card" style="margin-top:14px;">
-      <div class="section-title">Danh sách trang nội dung</div>
-      <div id="pages-list"></div>
-    </div>
-  </div>
-
-  <!-- FOOTER -->
-  <div id="tab-footer" class="tab-view">
-    <div class="page-header"><h1>Footer & Liên hệ</h1><p>Cài đặt footer</p></div>
-    <div class="card">
-      <div class="section-title">Footer</div>
-      <div class="form-row">
-        <div class="form-group"><label>Tên thương hiệu</label><input type="text" id="f-brand" placeholder="Nguyễn Đức"></div>
-        <div class="form-group"><label>Bản quyền</label><input type="text" id="f-copy" placeholder="© 2024 Nguyễn Đức..."></div>
-      </div>
-      <div class="section-title" style="margin-top:16px;">Thông tin liên hệ</div>
-      <div class="form-row">
-        <div class="form-group"><label>Email</label><input type="email" id="f-email" placeholder="hello@example.com"></div>
-        <div class="form-group"><label>Địa điểm</label><input type="text" id="f-location" placeholder="Hồ Chí Minh, Việt Nam"></div>
-      </div>
-      <button class="btn btn-primary" onclick="saveFooter()"><span class="material-symbols-outlined" style="font-size:18px">save</span> Lưu Footer</button>
-    </div>
-  </div>
+</div>
 
 </div><!-- /main -->
 
-<!-- ═══════════════ MODALS ═══════════════ -->
+<!-- ═══════ MODALS ═══════ -->
 
-<!-- SKILL MODAL -->
-<div class="modal-overlay" id="skillModal">
+<!-- GENERIC PERSONAL ITEM MODAL (skill/exp/edu) -->
+<div class="modal-overlay" id="itemModal">
 <div class="modal-box">
-  <button class="modal-close-btn" onclick="closeModal('skillModal')">✕</button>
-  <h3 id="skillModalTitle">Thêm kỹ năng mới</h3>
-  <input type="hidden" id="skill-edit-idx" value="-1">
-  <div class="form-row">
-    <div class="form-group"><label>Tên kỹ năng *</label><input type="text" id="sk-name" placeholder="UI/UX Design"></div>
-    <div class="form-group"><label>Phần trăm</label><input type="text" id="sk-percent" placeholder="95%"></div>
-  </div>
-  <div class="form-row">
-    <div class="form-group"><label>Icon (Material Symbols)</label><input type="text" id="sk-icon" placeholder="design_services"><small style="color:var(--text3);font-size:0.75rem">Xem tại <a href="https://fonts.google.com/icons" target="_blank" style="color:var(--primary)">fonts.google.com/icons</a></small></div>
-    <div class="form-group"><label>Màu sắc</label>
-      <select id="sk-color">
-        <option value="primary">Tím</option>
-        <option value="secondary">Xanh lá</option>
-        <option value="tertiary">Vàng</option>
-      </select>
-    </div>
-  </div>
+  <button class="modal-close" onclick="closeModal('itemModal')">✕</button>
+  <h3 id="itemModalTitle">Thêm mới</h3>
+  <input type="hidden" id="im-type" value="">
+  <input type="hidden" id="im-idx" value="-1">
+  <div id="itemModalBody"></div>
   <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('skillModal')">Huỷ</button>
-    <button class="btn btn-primary" onclick="saveSkill()">Lưu kỹ năng</button>
-  </div>
-</div>
-</div>
-
-<!-- EXPERIENCE MODAL -->
-<div class="modal-overlay" id="expModal">
-<div class="modal-box">
-  <button class="modal-close-btn" onclick="closeModal('expModal')">✕</button>
-  <h3 id="expModalTitle">Thêm kinh nghiệm</h3>
-  <input type="hidden" id="exp-edit-idx" value="-1">
-  <div class="form-row">
-    <div class="form-group"><label>Chức danh *</label><input type="text" id="ex-title" placeholder="Senior Product Designer"></div>
-    <div class="form-group"><label>Màu dot</label>
-      <select id="ex-color">
-        <option value="primary">Tím</option>
-        <option value="secondary">Xanh lá</option>
-        <option value="tertiary">Vàng</option>
-      </select>
-    </div>
-  </div>
-  <div class="form-row">
-    <div class="form-group"><label>Công ty</label><input type="text" id="ex-company" placeholder="TechVision Corp"></div>
-    <div class="form-group"><label>Thời gian</label><input type="text" id="ex-period" placeholder="2021 - Hiện tại"></div>
-  </div>
-  <div class="form-group"><label>Mô tả</label><textarea id="ex-desc" rows="3" placeholder="Mô tả công việc..."></textarea></div>
-  <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('expModal')">Huỷ</button>
-    <button class="btn btn-primary" onclick="saveExperience()">Lưu</button>
-  </div>
-</div>
-</div>
-
-<!-- PROJECT MODAL -->
-<div class="modal-overlay" id="projectModal">
-<div class="modal-box">
-  <button class="modal-close-btn" onclick="closeModal('projectModal')">✕</button>
-  <h3 id="projectModalTitle">Thêm dự án mới</h3>
-  <input type="hidden" id="project-edit-idx" value="-1">
-  <div class="form-group"><label>Tên dự án *</label><input type="text" id="p-title" placeholder="Neon Oasis Identity"></div>
-  <div class="form-group"><label>Mô tả</label><textarea id="p-desc" rows="3" placeholder="Mô tả dự án..."></textarea></div>
-  <div class="form-group"><label>URL ảnh bìa</label><input type="url" id="p-image" placeholder="https://..." oninput="previewImg('p-image','p-img-preview')"><img id="p-img-preview" class="img-preview" alt="Preview"></div>
-  <div class="form-group"><label>Link dự án</label><input type="url" id="p-link" placeholder="https://..."></div>
-  <div class="form-row">
-    <div class="form-group"><label>Ngày / Tháng</label><input type="text" id="p-date" placeholder="Tháng 10, 2024"></div>
-    <div class="form-group"><label>Nổi bật?</label>
-      <select id="p-featured">
-        <option value="true">Có — Hiển thị đầu</option>
-        <option value="false">Không</option>
-      </select>
-    </div>
-  </div>
-  <div class="form-group"><label>Tags (nhấn Enter để thêm)</label>
-    <div class="tags-input" id="p-tags-input" onclick="document.getElementById('p-tag-field').focus()">
-      <input class="tag-input-field" id="p-tag-field" placeholder="Branding, UI/UX..." onkeydown="addChip(event,'p')">
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('projectModal')">Huỷ</button>
-    <button class="btn btn-primary" onclick="saveProject()">Lưu dự án</button>
-  </div>
-</div>
-</div>
-
-<!-- COURSE MODAL -->
-<div class="modal-overlay" id="courseModal">
-<div class="modal-box">
-  <button class="modal-close-btn" onclick="closeModal('courseModal')">✕</button>
-  <h3 id="courseModalTitle">Thêm khóa học</h3>
-  <input type="hidden" id="course-edit-idx" value="-1">
-  <div class="form-row">
-    <div class="form-group"><label>Badge</label><input type="text" id="c-badge" placeholder="Nổi bật"></div>
-    <div class="form-group"><label>Nút đăng ký</label><input type="text" id="c-btn" placeholder="Đăng Ký Ngay"></div>
-  </div>
-  <div class="form-group"><label>Tiêu đề *</label><input type="text" id="c-title" placeholder="Masterclass UI/UX"></div>
-  <div class="form-group"><label>Mô tả</label><textarea id="c-desc" rows="3" placeholder="Mô tả khóa học..."></textarea></div>
-  <div class="form-group"><label>URL ảnh</label><input type="url" id="c-image" placeholder="https://..."></div>
-  <div class="form-row">
-    <div class="form-group"><label>Số bài học</label><input type="number" id="c-lessons" placeholder="12"></div>
-    <div class="form-group"><label>Thời lượng</label><input type="text" id="c-duration" placeholder="8 Tuần"></div>
-  </div>
-  <div class="form-row">
-    <div class="form-group"><label>Trạng thái</label>
-      <select id="c-status">
-        <option value="open">Đang mở</option>
-        <option value="upcoming">Sắp khai giảng</option>
-        <option value="closed">Đã đóng</option>
-      </select>
-    </div>
-    <div class="form-group"><label>Link đăng ký</label><input type="url" id="c-link" placeholder="https://..."></div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('courseModal')">Huỷ</button>
-    <button class="btn btn-primary" onclick="saveCourse()">Lưu</button>
-  </div>
-</div>
-</div>
-
-<!-- RESEARCH MODAL -->
-<div class="modal-overlay" id="researchModal">
-<div class="modal-box">
-  <button class="modal-close-btn" onclick="closeModal('researchModal')">✕</button>
-  <h3 id="researchModalTitle">Thêm bài nghiên cứu / kiến thức</h3>
-  <input type="hidden" id="research-edit-idx" value="-1|knowledge">
-  <div class="form-group">
-    <label>Loại bài viết</label>
-    <select id="r-type">
-      <option value="knowledge">📚 Kiến thức môn học (hiện trên trang Nghiên Cứu → mục Kiến Thức)</option>
-      <option value="research">🔬 Nghiên cứu khoa học (hiện trên trang Nghiên Cứu + Trang chủ)</option>
-    </select>
-  </div>
-  <div class="form-group"><label>Tiêu đề *</label><input type="text" id="r-title" placeholder="Tâm Lý Học Màu Sắc..."></div>
-  <div class="form-group"><label>Mô tả ngắn / Excerpt</label><textarea id="r-excerpt" rows="2" placeholder="Tóm tắt ngắn..."></textarea></div>
-  <div class="form-group"><label>Nội dung đầy đủ</label><textarea id="r-content" rows="5" placeholder="Nội dung bài viết..."></textarea></div>
-  <div class="form-row">
-    <div class="form-group"><label>Danh mục</label><input type="text" id="r-category" placeholder="Thiết kế UI/UX"></div>
-    <div class="form-group"><label>Tác giả</label><input type="text" id="r-author" placeholder="Nguyễn Văn A"></div>
-  </div>
-  <div class="form-row">
-    <div class="form-group"><label>Ngày đăng</label><input type="text" id="r-date" placeholder="2024-05-12"></div>
-    <div class="form-group"><label>Thời gian đọc (phút)</label><input type="number" id="r-read_time" placeholder="8"></div>
-  </div>
-  <div class="form-group"><label>URL ảnh</label><input type="url" id="r-image" placeholder="https://..."></div>
-  <div class="form-group"><label>Link (nếu bài ngoài)</label><input type="url" id="r-link" placeholder="https://..."></div>
-  <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('researchModal')">Huỷ</button>
-    <button class="btn btn-primary" onclick="saveResearch()">Lưu</button>
+    <button class="btn btn-ghost" onclick="closeModal('itemModal')">Huỷ</button>
+    <button class="btn btn-primary" onclick="savePersonalItem()">Lưu</button>
   </div>
 </div>
 </div>
@@ -581,1019 +258,515 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary);}
 <!-- MENU MODAL -->
 <div class="modal-overlay" id="menuModal">
 <div class="modal-box">
-  <button class="modal-close-btn" onclick="closeModal('menuModal')">✕</button>
-  <h3 id="menuModalTitle">Thêm Menu Mới</h3>
-  <input type="hidden" id="menu-edit-idx" value="-1">
-  <input type="hidden" id="menu-parent-idx" value="-1">
-  <div class="form-group">
-    <label>Tên menu *</label>
-    <input type="text" id="mu-label" placeholder="Ví dụ: Giới thiệu" oninput="autoSlug(this.value)">
-  </div>
-  <div class="form-group">
-    <label>Slug (URL) *</label>
-    <input type="text" id="mu-slug" placeholder="gioi-thieu" oninput="this.dataset.manual='1'">
-    <small style="color:var(--text3);font-size:0.75rem">Chỉ chữ thường, số và dấu gạch ngang. Tự động từ tên menu.</small>
-  </div>
-  <div class="form-group">
-    <label>Loại trang</label>
-    <select id="mu-type" onchange="toggleMenuType()">
-      <option value="page">Trang nội dung (tự tạo nội dung)</option>
-      <option value="fixed">Trang cố định (link riêng)</option>
+  <button class="modal-close" onclick="closeModal('menuModal')">✕</button>
+  <h3 id="menuModalTitle">Thêm Menu</h3>
+  <input type="hidden" id="mm-edit-id" value="">
+  <input type="hidden" id="mm-parent-id" value="">
+  <div class="fg"><label>Tên menu *</label><input type="text" id="mm-label" placeholder="Ví dụ: Portfolio" oninput="autoSlug()"></div>
+  <div class="fg"><label>Slug *</label><input type="text" id="mm-slug" placeholder="portfolio"><small style="color:var(--text3);font-size:.7rem">Chữ thường, số, dấu gạch ngang</small></div>
+  <div class="fg"><label>Dạng trang *</label>
+    <select id="mm-type">
+      <option value="article">📝 Bài viết (Blog / Nghiên cứu)</option>
+      <option value="project">🎨 Dự án (Portfolio / Showcase)</option>
+      <option value="elearning">📚 Khóa học (E-learning)</option>
     </select>
   </div>
-  <div class="form-group" id="mu-link-group" style="display:none">
-    <label>Link trang cố định</label>
-    <input type="text" id="mu-link" placeholder="portfolio.html hoặc https://...">
-  </div>
-  <div class="form-group">
-    <label>Menu cha (để trống = menu chính)</label>
-    <select id="mu-parent">
-      <option value="">— Menu chính —</option>
-    </select>
-  </div>
-  <div class="info-box" id="mu-info-box" style="margin-top:0">
-    💡 Khi chọn "Trang nội dung", hệ thống sẽ tự tạo trang mới với slug tương ứng. Bạn có thể chỉnh nội dung sau.
+  <div class="fg"><label>Menu cha</label>
+    <select id="mm-parent"><option value="">— Menu chính —</option></select>
   </div>
   <div class="modal-footer">
     <button class="btn btn-ghost" onclick="closeModal('menuModal')">Huỷ</button>
-    <button class="btn btn-primary" onclick="saveMenuItem()">Lưu Menu</button>
+    <button class="btn btn-primary" onclick="saveMenu()">Lưu Menu</button>
   </div>
 </div>
 </div>
 
-<!-- PAGE EDITOR MODAL -->
-<div class="modal-overlay" id="pageModal">
-<div class="modal-box wide">
-  <button class="modal-close-btn" onclick="closeModal('pageModal')">✕</button>
-  <h3 id="pageModalTitle">Tạo / Sửa Trang</h3>
-  <input type="hidden" id="page-edit-slug" value="">
-  <div class="form-row">
-    <div class="form-group"><label>Tiêu đề trang *</label><input type="text" id="pg-title" placeholder="Tiêu đề trang"></div>
-    <div class="form-group">
-      <label>Slug (URL) *</label>
-      <input type="text" id="pg-slug" placeholder="ten-trang" oninput="this.dataset.manual='1'">
-      <small style="color:var(--text3);font-size:0.75rem">Không thay đổi slug đã tồn tại — sẽ tạo trang mới.</small>
-    </div>
-  </div>
-  <div class="form-group"><label>Mô tả SEO</label><input type="text" id="pg-meta-desc" placeholder="Mô tả ngắn cho SEO"></div>
-  <div class="form-group">
-    <label>Nội dung trang</label>
-    <div id="pg-tinymce-wrap"><textarea id="pg-content" rows="10"></textarea></div>
-  </div>
-  <div class="form-group">
-    <label>Upload ảnh vào trang</label>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('pageFileUpload').click()">
-        <span class="material-symbols-outlined" style="font-size:16px">cloud_upload</span> Upload ảnh
-      </button>
-      <input type="file" id="pageFileUpload" accept="image/*" onchange="uploadPageImage(event)" style="display:none">
-    </div>
-    <div id="pageUploadProgress" style="display:none;margin-top:8px;font-size:0.85rem;color:var(--primary)">⏳ Đang upload...</div>
-    <div id="pageUploadResult" style="margin-top:8px;"></div>
-  </div>
+<!-- PAGE ITEM MODAL (article/project/course item) -->
+<div class="modal-overlay" id="pageItemModal">
+<div class="modal-box" style="max-width:620px">
+  <button class="modal-close" onclick="closeModal('pageItemModal')">✕</button>
+  <h3 id="piModalTitle">Thêm mục</h3>
+  <input type="hidden" id="pi-page-slug" value="">
+  <input type="hidden" id="pi-page-type" value="">
+  <input type="hidden" id="pi-edit-idx" value="-1">
+  <div id="piModalBody"></div>
   <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('pageModal')">Huỷ</button>
-    <button class="btn btn-primary" onclick="savePage()">Lưu Trang</button>
+    <button class="btn btn-ghost" onclick="closeModal('pageItemModal')">Huỷ</button>
+    <button class="btn btn-primary" onclick="savePageItem()">Lưu</button>
   </div>
 </div>
 </div>
 
-<!-- ═══════════════ SCRIPT ═══════════════ -->
+<!-- PAGE ITEMS LIST MODAL -->
+<div class="modal-overlay" id="pageListModal">
+<div class="modal-box" style="max-width:720px">
+  <button class="modal-close" onclick="closeModal('pageListModal')">✕</button>
+  <h3 id="plTitle">Quản lý nội dung</h3>
+  <div class="page-actions" style="margin-bottom:10px">
+    <span id="plCount" style="font-size:.78rem;color:var(--text3)"></span>
+    <button class="btn btn-primary btn-sm" id="plAddBtn">Thêm mới</button>
+  </div>
+  <div id="plList"></div>
+</div>
+</div>
+
+<!-- ═══════ SCRIPT ═══════ -->
 <script>
 'use strict';
+var AUTH=null,DATA={},_fileSha=null;
+var CONTENT_PATH='data/content.json';
 
-// ── STATE ──────────────────────────────────────────────────────────────────
-let AUTH = null;
-let DATA = {};
-let _pTags = []; // tags cho project modal
-let tinyEditor = null;
-const CONTENT_PATH = 'Data/content.json'; // path duy nhất
+// ── Helpers ──
+function v(id){return(document.getElementById(id)||{}).value?.trim()||'';}
+function set(id,val){var e=document.getElementById(id);if(e)e.value=val!=null?val:'';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function uid(){return Date.now().toString(36)+'_'+Math.random().toString(36).substr(2,4);}
 
-// ── HELPERS ────────────────────────────────────────────────────────────────
-function v(id) { return (document.getElementById(id)?.value || '').trim(); }
-function set(id, val) { const el = document.getElementById(id); if (el) el.value = val != null ? val : ''; }
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function showAlert(msg, type) {
-  const el = document.getElementById('alertBox');
-  el.textContent = msg;
-  el.className = 'alert alert-' + type + ' show';
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), 5000);
+function showAlert(msg,type){
+  var el=document.getElementById('alertBox');el.textContent=msg;
+  el.className='alert alert-'+type+' show';
+  clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove('show');},4000);
 }
-
-function openModal(id) { document.getElementById(id).classList.add('active'); }
-
-function closeModal(id) {
-  document.getElementById(id).classList.remove('active');
-  if (id === 'pageModal' && tinyEditor) {
-    try { tinyEditor.destroy(); } catch(e) {}
-    tinyEditor = null;
-  }
+function openModal(id){document.getElementById(id).classList.add('active');}
+function closeModal(id){document.getElementById(id).classList.remove('active');}
+function goTab(tab,btn){
+  document.querySelectorAll('.tab-view').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.sb-item').forEach(function(n){n.classList.remove('active');});
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(btn)btn.classList.add('active');
 }
-
-function previewImg(inputId, previewId) {
-  const url = v(inputId), img = document.getElementById(previewId);
-  if (url) { img.src = url; img.classList.add('show'); } else img.classList.remove('show');
-}
-
-function goTab(tab, btn) {
-  document.querySelectorAll('.tab-view').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  if (btn) btn.classList.add('active');
-  if (tab === 'pages') renderPagesTab();
-}
-
-// Close modal on backdrop click
-document.querySelectorAll('.modal-overlay').forEach(m =>
-  m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); })
-);
-
-// ── GITHUB AUTH ─────────────────────────────────────────────────────────────
-async function doLogin() {
-  const user = v('lUser'), repo = v('lRepo'), token = v('lToken');
-  if (!user || !repo || !token) { loginErr('Vui lòng điền đầy đủ thông tin.'); return; }
-  try {
-    const r = await fetch('https://api.github.com/repos/' + user + '/' + repo, {
-      headers: { Authorization: 'token ' + token, Accept: 'application/vnd.github.v3+json' }
-    });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    AUTH = { user, repo, token };
-    localStorage.setItem('nd_auth', JSON.stringify(AUTH));
-    startApp();
-  } catch(e) {
-    loginErr('Token không hợp lệ hoặc không có quyền truy cập repo. (' + e.message + ')');
-  }
-}
-
-function loginErr(m) {
-  const e = document.getElementById('loginErr');
-  e.textContent = m; e.style.display = 'block';
-}
-
-function doLogout() { localStorage.removeItem('nd_auth'); location.reload(); }
-
-window.addEventListener('DOMContentLoaded', () => {
-  const s = localStorage.getItem('nd_auth');
-  if (s) { try { AUTH = JSON.parse(s); startApp(); } catch(e) { localStorage.removeItem('nd_auth'); } }
+document.querySelectorAll('.modal-overlay').forEach(function(m){
+  m.addEventListener('click',function(e){if(e.target===m)closeModal(m.id);});
 });
 
-async function startApp() {
-  document.getElementById('loginView').style.display = 'none';
-  document.getElementById('sidebar').style.display = 'flex';
-  document.getElementById('mainArea').style.display = 'block';
-  document.getElementById('sidebarUser').textContent = AUTH.user + '/' + AUTH.repo;
-  document.getElementById('sidebarUserName').textContent = AUTH.user + '/' + AUTH.repo;
+// ── Auth ──
+async function doLogin(){
+  var user=v('lUser'),repo=v('lRepo'),token=v('lToken');
+  if(!user||!repo||!token){loginErr('Điền đầy đủ thông tin.');return;}
+  try{
+    var r=await fetch('https://api.github.com/repos/'+user+'/'+repo,{headers:{Authorization:'token '+token}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    AUTH={user:user,repo:repo,token:token};
+    localStorage.setItem('portfolio_auth',JSON.stringify(AUTH));
+    startApp();
+  }catch(e){loginErr('Token hoặc repo không hợp lệ. ('+e.message+')');}
+}
+function loginErr(m){var e=document.getElementById('loginErr');e.textContent=m;e.style.display='block';}
+function doLogout(){localStorage.removeItem('portfolio_auth');location.reload();}
+
+window.addEventListener('DOMContentLoaded',function(){
+  var s=localStorage.getItem('portfolio_auth');
+  if(s)try{AUTH=JSON.parse(s);startApp();}catch(e){localStorage.removeItem('portfolio_auth');}
+});
+
+async function startApp(){
+  document.getElementById('loginView').style.display='none';
+  document.getElementById('sidebar').style.display='flex';
+  document.getElementById('mainArea').style.display='block';
+  document.getElementById('sbUser').textContent=AUTH.user+'/'+AUTH.repo;
+  document.getElementById('sbName').textContent=AUTH.user;
   await loadData();
-  refreshDashboard();
-  loadBannerForm();
-  loadCommunityForm();
-  loadFooterForm();
-  renderSkillsList();
-  renderExpList();
-  renderPortfolioList();
-  renderCoursesList();
-  renderResearchList();
-  renderPagesTab();
+  refreshAll();
 }
 
-// ── GITHUB API ──────────────────────────────────────────────────────────────
-function ghFetch(path, opts) {
-  opts = opts || {};
-  return fetch('https://api.github.com/' + path, Object.assign({}, opts, {
-    headers: Object.assign({
-      Authorization: 'token ' + AUTH.token,
-      Accept: 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json'
-    }, opts.headers || {})
+// ── GitHub API ──
+function ghFetch(path,opts){
+  opts=opts||{};
+  return fetch('https://api.github.com/'+path,Object.assign({},opts,{
+    headers:Object.assign({Authorization:'token '+AUTH.token,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},opts.headers||{})
   }));
 }
+function toB64(s){var b=new TextEncoder().encode(s);var bin='';b.forEach(function(c){bin+=String.fromCharCode(c);});return btoa(bin);}
+function fromB64(b){var bin=atob(b.replace(/\n/g,''));var bytes=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return new TextDecoder().decode(bytes);}
 
-function toBase64(str) {
-  // UTF-8 safe base64 encode
-  const bytes = new TextEncoder().encode(str);
-  let binary = '';
-  bytes.forEach(b => binary += String.fromCharCode(b));
-  return btoa(binary);
+async function loadData(){
+  try{
+    var r=await ghFetch('repos/'+AUTH.user+'/'+AUTH.repo+'/contents/'+CONTENT_PATH);
+    if(r.ok){var f=await r.json();_fileSha=f.sha;DATA=JSON.parse(fromB64(f.content));return;}
+  }catch(e){console.error(e);}
+  DATA=defaultData();
 }
 
-function fromBase64(b64) {
-  const binary = atob(b64.replace(/\n/g, ''));
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return new TextDecoder('utf-8').decode(bytes);
+async function saveData(){
+  var json=JSON.stringify(DATA,null,2);
+  var body={message:'Admin update ['+new Date().toLocaleString('vi-VN')+']',content:toB64(json)};
+  if(_fileSha)body.sha=_fileSha;
+  var r=await ghFetch('repos/'+AUTH.user+'/'+AUTH.repo+'/contents/'+CONTENT_PATH,{method:'PUT',body:JSON.stringify(body)});
+  if(!r.ok){var err=await r.json().catch(function(){return{};});throw new Error(err.message||'HTTP '+r.status);}
+  var res=await r.json();_fileSha=res.content.sha;
 }
 
-// ── LOAD / SAVE ─────────────────────────────────────────────────────────────
-let _fileSha = null;
-
-async function loadData() {
-  try {
-    const r = await ghFetch('repos/' + AUTH.user + '/' + AUTH.repo + '/contents/' + CONTENT_PATH);
-    if (r.ok) {
-      const f = await r.json();
-      _fileSha = f.sha;
-      DATA = JSON.parse(fromBase64(f.content));
-      // Đảm bảo các key tồn tại
-      if (!DATA.menus) DATA.menus = [];
-      if (!DATA.pages) DATA.pages = {};
-      if (!DATA.skills) DATA.skills = [];
-      if (!DATA.experience) DATA.experience = [];
-      if (!DATA.portfolio) DATA.portfolio = [];
-      if (!DATA.courses) DATA.courses = [];
-      if (!DATA.research) DATA.research = [];
-      if (!DATA.knowledge) DATA.knowledge = [];
-      return;
-    }
-    // File chưa tồn tại → dùng default
-    DATA = getDefault();
-  } catch(e) {
-    console.error('loadData error:', e);
-    DATA = getDefault();
-    showAlert('⚠️ Không thể tải dữ liệu: ' + e.message, 'error');
-  }
+async function trySave(fn){
+  try{await saveData();if(fn)fn();showAlert('Đã lưu thành công!','success');refreshAll();}
+  catch(e){showAlert('Lỗi lưu: '+e.message,'error');}
 }
 
-async function saveData() {
-  const json = JSON.stringify(DATA, null, 2);
-  const content = toBase64(json);
-  const body = { message: 'Admin update [' + new Date().toLocaleString('vi-VN') + ']', content };
-  if (_fileSha) body.sha = _fileSha;
-  const r = await ghFetch(
-    'repos/' + AUTH.user + '/' + AUTH.repo + '/contents/' + CONTENT_PATH,
-    { method: 'PUT', body: JSON.stringify(body) }
-  );
-  if (!r.ok) {
-    const errData = await r.json().catch(() => ({}));
-    throw new Error(errData.message || 'HTTP ' + r.status);
-  }
-  const res = await r.json();
-  _fileSha = res.content.sha; // Cập nhật SHA mới sau mỗi lần save!
+function defaultData(){
+  return {site:{name:'',tagline:''},banner:{badge:'',title_line1:'',title_line2:'',name:'',description:'',btn_primary:'',btn_secondary:'',avatar_url:''},
+  personal:{skills:[],experience:[],education:[]},contact:{email:'',location:''},
+  footer:{brand:'',copyright:''},nav:{brand:'',logo_url:'',cta_label:'Liên Hệ',cta_link:'index.html#contact'},menus:[],pages:{}};
 }
 
-async function trySave(afterFn) {
-  try {
-    await saveData();
-    if (afterFn) afterFn();
-    showAlert('✓ Đã lưu thành công!', 'success');
-    refreshDashboard();
-  } catch(e) {
-    showAlert('❌ Lỗi lưu: ' + e.message, 'error');
-  }
+// ── Refresh all views ──
+function refreshAll(){
+  refreshDashboard();loadBannerForm();loadSettingsForm();
+  renderPersonalLists();renderMenuTree();
 }
 
-function getDefault() {
-  return {
-    banner: { badge:'', title_line1:'', title_line2:'', name:'', description:'', btn_primary:'', btn_secondary:'', avatar_url:'', show_text:true, show_badge:true },
-    skills: [], experience: [], portfolio: [], courses: [], research: [], knowledge: [],
-    community: { title:'', desc:'', btn:'', link:'' },
-    footer: { brand:'', copyright:'', links:[], email:'', location:'' },
-    nav_brand: '', nav_logo: '', nav_cta: 'Bắt Đầu',
-    menus: [], pages: {}
-  };
-}
-
-// ── DASHBOARD ───────────────────────────────────────────────────────────────
-function refreshDashboard() {
-  document.getElementById('d-portfolio').textContent = (DATA.portfolio||[]).length;
-  document.getElementById('d-skills').textContent = (DATA.skills||[]).length;
-  document.getElementById('d-exp').textContent = (DATA.experience||[]).length;
-  document.getElementById('d-research').textContent = ((DATA.research||[]).length + (DATA.knowledge||[]).length);
-  // Cập nhật số đếm trên tab Trang Cố Định
-  const fpP = document.getElementById('fp-portfolio-count');
-  const fpC = document.getElementById('fp-courses-count');
-  const fpR = document.getElementById('fp-research-count');
-  if (fpP) fpP.textContent = (DATA.portfolio||[]).length + ' dự án';
-  if (fpC) fpC.textContent = (DATA.courses||[]).length + ' khóa học';
-  if (fpR) fpR.textContent = ((DATA.research||[]).length + (DATA.knowledge||[]).length) + ' bài viết';
-}
-
-// Nhảy sang tab khác và click nav item tương ứng
-function jumpToTab(tabName) {
-  const navBtn = document.querySelector('.nav-item[onclick*="goTab(\''+tabName+'\')"]')
-    || Array.from(document.querySelectorAll('.nav-item')).find(b => b.getAttribute('onclick')?.includes("'"+tabName+"'"));
-  goTab(tabName, navBtn);
-}
-
-async function quickAddProject() {
-  const title = v('qTitle'), desc = v('qDesc'), image = v('qImage');
-  if (!title) { showAlert('Nhập tên dự án!', 'error'); return; }
-  if (!DATA.portfolio) DATA.portfolio = [];
-  DATA.portfolio.unshift({ id: 'p' + Date.now(), title, desc, image, link:'#', tags:[], featured:false, date:new Date().toLocaleDateString('vi-VN') });
-  await trySave(() => { set('qTitle',''); set('qDesc',''); set('qImage',''); renderPortfolioList(); });
-}
-
-// ── BANNER ──────────────────────────────────────────────────────────────────
-function loadBannerForm() {
-  const b = DATA.banner || {};
-  set('b-badge', b.badge); set('b-name', b.name);
-  set('b-line1', b.title_line1); set('b-line2', b.title_line2);
-  set('b-desc', b.description); set('b-btn1', b.btn_primary); set('b-btn2', b.btn_secondary);
-  set('b-avatar', b.avatar_url);
-  if (b.avatar_url) { document.getElementById('b-avatar-preview').src = b.avatar_url; document.getElementById('b-avatar-preview').classList.add('show'); }
-}
-
-async function saveBanner() {
-  DATA.banner = {
-    badge: v('b-badge'), name: v('b-name'), title_line1: v('b-line1'), title_line2: v('b-line2'),
-    description: v('b-desc'), btn_primary: v('b-btn1'), btn_secondary: v('b-btn2'), avatar_url: v('b-avatar'),
-    show_text: true, show_badge: true
-  };
-  // Đồng bộ nav_brand
-  if (v('b-name')) DATA.nav_brand = v('b-name');
-  await trySave(null);
-}
-
-async function uploadBannerImage(event) {
-  const file = event.target.files[0]; if (!file) return;
-  document.getElementById('bannerUploadProgress').style.display = 'block';
-  try {
-    const b64 = await fileToBase64(file);
-    const fname = 'images/banner_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-    const r = await ghFetch('repos/' + AUTH.user + '/' + AUTH.repo + '/contents/' + fname, {
-      method: 'PUT', body: JSON.stringify({ message: 'Upload banner image', content: b64 })
-    });
-    if (!r.ok) throw new Error('Upload failed ' + r.status);
-    const res = await r.json();
-    const url = res.content.download_url;
-    set('b-avatar', url);
-    document.getElementById('b-avatar-preview').src = url;
-    document.getElementById('b-avatar-preview').classList.add('show');
-    showAlert('✓ Upload ảnh thành công!', 'success');
-  } catch(e) { showAlert('❌ Upload lỗi: ' + e.message, 'error'); }
-  finally { document.getElementById('bannerUploadProgress').style.display = 'none'; }
-}
-
-// ── SKILLS ──────────────────────────────────────────────────────────────────
-function renderSkillsList() {
-  const el = document.getElementById('skills-list'), skills = DATA.skills || [];
-  document.getElementById('skills-count').textContent = skills.length + ' kỹ năng';
-  if (!skills.length) { el.innerHTML = '<div class="empty-state">Chưa có kỹ năng nào. Nhấn "Thêm kỹ năng" để bắt đầu.</div>'; return; }
-  el.innerHTML = skills.map((s,i) =>
-    '<div class="card"><div class="card-header"><div style="display:flex;align-items:center;gap:10px">' +
-    '<span class="material-symbols-outlined" style="font-size:24px;color:var(--primary)">' + esc(s.icon||'star') + '</span>' +
-    '<div><div class="card-title">' + esc(s.name) + '</div><div class="card-sub">' + esc(s.percent) + ' · ' + esc(s.color) + '</div></div></div>' +
-    '<div class="card-actions">' +
-    '<button class="btn btn-ghost btn-sm btn-icon" onclick="editSkill(' + i + ')"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>' +
-    '<button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem(\'skills\',' + i + ')"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>' +
-    '</div></div></div>'
-  ).join('');
-}
-
-function openSkillModal() {
-  document.getElementById('skill-edit-idx').value = -1;
-  document.getElementById('skillModalTitle').textContent = 'Thêm kỹ năng mới';
-  set('sk-name',''); set('sk-percent',''); set('sk-icon',''); set('sk-color','primary');
-  openModal('skillModal');
-}
-
-function editSkill(i) {
-  const s = DATA.skills[i];
-  document.getElementById('skill-edit-idx').value = i;
-  document.getElementById('skillModalTitle').textContent = 'Sửa kỹ năng';
-  set('sk-name', s.name); set('sk-percent', s.percent); set('sk-icon', s.icon); set('sk-color', s.color);
-  openModal('skillModal');
-}
-
-async function saveSkill() {
-  const name = v('sk-name');
-  if (!name) { showAlert('Nhập tên kỹ năng!', 'error'); return; }
-  const item = { name, percent: v('sk-percent') || '0%', icon: v('sk-icon') || 'star', color: v('sk-color') || 'primary' };
-  const idx = parseInt(document.getElementById('skill-edit-idx').value);
-  if (!DATA.skills) DATA.skills = [];
-  if (idx >= 0) DATA.skills[idx] = item; else DATA.skills.push(item);
-  await trySave(() => { closeModal('skillModal'); renderSkillsList(); });
-}
-
-// ── EXPERIENCE ───────────────────────────────────────────────────────────────
-function renderExpList() {
-  const el = document.getElementById('exp-list'), exp = DATA.experience || [];
-  document.getElementById('exp-count').textContent = exp.length + ' mục';
-  if (!exp.length) { el.innerHTML = '<div class="empty-state">Chưa có kinh nghiệm nào.</div>'; return; }
-  el.innerHTML = exp.map((e,i) =>
-    '<div class="card"><div class="card-header"><div><div class="card-title">' + esc(e.title) + '</div><div class="card-sub">' + esc(e.company) + ' · ' + esc(e.period) + '</div></div>' +
-    '<div class="card-actions">' +
-    '<button class="btn btn-ghost btn-sm btn-icon" onclick="editExp(' + i + ')"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>' +
-    '<button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem(\'experience\',' + i + ')"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>' +
-    '</div></div><p style="font-size:0.85rem;color:var(--text2);margin-top:6px">' + esc(e.desc) + '</p></div>'
-  ).join('');
-}
-
-function openExpModal() {
-  document.getElementById('exp-edit-idx').value = -1;
-  document.getElementById('expModalTitle').textContent = 'Thêm kinh nghiệm';
-  set('ex-title',''); set('ex-company',''); set('ex-period',''); set('ex-desc',''); set('ex-color','primary');
-  openModal('expModal');
-}
-
-function editExp(i) {
-  const e = DATA.experience[i];
-  document.getElementById('exp-edit-idx').value = i;
-  document.getElementById('expModalTitle').textContent = 'Sửa kinh nghiệm';
-  set('ex-title', e.title); set('ex-company', e.company); set('ex-period', e.period); set('ex-desc', e.desc); set('ex-color', e.color);
-  openModal('expModal');
-}
-
-async function saveExperience() {
-  const title = v('ex-title');
-  if (!title) { showAlert('Nhập chức danh!', 'error'); return; }
-  const item = { title, company: v('ex-company'), period: v('ex-period'), desc: v('ex-desc'), color: v('ex-color') || 'primary' };
-  const idx = parseInt(document.getElementById('exp-edit-idx').value);
-  if (!DATA.experience) DATA.experience = [];
-  if (idx >= 0) DATA.experience[idx] = item; else DATA.experience.push(item);
-  await trySave(() => { closeModal('expModal'); renderExpList(); });
-}
-
-// ── PORTFOLIO ────────────────────────────────────────────────────────────────
-function renderPortfolioList() {
-  const el = document.getElementById('portfolio-list'), items = DATA.portfolio || [];
-  document.getElementById('portfolio-count').textContent = items.length + ' dự án';
-  if (!items.length) { el.innerHTML = '<div class="empty-state">Chưa có dự án nào.</div>'; return; }
-  el.innerHTML = items.map((p,i) =>
-    '<div class="card"><div class="card-header"><div style="display:flex;align-items:center;gap:12px">' +
-    (p.image ? '<img src="' + esc(p.image) + '" style="width:60px;height:40px;object-fit:cover;border-radius:8px;">' : '') +
-    '<div><div class="card-title">' + esc(p.title) + '</div><div class="card-sub">' + esc((p.tags||[]).join(' · ')||'Chưa có tag') + '</div></div></div>' +
-    '<div class="card-actions">' +
-    '<button class="btn btn-ghost btn-sm btn-icon" onclick="editProject(' + i + ')"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>' +
-    '<button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem(\'portfolio\',' + i + ')"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>' +
-    '</div></div></div>'
-  ).join('');
-}
-
-function openProjectModal() {
-  document.getElementById('project-edit-idx').value = -1;
-  document.getElementById('projectModalTitle').textContent = 'Thêm dự án mới';
-  set('p-title',''); set('p-desc',''); set('p-image',''); set('p-link',''); set('p-date',''); set('p-featured','false');
-  _pTags = []; renderPTags('p');
-  document.getElementById('p-img-preview').classList.remove('show');
-  openModal('projectModal');
-}
-
-function editProject(i) {
-  const p = DATA.portfolio[i];
-  document.getElementById('project-edit-idx').value = i;
-  document.getElementById('projectModalTitle').textContent = 'Sửa dự án';
-  set('p-title', p.title); set('p-desc', p.desc); set('p-image', p.image); set('p-link', p.link);
-  set('p-date', p.date || ''); set('p-featured', p.featured ? 'true' : 'false');
-  _pTags = [...(p.tags||[])]; renderPTags('p');
-  if (p.image) { document.getElementById('p-img-preview').src = p.image; document.getElementById('p-img-preview').classList.add('show'); }
-  openModal('projectModal');
-}
-
-function addChip(e, prefix) {
-  if (e.key !== 'Enter' && e.key !== ',') return;
-  e.preventDefault();
-  const val = e.target.value.trim().replace(/,$/, '');
-  if (!val) return;
-  _pTags.push(val);
-  e.target.value = '';
-  renderPTags(prefix);
-}
-
-function renderPTags(prefix) {
-  const c = document.getElementById('p-tags-input');
-  const input = document.getElementById('p-tag-field');
-  // Xóa chips cũ
-  Array.from(c.children).forEach(child => { if (child !== input) c.removeChild(child); });
-  // Thêm chips mới trước input
-  _pTags.forEach((t, i) => {
-    const s = document.createElement('span');
-    s.className = 'tag-chip';
-    s.innerHTML = esc(t) + '<button class="tag-remove" type="button" onclick="_pTags.splice(' + i + ',1);renderPTags(\'p\')">×</button>';
-    c.insertBefore(s, input);
+// ── DASHBOARD ──
+function refreshDashboard(){
+  var pages=DATA.pages||{},pCount=0,aCount=0,cCount=0;
+  Object.keys(pages).forEach(function(k){
+    var p=pages[k];if(!p.items)return;
+    if(p.page_type==='project')pCount+=p.items.length;
+    if(p.page_type==='article')aCount+=p.items.length;
+    if(p.page_type==='elearning')cCount+=p.items.length;
   });
+  document.getElementById('d-projects').textContent=pCount;
+  document.getElementById('d-articles').textContent=aCount;
+  document.getElementById('d-courses').textContent=cCount;
+  document.getElementById('d-menus').textContent=(DATA.menus||[]).length;
 }
 
-async function saveProject() {
-  const title = v('p-title');
-  if (!title) { showAlert('Nhập tên dự án!', 'error'); return; }
-  const item = {
-    id: 'p' + Date.now(),
-    title, desc: v('p-desc'), image: v('p-image'), link: v('p-link') || '#',
-    date: v('p-date'), featured: v('p-featured') === 'true',
-    tags: [..._pTags],
-    tag_colors: _pTags.map((_,i) => ['primary','secondary','tertiary'][i%3])
-  };
-  const idx = parseInt(document.getElementById('project-edit-idx').value);
-  if (!DATA.portfolio) DATA.portfolio = [];
-  if (idx >= 0) { item.id = DATA.portfolio[idx].id || item.id; DATA.portfolio[idx] = item; }
-  else DATA.portfolio.unshift(item);
-  await trySave(() => { closeModal('projectModal'); renderPortfolioList(); });
+// ── BANNER ──
+function loadBannerForm(){
+  var b=DATA.banner||{};
+  set('b-badge',b.badge);set('b-name',b.name);set('b-line1',b.title_line1);set('b-line2',b.title_line2);
+  set('b-desc',b.description);set('b-btn1',b.btn_primary);set('b-btn2',b.btn_secondary);set('b-avatar',b.avatar_url);
+}
+async function saveBanner(){
+  DATA.banner={badge:v('b-badge'),name:v('b-name'),title_line1:v('b-line1'),title_line2:v('b-line2'),
+    description:v('b-desc'),btn_primary:v('b-btn1'),btn_primary_link:'#featured',btn_secondary:v('b-btn2'),btn_secondary_link:'#contact',avatar_url:v('b-avatar')};
+  if(v('b-name')){DATA.nav=DATA.nav||{};DATA.nav.brand=v('b-name');DATA.site=DATA.site||{};DATA.site.name=v('b-name');}
+  await trySave();
 }
 
-// ── COURSES ──────────────────────────────────────────────────────────────────
-function renderCoursesList() {
-  const el = document.getElementById('courses-list'), items = DATA.courses || [];
-  document.getElementById('courses-count').textContent = items.length + ' khóa học';
-  if (!items.length) { el.innerHTML = '<div class="empty-state">Chưa có khóa học nào.</div>'; return; }
-  el.innerHTML = items.map((c,i) =>
-    '<div class="card"><div class="card-header"><div><div class="card-title">' + esc(c.title) + '</div>' +
-    '<div class="card-sub">' + esc(c.badge||'') + ' · ' + esc(c.status||'') + ' · ' + esc(c.lessons||0) + ' bài · ' + esc(c.duration||'') + '</div></div>' +
-    '<div class="card-actions">' +
-    '<button class="btn btn-ghost btn-sm btn-icon" onclick="editCourse(' + i + ')"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>' +
-    '<button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem(\'courses\',' + i + ')"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>' +
-    '</div></div></div>'
-  ).join('');
+// ── SETTINGS ──
+function loadSettingsForm(){
+  var c=DATA.contact||{},f=DATA.footer||{},n=DATA.nav||{};
+  set('s-email',c.email);set('s-location',c.location);
+  set('s-brand',f.brand);set('s-copy',f.copyright);
+  set('s-cta-label',n.cta_label);set('s-cta-link',n.cta_link);
+}
+async function saveSettings(){
+  DATA.contact={email:v('s-email'),phone:'',location:v('s-location'),social:[]};
+  DATA.footer={brand:v('s-brand'),copyright:v('s-copy')};
+  DATA.nav=Object.assign(DATA.nav||{},{cta_label:v('s-cta-label'),cta_link:v('s-cta-link')});
+  await trySave();
 }
 
-function openCourseModal() {
-  document.getElementById('course-edit-idx').value = -1;
-  set('c-badge',''); set('c-btn',''); set('c-title',''); set('c-desc',''); set('c-image','');
-  set('c-lessons',''); set('c-duration',''); set('c-status','open'); set('c-link','');
-  openModal('courseModal');
+// ── PERSONAL (Skills, Exp, Edu) ──
+function renderPersonalLists(){
+  renderPList('skills','skillsList',function(s){return esc(s.name)+' ('+s.percent+'%)';},'skill');
+  renderPList('experience','expList',function(e){return esc(e.title)+' — '+esc(e.company);},'exp');
+  renderPList('education','eduList',function(e){return esc(e.title)+' — '+esc(e.school);},'edu');
+}
+function renderPList(key,elId,labelFn,type){
+  var el=document.getElementById(elId),items=(DATA.personal||{})[key]||[];
+  if(!items.length){el.innerHTML='<div class="empty-state">Chưa có dữ liệu.</div>';return;}
+  el.innerHTML=items.map(function(item,i){
+    return '<div class="mt-item"><div class="info"><div class="name">'+labelFn(item)+'</div></div><div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="openItemModal(\''+type+'\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button><button class="btn btn-danger btn-sm btn-icon" onclick="deletePersonalItem(\''+key+'\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button></div></div>';
+  }).join('');
 }
 
-function editCourse(i) {
-  const c = DATA.courses[i];
-  document.getElementById('course-edit-idx').value = i;
-  set('c-badge', c.badge); set('c-btn', c.btn); set('c-title', c.title); set('c-desc', c.desc);
-  set('c-image', c.image); set('c-lessons', c.lessons); set('c-duration', c.duration);
-  set('c-status', c.status || 'open'); set('c-link', c.link);
-  openModal('courseModal');
-}
-
-async function saveCourse() {
-  const title = v('c-title');
-  if (!title) { showAlert('Nhập tiêu đề khóa học!', 'error'); return; }
-  const item = {
-    id: 'c' + Date.now(), title, badge: v('c-badge') || 'Khóa Học',
-    btn: v('c-btn') || 'Đăng Ký', desc: v('c-desc'), image: v('c-image'),
-    lessons: parseInt(v('c-lessons')) || 0, duration: v('c-duration'),
-    status: v('c-status') || 'open', link: v('c-link') || '#', featured: true
-  };
-  const idx = parseInt(document.getElementById('course-edit-idx').value);
-  if (!DATA.courses) DATA.courses = [];
-  if (idx >= 0) { item.id = DATA.courses[idx].id || item.id; DATA.courses[idx] = item; }
-  else DATA.courses.unshift(item);
-  await trySave(() => { closeModal('courseModal'); renderCoursesList(); });
-}
-
-// ── RESEARCH / KNOWLEDGE ─────────────────────────────────────────────────────
-function renderResearchList() {
-  const el = document.getElementById('research-list');
-  const research = DATA.research || [];
-  const knowledge = DATA.knowledge || [];
-  const all = [...research.map(r => ({...r, _src:'research'})), ...knowledge.map(k => ({...k, _src:'knowledge'}))];
-  document.getElementById('research-count').textContent = all.length + ' bài';
-  if (!all.length) { el.innerHTML = '<div class="empty-state">Chưa có bài viết nào.</div>'; return; }
-  el.innerHTML = all.map((r,i) =>
-    '<div class="card"><div class="card-header"><div><div class="card-title">' + esc(r.title) +
-    ' <span style="font-size:0.7rem;background:var(--primary-lt);color:var(--primary);padding:2px 8px;border-radius:99px;">' + esc(r._src) + '</span></div>' +
-    '<div class="card-sub">' + esc(r.category||r.label||'') + ' · ' + esc(r.author||'') + ' · ' + esc(r.date||'') + '</div></div>' +
-    '<div class="card-actions">' +
-    '<button class="btn btn-ghost btn-sm btn-icon" onclick="editResearch(' + i + ',\'' + r._src + '\')"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>' +
-    '<button class="btn btn-danger btn-sm btn-icon" onclick="deleteResearchItem(' + i + ',\'' + r._src + '\')"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>' +
-    '</div></div></div>'
-  ).join('');
-}
-
-function openResearchModal() {
-  document.getElementById('research-edit-idx').value = '-1|knowledge';
-  document.getElementById('researchModalTitle').textContent = 'Thêm bài viết mới';
-  set('r-type','knowledge');
-  set('r-title',''); set('r-excerpt',''); set('r-content',''); set('r-category','');
-  set('r-author',''); set('r-date', new Date().toISOString().split('T')[0]); set('r-read_time','5');
-  set('r-image',''); set('r-link','');
-  openModal('researchModal');
-}
-
-function editResearch(i, src) {
-  const arr = src === 'knowledge' ? (DATA.knowledge||[]) : (DATA.research||[]);
-  // Need to find original index
-  const research = DATA.research || [];
-  const knowledge = DATA.knowledge || [];
-  const all = [...research.map(r => ({...r, _src:'research'})), ...knowledge.map(k => ({...k, _src:'knowledge'}))];
-  const item = all[i];
-  const origIdx = src === 'knowledge' ? knowledge.findIndex(k => k.id === item.id) : research.findIndex(r => r.id === item.id);
-  document.getElementById('research-edit-idx').value = origIdx + '|' + src;
-  document.getElementById('researchModalTitle').textContent = 'Sửa bài viết';
-  set('r-type', src);
-  set('r-title', item.title); set('r-excerpt', item.excerpt||''); set('r-content', item.content||'');
-  set('r-category', item.category||item.label||''); set('r-author', item.author||'');
-  set('r-date', item.date||''); set('r-read_time', item.read_time||5);
-  set('r-image', item.image||''); set('r-link', item.link||'');
-  openModal('researchModal');
-}
-
-async function saveResearch() {
-  const title = v('r-title');
-  if (!title) { showAlert('Nhập tiêu đề!', 'error'); return; }
-  const val = document.getElementById('research-edit-idx').value.split('|');
-  const origIdx = parseInt(val[0]);
-  // Ưu tiên dropdown r-type, fallback về val[1]
-  const src = v('r-type') || val[1] || 'knowledge';
-  const item = {
-    id: (src === 'research' ? 'r' : 'k') + Date.now(),
-    title, excerpt: v('r-excerpt'), content: v('r-content'),
-    category: v('r-category'), label: v('r-category'),
-    author: v('r-author'), date: v('r-date') || new Date().toISOString().split('T')[0],
-    read_time: parseInt(v('r-read_time')) || 5,
-    image: v('r-image'), link: v('r-link') || '#',
-    tags: [], views: 0, likes: 0, comments: 0
-  };
-  const targetArr = src === 'knowledge' ? 'knowledge' : 'research';
-  if (!DATA[targetArr]) DATA[targetArr] = [];
-  if (origIdx >= 0) { item.id = DATA[targetArr][origIdx].id || item.id; DATA[targetArr][origIdx] = item; }
-  else DATA[targetArr].unshift(item);
-  await trySave(() => { closeModal('researchModal'); renderResearchList(); });
-}
-
-async function deleteResearchItem(i, src) {
-  if (!confirm('Xoá bài viết này?')) return;
-  const research = DATA.research || [];
-  const knowledge = DATA.knowledge || [];
-  const all = [...research.map(r => ({...r, _src:'research'})), ...knowledge.map(k => ({...k, _src:'knowledge'}))];
-  const item = all[i];
-  if (src === 'knowledge') {
-    DATA.knowledge = knowledge.filter(k => k.id !== item.id);
-  } else {
-    DATA.research = research.filter(r => r.id !== item.id);
-  }
-  await trySave(() => renderResearchList());
-}
-
-// ── COMMUNITY ────────────────────────────────────────────────────────────────
-function loadCommunityForm() {
-  const c = DATA.community || {};
-  set('com-title', c.title); set('com-desc', c.desc); set('com-btn', c.btn); set('com-link', c.link);
-}
-
-async function saveCommunity() {
-  DATA.community = { title: v('com-title'), desc: v('com-desc'), btn: v('com-btn'), link: v('com-link') };
-  await trySave(null);
-}
-
-// ── FOOTER ───────────────────────────────────────────────────────────────────
-function loadFooterForm() {
-  const f = DATA.footer || {};
-  set('f-brand', f.brand); set('f-copy', f.copyright); set('f-email', f.email); set('f-location', f.location);
-}
-
-async function saveFooter() {
-  DATA.footer = {
-    brand: v('f-brand'), copyright: v('f-copy'), email: v('f-email'), location: v('f-location'),
-    links: [
-      { label: 'Trang chủ', href: 'index.html' },
-      { label: 'Portfolio', href: 'portfolio.html' },
-      { label: 'Các Khóa Học', href: 'courses.html' },
-      { label: 'Liên hệ', href: 'index.html#contact' }
-    ]
-  };
-  await trySave(null);
-}
-
-// ── DELETE GENERIC ───────────────────────────────────────────────────────────
-async function deleteItem(key, idx) {
-  if (!confirm('Xoá mục này?')) return;
-  DATA[key].splice(idx, 1);
-  await trySave(() => {
-    if (key === 'skills') renderSkillsList();
-    if (key === 'experience') renderExpList();
-    if (key === 'portfolio') renderPortfolioList();
-    if (key === 'courses') renderCoursesList();
-  });
-}
-
-// ── MENU & PAGES ─────────────────────────────────────────────────────────────
-function makeSlug(label) {
-  return label.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/đ/gi,'d').replace(/[^a-z0-9\s-]/g,'')
-    .trim().replace(/\s+/g,'-').replace(/-+/g,'-');
-}
-
-function autoSlug(label) {
-  const slugEl = document.getElementById('mu-slug');
-  if (!slugEl || slugEl.dataset.manual === '1') return;
-  slugEl.value = makeSlug(label);
-}
-
-function toggleMenuType() {
-  const t = v('mu-type');
-  document.getElementById('mu-link-group').style.display = t === 'fixed' ? 'block' : 'none';
-  document.getElementById('mu-info-box').style.display = t === 'page' ? 'block' : 'none';
-}
-
-function renderPagesTab() {
-  if (!DATA.menus) DATA.menus = [];
-  if (!DATA.pages) DATA.pages = {};
-  renderMenuTree();
-  renderPagesList();
-}
-
-function renderMenuTree() {
-  const el = document.getElementById('menu-tree');
-  const menus = DATA.menus || [];
-  document.getElementById('pages-count').textContent = menus.length + ' menu chính';
-  if (!menus.length) { el.innerHTML = '<div class="empty-state">Chưa có menu. Nhấn "Thêm Menu" để bắt đầu.</div>'; return; }
-
-  function buildTree(items, level) {
-    return items.map((m, i) => {
-      const badge = m.type === 'fixed'
-        ? '<span class="badge-type badge-fixed">fixed</span>'
-        : '<span class="badge-type badge-page">page</span>';
-      const link = m.link ? ' → ' + m.link : '';
-      let html = '<div class="menu-item-card" style="margin-left:' + (level*28) + 'px;">' +
-        '<div class="info"><div class="name">' + esc(m.label) + badge + '</div>' +
-        '<div class="slug">/' + esc(m.slug) + esc(link) + '</div></div>' +
-        '<div class="card-actions">' +
-        '<button class="btn btn-ghost btn-sm btn-icon" title="Sửa" onclick="editMenuItem(' + level + ',' + i + ',null)"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>' +
-        '<button class="btn btn-secondary btn-sm btn-icon" title="Thêm submenu" onclick="openMenuModal(' + i + ')"><span class="material-symbols-outlined" style="font-size:16px">subdirectory_arrow_right</span></button>' +
-        '<button class="btn btn-danger btn-sm btn-icon" title="Xoá" onclick="deleteTopMenu(' + i + ')"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>' +
-        '</div></div>';
-      if (m.children && m.children.length) {
-        html += buildSubTree(m.children, i, level + 1);
-      }
-      return html;
-    }).join('');
+function openItemModal(type,idx){
+  set('im-type',type);set('im-idx',idx!=null?idx:-1);
+  var body=document.getElementById('itemModalBody');
+  var title='Thêm ';
+  var html='';
+  var item=null;
+  if(idx!=null&&idx>=0){
+    title='Sửa ';
+    var key=type==='skill'?'skills':(type==='exp'?'experience':'education');
+    item=((DATA.personal||{})[key]||[])[idx];
   }
 
-  function buildSubTree(children, parentIdx, level) {
-    return children.map((c, ci) => {
-      const badge = c.type === 'fixed'
-        ? '<span class="badge-type badge-fixed">fixed</span>'
-        : '<span class="badge-type badge-page">page</span>';
-      return '<div class="menu-item-card" style="margin-left:' + (level*28) + 'px;border-style:dashed;">' +
-        '<div class="info"><div class="name">' + esc(c.label) + badge + '</div>' +
-        '<div class="slug">/' + esc(c.slug) + (c.link ? ' → ' + c.link : '') + '</div></div>' +
-        '<div class="card-actions">' +
-        '<button class="btn btn-ghost btn-sm btn-icon" onclick="editMenuItem(' + level + ',' + ci + ',' + parentIdx + ')"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>' +
-        '<button class="btn btn-danger btn-sm btn-icon" onclick="deleteSubMenu(' + parentIdx + ',' + ci + ')"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>' +
-        '</div></div>';
-    }).join('');
+  if(type==='skill'){
+    title+='kỹ năng';
+    html='<div class="fr"><div class="fg"><label>Tên *</label><input type="text" id="im-name" value="'+esc(item?item.name:'')+'"></div><div class="fg"><label>Phần trăm</label><input type="number" id="im-percent" value="'+(item?item.percent:0)+'" min="0" max="100"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Icon</label><input type="text" id="im-icon" value="'+esc(item?item.icon:'star')+'"></div><div class="fg"><label>Màu</label><select id="im-color"><option value="primary"'+(item&&item.color==='primary'?' selected':'')+'>Tím</option><option value="secondary"'+(item&&item.color==='secondary'?' selected':'')+'>Xanh</option><option value="tertiary"'+(item&&item.color==='tertiary'?' selected':'')+'>Vàng</option></select></div></div>';
+  }else if(type==='exp'){
+    title+='kinh nghiệm';
+    html='<div class="fr"><div class="fg"><label>Chức danh *</label><input type="text" id="im-title" value="'+esc(item?item.title:'')+'"></div><div class="fg"><label>Công ty</label><input type="text" id="im-company" value="'+esc(item?item.company:'')+'"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Thời gian</label><input type="text" id="im-period" value="'+esc(item?item.period:'')+'"></div><div class="fg"><label>Màu</label><select id="im-color"><option value="primary"'+(item&&item.color==='primary'?' selected':'')+'>Tím</option><option value="secondary"'+(item&&item.color==='secondary'?' selected':'')+'>Xanh</option><option value="tertiary"'+(item&&item.color==='tertiary'?' selected':'')+'>Vàng</option></select></div></div>';
+    html+='<div class="fg"><label>Mô tả</label><textarea id="im-desc" rows="2">'+esc(item?item.description:'')+'</textarea></div>';
+  }else{
+    title+='học vấn';
+    html='<div class="fr"><div class="fg"><label>Bằng cấp *</label><input type="text" id="im-title" value="'+esc(item?item.title:'')+'"></div><div class="fg"><label>Trường</label><input type="text" id="im-school" value="'+esc(item?item.school:'')+'"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Thời gian</label><input type="text" id="im-period" value="'+esc(item?item.period:'')+'"></div></div>';
+    html+='<div class="fg"><label>Mô tả</label><textarea id="im-desc" rows="2">'+esc(item?item.description:'')+'</textarea></div>';
   }
 
-  el.innerHTML = buildTree(menus, 0);
+  document.getElementById('itemModalTitle').textContent=title;
+  body.innerHTML=html;
+  openModal('itemModal');
 }
 
-function renderPagesList() {
-  const el = document.getElementById('pages-list');
-  const pages = DATA.pages || {};
-  const keys = Object.keys(pages);
-  if (!keys.length) { el.innerHTML = '<div class="empty-state">Chưa có trang nội dung. Tạo menu loại "page" để tự tạo trang.</div>'; return; }
-  el.innerHTML = keys.map(slug =>
-    '<div class="menu-item-card"><div class="info">' +
-    '<div class="name">' + esc(pages[slug].title || slug) + '</div>' +
-    '<div class="slug">slug: ' + esc(slug) + ' · Cập nhật: ' + esc(pages[slug].updated ? new Date(pages[slug].updated).toLocaleDateString('vi-VN') : '—') + '</div>' +
-    '</div><div class="card-actions">' +
-    '<button class="btn btn-ghost btn-sm btn-icon" onclick="openPageModal(\'' + esc(slug) + '\')"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>' +
-    '<a class="btn btn-secondary btn-sm btn-icon" href="../page.html?slug=' + esc(slug) + '" target="_blank" title="Xem trang"><span class="material-symbols-outlined" style="font-size:16px">open_in_new</span></a>' +
-    '<button class="btn btn-danger btn-sm btn-icon" onclick="deletePage(\'' + esc(slug) + '\')"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>' +
-    '</div></div>'
-  ).join('');
-}
-
-// openMenuModal(parentIdx): parentIdx = -1 → menu chính, >= 0 → submenu của parentIdx
-function openMenuModal(parentIdx) {
-  document.getElementById('menu-edit-idx').value = '-1';
-  document.getElementById('menu-parent-idx').value = parentIdx >= 0 ? parentIdx : -1;
-  document.getElementById('menuModalTitle').textContent = parentIdx >= 0 ? 'Thêm Submenu' : 'Thêm Menu Mới';
-
-  // Clear form
-  set('mu-label',''); 
-  const slugEl = document.getElementById('mu-slug');
-  slugEl.value = '';
-  slugEl.dataset.manual = '';
-  set('mu-type','page'); set('mu-link','');
-  toggleMenuType();
-
-  // Populate parent select
-  const ps = document.getElementById('mu-parent');
-  ps.innerHTML = '<option value="">— Menu chính —</option>';
-  (DATA.menus||[]).forEach((m,i) => {
-    ps.innerHTML += '<option value="' + i + '">' + esc(m.label) + '</option>';
-  });
-  if (parentIdx >= 0) ps.value = parentIdx;
-
-  openModal('menuModal');
-}
-
-// editMenuItem(level, idx, parentIdx): level=0 → top, level>0 → sub
-function editMenuItem(level, idx, parentIdx) {
-  let item;
-  if (level === 0) {
-    item = DATA.menus[idx];
-    document.getElementById('menu-edit-idx').value = 'top|' + idx;
-  } else {
-    item = DATA.menus[parentIdx].children[idx];
-    document.getElementById('menu-edit-idx').value = 'sub|' + parentIdx + '|' + idx;
+async function savePersonalItem(){
+  var type=v('im-type'),idx=parseInt(v('im-idx'));
+  if(!DATA.personal)DATA.personal={skills:[],experience:[],education:[]};
+  var item;
+  if(type==='skill'){
+    if(!v('im-name')){showAlert('Nhập tên!','error');return;}
+    item={id:uid(),name:v('im-name'),percent:parseInt(v('im-percent'))||0,icon:v('im-icon')||'star',color:v('im-color')||'primary'};
+    if(idx>=0)DATA.personal.skills[idx]=item;else DATA.personal.skills.push(item);
+  }else if(type==='exp'){
+    if(!v('im-title')){showAlert('Nhập chức danh!','error');return;}
+    item={id:uid(),title:v('im-title'),company:v('im-company'),period:v('im-period'),description:v('im-desc'),color:v('im-color')||'primary'};
+    if(idx>=0)DATA.personal.experience[idx]=item;else DATA.personal.experience.push(item);
+  }else{
+    if(!v('im-title')){showAlert('Nhập bằng cấp!','error');return;}
+    item={id:uid(),title:v('im-title'),school:v('im-school'),period:v('im-period'),description:v('im-desc')};
+    if(idx>=0)DATA.personal.education[idx]=item;else DATA.personal.education.push(item);
   }
-  document.getElementById('menu-parent-idx').value = -1;
-  document.getElementById('menuModalTitle').textContent = 'Sửa Menu';
-  set('mu-label', item.label);
-  const slugEl = document.getElementById('mu-slug');
-  slugEl.value = item.slug || '';
-  slugEl.dataset.manual = '1';
-  set('mu-type', item.type || 'page'); set('mu-link', item.link || '');
-  toggleMenuType();
-
-  const ps = document.getElementById('mu-parent');
-  ps.innerHTML = '<option value="">— Menu chính —</option>';
-  (DATA.menus||[]).forEach((m,i) => {
-    ps.innerHTML += '<option value="' + i + '">' + esc(m.label) + '</option>';
-  });
-  openModal('menuModal');
+  await trySave(function(){closeModal('itemModal');});
 }
 
-async function saveMenuItem() {
-  const label = v('mu-label'), slug = v('mu-slug'), type = v('mu-type') || 'page', link = v('mu-link');
-  if (!label) { showAlert('Nhập tên menu!', 'error'); return; }
-  if (!slug) { showAlert('Nhập slug!', 'error'); return; }
-  if (!/^[a-z0-9-]+$/.test(slug)) { showAlert('Slug chỉ được dùng chữ thường, số và dấu -', 'error'); return; }
-
-  const newItem = { label, slug, type, children: [] };
-  if (type === 'fixed' && link) newItem.link = link;
-
-  const editVal = document.getElementById('menu-edit-idx').value;
-  const parentIdxSelect = parseInt(document.getElementById('mu-parent').value);
-  const formParentIdx = parseInt(document.getElementById('menu-parent-idx').value);
-
-  if (editVal && editVal !== '-1') {
-    // Đang sửa
-    const parts = editVal.split('|');
-    if (parts[0] === 'top') {
-      const i = parseInt(parts[1]);
-      newItem.children = DATA.menus[i].children || [];
-      DATA.menus[i] = newItem;
-    } else {
-      const pi = parseInt(parts[1]), ci = parseInt(parts[2]);
-      newItem.children = DATA.menus[pi].children[ci].children || [];
-      DATA.menus[pi].children[ci] = newItem;
-    }
-  } else {
-    // Thêm mới
-    const pIdx = isNaN(parentIdxSelect) ? formParentIdx : parentIdxSelect;
-    if (pIdx >= 0) {
-      if (!DATA.menus[pIdx].children) DATA.menus[pIdx].children = [];
-      DATA.menus[pIdx].children.push(newItem);
-    } else {
-      DATA.menus.push(newItem);
-    }
-  }
-
-  // Tự tạo page nếu type=page và chưa tồn tại
-  if (type === 'page') {
-    if (!DATA.pages) DATA.pages = {};
-    if (!DATA.pages[slug]) {
-      DATA.pages[slug] = {
-        title: label,
-        content: '<h2>' + label + '</h2><p>Nội dung trang <strong>' + label + '</strong>. Chỉnh sửa tại Admin → Menu & Trang.</p>',
-        meta: { description: label },
-        created: new Date().toISOString(),
-        updated: new Date().toISOString()
-      };
-    }
-  }
-
-  await trySave(() => { closeModal('menuModal'); renderPagesTab(); });
+async function deletePersonalItem(key,idx){
+  if(!confirm('Xoá mục này?'))return;
+  DATA.personal[key].splice(idx,1);
+  await trySave();
 }
 
-async function deleteTopMenu(i) {
-  if (!confirm('Xoá menu "' + (DATA.menus[i]?.label || '') + '"?')) return;
-  DATA.menus.splice(i, 1);
-  await trySave(() => renderPagesTab());
+// ── MENUS ──
+function autoSlug(){
+  var label=v('mm-label');
+  var slug=label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-');
+  set('mm-slug',slug);
 }
 
-async function deleteSubMenu(parentIdx, childIdx) {
-  if (!confirm('Xoá submenu này?')) return;
-  DATA.menus[parentIdx].children.splice(childIdx, 1);
-  await trySave(() => renderPagesTab());
-}
+function renderMenuTree(){
+  var el=document.getElementById('menuTree'),menus=DATA.menus||[];
+  document.getElementById('menuCount').textContent=menus.length+' menu';
+  if(!menus.length){el.innerHTML='<div class="empty-state">Chưa có menu. Nhấn "Thêm Menu" để bắt đầu.</div>';return;}
 
-function openPageModal(slug) {
-  document.getElementById('page-edit-slug').value = slug || '';
-  document.getElementById('pageModalTitle').textContent = slug ? 'Sửa Trang: ' + slug : 'Tạo Trang Mới';
+  var html='';
+  menus.forEach(function(m,i){
+    var badge='<span class="badge-type badge-'+m.page_type+'">'+m.page_type+'</span>';
+    html+='<div class="mt-item"><div class="info"><div class="name">'+esc(m.label)+badge+'</div><div class="slug">/'+esc(m.slug)+'</div></div>';
+    html+='<div class="card-actions">';
+    html+='<button class="btn btn-secondary btn-sm" onclick="openPageList(\''+esc(m.slug)+'\')"><span class="material-symbols-outlined" style="font-size:14px">settings</span>Quản lý</button>';
+    html+='<button class="btn btn-ghost btn-sm btn-icon" onclick="openMenuModal(\''+m.id+'\')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>';
+    html+='<button class="btn btn-ghost btn-sm btn-icon" onclick="openMenuModal(\'\',\''+m.id+'\')"><span class="material-symbols-outlined" style="font-size:14px">subdirectory_arrow_right</span></button>';
+    html+='<button class="btn btn-danger btn-sm btn-icon" onclick="deleteMenu('+i+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>';
+    html+='</div></div>';
 
-  if (slug && DATA.pages && DATA.pages[slug]) {
-    const p = DATA.pages[slug];
-    set('pg-title', p.title); set('pg-slug', slug); set('pg-meta-desc', p.meta?.description || '');
-    set('pg-content', p.content || '');
-  } else {
-    set('pg-title',''); 
-    const s = document.getElementById('pg-slug');
-    s.value = ''; s.dataset.manual = '';
-    set('pg-meta-desc',''); set('pg-content','');
-  }
-
-  openModal('pageModal');
-
-  // Khởi TinyMCE sau khi modal mở
-  setTimeout(() => {
-    if (tinyEditor) { try { tinyEditor.destroy(); } catch(e){} tinyEditor = null; }
-    if (typeof tinymce !== 'undefined') {
-      tinymce.init({
-        selector: '#pg-content',
-        height: 400,
-        menubar: false,
-        plugins: 'link image code lists table',
-        toolbar: 'undo redo | formatselect | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image | code',
-        setup: function(editor) {
-          tinyEditor = editor;
-        }
+    // Children
+    if(m.children&&m.children.length){
+      m.children.forEach(function(c,ci){
+        var cbadge='<span class="badge-type badge-'+c.page_type+'">'+c.page_type+'</span>';
+        html+='<div class="mt-item" style="margin-left:24px;border-style:dashed"><div class="info"><div class="name">'+esc(c.label)+cbadge+'</div><div class="slug">/'+esc(c.slug)+'</div></div>';
+        html+='<div class="card-actions">';
+        html+='<button class="btn btn-secondary btn-sm" onclick="openPageList(\''+esc(c.slug)+'\')"><span class="material-symbols-outlined" style="font-size:14px">settings</span>Quản lý</button>';
+        html+='<button class="btn btn-ghost btn-sm btn-icon" onclick="editSubMenu('+i+','+ci+')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>';
+        html+='<button class="btn btn-danger btn-sm btn-icon" onclick="deleteSubMenu('+i+','+ci+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>';
+        html+='</div></div>';
       });
     }
-  }, 300);
-}
-
-async function savePage() {
-  const slug = v('pg-slug'), title = v('pg-title');
-  if (!slug) { showAlert('Nhập slug trang!', 'error'); return; }
-  if (!title) { showAlert('Nhập tiêu đề trang!', 'error'); return; }
-  if (!/^[a-z0-9-]+$/.test(slug)) { showAlert('Slug chỉ được dùng chữ thường, số và dấu -', 'error'); return; }
-
-  let content = v('pg-content');
-  if (tinyEditor) { try { content = tinyEditor.getContent(); } catch(e) {} }
-
-  if (!DATA.pages) DATA.pages = {};
-  const isNew = !DATA.pages[slug];
-  DATA.pages[slug] = {
-    title, content, meta: { description: v('pg-meta-desc') },
-    created: DATA.pages[slug]?.created || new Date().toISOString(),
-    updated: new Date().toISOString()
-  };
-
-  // Nếu trang mới → tự thêm vào menu nếu chưa có
-  if (isNew && !DATA.menus.some(m => m.slug === slug)) {
-    DATA.menus.push({ label: title, slug, type: 'page', children: [] });
-  }
-
-  await trySave(() => { closeModal('pageModal'); renderPagesTab(); });
-}
-
-async function deletePage(slug) {
-  if (!confirm('Xoá trang "' + slug + '"? (Menu liên kết cũng sẽ bị xoá)')) return;
-  delete DATA.pages[slug];
-  // Xoá menu liên kết
-  DATA.menus = (DATA.menus||[]).filter(m => m.slug !== slug).map(m => {
-    if (m.children) m.children = m.children.filter(c => c.slug !== slug);
-    return m;
   });
-  await trySave(() => renderPagesTab());
+  el.innerHTML=html;
 }
 
-// ── IMAGE UPLOAD ─────────────────────────────────────────────────────────────
-async function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = e => resolve(e.target.result.split(',')[1]);
-    r.onerror = reject;
-    r.readAsDataURL(file);
+function openMenuModal(editId,parentId){
+  set('mm-edit-id',editId||'');
+  set('mm-parent-id',parentId||'');
+  set('mm-label','');set('mm-slug','');set('mm-type','article');
+
+  // Populate parent select
+  var ps=document.getElementById('mm-parent');
+  ps.innerHTML='<option value="">— Menu chính —</option>';
+  (DATA.menus||[]).forEach(function(m){
+    ps.innerHTML+='<option value="'+m.id+'">'+esc(m.label)+'</option>';
   });
-}
+  if(parentId)ps.value=parentId;
 
-async function uploadPageImage(event) {
-  const file = event.target.files[0]; if (!file) return;
-  document.getElementById('pageUploadProgress').style.display = 'block';
-  document.getElementById('pageUploadResult').innerHTML = '';
-  try {
-    const b64 = await fileToBase64(file);
-    const fname = 'images/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-    const r = await ghFetch('repos/' + AUTH.user + '/' + AUTH.repo + '/contents/' + fname, {
-      method: 'PUT', body: JSON.stringify({ message: 'Upload image ' + fname, content: b64 })
+  if(editId){
+    // Editing existing menu
+    var menu=null;
+    (DATA.menus||[]).forEach(function(m){
+      if(m.id===editId)menu=m;
+      (m.children||[]).forEach(function(c){if(c.id===editId)menu=c;});
     });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const res = await r.json();
-    const url = res.content.download_url;
-    document.getElementById('pageUploadResult').innerHTML =
-      '<div style="background:var(--green-lt);padding:10px;border-radius:8px;font-size:0.82rem;color:var(--green);margin-top:8px;">' +
-      '✓ Upload OK! URL ảnh:<br><input type="text" value="' + url + '" style="width:100%;margin-top:4px;" onclick="this.select()" readonly>' +
-      '<button class="btn btn-primary btn-sm" style="margin-top:6px;" onclick="insertImgToEditor(\'' + url + '\')">Chèn vào bài</button></div>';
-    showAlert('✓ Upload ảnh thành công!', 'success');
-  } catch(e) {
-    document.getElementById('pageUploadResult').innerHTML = '<div style="color:var(--red)">❌ Lỗi: ' + e.message + '</div>';
-  } finally {
-    document.getElementById('pageUploadProgress').style.display = 'none';
+    if(menu){
+      set('mm-label',menu.label);set('mm-slug',menu.slug);set('mm-type',menu.page_type);
+      document.getElementById('menuModalTitle').textContent='Sửa Menu';
+    }
+  }else{
+    document.getElementById('menuModalTitle').textContent=parentId?'Thêm Submenu':'Thêm Menu';
   }
+  openModal('menuModal');
 }
 
-function insertImgToEditor(url) {
-  if (tinyEditor) { tinyEditor.execCommand('mceInsertContent', false, '<img src="' + url + '" style="max-width:100%;">'); }
-  else {
-    const ta = document.getElementById('pg-content');
-    if (ta) ta.value += '<img src="' + url + '" style="max-width:100%;">';
-  }
-  showAlert('✓ Đã chèn ảnh!', 'success');
+function editSubMenu(pi,ci){
+  var child=DATA.menus[pi].children[ci];
+  set('mm-edit-id',child.id);set('mm-parent-id','');
+  set('mm-label',child.label);set('mm-slug',child.slug);set('mm-type',child.page_type);
+  document.getElementById('menuModalTitle').textContent='Sửa Submenu';
+  var ps=document.getElementById('mm-parent');
+  ps.innerHTML='<option value="">— Menu chính —</option>';
+  (DATA.menus||[]).forEach(function(m){ps.innerHTML+='<option value="'+m.id+'">'+esc(m.label)+'</option>';});
+  openModal('menuModal');
 }
 
-async function uploadBannerImage(event) {
-  const file = event.target.files[0]; if (!file) return;
-  document.getElementById('bannerUploadProgress').style.display = 'block';
-  try {
-    const b64 = await fileToBase64(file);
-    const fname = 'images/banner_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-    const r = await ghFetch('repos/' + AUTH.user + '/' + AUTH.repo + '/contents/' + fname, {
-      method: 'PUT', body: JSON.stringify({ message: 'Upload banner image', content: b64 })
+async function saveMenu(){
+  var label=v('mm-label'),slug=v('mm-slug'),pageType=v('mm-type');
+  if(!label||!slug){showAlert('Nhập tên và slug!','error');return;}
+  if(!/^[a-z0-9-]+$/.test(slug)){showAlert('Slug chỉ dùng chữ thường, số, dấu -','error');return;}
+
+  var editId=v('mm-edit-id'),parentId=v('mm-parent-id')||v('mm-parent');
+  if(!DATA.menus)DATA.menus=[];
+  if(!DATA.pages)DATA.pages={};
+
+  if(editId){
+    // Update existing
+    var found=false;
+    DATA.menus.forEach(function(m){
+      if(m.id===editId){m.label=label;m.slug=slug;m.page_type=pageType;found=true;}
+      (m.children||[]).forEach(function(c){
+        if(c.id===editId){c.label=label;c.slug=slug;c.page_type=pageType;found=true;}
+      });
     });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const res = await r.json();
-    const url = res.content.download_url;
-    set('b-avatar', url);
-    document.getElementById('b-avatar-preview').src = url;
-    document.getElementById('b-avatar-preview').classList.add('show');
-    showAlert('✓ Upload ảnh banner thành công!', 'success');
-  } catch(e) { showAlert('❌ Upload lỗi: ' + e.message, 'error'); }
-  finally { document.getElementById('bannerUploadProgress').style.display = 'none'; }
+  }else{
+    // New menu
+    var newMenu={id:'m_'+uid(),label:label,slug:slug,page_type:pageType,children:[]};
+    if(parentId){
+      var parent=DATA.menus.find(function(m){return m.id===parentId;});
+      if(parent){if(!parent.children)parent.children=[];parent.children.push(newMenu);}
+    }else{
+      newMenu.order=DATA.menus.length;
+      DATA.menus.push(newMenu);
+    }
+  }
+
+  // Create page if not exists
+  if(!DATA.pages[slug]){
+    DATA.pages[slug]={title:label,description:'',page_type:pageType,items:[]};
+  }
+
+  await trySave(function(){closeModal('menuModal');});
+}
+
+async function deleteMenu(i){
+  if(!confirm('Xoá menu "'+DATA.menus[i].label+'"?'))return;
+  var slug=DATA.menus[i].slug;
+  DATA.menus.splice(i,1);
+  // Optionally delete page too
+  // delete DATA.pages[slug];
+  await trySave();
+}
+
+async function deleteSubMenu(pi,ci){
+  if(!confirm('Xoá submenu này?'))return;
+  DATA.menus[pi].children.splice(ci,1);
+  await trySave();
+}
+
+// ── PAGE ITEMS LIST ──
+function openPageList(slug){
+  var page=DATA.pages&&DATA.pages[slug];
+  if(!page){showAlert('Trang "'+slug+'" chưa tồn tại.','error');return;}
+
+  var items=page.items||[];
+  document.getElementById('plTitle').textContent='Quản lý: '+page.title;
+  document.getElementById('plCount').textContent=items.length+' mục';
+  document.getElementById('plAddBtn').onclick=function(){openPageItemModal(slug,page.page_type);};
+
+  var typeLabels={article:'Bài viết',project:'Dự án',elearning:'Khóa học'};
+  var html='';
+  if(!items.length){
+    html='<div class="empty-state">Chưa có '+typeLabels[page.page_type]+' nào.</div>';
+  }else{
+    items.forEach(function(item,i){
+      html+='<div class="mt-item"><div class="info"><div class="name">'+esc(item.title)+(item.featured?' ⭐':'')+'</div><div class="slug">'+esc(item.category||item.client||item.level||'')+(item.date?' · '+item.date:'')+'</div></div>';
+      html+='<div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="openPageItemModal(\''+slug+'\',\''+page.page_type+'\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>';
+      html+='<button class="btn btn-danger btn-sm btn-icon" onclick="deletePageItem(\''+slug+'\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button></div></div>';
+    });
+  }
+  document.getElementById('plList').innerHTML=html;
+  openModal('pageListModal');
+}
+
+async function deletePageItem(slug,idx){
+  if(!confirm('Xoá mục này?'))return;
+  DATA.pages[slug].items.splice(idx,1);
+  await trySave(function(){openPageList(slug);});
+}
+
+// ── PAGE ITEM MODAL (add/edit items for a page) ──
+function openPageItemModal(slug,pageType,idx){
+  set('pi-page-slug',slug);set('pi-page-type',pageType);set('pi-edit-idx',idx!=null?idx:-1);
+  var item=idx!=null&&idx>=0?(DATA.pages[slug].items||[])[idx]:null;
+
+  var typeLabels={article:'bài viết',project:'dự án',elearning:'khóa học'};
+  document.getElementById('piModalTitle').textContent=(item?'Sửa ':'Thêm ')+typeLabels[pageType];
+
+  var body=document.getElementById('piModalBody');
+  var html='';
+
+  if(pageType==='article'){
+    html+='<div class="fg"><label>Tiêu đề *</label><input type="text" id="pi-title" value="'+esc(item?item.title:'')+'"></div>';
+    html+='<div class="fg"><label>Excerpt</label><textarea id="pi-excerpt" rows="2">'+esc(item?item.excerpt:'')+'</textarea></div>';
+    html+='<div class="fg"><label>Nội dung</label><textarea id="pi-content" rows="4">'+esc(item?item.content:'')+'</textarea></div>';
+    html+='<div class="fr"><div class="fg"><label>Danh mục</label><input type="text" id="pi-category" value="'+esc(item?item.category:'')+'"></div><div class="fg"><label>Tác giả</label><input type="text" id="pi-author" value="'+esc(item?item.author:'')+'"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Ngày</label><input type="text" id="pi-date" value="'+esc(item?item.date:new Date().toISOString().split('T')[0])+'"></div><div class="fg"><label>Thời gian đọc (phút)</label><input type="number" id="pi-readtime" value="'+(item?item.read_time:5)+'"></div></div>';
+    html+='<div class="fg"><label>URL ảnh</label><input type="url" id="pi-image" value="'+esc(item?item.image:'')+'"></div>';
+    html+='<div class="fg"><label>Nổi bật?</label><select id="pi-featured"><option value="true"'+(item&&item.featured?' selected':'')+'>Có</option><option value="false"'+(item&&!item.featured?' selected':'')+'>Không</option></select></div>';
+  }else if(pageType==='project'){
+    html+='<div class="fg"><label>Tên dự án *</label><input type="text" id="pi-title" value="'+esc(item?item.title:'')+'"></div>';
+    html+='<div class="fg"><label>Mô tả</label><textarea id="pi-desc" rows="2">'+esc(item?item.description:'')+'</textarea></div>';
+    html+='<div class="fr"><div class="fg"><label>Khách hàng</label><input type="text" id="pi-client" value="'+esc(item?item.client:'')+'"></div><div class="fg"><label>Danh mục</label><input type="text" id="pi-category" value="'+esc(item?item.category:'')+'"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Ngày</label><input type="text" id="pi-date" value="'+esc(item?item.date:'')+'"></div><div class="fg"><label>Link</label><input type="url" id="pi-link" value="'+esc(item?item.link:'')+'"></div></div>';
+    html+='<div class="fg"><label>Tags (phẩy phân cách)</label><input type="text" id="pi-tags" value="'+esc(item?(item.tags||[]).join(', '):'')+'"></div>';
+    html+='<div class="fg"><label>URL ảnh</label><input type="url" id="pi-image" value="'+esc(item?item.image:'')+'"></div>';
+    html+='<div class="fg"><label>Nổi bật?</label><select id="pi-featured"><option value="true"'+(item&&item.featured?' selected':'')+'>Có</option><option value="false"'+(item&&!item.featured?' selected':'')+'>Không</option></select></div>';
+  }else if(pageType==='elearning'){
+    html+='<div class="fg"><label>Tên khóa học *</label><input type="text" id="pi-title" value="'+esc(item?item.title:'')+'"></div>';
+    html+='<div class="fg"><label>Mô tả</label><textarea id="pi-desc" rows="2">'+esc(item?item.description:'')+'</textarea></div>';
+    html+='<div class="fr"><div class="fg"><label>Giảng viên</label><input type="text" id="pi-instructor" value="'+esc(item?item.instructor:'')+'"></div><div class="fg"><label>Trình độ</label><input type="text" id="pi-level" value="'+esc(item?item.level:'')+'"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Số bài</label><input type="number" id="pi-lessons" value="'+(item?item.lessons:0)+'"></div><div class="fg"><label>Thời lượng</label><input type="text" id="pi-duration" value="'+esc(item?item.duration:'')+'"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Trạng thái</label><select id="pi-status"><option value="open"'+(item&&item.status==='open'?' selected':'')+'>Đang mở</option><option value="upcoming"'+(item&&item.status==='upcoming'?' selected':'')+'>Sắp khai giảng</option><option value="closed"'+(item&&item.status==='closed'?' selected':'')+'>Đã đóng</option></select></div><div class="fg"><label>Giá</label><input type="text" id="pi-price" value="'+esc(item?item.price:'')+'"></div></div>';
+    html+='<div class="fg"><label>Link đăng ký</label><input type="url" id="pi-link" value="'+esc(item?item.link:'')+'"></div>';
+    html+='<div class="fg"><label>Chương trình (mỗi dòng 1 mục)</label><textarea id="pi-syllabus" rows="3">'+esc(item&&item.syllabus?item.syllabus.join('\n'):'')+'</textarea></div>';
+    html+='<div class="fg"><label>URL ảnh</label><input type="url" id="pi-image" value="'+esc(item?item.image:'')+'"></div>';
+    html+='<div class="fr"><div class="fg"><label>Ngày</label><input type="text" id="pi-date" value="'+esc(item?item.date:'')+'"></div><div class="fg"><label>Nổi bật?</label><select id="pi-featured"><option value="true"'+(item&&item.featured?' selected':'')+'>Có</option><option value="false"'+(item&&!item.featured?' selected':'')+'>Không</option></select></div></div>';
+  }
+
+  body.innerHTML=html;
+  closeModal('pageListModal');
+  openModal('pageItemModal');
+}
+
+async function savePageItem(){
+  var slug=v('pi-page-slug'),pageType=v('pi-page-type'),idx=parseInt(v('pi-edit-idx'));
+  if(!v('pi-title')){showAlert('Nhập tiêu đề!','error');return;}
+
+  if(!DATA.pages[slug])DATA.pages[slug]={title:slug,description:'',page_type:pageType,items:[]};
+  if(!DATA.pages[slug].items)DATA.pages[slug].items=[];
+
+  var item={id:uid()};
+
+  if(pageType==='article'){
+    item.title=v('pi-title');item.excerpt=v('pi-excerpt');item.content=v('pi-content');
+    item.category=v('pi-category');item.author=v('pi-author');item.date=v('pi-date');
+    item.read_time=parseInt(v('pi-readtime'))||5;item.image=v('pi-image');
+    item.featured=v('pi-featured')==='true';item.tags=[];
+  }else if(pageType==='project'){
+    item.title=v('pi-title');item.description=v('pi-desc');item.client=v('pi-client');
+    item.category=v('pi-category');item.date=v('pi-date');item.link=v('pi-link')||'#';
+    item.tags=v('pi-tags')?v('pi-tags').split(',').map(function(t){return t.trim();}).filter(Boolean):[];
+    item.image=v('pi-image');item.featured=v('pi-featured')==='true';
+  }else if(pageType==='elearning'){
+    item.title=v('pi-title');item.description=v('pi-desc');item.instructor=v('pi-instructor');
+    item.level=v('pi-level');item.lessons=parseInt(v('pi-lessons'))||0;item.duration=v('pi-duration');
+    item.status=v('pi-status')||'open';item.price=v('pi-price');item.link=v('pi-link')||'#';
+    item.syllabus=v('pi-syllabus')?v('pi-syllabus').split('\n').map(function(s){return s.trim();}).filter(Boolean):[];
+    item.image=v('pi-image');item.date=v('pi-date');item.featured=v('pi-featured')==='true';
+  }
+
+  if(idx>=0){item.id=DATA.pages[slug].items[idx].id||item.id;DATA.pages[slug].items[idx]=item;}
+  else DATA.pages[slug].items.unshift(item);
+
+  await trySave(function(){closeModal('pageItemModal');openPageList(slug);});
 }
 </script>
 </body>

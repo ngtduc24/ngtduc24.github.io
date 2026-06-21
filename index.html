@@ -3,365 +3,338 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portfolio - Nguyễn Đức</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+<title>Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-<script id="tailwind-config">
-tailwind.config = {
-  darkMode: "class",
-  theme: {
-    extend: {
-      colors: {
-        "on-error":"#ffffff","surface-bright":"#f9f9ff","on-primary-fixed":"#07006c",
-        "surface-variant":"#d8e3fb","primary-container":"#6063ee","secondary-fixed-dim":"#b3d17a",
-        "inverse-surface":"#263143","tertiary-container":"#c4aa01","primary-fixed-dim":"#c0c1ff",
-        "on-surface":"#111c2d","error-container":"#ffdad6","on-tertiary-fixed":"#211b00",
-        "tertiary":"#6d5e00","surface-tint":"#494bd6","surface-container-high":"#dee8ff",
-        "inverse-on-surface":"#ecf1ff","surface-container-highest":"#d8e3fb","surface-dim":"#cfdaf2",
-        "primary":"#4648d4","on-secondary":"#ffffff","surface-container-lowest":"#ffffff",
-        "on-primary":"#ffffff","on-background":"#111c2d","on-tertiary-fixed-variant":"#524600",
-        "secondary-container":"#ceee93","on-tertiary":"#ffffff","on-primary-fixed-variant":"#2f2ebe",
-        "surface-container":"#e7eeff","secondary-fixed":"#ceee93","outline":"#767586",
-        "secondary":"#4d661c","on-tertiary-container":"#4a3f00","surface-container-low":"#f0f3ff",
-        "on-secondary-container":"#536d22","on-error-container":"#93000a","on-primary-container":"#fffbff",
-        "outline-variant":"#c7c4d7","tertiary-fixed":"#ffe24c","tertiary-fixed-dim":"#e2c62d",
-        "on-secondary-fixed-variant":"#364e03","primary-fixed":"#e1e0ff","surface":"#f9f9ff",
-        "background":"#f9f9ff","inverse-primary":"#c0c1ff","on-surface-variant":"#464554",
-        "error":"#ba1a1a","on-secondary-fixed":"#131f00"
-      },
-      borderRadius: { "DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px","2xl":"1rem","3xl":"1.5rem" },
-      spacing: { "gutter":"20px","max-width":"1280px","section-gap":"80px","unit":"8px","container-padding":"24px" },
-      fontFamily: { "display-lg":["Plus Jakarta Sans"],"body-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"label-bold":["Plus Jakarta Sans"],"body-md":["Plus Jakarta Sans"],"headline-lg":["Plus Jakarta Sans"] },
-      fontSize: {
-        "display-lg":["56px",{"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"800"}],
-        "body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],
-        "headline-md":["24px",{"lineHeight":"1.3","fontWeight":"700"}],
-        "label-bold":["14px",{"lineHeight":"1.0","fontWeight":"700"}],
-        "body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],
-        "headline-lg":["40px",{"lineHeight":"1.2","letterSpacing":"-0.01em","fontWeight":"700"}]
-      }
-    }
-  }
-}
-</script>
 <style>
-.glass-panel { background:rgba(255,255,255,0.7); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.3); }
-.hero-gradient { background:linear-gradient(135deg,#c0c1ff 0%,#ceee93 100%); }
-.inner-glow { box-shadow:inset 0 2px 4px rgba(255,255,255,0.5); }
-.ambient-shadow { box-shadow:0 20px 40px -10px rgba(96,99,238,0.15); }
-/* Dropdown menu styles */
-.nav-menu { position: relative; }
-.nav-menu li { position: relative; }
-.nav-menu .dropdown {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  min-width: 200px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-  padding: 8px 0;
-  z-index: 60;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--primary:#4648d4;--primary-light:#e1e0ff;--primary-dim:#c0c1ff;
+--secondary:#4d661c;--secondary-light:#ceee93;
+--tertiary:#6d5e00;--tertiary-light:#ffe24c;
+--surface:#f9f9ff;--surface-low:#f0f3ff;--surface-container:#e7eeff;
+--on-surface:#111c2d;--on-surface-variant:#464554;--outline:#767586;--outline-variant:#c7c4d7;
+--inverse:#263143;--inverse-text:#ecf1ff;
+--max-w:1280px;--gutter:20px;--gap:80px;
 }
-.nav-menu li:hover > .dropdown {
-  display: block;
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--surface);color:var(--on-surface);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+.wrap{max-width:var(--max-w);margin:0 auto;padding:0 var(--gutter)}
+a{text-decoration:none;color:inherit}
+
+/* HERO */
+.hero{margin-top:32px;margin-bottom:var(--gap);border-radius:28px;background:linear-gradient(135deg,var(--primary-dim) 0%,var(--secondary-light) 100%);overflow:hidden;min-height:520px;display:flex;align-items:center;padding:48px 56px;position:relative;box-shadow:0 20px 40px -10px rgba(96,99,238,.15)}
+.hero::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:var(--tertiary-light);border-radius:50%;filter:blur(80px);opacity:.4}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;width:100%;position:relative;z-index:1}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.6);backdrop-filter:blur(12px);font-size:13px;font-weight:700;color:var(--primary);margin-bottom:16px}
+.hero h1{font-size:clamp(2.2rem,5vw,3.5rem);font-weight:800;line-height:1.1;letter-spacing:-.02em;margin-bottom:12px}
+.hero h1 .accent{color:var(--primary)}
+.hero-desc{font-size:17px;line-height:1.6;color:var(--on-surface-variant);max-width:480px;margin-bottom:28px}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn-solid{padding:12px 28px;border-radius:999px;background:var(--on-surface);color:var(--surface);font-weight:700;font-size:14px;transition:background .2s}
+.btn-solid:hover{background:var(--primary)}
+.btn-glass{padding:12px 28px;border-radius:999px;background:rgba(255,255,255,.6);backdrop-filter:blur(12px);font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px;transition:background .2s}
+.btn-glass:hover{background:rgba(255,255,255,.9)}
+.hero-avatar-wrap{display:flex;justify-content:center;align-items:center}
+.hero-avatar-ring{width:100%;max-width:360px;aspect-ratio:1;border-radius:50%;background:rgba(255,255,255,.5);backdrop-filter:blur(12px);border:4px solid rgba(255,255,255,.5);padding:12px;box-shadow:0 20px 40px rgba(70,72,212,.12)}
+.hero-avatar-ring img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+
+/* SECTIONS */
+.section{margin-bottom:var(--gap)}
+.section-title{font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:800;letter-spacing:-.02em;margin-bottom:8px}
+.section-sub{font-size:16px;color:var(--on-surface-variant);margin-bottom:32px;max-width:600px}
+
+/* FEATURED PROJECTS */
+.project-grid{display:grid;gap:20px}
+.project-card{position:relative;border-radius:24px;overflow:hidden;cursor:pointer;box-shadow:0 12px 32px rgba(70,72,212,.08);border:1px solid rgba(255,255,255,.2)}
+.project-card img{width:100%;height:100%;object-fit:cover;transition:transform .8s}
+.project-card:hover img{transform:scale(1.05)}
+.project-card .overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,rgba(0,0,0,.25) 40%,transparent 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:28px;transition:opacity .3s}
+.project-card .p-tags{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.project-card .p-tag{padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;background:rgba(255,255,255,.2);color:#fff;backdrop-filter:blur(8px)}
+.project-card h3{color:#fff;font-size:clamp(1.2rem,2.5vw,1.8rem);font-weight:800;line-height:1.2}
+.project-card p{color:rgba(255,255,255,.75);font-size:14px;margin-top:6px;display:none}
+.project-card:hover p{display:block}
+.project-card .p-client{color:rgba(255,255,255,.5);font-size:12px;font-weight:700;margin-top:8px}
+
+/* PERSONAL */
+.personal-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px}
+.skills-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.skill-card{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;border-radius:16px;border:1px solid var(--outline-variant);transition:background .15s}
+.skill-card:hover{background:var(--surface-low)}
+.skill-card .material-symbols-outlined{font-size:32px;margin-bottom:8px}
+.skill-card .sk-name{font-size:12px;font-weight:700;text-align:center;margin-bottom:4px}
+.skill-card .sk-pct{font-size:20px;font-weight:800}
+.skill-card.c-primary .material-symbols-outlined,.skill-card.c-primary .sk-pct{color:var(--primary)}
+.skill-card.c-secondary .material-symbols-outlined,.skill-card.c-secondary .sk-pct{color:var(--secondary)}
+.skill-card.c-tertiary .material-symbols-outlined,.skill-card.c-tertiary .sk-pct{color:var(--tertiary)}
+.timeline{border-left:2px solid var(--outline-variant);margin-left:8px;padding-left:28px}
+.tl-item{position:relative;margin-bottom:28px}
+.tl-item::before{content:'';position:absolute;left:-35px;top:4px;width:14px;height:14px;border-radius:50%;border:3px solid var(--surface)}
+.tl-item.c-primary::before{background:var(--primary)}
+.tl-item.c-secondary::before{background:var(--secondary)}
+.tl-item.c-tertiary::before{background:var(--tertiary)}
+.tl-item h4{font-size:16px;font-weight:700}
+.tl-item .tl-meta{font-size:13px;font-weight:700;margin:3px 0 6px}
+.tl-item.c-primary .tl-meta{color:var(--primary)}
+.tl-item.c-secondary .tl-meta{color:var(--secondary)}
+.tl-item.c-tertiary .tl-meta{color:var(--tertiary)}
+.tl-item .tl-desc{font-size:14px;color:var(--on-surface-variant);line-height:1.5}
+
+/* COURSES */
+.course-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.course-card{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 8px 24px rgba(70,72,212,.06);border:1px solid var(--outline-variant);transition:transform .2s,box-shadow .2s}
+.course-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(70,72,212,.12)}
+.course-card img{width:100%;height:180px;object-fit:cover}
+.course-card .cc-body{padding:20px}
+.course-card h4{font-size:16px;font-weight:700;margin-bottom:6px}
+.course-card .cc-desc{font-size:13px;color:var(--on-surface-variant);line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.course-card .cc-meta{display:flex;gap:12px;font-size:12px;font-weight:700;color:var(--outline);margin-bottom:14px}
+.course-card .cc-meta span{display:flex;align-items:center;gap:3px}
+.course-card .cc-meta .material-symbols-outlined{font-size:15px}
+.cc-status{display:inline-block;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700}
+.cc-status.open{background:var(--secondary-light);color:var(--secondary)}
+.cc-status.upcoming{background:var(--primary-light);color:var(--primary)}
+.cc-status.closed{background:#f0f0f0;color:#999}
+
+/* CONTACT */
+.contact-section{background:var(--inverse);border-radius:28px;padding:56px;position:relative;overflow:hidden;box-shadow:0 20px 40px rgba(70,72,212,.12)}
+.contact-section::before{content:'';position:absolute;top:-60px;right:-60px;width:240px;height:240px;background:var(--primary);border-radius:50%;filter:blur(100px);opacity:.2}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;position:relative;z-index:1}
+.contact-grid h2{font-size:2.5rem;font-weight:800;color:var(--inverse-text);margin-bottom:12px}
+.contact-grid .c-desc{color:rgba(236,241,255,.7);font-size:16px;margin-bottom:24px}
+.contact-info{display:flex;flex-direction:column;gap:10px}
+.contact-info div{display:flex;align-items:center;gap:10px;color:rgba(236,241,255,.8);font-size:14px}
+.contact-form{background:rgba(255,255,255,.08);backdrop-filter:blur(12px);border-radius:16px;padding:24px;border:1px solid rgba(255,255,255,.1)}
+.contact-form input,.contact-form textarea{width:100%;background:rgba(255,255,255,.85);border:1.5px solid var(--outline-variant);border-radius:12px;padding:10px 14px;font-family:inherit;font-size:14px;color:var(--on-surface);outline:none;margin-bottom:10px;transition:border-color .2s;resize:none}
+.contact-form input:focus,.contact-form textarea:focus{border-color:var(--primary)}
+.contact-form button{width:100%;padding:12px;border:none;border-radius:999px;background:var(--primary);color:#fff;font-weight:700;font-size:14px;cursor:pointer;transition:background .2s}
+.contact-form button:hover{background:#3537b8}
+
+/* FOOTER */
+.site-footer{background:var(--on-surface);border-top:6px solid var(--tertiary);margin-top:var(--gap)}
+.footer-inner{display:flex;justify-content:space-between;align-items:center;padding:40px var(--gutter);max-width:var(--max-w);margin:0 auto;flex-wrap:wrap;gap:16px}
+.footer-brand{font-size:18px;font-weight:800;color:var(--secondary-light)}
+.footer-links{display:flex;gap:20px;flex-wrap:wrap}
+.footer-links a{color:rgba(199,196,215,.7);font-weight:700;font-size:13px;transition:color .15s}
+.footer-links a:hover{color:var(--tertiary-light)}
+.footer-copy{color:var(--surface);font-size:13px}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .hero{padding:32px 24px;min-height:auto}
+  .hero-grid{grid-template-columns:1fr;text-align:center}
+  .hero-desc{margin:0 auto 24px}
+  .hero-btns{justify-content:center}
+  .hero-avatar-wrap{order:-1}
+  .hero-avatar-ring{max-width:220px}
+  .personal-grid{grid-template-columns:1fr}
+  .contact-section{padding:32px 20px}
+  .contact-grid{grid-template-columns:1fr}
+  .skills-grid{grid-template-columns:repeat(2,1fr)}
 }
-.nav-menu .dropdown li {
-  display: block;
-}
-.nav-menu .dropdown a {
-  display: block;
-  padding: 10px 20px;
-  color: #111c2d;
-  font-weight: 600;
-  font-size: 14px;
-  white-space: nowrap;
-}
-.nav-menu .dropdown a:hover {
-  background: #eef2ff;
-  color: #4648d4;
+@media(max-width:600px){
+  .hero{margin-top:16px;border-radius:20px}
+  .project-grid{grid-template-columns:1fr!important}
+  .course-row{grid-template-columns:1fr}
+  .footer-inner{flex-direction:column;text-align:center}
 }
 </style>
 </head>
-<body class="bg-background text-on-background font-body-md antialiased overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
-
+<body>
 <script src="_nav.js"></script>
 
-<main class="max-w-max-width mx-auto px-gutter pb-section-gap">
+<main class="wrap">
 
 <!-- HERO -->
-<section class="mt-8 md:mt-12 mb-section-gap" id="hero">
-<div class="relative rounded-3xl hero-gradient overflow-hidden min-h-[500px] md:min-h-[600px] flex items-center p-8 md:p-16 ambient-shadow">
-  <div class="absolute top-10 right-10 w-24 h-24 bg-tertiary-fixed rounded-full blur-2xl opacity-60 mix-blend-multiply"></div>
-  <div class="absolute bottom-10 left-10 w-32 h-32 bg-primary rounded-full blur-3xl opacity-40 mix-blend-screen"></div>
-  <div class="relative z-10 grid md:grid-cols-2 gap-12 items-center w-full">
-    <div class="space-y-6 max-w-xl">
-      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel text-label-bold font-label-bold text-primary">
-        <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
-        <span id="hero-badge">Nhà Thiết Kế Sáng Tạo</span>
-      </div>
-      <h1 class="text-display-lg font-display-lg text-on-surface leading-tight">
-        <span id="hero-line1">Xin Chào!</span><br>
-        <span id="hero-line2">Tôi là</span> <span class="text-primary" id="hero-name">Nguyễn Đức</span>.
-      </h1>
-      <p class="text-body-lg font-body-lg text-on-surface-variant" id="hero-desc">Kết hợp nghệ thuật, công nghệ và một chút ma thuật để tạo ra những trải nghiệm kỹ thuật số đáng nhớ. Cùng nhau xây dựng những thế giới mới.</p>
-      <div class="flex flex-wrap gap-4 pt-4">
-        <a href="#portfolio" class="bg-on-surface text-surface-bright text-label-bold font-label-bold py-3 px-8 rounded-full hover:bg-primary transition-colors inner-glow" id="hero-btn1">Xem Portfolio</a>
-        <a href="#contact" class="glass-panel text-on-surface text-label-bold font-label-bold py-3 px-8 rounded-full hover:bg-white/90 transition-colors flex items-center gap-2" id="hero-btn2">
-          <span class="material-symbols-outlined">mail</span>Liên Hệ
-        </a>
-      </div>
-    </div>
-    <div class="relative h-full flex justify-center items-center">
-      <div class="w-full max-w-[400px] aspect-square rounded-full glass-panel flex items-center justify-center p-4 ambient-shadow border-4 border-white/50">
-        <img id="hero-avatar" alt="Avatar" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaM6nPg7daWott3BQVpCtvizZFbleVjeMlC6avIkwTE1aCxJeCfNrxwUqwDDxeepGlH0A9kiIbIuZwn3c1tAyUQ3N1-oF88I4_KEbYBnzSFct5eRx6P3kgkL3FQJK90R6DhDZZmmDuzC1EIG5p6E48fc7Iv48OMLM1hl2bjSx66k8493bjfQSxaQCAtMtvkHFHX_NkSPsW_h-5XEt3Auu38gBil8FELSgJxkwLQkCLVCZmoQ1oZz9fnc1TMzsBG8hqdNdUscFbhOQ">
-      </div>
+<section class="hero" id="hero">
+<div class="hero-grid">
+  <div>
+    <div class="hero-badge"><span class="material-symbols-outlined" style="font-size:16px">auto_awesome</span><span id="heroBadge">Nhà Thiết Kế Sáng Tạo</span></div>
+    <h1><span id="heroLine1">Xin Chào!</span><br><span id="heroLine2">Tôi là</span> <span class="accent" id="heroName">Andy Nguyễn</span>.</h1>
+    <p class="hero-desc" id="heroDesc">Kết hợp nghệ thuật, công nghệ và một chút ma thuật để tạo ra những trải nghiệm kỹ thuật số đáng nhớ.</p>
+    <div class="hero-btns">
+      <a class="btn-solid" href="#featured" id="heroBtn1">Xem Portfolio</a>
+      <a class="btn-glass" href="#contact" id="heroBtn2"><span class="material-symbols-outlined" style="font-size:18px">mail</span>Liên Hệ</a>
     </div>
   </div>
-</div>
-</section>
-
-<!-- SKILLS & EXPERIENCE -->
-<section class="mb-section-gap">
-<div class="mb-10">
-  <h2 class="text-display-lg font-display-lg text-on-surface tracking-tight">Kỹ Năng & Kinh Nghiệm</h2>
-  <p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl mt-2">Chuyên môn và hành trình phát triển sự nghiệp trong lĩnh vực thiết kế sáng tạo.</p>
-</div>
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
-  <div class="space-y-8">
-    <h3 class="text-headline-lg font-headline-lg text-on-surface flex items-center gap-3">
-      <span class="material-symbols-outlined text-primary">psychology</span> Kỹ Năng Cốt Lõi
-    </h3>
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4" id="skills-grid"></div>
-  </div>
-  <div class="space-y-8">
-    <h3 class="text-headline-lg font-headline-lg text-on-surface flex items-center gap-3">
-      <span class="material-symbols-outlined text-secondary">work_history</span> Kinh Nghiệm
-    </h3>
-    <div class="border-l-2 border-outline-variant/50 ml-4 pl-8 space-y-10" id="experience-list"></div>
+  <div class="hero-avatar-wrap">
+    <div class="hero-avatar-ring"><img id="heroAvatar" alt="Avatar" src=""></div>
   </div>
 </div>
 </section>
 
-<!-- PORTFOLIO -->
-<section class="mb-section-gap" id="portfolio">
-<div class="flex justify-between items-end mb-10">
-  <div class="space-y-2">
-    <h2 class="text-display-lg font-display-lg text-on-surface tracking-tight">Dự Án Nổi Bật</h2>
-    <p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl">Những sáng tạo độc bản, kết hợp giữa nghệ thuật thị giác và công nghệ tương tác hiện đại.</p>
-  </div>
-</div>
-<div class="grid grid-cols-1 gap-12" id="portfolio-grid"></div>
+<!-- FEATURED PROJECTS -->
+<section class="section" id="featured">
+  <h2 class="section-title">Dự Án Nổi Bật</h2>
+  <p class="section-sub">Những sáng tạo kết hợp giữa nghệ thuật thị giác và công nghệ.</p>
+  <div class="project-grid" id="projectGrid" style="grid-template-columns:1fr 1fr;grid-template-rows:360px 280px"></div>
 </section>
 
-<!-- COURSES & RESEARCH -->
-<section class="mb-section-gap" id="courses">
-<h2 class="text-headline-lg font-headline-lg text-on-surface mb-8">Học Tập & Khám Phá</h2>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[250px]" id="learn-grid"></div>
+<!-- PERSONAL INFO -->
+<section class="section" id="personal">
+  <h2 class="section-title">Kỹ Năng & Kinh Nghiệm</h2>
+  <p class="section-sub">Chuyên môn và hành trình phát triển sự nghiệp.</p>
+  <div class="personal-grid">
+    <div>
+      <h3 style="font-size:20px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px"><span class="material-symbols-outlined" style="color:var(--primary)">psychology</span>Kỹ Năng</h3>
+      <div class="skills-grid" id="skillsGrid"></div>
+      <h3 style="font-size:20px;font-weight:700;margin:32px 0 16px;display:flex;align-items:center;gap:8px"><span class="material-symbols-outlined" style="color:var(--tertiary)">school</span>Học Vấn</h3>
+      <div class="timeline" id="eduTimeline"></div>
+    </div>
+    <div>
+      <h3 style="font-size:20px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px"><span class="material-symbols-outlined" style="color:var(--secondary)">work_history</span>Kinh Nghiệm</h3>
+      <div class="timeline" id="expTimeline"></div>
+    </div>
+  </div>
+</section>
+
+<!-- COURSES -->
+<section class="section" id="courses">
+  <h2 class="section-title">Khóa Học Online</h2>
+  <p class="section-sub">Nâng tầm kỹ năng sáng tạo với các khóa học chuyên sâu.</p>
+  <div class="course-row" id="courseRow"></div>
 </section>
 
 <!-- CONTACT -->
-<section class="mb-section-gap" id="contact">
-<div class="relative rounded-3xl overflow-hidden bg-inverse-surface p-8 md:p-16 ambient-shadow">
-  <div class="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-3xl opacity-20 -mr-20 -mt-20"></div>
-  <div class="relative z-10 grid md:grid-cols-2 gap-12 items-center">
-    <div>
-      <h2 class="text-display-lg font-display-lg text-inverse-on-surface mb-4">Liên Hệ</h2>
-      <p class="text-body-lg text-inverse-on-surface/70 mb-8">Sẵn sàng hợp tác cho dự án tiếp theo của bạn.</p>
-      <div class="flex flex-col gap-3">
-        <div class="flex items-center gap-3 text-inverse-on-surface/80">
-          <span class="material-symbols-outlined">mail</span>
-          <span id="contact-email">hello@nguyenduc.dev</span>
-        </div>
-        <div class="flex items-center gap-3 text-inverse-on-surface/80">
-          <span class="material-symbols-outlined">location_on</span>
-          <span id="contact-location">Hồ Chí Minh, Việt Nam</span>
-        </div>
-      </div>
-    </div>
-    <div class="glass-panel rounded-2xl p-6">
-      <div class="space-y-4">
-        <input type="text" placeholder="Họ và tên" class="w-full bg-white/80 border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface outline-none focus:border-primary transition-colors">
-        <input type="email" placeholder="Email" class="w-full bg-white/80 border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface outline-none focus:border-primary transition-colors">
-        <textarea rows="4" placeholder="Tin nhắn..." class="w-full bg-white/80 border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface outline-none focus:border-primary transition-colors resize-none"></textarea>
-        <button class="w-full bg-primary text-on-primary font-label-bold py-3 rounded-full hover:bg-primary-container transition-colors">Gửi Tin Nhắn</button>
-      </div>
+<section class="section" id="contact">
+<div class="contact-section">
+<div class="contact-grid">
+  <div>
+    <h2>Liên Hệ</h2>
+    <p class="c-desc">Sẵn sàng hợp tác cho dự án tiếp theo của bạn.</p>
+    <div class="contact-info">
+      <div><span class="material-symbols-outlined">mail</span><span id="ctEmail">hello@example.com</span></div>
+      <div><span class="material-symbols-outlined">location_on</span><span id="ctLocation">Hồ Chí Minh, Việt Nam</span></div>
     </div>
   </div>
+  <div class="contact-form">
+    <input type="text" placeholder="Họ và tên">
+    <input type="email" placeholder="Email">
+    <textarea rows="4" placeholder="Tin nhắn..."></textarea>
+    <button type="button">Gửi Tin Nhắn</button>
+  </div>
+</div>
 </div>
 </section>
-
 </main>
 
 <!-- FOOTER -->
-<footer class="bg-on-surface mt-section-gap border-t-8 border-tertiary-container">
-<div class="flex flex-col md:flex-row justify-between items-center px-gutter py-12 w-full max-w-max-width mx-auto">
-  <div class="text-headline-md font-display-lg text-secondary-fixed mb-6 md:mb-0" id="footer-brand">Nguyễn Đức</div>
-  <div class="flex flex-wrap justify-center gap-6 md:gap-8 mb-6 md:mb-0" id="footer-links"></div>
-  <div class="text-surface-bright text-body-md text-center md:text-right" id="footer-copy">© 2024 Nguyễn Đức. All rights reserved.</div>
+<footer class="site-footer">
+<div class="footer-inner">
+  <div class="footer-brand" id="ftBrand">Andy Nguyễn</div>
+  <div class="footer-links" id="ftLinks"></div>
+  <div class="footer-copy" id="ftCopy">© 2024</div>
 </div>
 </footer>
 
-<script src="js/main.js"></script>
-
 <script>
-const COLOR_MAP = {
-  primary: { bg:'bg-primary-container/10', border:'border-primary-container/20', hover:'hover:bg-primary-container/20', icon:'text-primary', num:'text-primary' },
-  secondary: { bg:'bg-secondary-container/20', border:'border-secondary-container/40', hover:'hover:bg-secondary-container/30', icon:'text-secondary', num:'text-secondary' },
-  tertiary: { bg:'bg-tertiary-container/10', border:'border-tertiary-container/20', hover:'hover:bg-tertiary-container/20', icon:'text-tertiary', num:'text-tertiary' },
-  'primary-container': { bg:'bg-primary-container/10', border:'border-primary-container/20', hover:'hover:bg-primary-container/20', icon:'text-primary-container', num:'text-primary-container' }
-};
-
-async function loadData() {
-  try {
-    const r = await fetch('Data/content.json?t=' + Date.now());
-    if (r.ok) {
-      const text = await r.text();
-      return JSON.parse(text);
-    }
-  } catch(e) { console.error('loadData:', e); }
+async function loadData(){
+  try{var r=await fetch('data/content.json?t='+Date.now());if(r.ok)return await r.json();}catch(e){console.error(e);}
   return null;
 }
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-function renderBanner(b) {
-  if (!b) return;
-  if (b.badge) document.getElementById('hero-badge').textContent = b.badge;
-  if (b.title_line1) document.getElementById('hero-line1').textContent = b.title_line1;
-  if (b.title_line2) document.getElementById('hero-line2').textContent = b.title_line2;
-  if (b.name) { document.getElementById('hero-name').textContent = b.name; document.title = 'Portfolio - ' + b.name; }
-  if (b.description) document.getElementById('hero-desc').textContent = b.description;
-  if (b.btn_primary) document.getElementById('hero-btn1').textContent = b.btn_primary;
-  if (b.avatar_url) document.getElementById('hero-avatar').src = b.avatar_url;
+function renderHero(b){
+  if(!b)return;
+  if(b.badge)document.getElementById('heroBadge').textContent=b.badge;
+  if(b.title_line1)document.getElementById('heroLine1').textContent=b.title_line1;
+  if(b.title_line2)document.getElementById('heroLine2').textContent=b.title_line2;
+  if(b.name){document.getElementById('heroName').textContent=b.name;document.title='Portfolio — '+b.name;}
+  if(b.description)document.getElementById('heroDesc').textContent=b.description;
+  if(b.btn_primary)document.getElementById('heroBtn1').textContent=b.btn_primary;
+  if(b.btn_primary_link)document.getElementById('heroBtn1').href=b.btn_primary_link;
+  if(b.btn_secondary){var b2=document.getElementById('heroBtn2');b2.innerHTML='<span class="material-symbols-outlined" style="font-size:18px">mail</span>'+esc(b.btn_secondary);}
+  if(b.btn_secondary_link)document.getElementById('heroBtn2').href=b.btn_secondary_link;
+  if(b.avatar_url)document.getElementById('heroAvatar').src=b.avatar_url;
 }
 
-function renderSkills(skills) {
-  const g = document.getElementById('skills-grid');
-  if (!skills || !skills.length) { g.innerHTML = '<p class="text-on-surface-variant col-span-3">Chưa có kỹ năng.</p>'; return; }
-  g.innerHTML = skills.map(s => {
-    const c = COLOR_MAP[s.color] || COLOR_MAP.primary;
-    return `<div class="aspect-square flex flex-col items-center justify-center p-4 ${c.bg} border ${c.border} rounded-2xl ${c.hover} transition-colors">
-      <span class="material-symbols-outlined ${c.icon} text-4xl mb-3">${s.icon}</span>
-      <span class="text-label-bold font-label-bold text-on-surface text-center">${s.name}</span>
-      <span class="${c.num} text-headline-md font-bold mt-1">${s.percent}</span>
-    </div>`;
-  }).join('');
-}
-
-function renderExperience(exp) {
-  const el = document.getElementById('experience-list');
-  if (!exp || !exp.length) { el.innerHTML = '<p class="text-on-surface-variant">Chưa có kinh nghiệm.</p>'; return; }
-  el.innerHTML = exp.map(e => `
-    <div class="relative">
-      <div class="absolute -left-[41px] top-1 w-5 h-5 rounded-full bg-${e.color} border-4 border-surface shadow-sm"></div>
-      <h4 class="text-headline-md font-headline-md text-on-surface">${e.title}</h4>
-      <p class="text-label-bold font-label-bold text-${e.color} mt-1 mb-3">${e.company} | ${e.period}</p>
-      <p class="text-body-md text-on-surface-variant">${e.desc}</p>
-    </div>
-  `).join('');
-}
-
-function renderPortfolio(items) {
-  const g = document.getElementById('portfolio-grid');
-  if (!items || !items.length) { g.innerHTML = '<div class="rounded-3xl border-2 border-dashed border-outline-variant/40 p-16 text-center text-on-surface-variant">Chưa có dự án nào. Thêm từ trang <a href="admin/" class="text-primary underline">Admin</a>.</div>'; return; }
-  g.innerHTML = items.map(p => {
-    const tagHtml = (p.tags||[]).map((t,i) => {
-      const col = (p.tag_colors||[])[i];
-      return col === 'white'
-        ? `<span class="bg-white/20 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-sm font-bold border border-white/30">${t}</span>`
-        : `<span class="bg-${col||'primary'}/90 backdrop-blur-md text-on-primary px-4 py-1.5 rounded-full text-sm font-bold">${t}</span>`;
-    }).join('');
-    return `<div class="relative group overflow-hidden rounded-[32px] ambient-shadow cursor-pointer border border-white/20">
-      <div class="aspect-[21/9] w-full overflow-hidden">
-        <img alt="${p.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" src="${p.image||''}">
-      </div>
-      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-90 transition-opacity group-hover:opacity-100"></div>
-      <div class="absolute inset-0 flex flex-col justify-end p-8 md:p-12 transition-transform duration-500 transform translate-y-4 group-hover:translate-y-0">
-        <div class="flex items-center gap-3 mb-4">${tagHtml}</div>
-        <h3 class="text-display-lg text-white font-display-lg mb-4">${p.title}</h3>
-        <p class="text-white/80 text-body-lg max-w-2xl mb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">${p.desc}</p>
-        <div class="flex items-center gap-4">
-          <a href="${p.link||'#'}" class="bg-white text-on-surface py-3 px-8 rounded-full font-bold hover:bg-primary hover:text-on-primary transition-colors flex items-center gap-2">
-            View Case Study <span class="material-symbols-outlined">arrow_outward</span>
-          </a>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderLearn(courses, research, community) {
-  const g = document.getElementById('learn-grid');
-  let html = '';
-  const c = (courses||[])[0];
-  if (c) {
-    html += `<div class="md:col-span-2 md:row-span-2 rounded-3xl p-8 relative overflow-hidden bg-primary-fixed flex flex-col justify-between ambient-shadow border border-white/40 group">
-      <div class="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-3xl opacity-20 -mr-20 -mt-20 group-hover:opacity-40 transition-opacity duration-700"></div>
-      <div class="relative z-10 flex justify-between items-start">
-        <span class="bg-primary text-on-primary px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">${c.badge}</span>
-        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-primary">
-          <span class="material-symbols-outlined">school</span>
-        </div>
-      </div>
-      <div class="relative z-10 mt-auto">
-        <h3 class="text-headline-lg font-headline-lg text-on-surface mb-3 w-4/5 leading-tight">${c.title}</h3>
-        <p class="text-body-lg font-body-lg text-on-surface-variant mb-6 w-3/4">${c.desc}</p>
-        <a href="${c.link||'#'}" class="bg-on-surface text-surface-bright py-3 px-8 rounded-full font-bold hover:bg-primary transition-colors inline-flex items-center gap-2">
-          ${c.btn} <span class="material-symbols-outlined text-[18px]">arrow_right_alt</span>
-        </a>
-      </div>
-    </div>`;
-  }
-  (research||[]).slice(0,1).forEach(r => {
-    html += `<div class="rounded-3xl p-6 bg-secondary-fixed flex flex-col justify-between ambient-shadow relative overflow-hidden">
-      <div class="absolute -right-8 -bottom-8 opacity-20"><span class="material-symbols-outlined text-[120px]">science</span></div>
-      <div>
-        <span class="text-on-secondary-fixed-variant font-bold text-sm uppercase tracking-wider mb-2 block">${r.label || r.category || 'Nghiên Cứu'}</span>
-        <h4 class="text-headline-md font-headline-md text-on-secondary-fixed leading-tight mb-2">${r.title}</h4>
-      </div>
-      <a class="inline-flex items-center gap-1 text-on-secondary-fixed-variant font-bold mt-4 hover:underline" href="${r.link||'#'}">
-        Đọc Bài Viết <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-      </a>
-    </div>`;
+function renderProjects(pages){
+  var g=document.getElementById('projectGrid');
+  // Collect featured projects from all project-type pages
+  var items=[];
+  Object.keys(pages).forEach(function(k){
+    var pg=pages[k];
+    if(pg.page_type==='project'&&pg.items){
+      pg.items.forEach(function(it){if(it.featured)items.push(it);});
+    }
   });
-  if (community) {
-    html += `<div class="rounded-3xl p-6 bg-surface-container-high flex flex-col justify-center items-center text-center ambient-shadow border border-outline-variant/30">
-      <div class="w-16 h-16 bg-primary-container rounded-2xl flex items-center justify-center text-on-primary-container mb-4 transform rotate-12 shadow-inner">
-        <span class="material-symbols-outlined text-[32px]">group_add</span>
-      </div>
-      <h4 class="text-headline-md font-headline-md text-on-surface mb-2">${community.title}</h4>
-      <p class="text-body-md text-on-surface-variant mb-4 text-sm">${community.desc}</p>
-      <a href="${community.link||'#'}" class="w-full py-2.5 bg-white rounded-full text-primary font-bold shadow-sm border border-outline-variant/20 hover:bg-surface-bright transition-colors block text-center">${community.btn}</a>
-    </div>`;
+  if(!items.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--outline);border:2px dashed var(--outline-variant);border-radius:20px">Chưa có dự án nổi bật. <a href="admin/" style="color:var(--primary)">Thêm từ Admin</a>.</div>';return;}
+
+  // Layout: first item spans 2 columns on first row, rest fill second row
+  var cols=Math.min(items.length,3);
+  g.style.gridTemplateColumns=items.length===1?'1fr':'1fr 1fr';
+  g.style.gridTemplateRows=items.length<=2?'360px':'360px 280px';
+
+  g.innerHTML=items.slice(0,5).map(function(p,i){
+    var span=i===0&&items.length>1?'grid-column:1/-1':'';
+    var tags=(p.tags||[]).map(function(t){return '<span class="p-tag">'+esc(t)+'</span>';}).join('');
+    return '<div class="project-card" style="'+span+'"><img src="'+esc(p.image)+'" alt="'+esc(p.title)+'"><div class="overlay"><div class="p-tags">'+tags+'</div><h3>'+esc(p.title)+'</h3><p>'+esc(p.description)+'</p>'+(p.client?'<div class="p-client">'+esc(p.client)+'</div>':'')+'</div></div>';
+  }).join('');
+}
+
+function renderSkills(skills){
+  var g=document.getElementById('skillsGrid');
+  if(!skills||!skills.length){g.innerHTML='<p style="color:var(--outline);grid-column:1/-1">Chưa có kỹ năng.</p>';return;}
+  g.innerHTML=skills.map(function(s){
+    return '<div class="skill-card c-'+(s.color||'primary')+'"><span class="material-symbols-outlined">'+(s.icon||'star')+'</span><span class="sk-name">'+esc(s.name)+'</span><span class="sk-pct">'+(typeof s.percent==='number'?s.percent+'%':esc(s.percent))+'</span></div>';
+  }).join('');
+}
+
+function renderTimeline(items,elId,type){
+  var el=document.getElementById(elId);
+  if(!items||!items.length){el.innerHTML='<p style="color:var(--outline)">Chưa có dữ liệu.</p>';return;}
+  el.innerHTML=items.map(function(e){
+    var c=e.color||'primary';
+    var meta=type==='exp'?(esc(e.company)+' | '+esc(e.period)):(esc(e.school)+' | '+esc(e.period));
+    return '<div class="tl-item c-'+c+'"><h4>'+esc(e.title)+'</h4><div class="tl-meta">'+meta+'</div><div class="tl-desc">'+esc(e.description)+'</div></div>';
+  }).join('');
+}
+
+function renderCourses(pages){
+  var el=document.getElementById('courseRow');
+  var items=[];
+  Object.keys(pages).forEach(function(k){
+    var pg=pages[k];
+    if(pg.page_type==='elearning'&&pg.items){
+      pg.items.forEach(function(c){if(c.featured)items.push(c);});
+    }
+  });
+  if(!items.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--outline)">Chưa có khóa học.</div>';return;}
+  el.innerHTML=items.slice(0,4).map(function(c){
+    var statusCls=c.status==='open'?'open':(c.status==='upcoming'?'upcoming':'closed');
+    var statusTxt=c.status==='open'?'Đang mở':(c.status==='upcoming'?'Sắp khai giảng':'Đã đóng');
+    return '<div class="course-card">'+(c.image?'<img src="'+esc(c.image)+'" alt="'+esc(c.title)+'">':'')+'<div class="cc-body"><h4>'+esc(c.title)+'</h4><p class="cc-desc">'+esc(c.description)+'</p><div class="cc-meta">'+(c.lessons?'<span><span class="material-symbols-outlined">menu_book</span>'+c.lessons+' bài</span>':'')+(c.duration?'<span><span class="material-symbols-outlined">schedule</span>'+esc(c.duration)+'</span>':'')+'</div><span class="cc-status '+statusCls+'">'+statusTxt+'</span></div></div>';
+  }).join('');
+}
+
+function renderFooter(d){
+  if(d.footer){
+    if(d.footer.brand)document.getElementById('ftBrand').textContent=d.footer.brand;
+    if(d.footer.copyright)document.getElementById('ftCopy').textContent=d.footer.copyright;
   }
-  g.innerHTML = html || '<div class="col-span-3 text-center text-on-surface-variant p-16">Chưa có nội dung. Thêm từ <a href="admin/" class="text-primary underline">Admin</a>.</div>';
-}
-
-function renderFooter(f) {
-  if (!f) return;
-  if (f.brand) document.getElementById('footer-brand').textContent = f.brand;
-  if (f.copyright) document.getElementById('footer-copy').textContent = f.copyright;
-  if (f.links) {
-    document.getElementById('footer-links').innerHTML = f.links.map(l =>
-      `<a class="text-surface-variant/70 hover:text-tertiary-fixed transition-colors font-bold" href="${l.href}">${l.label}</a>`
-    ).join('');
+  var menus=d.menus||[];
+  document.getElementById('ftLinks').innerHTML=menus.map(function(m){
+    var h=m.slug==='home'?'index.html':'page.html?slug='+m.slug;
+    return '<a href="'+h+'">'+esc(m.label)+'</a>';
+  }).join('');
+  if(d.contact){
+    if(d.contact.email)document.getElementById('ctEmail').textContent=d.contact.email;
+    if(d.contact.location)document.getElementById('ctLocation').textContent=d.contact.location;
   }
 }
 
-async function init() {
-  const data = await loadData();
-  if (!data) return;
-  renderBanner(data.banner);
-  renderSkills(data.skills);
-  renderExperience(data.experience);
-  renderPortfolio(data.portfolio);
-  // research card: ưu tiên data.research, fallback data.knowledge
-  const researchForHome = (data.research && data.research.length) ? data.research : (data.knowledge || []);
-  renderLearn(data.courses, researchForHome, data.community);
-  renderFooter(data.footer);
+async function init(){
+  var d=await loadData();if(!d)return;
+  renderHero(d.banner);
+  renderProjects(d.pages||{});
+  var p=d.personal||{};
+  renderSkills(p.skills);
+  renderTimeline(p.experience,'expTimeline','exp');
+  renderTimeline(p.education,'eduTimeline','edu');
+  renderCourses(d.pages||{});
+  renderFooter(d);
 }
-
 init();
 </script>
 </body>
