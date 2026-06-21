@@ -6,47 +6,39 @@
 <title>Admin — Portfolio</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#f0f3ff;--surface:#fff;--surface2:#f7f9ff;--surface3:#eef1fb;--primary:#4648d4;--primary-lt:#e1e0ff;--primary-dim:#c0c1ff;--secondary:#4d661c;--secondary-lt:#ceee93;--tertiary:#6d5e00;--tertiary-lt:#ffe24c;--text:#111c2d;--text2:#464554;--text3:#767586;--border:#c7c4d7;--border-lt:#e7eeff;--green:#4d661c;--green-lt:#ceee93;--red:#ba1a1a;--red-lt:#ffdad6;--radius:12px;--radius-lg:20px;--shadow:0 4px 20px rgba(70,72,212,0.08)}
+:root{--bg:#f0f3ff;--surface:#fff;--surface2:#f7f9ff;--surface3:#eef1fb;--primary:#4648d4;--primary-lt:#e1e0ff;--primary-dim:#c0c1ff;--secondary:#4d661c;--secondary-lt:#ceee93;--tertiary:#6d5e00;--tertiary-lt:#ffe24c;--text:#111c2d;--text2:#464554;--text3:#767586;--border:#c7c4d7;--border-lt:#e7eeff;--green:#4d661c;--green-lt:#ceee93;--red:#ba1a1a;--red-lt:#ffdad6;--radius:12px;--radius-lg:20px;--shadow:0 4px 20px rgba(70,72,212,.08)}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:15px}
-.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
-
-/* SIDEBAR */
-.sidebar{width:250px;min-height:100vh;background:var(--primary);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:100}
+.sidebar{width:250px;min-height:100vh;background:var(--primary);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:100;overflow-y:auto}
 .sb-logo{padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.15)}
 .sb-logo .brand{font-size:1.1rem;font-weight:800;color:#fff}
 .sb-logo .sub{font-size:.7rem;color:rgba(255,255,255,.55);margin-top:2px}
-.sb-nav{padding:12px 10px;flex:1;overflow-y:auto}
+.sb-nav{padding:12px 10px;flex:1}
 .sb-section{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);padding:10px 8px 4px}
 .sb-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;color:rgba(255,255,255,.7);font-size:.82rem;font-weight:500;cursor:pointer;border:none;background:none;text-align:left;width:100%;margin-bottom:1px;transition:background .12s,color .12s}
 .sb-item:hover{background:rgba(255,255,255,.1);color:#fff}
 .sb-item.active{background:rgba(255,255,255,.18);color:#fff;font-weight:700}
 .sb-item .icon{font-size:18px;flex-shrink:0}
+.sb-item.sub{padding-left:28px;font-size:.78rem}
 .sb-footer{padding:12px 10px;border-top:1px solid rgba(255,255,255,.15)}
 .sb-user{padding:8px 10px;color:rgba(255,255,255,.75);font-size:.75rem;margin-bottom:6px}
 .sb-user b{color:#fff;font-size:.8rem;display:block}
 .btn-logout{display:flex;align-items:center;gap:6px;width:100%;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:none;cursor:pointer;font-size:.75rem;transition:background .12s}
 .btn-logout:hover{background:rgba(255,255,255,.18);color:#fff}
-
-/* MAIN */
 .main{margin-left:250px;flex:1;padding:24px 28px;min-height:100vh}
-
-/* LOGIN */
 #loginView{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px}
 .login-card{background:var(--surface);border-radius:var(--radius-lg);padding:36px;width:100%;max-width:420px;box-shadow:var(--shadow);border:1px solid var(--border-lt)}
 .login-card .logo{font-size:1.3rem;font-weight:800;color:var(--primary);margin-bottom:4px}
 .login-card .sub{font-size:.82rem;color:var(--text2);margin-bottom:24px;line-height:1.6}
 .login-card .sub a{color:var(--primary)}
-
-/* FORMS */
 .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
 .fg label{font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
 input[type=text],input[type=email],input[type=url],input[type=password],input[type=number],textarea,select{background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:inherit;font-size:.82rem;outline:none;width:100%;transition:border-color .15s;resize:vertical}
 input:focus,textarea:focus,select:focus{border-color:var(--primary)}
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
-/* BUTTONS */
 .btn{padding:8px 18px;border-radius:999px;font-size:.82rem;font-weight:700;cursor:pointer;border:none;transition:opacity .12s;display:inline-flex;align-items:center;gap:5px}
 .btn:hover{opacity:.85}
 .btn-primary{background:var(--primary);color:#fff}
@@ -56,11 +48,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary)}
 .btn-sm{padding:5px 12px;font-size:.75rem}
 .btn-icon{padding:6px;border-radius:6px}
 .login-btn{width:100%;justify-content:center;padding:11px;margin-top:6px}
-
-/* CARDS & LAYOUT */
-.page-header{margin-bottom:20px}
-.page-header h1{font-size:1.4rem;font-weight:800;margin-bottom:3px}
-.page-header p{font-size:.82rem;color:var(--text2)}
+.page-header{margin-bottom:20px}.page-header h1{font-size:1.4rem;font-weight:800;margin-bottom:3px}.page-header p{font-size:.82rem;color:var(--text2)}
 .page-actions{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .card{background:var(--surface);border-radius:var(--radius);padding:18px;margin-bottom:12px;border:1px solid var(--border-lt);box-shadow:var(--shadow)}
 .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
@@ -76,698 +64,366 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary)}
 .alert.show{display:flex}
 .alert-success{background:var(--green-lt);color:var(--green);border:1.5px solid rgba(77,102,28,.2)}
 .alert-error{background:var(--red-lt);color:var(--red);border:1.5px solid rgba(186,26,26,.2)}
-.tab-view{display:none}
-.tab-view.active{display:block}
+.tab-view{display:none}.tab-view.active{display:block}
 .empty-state{text-align:center;padding:36px;color:var(--text3);border:2px dashed var(--border);border-radius:var(--radius);font-size:.82rem}
-
-/* MODALS */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
 .modal-overlay.active{display:flex}
-.modal-box{background:var(--surface);border-radius:var(--radius-lg);padding:24px;width:100%;max-width:560px;max-height:85vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.18)}
+.modal-box{background:var(--surface);border-radius:var(--radius-lg);padding:24px;width:100%;max-width:620px;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.18)}
+.modal-box.wide{max-width:900px}
 .modal-box h3{font-size:1rem;font-weight:800;margin-bottom:16px}
 .modal-footer{display:flex;justify-content:flex-end;gap:6px;margin-top:16px;padding-top:12px;border-top:1.5px solid var(--border-lt)}
 .modal-close{position:absolute;top:14px;right:14px;background:var(--surface3);border:1.5px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
 .modal-close:hover{background:var(--border-lt)}
-
-/* MENU TREE ITEM */
 .mt-item{border:1px solid var(--border-lt);border-radius:8px;padding:10px 12px;margin-bottom:6px;background:var(--surface2);display:flex;justify-content:space-between;align-items:center}
-.mt-item .info{flex:1}
-.mt-item .name{font-weight:700;font-size:.85rem}
-.mt-item .slug{font-size:.7rem;color:var(--text3);margin-top:1px}
+.mt-item .info{flex:1;min-width:0}.mt-item .name{font-weight:700;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mt-item .slug{font-size:.7rem;color:var(--text3);margin-top:1px}
 .badge-type{display:inline-block;font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:999px;margin-left:5px;text-transform:uppercase}
 .badge-article{background:var(--secondary-lt);color:var(--secondary)}
 .badge-project{background:var(--primary-lt);color:var(--primary)}
 .badge-elearning{background:var(--tertiary-lt);color:var(--tertiary)}
-
-/* Tags input */
-.tags-wrap{display:flex;flex-wrap:wrap;gap:5px;padding:7px 10px;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;cursor:text;min-height:38px;align-items:center}
-.tags-wrap:focus-within{border-color:var(--primary)}
-.tag-chip{display:inline-flex;align-items:center;gap:3px;background:var(--primary-lt);color:var(--primary);padding:2px 7px 2px 9px;border-radius:999px;font-size:.72rem;font-weight:700}
-.tag-chip button{background:none;border:none;color:var(--primary);cursor:pointer;font-size:12px;padding:0;opacity:.6}
-.tag-chip button:hover{opacity:1}
-.tag-input{background:none;border:none;color:var(--text);font-size:.78rem;outline:none;min-width:60px;padding:2px;font-family:inherit}
-
+.ql-container{font-family:inherit;font-size:.88rem;min-height:200px;border-radius:0 0 8px 8px;border-color:var(--border)}
+.ql-toolbar{border-radius:8px 8px 0 0;border-color:var(--border);background:var(--surface2)}
+.lesson-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border-lt);border-radius:8px;margin-bottom:4px;background:var(--surface2)}
+.lesson-item .l-num{width:22px;height:22px;border-radius:999px;background:var(--primary-lt);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0}
+.lesson-item .l-info{flex:1;min-width:0}.lesson-item .l-title{font-size:.82rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lesson-item .l-type{font-size:.7rem;color:var(--text3)}
 @media(max-width:768px){.sidebar{display:none}.main{margin-left:0;padding:14px}.stats-row{grid-template-columns:1fr 1fr}.fr{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-
-<!-- LOGIN -->
 <div id="loginView">
 <div class="login-card">
   <div class="logo">🎨 Portfolio Admin</div>
-  <p class="sub">Đăng nhập bằng <strong>GitHub Personal Access Token</strong>.<br>Tạo tại <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a> → chọn quyền <strong>repo</strong>.</p>
-  <div class="fg"><label>GitHub Username</label><input type="text" id="lUser" placeholder="username"></div>
+  <p class="sub">Đăng nhập bằng <strong>GitHub Personal Access Token</strong>.<br><a href="https://github.com/settings/tokens" target="_blank">Tạo token</a> → chọn quyền <strong>repo</strong>.</p>
+  <div class="fg"><label>Username</label><input type="text" id="lUser" placeholder="username"></div>
   <div class="fg"><label>Repository</label><input type="text" id="lRepo" placeholder="username.github.io"></div>
-  <div class="fg"><label>Token</label><input type="password" id="lToken" placeholder="ghp_xxxxxxxx"></div>
+  <div class="fg"><label>Token</label><input type="password" id="lToken" placeholder="ghp_..."></div>
   <div id="loginErr" style="color:var(--red);font-size:.78rem;display:none;padding:6px 10px;background:var(--red-lt);border-radius:6px;margin-bottom:6px"></div>
-  <button class="btn btn-primary login-btn" onclick="doLogin()"><span class="material-symbols-outlined" style="font-size:16px">login</span> Đăng nhập</button>
+  <button class="btn btn-primary login-btn" onclick="doLogin()"><span class="material-symbols-outlined" style="font-size:16px">login</span>Đăng nhập</button>
 </div>
 </div>
-
-<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar" style="display:none">
   <div class="sb-logo"><div class="brand">Portfolio Admin</div><div class="sub" id="sbUser">—</div></div>
-  <nav class="sb-nav">
-    <div class="sb-section">Tổng quan</div>
-    <button class="sb-item active" onclick="goTab('dashboard',this)"><span class="material-symbols-outlined icon">dashboard</span>Dashboard</button>
-    <div class="sb-section">Trang chủ</div>
-    <button class="sb-item" onclick="goTab('banner',this)"><span class="material-symbols-outlined icon">web</span>Banner & Hero</button>
-    <button class="sb-item" onclick="goTab('personal',this)"><span class="material-symbols-outlined icon">person</span>Thông tin cá nhân</button>
-    <div class="sb-section">Nội dung</div>
-    <button class="sb-item" onclick="goTab('menus',this)"><span class="material-symbols-outlined icon">menu_open</span>Menu & Trang</button>
-    <div class="sb-section">Cài đặt</div>
-    <button class="sb-item" onclick="goTab('settings',this)"><span class="material-symbols-outlined icon">settings</span>Liên hệ & Footer</button>
-  </nav>
-  <div class="sb-footer">
-    <div class="sb-user"><b id="sbName">—</b></div>
-    <button class="btn-logout" onclick="doLogout()"><span class="material-symbols-outlined" style="font-size:16px">logout</span>Đăng xuất</button>
-  </div>
+  <nav class="sb-nav" id="sbNav"></nav>
+  <div class="sb-footer"><div class="sb-user"><b id="sbName">—</b></div><button class="btn-logout" onclick="doLogout()"><span class="material-symbols-outlined" style="font-size:16px">logout</span>Đăng xuất</button></div>
 </div>
-
-<!-- MAIN -->
 <div class="main" id="mainArea" style="display:none">
 <div id="alertBox" class="alert"></div>
-
-<!-- DASHBOARD -->
-<div id="tab-dashboard" class="tab-view active">
-  <div class="page-header"><h1>Dashboard</h1><p>Tổng quan nội dung portfolio</p></div>
-  <div class="stats-row">
-    <div class="stat-card"><div class="stat-num" id="d-projects">0</div><div class="stat-label">Dự án</div></div>
-    <div class="stat-card"><div class="stat-num" id="d-articles">0</div><div class="stat-label">Bài viết</div></div>
-    <div class="stat-card"><div class="stat-num" id="d-courses">0</div><div class="stat-label">Khóa học</div></div>
-    <div class="stat-card"><div class="stat-num" id="d-menus">0</div><div class="stat-label">Menu</div></div>
-  </div>
+<div id="tabContainer"></div>
 </div>
+<!-- MODALS -->
+<div class="modal-overlay" id="itemModal"><div class="modal-box" id="itemModalBox"><button class="modal-close" onclick="closeModal('itemModal')">✕</button><h3 id="imTitle">Modal</h3><div id="imBody"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('itemModal')">Huỷ</button><button class="btn btn-primary" id="imSaveBtn">Lưu</button></div></div></div>
+<div class="modal-overlay" id="menuModal"><div class="modal-box"><button class="modal-close" onclick="closeModal('menuModal')">✕</button><h3 id="mmTitle">Thêm Menu</h3><input type="hidden" id="mm-edit-id"><input type="hidden" id="mm-parent-id"><div class="fg"><label>Tên menu *</label><input type="text" id="mm-label" oninput="autoSlug()"></div><div class="fg"><label>Slug *</label><input type="text" id="mm-slug"><small style="color:var(--text3);font-size:.7rem">Chữ thường, số, dấu gạch ngang</small></div><div class="fg"><label>Dạng trang *</label><select id="mm-type"><option value="article">📝 Bài viết</option><option value="project">🎨 Dự án</option><option value="elearning">📚 Khóa học</option></select></div><div class="fg"><label>Menu cha</label><select id="mm-parent"><option value="">— Menu chính —</option></select></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('menuModal')">Huỷ</button><button class="btn btn-primary" onclick="saveMenu()">Lưu</button></div></div></div>
+<div class="modal-overlay" id="lessonModal"><div class="modal-box wide"><button class="modal-close" onclick="closeModal('lessonModal')">✕</button><h3 id="lmTitle">Thêm bài học</h3><input type="hidden" id="lm-slug"><input type="hidden" id="lm-course-idx"><input type="hidden" id="lm-edit-idx" value="-1"><div class="fr"><div class="fg"><label>Tiêu đề *</label><input type="text" id="lm-title"></div><div class="fg"><label>Loại</label><select id="lm-type" onchange="toggleLessonType()"><option value="video">Video</option><option value="article">Bài viết</option></select></div></div><div class="fg" id="lm-video-group"><label>URL Video (YouTube embed)</label><input type="url" id="lm-video" placeholder="https://www.youtube.com/embed/..."></div><div class="fg"><label>Thời lượng</label><input type="text" id="lm-duration" placeholder="15 phút"></div><div class="fg"><label>Nội dung bài học</label><div id="lm-editor" style="height:250px"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('lessonModal')">Huỷ</button><button class="btn btn-primary" onclick="saveLesson()">Lưu bài học</button></div></div></div>
 
-<!-- BANNER -->
-<div id="tab-banner" class="tab-view">
-  <div class="page-header"><h1>Banner & Hero</h1><p>Chỉnh sửa phần đầu trang chủ</p></div>
-  <div class="card">
-    <div class="section-title">Thông tin hiển thị</div>
-    <div class="fr">
-      <div class="fg"><label>Badge</label><input type="text" id="b-badge"></div>
-      <div class="fg"><label>Tên</label><input type="text" id="b-name"></div>
-    </div>
-    <div class="fr">
-      <div class="fg"><label>Dòng 1</label><input type="text" id="b-line1"></div>
-      <div class="fg"><label>Dòng 2</label><input type="text" id="b-line2"></div>
-    </div>
-    <div class="fg"><label>Mô tả</label><textarea id="b-desc" rows="2"></textarea></div>
-    <div class="fr">
-      <div class="fg"><label>Nút chính</label><input type="text" id="b-btn1"></div>
-      <div class="fg"><label>Nút phụ</label><input type="text" id="b-btn2"></div>
-    </div>
-    <div class="fg"><label>URL ảnh đại diện</label><input type="url" id="b-avatar"></div>
-    <button class="btn btn-primary" onclick="saveBanner()"><span class="material-symbols-outlined" style="font-size:16px">save</span>Lưu Banner</button>
-  </div>
-</div>
-
-<!-- PERSONAL -->
-<div id="tab-personal" class="tab-view">
-  <div class="page-header"><h1>Thông Tin Cá Nhân</h1><p>Kỹ năng, kinh nghiệm, học vấn</p></div>
-
-  <div class="card">
-    <div class="card-header"><div><div class="card-title">Kỹ Năng</div></div><button class="btn btn-primary btn-sm" onclick="openItemModal('skill')"><span class="material-symbols-outlined" style="font-size:14px">add</span>Thêm</button></div>
-    <div id="skillsList"></div>
-  </div>
-
-  <div class="card">
-    <div class="card-header"><div><div class="card-title">Kinh Nghiệm</div></div><button class="btn btn-primary btn-sm" onclick="openItemModal('exp')"><span class="material-symbols-outlined" style="font-size:14px">add</span>Thêm</button></div>
-    <div id="expList"></div>
-  </div>
-
-  <div class="card">
-    <div class="card-header"><div><div class="card-title">Học Vấn</div></div><button class="btn btn-primary btn-sm" onclick="openItemModal('edu')"><span class="material-symbols-outlined" style="font-size:14px">add</span>Thêm</button></div>
-    <div id="eduList"></div>
-  </div>
-</div>
-
-<!-- MENUS & PAGES -->
-<div id="tab-menus" class="tab-view">
-  <div class="page-header"><h1>Menu & Trang</h1><p>Quản lý menu, trang và nội dung</p></div>
-  <div class="page-actions">
-    <span id="menuCount" style="font-size:.82rem;color:var(--text3)"></span>
-    <button class="btn btn-primary btn-sm" onclick="openMenuModal()"><span class="material-symbols-outlined" style="font-size:14px">add</span>Thêm Menu</button>
-  </div>
-  <div id="menuTree"></div>
-</div>
-
-<!-- SETTINGS -->
-<div id="tab-settings" class="tab-view">
-  <div class="page-header"><h1>Liên Hệ & Footer</h1><p>Cài đặt thông tin liên hệ và footer</p></div>
-  <div class="card">
-    <div class="section-title">Liên hệ</div>
-    <div class="fr">
-      <div class="fg"><label>Email</label><input type="email" id="s-email"></div>
-      <div class="fg"><label>Địa điểm</label><input type="text" id="s-location"></div>
-    </div>
-    <div class="section-title" style="margin-top:14px">Footer</div>
-    <div class="fr">
-      <div class="fg"><label>Tên thương hiệu</label><input type="text" id="s-brand"></div>
-      <div class="fg"><label>Bản quyền</label><input type="text" id="s-copy"></div>
-    </div>
-    <div class="section-title" style="margin-top:14px">Navigation</div>
-    <div class="fr">
-      <div class="fg"><label>CTA Label</label><input type="text" id="s-cta-label"></div>
-      <div class="fg"><label>CTA Link</label><input type="text" id="s-cta-link"></div>
-    </div>
-    <button class="btn btn-primary" onclick="saveSettings()"><span class="material-symbols-outlined" style="font-size:16px">save</span>Lưu</button>
-  </div>
-</div>
-
-</div><!-- /main -->
-
-<!-- ═══════ MODALS ═══════ -->
-
-<!-- GENERIC PERSONAL ITEM MODAL (skill/exp/edu) -->
-<div class="modal-overlay" id="itemModal">
-<div class="modal-box">
-  <button class="modal-close" onclick="closeModal('itemModal')">✕</button>
-  <h3 id="itemModalTitle">Thêm mới</h3>
-  <input type="hidden" id="im-type" value="">
-  <input type="hidden" id="im-idx" value="-1">
-  <div id="itemModalBody"></div>
-  <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('itemModal')">Huỷ</button>
-    <button class="btn btn-primary" onclick="savePersonalItem()">Lưu</button>
-  </div>
-</div>
-</div>
-
-<!-- MENU MODAL -->
-<div class="modal-overlay" id="menuModal">
-<div class="modal-box">
-  <button class="modal-close" onclick="closeModal('menuModal')">✕</button>
-  <h3 id="menuModalTitle">Thêm Menu</h3>
-  <input type="hidden" id="mm-edit-id" value="">
-  <input type="hidden" id="mm-parent-id" value="">
-  <div class="fg"><label>Tên menu *</label><input type="text" id="mm-label" placeholder="Ví dụ: Portfolio" oninput="autoSlug()"></div>
-  <div class="fg"><label>Slug *</label><input type="text" id="mm-slug" placeholder="portfolio"><small style="color:var(--text3);font-size:.7rem">Chữ thường, số, dấu gạch ngang</small></div>
-  <div class="fg"><label>Dạng trang *</label>
-    <select id="mm-type">
-      <option value="article">📝 Bài viết (Blog / Nghiên cứu)</option>
-      <option value="project">🎨 Dự án (Portfolio / Showcase)</option>
-      <option value="elearning">📚 Khóa học (E-learning)</option>
-    </select>
-  </div>
-  <div class="fg"><label>Menu cha</label>
-    <select id="mm-parent"><option value="">— Menu chính —</option></select>
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('menuModal')">Huỷ</button>
-    <button class="btn btn-primary" onclick="saveMenu()">Lưu Menu</button>
-  </div>
-</div>
-</div>
-
-<!-- PAGE ITEM MODAL (article/project/course item) -->
-<div class="modal-overlay" id="pageItemModal">
-<div class="modal-box" style="max-width:620px">
-  <button class="modal-close" onclick="closeModal('pageItemModal')">✕</button>
-  <h3 id="piModalTitle">Thêm mục</h3>
-  <input type="hidden" id="pi-page-slug" value="">
-  <input type="hidden" id="pi-page-type" value="">
-  <input type="hidden" id="pi-edit-idx" value="-1">
-  <div id="piModalBody"></div>
-  <div class="modal-footer">
-    <button class="btn btn-ghost" onclick="closeModal('pageItemModal')">Huỷ</button>
-    <button class="btn btn-primary" onclick="savePageItem()">Lưu</button>
-  </div>
-</div>
-</div>
-
-<!-- PAGE ITEMS LIST MODAL -->
-<div class="modal-overlay" id="pageListModal">
-<div class="modal-box" style="max-width:720px">
-  <button class="modal-close" onclick="closeModal('pageListModal')">✕</button>
-  <h3 id="plTitle">Quản lý nội dung</h3>
-  <div class="page-actions" style="margin-bottom:10px">
-    <span id="plCount" style="font-size:.78rem;color:var(--text3)"></span>
-    <button class="btn btn-primary btn-sm" id="plAddBtn">Thêm mới</button>
-  </div>
-  <div id="plList"></div>
-</div>
-</div>
-
-<!-- ═══════ SCRIPT ═══════ -->
 <script>
 'use strict';
-var AUTH=null,DATA={},_fileSha=null;
+var AUTH=null,DATA={},_fileSha=null,_quill=null,_lessonQuill=null;
 var CONTENT_PATH='data/content.json';
-
-// ── Helpers ──
 function v(id){return(document.getElementById(id)||{}).value?.trim()||'';}
 function set(id,val){var e=document.getElementById(id);if(e)e.value=val!=null?val:'';}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function uid(){return Date.now().toString(36)+'_'+Math.random().toString(36).substr(2,4);}
-
-function showAlert(msg,type){
-  var el=document.getElementById('alertBox');el.textContent=msg;
-  el.className='alert alert-'+type+' show';
-  clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove('show');},4000);
-}
+function showAlert(m,t){var e=document.getElementById('alertBox');e.textContent=m;e.className='alert alert-'+t+' show';clearTimeout(e._t);e._t=setTimeout(function(){e.classList.remove('show');},4000);}
 function openModal(id){document.getElementById(id).classList.add('active');}
-function closeModal(id){document.getElementById(id).classList.remove('active');}
-function goTab(tab,btn){
-  document.querySelectorAll('.tab-view').forEach(function(t){t.classList.remove('active');});
-  document.querySelectorAll('.sb-item').forEach(function(n){n.classList.remove('active');});
-  document.getElementById('tab-'+tab).classList.add('active');
-  if(btn)btn.classList.add('active');
-}
-document.querySelectorAll('.modal-overlay').forEach(function(m){
-  m.addEventListener('click',function(e){if(e.target===m)closeModal(m.id);});
-});
+function closeModal(id){document.getElementById(id).classList.remove('active');if(id==='itemModal'&&_quill){_quill=null;}}
+document.querySelectorAll('.modal-overlay').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m)closeModal(m.id);});});
 
 // ── Auth ──
 async function doLogin(){
   var user=v('lUser'),repo=v('lRepo'),token=v('lToken');
-  if(!user||!repo||!token){loginErr('Điền đầy đủ thông tin.');return;}
-  try{
-    var r=await fetch('https://api.github.com/repos/'+user+'/'+repo,{headers:{Authorization:'token '+token}});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    AUTH={user:user,repo:repo,token:token};
-    localStorage.setItem('portfolio_auth',JSON.stringify(AUTH));
-    startApp();
-  }catch(e){loginErr('Token hoặc repo không hợp lệ. ('+e.message+')');}
+  if(!user||!repo||!token){loginErr('Điền đầy đủ.');return;}
+  try{var r=await fetch('https://api.github.com/repos/'+user+'/'+repo,{headers:{Authorization:'token '+token}});if(!r.ok)throw new Error(r.status);AUTH={user:user,repo:repo,token:token};localStorage.setItem('pa',JSON.stringify(AUTH));startApp();}catch(e){loginErr('Lỗi: '+e.message);}
 }
 function loginErr(m){var e=document.getElementById('loginErr');e.textContent=m;e.style.display='block';}
-function doLogout(){localStorage.removeItem('portfolio_auth');location.reload();}
-
-window.addEventListener('DOMContentLoaded',function(){
-  var s=localStorage.getItem('portfolio_auth');
-  if(s)try{AUTH=JSON.parse(s);startApp();}catch(e){localStorage.removeItem('portfolio_auth');}
-});
+function doLogout(){localStorage.removeItem('pa');location.reload();}
+window.addEventListener('DOMContentLoaded',function(){var s=localStorage.getItem('pa');if(s)try{AUTH=JSON.parse(s);startApp();}catch(e){}});
 
 async function startApp(){
-  document.getElementById('loginView').style.display='none';
-  document.getElementById('sidebar').style.display='flex';
-  document.getElementById('mainArea').style.display='block';
-  document.getElementById('sbUser').textContent=AUTH.user+'/'+AUTH.repo;
-  document.getElementById('sbName').textContent=AUTH.user;
-  await loadData();
-  refreshAll();
+  document.getElementById('loginView').style.display='none';document.getElementById('sidebar').style.display='flex';document.getElementById('mainArea').style.display='block';
+  document.getElementById('sbUser').textContent=AUTH.user+'/'+AUTH.repo;document.getElementById('sbName').textContent=AUTH.user;
+  await loadData();renderApp();
 }
 
-// ── GitHub API ──
-function ghFetch(path,opts){
-  opts=opts||{};
-  return fetch('https://api.github.com/'+path,Object.assign({},opts,{
-    headers:Object.assign({Authorization:'token '+AUTH.token,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},opts.headers||{})
-  }));
-}
-function toB64(s){var b=new TextEncoder().encode(s);var bin='';b.forEach(function(c){bin+=String.fromCharCode(c);});return btoa(bin);}
+// ── GitHub ──
+function ghFetch(p,o){o=o||{};return fetch('https://api.github.com/'+p,Object.assign({},o,{headers:Object.assign({Authorization:'token '+AUTH.token,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},o.headers||{})}));}
+function toB64(s){var b=new TextEncoder().encode(s);var r='';b.forEach(function(c){r+=String.fromCharCode(c);});return btoa(r);}
 function fromB64(b){var bin=atob(b.replace(/\n/g,''));var bytes=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return new TextDecoder().decode(bytes);}
+async function loadData(){try{var r=await ghFetch('repos/'+AUTH.user+'/'+AUTH.repo+'/contents/'+CONTENT_PATH);if(r.ok){var f=await r.json();_fileSha=f.sha;DATA=JSON.parse(fromB64(f.content));return;}}catch(e){console.error(e);}DATA={site:{},banner:{},personal:{skills:[],experience:[],education:[]},contact:{},footer:{},nav:{},menus:[],pages:{}};}
+async function saveData(){var j=JSON.stringify(DATA,null,2);var body={message:'Admin update',content:toB64(j)};if(_fileSha)body.sha=_fileSha;var r=await ghFetch('repos/'+AUTH.user+'/'+AUTH.repo+'/contents/'+CONTENT_PATH,{method:'PUT',body:JSON.stringify(body)});if(!r.ok)throw new Error((await r.json().catch(function(){return{};})).message||r.status);_fileSha=(await r.json()).content.sha;}
+async function trySave(fn){try{await saveData();if(fn)fn();showAlert('Đã lưu!','success');renderApp();}catch(e){showAlert('Lỗi: '+e.message,'error');}}
 
-async function loadData(){
-  try{
-    var r=await ghFetch('repos/'+AUTH.user+'/'+AUTH.repo+'/contents/'+CONTENT_PATH);
-    if(r.ok){var f=await r.json();_fileSha=f.sha;DATA=JSON.parse(fromB64(f.content));return;}
-  }catch(e){console.error(e);}
-  DATA=defaultData();
+// ── RENDER APP ──
+var _activeTab='dashboard';
+function goTab(tab,btn){_activeTab=tab;renderApp();if(btn){document.querySelectorAll('.sb-item').forEach(function(n){n.classList.remove('active');});btn.classList.add('active');}}
+
+function renderApp(){
+  renderSidebar();
+  var tc=document.getElementById('tabContainer');
+  if(_activeTab==='dashboard')tc.innerHTML=renderDashboard();
+  else if(_activeTab==='banner')tc.innerHTML=renderBannerTab();
+  else if(_activeTab==='personal')tc.innerHTML=renderPersonalTab();
+  else if(_activeTab==='menus')tc.innerHTML=renderMenusTab();
+  else if(_activeTab==='settings')tc.innerHTML=renderSettingsTab();
+  else if(_activeTab.startsWith('page:')){tc.innerHTML=renderPageTab(_activeTab.split(':')[1]);}
 }
 
-async function saveData(){
-  var json=JSON.stringify(DATA,null,2);
-  var body={message:'Admin update ['+new Date().toLocaleString('vi-VN')+']',content:toB64(json)};
-  if(_fileSha)body.sha=_fileSha;
-  var r=await ghFetch('repos/'+AUTH.user+'/'+AUTH.repo+'/contents/'+CONTENT_PATH,{method:'PUT',body:JSON.stringify(body)});
-  if(!r.ok){var err=await r.json().catch(function(){return{};});throw new Error(err.message||'HTTP '+r.status);}
-  var res=await r.json();_fileSha=res.content.sha;
-}
-
-async function trySave(fn){
-  try{await saveData();if(fn)fn();showAlert('Đã lưu thành công!','success');refreshAll();}
-  catch(e){showAlert('Lỗi lưu: '+e.message,'error');}
-}
-
-function defaultData(){
-  return {site:{name:'',tagline:''},banner:{badge:'',title_line1:'',title_line2:'',name:'',description:'',btn_primary:'',btn_secondary:'',avatar_url:''},
-  personal:{skills:[],experience:[],education:[]},contact:{email:'',location:''},
-  footer:{brand:'',copyright:''},nav:{brand:'',logo_url:'',cta_label:'Liên Hệ',cta_link:'index.html#contact'},menus:[],pages:{}};
-}
-
-// ── Refresh all views ──
-function refreshAll(){
-  refreshDashboard();loadBannerForm();loadSettingsForm();
-  renderPersonalLists();renderMenuTree();
-}
-
-// ── DASHBOARD ──
-function refreshDashboard(){
-  var pages=DATA.pages||{},pCount=0,aCount=0,cCount=0;
-  Object.keys(pages).forEach(function(k){
-    var p=pages[k];if(!p.items)return;
-    if(p.page_type==='project')pCount+=p.items.length;
-    if(p.page_type==='article')aCount+=p.items.length;
-    if(p.page_type==='elearning')cCount+=p.items.length;
+function renderSidebar(){
+  var nav=document.getElementById('sbNav');
+  var html='<div class="sb-section">Tổng quan</div>';
+  html+='<button class="sb-item'+(_activeTab==='dashboard'?' active':'')+'" onclick="goTab(\'dashboard\',this)"><span class="material-symbols-outlined icon">dashboard</span>Dashboard</button>';
+  html+='<div class="sb-section">Trang chủ</div>';
+  html+='<button class="sb-item'+(_activeTab==='banner'?' active':'')+'" onclick="goTab(\'banner\',this)"><span class="material-symbols-outlined icon">web</span>Banner & Hero</button>';
+  html+='<button class="sb-item'+(_activeTab==='personal'?' active':'')+'" onclick="goTab(\'personal\',this)"><span class="material-symbols-outlined icon">person</span>Thông tin cá nhân</button>';
+  html+='<div class="sb-section">Nội dung</div>';
+  // List all pages from menus
+  (DATA.menus||[]).forEach(function(m){
+    if(m.slug==='home')return;
+    var typeIcon=m.page_type==='article'?'article':(m.page_type==='project'?'grid_view':'school');
+    var tabId='page:'+m.slug;
+    html+='<button class="sb-item'+(_activeTab===tabId?' active':'')+'" onclick="goTab(\''+tabId+'\',this)"><span class="material-symbols-outlined icon">'+typeIcon+'</span>'+esc(m.label)+'</button>';
+    (m.children||[]).forEach(function(c){
+      var cTabId='page:'+c.slug;
+      var cIcon=c.page_type==='article'?'article':(c.page_type==='project'?'grid_view':'school');
+      html+='<button class="sb-item sub'+(_activeTab===cTabId?' active':'')+'" onclick="goTab(\''+cTabId+'\',this)"><span class="material-symbols-outlined icon">'+cIcon+'</span>'+esc(c.label)+'</button>';
+    });
   });
-  document.getElementById('d-projects').textContent=pCount;
-  document.getElementById('d-articles').textContent=aCount;
-  document.getElementById('d-courses').textContent=cCount;
-  document.getElementById('d-menus').textContent=(DATA.menus||[]).length;
+  html+='<div class="sb-section">Quản lý</div>';
+  html+='<button class="sb-item'+(_activeTab==='menus'?' active':'')+'" onclick="goTab(\'menus\',this)"><span class="material-symbols-outlined icon">menu_open</span>Menu</button>';
+  html+='<button class="sb-item'+(_activeTab==='settings'?' active':'')+'" onclick="goTab(\'settings\',this)"><span class="material-symbols-outlined icon">settings</span>Cài đặt</button>';
+  nav.innerHTML=html;
 }
 
-// ── BANNER ──
-function loadBannerForm(){
+// ── Dashboard ──
+function renderDashboard(){
+  var pages=DATA.pages||{},pC=0,aC=0,cC=0;
+  Object.keys(pages).forEach(function(k){var p=pages[k];if(!p.items)return;if(p.page_type==='project')pC+=p.items.length;if(p.page_type==='article')aC+=p.items.length;if(p.page_type==='elearning')cC+=p.items.length;});
+  return '<div class="page-header"><h1>Dashboard</h1><p>Tổng quan nội dung</p></div><div class="stats-row"><div class="stat-card"><div class="stat-num">'+pC+'</div><div class="stat-label">Dự án</div></div><div class="stat-card"><div class="stat-num">'+aC+'</div><div class="stat-label">Bài viết</div></div><div class="stat-card"><div class="stat-num">'+cC+'</div><div class="stat-label">Khóa học</div></div><div class="stat-card"><div class="stat-num">'+(DATA.menus||[]).length+'</div><div class="stat-label">Menu</div></div></div>';
+}
+
+// ── Banner ──
+function renderBannerTab(){
   var b=DATA.banner||{};
-  set('b-badge',b.badge);set('b-name',b.name);set('b-line1',b.title_line1);set('b-line2',b.title_line2);
-  set('b-desc',b.description);set('b-btn1',b.btn_primary);set('b-btn2',b.btn_secondary);set('b-avatar',b.avatar_url);
+  return '<div class="page-header"><h1>Banner & Hero</h1><p>Chỉnh sửa phần đầu trang chủ</p></div><div class="card"><div class="section-title">Thông tin hiển thị</div><div class="fr"><div class="fg"><label>Badge</label><input type="text" id="b-badge" value="'+esc(b.badge)+'"></div><div class="fg"><label>Tên</label><input type="text" id="b-name" value="'+esc(b.name)+'"></div></div><div class="fr"><div class="fg"><label>Dòng 1</label><input type="text" id="b-line1" value="'+esc(b.title_line1)+'"></div><div class="fg"><label>Dòng 2</label><input type="text" id="b-line2" value="'+esc(b.title_line2)+'"></div></div><div class="fg"><label>Mô tả</label><textarea id="b-desc" rows="2">'+esc(b.description)+'</textarea></div><div class="fr"><div class="fg"><label>Nút chính</label><input type="text" id="b-btn1" value="'+esc(b.btn_primary)+'"></div><div class="fg"><label>Nút phụ</label><input type="text" id="b-btn2" value="'+esc(b.btn_secondary)+'"></div></div><div class="fg"><label>URL ảnh đại diện</label><input type="url" id="b-avatar" value="'+esc(b.avatar_url)+'"></div><button class="btn btn-primary" onclick="saveBanner()"><span class="material-symbols-outlined" style="font-size:16px">save</span>Lưu</button></div>';
 }
-async function saveBanner(){
-  DATA.banner={badge:v('b-badge'),name:v('b-name'),title_line1:v('b-line1'),title_line2:v('b-line2'),
-    description:v('b-desc'),btn_primary:v('b-btn1'),btn_primary_link:'#featured',btn_secondary:v('b-btn2'),btn_secondary_link:'#contact',avatar_url:v('b-avatar')};
-  if(v('b-name')){DATA.nav=DATA.nav||{};DATA.nav.brand=v('b-name');DATA.site=DATA.site||{};DATA.site.name=v('b-name');}
-  await trySave();
-}
+function saveBanner(){DATA.banner={badge:v('b-badge'),name:v('b-name'),title_line1:v('b-line1'),title_line2:v('b-line2'),description:v('b-desc'),btn_primary:v('b-btn1'),btn_primary_link:'#featured',btn_secondary:v('b-btn2'),btn_secondary_link:'#contact',avatar_url:v('b-avatar')};if(v('b-name')){DATA.nav=DATA.nav||{};DATA.nav.brand=v('b-name');DATA.site=DATA.site||{};DATA.site.name=v('b-name');}trySave();}
 
-// ── SETTINGS ──
-function loadSettingsForm(){
-  var c=DATA.contact||{},f=DATA.footer||{},n=DATA.nav||{};
-  set('s-email',c.email);set('s-location',c.location);
-  set('s-brand',f.brand);set('s-copy',f.copyright);
-  set('s-cta-label',n.cta_label);set('s-cta-link',n.cta_link);
+// ── Personal ──
+function renderPersonalTab(){
+  var p=DATA.personal||{};
+  var html='<div class="page-header"><h1>Thông Tin Cá Nhân</h1><p>Kỹ năng, kinh nghiệm, học vấn</p></div>';
+  // Skills
+  html+='<div class="card"><div class="card-header"><div><div class="card-title">Kỹ Năng</div></div><button class="btn btn-primary btn-sm" onclick="openPersonalModal(\'skill\')"><span class="material-symbols-outlined" style="font-size:14px">add</span>Thêm</button></div>';
+  (p.skills||[]).forEach(function(s,i){html+='<div class="mt-item"><div class="info"><div class="name">'+esc(s.name)+' ('+s.percent+'%)</div></div><div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="openPersonalModal(\'skill\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button><button class="btn btn-danger btn-sm btn-icon" onclick="delPersonal(\'skills\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button></div></div>';});
+  if(!(p.skills||[]).length)html+='<div class="empty-state">Chưa có kỹ năng.</div>';
+  html+='</div>';
+  // Experience
+  html+='<div class="card"><div class="card-header"><div><div class="card-title">Kinh Nghiệm</div></div><button class="btn btn-primary btn-sm" onclick="openPersonalModal(\'exp\')"><span class="material-symbols-outlined" style="font-size:14px">add</span>Thêm</button></div>';
+  (p.experience||[]).forEach(function(e,i){html+='<div class="mt-item"><div class="info"><div class="name">'+esc(e.title)+' — '+esc(e.company)+'</div><div class="slug">'+esc(e.period)+'</div></div><div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="openPersonalModal(\'exp\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button><button class="btn btn-danger btn-sm btn-icon" onclick="delPersonal(\'experience\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button></div></div>';});
+  if(!(p.experience||[]).length)html+='<div class="empty-state">Chưa có kinh nghiệm.</div>';
+  html+='</div>';
+  // Education
+  html+='<div class="card"><div class="card-header"><div><div class="card-title">Học Vấn</div></div><button class="btn btn-primary btn-sm" onclick="openPersonalModal(\'edu\')"><span class="material-symbols-outlined" style="font-size:14px">add</span>Thêm</button></div>';
+  (p.education||[]).forEach(function(e,i){html+='<div class="mt-item"><div class="info"><div class="name">'+esc(e.title)+' — '+esc(e.school)+'</div><div class="slug">'+esc(e.period)+'</div></div><div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="openPersonalModal(\'edu\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button><button class="btn btn-danger btn-sm btn-icon" onclick="delPersonal(\'education\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button></div></div>';});
+  if(!(p.education||[]).length)html+='<div class="empty-state">Chưa có học vấn.</div>';
+  html+='</div>';
+  return html;
 }
-async function saveSettings(){
-  DATA.contact={email:v('s-email'),phone:'',location:v('s-location'),social:[]};
-  DATA.footer={brand:v('s-brand'),copyright:v('s-copy')};
-  DATA.nav=Object.assign(DATA.nav||{},{cta_label:v('s-cta-label'),cta_link:v('s-cta-link')});
-  await trySave();
-}
-
-// ── PERSONAL (Skills, Exp, Edu) ──
-function renderPersonalLists(){
-  renderPList('skills','skillsList',function(s){return esc(s.name)+' ('+s.percent+'%)';},'skill');
-  renderPList('experience','expList',function(e){return esc(e.title)+' — '+esc(e.company);},'exp');
-  renderPList('education','eduList',function(e){return esc(e.title)+' — '+esc(e.school);},'edu');
-}
-function renderPList(key,elId,labelFn,type){
-  var el=document.getElementById(elId),items=(DATA.personal||{})[key]||[];
-  if(!items.length){el.innerHTML='<div class="empty-state">Chưa có dữ liệu.</div>';return;}
-  el.innerHTML=items.map(function(item,i){
-    return '<div class="mt-item"><div class="info"><div class="name">'+labelFn(item)+'</div></div><div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="openItemModal(\''+type+'\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button><button class="btn btn-danger btn-sm btn-icon" onclick="deletePersonalItem(\''+key+'\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button></div></div>';
-  }).join('');
-}
-
-function openItemModal(type,idx){
-  set('im-type',type);set('im-idx',idx!=null?idx:-1);
-  var body=document.getElementById('itemModalBody');
-  var title='Thêm ';
-  var html='';
-  var item=null;
-  if(idx!=null&&idx>=0){
-    title='Sửa ';
-    var key=type==='skill'?'skills':(type==='exp'?'experience':'education');
-    item=((DATA.personal||{})[key]||[])[idx];
-  }
-
+function openPersonalModal(type,idx){
+  var item=null;if(idx!=null){var k=type==='skill'?'skills':(type==='exp'?'experience':'education');item=((DATA.personal||{})[k]||[])[idx];}
+  var title=(item?'Sửa ':'Thêm ')+(type==='skill'?'kỹ năng':(type==='exp'?'kinh nghiệm':'học vấn'));
+  document.getElementById('imTitle').textContent=title;
+  var html='<input type="hidden" id="pm-type" value="'+type+'"><input type="hidden" id="pm-idx" value="'+(idx!=null?idx:-1)+'">';
   if(type==='skill'){
-    title+='kỹ năng';
-    html='<div class="fr"><div class="fg"><label>Tên *</label><input type="text" id="im-name" value="'+esc(item?item.name:'')+'"></div><div class="fg"><label>Phần trăm</label><input type="number" id="im-percent" value="'+(item?item.percent:0)+'" min="0" max="100"></div></div>';
-    html+='<div class="fr"><div class="fg"><label>Icon</label><input type="text" id="im-icon" value="'+esc(item?item.icon:'star')+'"></div><div class="fg"><label>Màu</label><select id="im-color"><option value="primary"'+(item&&item.color==='primary'?' selected':'')+'>Tím</option><option value="secondary"'+(item&&item.color==='secondary'?' selected':'')+'>Xanh</option><option value="tertiary"'+(item&&item.color==='tertiary'?' selected':'')+'>Vàng</option></select></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Tên *</label><input type="text" id="pm-name" value="'+esc(item?item.name:'')+'"></div><div class="fg"><label>Phần trăm</label><input type="number" id="pm-pct" value="'+(item?item.percent:0)+'" min="0" max="100"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Icon</label><input type="text" id="pm-icon" value="'+esc(item?item.icon:'star')+'"></div><div class="fg"><label>Màu</label><select id="pm-color"><option value="primary"'+(item&&item.color==='primary'?' selected':'')+'>Tím</option><option value="secondary"'+(item&&item.color==='secondary'?' selected':'')+'>Xanh</option><option value="tertiary"'+(item&&item.color==='tertiary'?' selected':'')+'>Vàng</option></select></div></div>';
   }else if(type==='exp'){
-    title+='kinh nghiệm';
-    html='<div class="fr"><div class="fg"><label>Chức danh *</label><input type="text" id="im-title" value="'+esc(item?item.title:'')+'"></div><div class="fg"><label>Công ty</label><input type="text" id="im-company" value="'+esc(item?item.company:'')+'"></div></div>';
-    html+='<div class="fr"><div class="fg"><label>Thời gian</label><input type="text" id="im-period" value="'+esc(item?item.period:'')+'"></div><div class="fg"><label>Màu</label><select id="im-color"><option value="primary"'+(item&&item.color==='primary'?' selected':'')+'>Tím</option><option value="secondary"'+(item&&item.color==='secondary'?' selected':'')+'>Xanh</option><option value="tertiary"'+(item&&item.color==='tertiary'?' selected':'')+'>Vàng</option></select></div></div>';
-    html+='<div class="fg"><label>Mô tả</label><textarea id="im-desc" rows="2">'+esc(item?item.description:'')+'</textarea></div>';
+    html+='<div class="fr"><div class="fg"><label>Chức danh *</label><input type="text" id="pm-title" value="'+esc(item?item.title:'')+'"></div><div class="fg"><label>Công ty</label><input type="text" id="pm-company" value="'+esc(item?item.company:'')+'"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Thời gian</label><input type="text" id="pm-period" value="'+esc(item?item.period:'')+'"></div><div class="fg"><label>Màu</label><select id="pm-color"><option value="primary"'+(item&&item.color==='primary'?' selected':'')+'>Tím</option><option value="secondary"'+(item&&item.color==='secondary'?' selected':'')+'>Xanh</option><option value="tertiary"'+(item&&item.color==='tertiary'?' selected':'')+'>Vàng</option></select></div></div>';
+    html+='<div class="fg"><label>Mô tả</label><textarea id="pm-desc" rows="2">'+esc(item?item.description:'')+'</textarea></div>';
   }else{
-    title+='học vấn';
-    html='<div class="fr"><div class="fg"><label>Bằng cấp *</label><input type="text" id="im-title" value="'+esc(item?item.title:'')+'"></div><div class="fg"><label>Trường</label><input type="text" id="im-school" value="'+esc(item?item.school:'')+'"></div></div>';
-    html+='<div class="fr"><div class="fg"><label>Thời gian</label><input type="text" id="im-period" value="'+esc(item?item.period:'')+'"></div></div>';
-    html+='<div class="fg"><label>Mô tả</label><textarea id="im-desc" rows="2">'+esc(item?item.description:'')+'</textarea></div>';
+    html+='<div class="fr"><div class="fg"><label>Bằng cấp *</label><input type="text" id="pm-title" value="'+esc(item?item.title:'')+'"></div><div class="fg"><label>Trường</label><input type="text" id="pm-school" value="'+esc(item?item.school:'')+'"></div></div>';
+    html+='<div class="fg"><label>Thời gian</label><input type="text" id="pm-period" value="'+esc(item?item.period:'')+'"></div>';
+    html+='<div class="fg"><label>Mô tả</label><textarea id="pm-desc" rows="2">'+esc(item?item.description:'')+'</textarea></div>';
   }
+  document.getElementById('imBody').innerHTML=html;
+  document.getElementById('imSaveBtn').onclick=savePersonal;
+  openModal('itemModal');
+}
+function savePersonal(){
+  var type=v('pm-type'),idx=parseInt(v('pm-idx'));if(!DATA.personal)DATA.personal={skills:[],experience:[],education:[]};
+  var item;
+  if(type==='skill'){if(!v('pm-name')){showAlert('Nhập tên!','error');return;}item={id:uid(),name:v('pm-name'),percent:parseInt(v('pm-pct'))||0,icon:v('pm-icon')||'star',color:v('pm-color')||'primary'};if(idx>=0)DATA.personal.skills[idx]=item;else DATA.personal.skills.push(item);}
+  else if(type==='exp'){if(!v('pm-title')){showAlert('Nhập chức danh!','error');return;}item={id:uid(),title:v('pm-title'),company:v('pm-company'),period:v('pm-period'),description:v('pm-desc'),color:v('pm-color')||'primary'};if(idx>=0)DATA.personal.experience[idx]=item;else DATA.personal.experience.push(item);}
+  else{if(!v('pm-title')){showAlert('Nhập bằng cấp!','error');return;}item={id:uid(),title:v('pm-title'),school:v('pm-school'),period:v('pm-period'),description:v('pm-desc')};if(idx>=0)DATA.personal.education[idx]=item;else DATA.personal.education.push(item);}
+  trySave(function(){closeModal('itemModal');});
+}
+function delPersonal(key,idx){if(!confirm('Xoá?'))return;DATA.personal[key].splice(idx,1);trySave();}
 
-  document.getElementById('itemModalTitle').textContent=title;
-  body.innerHTML=html;
+// ── Menus ──
+function autoSlug(){var l=v('mm-label');set('mm-slug',l.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-'));}
+function renderMenusTab(){
+  var menus=DATA.menus||[];
+  var html='<div class="page-header"><h1>Quản Lý Menu</h1><p>Thêm, sửa, xoá menu và submenu</p></div><div class="page-actions"><span style="font-size:.82rem;color:var(--text3)">'+menus.length+' menu</span><button class="btn btn-primary btn-sm" onclick="openMenuModal()"><span class="material-symbols-outlined" style="font-size:14px">add</span>Thêm Menu</button></div>';
+  if(!menus.length){html+='<div class="empty-state">Chưa có menu.</div>';return html;}
+  menus.forEach(function(m,i){
+    if(m.slug==='home')return;
+    var badge='<span class="badge-type badge-'+m.page_type+'">'+m.page_type+'</span>';
+    html+='<div class="mt-item"><div class="info"><div class="name">'+esc(m.label)+badge+'</div><div class="slug">/'+esc(m.slug)+'</div></div><div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="openMenuModal(\''+m.id+'\')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button><button class="btn btn-ghost btn-sm btn-icon" onclick="openMenuModal(\'\',\''+m.id+'\')"><span class="material-symbols-outlined" style="font-size:14px">subdirectory_arrow_right</span></button><button class="btn btn-danger btn-sm btn-icon" onclick="delMenu('+i+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button></div></div>';
+    (m.children||[]).forEach(function(c,ci){
+      var cb='<span class="badge-type badge-'+c.page_type+'">'+c.page_type+'</span>';
+      html+='<div class="mt-item" style="margin-left:24px;border-style:dashed"><div class="info"><div class="name">'+esc(c.label)+cb+'</div><div class="slug">/'+esc(c.slug)+'</div></div><div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="editSubMenu('+i+','+ci+')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button><button class="btn btn-danger btn-sm btn-icon" onclick="delSubMenu('+i+','+ci+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button></div></div>';
+    });
+  });
+  return html;
+}
+function openMenuModal(editId,parentId){set('mm-edit-id',editId||'');set('mm-parent-id',parentId||'');set('mm-label','');set('mm-slug','');set('mm-type','article');var ps=document.getElementById('mm-parent');ps.innerHTML='<option value="">— Menu chính —</option>';(DATA.menus||[]).forEach(function(m){if(m.slug!=='home')ps.innerHTML+='<option value="'+m.id+'">'+esc(m.label)+'</option>';});if(parentId)ps.value=parentId;if(editId){var menu=null;(DATA.menus||[]).forEach(function(m){if(m.id===editId)menu=m;(m.children||[]).forEach(function(c){if(c.id===editId)menu=c;});});if(menu){set('mm-label',menu.label);set('mm-slug',menu.slug);set('mm-type',menu.page_type);}document.getElementById('mmTitle').textContent='Sửa Menu';}else{document.getElementById('mmTitle').textContent=parentId?'Thêm Submenu':'Thêm Menu';}openModal('menuModal');}
+function editSubMenu(pi,ci){var c=DATA.menus[pi].children[ci];set('mm-edit-id',c.id);set('mm-parent-id','');set('mm-label',c.label);set('mm-slug',c.slug);set('mm-type',c.page_type);document.getElementById('mmTitle').textContent='Sửa';var ps=document.getElementById('mm-parent');ps.innerHTML='<option value="">— Menu chính —</option>';(DATA.menus||[]).forEach(function(m){if(m.slug!=='home')ps.innerHTML+='<option value="'+m.id+'">'+esc(m.label)+'</option>';});openModal('menuModal');}
+function saveMenu(){var label=v('mm-label'),slug=v('mm-slug'),pt=v('mm-type');if(!label||!slug){showAlert('Nhập tên và slug!','error');return;}if(!/^[a-z0-9-]+$/.test(slug)){showAlert('Slug không hợp lệ','error');return;}var editId=v('mm-edit-id'),parentId=v('mm-parent-id')||v('mm-parent');if(!DATA.menus)DATA.menus=[];if(!DATA.pages)DATA.pages={};if(editId){DATA.menus.forEach(function(m){if(m.id===editId){m.label=label;m.slug=slug;m.page_type=pt;}(m.children||[]).forEach(function(c){if(c.id===editId){c.label=label;c.slug=slug;c.page_type=pt;}});});}else{var nm={id:'m_'+uid(),label:label,slug:slug,page_type:pt,children:[]};if(parentId){var par=DATA.menus.find(function(m){return m.id===parentId;});if(par){if(!par.children)par.children=[];par.children.push(nm);}}else{nm.order=DATA.menus.length;DATA.menus.push(nm);}}if(!DATA.pages[slug])DATA.pages[slug]={title:label,description:'',page_type:pt,items:[]};trySave(function(){closeModal('menuModal');});}
+function delMenu(i){if(!confirm('Xoá menu?'))return;DATA.menus.splice(i,1);trySave();}
+function delSubMenu(pi,ci){if(!confirm('Xoá?'))return;DATA.menus[pi].children.splice(ci,1);trySave();}
+
+// ── Settings ──
+function renderSettingsTab(){var c=DATA.contact||{},f=DATA.footer||{},n=DATA.nav||{};return '<div class="page-header"><h1>Cài Đặt</h1><p>Liên hệ, footer, navigation</p></div><div class="card"><div class="section-title">Liên hệ</div><div class="fr"><div class="fg"><label>Email</label><input type="email" id="s-email" value="'+esc(c.email)+'"></div><div class="fg"><label>Địa điểm</label><input type="text" id="s-loc" value="'+esc(c.location)+'"></div></div><div class="section-title" style="margin-top:14px">Footer</div><div class="fr"><div class="fg"><label>Thương hiệu</label><input type="text" id="s-brand" value="'+esc(f.brand)+'"></div><div class="fg"><label>Bản quyền</label><input type="text" id="s-copy" value="'+esc(f.copyright)+'"></div></div><div class="section-title" style="margin-top:14px">CTA</div><div class="fr"><div class="fg"><label>Label</label><input type="text" id="s-cta" value="'+esc(n.cta_label)+'"></div><div class="fg"><label>Link</label><input type="text" id="s-clink" value="'+esc(n.cta_link)+'"></div></div><button class="btn btn-primary" onclick="saveSettings()"><span class="material-symbols-outlined" style="font-size:16px">save</span>Lưu</button></div>';}
+function saveSettings(){DATA.contact={email:v('s-email'),location:v('s-loc')};DATA.footer={brand:v('s-brand'),copyright:v('s-copy')};DATA.nav=Object.assign(DATA.nav||{},{cta_label:v('s-cta'),cta_link:v('s-clink')});trySave();}
+
+// ══════════════════════════════════════════════
+// PAGE CONTENT TAB (article/project/elearning)
+// ══════════════════════════════════════════════
+function renderPageTab(slug){
+  var page=DATA.pages&&DATA.pages[slug];
+  if(!page)return '<div class="empty-state">Trang "'+esc(slug)+'" chưa tồn tại.</div>';
+  var items=page.items||[];
+  var typeLabels={article:'bài viết',project:'dự án',elearning:'khóa học'};
+  var typeLabel=typeLabels[page.page_type]||'mục';
+  var html='<div class="page-header"><h1>'+esc(page.title)+'</h1><p>Quản lý '+typeLabel+' · <a href="../page.html?slug='+esc(slug)+'" target="_blank" style="color:var(--primary)">Xem trang ↗</a></p></div>';
+  html+='<div class="page-actions"><span style="font-size:.82rem;color:var(--text3)">'+items.length+' '+typeLabel+'</span><button class="btn btn-primary btn-sm" onclick="openPageItemModal(\''+esc(slug)+'\')"><span class="material-symbols-outlined" style="font-size:14px">add</span>Thêm '+typeLabel+'</button></div>';
+  if(!items.length){html+='<div class="empty-state">Chưa có '+typeLabel+' nào.</div>';return html;}
+  items.forEach(function(item,i){
+    var extra='';
+    if(page.page_type==='elearning'){var lc=(item.lessons||[]).length;extra=' · '+lc+' bài học';}
+    html+='<div class="mt-item"><div class="info"><div class="name">'+esc(item.title)+(item.featured?' ⭐':'')+'</div><div class="slug">'+esc(item.category||item.client||item.level||'')+' · '+esc(item.date||'')+extra+'</div></div><div class="card-actions">';
+    if(page.page_type==='elearning')html+='<button class="btn btn-secondary btn-sm" onclick="openLessonsManager(\''+esc(slug)+'\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">school</span>Bài học</button>';
+    html+='<button class="btn btn-ghost btn-sm btn-icon" onclick="openPageItemModal(\''+esc(slug)+'\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>';
+    html+='<button class="btn btn-danger btn-sm btn-icon" onclick="delPageItem(\''+esc(slug)+'\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button></div></div>';
+  });
+  return html;
+}
+
+function openPageItemModal(slug,idx){
+  var page=DATA.pages[slug];if(!page)return;
+  var pt=page.page_type,item=idx!=null?(page.items||[])[idx]:null;
+  var typeLabels={article:'bài viết',project:'dự án',elearning:'khóa học'};
+  document.getElementById('imTitle').textContent=(item?'Sửa ':'Thêm ')+typeLabels[pt];
+  document.getElementById('itemModalBox').className='modal-box'+(pt==='article'?' wide':'');
+  var html='<input type="hidden" id="pi-slug" value="'+esc(slug)+'"><input type="hidden" id="pi-idx" value="'+(idx!=null?idx:-1)+'">';
+  if(pt==='article'){
+    html+='<div class="fg"><label>Tiêu đề *</label><input type="text" id="pi-title" value="'+esc(item?item.title:'')+'"></div>';
+    html+='<div class="fg"><label>Excerpt</label><textarea id="pi-excerpt" rows="2">'+esc(item?item.excerpt:'')+'</textarea></div>';
+    html+='<div class="fg"><label>Nội dung (trình soạn thảo)</label><div id="pi-editor" style="height:280px"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Danh mục</label><input type="text" id="pi-cat" value="'+esc(item?item.category:'')+'"></div><div class="fg"><label>Tác giả</label><input type="text" id="pi-author" value="'+esc(item?item.author:'')+'"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Ngày</label><input type="text" id="pi-date" value="'+esc(item?item.date:new Date().toISOString().split('T')[0])+'"></div><div class="fg"><label>Đọc (phút)</label><input type="number" id="pi-rt" value="'+(item?item.read_time:5)+'"></div></div>';
+    html+='<div class="fg"><label>URL ảnh</label><input type="url" id="pi-img" value="'+esc(item?item.image:'')+'"></div>';
+    html+='<div class="fg"><label>Tags (phẩy phân cách)</label><input type="text" id="pi-tags" value="'+esc(item?(item.tags||[]).join(', '):'')+'"></div>';
+    html+='<div class="fg"><label>Nổi bật?</label><select id="pi-feat"><option value="1"'+(item&&item.featured?' selected':'')+'>Có</option><option value="0"'+(item&&!item.featured?' selected':'')+'>Không</option></select></div>';
+  }else if(pt==='project'){
+    html+='<div class="fg"><label>Tên dự án *</label><input type="text" id="pi-title" value="'+esc(item?item.title:'')+'"></div>';
+    html+='<div class="fg"><label>Mô tả</label><textarea id="pi-desc" rows="2">'+esc(item?item.description:'')+'</textarea></div>';
+    html+='<div class="fr"><div class="fg"><label>Khách hàng</label><input type="text" id="pi-client" value="'+esc(item?item.client:'')+'"></div><div class="fg"><label>Danh mục</label><input type="text" id="pi-cat" value="'+esc(item?item.category:'')+'"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Ngày</label><input type="text" id="pi-date" value="'+esc(item?item.date:'')+'"></div><div class="fg"><label>Link</label><input type="url" id="pi-link" value="'+esc(item?item.link:'')+'"></div></div>';
+    html+='<div class="fg"><label>Tags</label><input type="text" id="pi-tags" value="'+esc(item?(item.tags||[]).join(', '):'')+'"></div>';
+    html+='<div class="fg"><label>URL ảnh</label><input type="url" id="pi-img" value="'+esc(item?item.image:'')+'"></div>';
+    html+='<div class="fg"><label>Nổi bật?</label><select id="pi-feat"><option value="1"'+(item&&item.featured?' selected':'')+'>Có</option><option value="0"'+(item&&!item.featured?' selected':'')+'>Không</option></select></div>';
+  }else{
+    html+='<div class="fg"><label>Tên khóa học *</label><input type="text" id="pi-title" value="'+esc(item?item.title:'')+'"></div>';
+    html+='<div class="fg"><label>Mô tả</label><textarea id="pi-desc" rows="2">'+esc(item?item.description:'')+'</textarea></div>';
+    html+='<div class="fr"><div class="fg"><label>Giảng viên</label><input type="text" id="pi-inst" value="'+esc(item?item.instructor:'')+'"></div><div class="fg"><label>Trình độ</label><input type="text" id="pi-level" value="'+esc(item?item.level:'')+'"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Thời lượng</label><input type="text" id="pi-dur" value="'+esc(item?item.duration:'')+'"></div><div class="fg"><label>Giá</label><input type="text" id="pi-price" value="'+esc(item?item.price:'')+'"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Trạng thái</label><select id="pi-status"><option value="open"'+(item&&item.status==='open'?' selected':'')+'>Đang mở</option><option value="upcoming"'+(item&&item.status==='upcoming'?' selected':'')+'>Sắp khai giảng</option><option value="closed"'+(item&&item.status==='closed'?' selected':'')+'>Đã đóng</option></select></div><div class="fg"><label>Link</label><input type="url" id="pi-link" value="'+esc(item?item.link:'')+'"></div></div>';
+    html+='<div class="fr"><div class="fg"><label>Ngày</label><input type="text" id="pi-date" value="'+esc(item?item.date:'')+'"></div><div class="fg"><label>Nổi bật?</label><select id="pi-feat"><option value="1"'+(item&&item.featured?' selected':'')+'>Có</option><option value="0"'+(item&&!item.featured?' selected':'')+'>Không</option></select></div></div>';
+    html+='<div class="fg"><label>URL ảnh</label><input type="url" id="pi-img" value="'+esc(item?item.image:'')+'"></div>';
+  }
+  document.getElementById('imBody').innerHTML=html;
+  document.getElementById('imSaveBtn').onclick=savePageItem;
+  openModal('itemModal');
+  // Init Quill for article content
+  if(pt==='article'){setTimeout(function(){_quill=new Quill('#pi-editor',{theme:'snow',modules:{toolbar:[['bold','italic','underline','strike'],['blockquote','code-block'],[{header:1},{header:2},{header:3}],[{list:'ordered'},{list:'bullet'}],['link','image'],['clean']]}});if(item&&item.content)_quill.root.innerHTML=item.content;},100);}
+}
+
+function savePageItem(){
+  var slug=v('pi-slug'),idx=parseInt(v('pi-idx'));
+  if(!v('pi-title')){showAlert('Nhập tiêu đề!','error');return;}
+  var page=DATA.pages[slug];if(!page)return;if(!page.items)page.items=[];
+  var pt=page.page_type,item={id:uid()};
+  if(pt==='article'){
+    item.title=v('pi-title');item.excerpt=v('pi-excerpt');item.content=_quill?_quill.root.innerHTML:'';
+    item.category=v('pi-cat');item.author=v('pi-author');item.date=v('pi-date');item.read_time=parseInt(v('pi-rt'))||5;
+    item.image=v('pi-img');item.tags=v('pi-tags')?v('pi-tags').split(',').map(function(t){return t.trim();}).filter(Boolean):[];
+    item.featured=v('pi-feat')==='1';
+  }else if(pt==='project'){
+    item.title=v('pi-title');item.description=v('pi-desc');item.client=v('pi-client');item.category=v('pi-cat');
+    item.date=v('pi-date');item.link=v('pi-link')||'#';
+    item.tags=v('pi-tags')?v('pi-tags').split(',').map(function(t){return t.trim();}).filter(Boolean):[];
+    item.image=v('pi-img');item.featured=v('pi-feat')==='1';
+  }else{
+    item.title=v('pi-title');item.description=v('pi-desc');item.instructor=v('pi-inst');item.level=v('pi-level');
+    item.duration=v('pi-dur');item.price=v('pi-price');item.status=v('pi-status')||'open';item.link=v('pi-link')||'#';
+    item.date=v('pi-date');item.image=v('pi-img');item.featured=v('pi-feat')==='1';
+    item.lessons=(idx>=0&&page.items[idx])?page.items[idx].lessons||[]:[];
+    item.lessons_count=item.lessons.length;
+  }
+  if(idx>=0){item.id=page.items[idx].id||item.id;if(pt==='elearning')item.lessons=page.items[idx].lessons||[];page.items[idx]=item;}
+  else page.items.unshift(item);
+  trySave(function(){closeModal('itemModal');});
+}
+function delPageItem(slug,idx){if(!confirm('Xoá?'))return;DATA.pages[slug].items.splice(idx,1);trySave();}
+
+// ── LESSONS MANAGER ──
+function openLessonsManager(slug,courseIdx){
+  var page=DATA.pages[slug];if(!page)return;
+  var course=page.items[courseIdx];if(!course)return;
+  if(!course.lessons)course.lessons=[];
+  document.getElementById('imTitle').textContent='Bài học: '+course.title;
+  document.getElementById('itemModalBox').className='modal-box wide';
+  var html='<input type="hidden" id="lm-ctx-slug" value="'+esc(slug)+'"><input type="hidden" id="lm-ctx-idx" value="'+courseIdx+'">';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span style="font-size:.82rem;color:var(--text3)">'+course.lessons.length+' bài học</span><button class="btn btn-primary btn-sm" onclick="openLessonEditor(\''+esc(slug)+'\','+courseIdx+')"><span class="material-symbols-outlined" style="font-size:14px">add</span>Thêm bài</button></div>';
+  if(!course.lessons.length){html+='<div class="empty-state">Chưa có bài học.</div>';}
+  else{course.lessons.sort(function(a,b){return(a.order||0)-(b.order||0);}).forEach(function(l,i){
+    var icon=l.type==='video'?'play_circle':'description';
+    html+='<div class="lesson-item"><div class="l-num">'+(i+1)+'</div><div class="l-info"><div class="l-title">'+esc(l.title)+'</div><div class="l-type"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle">'+icon+'</span> '+esc(l.type)+' · '+esc(l.duration||'')+'</div></div><div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="openLessonEditor(\''+esc(slug)+'\','+courseIdx+','+i+')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button><button class="btn btn-danger btn-sm btn-icon" onclick="delLesson(\''+esc(slug)+'\','+courseIdx+','+i+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button></div></div>';
+  });}
+  document.getElementById('imBody').innerHTML=html;
+  document.getElementById('imSaveBtn').style.display='none';
   openModal('itemModal');
 }
 
-async function savePersonalItem(){
-  var type=v('im-type'),idx=parseInt(v('im-idx'));
-  if(!DATA.personal)DATA.personal={skills:[],experience:[],education:[]};
-  var item;
-  if(type==='skill'){
-    if(!v('im-name')){showAlert('Nhập tên!','error');return;}
-    item={id:uid(),name:v('im-name'),percent:parseInt(v('im-percent'))||0,icon:v('im-icon')||'star',color:v('im-color')||'primary'};
-    if(idx>=0)DATA.personal.skills[idx]=item;else DATA.personal.skills.push(item);
-  }else if(type==='exp'){
-    if(!v('im-title')){showAlert('Nhập chức danh!','error');return;}
-    item={id:uid(),title:v('im-title'),company:v('im-company'),period:v('im-period'),description:v('im-desc'),color:v('im-color')||'primary'};
-    if(idx>=0)DATA.personal.experience[idx]=item;else DATA.personal.experience.push(item);
-  }else{
-    if(!v('im-title')){showAlert('Nhập bằng cấp!','error');return;}
-    item={id:uid(),title:v('im-title'),school:v('im-school'),period:v('im-period'),description:v('im-desc')};
-    if(idx>=0)DATA.personal.education[idx]=item;else DATA.personal.education.push(item);
-  }
-  await trySave(function(){closeModal('itemModal');});
+function openLessonEditor(slug,courseIdx,lessonIdx){
+  closeModal('itemModal');
+  var course=DATA.pages[slug].items[courseIdx];
+  var lesson=lessonIdx!=null?course.lessons[lessonIdx]:null;
+  set('lm-slug',slug);set('lm-course-idx',courseIdx);set('lm-edit-idx',lessonIdx!=null?lessonIdx:-1);
+  document.getElementById('lmTitle').textContent=lesson?'Sửa bài học':'Thêm bài học';
+  set('lm-title',lesson?lesson.title:'');set('lm-type',lesson?lesson.type:'video');
+  set('lm-video',lesson?lesson.video_url:'');set('lm-duration',lesson?lesson.duration:'');
+  toggleLessonType();
+  openModal('lessonModal');
+  setTimeout(function(){
+    if(_lessonQuill){_lessonQuill=null;}
+    var el=document.getElementById('lm-editor');if(!el)return;el.innerHTML='';
+    _lessonQuill=new Quill('#lm-editor',{theme:'snow',modules:{toolbar:[['bold','italic','underline'],[{header:1},{header:2},{header:3}],[{list:'ordered'},{list:'bullet'}],['link','image'],['clean']]}});
+    if(lesson&&lesson.content)_lessonQuill.root.innerHTML=lesson.content;
+  },150);
 }
-
-async function deletePersonalItem(key,idx){
-  if(!confirm('Xoá mục này?'))return;
-  DATA.personal[key].splice(idx,1);
-  await trySave();
+function toggleLessonType(){document.getElementById('lm-video-group').style.display=v('lm-type')==='video'?'block':'none';}
+function saveLesson(){
+  if(!v('lm-title')){showAlert('Nhập tiêu đề!','error');return;}
+  var slug=v('lm-slug'),cIdx=parseInt(v('lm-course-idx')),lIdx=parseInt(v('lm-edit-idx'));
+  var course=DATA.pages[slug].items[cIdx];if(!course.lessons)course.lessons=[];
+  var lesson={id:uid(),title:v('lm-title'),type:v('lm-type'),video_url:v('lm-video'),content:_lessonQuill?_lessonQuill.root.innerHTML:'',duration:v('lm-duration'),order:lIdx>=0?course.lessons[lIdx].order:course.lessons.length+1};
+  if(lIdx>=0){lesson.id=course.lessons[lIdx].id||lesson.id;course.lessons[lIdx]=lesson;}
+  else course.lessons.push(lesson);
+  course.lessons_count=course.lessons.length;
+  trySave(function(){closeModal('lessonModal');setTimeout(function(){document.getElementById('imSaveBtn').style.display='';openLessonsManager(slug,cIdx);},100);});
 }
-
-// ── MENUS ──
-function autoSlug(){
-  var label=v('mm-label');
-  var slug=label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-');
-  set('mm-slug',slug);
-}
-
-function renderMenuTree(){
-  var el=document.getElementById('menuTree'),menus=DATA.menus||[];
-  document.getElementById('menuCount').textContent=menus.length+' menu';
-  if(!menus.length){el.innerHTML='<div class="empty-state">Chưa có menu. Nhấn "Thêm Menu" để bắt đầu.</div>';return;}
-
-  var html='';
-  menus.forEach(function(m,i){
-    var badge='<span class="badge-type badge-'+m.page_type+'">'+m.page_type+'</span>';
-    html+='<div class="mt-item"><div class="info"><div class="name">'+esc(m.label)+badge+'</div><div class="slug">/'+esc(m.slug)+'</div></div>';
-    html+='<div class="card-actions">';
-    html+='<button class="btn btn-secondary btn-sm" onclick="openPageList(\''+esc(m.slug)+'\')"><span class="material-symbols-outlined" style="font-size:14px">settings</span>Quản lý</button>';
-    html+='<button class="btn btn-ghost btn-sm btn-icon" onclick="openMenuModal(\''+m.id+'\')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>';
-    html+='<button class="btn btn-ghost btn-sm btn-icon" onclick="openMenuModal(\'\',\''+m.id+'\')"><span class="material-symbols-outlined" style="font-size:14px">subdirectory_arrow_right</span></button>';
-    html+='<button class="btn btn-danger btn-sm btn-icon" onclick="deleteMenu('+i+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>';
-    html+='</div></div>';
-
-    // Children
-    if(m.children&&m.children.length){
-      m.children.forEach(function(c,ci){
-        var cbadge='<span class="badge-type badge-'+c.page_type+'">'+c.page_type+'</span>';
-        html+='<div class="mt-item" style="margin-left:24px;border-style:dashed"><div class="info"><div class="name">'+esc(c.label)+cbadge+'</div><div class="slug">/'+esc(c.slug)+'</div></div>';
-        html+='<div class="card-actions">';
-        html+='<button class="btn btn-secondary btn-sm" onclick="openPageList(\''+esc(c.slug)+'\')"><span class="material-symbols-outlined" style="font-size:14px">settings</span>Quản lý</button>';
-        html+='<button class="btn btn-ghost btn-sm btn-icon" onclick="editSubMenu('+i+','+ci+')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>';
-        html+='<button class="btn btn-danger btn-sm btn-icon" onclick="deleteSubMenu('+i+','+ci+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>';
-        html+='</div></div>';
-      });
-    }
-  });
-  el.innerHTML=html;
-}
-
-function openMenuModal(editId,parentId){
-  set('mm-edit-id',editId||'');
-  set('mm-parent-id',parentId||'');
-  set('mm-label','');set('mm-slug','');set('mm-type','article');
-
-  // Populate parent select
-  var ps=document.getElementById('mm-parent');
-  ps.innerHTML='<option value="">— Menu chính —</option>';
-  (DATA.menus||[]).forEach(function(m){
-    ps.innerHTML+='<option value="'+m.id+'">'+esc(m.label)+'</option>';
-  });
-  if(parentId)ps.value=parentId;
-
-  if(editId){
-    // Editing existing menu
-    var menu=null;
-    (DATA.menus||[]).forEach(function(m){
-      if(m.id===editId)menu=m;
-      (m.children||[]).forEach(function(c){if(c.id===editId)menu=c;});
-    });
-    if(menu){
-      set('mm-label',menu.label);set('mm-slug',menu.slug);set('mm-type',menu.page_type);
-      document.getElementById('menuModalTitle').textContent='Sửa Menu';
-    }
-  }else{
-    document.getElementById('menuModalTitle').textContent=parentId?'Thêm Submenu':'Thêm Menu';
-  }
-  openModal('menuModal');
-}
-
-function editSubMenu(pi,ci){
-  var child=DATA.menus[pi].children[ci];
-  set('mm-edit-id',child.id);set('mm-parent-id','');
-  set('mm-label',child.label);set('mm-slug',child.slug);set('mm-type',child.page_type);
-  document.getElementById('menuModalTitle').textContent='Sửa Submenu';
-  var ps=document.getElementById('mm-parent');
-  ps.innerHTML='<option value="">— Menu chính —</option>';
-  (DATA.menus||[]).forEach(function(m){ps.innerHTML+='<option value="'+m.id+'">'+esc(m.label)+'</option>';});
-  openModal('menuModal');
-}
-
-async function saveMenu(){
-  var label=v('mm-label'),slug=v('mm-slug'),pageType=v('mm-type');
-  if(!label||!slug){showAlert('Nhập tên và slug!','error');return;}
-  if(!/^[a-z0-9-]+$/.test(slug)){showAlert('Slug chỉ dùng chữ thường, số, dấu -','error');return;}
-
-  var editId=v('mm-edit-id'),parentId=v('mm-parent-id')||v('mm-parent');
-  if(!DATA.menus)DATA.menus=[];
-  if(!DATA.pages)DATA.pages={};
-
-  if(editId){
-    // Update existing
-    var found=false;
-    DATA.menus.forEach(function(m){
-      if(m.id===editId){m.label=label;m.slug=slug;m.page_type=pageType;found=true;}
-      (m.children||[]).forEach(function(c){
-        if(c.id===editId){c.label=label;c.slug=slug;c.page_type=pageType;found=true;}
-      });
-    });
-  }else{
-    // New menu
-    var newMenu={id:'m_'+uid(),label:label,slug:slug,page_type:pageType,children:[]};
-    if(parentId){
-      var parent=DATA.menus.find(function(m){return m.id===parentId;});
-      if(parent){if(!parent.children)parent.children=[];parent.children.push(newMenu);}
-    }else{
-      newMenu.order=DATA.menus.length;
-      DATA.menus.push(newMenu);
-    }
-  }
-
-  // Create page if not exists
-  if(!DATA.pages[slug]){
-    DATA.pages[slug]={title:label,description:'',page_type:pageType,items:[]};
-  }
-
-  await trySave(function(){closeModal('menuModal');});
-}
-
-async function deleteMenu(i){
-  if(!confirm('Xoá menu "'+DATA.menus[i].label+'"?'))return;
-  var slug=DATA.menus[i].slug;
-  DATA.menus.splice(i,1);
-  // Optionally delete page too
-  // delete DATA.pages[slug];
-  await trySave();
-}
-
-async function deleteSubMenu(pi,ci){
-  if(!confirm('Xoá submenu này?'))return;
-  DATA.menus[pi].children.splice(ci,1);
-  await trySave();
-}
-
-// ── PAGE ITEMS LIST ──
-function openPageList(slug){
-  var page=DATA.pages&&DATA.pages[slug];
-  if(!page){showAlert('Trang "'+slug+'" chưa tồn tại.','error');return;}
-
-  var items=page.items||[];
-  document.getElementById('plTitle').textContent='Quản lý: '+page.title;
-  document.getElementById('plCount').textContent=items.length+' mục';
-  document.getElementById('plAddBtn').onclick=function(){openPageItemModal(slug,page.page_type);};
-
-  var typeLabels={article:'Bài viết',project:'Dự án',elearning:'Khóa học'};
-  var html='';
-  if(!items.length){
-    html='<div class="empty-state">Chưa có '+typeLabels[page.page_type]+' nào.</div>';
-  }else{
-    items.forEach(function(item,i){
-      html+='<div class="mt-item"><div class="info"><div class="name">'+esc(item.title)+(item.featured?' ⭐':'')+'</div><div class="slug">'+esc(item.category||item.client||item.level||'')+(item.date?' · '+item.date:'')+'</div></div>';
-      html+='<div class="card-actions"><button class="btn btn-ghost btn-sm btn-icon" onclick="openPageItemModal(\''+slug+'\',\''+page.page_type+'\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>';
-      html+='<button class="btn btn-danger btn-sm btn-icon" onclick="deletePageItem(\''+slug+'\','+i+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button></div></div>';
-    });
-  }
-  document.getElementById('plList').innerHTML=html;
-  openModal('pageListModal');
-}
-
-async function deletePageItem(slug,idx){
-  if(!confirm('Xoá mục này?'))return;
-  DATA.pages[slug].items.splice(idx,1);
-  await trySave(function(){openPageList(slug);});
-}
-
-// ── PAGE ITEM MODAL (add/edit items for a page) ──
-function openPageItemModal(slug,pageType,idx){
-  set('pi-page-slug',slug);set('pi-page-type',pageType);set('pi-edit-idx',idx!=null?idx:-1);
-  var item=idx!=null&&idx>=0?(DATA.pages[slug].items||[])[idx]:null;
-
-  var typeLabels={article:'bài viết',project:'dự án',elearning:'khóa học'};
-  document.getElementById('piModalTitle').textContent=(item?'Sửa ':'Thêm ')+typeLabels[pageType];
-
-  var body=document.getElementById('piModalBody');
-  var html='';
-
-  if(pageType==='article'){
-    html+='<div class="fg"><label>Tiêu đề *</label><input type="text" id="pi-title" value="'+esc(item?item.title:'')+'"></div>';
-    html+='<div class="fg"><label>Excerpt</label><textarea id="pi-excerpt" rows="2">'+esc(item?item.excerpt:'')+'</textarea></div>';
-    html+='<div class="fg"><label>Nội dung</label><textarea id="pi-content" rows="4">'+esc(item?item.content:'')+'</textarea></div>';
-    html+='<div class="fr"><div class="fg"><label>Danh mục</label><input type="text" id="pi-category" value="'+esc(item?item.category:'')+'"></div><div class="fg"><label>Tác giả</label><input type="text" id="pi-author" value="'+esc(item?item.author:'')+'"></div></div>';
-    html+='<div class="fr"><div class="fg"><label>Ngày</label><input type="text" id="pi-date" value="'+esc(item?item.date:new Date().toISOString().split('T')[0])+'"></div><div class="fg"><label>Thời gian đọc (phút)</label><input type="number" id="pi-readtime" value="'+(item?item.read_time:5)+'"></div></div>';
-    html+='<div class="fg"><label>URL ảnh</label><input type="url" id="pi-image" value="'+esc(item?item.image:'')+'"></div>';
-    html+='<div class="fg"><label>Nổi bật?</label><select id="pi-featured"><option value="true"'+(item&&item.featured?' selected':'')+'>Có</option><option value="false"'+(item&&!item.featured?' selected':'')+'>Không</option></select></div>';
-  }else if(pageType==='project'){
-    html+='<div class="fg"><label>Tên dự án *</label><input type="text" id="pi-title" value="'+esc(item?item.title:'')+'"></div>';
-    html+='<div class="fg"><label>Mô tả</label><textarea id="pi-desc" rows="2">'+esc(item?item.description:'')+'</textarea></div>';
-    html+='<div class="fr"><div class="fg"><label>Khách hàng</label><input type="text" id="pi-client" value="'+esc(item?item.client:'')+'"></div><div class="fg"><label>Danh mục</label><input type="text" id="pi-category" value="'+esc(item?item.category:'')+'"></div></div>';
-    html+='<div class="fr"><div class="fg"><label>Ngày</label><input type="text" id="pi-date" value="'+esc(item?item.date:'')+'"></div><div class="fg"><label>Link</label><input type="url" id="pi-link" value="'+esc(item?item.link:'')+'"></div></div>';
-    html+='<div class="fg"><label>Tags (phẩy phân cách)</label><input type="text" id="pi-tags" value="'+esc(item?(item.tags||[]).join(', '):'')+'"></div>';
-    html+='<div class="fg"><label>URL ảnh</label><input type="url" id="pi-image" value="'+esc(item?item.image:'')+'"></div>';
-    html+='<div class="fg"><label>Nổi bật?</label><select id="pi-featured"><option value="true"'+(item&&item.featured?' selected':'')+'>Có</option><option value="false"'+(item&&!item.featured?' selected':'')+'>Không</option></select></div>';
-  }else if(pageType==='elearning'){
-    html+='<div class="fg"><label>Tên khóa học *</label><input type="text" id="pi-title" value="'+esc(item?item.title:'')+'"></div>';
-    html+='<div class="fg"><label>Mô tả</label><textarea id="pi-desc" rows="2">'+esc(item?item.description:'')+'</textarea></div>';
-    html+='<div class="fr"><div class="fg"><label>Giảng viên</label><input type="text" id="pi-instructor" value="'+esc(item?item.instructor:'')+'"></div><div class="fg"><label>Trình độ</label><input type="text" id="pi-level" value="'+esc(item?item.level:'')+'"></div></div>';
-    html+='<div class="fr"><div class="fg"><label>Số bài</label><input type="number" id="pi-lessons" value="'+(item?item.lessons:0)+'"></div><div class="fg"><label>Thời lượng</label><input type="text" id="pi-duration" value="'+esc(item?item.duration:'')+'"></div></div>';
-    html+='<div class="fr"><div class="fg"><label>Trạng thái</label><select id="pi-status"><option value="open"'+(item&&item.status==='open'?' selected':'')+'>Đang mở</option><option value="upcoming"'+(item&&item.status==='upcoming'?' selected':'')+'>Sắp khai giảng</option><option value="closed"'+(item&&item.status==='closed'?' selected':'')+'>Đã đóng</option></select></div><div class="fg"><label>Giá</label><input type="text" id="pi-price" value="'+esc(item?item.price:'')+'"></div></div>';
-    html+='<div class="fg"><label>Link đăng ký</label><input type="url" id="pi-link" value="'+esc(item?item.link:'')+'"></div>';
-    html+='<div class="fg"><label>Chương trình (mỗi dòng 1 mục)</label><textarea id="pi-syllabus" rows="3">'+esc(item&&item.syllabus?item.syllabus.join('\n'):'')+'</textarea></div>';
-    html+='<div class="fg"><label>URL ảnh</label><input type="url" id="pi-image" value="'+esc(item?item.image:'')+'"></div>';
-    html+='<div class="fr"><div class="fg"><label>Ngày</label><input type="text" id="pi-date" value="'+esc(item?item.date:'')+'"></div><div class="fg"><label>Nổi bật?</label><select id="pi-featured"><option value="true"'+(item&&item.featured?' selected':'')+'>Có</option><option value="false"'+(item&&!item.featured?' selected':'')+'>Không</option></select></div></div>';
-  }
-
-  body.innerHTML=html;
-  closeModal('pageListModal');
-  openModal('pageItemModal');
-}
-
-async function savePageItem(){
-  var slug=v('pi-page-slug'),pageType=v('pi-page-type'),idx=parseInt(v('pi-edit-idx'));
-  if(!v('pi-title')){showAlert('Nhập tiêu đề!','error');return;}
-
-  if(!DATA.pages[slug])DATA.pages[slug]={title:slug,description:'',page_type:pageType,items:[]};
-  if(!DATA.pages[slug].items)DATA.pages[slug].items=[];
-
-  var item={id:uid()};
-
-  if(pageType==='article'){
-    item.title=v('pi-title');item.excerpt=v('pi-excerpt');item.content=v('pi-content');
-    item.category=v('pi-category');item.author=v('pi-author');item.date=v('pi-date');
-    item.read_time=parseInt(v('pi-readtime'))||5;item.image=v('pi-image');
-    item.featured=v('pi-featured')==='true';item.tags=[];
-  }else if(pageType==='project'){
-    item.title=v('pi-title');item.description=v('pi-desc');item.client=v('pi-client');
-    item.category=v('pi-category');item.date=v('pi-date');item.link=v('pi-link')||'#';
-    item.tags=v('pi-tags')?v('pi-tags').split(',').map(function(t){return t.trim();}).filter(Boolean):[];
-    item.image=v('pi-image');item.featured=v('pi-featured')==='true';
-  }else if(pageType==='elearning'){
-    item.title=v('pi-title');item.description=v('pi-desc');item.instructor=v('pi-instructor');
-    item.level=v('pi-level');item.lessons=parseInt(v('pi-lessons'))||0;item.duration=v('pi-duration');
-    item.status=v('pi-status')||'open';item.price=v('pi-price');item.link=v('pi-link')||'#';
-    item.syllabus=v('pi-syllabus')?v('pi-syllabus').split('\n').map(function(s){return s.trim();}).filter(Boolean):[];
-    item.image=v('pi-image');item.date=v('pi-date');item.featured=v('pi-featured')==='true';
-  }
-
-  if(idx>=0){item.id=DATA.pages[slug].items[idx].id||item.id;DATA.pages[slug].items[idx]=item;}
-  else DATA.pages[slug].items.unshift(item);
-
-  await trySave(function(){closeModal('pageItemModal');openPageList(slug);});
-}
+function delLesson(slug,cIdx,lIdx){if(!confirm('Xoá bài học?'))return;var c=DATA.pages[slug].items[cIdx];c.lessons.splice(lIdx,1);c.lessons_count=c.lessons.length;trySave(function(){openLessonsManager(slug,cIdx);});}
 </script>
 </body>
 </html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Khóa học</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--primary:#4648d4;--primary-light:#e1e0ff;--primary-dim:#c0c1ff;--secondary:#4d661c;--secondary-light:#ceee93;--tertiary:#6d5e00;--tertiary-light:#ffe24c;--surface:#f9f9ff;--surface-low:#f0f3ff;--surface-container:#e7eeff;--on-surface:#111c2d;--on-surface-variant:#464554;--outline:#767586;--outline-variant:#c7c4d7;--inverse:#263143;--max-w:1280px;--gutter:20px}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--surface);color:var(--on-surface);-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}
+.wrap{max-width:var(--max-w);margin:0 auto;padding:0 var(--gutter)}
+
+/* COURSE HEADER */
+.course-header{padding:24px 0 20px;border-bottom:1px solid var(--outline-variant);margin-bottom:24px}
+.course-header .back{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--primary);margin-bottom:10px}
+.course-header h1{font-size:clamp(1.4rem,3vw,1.8rem);font-weight:800;margin-bottom:6px}
+.course-header .ch-meta{font-size:13px;color:var(--outline);display:flex;gap:14px;flex-wrap:wrap}
+.course-header .ch-meta span{display:flex;align-items:center;gap:4px}
+.course-header .ch-meta .material-symbols-outlined{font-size:16px}
+
+/* PROGRESS BAR */
+.progress-wrap{margin-bottom:24px}
+.progress-info{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--outline);margin-bottom:6px}
+.progress-bar{height:8px;background:var(--outline-variant);border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:999px;transition:width .4s}
+
+/* LAYOUT */
+.course-layout{display:grid;grid-template-columns:1fr 320px;gap:32px;margin-bottom:80px;align-items:start}
+
+/* LESSON CONTENT */
+.lesson-viewer{background:#fff;border-radius:16px;border:1px solid var(--outline-variant);overflow:hidden;box-shadow:0 4px 16px rgba(70,72,212,.06)}
+.lesson-video{width:100%;aspect-ratio:16/9;background:#000;position:relative}
+.lesson-video iframe{width:100%;height:100%;border:none}
+.lesson-video .no-video{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--outline);flex-direction:column;gap:8px}
+.lesson-video .no-video .material-symbols-outlined{font-size:48px}
+.lesson-body{padding:24px}
+.lesson-body h2{font-size:20px;font-weight:800;margin-bottom:8px}
+.lesson-body .lb-type{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;margin-bottom:12px}
+.lesson-body .lb-type.video{background:var(--primary-light);color:var(--primary)}
+.lesson-body .lb-type.article{background:var(--secondary-light);color:var(--secondary)}
+.lesson-content{font-size:15px;line-height:1.8;color:var(--on-surface-variant)}
+.lesson-content h3{color:var(--on-surface);margin:20px 0 8px;font-size:17px;font-weight:700}
+.lesson-content p{margin-bottom:14px}
+.lesson-nav{display:flex;justify-content:space-between;padding:16px 24px;border-top:1px solid var(--outline-variant)}
+.lesson-nav button{padding:8px 18px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;gap:5px;transition:background .15s}
+.lesson-nav .btn-prev{background:var(--surface-low);color:var(--on-surface)}
+.lesson-nav .btn-prev:hover{background:var(--outline-variant)}
+.lesson-nav .btn-next{background:var(--primary);color:#fff}
+.lesson-nav .btn-next:hover{background:#3537b8}
+.lesson-nav .btn-complete{background:var(--secondary);color:#fff}
+.lesson-nav .btn-complete:hover{background:#3a4e10}
+
+/* LESSON SIDEBAR */
+.lesson-sidebar{position:sticky;top:80px}
+.lesson-sidebar h3{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.lesson-sidebar h3 .material-symbols-outlined{font-size:18px;color:var(--primary)}
+.lesson-list{display:flex;flex-direction:column;gap:4px}
+.lesson-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:background .12s;border:1px solid transparent;font-size:13px}
+.lesson-item:hover{background:var(--surface-low)}
+.lesson-item.active{background:var(--primary-light);border-color:var(--primary);font-weight:700}
+.lesson-item.completed .li-check{color:var(--secondary)}
+.li-num{width:24px;height:24px;border-radius:999px;background:var(--outline-variant);color:var(--on-surface-variant);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.lesson-item.active .li-num{background:var(--primary);color:#fff}
+.lesson-item.completed .li-num{background:var(--secondary-light);color:var(--secondary)}
+.li-info{flex:1;min-width:0}
+.li-title{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li-meta{font-size:11px;color:var(--outline);display:flex;align-items:center;gap:6px;margin-top:2px}
+.li-meta .material-symbols-outlined{font-size:13px}
+.li-check{font-size:18px;color:var(--outline-variant);flex-shrink:0}
+
+/* Course info card */
+.course-info-card{background:#fff;border-radius:12px;border:1px solid var(--outline-variant);padding:16px;margin-top:16px}
+.course-info-card h4{font-size:13px;font-weight:700;margin-bottom:8px}
+.ci-row{display:flex;justify-content:space-between;font-size:12px;color:var(--on-surface-variant);padding:4px 0}
+.ci-row span:first-child{color:var(--outline)}
+
+/* FOOTER */
+.site-footer{background:var(--inverse);border-top:6px solid var(--tertiary)}
+.footer-inner{display:flex;justify-content:space-between;align-items:center;padding:40px var(--gutter);max-width:var(--max-w);margin:0 auto;flex-wrap:wrap;gap:16px}
+.footer-brand{font-size:18px;font-weight:800;color:var(--secondary-light)}
+.footer-links{display:flex;gap:20px;flex-wrap:wrap}
+.footer-links a{color:rgba(199,196,215,.7);font-weight:700;font-size:13px}
+.footer-copy{color:var(--surface);font-size:13px}
+
+@media(max-width:900px){.course-layout{grid-template-columns:1fr}.lesson-sidebar{position:static;order:-1}}
+@media(max-width:600px){.footer-inner{flex-direction:column;text-align:center}}
+</style>
+</head>
+<body>
+<script src="_nav.js"></script>
+<main class="wrap">
+  <div class="course-header" id="courseHeader"><p style="color:var(--outline)">Đang tải...</p></div>
+  <div class="progress-wrap" id="progressWrap" style="display:none">
+    <div class="progress-info"><span id="progText">0/0 bài đã hoàn thành</span><span id="progPct">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+  </div>
+  <div class="course-layout">
+    <div class="lesson-viewer" id="lessonViewer"><div style="text-align:center;padding:60px;color:var(--outline)">Chọn một bài học để bắt đầu</div></div>
+    <aside class="lesson-sidebar" id="lessonSidebar"></aside>
+  </div>
+</main>
+<footer class="site-footer"><div class="footer-inner"><div class="footer-brand" id="ftBrand"></div><div class="footer-links" id="ftLinks"></div><div class="footer-copy" id="ftCopy"></div></div></footer>
+<script>
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+async function loadData(){try{var r=await fetch('data/content.json?t='+Date.now());if(r.ok)return r.json();}catch(e){}return null;}
+
+var _course=null,_lessons=[],_currentIdx=0,_slug='',_completed={};
+
+function getProgressKey(){return 'course_progress_'+_slug+'_'+_course.id;}
+function loadProgress(){try{_completed=JSON.parse(localStorage.getItem(getProgressKey()))||{};}catch(e){_completed={};}}
+function saveProgress(){try{localStorage.setItem(getProgressKey(),JSON.stringify(_completed));}catch(e){}}
+
+function updateProgress(){
+  var total=_lessons.length,done=Object.keys(_completed).length;
+  if(!total)return;
+  var pct=Math.round(done/total*100);
+  document.getElementById('progText').textContent=done+'/'+total+' bài đã hoàn thành';
+  document.getElementById('progPct').textContent=pct+'%';
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progressWrap').style.display='block';
+}
+
+function renderSidebar(){
+  var sb=document.getElementById('lessonSidebar');
+  var html='<h3><span class="material-symbols-outlined">menu_book</span>Nội dung khóa học</h3><div class="lesson-list">';
+  _lessons.forEach(function(l,i){
+    var isActive=i===_currentIdx;
+    var isDone=_completed[l.id];
+    var cls='lesson-item'+(isActive?' active':'')+(isDone?' completed':'');
+    var typeIcon=l.type==='video'?'play_circle':'description';
+    html+='<div class="'+cls+'" onclick="goLesson('+i+')"><div class="li-num">'+(i+1)+'</div><div class="li-info"><div class="li-title">'+esc(l.title)+'</div><div class="li-meta"><span class="material-symbols-outlined">'+typeIcon+'</span>'+esc(l.duration||'')+'</div></div><span class="material-symbols-outlined li-check">'+(isDone?'check_circle':'radio_button_unchecked')+'</span></div>';
+  });
+  html+='</div>';
+  // Course info
+  html+='<div class="course-info-card"><h4>Thông tin khóa học</h4>';
+  html+='<div class="ci-row"><span>Giảng viên</span><span>'+esc(_course.instructor)+'</span></div>';
+  html+='<div class="ci-row"><span>Thời lượng</span><span>'+esc(_course.duration)+'</span></div>';
+  html+='<div class="ci-row"><span>Trình độ</span><span>'+esc(_course.level)+'</span></div>';
+  html+='<div class="ci-row"><span>Giá</span><span>'+esc(_course.price)+'</span></div>';
+  html+='</div>';
+  sb.innerHTML=html;
+}
+
+function renderLesson(idx){
+  _currentIdx=idx;
+  var l=_lessons[idx];if(!l)return;
+  var viewer=document.getElementById('lessonViewer');
+
+  // Video section
+  var videoHtml='';
+  if(l.type==='video'&&l.video_url){
+    videoHtml='<div class="lesson-video"><iframe src="'+esc(l.video_url)+'" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>';
+  }else if(l.type==='video'){
+    videoHtml='<div class="lesson-video"><div class="no-video"><span class="material-symbols-outlined">videocam_off</span><span>Chưa có video</span></div></div>';
+  }
+
+  var typeCls=l.type==='video'?'video':'article';
+  var typeLabel=l.type==='video'?'Video':'Bài viết';
+  var typeIcon=l.type==='video'?'play_circle':'description';
+
+  var html=videoHtml;
+  html+='<div class="lesson-body"><span class="lb-type '+typeCls+'"><span class="material-symbols-outlined" style="font-size:14px">'+typeIcon+'</span>'+typeLabel+' · '+esc(l.duration||'')+'</span>';
+  html+='<h2>'+esc(l.title)+'</h2>';
+  html+='<div class="lesson-content">'+(l.content||'')+'</div></div>';
+
+  // Navigation
+  html+='<div class="lesson-nav">';
+  if(idx>0)html+='<button class="btn-prev" onclick="goLesson('+(idx-1)+')"><span class="material-symbols-outlined" style="font-size:16px">arrow_back</span>Bài trước</button>';
+  else html+='<div></div>';
+  if(!_completed[l.id])html+='<button class="btn-complete" onclick="markComplete(\''+l.id+'\')"><span class="material-symbols-outlined" style="font-size:16px">check</span>Hoàn thành</button>';
+  else if(idx<_lessons.length-1)html+='<button class="btn-next" onclick="goLesson('+(idx+1)+')">Bài tiếp <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span></button>';
+  else html+='<button class="btn-complete" disabled style="opacity:.5;cursor:default"><span class="material-symbols-outlined" style="font-size:16px">celebration</span>Đã hoàn thành!</button>';
+  html+='</div>';
+
+  viewer.innerHTML=html;
+  renderSidebar();
+  updateProgress();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function goLesson(i){renderLesson(i);}
+function markComplete(lid){_completed[lid]=true;saveProgress();renderLesson(_currentIdx);}
+
+async function init(){
+  var params=new URLSearchParams(location.search);
+  _slug=params.get('slug')||'';var id=params.get('id')||'';
+  var d=await loadData();if(!d)return;
+
+  var page=d.pages&&d.pages[_slug];
+  if(!page){document.getElementById('courseHeader').innerHTML='<p>Trang không tồn tại.</p>';return;}
+
+  _course=page.items&&page.items.find(function(c){return c.id===id;});
+  if(!_course){document.getElementById('courseHeader').innerHTML='<p>Khóa học không tồn tại. <a href="page.html?slug='+esc(_slug)+'" style="color:var(--primary)">Quay lại</a></p>';return;}
+
+  _lessons=(_course.lessons||[]).sort(function(a,b){return(a.order||0)-(b.order||0);});
+  loadProgress();
+  document.title=_course.title+' — '+(d.site&&d.site.name||'');
+
+  // Header
+  var hdr=document.getElementById('courseHeader');
+  hdr.innerHTML='<a href="page.html?slug='+esc(_slug)+'" class="back"><span class="material-symbols-outlined" style="font-size:16px">arrow_back</span>'+esc(page.title)+'</a><h1>'+esc(_course.title)+'</h1><div class="ch-meta"><span><span class="material-symbols-outlined">person</span>'+esc(_course.instructor)+'</span><span><span class="material-symbols-outlined">menu_book</span>'+_lessons.length+' bài học</span><span><span class="material-symbols-outlined">schedule</span>'+esc(_course.duration)+'</span></div>';
+
+  // Render first lesson or sidebar only
+  if(_lessons.length){renderLesson(0);}
+  else{renderSidebar();document.getElementById('lessonViewer').innerHTML='<div style="text-align:center;padding:60px;color:var(--outline)">Khóa học chưa có bài học nào.</div>';}
+
+  // Footer
+  if(d.footer){document.getElementById('ftBrand').textContent=d.footer.brand||'';document.getElementById('ftCopy').textContent=d.footer.copyright||'';}
+  if(d.menus)document.getElementById('ftLinks').innerHTML=d.menus.map(function(m){return '<a href="'+(m.slug==='home'?'index.html':'page.html?slug='+m.slug)+'">'+esc(m.label)+'</a>';}).join('');
+}
+init();
+</script>
+</body>
+</html>
