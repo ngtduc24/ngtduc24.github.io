@@ -5,9 +5,9 @@
   },
   "banner": {
     "badge": "Nhà Thiết Kế Sáng Tạo",
-    "title_line1": "Xin Chào!",
-    "title_line2": "Tôi là",
     "name": "Andy Nguyễn",
+    "title_line1": "helloooo",
+    "title_line2": "Tôi là",
     "description": "Kết hợp nghệ thuật, công nghệ và một chút ma thuật để tạo ra những trải nghiệm kỹ thuật số đáng nhớ.",
     "btn_primary": "Xem Portfolio",
     "btn_primary_link": "#featured",
@@ -17,20 +17,82 @@
   },
   "personal": {
     "skills": [
-      { "id": "sk1", "name": "UI/UX Design", "icon": "design_services", "percent": 95, "color": "primary" },
-      { "id": "sk2", "name": "3D Motion", "icon": "animation", "percent": 88, "color": "secondary" },
-      { "id": "sk3", "name": "Figma", "icon": "brush", "percent": 92, "color": "primary" },
-      { "id": "sk4", "name": "Blender", "icon": "view_in_ar", "percent": 80, "color": "tertiary" },
-      { "id": "sk5", "name": "After Effects", "icon": "movie", "percent": 85, "color": "secondary" },
-      { "id": "sk6", "name": "Photoshop", "icon": "image", "percent": 90, "color": "primary" }
+      {
+        "id": "sk1",
+        "name": "UI/UX Design",
+        "icon": "design_services",
+        "percent": 95,
+        "color": "primary"
+      },
+      {
+        "id": "sk2",
+        "name": "3D Motion",
+        "icon": "animation",
+        "percent": 88,
+        "color": "secondary"
+      },
+      {
+        "id": "sk3",
+        "name": "Figma",
+        "icon": "brush",
+        "percent": 92,
+        "color": "primary"
+      },
+      {
+        "id": "sk4",
+        "name": "Blender",
+        "icon": "view_in_ar",
+        "percent": 80,
+        "color": "tertiary"
+      },
+      {
+        "id": "sk5",
+        "name": "After Effects",
+        "icon": "movie",
+        "percent": 85,
+        "color": "secondary"
+      },
+      {
+        "id": "sk6",
+        "name": "Photoshop",
+        "icon": "image",
+        "percent": 90,
+        "color": "primary"
+      }
     ],
     "experience": [
-      { "id": "ex1", "title": "Senior UI/UX Designer", "company": "Creative Studio", "period": "2022 - Hiện tại", "description": "Thiết kế giao diện và trải nghiệm người dùng cho các sản phẩm kỹ thuật số.", "color": "primary" },
-      { "id": "ex2", "title": "Motion Designer", "company": "Media Agency", "period": "2020 - 2022", "description": "Tạo hiệu ứng chuyển động và đồ họa tương tác cho chiến dịch quảng cáo.", "color": "secondary" }
+      {
+        "id": "ex1",
+        "title": "Senior UI/UX Designer",
+        "company": "Creative Studio",
+        "period": "2022 - Hiện tại",
+        "description": "Thiết kế giao diện và trải nghiệm người dùng cho các sản phẩm kỹ thuật số.",
+        "color": "primary"
+      },
+      {
+        "id": "ex2",
+        "title": "Motion Designer",
+        "company": "Media Agency",
+        "period": "2020 - 2022",
+        "description": "Tạo hiệu ứng chuyển động và đồ họa tương tác cho chiến dịch quảng cáo.",
+        "color": "secondary"
+      }
     ],
     "education": [
-      { "id": "ed1", "title": "Thạc sĩ Truyền thông Đa phương tiện", "school": "ĐH KHXH&NV TP.HCM", "period": "2018 - 2020", "description": "Chuyên ngành thiết kế đồ họa và truyền thông số." },
-      { "id": "ed2", "title": "Cử nhân Thiết kế Đồ họa", "school": "ĐH Mỹ thuật TP.HCM", "period": "2014 - 2018", "description": "Tốt nghiệp loại giỏi." }
+      {
+        "id": "ed1",
+        "title": "Thạc sĩ Truyền thông Đa phương tiện",
+        "school": "ĐH KHXH&NV TP.HCM",
+        "period": "2018 - 2020",
+        "description": "Chuyên ngành thiết kế đồ họa và truyền thông số."
+      },
+      {
+        "id": "ed2",
+        "title": "Cử nhân Thiết kế Đồ họa",
+        "school": "ĐH Mỹ thuật TP.HCM",
+        "period": "2014 - 2018",
+        "description": "Tốt nghiệp loại giỏi."
+      }
     ]
   },
   "contact": {
@@ -50,13 +112,51 @@
     "cta_link": "index.html#contact"
   },
   "menus": [
-    { "id": "m_home", "label": "Trang chủ", "slug": "home", "page_type": "home", "order": 0, "children": [] },
-    { "id": "m_portfolio", "label": "Portfolio", "slug": "portfolio", "page_type": "project", "order": 1, "children": [
-      { "id": "m_2d", "label": "2D Design", "slug": "2d-design", "page_type": "project" },
-      { "id": "m_3d", "label": "3D & Motion", "slug": "3d-motion", "page_type": "project" }
-    ]},
-    { "id": "m_courses", "label": "Khóa Học", "slug": "courses", "page_type": "elearning", "order": 2, "children": [] },
-    { "id": "m_blog", "label": "Nghiên Cứu", "slug": "blog", "page_type": "article", "order": 3, "children": [] }
+    {
+      "id": "m_home",
+      "label": "Trang chủ",
+      "slug": "home",
+      "page_type": "home",
+      "order": 0,
+      "children": []
+    },
+    {
+      "id": "m_portfolio",
+      "label": "Portfolio",
+      "slug": "portfolio",
+      "page_type": "project",
+      "order": 1,
+      "children": [
+        {
+          "id": "m_2d",
+          "label": "2D Design",
+          "slug": "2d-design",
+          "page_type": "project"
+        },
+        {
+          "id": "m_3d",
+          "label": "3D & Motion",
+          "slug": "3d-motion",
+          "page_type": "project"
+        }
+      ]
+    },
+    {
+      "id": "m_courses",
+      "label": "Khóa Học",
+      "slug": "courses",
+      "page_type": "elearning",
+      "order": 2,
+      "children": []
+    },
+    {
+      "id": "m_blog",
+      "label": "Nghiên Cứu",
+      "slug": "blog",
+      "page_type": "article",
+      "order": 3,
+      "children": []
+    }
   ],
   "pages": {
     "portfolio": {
@@ -65,65 +165,170 @@
       "page_type": "project",
       "items": [
         {
-          "id": "p1", "title": "Project Nexus Rebrand", "description": "Hệ thống nhận diện thương hiệu toàn diện cho startup công nghệ.",
+          "id": "p1",
+          "title": "Project Nexus Rebrand",
+          "description": "Hệ thống nhận diện thương hiệu toàn diện cho startup công nghệ.",
           "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAi-XyIw7n5_qs2gRuVY5tzy8T9kNcTJ7oct3L7pA4uaRSsFv-NXNAqCkD03VG4wVF5M6nhBu2AH5XuLevkbHGhXyfWTTfiZCvB2mWUQGdzB02-oCUBVZ5fBLndUc8knKZjZ0Abr4Pm2x7KCJf57mpVHt8eLzjg4J034tgdWqERPQ-pcm2B2d2mUAy0GBvD6gvk3Qn1es0Kcd5gZKeytqMpF96k5gc2wKpQUR3xXrDdM5-EFqcS1VIg0fSE782XWMstEOcUjUpTk68",
-          "client": "TechVision Corp", "category": "Branding", "tags": ["UX/UI", "3D Motion"],
-          "link": "#", "date": "2024-10", "featured": true
+          "client": "TechVision Corp",
+          "category": "Branding",
+          "tags": [
+            "UX/UI",
+            "3D Motion"
+          ],
+          "link": "#",
+          "date": "2024-10",
+          "featured": true
         },
         {
-          "id": "p2", "title": "Lumina Learning App", "description": "Nền tảng học tập tương tác với gamification.",
+          "id": "p2",
+          "title": "Lumina Learning App",
+          "description": "Nền tảng học tập tương tác với gamification.",
           "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCiOl3Qa7E3ATwP3qJi6AaUiM8Z06sPDn4IapkN9k_Aah6sVf92fyGujSQG9hPS0N3uwKYMFsvpzoeg24FeDzU2gjL_1T7JRxL9xbwbUi7ufN7cDiRLgkH2Y8SCM4ZQlsSz7LZuLzecITjKEVsXj3utK6FIjaMNUdHcgaXheDr_n7HSaSTJProZ4uK6V97GEtaCqcVqm3cGYxCfeQM-BpRIvjx5vK6Yt_0qUTxJn8bDrYLLFaVG8zI0xqBho4po23kqmZIsbMoBmUo",
-          "client": "Lumina Inc", "category": "App Design", "tags": ["UI/UX"],
-          "link": "#", "date": "2024-08", "featured": true
+          "client": "Lumina Inc",
+          "category": "App Design",
+          "tags": [
+            "UI/UX"
+          ],
+          "link": "#",
+          "date": "2024-08",
+          "featured": true
         },
         {
-          "id": "p3", "title": "Echo Sound System", "description": "Giao diện thương mại điện tử với trực quan hoá âm thanh.",
+          "id": "p3",
+          "title": "Echo Sound System",
+          "description": "Giao diện thương mại điện tử với trực quan hoá âm thanh.",
           "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDb-hh5_OixoKQqjPxkFJRveTNePY3u4P6HcNSDmu3DW4OwI2D6Jdp9FI-R7NwFoW1cCqL4zrWxZX2TePWA5HstmDTfr5kgInfw30jO01a0oScu72WPYZOns5Ty0YsgGUKHTjRK_E2e3n755mnkMw2Bn2nKnN2caIgJT_vU9sigfin_SqV44tVA8cO9qabGSs6VjmXoM7Y9OuON_-rmfhQIWCZ20o3jKCtwV6x3LTejJt-TNeBPS1y9n0gQo-3AOYKkxCsb5ucHoxc",
-          "client": "Echo Audio", "category": "E-commerce", "tags": ["E-commerce", "3D"],
-          "link": "#", "date": "2024-06", "featured": true
+          "client": "Echo Audio",
+          "category": "E-commerce",
+          "tags": [
+            "E-commerce",
+            "3D"
+          ],
+          "link": "#",
+          "date": "2024-06",
+          "featured": true
         }
       ]
     },
-    "2d-design": { "title": "2D Design", "description": "Các dự án thiết kế 2D.", "page_type": "project", "items": [] },
-    "3d-motion": { "title": "3D & Motion", "description": "Các dự án 3D và motion graphics.", "page_type": "project", "items": [] },
+    "2d-design": {
+      "title": "2D Design",
+      "description": "Các dự án thiết kế 2D.",
+      "page_type": "project",
+      "items": []
+    },
+    "3d-motion": {
+      "title": "3D & Motion",
+      "description": "Các dự án 3D và motion graphics.",
+      "page_type": "project",
+      "items": []
+    },
     "courses": {
       "title": "Khóa Học Online",
       "description": "Các khóa học được thiết kế bởi chuyên gia.",
       "page_type": "elearning",
       "items": [
         {
-          "id": "c1", "title": "Advanced UI/UX Masterclass",
+          "id": "c1",
+          "title": "Advanced UI/UX Masterclass",
           "description": "Làm chủ quy trình thiết kế từ Research đến Prototyping nâng cao.",
           "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAi-XyIw7n5_qs2gRuVY5tzy8T9kNcTJ7oct3L7pA4uaRSsFv-NXNAqCkD03VG4wVF5M6nhBu2AH5XuLevkbHGhXyfWTTfiZCvB2mWUQGdzB02-oCUBVZ5fBLndUc8knKZjZ0Abr4Pm2x7KCJf57mpVHt8eLzjg4J034tgdWqERPQ-pcm2B2d2mUAy0GBvD6gvk3Qn1es0Kcd5gZKeytqMpF96k5gc2wKpQUR3xXrDdM5-EFqcS1VIg0fSE782XWMstEOcUjUpTk68",
-          "instructor": "Andy Nguyễn", "lessons_count": 12, "duration": "8 Tuần",
-          "level": "Nâng cao", "status": "open", "price": "Miễn phí",
-          "link": "#", "featured": true, "date": "2024-10",
+          "instructor": "Andy Nguyễn",
+          "lessons_count": 12,
+          "duration": "8 Tuần",
+          "level": "Nâng cao",
+          "status": "open",
+          "price": "Miễn phí",
+          "link": "#",
+          "featured": true,
+          "date": "2024-10",
           "lessons": [
-            { "id": "c1l1", "title": "Giới thiệu khóa học", "type": "video", "video_url": "https://www.youtube.com/embed/dQw4w9WgXcQ", "content": "<p>Chào mừng bạn đến với khóa học UI/UX nâng cao. Trong video này, chúng ta sẽ tìm hiểu tổng quan về nội dung khóa học.</p>", "duration": "15 phút", "order": 1 },
-            { "id": "c1l2", "title": "Nghiên cứu người dùng (User Research)", "type": "article", "video_url": "", "content": "<h3>User Research là gì?</h3><p>User Research là quá trình tìm hiểu nhu cầu, hành vi và động lực của người dùng thông qua các phương pháp quan sát, phân tích nhiệm vụ và các phương pháp phản hồi khác.</p><h3>Các phương pháp phổ biến</h3><p>Interview, Survey, Usability Testing, A/B Testing, Card Sorting là những phương pháp được sử dụng rộng rãi trong nghiên cứu người dùng.</p>", "duration": "20 phút đọc", "order": 2 },
-            { "id": "c1l3", "title": "Wireframing & Prototyping", "type": "video", "video_url": "https://www.youtube.com/embed/dQw4w9WgXcQ", "content": "<p>Tìm hiểu cách tạo wireframe và prototype chuyên nghiệp.</p>", "duration": "25 phút", "order": 3 },
-            { "id": "c1l4", "title": "Xây dựng Design System", "type": "article", "video_url": "", "content": "<h3>Design System là gì?</h3><p>Design System là tập hợp các thành phần có thể tái sử dụng, được hướng dẫn bởi các tiêu chuẩn rõ ràng, có thể được kết hợp để xây dựng bất kỳ số lượng ứng dụng nào.</p>", "duration": "15 phút đọc", "order": 4 }
+            {
+              "id": "c1l1",
+              "title": "Giới thiệu khóa học",
+              "type": "video",
+              "video_url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+              "content": "<p>Chào mừng bạn đến với khóa học UI/UX nâng cao. Trong video này, chúng ta sẽ tìm hiểu tổng quan về nội dung khóa học.</p>",
+              "duration": "15 phút",
+              "order": 1
+            },
+            {
+              "id": "c1l2",
+              "title": "Nghiên cứu người dùng (User Research)",
+              "type": "article",
+              "video_url": "",
+              "content": "<h3>User Research là gì?</h3><p>User Research là quá trình tìm hiểu nhu cầu, hành vi và động lực của người dùng thông qua các phương pháp quan sát, phân tích nhiệm vụ và các phương pháp phản hồi khác.</p><h3>Các phương pháp phổ biến</h3><p>Interview, Survey, Usability Testing, A/B Testing, Card Sorting là những phương pháp được sử dụng rộng rãi trong nghiên cứu người dùng.</p>",
+              "duration": "20 phút đọc",
+              "order": 2
+            },
+            {
+              "id": "c1l3",
+              "title": "Wireframing & Prototyping",
+              "type": "video",
+              "video_url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+              "content": "<p>Tìm hiểu cách tạo wireframe và prototype chuyên nghiệp.</p>",
+              "duration": "25 phút",
+              "order": 3
+            },
+            {
+              "id": "c1l4",
+              "title": "Xây dựng Design System",
+              "type": "article",
+              "video_url": "",
+              "content": "<h3>Design System là gì?</h3><p>Design System là tập hợp các thành phần có thể tái sử dụng, được hướng dẫn bởi các tiêu chuẩn rõ ràng, có thể được kết hợp để xây dựng bất kỳ số lượng ứng dụng nào.</p>",
+              "duration": "15 phút đọc",
+              "order": 4
+            }
           ]
         },
         {
-          "id": "c2", "title": "3D Motion Foundation",
+          "id": "c2",
+          "title": "3D Motion Foundation",
           "description": "Nhập môn chuyển động 3D với Blender.",
           "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCiOl3Qa7E3ATwP3qJi6AaUiM8Z06sPDn4IapkN9k_Aah6sVf92fyGujSQG9hPS0N3uwKYMFsvpzoeg24FeDzU2gjL_1T7JRxL9xbwbUi7ufN7cDiRLgkH2Y8SCM4ZQlsSz7LZuLzecITjKEVsXj3utK6FIjaMNUdHcgaXheDr_n7HSaSTJProZ4uK6V97GEtaCqcVqm3cGYxCfeQM-BpRIvjx5vK6Yt_0qUTxJn8bDrYLLFaVG8zI0xqBho4po23kqmZIsbMoBmUo",
-          "instructor": "Andy Nguyễn", "lessons_count": 8, "duration": "4 Tuần",
-          "level": "Cơ bản", "status": "upcoming", "price": "1.200.000đ",
-          "link": "#", "featured": true, "date": "2024-12",
+          "instructor": "Andy Nguyễn",
+          "lessons_count": 8,
+          "duration": "4 Tuần",
+          "level": "Cơ bản",
+          "status": "upcoming",
+          "price": "1.200.000đ",
+          "link": "#",
+          "featured": true,
+          "date": "2024-12",
           "lessons": [
-            { "id": "c2l1", "title": "Làm quen với Blender", "type": "video", "video_url": "https://www.youtube.com/embed/dQw4w9WgXcQ", "content": "<p>Giới thiệu giao diện và công cụ cơ bản của Blender.</p>", "duration": "20 phút", "order": 1 },
-            { "id": "c2l2", "title": "Modeling cơ bản", "type": "article", "video_url": "", "content": "<h3>Modeling trong 3D</h3><p>Modeling là quá trình tạo ra các đối tượng 3D bằng cách thao tác các đỉnh, cạnh và mặt.</p>", "duration": "15 phút đọc", "order": 2 }
+            {
+              "id": "c2l1",
+              "title": "Làm quen với Blender",
+              "type": "video",
+              "video_url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+              "content": "<p>Giới thiệu giao diện và công cụ cơ bản của Blender.</p>",
+              "duration": "20 phút",
+              "order": 1
+            },
+            {
+              "id": "c2l2",
+              "title": "Modeling cơ bản",
+              "type": "article",
+              "video_url": "",
+              "content": "<h3>Modeling trong 3D</h3><p>Modeling là quá trình tạo ra các đối tượng 3D bằng cách thao tác các đỉnh, cạnh và mặt.</p>",
+              "duration": "15 phút đọc",
+              "order": 2
+            }
           ]
         },
         {
-          "id": "c3", "title": "Graphic Design Fundamentals",
+          "id": "c3",
+          "title": "Graphic Design Fundamentals",
           "description": "Nắm vững các nguyên tắc thiết kế cơ bản.",
           "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDb-hh5_OixoKQqjPxkFJRveTNePY3u4P6HcNSDmu3DW4OwI2D6Jdp9FI-R7NwFoW1cCqL4zrWxZX2TePWA5HstmDTfr5kgInfw30jO01a0oScu72WPYZOns5Ty0YsgGUKHTjRK_E2e3n755mnkMw2Bn2nKnN2caIgJT_vU9sigfin_SqV44tVA8cO9qabGSs6VjmXoM7Y9OuON_-rmfhQIWCZ20o3jKCtwV6x3LTejJt-TNeBPS1y9n0gQo-3AOYKkxCsb5ucHoxc",
-          "instructor": "Andy Nguyễn", "lessons_count": 10, "duration": "6 Tuần",
-          "level": "Cơ bản", "status": "open", "price": "Miễn phí",
-          "link": "#", "featured": false, "date": "2024-11",
+          "instructor": "Andy Nguyễn",
+          "lessons_count": 10,
+          "duration": "6 Tuần",
+          "level": "Cơ bản",
+          "status": "open",
+          "price": "Miễn phí",
+          "link": "#",
+          "featured": false,
+          "date": "2024-11",
           "lessons": []
         }
       ]
@@ -134,28 +339,52 @@
       "page_type": "article",
       "items": [
         {
-          "id": "a1", "title": "Tương Lai Của Glassmorphism Trong Thiết Kế Giao Diện",
+          "id": "a1",
+          "title": "Tương Lai Của Glassmorphism Trong Thiết Kế Giao Diện",
           "excerpt": "Glassmorphism đã trở thành ngôn ngữ thiết kế quan trọng trong việc xây dựng không gian số có chiều sâu.",
           "content": "<h3>Glassmorphism là gì?</h3><p>Glassmorphism không chỉ là một trào lưu nhất thời. Nó đã trở thành một ngôn ngữ thiết kế quan trọng trong việc xây dựng các không gian số có chiều sâu và tính tương tác cao.</p><p>Bằng cách sử dụng các lớp vật liệu trong suốt với độ mờ (blur) thích hợp, các nhà thiết kế có thể tạo ra cảm giác về không gian vật lý ngay trên màn hình phẳng.</p><h3>Ứng dụng trong thực tế</h3><p>Trong hệ thống thiết kế hiện đại, việc phân cấp bằng các lớp màu và bóng đổ mềm là rất quan trọng. Thay vì sử dụng những đường viền sắc nét, chúng ta chuyển sang cảm giác mượt mà hơn.</p>",
           "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAi-XyIw7n5_qs2gRuVY5tzy8T9kNcTJ7oct3L7pA4uaRSsFv-NXNAqCkD03VG4wVF5M6nhBu2AH5XuLevkbHGhXyfWTTfiZCvB2mWUQGdzB02-oCUBVZ5fBLndUc8knKZjZ0Abr4Pm2x7KCJf57mpVHt8eLzjg4J034tgdWqERPQ-pcm2B2d2mUAy0GBvD6gvk3Qn1es0Kcd5gZKeytqMpF96k5gc2wKpQUR3xXrDdM5-EFqcS1VIg0fSE782XWMstEOcUjUpTk68",
-          "author": "Andy Nguyễn", "category": "UI/UX", "tags": ["UI/UX", "Trend 2024"],
-          "date": "2024-05-12", "read_time": 8, "featured": true
+          "author": "Andy Nguyễn",
+          "category": "UI/UX",
+          "tags": [
+            "UI/UX",
+            "Trend 2024"
+          ],
+          "date": "2024-05-12",
+          "read_time": 8,
+          "featured": true
         },
         {
-          "id": "a2", "title": "Ứng Dụng Tâm Lý Học Màu Sắc vào Thiết Kế",
+          "id": "a2",
+          "title": "Ứng Dụng Tâm Lý Học Màu Sắc vào Thiết Kế",
           "excerpt": "Khám phá cách não bộ phản ứng với các dải màu khác nhau.",
           "content": "<h3>Tâm lý học màu sắc</h3><p>Khám phá cách não bộ phản ứng với các dải màu khác nhau và cách áp dụng chúng để điều hướng hành vi người dùng.</p><p>Màu sắc không chỉ là yếu tố thẩm mỹ, chúng còn là công cụ tâm lý mạnh mẽ giúp dẫn dắt người dùng qua giao diện một cách tự nhiên.</p>",
           "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCiOl3Qa7E3ATwP3qJi6AaUiM8Z06sPDn4IapkN9k_Aah6sVf92fyGujSQG9hPS0N3uwKYMFsvpzoeg24FeDzU2gjL_1T7JRxL9xbwbUi7ufN7cDiRLgkH2Y8SCM4ZQlsSz7LZuLzecITjKEVsXj3utK6FIjaMNUdHcgaXheDr_n7HSaSTJProZ4uK6V97GEtaCqcVqm3cGYxCfeQM-BpRIvjx5vK6Yt_0qUTxJn8bDrYLLFaVG8zI0xqBho4po23kqmZIsbMoBmUo",
-          "author": "Andy Nguyễn", "category": "Tâm lý học", "tags": ["UI/UX", "Tâm lý học"],
-          "date": "2024-10-12", "read_time": 6, "featured": true
+          "author": "Andy Nguyễn",
+          "category": "Tâm lý học",
+          "tags": [
+            "UI/UX",
+            "Tâm lý học"
+          ],
+          "date": "2024-10-12",
+          "read_time": 6,
+          "featured": true
         },
         {
-          "id": "a3", "title": "Xây Dựng Hệ Thống Typography Cho Website",
+          "id": "a3",
+          "title": "Xây Dựng Hệ Thống Typography Cho Website",
           "excerpt": "Hướng dẫn chi tiết cách thiết lập hierarchy và chọn font chữ phù hợp.",
           "content": "<h3>Typography trong web</h3><p>Typography là xương sống của mọi giao diện tốt. Khi được làm đúng, người dùng không chú ý đến nó. Khi làm sai, đó là điều đầu tiên họ nhận ra.</p>",
           "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDb-hh5_OixoKQqjPxkFJRveTNePY3u4P6HcNSDmu3DW4OwI2D6Jdp9FI-R7NwFoW1cCqL4zrWxZX2TePWA5HstmDTfr5kgInfw30jO01a0oScu72WPYZOns5Ty0YsgGUKHTjRK_E2e3n755mnkMw2Bn2nKnN2caIgJT_vU9sigfin_SqV44tVA8cO9qabGSs6VjmXoM7Y9OuON_-rmfhQIWCZ20o3jKCtwV6x3LTejJt-TNeBPS1y9n0gQo-3AOYKkxCsb5ucHoxc",
-          "author": "Andy Nguyễn", "category": "Typography", "tags": ["Typography", "Web"],
-          "date": "2024-10-08", "read_time": 5, "featured": false
+          "author": "Andy Nguyễn",
+          "category": "Typography",
+          "tags": [
+            "Typography",
+            "Web"
+          ],
+          "date": "2024-10-08",
+          "read_time": 5,
+          "featured": false
         }
       ]
     }
