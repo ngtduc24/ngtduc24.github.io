@@ -155,7 +155,7 @@ window.addEventListener('DOMContentLoaded',function(){var s=localStorage.getItem
 async function startApp(){
   document.getElementById('loginView').style.display='none';document.getElementById('sidebar').style.display='flex';document.getElementById('mainArea').style.display='block';
   document.getElementById('sbUser').textContent=AUTH.user+'/'+AUTH.repo;document.getElementById('sbName').textContent=AUTH.user;
-  await loadData();renderApp();
+  await loadData();await loadMessages();renderApp();
 }
 
 // ── GitHub API ──
@@ -227,6 +227,7 @@ function renderApp(){
   else if(_activeTab==='personal'){tc.innerHTML=renderPersonalTab();initPersonalEditor();}
   else if(_activeTab==='menus')tc.innerHTML=renderMenusTab();
   else if(_activeTab==='settings')tc.innerHTML=renderSettingsTab();
+  else if(_activeTab==='messages'){tc.innerHTML=renderMessagesTab();}
   else if(_activeTab.startsWith('page:')){tc.innerHTML=renderPageTab(_activeTab.split(':')[1]);initPageEditor();}
 }
 
@@ -249,6 +250,7 @@ function renderSidebar(){
     });
   });
   html+='<div class="sb-section">Quản lý</div>';
+  html+='<button class="sb-item'+(_activeTab==='messages'?' active':'')+'" onclick="goTab(\'messages\',this)"><span class="material-symbols-outlined icon">inbox</span>Tin nhắn <span id="msgBadge" style="margin-left:auto;background:var(--red);color:#fff;font-size:.6rem;padding:2px 6px;border-radius:999px;display:'+((_msgCount>0)?'inline':'none')+'">'+_msgCount+'</span></button>';
   html+='<button class="sb-item'+(_activeTab==='menus'?' active':'')+'" onclick="goTab(\'menus\',this)"><span class="material-symbols-outlined icon">menu_open</span>Menu</button>';
   html+='<button class="sb-item'+(_activeTab==='settings'?' active':'')+'" onclick="goTab(\'settings\',this)"><span class="material-symbols-outlined icon">settings</span>Cài đặt</button>';
   nav.innerHTML=html;
@@ -258,7 +260,7 @@ function renderSidebar(){
 function renderDashboard(){
   var pages=DATA.pages||{},pC=0,aC=0,cC=0;
   Object.keys(pages).forEach(function(k){var p=pages[k];if(!p.items)return;if(p.page_type==='project')pC+=p.items.length;if(p.page_type==='article')aC+=p.items.length;if(p.page_type==='elearning')cC+=p.items.length;});
-  return '<div class="page-header"><h1>Dashboard</h1><p>Tổng quan nội dung</p></div><div class="stats-row"><div class="stat-card"><div class="stat-num">'+pC+'</div><div class="stat-label">Dự án</div></div><div class="stat-card"><div class="stat-num">'+aC+'</div><div class="stat-label">Bài viết</div></div><div class="stat-card"><div class="stat-num">'+cC+'</div><div class="stat-label">Khóa học</div></div><div class="stat-card"><div class="stat-num">'+(DATA.menus||[]).length+'</div><div class="stat-label">Menu</div></div></div>';
+  return '<div class="page-header"><h1>Dashboard</h1><p>Tổng quan nội dung</p></div><div class="stats-row"><div class="stat-card"><div class="stat-num">'+pC+'</div><div class="stat-label">Dự án</div></div><div class="stat-card"><div class="stat-num">'+aC+'</div><div class="stat-label">Bài viết</div></div><div class="stat-card"><div class="stat-num">'+cC+'</div><div class="stat-label">Khóa học</div></div><div class="stat-card" style="cursor:pointer" onclick="goTab(\'messages\')"><div class="stat-num" style="color:'+ (_msgCount>0?'var(--red)':'var(--primary)')+'">'+_msgCount+'</div><div class="stat-label">Tin nhắn mới</div></div></div>';
 }
 
 // ── Banner ──
@@ -553,6 +555,67 @@ function saveLesson(){
   trySave(function(){closeModal('lessonModal');setTimeout(function(){openLessonsManager(slug,cIdx);},100);});
 }
 function delLesson(slug,cIdx,lIdx){if(!confirm('Xoá bài học?'))return;var c=DATA.pages[slug].items[cIdx];c.lessons.splice(lIdx,1);c.lessons_count=c.lessons.length;trySave(function(){openLessonsManager(slug,cIdx);});}
+
+// ══════════════════════════════════════════════
+// MESSAGES SYSTEM
+// ══════════════════════════════════════════════
+var _msgCount=0,_messages=[],_msgSha=null;
+var MSG_PATH='data/messages.json';
+
+async function loadMessages(){
+  try{
+    var r=await ghFetch('repos/'+AUTH.user+'/'+AUTH.repo+'/contents/'+MSG_PATH);
+    if(r.ok){var f=await r.json();_msgSha=f.sha;_messages=JSON.parse(fromB64(f.content));
+    }else{_messages=[];}
+  }catch(e){_messages=[];}
+  _msgCount=_messages.filter(function(m){return !m.read;}).length;
+}
+
+async function saveMessages(){
+  var j=JSON.stringify(_messages,null,2);
+  var body={message:'Update messages',content:toB64(j),branch:'main'};
+  if(_msgSha)body.sha=_msgSha;
+  var r=await ghFetch('repos/'+AUTH.user+'/'+AUTH.repo+'/contents/'+MSG_PATH,{method:'PUT',body:JSON.stringify(body)});
+  if(!r.ok)throw new Error((await r.json().catch(function(){return{};})).message||r.status);
+  _msgSha=(await r.json()).content.sha;
+  _msgCount=_messages.filter(function(m){return !m.read;}).length;
+}
+
+function renderMessagesTab(){
+  var html='<div class="page-header"><h1>Tin Nhắn Liên Hệ</h1><p>Quản lý tin nhắn từ form liên hệ trên trang chủ</p></div>';
+  html+='<div class="page-actions"><span style="font-size:.82rem;color:var(--text3)">'+_messages.length+' tin nhắn · '+_msgCount+' chưa đọc</span>';
+  if(_messages.length)html+='<div style="display:flex;gap:6px"><button class="btn btn-secondary btn-sm" onclick="markAllRead()"><span class="material-symbols-outlined" style="font-size:14px">done_all</span>Đánh dấu tất cả đã đọc</button><button class="btn btn-danger btn-sm" onclick="clearAllMessages()"><span class="material-symbols-outlined" style="font-size:14px">delete_sweep</span>Xoá tất cả</button></div>';
+  html+='</div>';
+
+  if(!_messages.length){
+    html+='<div class="empty-state"><span class="material-symbols-outlined" style="font-size:40px;display:block;margin-bottom:8px;opacity:.5">inbox</span>Chưa có tin nhắn nào.<br><small style="color:var(--text3)">Tin nhắn từ form liên hệ trên trang chủ sẽ xuất hiện ở đây.</small></div>';
+    return html;
+  }
+
+  _messages.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  _messages.forEach(function(msg,i){
+    var isRead=msg.read;
+    var d=msg.date?new Date(msg.date):null;
+    var dateStr=d?d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+    html+='<div class="card" style="border-left:4px solid '+(isRead?'var(--border)':'var(--primary)')+';'+(isRead?'opacity:.75':'')+'">';
+    html+='<div class="card-header"><div><div class="card-title" style="display:flex;align-items:center;gap:6px">'+(isRead?'':'<span style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0"></span>')+esc(msg.name||'Ẩn danh')+'</div><div class="card-sub">'+esc(msg.email||'')+' · '+dateStr+'</div></div>';
+    html+='<div class="card-actions">';
+    if(!isRead)html+='<button class="btn btn-ghost btn-sm btn-icon" title="Đánh dấu đã đọc" onclick="markRead('+i+')"><span class="material-symbols-outlined" style="font-size:14px">check</span></button>';
+    html+='<button class="btn btn-ghost btn-sm btn-icon" title="Trả lời email" onclick="replyMsg('+i+')"><span class="material-symbols-outlined" style="font-size:14px">reply</span></button>';
+    html+='<button class="btn btn-danger btn-sm btn-icon" title="Xoá" onclick="delMsg('+i+')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>';
+    html+='</div></div>';
+    html+='<div style="font-size:.88rem;line-height:1.6;color:var(--text);white-space:pre-wrap;padding:4px 0">'+esc(msg.message||'')+'</div>';
+    html+='</div>';
+  });
+  return html;
+}
+
+async function markRead(i){_messages[i].read=true;try{await saveMessages();showAlert('Đã đánh dấu đã đọc','success');renderApp();}catch(e){showAlert('Lỗi: '+e.message,'error');}}
+async function markAllRead(){_messages.forEach(function(m){m.read=true;});try{await saveMessages();showAlert('Tất cả đã đọc','success');renderApp();}catch(e){showAlert('Lỗi: '+e.message,'error');}}
+async function delMsg(i){if(!confirm('Xoá tin nhắn này?'))return;_messages.splice(i,1);try{await saveMessages();showAlert('Đã xoá','success');renderApp();}catch(e){showAlert('Lỗi: '+e.message,'error');}}
+async function clearAllMessages(){if(!confirm('Xoá tất cả tin nhắn?'))return;_messages=[];try{await saveMessages();showAlert('Đã xoá tất cả','success');renderApp();}catch(e){showAlert('Lỗi: '+e.message,'error');}}
+function replyMsg(i){var msg=_messages[i];if(msg.email)window.open('mailto:'+encodeURIComponent(msg.email)+'?subject='+encodeURIComponent('Re: Tin nhắn từ '+msg.name)+'&body='+encodeURIComponent('\n\n---\nTin nhắn gốc:\n'+msg.message));}
+
 </script>
 </body>
 </html>
