@@ -23,12 +23,13 @@
 .nv-brand{font-size:1.15rem;font-weight:800;color:#4648d4;text-decoration:none;letter-spacing:-.02em;display:flex;align-items:center;gap:8px;flex-shrink:0}
 .nv-brand img{height:32px;width:auto;object-fit:contain}
 .nv-links{display:flex;align-items:center;gap:2px;flex:1;justify-content:center}
-.nv-item{position:relative;display:inline-block}
+.nv-item{position:relative;display:inline-block;padding-bottom:8px;margin-bottom:-8px}
 .nv-link{display:inline-block;padding:7px 14px;border-radius:999px;font-size:13.5px;font-weight:700;color:#464554;text-decoration:none;white-space:nowrap;transition:background .15s,color .15s}
 .nv-link:hover{color:#4648d4;background:rgba(70,72,212,.08)}
 .nv-link.active{color:#4648d4;background:rgba(70,72,212,.1)}
-.nv-link.has-child::after{content:'';display:inline-block;width:12px;height:12px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23464554' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") center/contain no-repeat;vertical-align:middle;margin-left:2px;opacity:.6}
-.nv-drop{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:180px;background:#fff;border-radius:14px;box-shadow:0 10px 36px rgba(0,0,0,.12),0 0 0 1px rgba(199,196,215,.3);padding:5px 0;z-index:100;animation:nvF .15s ease}
+.nv-link.has-child::after{content:'';display:inline-block;width:12px;height:12px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%23464554' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") center/contain no-repeat;vertical-align:middle;margin-left:2px;opacity:.6;transition:transform .2s}
+.nv-item:hover .nv-link.has-child::after{transform:rotate(180deg)}
+.nv-drop{display:none;position:absolute;top:100%;left:0;min-width:180px;background:#fff;border-radius:14px;box-shadow:0 10px 36px rgba(0,0,0,.12),0 0 0 1px rgba(199,196,215,.3);padding:5px 0;z-index:100;animation:nvF .15s ease}
 @keyframes nvF{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
 .nv-item:hover>.nv-drop{display:block}
 .nv-drop a{display:block;padding:9px 16px;color:#111c2d;font-weight:600;font-size:13.5px;white-space:nowrap;text-decoration:none;transition:background .12s,color .12s}
@@ -95,7 +96,7 @@
       var r=await fetch(base+'data/content.json?t='+Date.now());
       if(!r.ok)return;
       var d=await r.json();
-      var menus=(d.menus&&d.menus.length)?d.menus.filter(function(m){return m.slug!=='home'||true;}):DEFAULT;
+      var menus=(d.menus&&d.menus.length)?d.menus:DEFAULT;
       var brand=(d.nav&&d.nav.brand)||d.banner&&d.banner.name||'Andy Nguyễn';
       var logo=(d.nav&&d.nav.logo_url)||'';
       var ctaLabel=(d.nav&&d.nav.cta_label)||'Liên Hệ';
