@@ -269,7 +269,8 @@ function renderProjects(pages){
   g.innerHTML=items.slice(0,5).map(function(p,i){
     var span=i===0&&items.length>1?'grid-column:1/-1':'';
     var tags=(p.tags||[]).map(function(t){return '<span class="p-tag">'+esc(t)+'</span>';}).join('');
-    return '<div class="project-card" style="'+span+'"><img src="'+esc(p.image)+'" alt="'+esc(p.title)+'"><div class="overlay"><div class="p-tags">'+tags+'</div><h3>'+esc(p.title)+'</h3><p>'+esc(p.description)+'</p>'+(p.client?'<div class="p-client">'+esc(p.client)+'</div>':'')+'</div></div>';
+    var link=p.link&&p.link!=='#'?p.link:'page.html?slug=portfolio';
+    return '<a href="'+link+'" class="project-card" style="'+span+';display:block;text-decoration:none"><img src="'+esc(p.image)+'" alt="'+esc(p.title)+'"><div class="overlay"><div class="p-tags">'+tags+'</div><h3>'+esc(p.title)+'</h3><p>'+esc(p.description)+'</p>'+(p.client?'<div class="p-client">'+esc(p.client)+'</div>':'')+'</div></a>';
   }).join('');
 }
 
