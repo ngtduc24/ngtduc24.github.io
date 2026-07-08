@@ -284,11 +284,12 @@ a{text-decoration:none;color:inherit}
         <div><span class="material-symbols-outlined">location_on</span><span id="ctLocation">Hồ Chí Minh, Việt Nam</span></div>
       </div>
     </div>
-    <div class="contact-form">
-      <input type="text" placeholder="Họ và tên">
-      <input type="email" placeholder="Email">
-      <textarea rows="4" placeholder="Tin nhắn..."></textarea>
-      <button type="button">Gửi Tin Nhắn</button>
+    <div class="contact-form" id="contactForm">
+      <input type="text" id="cf-name" placeholder="Họ và tên" required>
+      <input type="email" id="cf-email" placeholder="Email" required>
+      <textarea rows="4" id="cf-msg" placeholder="Tin nhắn..." required></textarea>
+      <div id="cf-status" style="display:none;padding:10px;border-radius:10px;font-size:.82rem;margin-bottom:8px;text-align:center"></div>
+      <button type="button" id="cf-btn" onclick="submitContact()">Gửi Tin Nhắn</button>
     </div>
   </div>
 </div>
@@ -377,6 +378,61 @@ async function init(){
   renderSkills(p.skills);renderTimeline(p.experience,'expTimeline','exp');renderTimeline(p.education,'eduTimeline','edu');
   renderProjects(d.pages||{});renderCourses(d.pages||{});renderDynamicSections(d);renderFooter(d);
 }
+// ═══ Contact Form Submission ═══
+async function submitContact(){
+  var name=document.getElementById('cf-name').value.trim();
+  var email=document.getElementById('cf-email').value.trim();
+  var msg=document.getElementById('cf-msg').value.trim();
+  var status=document.getElementById('cf-status');
+  var btn=document.getElementById('cf-btn');
+
+  if(!name||!email||!msg){showStatus('Vui lòng điền đầy đủ thông tin.','#3a1c1c','#ff6b6b');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showStatus('Email không hợp lệ.','#3a1c1c','#ff6b6b');return;}
+
+  btn.disabled=true;btn.textContent='Đang gửi...';
+
+  // Try to save to GitHub
+  var saved=false;
+  var auth=null;
+  try{var s=localStorage.getItem('pa');if(s)auth=JSON.parse(s);}catch(e){}
+
+  if(auth&&auth.token){
+    try{
+      var msgPath='data/messages.json';
+      var headers={Authorization:'token '+auth.token,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'};
+      // Load existing messages
+      var messages=[],sha=null;
+      try{
+        var r=await fetch('https://api.github.com/repos/'+auth.user+'/'+auth.repo+'/contents/'+msgPath,{headers:headers});
+        if(r.ok){var f=await r.json();sha=f.sha;var bin=atob(f.content.replace(/\n/g,''));var bytes=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);messages=JSON.parse(new TextDecoder().decode(bytes));}
+      }catch(e){}
+      // Add new message
+      messages.push({id:Date.now().toString(36)+'_'+Math.random().toString(36).substr(2,4),name:name,email:email,message:msg,date:new Date().toISOString(),read:false});
+      // Save
+      var content=new TextEncoder().encode(JSON.stringify(messages,null,2));var b64='';content.forEach(function(c){b64+=String.fromCharCode(c);});b64=btoa(b64);
+      var body={message:'New contact message',content:b64,branch:'main'};if(sha)body.sha=sha;
+      var wr=await fetch('https://api.github.com/repos/'+auth.user+'/'+auth.repo+'/contents/'+msgPath,{method:'PUT',headers:headers,body:JSON.stringify(body)});
+      if(wr.ok)saved=true;
+    }catch(e){console.error('Save error:',e);}
+  }
+
+  if(saved){
+    showStatus('Tin nhắn đã được gửi thành công!','#1a2e0a','var(--lime)');
+    document.getElementById('cf-name').value='';document.getElementById('cf-email').value='';document.getElementById('cf-msg').value='';
+  }else{
+    // Fallback: mailto
+    var mailTo='mailto:'+encodeURIComponent(document.getElementById('ctEmail').textContent||'')+'?subject='+encodeURIComponent('Liên hệ từ '+name)+'&body='+encodeURIComponent('Tên: '+name+'\nEmail: '+email+'\n\n'+msg);
+    window.open(mailTo);
+    showStatus('Đã mở ứng dụng email. Nếu không thấy, hãy gửi trực tiếp qua email.','#1a2e0a','var(--lime)');
+  }
+  btn.disabled=false;btn.textContent='Gửi Tin Nhắn';
+}
+function showStatus(text,bg,color){
+  var s=document.getElementById('cf-status');
+  s.textContent=text;s.style.display='block';s.style.background=bg;s.style.color=color;s.style.border='1px solid '+color;
+  setTimeout(function(){s.style.display='none';},5000);
+}
+
 init();
 </script>
 </body>
