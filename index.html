@@ -362,7 +362,7 @@ function renderDynamicSections(d){
   var container=document.getElementById('dynamicSections');var menus=d.menus||{};var pages=d.pages||{};var html='';
   (d.menus||[]).forEach(function(m){if(m.slug==='home'||m.page_type==='project'||m.page_type==='elearning')return;var page=pages[m.slug];if(!page||!page.items||!page.items.length)return;
   html+='<section class="section dynamic-section" id="section-'+esc(m.slug)+'"><div class="wrap"><div class="section-eyebrow">'+esc(m.label)+'</div><h2 class="section-heading">'+esc(page.title)+'</h2>';if(page.description)html+='<p class="section-sub">'+esc(page.description)+'</p>';html+='<div class="ds-grid">';
-  page.items.slice(0,6).forEach(function(item){html+='<a href="page.html?slug='+esc(m.slug)+'" class="ds-card"><h4>'+esc(item.title)+'</h4><p>'+esc(item.excerpt||item.description||'')+'</p><div class="ds-meta">'+esc(item.category||item.author||'')+' · '+esc(item.date||'')+'</div></a>';});
+  page.items.slice(0,6).forEach(function(item){var itemLink=m.page_type==='article'?'article.html?slug='+esc(m.slug)+'&id='+esc(item.id):'page.html?slug='+esc(m.slug);html+='<a href="'+itemLink+'" class="ds-card"><h4>'+esc(item.title)+'</h4><p>'+esc(item.excerpt||item.description||'')+'</p><div class="ds-meta">'+esc(item.category||item.author||'')+' · '+esc(item.date||'')+'</div></a>';});
   html+='</div>';if(page.items.length>6)html+='<div style="text-align:center;margin-top:20px"><a href="page.html?slug='+esc(m.slug)+'" class="btn-outline" style="display:inline-flex">Xem tất cả<span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span></a></div>';html+='</div></section>';});
   container.innerHTML=html;
 }
