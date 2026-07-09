@@ -8,6 +8,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="../fb-init.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#f0f3ff;--surface:#fff;--surface2:#f7f9ff;--surface3:#eef1fb;--primary:#4648d4;--primary-lt:#e1e0ff;--primary-dim:#c0c1ff;--secondary:#4d661c;--secondary-lt:#ceee93;--tertiary:#6d5e00;--tertiary-lt:#ffe24c;--text:#111c2d;--text2:#464554;--text3:#767586;--border:#c7c4d7;--border-lt:#e7eeff;--green:#4d661c;--green-lt:#ceee93;--red:#ba1a1a;--red-lt:#ffdad6;--radius:12px;--radius-lg:20px;--shadow:0 4px 20px rgba(70,72,212,.08)}
@@ -155,15 +158,42 @@ window.addEventListener('DOMContentLoaded',function(){var s=localStorage.getItem
 async function startApp(){
   document.getElementById('loginView').style.display='none';document.getElementById('sidebar').style.display='flex';document.getElementById('mainArea').style.display='block';
   document.getElementById('sbUser').textContent=AUTH.user+'/'+AUTH.repo;document.getElementById('sbName').textContent=AUTH.user;
-  await loadData();await loadMessages();renderApp();
+  initFB();
+  await loadData();await fbLoadMessages();renderApp();
 }
 
 // ── GitHub API ──
 function ghFetch(p,o){o=o||{};return fetch('https://api.github.com/'+p,Object.assign({},o,{headers:Object.assign({Authorization:'token '+AUTH.token,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},o.headers||{})}));}
 function toB64(s){var b=new TextEncoder().encode(s);var r='';b.forEach(function(c){r+=String.fromCharCode(c);});return btoa(r);}
 function fromB64(b){var bin=atob(b.replace(/\n/g,''));var bytes=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return new TextDecoder().decode(bytes);}
-async function loadData(){try{var r=await ghFetch('repos/'+AUTH.user+'/'+AUTH.repo+'/contents/'+CONTENT_PATH);if(r.ok){var f=await r.json();_fileSha=f.sha;DATA=JSON.parse(fromB64(f.content));return;}}catch(e){console.error(e);}DATA={site:{},banner:{},personal:{skills:[],experience:[],education:[]},contact:{},footer:{},nav:{},menus:[],pages:{}};}
-async function saveData(){var j=JSON.stringify(DATA,null,2);var body={message:'Admin update',content:toB64(j)};if(_fileSha)body.sha=_fileSha;var r=await ghFetch('repos/'+AUTH.user+'/'+AUTH.repo+'/contents/'+CONTENT_PATH,{method:'PUT',body:JSON.stringify(body)});if(!r.ok)throw new Error((await r.json().catch(function(){return{};})).message||r.status);_fileSha=(await r.json()).content.sha;}
+async function loadData(){
+  try{
+    var db=initFB();
+    var configSnap=await db.collection('config').doc('site').get();
+    var config=configSnap.exists?configSnap.data():{};
+    var itemsSnap=await db.collection('items').orderBy('createdAt','desc').get();
+    var allItems=[];itemsSnap.forEach(function(d){var it=d.data();it.id=d.id;allItems.push(it);});
+    var pagesMeta=config.pages_meta||{};
+    var pages={};
+    Object.keys(pagesMeta).forEach(function(slug){
+      pages[slug]=Object.assign({},pagesMeta[slug],{items:allItems.filter(function(it){return it.pageSlug===slug;})});
+    });
+    DATA={site:config.site||{},banner:config.banner||{},personal:config.personal||{skills:[],experience:[],education:[]},contact:config.contact||{},footer:config.footer||{},nav:config.nav||{},menus:config.menus||[],pages:pages};
+  }catch(e){console.error('Firestore load error:',e);DATA={site:{},banner:{},personal:{skills:[],experience:[],education:[]},contact:{},footer:{},nav:{},menus:[],pages:{}};}
+}
+async function saveData(){
+  var db=initFB();
+  var pagesMeta={};
+  Object.keys(DATA.pages||{}).forEach(function(slug){
+    var p=DATA.pages[slug];
+    pagesMeta[slug]={title:p.title||'',description:p.description||'',page_type:p.page_type||'article'};
+  });
+  await db.collection('config').doc('site').set({
+    site:DATA.site||{},banner:DATA.banner||{},personal:DATA.personal||{},
+    contact:DATA.contact||{},footer:DATA.footer||{},nav:DATA.nav||{},
+    menus:DATA.menus||[],pages_meta:pagesMeta
+  });
+}
 async function trySave(fn){try{await saveData();if(fn)fn();showAlert('Đã lưu!','success');renderApp();}catch(e){showAlert('Lỗi: '+e.message,'error');}}
 
 // ── IMAGE UPLOAD to GitHub ──
@@ -260,7 +290,8 @@ function renderSidebar(){
 function renderDashboard(){
   var pages=DATA.pages||{},pC=0,aC=0,cC=0;
   Object.keys(pages).forEach(function(k){var p=pages[k];if(!p.items)return;if(p.page_type==='project')pC+=p.items.length;if(p.page_type==='article')aC+=p.items.length;if(p.page_type==='elearning')cC+=p.items.length;});
-  return '<div class="page-header"><h1>Dashboard</h1><p>Tổng quan nội dung</p></div><div class="stats-row"><div class="stat-card"><div class="stat-num">'+pC+'</div><div class="stat-label">Dự án</div></div><div class="stat-card"><div class="stat-num">'+aC+'</div><div class="stat-label">Bài viết</div></div><div class="stat-card"><div class="stat-num">'+cC+'</div><div class="stat-label">Khóa học</div></div><div class="stat-card" style="cursor:pointer" onclick="goTab(\'messages\')"><div class="stat-num" style="color:'+ (_msgCount>0?'var(--red)':'var(--primary)')+'">'+_msgCount+'</div><div class="stat-label">Tin nhắn mới</div></div></div>';
+  var migBtn='<div class="card" style="margin-bottom:16px;border-color:var(--primary-dim)"><div class="card-header"><div><div class="card-title">🔄 Chuyển dữ liệu sang Firebase</div><div class="card-sub">Nhập dữ liệu từ content.json cũ vào Firestore (chỉ cần làm 1 lần)</div></div><button class="btn btn-primary btn-sm" onclick="doMigrate()"><span class="material-symbols-outlined" style="font-size:14px">cloud_upload</span>Chuyển dữ liệu</button></div></div>';
+  return migBtn+'<div class="page-header"><h1>Dashboard</h1><p>Tổng quan nội dung</p></div><div class="stats-row"><div class="stat-card"><div class="stat-num">'+pC+'</div><div class="stat-label">Dự án</div></div><div class="stat-card"><div class="stat-num">'+aC+'</div><div class="stat-label">Bài viết</div></div><div class="stat-card"><div class="stat-num">'+cC+'</div><div class="stat-label">Khóa học</div></div><div class="stat-card" style="cursor:pointer" onclick="goTab(\'messages\')"><div class="stat-num" style="color:'+ (_msgCount>0?'var(--red)':'var(--primary)')+'">'+_msgCount+'</div><div class="stat-label">Tin nhắn mới</div></div></div>';
 }
 
 // ── Banner ──
@@ -496,12 +527,17 @@ function savePageItem(){
     item.lessons=(idx>=0&&page.items[idx])?page.items[idx].lessons||[]:[];
     item.lessons_count=item.lessons.length;
   }
-  if(idx>=0){item.id=page.items[idx].id||item.id;if(pt==='elearning')item.lessons=page.items[idx].lessons||[];page.items[idx]=item;}
-  else page.items.unshift(item);
-  _editingItem=null;_quill=null;
-  trySave();
+  item.pageSlug=slug;item.pageType=pt;
+  if(idx>=0){item.id=page.items[idx].id||item.id;if(pt==='elearning')item.lessons=page.items[idx].lessons||[];}
+  try{
+    var savedId=await saveItem(item);
+    item.id=savedId;
+    if(idx>=0)page.items[idx]=item;else page.items.unshift(item);
+    _editingItem=null;_quill=null;
+    await saveData();showAlert('Đã lưu!','success');renderApp();
+  }catch(e){showAlert('Lỗi: '+e.message,'error');}
 }
-function delPageItem(slug,idx){if(!confirm('Xoá?'))return;DATA.pages[slug].items.splice(idx,1);trySave();}
+async function delPageItem(slug,idx){if(!confirm('Xoá?'))return;var item=DATA.pages[slug].items[idx];if(item&&item.id){try{await deleteItem(item.id);}catch(e){}}DATA.pages[slug].items.splice(idx,1);trySave();}
 
 // ── LESSONS MANAGER (still uses modal - complex nested UI) ──
 function openLessonsManager(slug,courseIdx){
@@ -562,24 +598,12 @@ function delLesson(slug,cIdx,lIdx){if(!confirm('Xoá bài học?'))return;var c=
 var _msgCount=0,_messages=[],_msgSha=null;
 var MSG_PATH='data/messages.json';
 
-async function loadMessages(){
-  try{
-    var r=await ghFetch('repos/'+AUTH.user+'/'+AUTH.repo+'/contents/'+MSG_PATH);
-    if(r.ok){var f=await r.json();_msgSha=f.sha;_messages=JSON.parse(fromB64(f.content));
-    }else{_messages=[];}
-  }catch(e){_messages=[];}
+async function fbLoadMessages(){
+  try{_messages=await loadMessages();}catch(e){_messages=[];}
   _msgCount=_messages.filter(function(m){return !m.read;}).length;
 }
 
-async function saveMessages(){
-  var j=JSON.stringify(_messages,null,2);
-  var body={message:'Update messages',content:toB64(j),branch:'main'};
-  if(_msgSha)body.sha=_msgSha;
-  var r=await ghFetch('repos/'+AUTH.user+'/'+AUTH.repo+'/contents/'+MSG_PATH,{method:'PUT',body:JSON.stringify(body)});
-  if(!r.ok)throw new Error((await r.json().catch(function(){return{};})).message||r.status);
-  _msgSha=(await r.json()).content.sha;
-  _msgCount=_messages.filter(function(m){return !m.read;}).length;
-}
+// Messages now use Firestore directly via fb-init.js helpers
 
 function renderMessagesTab(){
   var html='<div class="page-header"><h1>Tin Nhắn Liên Hệ</h1><p>Quản lý tin nhắn từ form liên hệ trên trang chủ</p></div>';
@@ -610,11 +634,21 @@ function renderMessagesTab(){
   return html;
 }
 
-async function markRead(i){_messages[i].read=true;try{await saveMessages();showAlert('Đã đánh dấu đã đọc','success');renderApp();}catch(e){showAlert('Lỗi: '+e.message,'error');}}
-async function markAllRead(){_messages.forEach(function(m){m.read=true;});try{await saveMessages();showAlert('Tất cả đã đọc','success');renderApp();}catch(e){showAlert('Lỗi: '+e.message,'error');}}
-async function delMsg(i){if(!confirm('Xoá tin nhắn này?'))return;_messages.splice(i,1);try{await saveMessages();showAlert('Đã xoá','success');renderApp();}catch(e){showAlert('Lỗi: '+e.message,'error');}}
-async function clearAllMessages(){if(!confirm('Xoá tất cả tin nhắn?'))return;_messages=[];try{await saveMessages();showAlert('Đã xoá tất cả','success');renderApp();}catch(e){showAlert('Lỗi: '+e.message,'error');}}
+async function markRead(i){try{await updateMessage(_messages[i]._docId,{read:true});_messages[i].read=true;_msgCount=_messages.filter(function(m){return !m.read;}).length;showAlert('Đã đọc','success');renderApp();}catch(e){showAlert('Lỗi: '+e.message,'error');}}
+async function markAllRead(){try{for(var i=0;i<_messages.length;i++){if(!_messages[i].read)await updateMessage(_messages[i]._docId,{read:true});_messages[i].read=true;}_msgCount=0;showAlert('Tất cả đã đọc','success');renderApp();}catch(e){showAlert('Lỗi: '+e.message,'error');}}
+async function delMsg(i){if(!confirm('Xoá tin nhắn này?'))return;try{await deleteMessage(_messages[i]._docId);_messages.splice(i,1);_msgCount=_messages.filter(function(m){return !m.read;}).length;showAlert('Đã xoá','success');renderApp();}catch(e){showAlert('Lỗi: '+e.message,'error');}}
+async function clearAllMessages(){if(!confirm('Xoá tất cả tin nhắn?'))return;try{await deleteAllMessages();_messages=[];_msgCount=0;showAlert('Đã xoá tất cả','success');renderApp();}catch(e){showAlert('Lỗi: '+e.message,'error');}}
 function replyMsg(i){var msg=_messages[i];if(msg.email)window.open('mailto:'+encodeURIComponent(msg.email)+'?subject='+encodeURIComponent('Re: Tin nhắn từ '+msg.name)+'&body='+encodeURIComponent('\n\n---\nTin nhắn gốc:\n'+msg.message));}
+
+async function doMigrate(){
+  if(!confirm('Chuyển dữ liệu từ content.json sang Firebase? Dữ liệu hiện có trên Firebase sẽ được ghi đè.'))return;
+  showAlert('Đang chuyển dữ liệu...','success');
+  try{
+    var ok=await migrateFromJSON('../data/content.json');
+    if(ok){showAlert('Chuyển dữ liệu thành công! Đang tải lại...','success');setTimeout(function(){location.reload();},1500);}
+    else{showAlert('Không tìm thấy content.json','error');}
+  }catch(e){showAlert('Lỗi: '+e.message,'error');}
+}
 
 </script>
 </body>
