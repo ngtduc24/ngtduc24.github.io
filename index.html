@@ -105,22 +105,19 @@ a{text-decoration:none;color:inherit}
    PROJECTS — Device-card style
    ═══════════════════════════════════════ */
 .project-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.project-card{position:relative;border-radius:24px;overflow:hidden;cursor:pointer;border:1.5px solid var(--border);background:linear-gradient(180deg,#161b16 0%,#111611 100%);transition:border-color .25s,transform .25s;display:flex;flex-direction:column;padding:16px 16px 0}
+.project-card{position:relative;border-radius:24px;overflow:hidden;cursor:pointer;border:1.5px solid var(--border);background:linear-gradient(180deg,#161b16 0%,#111611 100%);transition:border-color .25s,transform .25s;display:flex;flex-direction:column;padding:16px 16px 0;text-decoration:none}
 .project-card:hover{border-color:var(--lime-dim);transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,.4)}
-/* Floating badge */
 .project-card .pc-badge{position:absolute;top:12px;z-index:3;padding:6px 14px;border-radius:999px;background:#d4a017;color:#0a0f0a;font-size:.68rem;font-weight:800;box-shadow:0 4px 16px rgba(0,0,0,.3);white-space:nowrap}
 .project-card:nth-child(odd) .pc-badge{left:12px}
 .project-card:nth-child(even) .pc-badge{right:12px}
-/* Image area */
 .project-card .pc-img-wrap{position:relative;border-radius:16px;overflow:hidden;aspect-ratio:3/4;background:var(--bg);flex:1}
 .project-card .pc-img-wrap img{width:100%;height:100%;object-fit:cover;transition:transform .6s}
 .project-card:hover .pc-img-wrap img{transform:scale(1.06)}
 .project-card .pc-img-wrap::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(10,15,10,.6) 0%,transparent 40%);pointer-events:none}
-/* Bottom info bar */
-.project-card .pc-bottom{display:flex;justify-content:space-between;align-items:center;padding:14px 4px;position:relative;z-index:2}
-.project-card .pc-info{}
+.project-card .pc-bottom{display:flex;justify-content:space-between;align-items:center;padding:14px 4px;gap:10px}
 .project-card .pc-label{font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
 .project-card .pc-title{font-size:1.05rem;font-weight:900;color:var(--white);line-height:1.2;margin-top:1px}
+.project-card .pc-desc{font-size:.78rem;color:var(--text2);line-height:1.4;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .project-card .pc-arrow{width:36px;height:36px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .15s,box-shadow .15s}
 .project-card:hover .pc-arrow{transform:scale(1.1);box-shadow:0 0 16px rgba(184,255,0,.3)}
 .project-card .pc-arrow .material-symbols-outlined{font-size:18px;color:#0a0f0a}
@@ -354,27 +351,27 @@ function renderTimeline(items,elId,type){
 }
 function renderProjects(pages){
   var g=document.getElementById('projectGrid');var items=[];
-  Object.keys(pages).forEach(function(k){var pg=pages[k];if(pg.page_type==='project'&&pg.items)pg.items.forEach(function(it){if(it.featured)items.push(it);});});
+  Object.keys(pages).forEach(function(k){var pg=pages[k];if(pg.page_type==='project'&&pg.items)pg.items.forEach(function(it){it._slug=k;if(it.featured)items.push(it);});});
   if(!items.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text3);border:2px dashed var(--border);border-radius:20px">Chưa có dự án nổi bật. <a href="admin/" style="color:var(--lime)">Thêm từ Admin</a>.</div>';return;}
-  // Adjust columns based on item count
   if(items.length===1)g.style.gridTemplateColumns='minmax(0,400px)';
   else if(items.length===2)g.style.gridTemplateColumns='1fr 1fr';
-  else g.style.gridTemplateColumns='repeat(3,1fr)';
-  g.innerHTML=items.slice(0,6).map(function(p,i){
-    var link=p.link&&p.link!=='#'?p.link:'page.html?slug=portfolio';
+  g.innerHTML=items.slice(0,6).map(function(p){
+    var link='page.html?slug='+esc(p._slug)+'&id='+esc(p.id);
     var badge=p.client||p.category||(p.tags&&p.tags[0])||'';
+    var desc=(p.description||'').length>80?(p.description.substring(0,80)+'...'):p.description||'';
     return '<a href="'+link+'" class="project-card">'
       +(badge?'<div class="pc-badge">'+esc(badge)+'</div>':'')
       +'<div class="pc-img-wrap">'+(p.image?'<img src="'+esc(p.image)+'" alt="'+esc(p.title)+'">':'')+'</div>'
-      +'<div class="pc-bottom"><div class="pc-info"><div class="pc-label">'+(p.category?esc(p.category):'Portfolio')+'</div><div class="pc-title">'+esc(p.title)+'</div></div>'
-      +'<div class="pc-arrow"><span class="material-symbols-outlined">arrow_forward</span></div></div></a>';
+      +'<div class="pc-bottom"><div class="pc-info"><div class="pc-label">'+(p.category?esc(p.category):'Portfolio')+'</div><div class="pc-title">'+esc(p.title)+'</div>'
+      +(desc?'<div class="pc-desc">'+esc(desc)+'</div>':'')
+      +'</div><div class="pc-arrow"><span class="material-symbols-outlined">arrow_forward</span></div></div></a>';
   }).join('');
 }
 function renderCourses(pages){
   var el=document.getElementById('courseRow');var items=[];
-  Object.keys(pages).forEach(function(k){var pg=pages[k];if(pg.page_type==='elearning'&&pg.items)pg.items.forEach(function(c){if(c.featured)items.push(c);});});
+  Object.keys(pages).forEach(function(k){var pg=pages[k];if(pg.page_type==='elearning'&&pg.items)pg.items.forEach(function(c){c._slug=k;if(c.featured)items.push(c);});});
   if(!items.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);border:2px dashed var(--border);border-radius:20px">Chưa có khóa học nổi bật.</div>';return;}
-  el.innerHTML=items.slice(0,4).map(function(c){var statusCls=c.status==='open'?'open':(c.status==='upcoming'?'upcoming':'closed');var statusTxt=c.status==='open'?'Đang mở':(c.status==='upcoming'?'Sắp khai giảng':'Đã đóng');return '<div class="course-card">'+(c.image?'<img src="'+esc(c.image)+'" alt="'+esc(c.title)+'">':'<div style="height:180px;background:var(--bg);display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:48px;color:var(--border)">school</span></div>')+'<div class="cc-body"><h4>'+esc(c.title)+'</h4><p class="cc-desc">'+esc(c.description)+'</p><div class="cc-meta">'+(c.lessons_count?'<span><span class="material-symbols-outlined">menu_book</span>'+c.lessons_count+' bài</span>':'')+(c.duration?'<span><span class="material-symbols-outlined">schedule</span>'+esc(c.duration)+'</span>':'')+'</div><span class="cc-status '+statusCls+'">'+statusTxt+'</span></div></div>';}).join('');
+  el.innerHTML=items.slice(0,4).map(function(c){var statusCls=c.status==='open'?'open':(c.status==='upcoming'?'upcoming':'closed');var statusTxt=c.status==='open'?'Đang mở':(c.status==='upcoming'?'Sắp khai giảng':'Đã đóng');var cLink='page.html?slug='+esc(c._slug)+'&id='+esc(c.id);return '<a href="'+cLink+'" class="course-card" style="display:block;text-decoration:none;color:inherit">'+(c.image?'<img src="'+esc(c.image)+'" alt="'+esc(c.title)+'">':'<div style="height:180px;background:var(--bg);display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:48px;color:var(--border)">school</span></div>')+'<div class="cc-body"><h4>'+esc(c.title)+'</h4><p class="cc-desc">'+esc(c.description)+'</p><div class="cc-meta">'+(c.lessons_count?'<span><span class="material-symbols-outlined">menu_book</span>'+c.lessons_count+' bài</span>':'')+(c.duration?'<span><span class="material-symbols-outlined">schedule</span>'+esc(c.duration)+'</span>':'')+'</div><span class="cc-status '+statusCls+'">'+statusTxt+'</span></div></div>';}).join('');
 }
 function renderDynamicSections(d){
   var container=document.getElementById('dynamicSections');var menus=d.menus||{};var pages=d.pages||{};var html='';
