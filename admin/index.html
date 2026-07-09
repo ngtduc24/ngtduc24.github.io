@@ -504,7 +504,7 @@ function initPageEditor(){
   },80);
 }
 
-function savePageItem(){
+async function savePageItem(){
   if(!_editingItem)return;
   var slug=_editingItem.slug,idx=_editingItem.idx;
   if(!v('pi-title')){showAlert('Nhập tiêu đề!','error');return;}
