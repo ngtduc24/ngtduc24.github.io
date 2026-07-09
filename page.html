@@ -193,6 +193,14 @@ async function init(){
   else if(pt==='project')html+=renderProjectPage(page);
   else if(pt==='elearning')html+=renderElearningPage(page);
   document.getElementById('pageMain').innerHTML=html;
+  // Auto-open project detail if id param present
+  var detailId=new URLSearchParams(location.search).get('id');
+  if(detailId&&pt==='project'){setTimeout(function(){openProject(detailId);},200);}
+  // Auto-scroll to course if id param present  
+  if(detailId&&pt==='elearning'){
+    var course=page.items.find(function(c){return c.id===detailId;});
+    if(course){document.title=course.title+' — '+(d.site&&d.site.name||'');}
+  }
   if(d.footer){document.getElementById('ftBrand').textContent=d.footer.brand||'';document.getElementById('ftCopy').textContent=d.footer.copyright||'';}
   if(d.menus)document.getElementById('ftLinks').innerHTML=d.menus.map(function(m){return '<a href="'+(m.slug==='home'?'index.html':'page.html?slug='+m.slug)+'">'+esc(m.label)+'</a>';}).join('');
 }
