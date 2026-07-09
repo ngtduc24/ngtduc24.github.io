@@ -83,6 +83,9 @@ a{text-decoration:none;color:inherit}
 </style>
 </head>
 <body>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="fb-init.js"></script>
 <script src="_nav.js"></script>
 
 <div id="articlePage">
@@ -94,7 +97,7 @@ a{text-decoration:none;color:inherit}
 <script>
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function getParam(k){return new URLSearchParams(location.search).get(k)||'';}
-async function loadData(){try{var r=await fetch('data/content.json?t='+Date.now());if(r.ok)return r.json();}catch(e){}return null;}
+async function loadData(){try{return await loadSiteData();}catch(e){console.error(e);try{var r=await fetch('data/content.json?t='+Date.now());if(r.ok)return r.json();}catch(e2){}return null;}}
 
 async function init(){
   var slug=getParam('slug'),id=getParam('id');
