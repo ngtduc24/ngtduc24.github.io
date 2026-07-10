@@ -36,9 +36,9 @@ function jShowView(v){jSV(v);}
 // ═══ LIST ═══
 function jVList(){
   var h='<div class="jcard"><div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap"><input type="text" id="jQ" placeholder="Tìm tên tạp chí, ISSN..." oninput="jF()" style="flex:1;min-width:200px"><select id="jFF" onchange="jF()"><option value="">Tất cả ngành</option>'+jFieldOpts()+'</select><select id="jFS" onchange="jF()"><option value="">Tất cả điểm</option><option value="2">≥ 2.0</option><option value="1">≥ 1.0</option><option value="0.5">≥ 0.5</option></select></div>';
-  h+='<div class="jbar"><button class="btn btn-danger btn-sm" onclick="jDelSel()"><span class="material-symbols-outlined" style="font-size:14px">delete</span>Xóa đã chọn (<span id="jSN">0</span>)</button><button class="btn btn-ghost btn-sm" onclick="jSelAll()">Chọn tất cả</button><button class="btn btn-ghost btn-sm" onclick="jDesel()">Bỏ chọn</button><span style="margin-left:auto;font-size:.75rem;color:var(--text3)" id="jCnt"></span></div>';
+  h+='<div class="jbar"><button class="btn btn-danger btn-sm" onclick="jDelSel()"><span class="material-symbols-outlined" style="font-size:14px">delete</span>Xóa đã chọn (<span id="jSN">0</span>)</button><button class="btn btn-primary btn-sm" onclick="jBulkEdit()"><span class="material-symbols-outlined" style="font-size:14px">edit</span>Sửa hàng loạt</button><button class="btn btn-ghost btn-sm" onclick="jSelAll()">Chọn tất cả</button><button class="btn btn-ghost btn-sm" onclick="jDesel()">Bỏ chọn</button><span style="margin-left:auto;font-size:.75rem;color:var(--text3)" id="jCnt"></span></div>';
   h+='<p style="font-size:.7rem;color:var(--text3);margin-bottom:8px">💡 Bấm vào dòng để chọn/bỏ chọn</p>';
-  h+='<div class="jtbl"><table><thead><tr><th style="width:28px">☑</th><th style="width:36px">TT</th><th>Tên tạp chí</th><th>ISSN</th><th>Loại</th><th>Cơ quan XB</th><th>Ngành</th><th>Điểm</th><th>Ngày nhập</th><th style="width:36px"></th></tr></thead><tbody id="jTB"></tbody></table></div>';
+  h+='<div class="jtbl"><table><thead><tr><th style="width:28px">☑</th><th style="width:36px">TT</th><th>Tên tạp chí</th><th>ISSN</th><th>Loại</th><th>Cơ quan XB</th><th>Ngành</th><th>Điểm</th><th>Ngày nhập</th><th style="width:36px">Sửa</th><th style="width:36px"></th></tr></thead><tbody id="jTB"></tbody></table></div>';
   h+='<div class="jpager" id="jPG"></div></div>';
   setTimeout(jF,30);
   return h;
@@ -64,8 +64,8 @@ function jF(){
   var tb=document.getElementById('jTB');if(!tb)return;
   tb.innerHTML=rows.length?rows.map(function(j,i){
     var sel=_jSelected.has(j._id);
-    return '<tr class="'+(sel?'sel':'')+'" onclick="jTR(\''+j._id+'\',this)"><td style="text-align:center;color:var(--primary)">'+(sel?'☑':'☐')+'</td><td style="color:var(--text3);font-weight:600">'+(s+i+1)+'</td><td class="jname">'+jE(j.name)+'</td><td style="font-size:.72rem;color:var(--text2);font-family:monospace">'+jE(j.issn)+'</td><td style="font-size:.72rem">'+jE(j.type)+'</td><td style="font-size:.72rem;color:var(--text2);max-width:160px">'+jE(j.pub)+'</td><td><span class="jfield">'+jE(j.field)+'</span></td><td class="jscore">'+jE(j.score)+'</td><td style="font-size:.68rem;color:var(--text3);white-space:nowrap">'+jFD(j.importedAt||j.createdAt)+'</td><td><button class="jdel" onclick="event.stopPropagation();jDel1(\''+j._id+'\')"><span class="material-symbols-outlined" style="font-size:14px">close</span></button></td></tr>';
-  }).join(''):'<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text3)">Không có dữ liệu.</td></tr>';
+    return '<tr class="'+(sel?'sel':'')+'" onclick="jTR(\''+j._id+'\',this)"><td style="text-align:center;color:var(--primary)">'+(sel?'☑':'☐')+'</td><td style="color:var(--text3);font-weight:600">'+(s+i+1)+'</td><td class="jname">'+jE(j.name)+'</td><td style="font-size:.72rem;color:var(--text2);font-family:monospace">'+jE(j.issn)+'</td><td style="font-size:.72rem">'+jE(j.type)+'</td><td style="font-size:.72rem;color:var(--text2);max-width:160px">'+jE(j.pub)+'</td><td><span class="jfield">'+jE(j.field)+'</span></td><td class="jscore">'+jE(j.score)+'</td><td style="font-size:.68rem;color:var(--text3);white-space:nowrap">'+jFD(j.importedAt||j.createdAt)+'</td><td><button class="jdel" style="background:var(--primary-lt);color:var(--primary)" onclick="event.stopPropagation();jEditOne(\''+j._id+'\')"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button></td><td><button class="jdel" onclick="event.stopPropagation();jDel1(\''+j._id+'\')"><span class="material-symbols-outlined" style="font-size:14px">close</span></button></td></tr>';
+  }).join(''):'<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3)">Không có dữ liệu.</td></tr>';
   var ce=document.getElementById('jCnt');if(ce)ce.textContent=tot+' kết quả';
   var pg=document.getElementById('jPG');if(pg)pg.innerHTML='<span>Trang '+(pgs?_jPage+1:0)+'/'+pgs+'</span><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-sm" onclick="_jPage=Math.max(0,_jPage-1);jF()">← Trước</button><button class="btn btn-ghost btn-sm" onclick="_jPage=Math.min('+(pgs-1)+',_jPage+1);jF()">Sau →</button></div>';
   jUSC();
@@ -100,6 +100,92 @@ async function jAddM(){
   await jSH('add',[j]);
   document.getElementById('ja-n').value='';document.getElementById('ja-i').value='';document.getElementById('ja-p').value='';document.getElementById('ja-s').value='';
   showAlert('Đã thêm: '+n,'success');
+}
+
+// ═══ EDIT ═══
+function jBulkEdit(){
+  if(!_jSelected.size){showAlert('Chưa chọn tạp chí nào.','error');return;}
+  var count=_jSelected.size;
+  var html='<div class="jcard" id="jBulkForm"><h3><span class="material-symbols-outlined">edit_note</span>Sửa hàng loạt '+count+' tạp chí</h3>';
+  html+='<p style="font-size:.78rem;color:var(--text3);margin-bottom:12px">Chỉ thay đổi các trường bạn chọn. Bỏ trống = giữ nguyên.</p>';
+  html+='<div class="fr"><div class="fg"><label>Đổi ngành</label><select id="jbe-field"><option value="">— Giữ nguyên —</option>'+jFieldOpts()+'</select></div><div class="fg"><label>Đổi loại</label><select id="jbe-type"><option value="">— Giữ nguyên —</option><option>Tạp chí</option><option>Kỷ yếu</option></select></div></div>';
+  html+='<div class="fr"><div class="fg"><label>Đổi điểm</label><input type="text" id="jbe-score" placeholder="Giữ nguyên"></div><div class="fg"><label>Đổi cơ quan XB</label><input type="text" id="jbe-pub" placeholder="Giữ nguyên"></div></div>';
+  html+='<div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-primary" onclick="jDoBulkEdit()"><span class="material-symbols-outlined" style="font-size:14px">save</span>Áp dụng cho '+count+' tạp chí</button><button class="btn btn-ghost" onclick="document.getElementById(\'jBulkForm\').remove()">Hủy</button></div></div>';
+  // Insert before the table
+  var container=document.getElementById('jVC');
+  container.insertAdjacentHTML('afterbegin',html);
+  container.scrollTop=0;
+}
+
+async function jDoBulkEdit(){
+  var newField=document.getElementById('jbe-field').value;
+  var newType=document.getElementById('jbe-type').value;
+  var newScore=document.getElementById('jbe-score').value.trim();
+  var newPub=document.getElementById('jbe-pub').value.trim();
+  if(!newField&&!newType&&!newScore&&!newPub){showAlert('Chưa thay đổi gì.','error');return;}
+  var db=initFB(),batch=db.batch(),count=0;
+  var updates={};
+  if(newField)updates.field=newField;
+  if(newType)updates.type=newType;
+  if(newScore)updates.score=newScore;
+  if(newPub)updates.pub=newPub;
+  _jSelected.forEach(function(id){
+    batch.update(db.collection('journals').doc(id),updates);
+    count++;
+  });
+  await batch.commit();
+  // Update local data
+  _jList.forEach(function(j){
+    if(_jSelected.has(j._id)){
+      if(newField)j.field=newField;
+      if(newType)j.type=newType;
+      if(newScore)j.score=newScore;
+      if(newPub)j.pub=newPub;
+    }
+  });
+  var el=document.getElementById('jBulkForm');if(el)el.remove();
+  showAlert('Đã cập nhật '+count+' tạp chí.','success');
+  _jSelected.clear();jF();
+}
+
+function jEditOne(id){
+  var j=_jList.find(function(x){return x._id===id;});
+  if(!j)return;
+  var html='<div class="jcard" id="jEditForm" style="border-color:var(--primary)">';
+  html+='<h3><span class="material-symbols-outlined">edit</span>Sửa tạp chí</h3>';
+  html+='<input type="hidden" id="je-id" value="'+id+'">';
+  html+='<div class="fr"><div class="fg"><label>Tên tạp chí *</label><input type="text" id="je-name" value="'+jE(j.name)+'"></div><div class="fg"><label>ISSN</label><input type="text" id="je-issn" value="'+jE(j.issn)+'"></div></div>';
+  html+='<div class="fr"><div class="fg"><label>Loại</label><select id="je-type"><option'+(j.type==='Tạp chí'?' selected':'')+'>Tạp chí</option><option'+(j.type==='Kỷ yếu'?' selected':'')+'>Kỷ yếu</option></select></div><div class="fg"><label>Ngành *</label><select id="je-field">'+J_FIELDS.map(function(f){return '<option'+(f===j.field?' selected':'')+'>'+f+'</option>';}).join('')+'</select></div></div>';
+  html+='<div class="fr"><div class="fg"><label>Cơ quan xuất bản</label><input type="text" id="je-pub" value="'+jE(j.pub)+'"></div><div class="fg"><label>Điểm *</label><input type="text" id="je-score" value="'+jE(j.score)+'"></div></div>';
+  html+='<div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-primary" onclick="jDoEditOne()"><span class="material-symbols-outlined" style="font-size:14px">save</span>Lưu</button><button class="btn btn-ghost" onclick="document.getElementById(\'jEditForm\').remove()">Hủy</button></div></div>';
+  // Remove existing edit form
+  var old=document.getElementById('jEditForm');if(old)old.remove();
+  var container=document.getElementById('jVC');
+  container.insertAdjacentHTML('afterbegin',html);
+  container.scrollTop=0;
+  document.getElementById('je-name').focus();
+}
+
+async function jDoEditOne(){
+  var id=document.getElementById('je-id').value;
+  var name=document.getElementById('je-name').value.trim();
+  var score=document.getElementById('je-score').value.trim();
+  if(!name||!score){showAlert('Nhập tên và điểm!','error');return;}
+  var updates={
+    name:name,
+    issn:document.getElementById('je-issn').value.trim(),
+    type:document.getElementById('je-type').value,
+    field:document.getElementById('je-field').value,
+    pub:document.getElementById('je-pub').value.trim(),
+    score:score
+  };
+  await initFB().collection('journals').doc(id).update(updates);
+  // Update local
+  var j=_jList.find(function(x){return x._id===id;});
+  if(j){Object.assign(j,updates);}
+  var el=document.getElementById('jEditForm');if(el)el.remove();
+  showAlert('Đã cập nhật: '+name,'success');
+  jF();
 }
 
 // ═══ EXCEL ═══
