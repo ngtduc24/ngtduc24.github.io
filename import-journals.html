@@ -7,35 +7,121 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="fb-init.js"></script>
 <script src="import-data.js"></script>
-<style>body{font-family:sans-serif;max-width:600px;margin:40px auto;padding:20px}h1{font-size:1.3rem}#log{background:#f5f5f5;padding:16px;border-radius:8px;font-size:.82rem;max-height:400px;overflow-y:auto;white-space:pre-wrap}button{padding:12px 24px;background:#7C3AED;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;margin:12px 0}button:hover{background:#6D28D9}.done{color:#059669;font-weight:700}</style>
+<style>body{font-family:'Plus Jakarta Sans',sans-serif;max-width:640px;margin:40px auto;padding:20px;background:#FAFAFA;color:#1E1E2E}h1{font-size:1.3rem;color:#7C3AED}#log{background:#fff;padding:16px;border-radius:12px;font-size:.8rem;max-height:400px;overflow-y:auto;white-space:pre-wrap;border:1.5px solid #E5E7EB;margin-top:12px}button{padding:12px 24px;border-radius:10px;color:#fff;border:none;font-size:.9rem;font-weight:700;cursor:pointer;margin:8px 4px 8px 0}.btn-main{background:#7C3AED}.btn-main:hover{background:#6D28D9}.btn-danger{background:#EF4444}.btn-danger:hover{background:#DC2626}.stat{display:inline-block;background:#EDE9FE;color:#7C3AED;padding:6px 14px;border-radius:8px;font-weight:700;font-size:.85rem;margin:4px}</style>
 </head>
 <body>
 <h1>📥 Nhập dữ liệu tạp chí HĐGSNN 2025</h1>
-<p>Nhập <strong id="totalCount">0</strong> tạp chí từ 2 ngành: Triết học-CTH-XHH và Văn hoá-NT-TDTT</p>
-<button onclick="doImport()">Bắt đầu nhập vào Firebase</button>
-<div id="log">Chờ bấm nút...</div>
+<p>Tổng cộng: <span class="stat" id="totalCount">0</span> tạp chí từ 4 ngành</p>
+<div>
+  <button class="btn-danger" onclick="clearAll()">🗑️ Xóa toàn bộ dữ liệu cũ</button>
+  <button class="btn-main" onclick="doImport()">📥 Nhập dữ liệu mới</button>
+  <button class="btn-main" style="background:#059669" onclick="checkData()">🔍 Kiểm tra Firebase</button>
+</div>
+<div id="log">Sẵn sàng. Nên bấm "Xóa toàn bộ dữ liệu cũ" trước, rồi "Nhập dữ liệu mới".</div>
+
 <script>
 document.getElementById('totalCount').textContent = IMPORT_DATA.length;
+
+async function checkData(){
+  var log = document.getElementById('log');
+  log.textContent = 'Đang kiểm tra Firebase...\n';
+  var db = initFB();
+  var snap = await db.collection('journals').get();
+  var count = snap.size;
+  var fields = {};
+  snap.forEach(function(d){
+    var j = d.data();
+    var f = j.field || 'Không rõ';
+    fields[f] = (fields[f]||0) + 1;
+  });
+  log.textContent += '\nTổng cộng: ' + count + ' tạp chí trong Firebase\n\nTheo ngành:\n';
+  Object.keys(fields).sort().forEach(function(f){
+    log.textContent += '  ' + f + ': ' + fields[f] + '\n';
+  });
+  
+  // Check duplicates
+  var names = {};
+  var dupes = 0;
+  snap.forEach(function(d){
+    var j = d.data();
+    var key = (j.name||'') + '|' + (j.field||'');
+    if(names[key]) dupes++;
+    names[key] = true;
+  });
+  log.textContent += '\nBản trùng (cùng tên + cùng ngành): ' + dupes + '\n';
+}
+
+async function clearAll(){
+  if(!confirm('XÓA TOÀN BỘ dữ liệu tạp chí trong Firebase? Hành động này không thể hoàn tác.')) return;
+  var log = document.getElementById('log');
+  log.textContent = 'Đang xóa toàn bộ dữ liệu...\n';
+  var db = initFB();
+  var snap = await db.collection('journals').get();
+  var total = snap.size;
+  var count = 0;
+  // Delete in batches of 500
+  var batch = db.batch();
+  var batchCount = 0;
+  for(var i = 0; i < snap.docs.length; i++){
+    batch.delete(snap.docs[i].ref);
+    batchCount++;
+    if(batchCount >= 400){
+      await batch.commit();
+      count += batchCount;
+      log.textContent += count + '/' + total + ' đã xóa...\n';
+      log.scrollTop = log.scrollHeight;
+      batch = db.batch();
+      batchCount = 0;
+    }
+  }
+  if(batchCount > 0){
+    await batch.commit();
+    count += batchCount;
+  }
+  log.textContent += '\n✅ Đã xóa ' + count + ' tạp chí. Firebase đã sạch.\nBây giờ bấm "Nhập dữ liệu mới" để nhập lại.\n';
+}
+
 async function doImport(){
   var log = document.getElementById('log');
-  log.textContent = 'Đang kết nối Firebase...\n';
+  log.textContent = 'Đang nhập ' + IMPORT_DATA.length + ' tạp chí...\n';
   var db = initFB();
   var count = 0;
+  var errors = 0;
+  // Use batches for speed
+  var batch = db.batch();
+  var batchCount = 0;
   for(var i = 0; i < IMPORT_DATA.length; i++){
     var d = IMPORT_DATA[i];
     var j = {name:d.n, issn:d.i, type:d.t, pub:d.p, field:d.f, score:d.s};
-    try{
-      await db.collection('journals').add(j);
-      count++;
-      if(count % 10 === 0) log.textContent += count + '/' + IMPORT_DATA.length + ' đã nhập...\n';
-      log.scrollTop = log.scrollHeight;
-    }catch(e){
-      log.textContent += '❌ Lỗi: ' + d.n + ' - ' + e.message + '\n';
+    var ref = db.collection('journals').doc();
+    batch.set(ref, j);
+    batchCount++;
+    if(batchCount >= 400){
+      try{
+        await batch.commit();
+        count += batchCount;
+        log.textContent += count + '/' + IMPORT_DATA.length + ' đã nhập...\n';
+        log.scrollTop = log.scrollHeight;
+      }catch(e){
+        log.textContent += '❌ Lỗi batch: ' + e.message + '\n';
+        errors += batchCount;
+      }
+      batch = db.batch();
+      batchCount = 0;
     }
   }
-  log.textContent += '\n✅ Hoàn tất! Đã nhập ' + count + '/' + IMPORT_DATA.length + ' tạp chí.\n';
-  log.textContent += 'Vào tracuu.html để kiểm tra.';
-  log.classList.add('done');
+  if(batchCount > 0){
+    try{
+      await batch.commit();
+      count += batchCount;
+    }catch(e){
+      errors += batchCount;
+      log.textContent += '❌ Lỗi: ' + e.message + '\n';
+    }
+  }
+  log.textContent += '\n✅ Hoàn tất! Đã nhập ' + count + ' tạp chí.';
+  if(errors) log.textContent += ' (' + errors + ' lỗi)';
+  log.textContent += '\n\nVào tracuu.html để kiểm tra.';
 }
 </script>
 </body>
