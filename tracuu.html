@@ -60,6 +60,36 @@ tr:hover{background:rgba(124,58,237,.02)}
 .j-pub{font-size:.75rem;color:var(--text2);max-width:240px}
 
 .empty-tbl{text-align:center;padding:48px;color:var(--text3);font-size:.88rem}
+/* Journal name hover */
+.j-name-link{font-weight:700;color:var(--text);cursor:pointer;transition:color .15s}
+.j-name-link:hover{color:var(--purple);text-decoration:underline;text-underline-offset:3px}
+/* Modal */
+.jmodal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:20px;animation:jmFade .2s}
+.jmodal-bg.open{display:flex}
+@keyframes jmFade{from{opacity:0}to{opacity:1}}
+.jmodal{background:var(--white);border-radius:20px;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.15);animation:jmSlide .25s ease}
+@keyframes jmSlide{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.jmodal .jm-close{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;color:var(--text2);z-index:2;transition:all .12s}
+.jmodal .jm-close:hover{border-color:var(--purple);color:var(--purple)}
+.jm-header{display:flex;gap:20px;padding:24px 24px 0;align-items:flex-start}
+.jm-img{width:120px;height:120px;border-radius:16px;overflow:hidden;flex-shrink:0;background:var(--purple-lt);display:flex;align-items:center;justify-content:center;border:1.5px solid var(--border)}
+.jm-img img{width:100%;height:100%;object-fit:cover}
+.jm-img .jm-placeholder{font-size:40px;color:var(--purple-dim)}
+.jm-title-area{flex:1;min-width:0}
+.jm-title{font-size:1.25rem;font-weight:900;color:var(--text);line-height:1.2;margin-bottom:6px}
+.jm-stars{display:flex;gap:2px;margin-bottom:8px}
+.jm-stars .star{font-size:18px}
+.jm-stars .star.on{color:#EAB308}
+.jm-stars .star.off{color:var(--border)}
+.jm-field-badge{display:inline-block;font-size:.68rem;font-weight:700;color:var(--purple);background:var(--purple-lt);padding:3px 10px;border-radius:999px}
+.jm-body{padding:20px 24px}
+.jm-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.jm-item{background:var(--bg);border-radius:10px;padding:10px 14px}
+.jm-item .jm-label{font-size:.62rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.jm-item .jm-value{font-size:.88rem;font-weight:600;color:var(--text)}
+.jm-item .jm-value.score{font-size:1.1rem;font-weight:900;color:var(--purple)}
+.jm-desc{background:var(--bg);border-radius:12px;padding:16px;font-size:.85rem;color:var(--text2);line-height:1.7;border-top:1.5px solid var(--border)}
+@media(max-width:500px){.jm-header{flex-direction:column;align-items:center;text-align:center}.jm-grid{grid-template-columns:1fr}}
 
 /* Admin bar */
 .admin-bar{max-width:1100px;margin:20px auto;padding:0 24px}
@@ -152,6 +182,14 @@ tr:hover{background:rgba(124,58,237,.02)}
     <p>Dữ liệu được tổng hợp từ 28 danh mục tạp chí của các HĐGS ngành, liên ngành năm 2025. Quản trị viên có thể nhập thêm dữ liệu từ file CSV.</p>
     <a href="http://hdgsnn.gov.vn/tin-tuc/quyet-dinh-so-26-qd-hdgsnn-phe-duyet-danh-muc-tap-chi-khoa-hoc-duoc-tinh-diem-nam-2025_816/" target="_blank">Xem QĐ gốc trên HĐGSNN ↗</a>
   </div>
+</div>
+
+<!-- Journal Detail Modal -->
+<div class="jmodal-bg" id="jModal" onclick="if(event.target===this)closeJModal()">
+<div class="jmodal">
+  <button class="jm-close" onclick="closeJModal()">✕</button>
+  <div id="jModalContent"></div>
+</div>
 </div>
 
 <footer class="footer"><a href="index.html">← Về trang chủ</a> · Dữ liệu từ <a href="http://hdgsnn.gov.vn" target="_blank">HĐGSNN</a></footer>
@@ -294,11 +332,12 @@ function doSearch() {
   }
 
   filtered.sort(function(a, b) { return parseScore(b.score) - parseScore(a.score); });
+  window._filteredJ = filtered;
 
   document.getElementById('tBody').innerHTML = filtered.map(function(j, i) {
     return '<tr>'
       + '<td style="color:var(--text3);font-weight:700">' + (i + 1) + '</td>'
-      + '<td class="j-name">' + esc(j.name) + '</td>'
+      + '<td><span class="j-name-link" onclick="openJModal('+i+')">' + esc(j.name) + '</span></td>'
       + '<td class="j-issn">' + esc(j.issn) + '</td>'
       + '<td class="j-type">' + esc(j.type) + '</td>'
       + '<td class="j-pub">' + esc(j.pub) + '</td>'
@@ -362,6 +401,61 @@ async function doAddManual() {
 document.getElementById('importModal').addEventListener('click', function(e) { if (e.target === this) closeImport(); });
 document.getElementById('q').addEventListener('keydown', function(e) { if (e.key === 'Enter') doSearch(); });
 
+
+// ═══ JOURNAL DETAIL MODAL ═══
+var _defaultJImg = '';
+
+async function loadDefaultImg(){
+  try{var db=initFB();var snap=await db.collection('config').doc('journal_settings').get();
+  if(snap.exists&&snap.data().defaultImage)_defaultJImg=snap.data().defaultImage;}catch(e){}
+}
+
+function openJModal(idx){
+  var j=(window._filteredJ||[])[idx];if(!j)return;
+  var img=j.image||_defaultJImg;
+  var imgHtml=img?'<img src="'+esc(img)+'" alt="'+esc(j.name)+'">':'<span class="material-symbols-outlined jm-placeholder">menu_book</span>';
+
+  // Calculate stars (1-5) based on score
+  var maxScore=parseScore(j.score);
+  var stars=Math.min(5,Math.max(1,Math.round(maxScore/0.6)));
+  var starsHtml='';
+  for(var s=1;s<=5;s++){starsHtml+='<span class="star '+(s<=stars?'on':'off')+'">★</span>';}
+
+  var html='<div class="jm-header"><div class="jm-img">'+imgHtml+'</div>';
+  html+='<div class="jm-title-area"><div class="jm-title">'+esc(j.name)+'</div>';
+  html+='<div class="jm-stars">'+starsHtml+'<span style="font-size:.72rem;color:var(--text3);margin-left:6px">Độ uy tín</span></div>';
+  html+='<span class="jm-field-badge">'+esc(j.field)+'</span></div></div>';
+
+  html+='<div class="jm-body"><div class="jm-grid">';
+  html+='<div class="jm-item"><div class="jm-label">ISSN</div><div class="jm-value">'+(j.issn?esc(j.issn):'—')+'</div></div>';
+  html+='<div class="jm-item"><div class="jm-label">Loại</div><div class="jm-value">'+esc(j.type||'Tạp chí')+'</div></div>';
+  html+='<div class="jm-item"><div class="jm-label">Cơ quan xuất bản</div><div class="jm-value">'+esc(j.pub||'—')+'</div></div>';
+  html+='<div class="jm-item"><div class="jm-label">Ngành</div><div class="jm-value">'+esc(j.field)+'</div></div>';
+  html+='<div class="jm-item"><div class="jm-label">Điểm công trình</div><div class="jm-value score">'+esc(j.score)+'</div></div>';
+  html+='<div class="jm-item"><div class="jm-label">Ngày thành lập</div><div class="jm-value">'+(j.foundedYear?esc(j.foundedYear):'—')+'</div></div>';
+  html+='</div>';
+
+  // Description
+  if(j.description){
+    html+='<div class="jm-desc">'+esc(j.description)+'</div>';
+  }else{
+    html+='<div class="jm-desc" style="color:var(--text3);font-style:italic">Chưa có thông tin giới thiệu chi tiết về tạp chí này. Quản trị viên có thể cập nhật trong trang Admin.</div>';
+  }
+  html+='</div>';
+
+  document.getElementById('jModalContent').innerHTML=html;
+  document.getElementById('jModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeJModal(){
+  document.getElementById('jModal').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeJModal();});
+
+loadDefaultImg();
 loadJournals();
 </script>
 </body>
