@@ -15,7 +15,7 @@ function renderJournalTab(){
   var h='<style>.jt{font-family:inherit}.jt .jtbl th{position:relative;user-select:none}.jt .jtbl th .col-resize{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;background:transparent;z-index:2}.jt .jtbl th .col-resize:hover,.jt .jtbl th .col-resize.dragging{background:var(--primary);opacity:.4}.jt .jtabs{display:flex;gap:6px;margin:16px 0;flex-wrap:wrap}.jt .jtab{padding:8px 18px;border-radius:10px;font-size:.82rem;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);transition:all .15s}.jt .jtab:hover{border-color:var(--primary)}.jt .jtab.on{background:var(--primary);border-color:var(--primary);color:#fff}.jt .jcard{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px}.jt .jcard h3{font-size:.95rem;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px}.jt .jcard h3 .material-symbols-outlined{color:var(--primary);font-size:20px}.jt .jstats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px}.jt .jstat{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:12px 16px}.jt .jstat .n{font-size:1.5rem;font-weight:900;color:var(--primary)}.jt .jstat .l{font-size:.65rem;color:var(--text3);text-transform:uppercase}.jt .jtbl{overflow-x:auto;border:1.5px solid var(--border);border-radius:12px;background:var(--surface)}.jt .jtbl table{width:100%;border-collapse:collapse;font-size:.8rem}.jt .jtbl thead{background:var(--surface2)}.jt .jtbl th{padding:10px 12px;text-align:left;font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.03em;color:var(--text2);border-bottom:1.5px solid var(--border);white-space:nowrap}.jt .jtbl td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}.jt .jtbl tr{cursor:pointer;transition:background .1s}.jt .jtbl tr:hover{background:rgba(124,58,237,.03)}.jt .jtbl tr.sel{background:rgba(124,58,237,.06)}.jt .jname{font-weight:700;color:var(--text)}.jt .jfield{font-size:.65rem;font-weight:700;color:var(--primary);background:var(--primary-lt);padding:2px 8px;border-radius:999px;white-space:nowrap;display:inline-block}.jt .jscore{font-weight:800;color:var(--primary);white-space:nowrap}.jt .jdel{width:28px;height:28px;border-radius:8px;background:var(--red-lt);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--red);transition:background .12s}.jt .jdel:hover{background:var(--red);color:#fff}.jt .jbar{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center}.jt .jupload{border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;position:relative;transition:border-color .15s;margin-bottom:10px}.jt .jupload:hover{border-color:var(--primary);background:var(--primary-lt)}.jt .jupload input{position:absolute;inset:0;opacity:0;cursor:pointer}.jt .jprev{max-height:220px;overflow-y:auto;border:1.5px solid var(--border);border-radius:10px;margin:10px 0}.jt .jprev table{font-size:.72rem}.jt .jprev .dupe{background:#FEF2F2}.jt .jprev .new{background:#ECFDF5}.jt .jpager{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:.78rem;color:var(--text3)}</style>';
 
   h+='<div class="jt"><div class="jstats"><div class="jstat"><div class="n">'+_jList.length+'</div><div class="l">Tổng tạp chí</div></div><div class="jstat"><div class="n">'+Object.keys(fields).length+'</div><div class="l">Ngành</div></div></div>';
-  h+='<div class="jtabs"><div class="jtab on" onclick="jSV(\'list\',this)">📋 Danh sách</div><div class="jtab" onclick="jSV(\'add\',this)">➕ Thêm thủ công</div><div class="jtab" onclick="jSV(\'excel\',this)">📊 Nhập Excel</div><div class="jtab" onclick="jSV(\'history\',this)">📜 Lịch sử</div><div class="jtab" onclick="jSV(\'tools\',this)">🔧 Công cụ</div></div>';
+  h+='<div class="jtabs"><div class="jtab on" onclick="jSV(\'list\',this)">📋 Danh sách</div><div class="jtab" onclick="jSV(\'add\',this)">➕ Thêm thủ công</div><div class="jtab" onclick="jSV(\'excel\',this)">📊 Nhập Excel</div><div class="jtab" onclick="jSV(\'history\',this)">📜 Lịch sử</div><div class="jtab" onclick="jSV(\'tools\',this)">🔧 Công cụ</div><div class="jtab" onclick="jSV(\'settings\',this)">⚙️ Cài đặt</div></div>';
   h+='<div id="jVC"></div></div>';
   return h;
 }
@@ -30,6 +30,7 @@ function jSV(v,el){
   else if(v==='excel')c.innerHTML=jVExcel();
   else if(v==='history')c.innerHTML=jVHistory();
   else if(v==='tools')c.innerHTML=jVTools();
+  else if(v==='settings')c.innerHTML=jVSettings();
 }
 function jShowView(v){jSV(v);}
 
@@ -94,7 +95,7 @@ function jVAdd(){
 async function jAddM(){
   var n=v('ja-n'),f=document.getElementById('ja-f').value,s=v('ja-s');
   if(!n||!f||!s){showAlert('Nhập tên, ngành và điểm!','error');return;}
-  var j={name:n,issn:v('ja-i'),type:document.getElementById('ja-t').value,pub:v('ja-p'),field:f,score:s,importedAt:new Date().toISOString()};
+  var j={name:n,issn:v('ja-i'),type:document.getElementById('ja-t').value,pub:v('ja-p'),field:f,score:s,importedAt:new Date().toISOString(),image:(document.getElementById('ja-img')||{}).value||'',foundedYear:(document.getElementById('ja-yr')||{}).value||'',description:(document.getElementById('ja-desc')||{}).value||''};
   if(_jList.find(function(x){return jKey(x)===jKey(j);})){showAlert('Trùng! "'+n+'" đã có trong ngành này.','error');return;}
   var ref=await initFB().collection('journals').add(j);j._id=ref.id;_jList.push(j);
   await jSH('add',[j]);
@@ -157,6 +158,8 @@ function jEditOne(id){
   html+='<div class="fr"><div class="fg"><label>Tên tạp chí *</label><input type="text" id="je-name" value="'+jE(j.name)+'"></div><div class="fg"><label>ISSN</label><input type="text" id="je-issn" value="'+jE(j.issn)+'"></div></div>';
   html+='<div class="fr"><div class="fg"><label>Loại</label><select id="je-type"><option'+(j.type==='Tạp chí'?' selected':'')+'>Tạp chí</option><option'+(j.type==='Kỷ yếu'?' selected':'')+'>Kỷ yếu</option></select></div><div class="fg"><label>Ngành *</label><select id="je-field">'+J_FIELDS.map(function(f){return '<option'+(f===j.field?' selected':'')+'>'+f+'</option>';}).join('')+'</select></div></div>';
   html+='<div class="fr"><div class="fg"><label>Cơ quan xuất bản</label><input type="text" id="je-pub" value="'+jE(j.pub)+'"></div><div class="fg"><label>Điểm *</label><input type="text" id="je-score" value="'+jE(j.score)+'"></div></div>';
+  html+='<div class="fr"><div class="fg"><label>Ảnh đại diện (URL)</label><input type="url" id="je-img" value="'+jE(j.image||'')+'" placeholder="https://..."></div><div class="fg"><label>Năm thành lập</label><input type="text" id="je-year" value="'+jE(j.foundedYear||'')+'" placeholder="VD: 1995"></div></div>';
+  html+='<div class="fg"><label>Mô tả chi tiết</label><textarea id="je-desc" rows="3" style="resize:vertical">'+jE(j.description||'')+'</textarea></div>';
   html+='<div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-primary" onclick="jDoEditOne()"><span class="material-symbols-outlined" style="font-size:14px">save</span>Lưu</button><button class="btn btn-ghost" onclick="document.getElementById(\'jEditForm\').remove()">Hủy</button></div></div>';
   // Remove existing edit form
   var old=document.getElementById('jEditForm');if(old)old.remove();
@@ -177,7 +180,10 @@ async function jDoEditOne(){
     type:document.getElementById('je-type').value,
     field:document.getElementById('je-field').value,
     pub:document.getElementById('je-pub').value.trim(),
-    score:score
+    score:score,
+    image:document.getElementById('je-img').value.trim(),
+    foundedYear:document.getElementById('je-year').value.trim(),
+    description:document.getElementById('je-desc').value.trim()
   };
   await initFB().collection('journals').doc(id).update(updates);
   // Update local
@@ -376,4 +382,36 @@ function jColResize(e){
   function onUp(){document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);handle.classList.remove('dragging');}
   document.addEventListener('mousemove',onMove);
   document.addEventListener('mouseup',onUp);
+}
+
+// ═══ SETTINGS ═══
+function jVSettings(){
+  var h='<div class="jcard"><h3><span class="material-symbols-outlined">settings</span>Cài đặt Tạp chí Khoa học</h3>';
+  h+='<div class="fg"><label>Ảnh đại diện mặc định (URL)</label><input type="url" id="js-defimg" placeholder="https://... Ảnh hiển thị khi tạp chí chưa có ảnh riêng"><p style="font-size:.7rem;color:var(--text3);margin-top:3px">Ảnh này sẽ hiện trong trang tra cứu khi tạp chí chưa được upload ảnh riêng.</p></div>';
+  h+='<div id="js-imgpreview" style="margin-bottom:10px"></div>';
+  h+='<button class="btn btn-primary" onclick="jSaveSettings()"><span class="material-symbols-outlined" style="font-size:14px">save</span>Lưu cài đặt</button>';
+  h+='</div>';
+  // Load current settings
+  setTimeout(jLoadSettings,50);
+  return h;
+}
+async function jLoadSettings(){
+  try{
+    var db=initFB();var snap=await db.collection('config').doc('journal_settings').get();
+    if(snap.exists){
+      var data=snap.data();
+      if(data.defaultImage){
+        document.getElementById('js-defimg').value=data.defaultImage;
+        document.getElementById('js-imgpreview').innerHTML='<img src="'+data.defaultImage+'" style="height:80px;border-radius:10px;border:1.5px solid var(--border)">';
+      }
+    }
+  }catch(e){}
+}
+async function jSaveSettings(){
+  var img=document.getElementById('js-defimg').value.trim();
+  try{
+    await initFB().collection('config').doc('journal_settings').set({defaultImage:img},{merge:true});
+    showAlert('Đã lưu cài đặt!','success');
+    if(img)document.getElementById('js-imgpreview').innerHTML='<img src="'+img+'" style="height:80px;border-radius:10px;border:1.5px solid var(--border)">';
+  }catch(e){showAlert('Lỗi: '+e.message,'error');}
 }
