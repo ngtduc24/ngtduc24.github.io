@@ -165,8 +165,8 @@ async function doLogin(){
   var email=v('lEmail'),pass=v('lPass');
   if(!email||!pass){loginErr('Nhập email và mật khẩu.');return;}
   try{
+    initFB();
     await firebase.auth().signInWithEmailAndPassword(email,pass);
-    // Load GitHub token from Firestore if saved
     try{var db=initFB();var snap=await db.collection('config').doc('github').get();if(snap.exists){AUTH=snap.data();localStorage.setItem('pa',JSON.stringify(AUTH));}}catch(e){}
     startApp();
   }catch(e){
@@ -175,6 +175,8 @@ async function doLogin(){
     else if(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential')msg='Mật khẩu sai.';
     else if(e.code==='auth/invalid-email')msg='Email không hợp lệ.';
     else if(e.code==='auth/too-many-requests')msg='Quá nhiều lần thử. Đợi vài phút.';
+    else if(e.code==='auth/configuration-not-found'||e.code==='auth/admin-restricted-operation')msg='Chưa bật Authentication trong Firebase Console! Vào console.firebase.google.com → Authentication → Sign-in method → bật Email/Password.';
+    else msg='Lỗi: '+(e.message||e.code||'không xác định');
     loginErr(msg);
   }
 }
@@ -187,6 +189,7 @@ async function doRegister(){
   if(!email||!pass){loginErr('Nhập email và mật khẩu.');return;}
   if(pass.length<6){loginErr('Mật khẩu ít nhất 6 ký tự.');return;}
   try{
+    initFB();
     var cred=await firebase.auth().createUserWithEmailAndPassword(email,pass);
     var db=initFB();
     // Check invite for pre-assigned role
@@ -222,13 +225,18 @@ async function saveGHToken(){
 function loginErr(m){var e=document.getElementById('loginErr');e.textContent=m;e.style.display='block';}
 async function doLogout(){try{await firebase.auth().signOut();}catch(e){}localStorage.removeItem('pa');location.reload();}
 window.addEventListener('DOMContentLoaded',function(){
-  initFB();
-  firebase.auth().onAuthStateChanged(function(user){
-    if(user){
-      var s=localStorage.getItem('pa');if(s)try{AUTH=JSON.parse(s);}catch(e){}
-      startApp();
-    }
-  });
+  try{
+    initFB();
+    firebase.auth().onAuthStateChanged(function(user){
+      if(user){
+        var s=localStorage.getItem('pa');if(s)try{AUTH=JSON.parse(s);}catch(e){}
+        startApp();
+      }
+    });
+  }catch(e){
+    console.error('Auth init error:',e);
+    // Auth not enabled yet - show login form normally
+  }
 });
 
 async function startApp(){
