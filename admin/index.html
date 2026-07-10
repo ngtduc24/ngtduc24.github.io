@@ -148,6 +148,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--primary)}
 <script>
 'use strict';
 var AUTH=null,DATA={},_fileSha=null,_quill=null,_lessonQuill=null;
+var _currentRole='editor',_currentUid=null,_allUsers=[];
 var CONTENT_PATH='data/content.json';
 var IMG_PATH='images/';
 function v(id){return(document.getElementById(id)||{}).value?.trim()||'';}
@@ -186,8 +187,23 @@ async function doRegister(){
   if(!email||!pass){loginErr('Nhập email và mật khẩu.');return;}
   if(pass.length<6){loginErr('Mật khẩu ít nhất 6 ký tự.');return;}
   try{
-    await firebase.auth().createUserWithEmailAndPassword(email,pass);
-    loginErr('');showAlert('Tài khoản đã tạo! Đang đăng nhập...','success');
+    var cred=await firebase.auth().createUserWithEmailAndPassword(email,pass);
+    var db=initFB();
+    // Check invite for pre-assigned role
+    var inviteKey=email.replace(/[^a-zA-Z0-9]/g,'_');
+    var inviteSnap=await db.collection('invites').doc(inviteKey).get();
+    var role='editor';
+    if(inviteSnap.exists){
+      role=inviteSnap.data().role||'editor';
+      await db.collection('invites').doc(inviteKey).delete(); // Remove used invite
+    }else{
+      // Check if any admin exists - first user = admin
+      var admSnap=await db.collection('users').where('role','==','admin').get();
+      if(admSnap.empty)role='admin';
+    }
+    await db.collection('users').doc(cred.user.uid).set({email:email,role:role,createdAt:new Date().toISOString()});
+    loginErr('');
+    showAlert('Tài khoản đã tạo! Quyền: '+(role==='admin'?'Quản trị viên':'Biên tập viên'),'success');
     startApp();
   }catch(e){
     var msg='Lỗi tạo tài khoản.';
@@ -218,11 +234,25 @@ window.addEventListener('DOMContentLoaded',function(){
 async function startApp(){
   document.getElementById('loginView').style.display='none';document.getElementById('sidebar').style.display='flex';document.getElementById('mainArea').style.display='block';
   var fbUser=firebase.auth().currentUser;
-  document.getElementById('sbUser').textContent=fbUser?fbUser.email:'Admin';
-  document.getElementById('sbName').textContent=fbUser?fbUser.email.split('@')[0]:'Admin';
-  // Show GitHub token setup if not configured
-  if(!AUTH||!AUTH.token){document.getElementById('ghTokenBox')&&(document.getElementById('ghTokenBox').style.display='none');}
+  _currentUid=fbUser?fbUser.uid:null;
+  // Load user role from Firestore
   initFB();
+  if(_currentUid){
+    try{
+      var uSnap=await initFB().collection('users').doc(_currentUid).get();
+      if(uSnap.exists){_currentRole=uSnap.data().role||'editor';}
+      else{
+        // Auto-create user doc if missing (first admin)
+        var admSnap=await initFB().collection('users').where('role','==','admin').get();
+        _currentRole=admSnap.empty?'admin':'editor';
+        await initFB().collection('users').doc(_currentUid).set({email:fbUser.email,role:_currentRole,createdAt:new Date().toISOString()});
+      }
+    }catch(e){_currentRole='editor';}
+  }
+  var roleLabel=_currentRole==='admin'?'👑 Quản trị viên':'✏️ Biên tập viên';
+  document.getElementById('sbUser').textContent=roleLabel;
+  document.getElementById('sbName').textContent=fbUser?fbUser.email.split('@')[0]:'Admin';
+  if(!AUTH||!AUTH.token){document.getElementById('ghTokenBox')&&(document.getElementById('ghTokenBox').style.display='none');}
   await loadData();await fbLoadMessages();renderApp();
 }
 
@@ -320,7 +350,8 @@ function renderApp(){
   else if(_activeTab==='banner')tc.innerHTML=renderBannerTab();
   else if(_activeTab==='personal'){tc.innerHTML=renderPersonalTab();initPersonalEditor();}
   else if(_activeTab==='menus')tc.innerHTML=renderMenusTab();
-  else if(_activeTab==='settings')tc.innerHTML=renderSettingsTab();
+  else if(_activeTab==='settings'){if(_currentRole!=='admin'){goTab('dashboard');return;}tc.innerHTML=renderSettingsTab();}
+  else if(_activeTab==='users'){if(_currentRole!=='admin'){goTab('dashboard');return;}loadUsersAndRender();}
   else if(_activeTab==='messages'){tc.innerHTML=renderMessagesTab();}
   else if(_activeTab.startsWith('page:')){tc.innerHTML=renderPageTab(_activeTab.split(':')[1]);initPageEditor();}
 }
@@ -724,6 +755,100 @@ async function saveGHSettings(){
   AUTH={user:user,repo:repo,token:token};
   localStorage.setItem('pa',JSON.stringify(AUTH));
   try{var db=initFB();await db.collection('config').doc('github').set(AUTH);showAlert('Đã lưu GitHub token!','success');}catch(e){showAlert('Lỗi: '+e.message,'error');}
+}
+
+// ══════════════════════════════════════════════
+// USER MANAGEMENT (Admin only)
+// ══════════════════════════════════════════════
+async function loadUsersAndRender(){
+  var db=initFB();
+  var snap=await db.collection('users').get();
+  _allUsers=[];
+  snap.forEach(function(d){var u=d.data();u._id=d.id;_allUsers.push(u);});
+  document.getElementById('tabContainer').innerHTML=renderUsersTab();
+}
+
+function renderUsersTab(){
+  if(_currentRole!=='admin')return '<div class="empty-state">Không có quyền truy cập.</div>';
+  var adminCount=_allUsers.filter(function(u){return u.role==='admin';}).length;
+  var html='<div class="page-header"><h1>Quản Lý Tài Khoản</h1><p>'+_allUsers.length+' tài khoản · '+adminCount+' admin</p></div>';
+
+  // Add user form
+  html+='<div class="card"><div class="card-header"><div class="card-title">➕ Thêm tài khoản</div></div>';
+  html+='<div class="fr"><div class="fg"><label>Email *</label><input type="email" id="nu-email" placeholder="user@example.com"></div><div class="fg"><label>Mật khẩu *</label><input type="password" id="nu-pass" placeholder="≥ 6 ký tự"></div></div>';
+  html+='<div class="fg"><label>Quyền</label><select id="nu-role"><option value="editor">✏️ Biên tập viên (Editor)</option><option value="admin">👑 Quản trị viên (Admin)</option></select></div>';
+  html+='<small style="color:var(--text3);font-size:.72rem;display:block;margin-bottom:8px">Biên tập viên: đăng bài, xoá bài, quản lý nội dung. Quản trị viên: toàn quyền (menu, cài đặt, tài khoản).</small>';
+  html+='<button class="btn btn-primary" onclick="createUser()"><span class="material-symbols-outlined" style="font-size:14px">person_add</span>Tạo tài khoản</button></div>';
+
+  // User list
+  html+='<div class="card"><div class="card-title">Danh sách tài khoản</div>';
+  if(!_allUsers.length){html+='<div class="empty-state">Chưa có tài khoản.</div>';}
+  else{
+    _allUsers.sort(function(a,b){return a.role==='admin'?-1:1;});
+    _allUsers.forEach(function(u){
+      var isMe=u._id===_currentUid;
+      var isAdmin=u.role==='admin';
+      var roleBadge=isAdmin?'<span style="background:var(--primary-lt);color:var(--primary);padding:2px 8px;border-radius:999px;font-size:.65rem;font-weight:700">👑 ADMIN</span>':'<span style="background:var(--border-lt);color:var(--text2);padding:2px 8px;border-radius:999px;font-size:.65rem;font-weight:700">✏️ EDITOR</span>';
+      html+='<div class="mt-item"><div class="info"><div class="name">'+esc(u.email)+' '+roleBadge+(isMe?' <em style="font-size:.7rem;color:var(--text3)">(bạn)</em>':'')+'</div><div class="slug">Tạo: '+esc(u.createdAt||'N/A')+'</div></div><div class="card-actions">';
+      // Role toggle
+      if(!isMe){
+        if(isAdmin){
+          html+='<button class="btn btn-ghost btn-sm" onclick="changeRole(''+u._id+'','editor')"><span class="material-symbols-outlined" style="font-size:14px">arrow_downward</span>Hạ Editor</button>';
+        }else{
+          html+='<button class="btn btn-ghost btn-sm" onclick="changeRole(''+u._id+'','admin')"><span class="material-symbols-outlined" style="font-size:14px">arrow_upward</span>Nâng Admin</button>';
+        }
+        html+='<button class="btn btn-danger btn-sm btn-icon" onclick="deleteUser(''+u._id+'',''+esc(u.email)+'',''+u.role+'')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>';
+      }
+      html+='</div></div>';
+    });
+  }
+  html+='</div>';
+  return html;
+}
+
+async function createUser(){
+  var email=v('nu-email'),pass=v('nu-pass'),role=v('nu-role');
+  if(!email||!pass){showAlert('Nhập email và mật khẩu!','error');return;}
+  if(pass.length<6){showAlert('Mật khẩu ít nhất 6 ký tự!','error');return;}
+  // We can't create Firebase Auth users from client side for OTHER users
+  // So we save to Firestore and the user registers themselves
+  // Alternative: save pending invite
+  try{
+    var db=initFB();
+    // Check if email already exists in users collection
+    var existing=_allUsers.find(function(u){return u.email===email;});
+    if(existing){showAlert('Email đã tồn tại!','error');return;}
+    // Save invite to Firestore - user will register themselves
+    await db.collection('invites').doc(email.replace(/[^a-zA-Z0-9]/g,'_')).set({email:email,role:role,createdBy:firebase.auth().currentUser.email,createdAt:new Date().toISOString()});
+    showAlert('Đã tạo lời mời cho '+email+'. Người dùng cần vào trang admin và đăng ký bằng email này.','success');
+    loadUsersAndRender();
+  }catch(e){showAlert('Lỗi: '+e.message,'error');}
+}
+
+async function changeRole(uid,newRole){
+  var db=initFB();
+  // If changing from admin to editor, check admin count
+  if(newRole==='editor'){
+    var adminCount=_allUsers.filter(function(u){return u.role==='admin';}).length;
+    if(adminCount<=1){showAlert('Không thể hạ quyền! Phải có ít nhất 1 tài khoản Admin.','error');return;}
+  }
+  if(!confirm('Đổi quyền thành '+(newRole==='admin'?'Quản trị viên':'Biên tập viên')+'?'))return;
+  await db.collection('users').doc(uid).update({role:newRole});
+  showAlert('Đã đổi quyền!','success');
+  loadUsersAndRender();
+}
+
+async function deleteUser(uid,email,role){
+  var db=initFB();
+  // Cannot delete last admin
+  if(role==='admin'){
+    var adminCount=_allUsers.filter(function(u){return u.role==='admin';}).length;
+    if(adminCount<=1){showAlert('Không thể xoá! Phải có ít nhất 1 tài khoản Admin.','error');return;}
+  }
+  if(!confirm('Xoá tài khoản '+email+'? (Chỉ xoá quyền truy cập, tài khoản Firebase Auth vẫn tồn tại)'))return;
+  await db.collection('users').doc(uid).delete();
+  showAlert('Đã xoá quyền của '+email,'success');
+  loadUsersAndRender();
 }
 
 </script>
