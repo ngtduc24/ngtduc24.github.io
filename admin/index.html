@@ -12,6 +12,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="../fb-init.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#f0f3ff;--surface:#fff;--surface2:#f7f9ff;--surface3:#eef1fb;--primary:#4648d4;--primary-lt:#e1e0ff;--primary-dim:#c0c1ff;--secondary:#4d661c;--secondary-lt:#ceee93;--tertiary:#6d5e00;--tertiary-lt:#ffe24c;--text:#111c2d;--text2:#464554;--text3:#767586;--border:#c7c4d7;--border-lt:#e7eeff;--green:#4d661c;--green-lt:#ceee93;--red:#ba1a1a;--red-lt:#ffdad6;--radius:12px;--radius-lg:20px;--shadow:0 4px 20px rgba(70,72,212,.08)}
@@ -360,6 +361,7 @@ function renderApp(){
   else if(_activeTab==='menus')tc.innerHTML=renderMenusTab();
   else if(_activeTab==='settings'){if(_currentRole!=='admin'){goTab('dashboard');return;}tc.innerHTML=renderSettingsTab();}
   else if(_activeTab==='users'){if(_currentRole!=='admin'){goTab('dashboard');return;}loadUsersAndRender();}
+  else if(_activeTab==='journals'){jLoad().then(function(){tc.innerHTML=renderJournalTab();jShowView('list');});}
   else if(_activeTab==='messages'){tc.innerHTML=renderMessagesTab();}
   else if(_activeTab.startsWith('page:')){tc.innerHTML=renderPageTab(_activeTab.split(':')[1]);initPageEditor();}
 }
@@ -860,5 +862,6 @@ async function deleteUser(uid,email,role){
 }
 
 </script>
+<script src="admin-journal-tab.js"></script>
 </body>
 </html>
