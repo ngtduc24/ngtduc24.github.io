@@ -281,6 +281,7 @@ function renderSidebar(){
   });
   html+='<div class="sb-section">Quản lý</div>';
   html+='<button class="sb-item'+(_activeTab==='messages'?' active':'')+'" onclick="goTab(\'messages\',this)"><span class="material-symbols-outlined icon">inbox</span>Tin nhắn <span id="msgBadge" style="margin-left:auto;background:var(--red);color:#fff;font-size:.6rem;padding:2px 6px;border-radius:999px;display:'+((_msgCount>0)?'inline':'none')+'">'+_msgCount+'</span></button>';
+  html+='<button class="sb-item" onclick="window.location.href=\'journals.html\'"><span class="material-symbols-outlined icon">library_books</span>Tạp chí KH</button>';
   html+='<button class="sb-item'+(_activeTab==='menus'?' active':'')+'" onclick="goTab(\'menus\',this)"><span class="material-symbols-outlined icon">menu_open</span>Menu</button>';
   html+='<button class="sb-item'+(_activeTab==='settings'?' active':'')+'" onclick="goTab(\'settings\',this)"><span class="material-symbols-outlined icon">settings</span>Cài đặt</button>';
   nav.innerHTML=html;
