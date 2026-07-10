@@ -801,11 +801,11 @@ function renderUsersTab(){
       // Role toggle
       if(!isMe){
         if(isAdmin){
-          html+='<button class="btn btn-ghost btn-sm" onclick="changeRole(''+u._id+'','editor')"><span class="material-symbols-outlined" style="font-size:14px">arrow_downward</span>Hạ Editor</button>';
+          html+='<button class="btn btn-ghost btn-sm" onclick="changeRole(this.dataset.id,\'editor\')" data-id="'+u._id+'"><span class="material-symbols-outlined" style="font-size:14px">arrow_downward</span>Hạ Editor</button>';
         }else{
-          html+='<button class="btn btn-ghost btn-sm" onclick="changeRole(''+u._id+'','admin')"><span class="material-symbols-outlined" style="font-size:14px">arrow_upward</span>Nâng Admin</button>';
+          html+='<button class="btn btn-ghost btn-sm" onclick="changeRole(this.dataset.id,\'admin\')" data-id="'+u._id+'"><span class="material-symbols-outlined" style="font-size:14px">arrow_upward</span>Nâng Admin</button>';
         }
-        html+='<button class="btn btn-danger btn-sm btn-icon" onclick="deleteUser(''+u._id+'',''+esc(u.email)+'',''+u.role+'')"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>';
+        html+='<button class="btn btn-danger btn-sm btn-icon" onclick="deleteUser(this.dataset.id,this.dataset.email,this.dataset.role)" data-id="'+u._id+'" data-email="'+esc(u.email)+'" data-role="'+u.role+'"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>';
       }
       html+='</div></div>';
     });
