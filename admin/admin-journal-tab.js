@@ -47,10 +47,15 @@ function jF(){
   var q=((document.getElementById('jQ')||{}).value||'').toLowerCase().trim();
   var ff=(document.getElementById('jFF')||{}).value||'';
   var fs=(document.getElementById('jFS')||{}).value||'';
+  var fp=(document.getElementById('jFP')||{}).value||'';
+  var fd1=(document.getElementById('jFD1')||{}).value||'';
+  var fd2=(document.getElementById('jFD2')||{}).value||'';
   var fl=_jList.filter(function(j){
     if(q&&(j.name||'').toLowerCase().indexOf(q)===-1&&(j.issn||'').toLowerCase().indexOf(q)===-1&&(j.pub||'').toLowerCase().indexOf(q)===-1)return false;
     if(ff&&j.field!==ff)return false;
     if(fs&&jPS(j.score)<parseFloat(fs))return false;
+    if(fp&&j.pub!==fp)return false;
+    if(fd1||fd2){var d=j.importedAt||j.createdAt||'';if(typeof d==='object'&&d.toDate)d=d.toDate().toISOString();var ds=String(d).substring(0,10);if(fd1&&ds<fd1)return false;if(fd2&&ds>fd2)return false;}
     return true;
   }).sort(function(a,b){return jPS(b.score)-jPS(a.score);});
   var tot=fl.length,pgs=Math.ceil(tot/_jPerPage);
@@ -66,6 +71,11 @@ function jF(){
   jUSC();
 }
 function jTR(id,tr){if(_jSelected.has(id)){_jSelected.delete(id);tr.classList.remove('sel');tr.querySelector('td').textContent='☐';}else{_jSelected.add(id);tr.classList.add('sel');tr.querySelector('td').textContent='☑';}jUSC();}
+function jClearFilters(){
+  ['jQ','jFD1','jFD2'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  ['jFF','jFS','jFP'].forEach(function(id){var e=document.getElementById(id);if(e)e.selectedIndex=0;});
+  jF();
+}
 function jSelAll(){_jList.forEach(function(j){_jSelected.add(j._id);});jF();}
 function jDesel(){_jSelected.clear();jF();}
 function jUSC(){var e=document.getElementById('jSN');if(e)e.textContent=_jSelected.size;}
@@ -140,19 +150,65 @@ async function jSH(action,items,bid){await initFB().collection('import_history')
 function jVHistory(){
   var h='<div class="jcard"><h3><span class="material-symbols-outlined">history</span>Lịch sử nhập / xóa</h3>';
   h+='<button class="btn btn-secondary btn-sm" onclick="jRefH()" style="margin-bottom:12px"><span class="material-symbols-outlined" style="font-size:14px">refresh</span>Tải lịch sử</button>';
-  h+='<div style="margin-bottom:14px"><p style="font-size:.82rem;font-weight:700;margin-bottom:6px">⚡ Xóa nhanh theo thời gian nhập:</p><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-danger btn-sm" onclick="jDelTime(1)">1 giờ trước</button><button class="btn btn-danger btn-sm" onclick="jDelTime(24)">24 giờ trước</button><button class="btn btn-danger btn-sm" onclick="jDelTime(168)">7 ngày trước</button></div></div>';
+  h+='<div style="margin-bottom:14px"><p style="font-size:.82rem;font-weight:700;margin-bottom:6px">⚡ Xóa nhanh theo thời gian nhập:</p><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="btn btn-danger btn-sm" onclick="jDelTime(1)">1 giờ trước</button><button class="btn btn-danger btn-sm" onclick="jDelTime(24)">24 giờ trước</button><button class="btn btn-danger btn-sm" onclick="jDelTime(168)">7 ngày trước</button><span style="font-size:.78rem;color:var(--text3)">|</span><input type="date" id="jHD1" style="width:auto;font-size:.78rem" title="Từ ngày"><input type="date" id="jHD2" style="width:auto;font-size:.78rem" title="Đến ngày"><button class="btn btn-danger btn-sm" onclick="jDelDateRange()">Xóa khoảng ngày</button></div></div>';
   h+='<div id="jHList"><p style="color:var(--text3);font-size:.82rem">Bấm "Tải lịch sử" để xem.</p></div></div>';
   return h;
 }
 async function jRefH(){
   await jLH();var el=document.getElementById('jHList');
   if(!_jHistory.length){el.innerHTML='<p style="color:var(--text3)">Chưa có lịch sử.</p>';return;}
-  el.innerHTML=_jHistory.map(function(h){
+  el.innerHTML=_jHistory.map(function(h,idx){
     var ic=h.action==='import'?'📥':h.action==='add'?'➕':'🗑️';
     var txt=h.action==='import'?'Nhập '+h.count:h.action==='add'?'Thêm '+h.count:'Xóa '+h.count;
-    var undo=h.action==='import'&&h.batchId?'<button class="btn btn-danger btn-sm" data-bid="'+h.batchId+'" data-hid="'+h._id+'" onclick="jUndo(this)">↩ Hoàn tác</button>':'';
-    return '<div class="mt-item"><div class="info"><div class="name">'+ic+' '+txt+' tạp chí</div><div class="slug">'+jE(h.user)+' · '+h.date.substring(0,16).replace('T',' ')+'</div></div>'+undo+'</div>';
+    var undo=h.action==='import'&&h.batchId?'<button class="btn btn-danger btn-sm" data-bid="'+h.batchId+'" data-hid="'+h._id+'" onclick="jUndo(this)">↩ Hoàn tác tất cả</button>':'';
+    var toggle='<button class="btn btn-ghost btn-sm" onclick="jToggleHItems('+idx+')"><span class="material-symbols-outlined" style="font-size:14px">expand_more</span>Chi tiết</button>';
+    // Item list (hidden by default)
+    var items='<div id="jHItems'+idx+'" style="display:none;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">';
+    if(h.items&&h.items.length){
+      items+='<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center"><button class="btn btn-danger btn-sm" onclick="jDelHSel('+idx+')"><span class="material-symbols-outlined" style="font-size:12px">delete</span>Xóa đã chọn</button><button class="btn btn-ghost btn-sm" onclick="jSelHAll('+idx+')">Chọn tất cả</button><button class="btn btn-ghost btn-sm" onclick="jDeselH('+idx+')">Bỏ chọn</button></div>';
+      items+='<div style="max-height:200px;overflow-y:auto">';
+      h.items.forEach(function(it,ii){
+        items+='<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:.78rem;cursor:pointer" onclick="jToggleHItem('+idx+','+ii+',this)"><span style="color:var(--primary);width:16px" class="jhi-chk">☐</span><span style="flex:1;font-weight:600">'+jE(it.name)+'</span><span style="font-size:.68rem;color:var(--text3)">'+jE(it.field)+'</span></div>';
+      });
+      items+='</div>';
+    }else{items+='<p style="font-size:.75rem;color:var(--text3)">Không có chi tiết.</p>';}
+    items+='</div>';
+    return '<div class="mt-item" style="flex-direction:column;align-items:stretch"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><div class="info"><div class="name">'+ic+' '+txt+' tạp chí</div><div class="slug">'+jE(h.user)+' · '+h.date.substring(0,16).replace('T',' ')+'</div></div><div style="display:flex;gap:4px">'+toggle+undo+'</div></div>'+items+'</div>';
   }).join('');
+}
+var _jHSel={};
+function jToggleHItems(idx){var el=document.getElementById('jHItems'+idx);el.style.display=el.style.display==='none'?'block':'none';}
+function jToggleHItem(idx,ii,el){
+  var key=idx+'_'+ii;
+  var chk=el.querySelector('.jhi-chk');
+  if(_jHSel[key]){delete _jHSel[key];chk.textContent='☐';el.style.background='';}
+  else{_jHSel[key]=_jHistory[idx].items[ii];chk.textContent='☑';el.style.background='rgba(124,58,237,.05)';}
+}
+function jSelHAll(idx){
+  var h=_jHistory[idx];if(!h||!h.items)return;
+  var container=document.getElementById('jHItems'+idx);
+  var rows=container.querySelectorAll('[onclick*="jToggleHItem"]');
+  h.items.forEach(function(it,ii){var key=idx+'_'+ii;_jHSel[key]=it;});
+  rows.forEach(function(r){r.style.background='rgba(124,58,237,.05)';r.querySelector('.jhi-chk').textContent='☑';});
+}
+function jDeselH(idx){
+  var h=_jHistory[idx];if(!h||!h.items)return;
+  var container=document.getElementById('jHItems'+idx);
+  var rows=container.querySelectorAll('[onclick*="jToggleHItem"]');
+  h.items.forEach(function(it,ii){delete _jHSel[idx+'_'+ii];});
+  rows.forEach(function(r){r.style.background='';r.querySelector('.jhi-chk').textContent='☐';});
+}
+async function jDelHSel(idx){
+  var ids=[];Object.keys(_jHSel).forEach(function(k){if(k.startsWith(idx+'_')&&_jHSel[k]&&_jHSel[k]._id)ids.push(_jHSel[k]._id);});
+  if(!ids.length){showAlert('Chưa chọn bài nào.','error');return;}
+  if(!confirm('Xóa '+ids.length+' tạp chí đã chọn?'))return;
+  var db=initFB(),batch=db.batch();
+  ids.forEach(function(id){batch.delete(db.collection('journals').doc(id));});
+  await batch.commit();
+  var idSet=new Set(ids);_jList=_jList.filter(function(j){return!idSet.has(j._id);});
+  ids.forEach(function(){});Object.keys(_jHSel).forEach(function(k){if(k.startsWith(idx+'_'))delete _jHSel[k];});
+  showAlert('Đã xóa '+ids.length+' tạp chí.','success');
+  jRefH();
 }
 async function jUndo(btn){
   var bid=btn.dataset.bid,hid=btn.dataset.hid;
@@ -177,6 +233,23 @@ async function jDelTime(hrs){
   var ids=new Set(recent.map(function(j){return j._id;}));
   _jList=_jList.filter(function(j){return!ids.has(j._id);});
   showAlert('Đã xóa '+recent.length+'.','success');
+}
+async function jDelDateRange(){
+  var d1=(document.getElementById('jHD1')||{}).value||'';
+  var d2=(document.getElementById('jHD2')||{}).value||'';
+  if(!d1&&!d2){showAlert('Chọn khoảng ngày!','error');return;}
+  var matches=_jList.filter(function(j){
+    var d=j.importedAt||j.createdAt||'';if(typeof d==='object'&&d.toDate)d=d.toDate().toISOString();var ds=String(d).substring(0,10);
+    if(d1&&ds<d1)return false;if(d2&&ds>d2)return false;return true;
+  });
+  if(!matches.length){showAlert('Không có tạp chí trong khoảng ngày này.','error');return;}
+  if(!confirm('Xóa '+matches.length+' tạp chí nhập từ '+(d1||'đầu')+' đến '+(d2||'nay')+'?'))return;
+  var db=initFB(),batch=db.batch();
+  matches.forEach(function(j){batch.delete(db.collection('journals').doc(j._id));});
+  await batch.commit();
+  var ids=new Set(matches.map(function(j){return j._id;}));
+  _jList=_jList.filter(function(j){return!ids.has(j._id);});
+  showAlert('Đã xóa '+matches.length+'.','success');
 }
 
 // ═══ TOOLS ═══
