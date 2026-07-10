@@ -6,203 +6,363 @@
 <title>Tra cứu Tạp chí Khoa học — HĐGSNN 2025</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="fb-init.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#FAFAFA;--white:#fff;--purple:#7C3AED;--purple-lt:#EDE9FE;--purple-dim:#A78BFA;--purple-dark:#5B21B6;--orange:#F97316;--orange-lt:#FFF7ED;--text:#1E1E2E;--text2:#4B5563;--text3:#9CA3AF;--border:#E5E7EB;--shadow:0 2px 16px rgba(0,0,0,.04);--shadow-lg:0 8px 30px rgba(0,0,0,.08)}
+:root{--bg:#FAFAFA;--white:#fff;--purple:#7C3AED;--purple-lt:#EDE9FE;--purple-dim:#A78BFA;--purple-dark:#5B21B6;--orange:#F97316;--orange-lt:#FFF7ED;--green:#059669;--green-lt:#ECFDF5;--text:#1E1E2E;--text2:#4B5563;--text3:#9CA3AF;--border:#E5E7EB;--shadow:0 2px 16px rgba(0,0,0,.04);--shadow-lg:0 8px 30px rgba(0,0,0,.08)}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
 a{text-decoration:none;color:inherit}
 .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400}
 
-/* Hero */
 .hero{background:linear-gradient(135deg,#7C3AED 0%,#5B21B6 60%,#4C1D95 100%);padding:100px 24px 60px;text-align:center;position:relative;overflow:hidden}
 .hero::before{content:'';position:absolute;top:-50%;right:-20%;width:500px;height:500px;background:radial-gradient(circle,rgba(249,115,22,.2),transparent 70%);pointer-events:none}
-.hero::after{content:'';position:absolute;bottom:-30%;left:-10%;width:400px;height:400px;background:radial-gradient(circle,rgba(167,139,250,.15),transparent 70%);pointer-events:none}
 .hero h1{font-size:clamp(1.8rem,5vw,2.8rem);font-weight:900;color:#fff;line-height:1.15;margin-bottom:8px;position:relative;z-index:1}
 .hero h1 .accent{color:#FCD34D}
-.hero p{font-size:.95rem;color:rgba(255,255,255,.75);max-width:560px;margin:0 auto 28px;line-height:1.6;position:relative;z-index:1}
-.hero .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.9);font-size:.72rem;font-weight:700;margin-bottom:16px;position:relative;z-index:1}
+.hero p{font-size:.92rem;color:rgba(255,255,255,.7);max-width:560px;margin:0 auto 24px;line-height:1.6;position:relative;z-index:1}
+.hero .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.85);font-size:.7rem;font-weight:700;margin-bottom:14px;position:relative;z-index:1}
 
-/* Search */
-.search-wrap{max-width:680px;margin:-28px auto 0;padding:0 24px;position:relative;z-index:10}
+.search-wrap{max-width:720px;margin:-28px auto 0;padding:0 24px;position:relative;z-index:10}
 .search-box{display:flex;align-items:center;gap:10px;background:var(--white);border-radius:16px;padding:6px 6px 6px 20px;box-shadow:var(--shadow-lg);border:1.5px solid var(--border)}
-.search-box input{flex:1;border:none;outline:none;font-family:inherit;font-size:.95rem;color:var(--text);padding:10px 0;background:transparent}
+.search-box input{flex:1;border:none;outline:none;font-family:inherit;font-size:.92rem;color:var(--text);padding:10px 0;background:transparent}
 .search-box input::placeholder{color:var(--text3)}
-.search-box .icon{color:var(--text3);font-size:22px}
-.search-box .btn-search{padding:10px 20px;border-radius:12px;background:var(--purple);color:#fff;border:none;font-weight:700;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background .15s}
-.search-box .btn-search:hover{background:var(--purple-dark)}
+.search-box .btn-s{padding:10px 20px;border-radius:12px;background:var(--purple);color:#fff;border:none;font-weight:700;font-size:.8rem;cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.search-box .btn-s:hover{background:var(--purple-dark)}
 
-/* Filters */
-.filters{max-width:1100px;margin:24px auto 0;padding:0 24px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
-.filter-btn{padding:6px 14px;border-radius:999px;border:1.5px solid var(--border);background:var(--white);color:var(--text2);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s}
-.filter-btn:hover,.filter-btn.active{background:var(--purple);border-color:var(--purple);color:#fff}
+.toolbar{max-width:1100px;margin:20px auto;padding:0 24px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar select{padding:7px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);color:var(--text);font-family:inherit;font-size:.78rem;font-weight:600;outline:none;cursor:pointer}
+.toolbar select:focus{border-color:var(--purple)}
+.toolbar .count{margin-left:auto;font-size:.78rem;color:var(--text3);font-weight:600}
 
-/* Stats */
-.stats-bar{max-width:1100px;margin:24px auto;padding:0 24px;display:flex;justify-content:center;gap:32px;flex-wrap:wrap}
-.stat{text-align:center}
-.stat .num{font-size:1.6rem;font-weight:900;color:var(--purple)}
-.stat .label{font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.stats-bar{max-width:1100px;margin:16px auto;padding:0 24px;display:flex;gap:12px;flex-wrap:wrap}
+.stat-pill{padding:8px 16px;border-radius:12px;background:var(--white);border:1.5px solid var(--border);font-size:.75rem;font-weight:700;display:flex;align-items:center;gap:6px}
+.stat-pill .num{color:var(--purple);font-size:1rem;font-weight:900}
 
-/* Grid */
-.grid-wrap{max-width:1100px;margin:32px auto;padding:0 24px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
-.card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:20px;transition:all .25s;display:flex;gap:16px;align-items:flex-start;cursor:pointer;position:relative}
-.card:hover{border-color:var(--purple-dim);transform:translateY(-3px);box-shadow:var(--shadow-lg)}
-.card-num{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.88rem;flex-shrink:0;color:#fff}
-.card-num.c1{background:linear-gradient(135deg,#7C3AED,#6D28D9)}
-.card-num.c2{background:linear-gradient(135deg,#F97316,#EA580C)}
-.card-num.c3{background:linear-gradient(135deg,#EC4899,#DB2777)}
-.card-num.c4{background:linear-gradient(135deg,#10B981,#059669)}
-.card-body{flex:1;min-width:0}
-.card-body h3{font-size:.92rem;font-weight:800;color:var(--text);line-height:1.3;margin-bottom:4px}
-.card-body .cat{font-size:.68rem;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
-.card-body .desc{font-size:.78rem;color:var(--text2);line-height:1.5}
-.card-arrow{color:var(--text3);transition:color .15s}
-.card:hover .card-arrow{color:var(--purple)}
-.card .tag{position:absolute;top:12px;right:12px;padding:3px 8px;border-radius:999px;font-size:.6rem;font-weight:700;background:var(--orange-lt);color:var(--orange)}
+.wrap{max-width:1100px;margin:0 auto;padding:16px 24px 40px}
 
-/* Empty */
-.empty{text-align:center;padding:48px;color:var(--text3);font-size:.9rem}
+/* Table */
+.tbl-wrap{overflow-x:auto;border-radius:16px;border:1.5px solid var(--border);background:var(--white);box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+thead{background:#F3F4F6;position:sticky;top:0;z-index:2}
+th{padding:12px 14px;text-align:left;font-weight:700;color:var(--text2);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;border-bottom:1.5px solid var(--border)}
+td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover{background:rgba(124,58,237,.02)}
+.j-name{font-weight:700;color:var(--text);max-width:320px}
+.j-issn{font-family:'Fira Code',monospace;font-size:.75rem;color:var(--text2)}
+.j-field{font-size:.68rem;font-weight:700;color:var(--purple);background:var(--purple-lt);padding:3px 8px;border-radius:999px;white-space:nowrap;display:inline-block}
+.j-score{font-weight:900;font-size:.95rem;text-align:center;white-space:nowrap}
+.j-score.high{color:var(--purple)}
+.j-score.mid{color:var(--orange)}
+.j-score.low{color:var(--text3)}
+.j-type{font-size:.72rem;color:var(--text2)}
+.j-pub{font-size:.75rem;color:var(--text2);max-width:240px}
 
-/* Info */
-.info-section{max-width:800px;margin:40px auto;padding:0 24px 60px}
-.info-card{background:var(--purple-lt);border:1.5px solid rgba(124,58,237,.15);border-radius:16px;padding:24px;text-align:center}
-.info-card h3{font-size:1rem;font-weight:800;color:var(--purple-dark);margin-bottom:8px}
-.info-card p{font-size:.85rem;color:var(--text2);line-height:1.6;margin-bottom:12px}
-.info-card a{display:inline-flex;align-items:center;gap:4px;color:var(--purple);font-weight:700;font-size:.85rem}
-.info-card a:hover{text-decoration:underline}
+.empty-tbl{text-align:center;padding:48px;color:var(--text3);font-size:.88rem}
 
-/* Footer */
-.footer{border-top:1px solid var(--border);padding:24px;text-align:center;font-size:.75rem;color:var(--text3)}
+/* Admin bar */
+.admin-bar{max-width:1100px;margin:20px auto;padding:0 24px}
+.admin-card{background:var(--orange-lt);border:1.5px solid rgba(249,115,22,.2);border-radius:14px;padding:16px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.admin-card h3{font-size:.88rem;font-weight:800;color:var(--orange);flex:1;min-width:200px}
+.admin-card .btn-admin{padding:8px 16px;border-radius:10px;background:var(--orange);color:#fff;border:none;font-weight:700;font-size:.78rem;cursor:pointer;display:flex;align-items:center;gap:4px;transition:opacity .15s}
+.admin-card .btn-admin:hover{opacity:.85}
+
+/* Import modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:20px;max-width:720px;width:100%;max-height:85vh;overflow-y:auto;padding:28px;position:relative}
+.modal h2{font-size:1.1rem;font-weight:800;margin-bottom:4px}
+.modal .sub{font-size:.82rem;color:var(--text2);margin-bottom:16px;line-height:1.5}
+.modal .close{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text2)}
+.modal .close:hover{border-color:var(--purple)}
+.modal textarea{width:100%;height:200px;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-family:'Fira Code',monospace;font-size:.75rem;resize:vertical;outline:none;background:var(--bg)}
+.modal textarea:focus{border-color:var(--purple)}
+.modal select{padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);font-family:inherit;font-size:.82rem;outline:none;margin-bottom:12px}
+.modal .actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+.modal .btn-pr{padding:10px 22px;border-radius:10px;background:var(--purple);color:#fff;border:none;font-weight:700;font-size:.82rem;cursor:pointer}
+.modal .btn-gh{padding:10px 22px;border-radius:10px;background:var(--bg);color:var(--text);border:1.5px solid var(--border);font-weight:600;font-size:.82rem;cursor:pointer}
+.modal .preview{margin-top:12px;font-size:.75rem;color:var(--text2);max-height:120px;overflow-y:auto;background:var(--bg);padding:10px;border-radius:8px}
+
+.info-section{max-width:800px;margin:32px auto;padding:0 24px 40px}
+.info-card{background:var(--purple-lt);border:1.5px solid rgba(124,58,237,.12);border-radius:14px;padding:20px;text-align:center}
+.info-card p{font-size:.82rem;color:var(--text2);line-height:1.6;margin-bottom:8px}
+.info-card a{color:var(--purple);font-weight:700;font-size:.82rem}
+.footer{border-top:1px solid var(--border);padding:20px;text-align:center;font-size:.72rem;color:var(--text3)}
 .footer a{color:var(--purple);font-weight:600}
+.back-link{position:fixed;bottom:24px;right:24px;width:44px;height:44px;border-radius:50%;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-lg);z-index:50}
 
-/* Back */
-.back-link{position:fixed;bottom:24px;right:24px;width:44px;height:44px;border-radius:50%;background:var(--purple);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-lg);z-index:50;transition:transform .15s}
-.back-link:hover{transform:scale(1.1)}
-
-@media(max-width:600px){.grid{grid-template-columns:1fr}.stats-bar{gap:20px}}
+@media(max-width:768px){.toolbar{flex-direction:column;align-items:stretch}.toolbar .count{margin-left:0;text-align:center}table{font-size:.75rem}th,td{padding:8px 10px}.admin-card{flex-direction:column}}
 </style>
 </head>
 <body>
+
 <section class="hero">
-  <div class="badge"><span class="material-symbols-outlined" style="font-size:14px">verified</span>Quyết định số 26/QĐ-HĐGSNN · Năm 2025</div>
-  <h1>Tra Cứu <span class="accent">Tạp Chí Khoa Học</span><br>Được Tính Điểm</h1>
-  <p>Danh mục tạp chí khoa học được tính điểm của 28 Hội đồng Giáo sư ngành, liên ngành năm 2025 theo Hội đồng Giáo sư Nhà nước.</p>
+  <div class="badge"><span class="material-symbols-outlined" style="font-size:14px">verified</span>QĐ 26/QĐ-HĐGSNN · 11/7/2025</div>
+  <h1>Tra Cứu <span class="accent">Tạp Chí Khoa Học</span><br>Được Tính Điểm 2025</h1>
+  <p>Tìm kiếm tạp chí theo tên, ISSN, điểm số, ngành/lĩnh vực. Dữ liệu theo 28 HĐ Giáo sư ngành, liên ngành.</p>
 </section>
 
 <div class="search-wrap">
   <div class="search-box">
-    <span class="material-symbols-outlined icon">search</span>
-    <input type="text" id="searchInput" placeholder="Tìm kiếm ngành, tạp chí..." oninput="filterCards()">
-    <button class="btn-search" onclick="filterCards()"><span class="material-symbols-outlined" style="font-size:16px">search</span>Tìm</button>
+    <span class="material-symbols-outlined" style="font-size:22px;color:var(--text3)">search</span>
+    <input type="text" id="q" placeholder="Nhập tên tạp chí, ISSN, cơ quan xuất bản..." oninput="doSearch()">
+    <button class="btn-s" onclick="doSearch()"><span class="material-symbols-outlined" style="font-size:16px">search</span>Tìm</button>
   </div>
 </div>
 
-<div class="filters" id="filters"></div>
-
-<div class="stats-bar">
-  <div class="stat"><div class="num">28</div><div class="label">Ngành / Liên ngành</div></div>
-  <div class="stat"><div class="num">2025</div><div class="label">Năm áp dụng</div></div>
-  <div class="stat"><div class="num" id="resultCount">28</div><div class="label">Kết quả</div></div>
+<div class="toolbar">
+  <select id="fField" onchange="doSearch()"><option value="">Tất cả ngành</option></select>
+  <select id="fScore" onchange="doSearch()">
+    <option value="">Tất cả điểm</option>
+    <option value="2.5-3">2.5 – 3.0 điểm</option>
+    <option value="2-2.5">2.0 – 2.5 điểm</option>
+    <option value="1.5-2">1.5 – 2.0 điểm</option>
+    <option value="1-1.5">1.0 – 1.5 điểm</option>
+    <option value="0.5-1">0.5 – 1.0 điểm</option>
+    <option value="0-0.5">0 – 0.5 điểm</option>
+  </select>
+  <select id="fType" onchange="doSearch()">
+    <option value="">Tất cả loại</option>
+    <option value="Tạp chí">Tạp chí</option>
+    <option value="Kỷ yếu">Kỷ yếu</option>
+  </select>
+  <div class="count" id="countLabel">0 kết quả</div>
 </div>
 
-<div class="grid-wrap"><div class="grid" id="cardGrid"></div></div>
+<div class="admin-bar" id="adminBar" style="display:none">
+  <div class="admin-card">
+    <h3>📥 Nhập dữ liệu tạp chí (dành cho quản trị viên)</h3>
+    <button class="btn-admin" onclick="openImport()"><span class="material-symbols-outlined" style="font-size:16px">upload_file</span>Nhập từ CSV</button>
+    <button class="btn-admin" style="background:var(--purple)" onclick="openImport('manual')"><span class="material-symbols-outlined" style="font-size:16px">add</span>Thêm thủ công</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th style="width:40px">TT</th><th>Tên tạp chí</th><th>ISSN</th><th>Loại</th><th>Cơ quan xuất bản</th><th>Ngành</th><th style="width:70px;text-align:center">Điểm</th></tr></thead>
+      <tbody id="tBody"><tr><td colspan="7" class="empty-tbl">Đang tải dữ liệu...</td></tr></tbody>
+    </table>
+  </div>
+</div>
 
 <div class="info-section">
   <div class="info-card">
-    <h3>📋 Về Danh mục Tạp chí Khoa học</h3>
-    <p>Danh mục được Chủ tịch HĐGSNN Nguyễn Kim Sơn ký ban hành ngày 11/7/2025. Các tạp chí phải gửi kèm minh chứng phản biện của các bài báo khoa học trong các số đã xuất bản năm 2024.</p>
-    <a href="https://giaoduc.net.vn/hoi-dong-giao-su-nha-nuoc-phe-duyet-danh-muc-tap-chi-khoa-hoc-duoc-tinh-diem-nam-2025-post252745.gd" target="_blank">Đọc bài viết gốc <span class="material-symbols-outlined" style="font-size:16px">open_in_new</span></a>
+    <p>Dữ liệu được tổng hợp từ 28 danh mục tạp chí của các HĐGS ngành, liên ngành năm 2025. Quản trị viên có thể nhập thêm dữ liệu từ file CSV.</p>
+    <a href="http://hdgsnn.gov.vn/tin-tuc/quyet-dinh-so-26-qd-hdgsnn-phe-duyet-danh-muc-tap-chi-khoa-hoc-duoc-tinh-diem-nam-2025_816/" target="_blank">Xem QĐ gốc trên HĐGSNN ↗</a>
   </div>
 </div>
 
-<footer class="footer">
-  <p>Dữ liệu từ <a href="http://hdgsnn.gov.vn" target="_blank">Hội đồng Giáo sư Nhà nước</a> · Trang tra cứu phi thương mại · <a href="index.html">← Về trang chủ</a></p>
-</footer>
+<footer class="footer"><a href="index.html">← Về trang chủ</a> · Dữ liệu từ <a href="http://hdgsnn.gov.vn" target="_blank">HĐGSNN</a></footer>
+<a href="index.html" class="back-link"><span class="material-symbols-outlined" style="font-size:20px">home</span></a>
 
-<a href="index.html" class="back-link" title="Về trang chủ"><span class="material-symbols-outlined" style="font-size:20px">home</span></a>
+<!-- Import Modal -->
+<div class="modal-bg" id="importModal">
+<div class="modal">
+  <button class="close" onclick="closeImport()">✕</button>
+  <div id="importCSV">
+    <h2>📥 Nhập dữ liệu từ CSV</h2>
+    <p class="sub">Dán dữ liệu CSV vào ô bên dưới. Mỗi dòng một tạp chí, các cột cách nhau bằng tab hoặc dấu phẩy.<br>Cột theo thứ tự: <strong>TT, Tên tạp chí, ISSN, Loại, Cơ quan xuất bản, Điểm</strong></p>
+    <select id="importField"></select>
+    <textarea id="csvData" placeholder="1&#9;Tạp chí Khoa học ĐHQG&#9;1234-5678&#9;Tạp chí&#9;ĐHQG Hà Nội&#9;1.0"></textarea>
+    <div class="preview" id="csvPreview"></div>
+    <div class="actions">
+      <button class="btn-gh" onclick="closeImport()">Huỷ</button>
+      <button class="btn-pr" onclick="previewCSV()">Xem trước</button>
+      <button class="btn-pr" style="background:var(--green)" onclick="doImportCSV()">Nhập dữ liệu</button>
+    </div>
+  </div>
+  <div id="importManual" style="display:none">
+    <h2>➕ Thêm tạp chí thủ công</h2>
+    <p class="sub">Nhập thông tin tạp chí mới.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><label style="font-size:.7rem;font-weight:700;color:var(--text2)">Tên tạp chí *</label><input type="text" id="m-name" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.82rem;outline:none;margin-top:2px"></div>
+      <div><label style="font-size:.7rem;font-weight:700;color:var(--text2)">ISSN</label><input type="text" id="m-issn" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.82rem;outline:none;margin-top:2px"></div>
+      <div><label style="font-size:.7rem;font-weight:700;color:var(--text2)">Loại</label><select id="m-type" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.82rem;outline:none;margin-top:2px"><option>Tạp chí</option><option>Kỷ yếu</option></select></div>
+      <div><label style="font-size:.7rem;font-weight:700;color:var(--text2)">Cơ quan xuất bản</label><input type="text" id="m-pub" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.82rem;outline:none;margin-top:2px"></div>
+      <div><label style="font-size:.7rem;font-weight:700;color:var(--text2)">Ngành *</label><select id="m-field" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.82rem;outline:none;margin-top:2px"></select></div>
+      <div><label style="font-size:.7rem;font-weight:700;color:var(--text2)">Điểm *</label><input type="text" id="m-score" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.82rem;outline:none;margin-top:2px" placeholder="0 – 1.5"></div>
+    </div>
+    <div class="actions">
+      <button class="btn-gh" onclick="closeImport()">Huỷ</button>
+      <button class="btn-pr" onclick="doAddManual()">Thêm tạp chí</button>
+    </div>
+  </div>
+</div>
+</div>
 
 <script>
-var DATA = [
-  {id:1, name:"Chăn nuôi - Thú y - Thuỷ sản", type:"Liên ngành", group:"Nông nghiệp", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/1-HD%20CN-TY-TS-DMTC%202025_0001.pdf"},
-  {id:2, name:"Cơ học", type:"Ngành", group:"Kỹ thuật", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/2-HD%20Co%20hoc-DMTC%202025_0001.pdf"},
-  {id:3, name:"Cơ khí - Động lực", type:"Liên ngành", group:"Kỹ thuật", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/3-HD%20CK-DL-DMTC%202025_0001.pdf"},
-  {id:4, name:"Công nghệ thông tin", type:"Ngành", group:"Kỹ thuật", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/4-HD%20CNTT-DMTC%202025_0001.pdf"},
-  {id:5, name:"Dược học", type:"Ngành", group:"Y Dược", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/5-HD%20Duoc%20hoc-DMTC%202025_0001.pdf"},
-  {id:6, name:"Điện - Điện tử - Tự động hoá", type:"Liên ngành", group:"Kỹ thuật", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/6-HD%20Dien-DT-TDH-DMTC%202025_0001.pdf"},
-  {id:7, name:"Giao thông vận tải", type:"Ngành", group:"Kỹ thuật", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/7-HD%20GTVT-DMTC%202025_0001.pdf"},
-  {id:8, name:"Khoa học Giáo dục", type:"Ngành", group:"Xã hội", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/8-HD%20KH%20Giao%20duc-DMTC%202025_0001.pdf"},
-  {id:9, name:"Hoá học - Công nghệ thực phẩm", type:"Ngành", group:"Tự nhiên", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/9-HD%20Hoa%20hoc-CNTP-DMTC%202025_0001.pdf"},
-  {id:10, name:"Khoa học An ninh", type:"Ngành", group:"An ninh QP", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/10-HD%20KH%20An%20ninh-DMTC%202025_0001.pdf"},
-  {id:11, name:"Khoa học Quân sự", type:"Ngành", group:"An ninh QP", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/11-HD%20KH%20Quan%20su-DMTC%202025_0001.pdf"},
-  {id:12, name:"Khoa học Trái đất - Mỏ", type:"Ngành", group:"Tự nhiên", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/12-HD%20KHTD-Mo-DMTC%202025_0001.pdf"},
-  {id:13, name:"Kinh tế", type:"Ngành", group:"Xã hội", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/13-HD%20Kinh%20te-DMTC%202025_0001.pdf"},
-  {id:14, name:"Luật học", type:"Ngành", group:"Xã hội", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/14-HD%20Luat%20hoc-DMTC%202025_0001.pdf"},
-  {id:15, name:"Luyện kim", type:"Ngành", group:"Kỹ thuật", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/15-HD%20Luyen%20kim-DMTC%202025_0001.pdf"},
-  {id:16, name:"Ngôn ngữ học", type:"Ngành", group:"Xã hội", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/16-HD%20Ngon%20ngu%20hoc-DMTC%202025_0001.pdf"},
-  {id:17, name:"Nông nghiệp - Lâm nghiệp", type:"Liên ngành", group:"Nông nghiệp", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/17-HD%20Nong%20nghiep-LN-DMTC%202025_0001.pdf"},
-  {id:18, name:"Sinh học", type:"Ngành", group:"Tự nhiên", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/18-HD%20Sinh%20hoc-DMTC%202025_0001.pdf"},
-  {id:19, name:"Sử học - Khảo cổ học - Dân tộc học / Nhân học", type:"Liên ngành", group:"Xã hội", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/19-Hd%20Su%20hoc-KCH-DTH-NH-DMTC%202025_0001.pdf"},
-  {id:20, name:"Tâm lý học", type:"Ngành", group:"Xã hội", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/20-HD%20Tam%20ly%20hoc-DMTC%202025_0001.pdf"},
-  {id:21, name:"Thuỷ lợi", type:"Ngành", group:"Kỹ thuật", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/21-HD%20Thuy%20loi-DMTC%202025_0001.pdf"},
-  {id:22, name:"Toán học", type:"Ngành", group:"Tự nhiên", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/22-HD%20Toan%20hoc-DMTC%202025_0001.pdf"},
-  {id:23, name:"Triết học - Xã hội học - Chính trị học", type:"Liên ngành", group:"Xã hội", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/23-HD%20Triet%20hoc-CTH-XHH-DMTC%202025_0001.pdf"},
-  {id:24, name:"Văn hoá - Nghệ thuật - Thể dục thể thao", type:"Ngành", group:"Văn hoá NT", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/24-HD%20VH-NT-TDTT-DMTC%202025_0001.pdf"},
-  {id:25, name:"Văn học", type:"Ngành", group:"Xã hội", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/25-HD%20Van%20hoc-DMTC%202025_0001.pdf"},
-  {id:26, name:"Vật lý", type:"Ngành", group:"Tự nhiên", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/26-HD%20Vat%20ly-DMTC%202025_0001.pdf"},
-  {id:27, name:"Xây dựng - Kiến trúc", type:"Ngành", group:"Kỹ thuật", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/27-HD%20XD-KT-DMTC%202025_0001.pdf"},
-  {id:28, name:"Y học", type:"Ngành", group:"Y Dược", pdf:"http://hdgsnn.gov.vn/files/anhbaiviet/files/DMTC%202025/28-HD%20Y%20hoc-DMTC%202025_0001.pdf"}
+var FIELDS = [
+  "Chăn nuôi - Thú y - Thuỷ sản","Cơ học","Cơ khí - Động lực","Công nghệ thông tin",
+  "Dược học","Điện - Điện tử - Tự động hoá","Giao thông vận tải","Khoa học Giáo dục",
+  "Hoá học - Công nghệ thực phẩm","Khoa học An ninh","Khoa học Quân sự","Khoa học Trái đất - Mỏ",
+  "Kinh tế","Luật học","Luyện kim","Ngôn ngữ học","Nông nghiệp - Lâm nghiệp","Sinh học",
+  "Sử học - Khảo cổ - Dân tộc học","Tâm lý học","Thuỷ lợi","Toán học",
+  "Triết học - Xã hội học - Chính trị học","Văn hoá - Nghệ thuật - TDTT","Văn học","Vật lý",
+  "Xây dựng - Kiến trúc","Y học","Quốc tế (WoS/Scopus)"
 ];
 
-var _activeFilter = '';
-var COLORS = ['c1','c2','c3','c4'];
+// Default international journals (common to ALL fields)
+var DEFAULT_DATA = [
+  {name:"Tạp chí quốc tế WoS (IF ≥ 2.5 / Q1, H-index ≥ 50)",issn:"",type:"Tạp chí",pub:"WoS, Scopus",field:"Quốc tế (WoS/Scopus)",score:"0 – 3.0"},
+  {name:"Tạp chí quốc tế WoS (1 ≤ IF < 2.5 / Q1, H-index < 50, Q2)",issn:"",type:"Tạp chí",pub:"WoS, Scopus",field:"Quốc tế (WoS/Scopus)",score:"0 – 2.0"},
+  {name:"Tạp chí quốc tế WoS, Scopus (IF < 1), Q3, Q4",issn:"",type:"Tạp chí",pub:"WoS, Scopus",field:"Quốc tế (WoS/Scopus)",score:"0 – 1.5"},
+  {name:"Kỷ yếu hội thảo quốc tế uy tín (WoS/Scopus indexed)",issn:"",type:"Kỷ yếu",pub:"WoS, Scopus",field:"Quốc tế (WoS/Scopus)",score:"0 – 1.0"}
+];
 
-function renderFilters() {
-  var groups = [];
-  DATA.forEach(function(d) { if (groups.indexOf(d.group) === -1) groups.push(d.group); });
-  var html = '<button class="filter-btn active" onclick="setFilter(\'\')">Tất cả</button>';
-  groups.forEach(function(g) {
-    html += '<button class="filter-btn" onclick="setFilter(\'' + g + '\')">' + g + '</button>';
-  });
-  document.getElementById('filters').innerHTML = html;
+var _allJournals = [];
+var _db = null;
+
+async function loadJournals() {
+  try {
+    _db = initFB();
+    var snap = await _db.collection('journals').orderBy('name').get();
+    _allJournals = [];
+    snap.forEach(function(d) { var j = d.data(); j._id = d.id; _allJournals.push(j); });
+    if (!_allJournals.length) {
+      // First time: seed with defaults
+      for (var i = 0; i < DEFAULT_DATA.length; i++) {
+        await _db.collection('journals').add(DEFAULT_DATA[i]);
+      }
+      _allJournals = DEFAULT_DATA;
+    }
+  } catch(e) {
+    console.error(e);
+    _allJournals = DEFAULT_DATA;
+  }
+  buildFilters();
+  doSearch();
+  checkAdmin();
 }
 
-function setFilter(group) {
-  _activeFilter = group;
-  document.querySelectorAll('.filter-btn').forEach(function(b) {
-    b.classList.toggle('active', (group === '' && b.textContent === 'Tất cả') || b.textContent === group);
+function buildFilters() {
+  var sel = document.getElementById('fField');
+  sel.innerHTML = '<option value="">Tất cả ngành</option>';
+  FIELDS.forEach(function(f) { sel.innerHTML += '<option value="' + f + '">' + f + '</option>'; });
+  // Import selects
+  var iSel = document.getElementById('importField');
+  var mSel = document.getElementById('m-field');
+  iSel.innerHTML = '';
+  mSel.innerHTML = '';
+  FIELDS.forEach(function(f) {
+    iSel.innerHTML += '<option>' + f + '</option>';
+    mSel.innerHTML += '<option>' + f + '</option>';
   });
-  filterCards();
 }
 
-function filterCards() {
-  var q = document.getElementById('searchInput').value.toLowerCase().trim();
-  var filtered = DATA.filter(function(d) {
-    var matchGroup = !_activeFilter || d.group === _activeFilter;
-    var matchSearch = !q || d.name.toLowerCase().indexOf(q) !== -1 || d.type.toLowerCase().indexOf(q) !== -1 || d.group.toLowerCase().indexOf(q) !== -1;
-    return matchGroup && matchSearch;
+function parseScore(s) {
+  if (!s) return 0;
+  var m = String(s).match(/[\d.]+/g);
+  if (!m) return 0;
+  return parseFloat(m[m.length - 1]) || 0;
+}
+
+function scoreClass(s) {
+  var n = parseScore(s);
+  if (n >= 2) return 'high';
+  if (n >= 1) return 'mid';
+  return 'low';
+}
+
+function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+function doSearch() {
+  var q = document.getElementById('q').value.toLowerCase().trim();
+  var ff = document.getElementById('fField').value;
+  var fs = document.getElementById('fScore').value;
+  var ft = document.getElementById('fType').value;
+
+  var filtered = _allJournals.filter(function(j) {
+    if (q && (j.name || '').toLowerCase().indexOf(q) === -1 && (j.issn || '').toLowerCase().indexOf(q) === -1 && (j.pub || '').toLowerCase().indexOf(q) === -1) return false;
+    if (ff && j.field !== ff) return false;
+    if (ft && j.type !== ft) return false;
+    if (fs) {
+      var parts = fs.split('-');
+      var lo = parseFloat(parts[0]), hi = parseFloat(parts[1]);
+      var sc = parseScore(j.score);
+      if (sc < lo || sc > hi) return false;
+    }
+    return true;
   });
-  document.getElementById('resultCount').textContent = filtered.length;
+
+  document.getElementById('countLabel').textContent = filtered.length + ' kết quả';
+
   if (!filtered.length) {
-    document.getElementById('cardGrid').innerHTML = '<div class="empty" style="grid-column:1/-1">Không tìm thấy kết quả phù hợp.</div>';
+    document.getElementById('tBody').innerHTML = '<tr><td colspan="7" class="empty-tbl">Không tìm thấy tạp chí phù hợp.</td></tr>';
     return;
   }
-  document.getElementById('cardGrid').innerHTML = filtered.map(function(d) {
-    var color = COLORS[(d.id - 1) % 4];
-    return '<a href="' + d.pdf + '" target="_blank" class="card">'
-      + '<div class="card-num ' + color + '">' + d.id + '</div>'
-      + '<div class="card-body"><div class="cat">' + d.type + ' · ' + d.group + '</div><h3>' + d.name + '</h3><div class="desc">Danh mục tạp chí khoa học được tính điểm năm 2025</div></div>'
-      + '<span class="material-symbols-outlined card-arrow">open_in_new</span>'
-      + '<span class="tag">PDF</span>'
-      + '</a>';
+
+  filtered.sort(function(a, b) { return parseScore(b.score) - parseScore(a.score); });
+
+  document.getElementById('tBody').innerHTML = filtered.map(function(j, i) {
+    return '<tr>'
+      + '<td style="color:var(--text3);font-weight:700">' + (i + 1) + '</td>'
+      + '<td class="j-name">' + esc(j.name) + '</td>'
+      + '<td class="j-issn">' + esc(j.issn) + '</td>'
+      + '<td class="j-type">' + esc(j.type) + '</td>'
+      + '<td class="j-pub">' + esc(j.pub) + '</td>'
+      + '<td><span class="j-field">' + esc(j.field) + '</span></td>'
+      + '<td class="j-score ' + scoreClass(j.score) + '">' + esc(j.score) + '</td>'
+      + '</tr>';
   }).join('');
 }
 
-renderFilters();
-filterCards();
+function checkAdmin() {
+  try { var s = localStorage.getItem('pa'); if (s) document.getElementById('adminBar').style.display = 'block'; } catch(e) {}
+}
 
-document.getElementById('searchInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') filterCards();
-});
+function openImport(mode) {
+  document.getElementById('importCSV').style.display = mode === 'manual' ? 'none' : 'block';
+  document.getElementById('importManual').style.display = mode === 'manual' ? 'block' : 'none';
+  document.getElementById('importModal').classList.add('open');
+}
+function closeImport() { document.getElementById('importModal').classList.remove('open'); }
+
+function previewCSV() {
+  var raw = document.getElementById('csvData').value.trim();
+  if (!raw) return;
+  var lines = raw.split('\n').filter(function(l) { return l.trim(); });
+  var parsed = lines.map(function(l) {
+    var cols = l.indexOf('\t') !== -1 ? l.split('\t') : l.split(',');
+    return { tt: (cols[0] || '').trim(), name: (cols[1] || '').trim(), issn: (cols[2] || '').trim(), type: (cols[3] || 'Tạp chí').trim(), pub: (cols[4] || '').trim(), score: (cols[5] || '').trim() };
+  });
+  document.getElementById('csvPreview').innerHTML = '<strong>' + parsed.length + ' tạp chí sẽ được nhập:</strong><br>' + parsed.slice(0, 5).map(function(p) { return esc(p.name) + ' | ' + esc(p.issn) + ' | ' + esc(p.score); }).join('<br>') + (parsed.length > 5 ? '<br>... và ' + (parsed.length - 5) + ' tạp chí khác' : '');
+}
+
+async function doImportCSV() {
+  var raw = document.getElementById('csvData').value.trim();
+  var field = document.getElementById('importField').value;
+  if (!raw || !field) { alert('Chọn ngành và dán dữ liệu CSV!'); return; }
+  var lines = raw.split('\n').filter(function(l) { return l.trim(); });
+  var count = 0;
+  for (var i = 0; i < lines.length; i++) {
+    var cols = lines[i].indexOf('\t') !== -1 ? lines[i].split('\t') : lines[i].split(',');
+    var name = (cols[1] || cols[0] || '').trim();
+    if (!name || /^(TT|STT|tt)$/i.test(name)) continue;
+    var j = { name: name, issn: (cols[2] || '').trim(), type: (cols[3] || 'Tạp chí').trim(), pub: (cols[4] || '').trim(), field: field, score: (cols[5] || cols[cols.length-1] || '').trim() };
+    try { await _db.collection('journals').add(j); count++; } catch(e) { console.error(e); }
+  }
+  alert('Đã nhập ' + count + ' tạp chí vào ngành ' + field + '!');
+  closeImport();
+  document.getElementById('csvData').value = '';
+  document.getElementById('csvPreview').innerHTML = '';
+  await loadJournals();
+}
+
+async function doAddManual() {
+  var name = document.getElementById('m-name').value.trim();
+  var field = document.getElementById('m-field').value;
+  var score = document.getElementById('m-score').value.trim();
+  if (!name || !field || !score) { alert('Nhập tên, ngành và điểm!'); return; }
+  var j = { name: name, issn: document.getElementById('m-issn').value.trim(), type: document.getElementById('m-type').value, pub: document.getElementById('m-pub').value.trim(), field: field, score: score };
+  try { await _db.collection('journals').add(j); alert('Đã thêm: ' + name); closeImport(); await loadJournals(); } catch(e) { alert('Lỗi: ' + e.message); }
+}
+
+document.getElementById('importModal').addEventListener('click', function(e) { if (e.target === this) closeImport(); });
+document.getElementById('q').addEventListener('keydown', function(e) { if (e.key === 'Enter') doSearch(); });
+
+loadJournals();
 </script>
 </body>
 </html>
