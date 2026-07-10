@@ -163,12 +163,9 @@ var IMPORT_DATA = [
 {n:"Tâm lý học",i:"1859-0098",t:"Tạp chí",p:"Viện Tâm lý học, Viện HL KHXH VN",f:"Văn hoá - Nghệ thuật - TDTT",s:"0 – 0.5"},
 {n:"Y học thực hành",i:"1859-1663",t:"Tạp chí",p:"Bộ Y tế",f:"Văn hoá - Nghệ thuật - TDTT",s:"0 – 0.5"},
 {n:"Du lịch Việt Nam",i:"0866-7373",t:"Tạp chí",p:"Tổng cục Du lịch, Bộ VH-TT&DL",f:"Văn hoá - Nghệ thuật - TDTT",s:"0 – 0.75"},
-];
 
-console.log("Total journals to import:", IMPORT_DATA.length);
 
 // ═══ CHĂN NUÔI - THÚ Y - THUỶ SẢN (Vietnamese journals) ═══
-IMPORT_DATA.push(
 {n:"TC quốc tế (Phụ lục 1) Q1 uy tín vượt trội",i:"",t:"Tạp chí",p:"WoS Q1",f:"Chăn nuôi - Thú y - Thuỷ sản",s:"0 – 3.0"},
 {n:"TC quốc tế Q3",i:"",t:"Tạp chí",p:"WoS/Scopus",f:"Chăn nuôi - Thú y - Thuỷ sản",s:"0 – 2.0"},
 {n:"Báo cáo KH tại hội nghị quốc tế",i:"",t:"Kỷ yếu",p:"Proceedings, có ISBN",f:"Chăn nuôi - Thú y - Thuỷ sản",s:"0 – 1.0"},
@@ -262,6 +259,6 @@ IMPORT_DATA.push(
 {n:"Phát triển KH và CN: Khoa học tự nhiên",i:"2588-106X",t:"Tạp chí",p:"ĐHQG TP HCM",f:"Cơ học",s:"0 – 0.25"},
 {n:"KH và Công nghệ (ĐH Công nghiệp HN)",i:"p-1859-3585",t:"Tạp chí",p:"Trường ĐH Công nghiệp Hà Nội",f:"Cơ học",s:"0 – 0.25"},
 {n:"KH và CN Giao thông vận tải",i:"p-1859-4263",t:"Tạp chí",p:"Trường ĐH Giao thông vận tải TP HCM",f:"Cơ học",s:"0 – 0.25"}
-);
+];
 
-console.log("Total after update:", IMPORT_DATA.length);
+console.log("Total journals:", IMPORT_DATA.length);
