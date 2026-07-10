@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản trị Tạp chí — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="../fb-init.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#F3F4F6;--white:#fff;--purple:#7C3AED;--purple-lt:#EDE9FE;--purple-dim:#A78BFA;--orange:#F97316;--orange-lt:#FFF7ED;--green:#059669;--green-lt:#ECFDF5;--red:#EF4444;--red-lt:#FEF2F2;--text:#1E1E2E;--text2:#4B5563;--text3:#9CA3AF;--border:#E5E7EB;--shadow:0 2px 12px rgba(0,0,0,.04)}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.top-bar{background:var(--purple);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.top-bar h1{color:#fff;font-size:1rem;font-weight:800;display:flex;align-items:center;gap:8px}
+.top-bar a{color:rgba(255,255,255,.7);font-size:.8rem;font-weight:600}
+.top-bar a:hover{color:#fff}
+.wrap{max-width:1200px;margin:0 auto;padding:20px 24px}
+.tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:8px 18px;border-radius:10px;background:var(--white);border:1.5px solid var(--border);color:var(--text2);font-size:.8rem;font-weight:700;cursor:pointer}
+.tab.active{background:var(--purple);border-color:var(--purple);color:#fff}
+.tab:hover:not(.active){border-color:var(--purple-dim)}
+.card{background:var(--white);border-radius:14px;border:1.5px solid var(--border);padding:20px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card h3{font-size:.95rem;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card h3 .material-symbols-outlined{color:var(--purple);font-size:20px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.fg{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+.fg label{font-size:.68rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.03em}
+input,select,textarea{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.82rem;color:var(--text);outline:none;background:var(--bg);width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--purple)}
+.btn{padding:8px 18px;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:5px;transition:opacity .12s}
+.btn:hover{opacity:.85}
+.btn-purple{background:var(--purple);color:#fff}
+.btn-orange{background:var(--orange);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-ghost{background:var(--bg);color:var(--text);border:1.5px solid var(--border)}
+.btn-sm{padding:5px 10px;font-size:.72rem}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.alert{padding:10px 14px;border-radius:8px;font-size:.8rem;margin-bottom:10px;display:none;align-items:center;gap:6px}
+.alert.show{display:flex}
+.alert-success{background:var(--green-lt);color:var(--green);border:1px solid rgba(5,150,105,.15)}
+.alert-error{background:var(--red-lt);color:var(--red);border:1px solid rgba(239,68,68,.15)}
+.alert-warn{background:var(--orange-lt);color:var(--orange);border:1px solid rgba(249,115,22,.15)}
+.stats{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.stat{background:var(--white);border:1.5px solid var(--border);border-radius:10px;padding:12px 16px;min-width:100px}
+.stat .num{font-size:1.4rem;font-weight:900;color:var(--purple)}
+.stat .label{font-size:.65rem;color:var(--text3);text-transform:uppercase}
+/* Table */
+.tbl-wrap{overflow-x:auto;border-radius:12px;border:1.5px solid var(--border);background:var(--white)}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+thead{background:#F9FAFB;position:sticky;top:0}
+th{padding:10px 12px;text-align:left;font-weight:700;color:var(--text2);font-size:.68rem;text-transform:uppercase;letter-spacing:.03em;border-bottom:1.5px solid var(--border);white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:hover{background:rgba(124,58,237,.02)}
+th.chk,td.chk{width:30px;text-align:center}
+.j-name{font-weight:700;color:var(--text);max-width:280px}
+.j-score{font-weight:800;color:var(--purple);white-space:nowrap}
+.j-field{font-size:.65rem;font-weight:700;color:var(--purple);background:var(--purple-lt);padding:2px 8px;border-radius:999px;white-space:nowrap}
+/* Upload */
+.upload-area{border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:border-color .15s;position:relative;margin-bottom:8px}
+.upload-area:hover{border-color:var(--purple);background:rgba(124,58,237,.02)}
+.upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-area .icon{font-size:32px;color:var(--purple-dim);margin-bottom:6px}
+.upload-area p{font-size:.8rem;color:var(--text3)}
+.spinner{display:none;text-align:center;padding:16px;color:var(--purple);font-size:.82rem}
+.spinner.show{display:block}
+/* Preview table */
+.preview-wrap{max-height:300px;overflow-y:auto;margin:10px 0;border:1.5px solid var(--border);border-radius:10px}
+.preview-wrap table{font-size:.72rem}
+.dupe{background:var(--red-lt)!important}
+.new-row{background:var(--green-lt)!important}
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:16px;max-width:800px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;position:relative}
+.modal h3{font-size:1rem;font-weight:800;margin-bottom:12px}
+.modal .close{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:6px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
+.pager{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:.78rem;color:var(--text3)}
+.pager button{padding:6px 14px;border-radius:8px;background:var(--bg);border:1.5px solid var(--border);font-size:.75rem;font-weight:600;cursor:pointer}
+@media(max-width:768px){.row,.row3{grid-template-columns:1fr}.stats{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <h1><span class="material-symbols-outlined" style="font-size:20px">library_books</span>Quản trị Tạp chí Khoa học</h1>
+  <a href="index.html">← Về Admin</a>
+</div>
+
+<div class="wrap">
+<div id="alertBox" class="alert"></div>
+
+<div class="stats" id="statsBar"></div>
+
+<div class="tabs">
+  <div class="tab active" onclick="goTab('list')">📋 Danh sách</div>
+  <div class="tab" onclick="goTab('add')">➕ Thêm thủ công</div>
+  <div class="tab" onclick="goTab('excel')">📊 Nhập Excel</div>
+  <div class="tab" onclick="goTab('pdf')">📄 Nhập từ PDF (AI)</div>
+  <div class="tab" onclick="goTab('tools')">🔧 Công cụ</div>
+</div>
+
+<!-- TAB: LIST -->
+<div id="tab-list" class="tab-content">
+  <div class="card">
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <input type="text" id="searchQ" placeholder="Tìm tên tạp chí, ISSN..." oninput="renderTable()" style="flex:1;min-width:200px">
+      <select id="filterField" onchange="renderTable()" style="width:auto"><option value="">Tất cả ngành</option></select>
+      <select id="filterScore" onchange="renderTable()" style="width:auto"><option value="">Tất cả điểm</option><option value="2">≥ 2.0</option><option value="1">≥ 1.0</option><option value="0.75">≥ 0.75</option><option value="0.5">≥ 0.5</option><option value="0.25">≥ 0.25</option></select>
+    </div>
+    <div class="actions">
+      <button class="btn btn-red btn-sm" onclick="deleteSelected()"><span class="material-symbols-outlined" style="font-size:14px">delete</span>Xóa đã chọn</button>
+      <button class="btn btn-ghost btn-sm" onclick="selectAll()"><span class="material-symbols-outlined" style="font-size:14px">select_all</span>Chọn tất cả</button>
+      <button class="btn btn-ghost btn-sm" onclick="deselectAll()">Bỏ chọn</button>
+      <span id="selCount" style="font-size:.75rem;color:var(--text3);margin-left:auto"></span>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr><th class="chk"><input type="checkbox" id="chkAll" onchange="toggleAll(this)"></th><th>TT</th><th>Tên tạp chí</th><th>ISSN</th><th>Loại</th><th>Cơ quan XB</th><th>Ngành</th><th>Điểm</th><th>Xóa</th></tr></thead><tbody id="tBody"></tbody></table></div>
+    <div class="pager" id="pager"></div>
+  </div>
+</div>
+
+<!-- TAB: ADD MANUAL -->
+<div id="tab-add" class="tab-content" style="display:none">
+  <div class="card">
+    <h3><span class="material-symbols-outlined">add_circle</span>Thêm tạp chí thủ công</h3>
+    <div class="row"><div class="fg"><label>Tên tạp chí *</label><input type="text" id="a-name"></div><div class="fg"><label>ISSN</label><input type="text" id="a-issn"></div></div>
+    <div class="row3"><div class="fg"><label>Loại</label><select id="a-type"><option>Tạp chí</option><option>Kỷ yếu</option></select></div><div class="fg"><label>Ngành *</label><select id="a-field"></select></div><div class="fg"><label>Điểm *</label><input type="text" id="a-score" placeholder="0 – 1.0"></div></div>
+    <div class="fg"><label>Cơ quan xuất bản</label><input type="text" id="a-pub"></div>
+    <button class="btn btn-purple" onclick="addManual()"><span class="material-symbols-outlined" style="font-size:16px">save</span>Thêm tạp chí</button>
+  </div>
+</div>
+
+<!-- TAB: EXCEL -->
+<div id="tab-excel" class="tab-content" style="display:none">
+  <div class="card">
+    <h3><span class="material-symbols-outlined">table_chart</span>Nhập từ file Excel</h3>
+    <div class="actions">
+      <button class="btn btn-green" onclick="downloadTemplate()"><span class="material-symbols-outlined" style="font-size:16px">download</span>Tải file mẫu (.xlsx)</button>
+      <button class="btn btn-purple" onclick="exportAll()"><span class="material-symbols-outlined" style="font-size:16px">file_download</span>Xuất toàn bộ dữ liệu</button>
+    </div>
+    <div class="upload-area" id="excelUpload">
+      <input type="file" accept=".xlsx,.xls,.csv" onchange="handleExcel(this)">
+      <div class="material-symbols-outlined icon">upload_file</div>
+      <p>Nhấn hoặc kéo thả file Excel (.xlsx) vào đây</p>
+    </div>
+    <div class="fg"><label>Ngành áp dụng *</label><select id="ex-field"></select></div>
+    <div class="spinner" id="exSpinner">⏳ Đang xử lý file...</div>
+    <div id="exPreview"></div>
+    <div id="exActions" style="display:none" class="actions">
+      <button class="btn btn-purple" onclick="importExcel()"><span class="material-symbols-outlined" style="font-size:16px">cloud_upload</span>Nhập dữ liệu mới (bỏ qua trùng)</button>
+      <span id="exSummary" style="font-size:.78rem;color:var(--text3)"></span>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: PDF AI -->
+<div id="tab-pdf" class="tab-content" style="display:none">
+  <div class="card">
+    <h3><span class="material-symbols-outlined">smart_toy</span>Nhập từ PDF bằng AI</h3>
+    <p style="font-size:.82rem;color:var(--text2);margin-bottom:12px">Tải lên file PDF scan danh mục tạp chí. AI sẽ đọc và trích xuất dữ liệu tự động.</p>
+    <div class="upload-area" id="pdfUpload">
+      <input type="file" accept=".pdf" onchange="handlePDF(this)">
+      <div class="material-symbols-outlined icon">picture_as_pdf</div>
+      <p>Nhấn hoặc kéo thả file PDF vào đây</p>
+    </div>
+    <div class="fg"><label>Ngành áp dụng *</label><select id="pdf-field"></select></div>
+    <div class="spinner" id="pdfSpinner">🤖 AI đang đọc và trích xuất dữ liệu từ PDF... (có thể mất 30-60 giây)</div>
+    <div id="pdfPreview"></div>
+    <div id="pdfActions" style="display:none" class="actions">
+      <button class="btn btn-purple" onclick="importPDF()"><span class="material-symbols-outlined" style="font-size:16px">cloud_upload</span>Nhập dữ liệu mới (bỏ qua trùng)</button>
+      <span id="pdfSummary" style="font-size:.78rem;color:var(--text3)"></span>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: TOOLS -->
+<div id="tab-tools" class="tab-content" style="display:none">
+  <div class="card">
+    <h3><span class="material-symbols-outlined">build</span>Công cụ quản lý</h3>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-orange" onclick="findDuplicates()"><span class="material-symbols-outlined" style="font-size:16px">find_replace</span>Tìm và xóa bản trùng</button>
+      <button class="btn btn-red" onclick="deleteByField()"><span class="material-symbols-outlined" style="font-size:16px">delete_sweep</span>Xóa theo ngành</button>
+    </div>
+    <div id="toolLog" style="margin-top:12px;font-size:.78rem;color:var(--text2);background:var(--bg);padding:12px;border-radius:8px;white-space:pre-wrap;max-height:300px;overflow-y:auto"></div>
+  </div>
+</div>
+</div>
+
+<script>
+var _db,_journals=[],_selected=new Set(),_page=0,_perPage=50,_excelData=[],_pdfData=[],_existingKeys={};
+var FIELDS=["Chăn nuôi - Thú y - Thuỷ sản","Cơ học","Cơ khí - Động lực","Công nghệ thông tin","Dược học","Điện - Điện tử - Tự động hoá","Giao thông vận tải","Khoa học Giáo dục","Hoá học - Công nghệ thực phẩm","Khoa học An ninh","Khoa học Quân sự","Khoa học Trái đất - Mỏ","Kinh tế","Luật học","Luyện kim","Ngôn ngữ học","Nông nghiệp - Lâm nghiệp","Sinh học","Sử học - Khảo cổ - Dân tộc học","Tâm lý học","Thuỷ lợi","Toán học","Triết học - Xã hội học - Chính trị học","Văn hoá - Nghệ thuật - TDTT","Văn học","Vật lý","Xây dựng - Kiến trúc","Y học","Quốc tế (WoS/Scopus)"];
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function jKey(j){return(j.name||'').toLowerCase().trim()+'|||'+(j.field||'');}
+function parseScore(s){var m=String(s||'').match(/[\d.]+/g);return m?parseFloat(m[m.length-1]):0;}
+function showAlert(m,t){var e=document.getElementById('alertBox');e.textContent=m;e.className='alert alert-'+t+' show';clearTimeout(e._t);e._t=setTimeout(function(){e.classList.remove('show');},4000);}
+
+function fillSelects(){
+  ['a-field','ex-field','pdf-field','filterField'].forEach(function(id){
+    var el=document.getElementById(id);if(!el)return;
+    var isFilter=id==='filterField';
+    el.innerHTML=isFilter?'<option value="">Tất cả ngành</option>':'';
+    FIELDS.forEach(function(f){el.innerHTML+='<option>'+f+'</option>';});
+  });
+}
+
+async function loadAll(){
+  _db=initFB();
+  var snap=await _db.collection('journals').get();
+  _journals=[];_existingKeys={};
+  snap.forEach(function(d){var j=d.data();j._id=d.id;_journals.push(j);_existingKeys[jKey(j)]=true;});
+  renderStats();renderTable();
+}
+
+function renderStats(){
+  var fields={};_journals.forEach(function(j){fields[j.field||'?']=(fields[j.field||'?']||0)+1;});
+  var fCount=Object.keys(fields).length;
+  document.getElementById('statsBar').innerHTML='<div class="stat"><div class="num">'+_journals.length+'</div><div class="label">Tổng tạp chí</div></div><div class="stat"><div class="num">'+fCount+'</div><div class="label">Ngành</div></div>';
+}
+
+// ═══ TAB NAVIGATION ═══
+function goTab(t){
+  document.querySelectorAll('.tab-content').forEach(function(e){e.style.display='none';});
+  document.querySelectorAll('.tab').forEach(function(e){e.classList.remove('active');});
+  document.getElementById('tab-'+t).style.display='block';
+  event.target.classList.add('active');
+}
+
+// ═══ TABLE ═══
+function renderTable(){
+  var q=(document.getElementById('searchQ').value||'').toLowerCase().trim();
+  var ff=document.getElementById('filterField').value;
+  var fs=document.getElementById('filterScore').value;
+  var filtered=_journals.filter(function(j){
+    if(q&&(j.name||'').toLowerCase().indexOf(q)===-1&&(j.issn||'').toLowerCase().indexOf(q)===-1&&(j.pub||'').toLowerCase().indexOf(q)===-1)return false;
+    if(ff&&j.field!==ff)return false;
+    if(fs&&parseScore(j.score)<parseFloat(fs))return false;
+    return true;
+  });
+  filtered.sort(function(a,b){return parseScore(b.score)-parseScore(a.score);});
+  var total=filtered.length,pages=Math.ceil(total/_perPage);
+  if(_page>=pages)_page=Math.max(0,pages-1);
+  var start=_page*_perPage,end=Math.min(start+_perPage,total);
+  var rows=filtered.slice(start,end);
+  document.getElementById('tBody').innerHTML=rows.length?rows.map(function(j,i){
+    var checked=_selected.has(j._id)?'checked':'';
+    return '<tr><td class="chk"><input type="checkbox" '+checked+' onchange="toggleSel(\''+j._id+'\',this)"></td><td>'+(start+i+1)+'</td><td class="j-name">'+esc(j.name)+'</td><td style="font-size:.72rem;color:var(--text2)">'+esc(j.issn)+'</td><td style="font-size:.72rem">'+esc(j.type)+'</td><td style="font-size:.72rem;color:var(--text2);max-width:180px">'+esc(j.pub)+'</td><td><span class="j-field">'+esc(j.field)+'</span></td><td class="j-score">'+esc(j.score)+'</td><td><button class="btn btn-red btn-sm" onclick="deleteOne(\''+j._id+'\')"><span class="material-symbols-outlined" style="font-size:13px">close</span></button></td></tr>';
+  }).join(''):'<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3)">Không có dữ liệu.</td></tr>';
+  document.getElementById('pager').innerHTML='<span>Trang '+(pages?_page+1:0)+'/'+pages+' ('+total+' kết quả)</span><div><button onclick="_page=Math.max(0,_page-1);renderTable()" '+(page<1?'disabled':'')+'>← Trước</button> <button onclick="_page=Math.min('+pages+'-1,_page+1);renderTable()" '+(_page>=pages-1?'disabled':'')+'>Sau →</button></div>';
+  updateSelCount();
+}
+function toggleSel(id,cb){if(cb.checked)_selected.add(id);else _selected.delete(id);updateSelCount();}
+function toggleAll(cb){var boxes=document.querySelectorAll('#tBody input[type=checkbox]');boxes.forEach(function(b){b.checked=cb.checked;var id=b.closest('tr').querySelector('button').getAttribute('onclick').match(/'([^']+)'/)[1];if(cb.checked)_selected.add(id);else _selected.delete(id);});updateSelCount();}
+function selectAll(){_journals.forEach(function(j){_selected.add(j._id);});renderTable();}
+function deselectAll(){_selected.clear();renderTable();}
+function updateSelCount(){document.getElementById('selCount').textContent=_selected.size?_selected.size+' đã chọn':'';}
+
+// ═══ DELETE ═══
+async function deleteOne(id){if(!confirm('Xóa tạp chí này?'))return;await _db.collection('journals').doc(id).delete();_journals=_journals.filter(function(j){return j._id!==id;});_selected.delete(id);_existingKeys={};_journals.forEach(function(j){_existingKeys[jKey(j)]=true;});renderStats();renderTable();showAlert('Đã xóa.','success');}
+async function deleteSelected(){if(!_selected.size){showAlert('Chưa chọn mục nào.','error');return;}if(!confirm('Xóa '+_selected.size+' tạp chí đã chọn?'))return;var batch=_db.batch(),count=0;_selected.forEach(function(id){batch.delete(_db.collection('journals').doc(id));count++;});await batch.commit();_journals=_journals.filter(function(j){return!_selected.has(j._id);});_selected.clear();_existingKeys={};_journals.forEach(function(j){_existingKeys[jKey(j)]=true;});renderStats();renderTable();showAlert('Đã xóa '+count+' tạp chí.','success');}
+
+// ═══ ADD MANUAL ═══
+async function addManual(){
+  var name=document.getElementById('a-name').value.trim();
+  var field=document.getElementById('a-field').value;
+  var score=document.getElementById('a-score').value.trim();
+  if(!name||!field||!score){showAlert('Nhập tên, ngành và điểm!','error');return;}
+  var j={name:name,issn:document.getElementById('a-issn').value.trim(),type:document.getElementById('a-type').value,pub:document.getElementById('a-pub').value.trim(),field:field,score:score};
+  var key=jKey(j);
+  if(_existingKeys[key]){showAlert('Tạp chí "'+name+'" đã tồn tại trong ngành này!','warn');return;}
+  var ref=await _db.collection('journals').add(j);j._id=ref.id;_journals.push(j);_existingKeys[key]=true;
+  document.getElementById('a-name').value='';document.getElementById('a-issn').value='';document.getElementById('a-pub').value='';document.getElementById('a-score').value='';
+  renderStats();showAlert('Đã thêm: '+name,'success');
+}
+
+// ═══ EXCEL IMPORT/EXPORT ═══
+function downloadTemplate(){
+  var ws=XLSX.utils.aoa_to_sheet([['TT','Tên tạp chí','Chỉ số ISSN','Loại','Cơ quan xuất bản','Điểm'],['1','Ví dụ: Tạp chí Khoa học','1234-5678','Tạp chí','Đại học ABC','0 – 1.0']]);
+  ws['!cols']=[{wch:5},{wch:35},{wch:15},{wch:10},{wch:30},{wch:12}];
+  var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Mau');XLSX.writeFile(wb,'mau_tap_chi.xlsx');
+}
+function exportAll(){
+  var data=[['TT','Tên tạp chí','ISSN','Loại','Cơ quan xuất bản','Ngành','Điểm']];
+  _journals.forEach(function(j,i){data.push([i+1,j.name,j.issn,j.type,j.pub,j.field,j.score]);});
+  var ws=XLSX.utils.aoa_to_sheet(data);ws['!cols']=[{wch:5},{wch:40},{wch:15},{wch:10},{wch:35},{wch:30},{wch:12}];
+  var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'TapChi');XLSX.writeFile(wb,'tapchi_hdgsnn_2025.xlsx');
+}
+function handleExcel(input){
+  var file=input.files[0];if(!file)return;
+  document.getElementById('exSpinner').classList.add('show');
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var wb=XLSX.read(e.target.result,{type:'binary'});
+    var ws=wb.Sheets[wb.SheetNames[0]];
+    var rows=XLSX.utils.sheet_to_json(ws,{header:1});
+    _excelData=[];var dupes=0,newCount=0;
+    for(var i=1;i<rows.length;i++){
+      var r=rows[i];if(!r||!r[1])continue;
+      var j={name:String(r[1]||'').trim(),issn:String(r[2]||'').trim(),type:String(r[3]||'Tạp chí').trim(),pub:String(r[4]||'').trim(),score:String(r[5]||r[r.length-1]||'').trim()};
+      var key=j.name.toLowerCase().trim()+'|||'+document.getElementById('ex-field').value;
+      j._isDupe=!!_existingKeys[key];
+      if(j._isDupe)dupes++;else newCount++;
+      _excelData.push(j);
+    }
+    document.getElementById('exSpinner').classList.remove('show');
+    renderPreview(_excelData,'exPreview');
+    document.getElementById('exActions').style.display='flex';
+    document.getElementById('exSummary').textContent=_excelData.length+' dòng: '+newCount+' mới, '+dupes+' trùng (sẽ bỏ qua)';
+  };
+  reader.readAsBinaryString(file);
+}
+async function importExcel(){
+  var field=document.getElementById('ex-field').value;if(!field){showAlert('Chọn ngành!','error');return;}
+  var toAdd=_excelData.filter(function(j){return !j._isDupe;});
+  if(!toAdd.length){showAlert('Không có dữ liệu mới để nhập.','warn');return;}
+  var batch=_db.batch(),count=0;
+  for(var i=0;i<toAdd.length;i++){
+    var j={name:toAdd[i].name,issn:toAdd[i].issn,type:toAdd[i].type,pub:toAdd[i].pub,field:field,score:toAdd[i].score};
+    batch.set(_db.collection('journals').doc(),j);count++;
+    if(count%400===0){await batch.commit();batch=_db.batch();}
+  }
+  if(count%400!==0)await batch.commit();
+  showAlert('Đã nhập '+count+' tạp chí mới!','success');
+  _excelData=[];document.getElementById('exPreview').innerHTML='';document.getElementById('exActions').style.display='none';
+  await loadAll();
+}
+
+// ═══ PDF AI IMPORT ═══
+async function handlePDF(input){
+  var file=input.files[0];if(!file)return;
+  document.getElementById('pdfSpinner').classList.add('show');
+  var reader=new FileReader();
+  reader.onload=async function(e){
+    var b64=btoa(new Uint8Array(e.target.result).reduce(function(d,b){return d+String.fromCharCode(b);},''));
+    try{
+      var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4000,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:'Trích xuất danh mục tạp chí từ bảng trong PDF này. Trả về CHỈ JSON array, không có text khác. Mỗi phần tử có: name (tên tạp chí), issn (chỉ số ISSN), type (Tạp chí hoặc Kỷ yếu), pub (cơ quan xuất bản), score (điểm, giữ nguyên format gốc như "0 – 1.0"). Bỏ qua header row. Ví dụ: [{"name":"Tạp chí ABC","issn":"1234-5678","type":"Tạp chí","pub":"ĐH XYZ","score":"0 – 1.0"}]'}]}]})});
+      var data=await resp.json();
+      var text=data.content.map(function(c){return c.text||'';}).join('');
+      text=text.replace(/```json|```/g,'').trim();
+      _pdfData=JSON.parse(text);
+      var field=document.getElementById('pdf-field').value;
+      var dupes=0,newCount=0;
+      _pdfData.forEach(function(j){
+        var key=(j.name||'').toLowerCase().trim()+'|||'+field;
+        j._isDupe=!!_existingKeys[key];
+        if(j._isDupe)dupes++;else newCount++;
+      });
+      renderPreview(_pdfData,'pdfPreview');
+      document.getElementById('pdfActions').style.display='flex';
+      document.getElementById('pdfSummary').textContent=_pdfData.length+' tạp chí: '+newCount+' mới, '+dupes+' trùng';
+    }catch(err){showAlert('Lỗi AI: '+err.message,'error');}
+    document.getElementById('pdfSpinner').classList.remove('show');
+  };
+  reader.readAsArrayBuffer(file);
+}
+async function importPDF(){
+  var field=document.getElementById('pdf-field').value;if(!field){showAlert('Chọn ngành!','error');return;}
+  var toAdd=_pdfData.filter(function(j){return!j._isDupe;});
+  if(!toAdd.length){showAlert('Không có dữ liệu mới.','warn');return;}
+  var batch=_db.batch(),count=0;
+  for(var i=0;i<toAdd.length;i++){
+    var j={name:toAdd[i].name,issn:toAdd[i].issn||'',type:toAdd[i].type||'Tạp chí',pub:toAdd[i].pub||'',field:field,score:toAdd[i].score||''};
+    batch.set(_db.collection('journals').doc(),j);count++;
+    if(count%400===0){await batch.commit();batch=_db.batch();}
+  }
+  if(count%400!==0)await batch.commit();
+  showAlert('Đã nhập '+count+' tạp chí từ PDF!','success');
+  _pdfData=[];document.getElementById('pdfPreview').innerHTML='';document.getElementById('pdfActions').style.display='none';
+  await loadAll();
+}
+
+// ═══ PREVIEW TABLE ═══
+function renderPreview(data,containerId){
+  if(!data.length){document.getElementById(containerId).innerHTML='<p style="color:var(--text3);font-size:.82rem">Không có dữ liệu.</p>';return;}
+  var html='<div class="preview-wrap"><table><thead><tr><th>TT</th><th>Tên</th><th>ISSN</th><th>Loại</th><th>CQ Xuất bản</th><th>Điểm</th><th>Trạng thái</th></tr></thead><tbody>';
+  data.forEach(function(j,i){
+    var cls=j._isDupe?'dupe':'new-row';
+    var status=j._isDupe?'<span style="color:var(--red);font-weight:700">TRÙNG</span>':'<span style="color:var(--green);font-weight:700">MỚI</span>';
+    html+='<tr class="'+cls+'"><td>'+(i+1)+'</td><td>'+esc(j.name)+'</td><td>'+esc(j.issn)+'</td><td>'+esc(j.type)+'</td><td>'+esc(j.pub)+'</td><td>'+esc(j.score)+'</td><td>'+status+'</td></tr>';
+  });
+  html+='</tbody></table></div>';
+  document.getElementById(containerId).innerHTML=html;
+}
+
+// ═══ TOOLS ═══
+async function findDuplicates(){
+  var log=document.getElementById('toolLog');log.textContent='🔍 Đang tìm bản trùng...\n';
+  var seen={},dupeIds=[];
+  _journals.forEach(function(j){var key=jKey(j);if(seen[key])dupeIds.push(j._id);else seen[key]=true;});
+  log.textContent+='Tìm thấy '+dupeIds.length+' bản trùng.\n';
+  if(!dupeIds.length){log.textContent+='✅ Không có trùng!';return;}
+  if(!confirm('Xóa '+dupeIds.length+' bản trùng?'))return;
+  var batch=_db.batch(),count=0;
+  dupeIds.forEach(function(id){batch.delete(_db.collection('journals').doc(id));count++;});
+  await batch.commit();
+  log.textContent+='✅ Đã xóa '+count+' bản trùng.\n';
+  await loadAll();
+}
+async function deleteByField(){
+  var field=prompt('Nhập tên ngành muốn xóa toàn bộ:');if(!field)return;
+  var ids=_journals.filter(function(j){return j.field===field;}).map(function(j){return j._id;});
+  if(!ids.length){showAlert('Không tìm thấy ngành: '+field,'error');return;}
+  if(!confirm('Xóa '+ids.length+' tạp chí ngành "'+field+'"?'))return;
+  var batch=_db.batch();ids.forEach(function(id){batch.delete(_db.collection('journals').doc(id));});
+  await batch.commit();
+  showAlert('Đã xóa '+ids.length+' tạp chí ngành '+field,'success');
+  await loadAll();
+}
+
+// Init
+fillSelects();loadAll();
+</script>
+</body>
+</html>
