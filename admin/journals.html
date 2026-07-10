@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="../fb-init.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -83,12 +84,50 @@ th.chk,td.chk{width:30px;text-align:center}
 .pager{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:.78rem;color:var(--text3)}
 .pager button{padding:6px 14px;border-radius:8px;background:var(--bg);border:1.5px solid var(--border);font-size:.75rem;font-weight:600;cursor:pointer}
 @media(max-width:768px){.row,.row3{grid-template-columns:1fr}.stats{flex-direction:column}}
+/* Login */
+#loginView{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px}
+.login-card{background:var(--white);border-radius:16px;padding:32px;width:100%;max-width:400px;border:1.5px solid var(--border);box-shadow:0 8px 30px rgba(0,0,0,.08)}
+.login-card h2{font-size:1.2rem;font-weight:900;color:var(--purple);margin-bottom:4px}
+.login-card .sub{font-size:.82rem;color:var(--text2);margin-bottom:18px}
+.login-btn{width:100%;justify-content:center;padding:11px;margin-top:6px;border-radius:10px}
+#loginErr{color:var(--red);font-size:.78rem;display:none;padding:6px 10px;background:var(--red-lt);border-radius:6px;margin-bottom:6px}
+.user-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:.68rem;font-weight:700}
+.user-badge.admin{background:#EDE9FE;color:#7C3AED}
+.user-badge.editor{background:#F3F4F6;color:#4B5563}
+/* Account cards */
+.user-item{border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:6px;background:var(--white);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.user-item .u-info{flex:1;min-width:200px}
+.user-item .u-email{font-weight:700;font-size:.85rem}
+.user-item .u-date{font-size:.68rem;color:var(--text3)}
 </style>
 </head>
 <body>
+<!-- LOGIN -->
+<div id="loginView">
+<div class="login-card">
+  <h2>🔐 Đăng nhập Admin</h2>
+  <p class="sub">Quản trị tạp chí khoa học & tài khoản</p>
+  <div class="fg"><label>Email</label><input type="email" id="lEmail" placeholder="admin@example.com"></div>
+  <div class="fg"><label>Mật khẩu</label><input type="password" id="lPass" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+  <div id="loginErr"></div>
+  <button class="btn btn-purple login-btn" onclick="doLogin()">Đăng nhập</button>
+  <div style="text-align:center;margin-top:10px"><a href="#" onclick="document.getElementById('regBox').style.display=document.getElementById('regBox').style.display==='none'?'block':'none'" style="color:var(--purple);font-size:.78rem;font-weight:600">Tạo tài khoản mới</a></div>
+  <div id="regBox" style="display:none;margin-top:10px;padding-top:10px;border-top:1.5px solid var(--border)">
+    <div class="fg"><label>Email</label><input type="email" id="rEmail" placeholder="email@example.com"></div>
+    <div class="fg"><label>Mật khẩu (≥6 ký tự)</label><input type="password" id="rPass" placeholder="••••••"></div>
+    <button class="btn btn-green login-btn" onclick="doRegister()">Tạo tài khoản</button>
+  </div>
+</div>
+</div>
+
+<div id="appView" style="display:none">
 <div class="top-bar">
-  <h1><span class="material-symbols-outlined" style="font-size:20px">library_books</span>Quản trị Tạp chí Khoa học</h1>
-  <a href="index.html">← Về Admin</a>
+  <h1><span class="material-symbols-outlined" style="font-size:20px">library_books</span>Quản trị Tạp chí & Tài khoản</h1>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="userInfo" style="color:rgba(255,255,255,.7);font-size:.75rem"></span>
+    <a href="index.html">Admin chính</a>
+    <a href="#" onclick="doLogout()" style="color:#fca5a5">Đăng xuất</a>
+  </div>
 </div>
 
 <div class="wrap">
@@ -102,6 +141,7 @@ th.chk,td.chk{width:30px;text-align:center}
   <div class="tab" onclick="goTab('excel')">📊 Nhập Excel</div>
   <div class="tab" onclick="goTab('pdf')">📄 Nhập từ PDF (AI)</div>
   <div class="tab" onclick="goTab('tools')">🔧 Công cụ</div>
+  <div class="tab" onclick="goTab('accounts')" id="tabAccounts" style="display:none">👥 Tài khoản</div>
 </div>
 
 <!-- TAB: LIST -->
@@ -177,6 +217,24 @@ th.chk,td.chk{width:30px;text-align:center}
   </div>
 </div>
 
+<!-- TAB: ACCOUNTS (admin only) -->
+<div id="tab-accounts" class="tab-content" style="display:none">
+  <div class="card">
+    <h3><span class="material-symbols-outlined">group</span>Quản lý Tài khoản</h3>
+    <div class="row">
+      <div class="fg"><label>Email *</label><input type="email" id="nu-email" placeholder="user@example.com"></div>
+      <div class="fg"><label>Mật khẩu *</label><input type="password" id="nu-pass" placeholder="≥ 6 ký tự"></div>
+    </div>
+    <div class="fg"><label>Quyền</label><select id="nu-role"><option value="editor">✏️ Biên tập viên</option><option value="admin">👑 Quản trị viên</option></select></div>
+    <p style="font-size:.72rem;color:var(--text3);margin-bottom:8px">Tạo lời mời: người dùng cần đăng ký bằng email này để nhận quyền.</p>
+    <button class="btn btn-purple" onclick="createInvite()">➕ Tạo lời mời</button>
+  </div>
+  <div class="card">
+    <h3>Danh sách tài khoản</h3>
+    <div id="userList"></div>
+  </div>
+</div>
+
 <!-- TAB: TOOLS -->
 <div id="tab-tools" class="tab-content" style="display:none">
   <div class="card">
@@ -222,13 +280,7 @@ function renderStats(){
   document.getElementById('statsBar').innerHTML='<div class="stat"><div class="num">'+_journals.length+'</div><div class="label">Tổng tạp chí</div></div><div class="stat"><div class="num">'+fCount+'</div><div class="label">Ngành</div></div>';
 }
 
-// ═══ TAB NAVIGATION ═══
-function goTab(t){
-  document.querySelectorAll('.tab-content').forEach(function(e){e.style.display='none';});
-  document.querySelectorAll('.tab').forEach(function(e){e.classList.remove('active');});
-  document.getElementById('tab-'+t).style.display='block';
-  event.target.classList.add('active');
-}
+// goTab moved to init section
 
 // ═══ TABLE ═══
 function renderTable(){
@@ -411,8 +463,115 @@ async function deleteByField(){
   await loadAll();
 }
 
-// Init
-fillSelects();loadAll();
+// ═══ AUTH ═══
+var _role='editor',_uid=null,_allUsers=[];
+
+function v(id){return(document.getElementById(id)||{}).value.trim();}
+function loginErr(m){var e=document.getElementById('loginErr');e.textContent=m;e.style.display=m?'block':'none';}
+
+async function doLogin(){
+  var email=v('lEmail'),pass=v('lPass');
+  if(!email||!pass){loginErr('Nhập email và mật khẩu.');return;}
+  try{initFB();await firebase.auth().signInWithEmailAndPassword(email,pass);showApp();}
+  catch(e){
+    var msg='Lỗi đăng nhập.';
+    if(e.code==='auth/user-not-found')msg='Email chưa đăng ký.';
+    else if(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential')msg='Mật khẩu sai.';
+    else if(e.code==='auth/invalid-email')msg='Email không hợp lệ.';
+    else msg=e.message||e.code;
+    loginErr(msg);
+  }
+}
+async function doRegister(){
+  var email=v('rEmail'),pass=v('rPass');
+  if(!email||!pass){loginErr('Nhập email và mật khẩu.');return;}
+  if(pass.length<6){loginErr('Mật khẩu ≥ 6 ký tự.');return;}
+  try{
+    initFB();var db=initFB();
+    var cred=await firebase.auth().createUserWithEmailAndPassword(email,pass);
+    var invKey=email.replace(/[^a-zA-Z0-9]/g,'_');
+    var invSnap=await db.collection('invites').doc(invKey).get();
+    var role='editor';
+    if(invSnap.exists){role=invSnap.data().role||'editor';await db.collection('invites').doc(invKey).delete();}
+    else{var admSnap=await db.collection('users').where('role','==','admin').get();if(admSnap.empty)role='admin';}
+    await db.collection('users').doc(cred.user.uid).set({email:email,role:role,createdAt:new Date().toISOString()});
+    showAlert('Tài khoản đã tạo! Quyền: '+(role==='admin'?'Admin':'Editor'),'success');
+    showApp();
+  }catch(e){loginErr(e.message||'Lỗi tạo tài khoản.');}
+}
+async function doLogout(){try{await firebase.auth().signOut();}catch(e){}location.reload();}
+
+async function showApp(){
+  var user=firebase.auth().currentUser;if(!user){document.getElementById('loginView').style.display='flex';return;}
+  _uid=user.uid;
+  var db=initFB();
+  try{var uSnap=await db.collection('users').doc(_uid).get();
+    if(uSnap.exists){_role=uSnap.data().role||'editor';}
+    else{var admSnap=await db.collection('users').where('role','==','admin').get();_role=admSnap.empty?'admin':'editor';await db.collection('users').doc(_uid).set({email:user.email,role:_role,createdAt:new Date().toISOString()});}
+  }catch(e){_role='editor';}
+  document.getElementById('loginView').style.display='none';
+  document.getElementById('appView').style.display='block';
+  var badge=_role==='admin'?'👑 Admin':'✏️ Editor';
+  document.getElementById('userInfo').innerHTML=user.email+' <span class="user-badge '+_role+'">'+badge+'</span>';
+  if(_role==='admin')document.getElementById('tabAccounts').style.display='';
+  fillSelects();loadAll();
+}
+
+// ═══ ACCOUNT MANAGEMENT ═══
+async function loadUsers(){
+  var db=initFB();var snap=await db.collection('users').get();
+  _allUsers=[];snap.forEach(function(d){var u=d.data();u._id=d.id;_allUsers.push(u);});
+  renderUserList();
+}
+function renderUserList(){
+  var el=document.getElementById('userList');if(!el)return;
+  if(!_allUsers.length){el.innerHTML='<p style="color:var(--text3);font-size:.82rem">Chưa có tài khoản.</p>';return;}
+  var adminCount=_allUsers.filter(function(u){return u.role==='admin';}).length;
+  el.innerHTML=_allUsers.map(function(u){
+    var isMe=u._id===_uid;
+    var badge=u.role==='admin'?'<span class="user-badge admin">👑 Admin</span>':'<span class="user-badge editor">✏️ Editor</span>';
+    var btns='';
+    if(!isMe){
+      if(u.role==='admin'){btns+='<button class="btn btn-ghost btn-sm" data-id="'+u._id+'" data-role="editor" onclick="changeRole(this)">Hạ Editor</button>';}
+      else{btns+='<button class="btn btn-ghost btn-sm" data-id="'+u._id+'" data-role="admin" onclick="changeRole(this)">Nâng Admin</button>';}
+      btns+='<button class="btn btn-red btn-sm" data-id="'+u._id+'" data-email="'+u.email+'" data-role="'+u.role+'" onclick="deleteUser(this)">Xóa</button>';
+    }else{btns='<span style="font-size:.72rem;color:var(--text3)">(bạn)</span>';}
+    return '<div class="user-item"><div class="u-info"><div class="u-email">'+u.email+' '+badge+'</div><div class="u-date">Tạo: '+u.createdAt+'</div></div><div style="display:flex;gap:4px">'+btns+'</div></div>';
+  }).join('');
+}
+async function changeRole(btn){
+  var id=btn.dataset.id,newRole=btn.dataset.role;
+  if(newRole==='editor'){var ac=_allUsers.filter(function(u){return u.role==='admin';}).length;if(ac<=1){showAlert('Phải có ít nhất 1 Admin!','error');return;}}
+  if(!confirm('Đổi quyền thành '+(newRole==='admin'?'Admin':'Editor')+'?'))return;
+  await initFB().collection('users').doc(id).update({role:newRole});
+  showAlert('Đã đổi quyền!','success');loadUsers();
+}
+async function deleteUser(btn){
+  var id=btn.dataset.id,email=btn.dataset.email,role=btn.dataset.role;
+  if(role==='admin'){var ac=_allUsers.filter(function(u){return u.role==='admin';}).length;if(ac<=1){showAlert('Không thể xóa Admin cuối cùng!','error');return;}}
+  if(!confirm('Xóa tài khoản '+email+'?'))return;
+  await initFB().collection('users').doc(id).delete();
+  showAlert('Đã xóa '+email,'success');loadUsers();
+}
+async function createInvite(){
+  var email=v('nu-email'),role=v('nu-role');
+  if(!email){showAlert('Nhập email!','error');return;}
+  var key=email.replace(/[^a-zA-Z0-9]/g,'_');
+  await initFB().collection('invites').doc(key).set({email:email,role:role,createdBy:firebase.auth().currentUser.email,createdAt:new Date().toISOString()});
+  showAlert('Đã tạo lời mời cho '+email+' (quyền: '+role+'). Người dùng cần đăng ký bằng email này.','success');
+}
+
+// ═══ INIT ═══
+function goTab(t){
+  document.querySelectorAll('.tab-content').forEach(function(e){e.style.display='none';});
+  document.querySelectorAll('.tab').forEach(function(e){e.classList.remove('active');});
+  document.getElementById('tab-'+t).style.display='block';
+  if(event&&event.target)event.target.classList.add('active');
+  if(t==='accounts')loadUsers();
+}
+
+try{initFB();firebase.auth().onAuthStateChanged(function(user){if(user)showApp();});}catch(e){}
 </script>
+</div><!-- /appView -->
 </body>
 </html>
