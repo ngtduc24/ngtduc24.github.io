@@ -353,13 +353,78 @@ function jVTools(){
   return h;
 }
 async function jFindDup(){
-  var seen={},dids=[];_jList.forEach(function(j){var k=jKey(j);if(seen[k])dids.push(j._id);else seen[k]=true;});
-  var log=document.getElementById('jTLog');log.textContent='Tìm thấy '+dids.length+' trùng.\n';
-  if(!dids.length){log.textContent+='✅ Không trùng!';return;}
-  if(!confirm('Xóa '+dids.length+' trùng?'))return;
-  var db=initFB(),b=db.batch();dids.forEach(function(id){b.delete(db.collection('journals').doc(id));});await b.commit();
-  _jList=_jList.filter(function(j){return dids.indexOf(j._id)===-1;});
-  log.textContent+='✅ Đã xóa '+dids.length+' trùng.\n';showAlert('Xóa '+dids.length+' trùng.','success');
+  var seen={},groups={};
+  _jList.forEach(function(j){
+    var k=jKey(j);
+    if(!groups[k])groups[k]=[];
+    groups[k].push(j);
+  });
+  // Find groups with >1 entry
+  var dupeGroups=[];
+  Object.keys(groups).forEach(function(k){if(groups[k].length>1)dupeGroups.push(groups[k]);});
+  var totalDupes=0;dupeGroups.forEach(function(g){totalDupes+=g.length-1;});
+
+  var log=document.getElementById('jTLog');
+  if(!dupeGroups.length){log.innerHTML='<p style="color:var(--green);font-weight:700">✅ Không có dữ liệu trùng lặp!</p>';return;}
+
+  var html='<p style="font-weight:700;margin-bottom:10px">Tìm thấy <span style="color:var(--red)">'+totalDupes+'</span> bản trùng trong '+dupeGroups.length+' nhóm:</p>';
+  html+='<div style="display:flex;gap:6px;margin-bottom:10px"><button class="btn btn-danger btn-sm" onclick="jDelCheckedDupes()"><span class="material-symbols-outlined" style="font-size:14px">delete</span>Xóa đã chọn (<span id="jDupeSelN">0</span>)</button><button class="btn btn-ghost btn-sm" onclick="jSelectAllDupes()">Chọn tất cả trùng</button><button class="btn btn-ghost btn-sm" onclick="jDeselectAllDupes()">Bỏ chọn</button></div>';
+
+  dupeGroups.forEach(function(group,gi){
+    html+='<div style="border:1.5px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden">';
+    html+='<div style="background:var(--surface2);padding:8px 12px;font-size:.75rem;font-weight:700;color:var(--text2);display:flex;justify-content:space-between"><span>'+jE(group[0].name)+' — '+jE(group[0].field)+'</span><span>'+group.length+' bản</span></div>';
+    group.forEach(function(j,ji){
+      var isFirst=ji===0;
+      var bg=isFirst?'background:var(--green-lt);':'background:var(--red-lt);';
+      var label=isFirst?'<span style="color:var(--green);font-size:.65rem;font-weight:700">GIỮ LẠI</span>':'<span style="color:var(--red);font-size:.65rem;font-weight:700">TRÙNG</span>';
+      html+='<div style="'+bg+'padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:.78rem">';
+      if(!isFirst){
+        html+='<input type="checkbox" class="jdupe-chk" data-id="'+j._id+'" checked style="cursor:pointer;width:16px;height:16px" onchange="jUpdateDupeCount()">';
+      }else{
+        html+='<span style="width:16px;text-align:center">🔒</span>';
+      }
+      html+='<span style="flex:1;font-weight:'+(isFirst?'700':'400')+'">'+jE(j.name)+'</span>';
+      html+='<span style="font-size:.7rem;color:var(--text3)">'+jE(j.issn||'')+'</span>';
+      html+='<span style="font-size:.7rem;color:var(--text3)">'+jE(j.score)+'</span>';
+      html+=label;
+      html+='</div>';
+    });
+    html+='</div>';
+  });
+
+  log.innerHTML=html;
+  setTimeout(jUpdateDupeCount,50);
+}
+
+function jUpdateDupeCount(){
+  var checks=document.querySelectorAll('.jdupe-chk:checked');
+  var el=document.getElementById('jDupeSelN');
+  if(el)el.textContent=checks.length;
+}
+
+function jSelectAllDupes(){
+  document.querySelectorAll('.jdupe-chk').forEach(function(cb){cb.checked=true;});
+  jUpdateDupeCount();
+}
+
+function jDeselectAllDupes(){
+  document.querySelectorAll('.jdupe-chk').forEach(function(cb){cb.checked=false;});
+  jUpdateDupeCount();
+}
+
+async function jDelCheckedDupes(){
+  var checks=document.querySelectorAll('.jdupe-chk:checked');
+  if(!checks.length){showAlert('Chưa chọn bản trùng nào.','error');return;}
+  var ids=[];checks.forEach(function(cb){ids.push(cb.dataset.id);});
+  if(!confirm('Xóa '+ids.length+' bản trùng đã chọn?'))return;
+  var db=initFB(),batch=db.batch();
+  ids.forEach(function(id){batch.delete(db.collection('journals').doc(id));});
+  await batch.commit();
+  var idSet=new Set(ids);
+  _jList=_jList.filter(function(j){return!idSet.has(j._id);});
+  showAlert('Đã xóa '+ids.length+' bản trùng!','success');
+  // Re-scan
+  jFindDup();
 }
 async function jDelField(){
   var f=prompt('Nhập tên ngành:');if(!f)return;
