@@ -777,45 +777,113 @@ async function saveGHSettings(){
 // TOOLS MANAGEMENT
 // ══════════════════════════════════════════════
 function renderToolsTab(){
-  var html='<div class="page-header"><h1>Công Cụ Khoa Học</h1><p>Quản lý các công cụ hỗ trợ nghiên cứu</p></div>';
+  var html='<style>';
+  html+='.tool-wrap{position:relative}.tool-gear{position:absolute;top:0;right:0;width:36px;height:36px;border-radius:10px;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);transition:all .15s;z-index:5}.tool-gear:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-lt)}';
+  html+='.tool-settings-panel{display:none;position:absolute;top:44px;right:0;width:420px;max-height:70vh;overflow-y:auto;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.12);padding:20px;z-index:10;animation:tsFade .2s}@keyframes tsFade{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}.tool-settings-panel.open{display:block}';
+  html+='.cm-card{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:24px;max-width:600px;margin:0 auto;animation:cmFade .3s}@keyframes cmFade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}';
+  html+='.cm-steps{display:flex;justify-content:center;gap:8px;margin-bottom:20px}.cm-step{display:flex;align-items:center;gap:5px;font-size:.7rem;font-weight:700;color:var(--text3)}.cm-step .sn{width:24px;height:24px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:.68rem;color:var(--text3)}.cm-step.on .sn{background:var(--primary);color:#fff}.cm-step.on{color:var(--primary)}.cm-step.done .sn{background:var(--green);color:#fff}.cm-step.done{color:var(--green)}.cm-line{width:28px;height:2px;background:var(--border);align-self:center}';
+  html+='.mcard{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;background:var(--surface);margin-bottom:8px}.mcard:hover{border-color:var(--primary);background:var(--primary-lt);transform:translateY(-2px)}.mcard .mi{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px}.mcard:nth-child(1) .mi{background:var(--primary-lt);color:var(--primary)}.mcard:nth-child(2) .mi{background:#FFF7ED;color:#F97316}.mcard:nth-child(3) .mi{background:#ECFDF5;color:#059669}';
+  html+='.cm-result{text-align:center;padding:16px 0}.cm-rn{font-size:3rem;font-weight:900;color:var(--primary);line-height:1}.cm-rl{font-size:.78rem;color:var(--text2);margin-bottom:4px}.cm-rs{font-size:1.6rem;font-weight:900;margin-bottom:12px}.cm-formula{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:12px 16px;text-align:left;margin-top:14px}.cm-formula h4{font-size:.72rem;font-weight:700;color:var(--primary);text-transform:uppercase;margin-bottom:4px}.cm-formula p{font-size:.75rem;color:var(--text2);line-height:1.6}.cm-formula code{background:var(--primary-lt);color:var(--primary);padding:1px 5px;border-radius:3px;font-size:.72rem;font-weight:700}';
+  html+='</style>';
 
-  // Tool cards
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">';
+  html+='<div class="tool-wrap"><div class="page-header"><h1>📐 Tính Cỡ Mẫu Nghiên Cứu</h1><p>Công cụ hỗ trợ tính toán cỡ mẫu cho nghiên cứu định lượng · <a href="../comau.html" target="_blank" style="color:var(--primary)">Mở trang riêng ↗</a></p></div>';
 
-  // Calculator card
-  html+='<div class="card" style="cursor:pointer" onclick="window.open(\'../comau.html\',\'_blank\')">';
-  html+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><div style="width:48px;height:48px;border-radius:14px;background:var(--primary-lt);display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="color:var(--primary);font-size:24px">calculate</span></div><div><div class="card-title" style="margin-bottom:0">Tính Cỡ Mẫu</div><div class="card-sub">Hỗ trợ tính toán mẫu nghiên cứu</div></div></div>';
-  html+='<p style="font-size:.78rem;color:var(--text2);margin-bottom:8px">3 phương pháp: SPSS (Hair), Taro Yamane, Cochran</p>';
-  html+='<span style="font-size:.72rem;color:var(--primary);font-weight:700">Mở công cụ →</span>';
-  html+='</div>';
+  // Settings gear
+  html+='<div class="tool-gear" onclick="toggleToolSettings()" title="Cài đặt"><span class="material-symbols-outlined" style="font-size:18px">settings</span></div>';
 
-  // Tracuu card
-  html+='<div class="card" style="cursor:pointer" onclick="window.open(\'../tracuu.html\',\'_blank\')">';
-  html+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><div style="width:48px;height:48px;border-radius:14px;background:var(--secondary-lt);display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="color:var(--secondary);font-size:24px">library_books</span></div><div><div class="card-title" style="margin-bottom:0">Tra Cứu Tạp Chí</div><div class="card-sub">HĐGSNN 2025</div></div></div>';
-  html+='<p style="font-size:.78rem;color:var(--text2);margin-bottom:8px">Tra cứu điểm, ISSN, ngành của tạp chí khoa học</p>';
-  html+='<span style="font-size:.72rem;color:var(--primary);font-weight:700">Mở công cụ →</span>';
-  html+='</div>';
-  html+='</div>';
-
-  // Calculator settings
-  html+='<div class="card"><div class="card-title"><span class="material-symbols-outlined" style="font-size:18px;color:var(--primary)">tune</span> Cài đặt Tính Cỡ Mẫu</div>';
-  html+='<p style="font-size:.78rem;color:var(--text2);margin-bottom:12px">Tuỳ chỉnh tiêu đề, mô tả, và giá trị mặc định của công cụ tính cỡ mẫu.</p>';
+  // Settings panel (hidden)
+  html+='<div class="tool-settings-panel" id="toolSettingsPanel">';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 style="font-size:.9rem;font-weight:800">⚙️ Cài đặt</h3><button class="btn btn-ghost btn-sm" onclick="toggleToolSettings()">✕</button></div>';
   html+='<div class="fr"><div class="fg"><label>Tiêu đề</label><input type="text" id="tc-title" placeholder="Tính Cỡ Mẫu Nghiên Cứu"></div><div class="fg"><label>Mô tả</label><input type="text" id="tc-desc" placeholder="Công cụ hỗ trợ..."></div></div>';
-  html+='<div class="section-title" style="margin-top:10px">Giá trị mặc định</div>';
-  html+='<div class="fr"><div class="fg"><label>Sai số mặc định (%)</label><input type="number" id="tc-e" placeholder="5"></div><div class="fg"><label>Dự phòng mặc định (%)</label><input type="number" id="tc-reserve" placeholder="10"></div></div>';
-  html+='<div class="fr"><div class="fg"><label>Tỷ lệ p mặc định</label><input type="number" id="tc-p" step="0.01" placeholder="0.5"></div><div class="fg"><label>Mức tin cậy mặc định</label><select id="tc-z"><option value="1.96">95% (Z=1.96)</option><option value="2.58">99% (Z=2.58)</option></select></div></div>';
-  html+='<div class="section-title" style="margin-top:10px">Phương pháp (A) — SPSS</div>';
-  html+='<div class="fr"><div class="fg"><label>Tên phương pháp A</label><input type="text" id="tc-a-name" placeholder="Phân tích SPSS — EFA & Hồi quy"></div><div class="fg"><label>Mô tả A</label><input type="text" id="tc-a-desc" placeholder="Theo Hoàng Trọng & Hair"></div></div>';
-  html+='<div class="section-title" style="margin-top:10px">Phương pháp (B) — Yamane</div>';
-  html+='<div class="fr"><div class="fg"><label>Tên phương pháp B</label><input type="text" id="tc-b-name" placeholder="Khảo sát cộng đồng — Đã biết tổng thể"></div><div class="fg"><label>Mô tả B</label><input type="text" id="tc-b-desc" placeholder="Công thức Taro Yamane"></div></div>';
-  html+='<div class="section-title" style="margin-top:10px">Phương pháp (C) — Cochran</div>';
-  html+='<div class="fr"><div class="fg"><label>Tên phương pháp C</label><input type="text" id="tc-c-name" placeholder="Khảo sát cộng đồng — Chưa biết tổng thể"></div><div class="fg"><label>Mô tả C</label><input type="text" id="tc-c-desc" placeholder="Công thức Cochran"></div></div>';
-  html+='<button class="btn btn-primary" onclick="saveToolSettings()" style="margin-top:10px"><span class="material-symbols-outlined" style="font-size:14px">save</span>Lưu cài đặt</button>';
+  html+='<div class="section-title">Giá trị mặc định</div>';
+  html+='<div class="fr"><div class="fg"><label>Sai số (%)</label><input type="number" id="tc-e" placeholder="5"></div><div class="fg"><label>Dự phòng (%)</label><input type="number" id="tc-reserve" placeholder="10"></div></div>';
+  html+='<div class="fr"><div class="fg"><label>Tỷ lệ p</label><input type="number" id="tc-p" step="0.01" placeholder="0.5"></div><div class="fg"><label>Tin cậy Z</label><select id="tc-z"><option value="1.96">95%</option><option value="2.58">99%</option></select></div></div>';
+  html+='<div class="section-title">Tên phương pháp</div>';
+  html+='<div class="fg"><label>PP (A)</label><input type="text" id="tc-a-name" placeholder="Phân tích SPSS — EFA & Hồi quy"></div>';
+  html+='<div class="fg"><label>PP (B)</label><input type="text" id="tc-b-name" placeholder="Khảo sát — Đã biết tổng thể"></div>';
+  html+='<div class="fg"><label>PP (C)</label><input type="text" id="tc-c-name" placeholder="Khảo sát — Chưa biết tổng thể"></div>';
+  html+='<button class="btn btn-primary" onclick="saveToolSettings()" style="margin-top:8px;width:100%;justify-content:center"><span class="material-symbols-outlined" style="font-size:14px">save</span>Lưu cài đặt</button>';
   html+='</div>';
 
-  // Load settings after render
-  setTimeout(loadToolSettings,50);
+  // Calculator steps
+  html+='<div class="cm-steps"><div class="cm-step on" id="cs1"><span class="sn">1</span>Phương pháp</div><div class="cm-line"></div><div class="cm-step" id="cs2"><span class="sn">2</span>Nhập liệu</div><div class="cm-line"></div><div class="cm-step" id="cs3"><span class="sn">3</span>Kết quả</div></div>';
+  html+='<div id="cmScreen"></div>';
+  html+='<p style="text-align:center;font-size:.7rem;color:var(--text3);margin-top:14px">Hệ thống hỗ trợ tính toán phương pháp nghiên cứu định lượng</p>';
+  html+='</div>';
+
+  setTimeout(function(){cmScreen1();loadToolSettings();},50);
   return html;
+}
+
+function toggleToolSettings(){document.getElementById('toolSettingsPanel').classList.toggle('open');}
+// Close settings when clicking outside
+document.addEventListener('click',function(e){var p=document.getElementById('toolSettingsPanel');if(p&&p.classList.contains('open')&&!p.contains(e.target)&&!e.target.closest('.tool-gear'))p.classList.remove('open');});
+
+var _cmMethod='';
+function cmSetStep(n){['cs1','cs2','cs3'].forEach(function(id,i){var el=document.getElementById(id);if(!el)return;el.className='cm-step';if(i+1<n)el.className='cm-step done';else if(i+1===n)el.className='cm-step on';});}
+
+function cmScreen1(){
+  _cmMethod='';cmSetStep(1);
+  var h='<div class="cm-card"><h3 style="font-size:.95rem;font-weight:800;margin-bottom:12px">Chọn phương pháp tính cỡ mẫu</h3>';
+  h+='<div class="mcard" onclick="cmPick(\'A\')"><div class="mi"><span class="material-symbols-outlined">analytics</span></div><div style="flex:1"><div style="font-size:.88rem;font-weight:800">(A) Phân tích SPSS — EFA & Hồi quy</div><div style="font-size:.7rem;color:var(--text2)">Hoàng Trọng & Hair</div></div><span class="material-symbols-outlined" style="color:var(--text3)">arrow_forward</span></div>';
+  h+='<div class="mcard" onclick="cmPick(\'B\')"><div class="mi"><span class="material-symbols-outlined">groups</span></div><div style="flex:1"><div style="font-size:.88rem;font-weight:800">(B) Taro Yamane — Đã biết tổng thể</div><div style="font-size:.7rem;color:var(--text2)">Biết quy mô dân số</div></div><span class="material-symbols-outlined" style="color:var(--text3)">arrow_forward</span></div>';
+  h+='<div class="mcard" onclick="cmPick(\'C\')"><div class="mi"><span class="material-symbols-outlined">calculate</span></div><div style="flex:1"><div style="font-size:.88rem;font-weight:800">(C) Cochran — Chưa biết tổng thể</div><div style="font-size:.7rem;color:var(--text2)">Không biết quy mô</div></div><span class="material-symbols-outlined" style="color:var(--text3)">arrow_forward</span></div>';
+  h+='</div>';
+  document.getElementById('cmScreen').innerHTML=h;
+}
+
+function cmPick(m){
+  _cmMethod=m;cmSetStep(2);
+  var h='<div class="cm-card">';
+  var titles={A:'Phân tích SPSS (EFA & Hồi quy)',B:'Taro Yamane (Đã biết tổng thể)',C:'Cochran (Chưa biết tổng thể)'};
+  h+='<h3 style="font-size:.9rem;font-weight:800;color:var(--primary);margin-bottom:12px">'+titles[m]+'</h3>';
+  if(m==='A'){
+    h+='<div class="fr"><div class="fg"><label>Số biến quan sát (câu hỏi) *</label><input type="number" id="ci-obs" min="1" placeholder="VD: 25"></div><div class="fg"><label>Số biến độc lập *</label><input type="number" id="ci-indep" min="1" placeholder="VD: 5"></div></div>';
+  }else if(m==='B'){
+    h+='<div class="fr"><div class="fg"><label>Tổng thể dân số (N) *</label><input type="number" id="ci-pop" min="1" placeholder="VD: 5000"></div><div class="fg"><label>Sai số (e, %) *</label><input type="number" id="ci-e" value="5" min="0.1" step="0.1"></div></div>';
+  }else{
+    h+='<div class="fr"><div class="fg"><label>Mức tin cậy Z *</label><select id="ci-z"><option value="1.96">95% (Z=1.96)</option><option value="2.58">99% (Z=2.58)</option><option value="1.645">90% (Z=1.645)</option></select></div><div class="fg"><label>Tỷ lệ p *</label><input type="number" id="ci-p" value="0.5" min="0.01" max="0.99" step="0.01"></div></div>';
+    h+='<div class="fg"><label>Sai số (e, %) *</label><input type="number" id="ci-e" value="5" min="0.1" step="0.1"></div>';
+  }
+  h+='<hr style="border:none;border-top:1px solid var(--border);margin:12px 0">';
+  h+='<div class="fg"><label>Dự phòng phiếu hỏng (%)</label><input type="number" id="ci-reserve" value="10" min="0" max="50"></div>';
+  h+='<div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-ghost" onclick="cmScreen1()"><span class="material-symbols-outlined" style="font-size:16px">arrow_back</span>Quay lại</button><button class="btn btn-primary" onclick="cmCalc()"><span class="material-symbols-outlined" style="font-size:16px">calculate</span>Tính Toán</button></div>';
+  h+='</div>';
+  document.getElementById('cmScreen').innerHTML=h;
+}
+
+function cmGetV(id){var el=document.getElementById(id);if(!el)return null;var v=parseFloat(el.value);if(isNaN(v)||v<=0){el.style.borderColor='var(--red)';el.style.background='#FEF2F2';return null;}el.style.borderColor='';el.style.background='';return v;}
+
+function cmCalc(){
+  var n=0,formula='',detail='';
+  if(_cmMethod==='A'){
+    var obs=cmGetV('ci-obs'),indep=cmGetV('ci-indep');if(!obs||!indep)return;
+    var n1=Math.max(obs*5,100),n2=50+8*indep;n=Math.max(n1,n2);
+    formula='n₁ = max('+obs+'×5, 100) = '+n1+'\nn₂ = 50 + 8×'+indep+' = '+n2+'\nn = max(n₁, n₂) = '+n;
+    detail='Hair et al. (2014) & Tabachnick';
+  }else if(_cmMethod==='B'){
+    var pop=cmGetV('ci-pop'),e=cmGetV('ci-e');if(!pop||!e)return;
+    var ed=e/100;n=Math.ceil(pop/(1+pop*ed*ed));
+    formula='n = '+pop+' / (1+'+pop+'×'+ed+'²) = '+n;detail='Taro Yamane (1967)';
+  }else{
+    var z=parseFloat(document.getElementById('ci-z').value),p=cmGetV('ci-p'),e=cmGetV('ci-e');if(!p||!e)return;
+    var ed=e/100;n=Math.ceil(z*z*p*(1-p)/(ed*ed));
+    formula='n = '+z+'²×'+p+'×'+(1-p)+' / '+ed+'² = '+n;detail='Cochran (1977)';
+  }
+  var reserve=parseFloat(document.getElementById('ci-reserve').value)||10;
+  var nReal=Math.ceil(n/(1-reserve/100));
+  cmSetStep(3);
+  var h='<div class="cm-card"><div class="cm-result">';
+  h+='<div class="cm-rl">Cỡ mẫu lý thuyết tối thiểu</div><div class="cm-rs">'+n+' <span style="font-size:.85rem;color:var(--text3)">mẫu</span></div>';
+  h+='<div style="width:50px;height:3px;background:linear-gradient(90deg,var(--primary),#F97316);border-radius:2px;margin:12px auto"></div>';
+  h+='<div class="cm-rl" style="color:var(--primary);text-transform:uppercase;font-weight:700;letter-spacing:.04em">Số phiếu thực tế cần phát</div>';
+  h+='<div class="cm-rn">'+nReal+'</div>';
+  h+='<div style="font-size:.82rem;color:var(--text2)">phiếu khảo sát (cộng '+reserve+'% dự phòng)</div>';
+  h+='</div>';
+  h+='<div class="cm-formula"><h4>📝 Công thức</h4><pre style="font-size:.75rem;white-space:pre-wrap;margin-bottom:6px;font-family:monospace">'+formula+'</pre><p>'+detail+'. <code>N thực tế</code> = '+n+' / '+(1-reserve/100).toFixed(2)+' = <strong>'+nReal+'</strong></p></div>';
+  h+='<div style="text-align:center;margin-top:14px"><button class="btn btn-primary" onclick="cmScreen1()"><span class="material-symbols-outlined" style="font-size:16px">refresh</span>Tính lại</button></div>';
+  h+='</div>';
+  document.getElementById('cmScreen').innerHTML=h;
 }
 
 async function loadToolSettings(){
