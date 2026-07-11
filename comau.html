@@ -85,6 +85,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 @media(max-width:500px){.row2{grid-template-columns:1fr}.r-main{font-size:2.5rem}.card{padding:20px}}
 </style>
 </head>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="fb-init.js"></script>
 <body>
 
 <div class="calc-wrap">
@@ -232,7 +235,28 @@ function calculate(){
   document.getElementById('screenContainer').innerHTML=h;
 }
 
+// Load custom settings from Firebase
+var _toolCfg={};
+async function loadToolCfg(){
+  try{var db=initFB();var snap=await db.collection('config').doc('tool_calculator').get();
+  if(snap.exists)_toolCfg=snap.data();}catch(e){}
+  // Apply settings
+  if(_toolCfg.title)document.querySelector('.calc-header h1').textContent='📐 '+_toolCfg.title;
+  if(_toolCfg.desc)document.querySelector('.calc-header p').textContent=_toolCfg.desc;
+}
+loadToolCfg();
 showScreen1();
+
+// Override pickMethod to use custom names
+var _origPickMethod=pickMethod;
+pickMethod=function(m){
+  _origPickMethod(m);
+  // Apply custom defaults
+  if(_toolCfg.defaultE){var eEl=document.getElementById('inp-e');if(eEl)eEl.value=_toolCfg.defaultE;}
+  if(_toolCfg.defaultReserve){var rEl=document.getElementById('inp-reserve');if(rEl)rEl.value=_toolCfg.defaultReserve;}
+  if(_toolCfg.defaultP){var pEl=document.getElementById('inp-p');if(pEl)pEl.value=_toolCfg.defaultP;}
+  if(_toolCfg.defaultZ){var zEl=document.getElementById('inp-z');if(zEl)zEl.value=_toolCfg.defaultZ;}
+};
 </script>
 </body>
 </html>
