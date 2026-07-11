@@ -361,6 +361,7 @@ function renderApp(){
   else if(_activeTab==='menus')tc.innerHTML=renderMenusTab();
   else if(_activeTab==='settings'){if(_currentRole!=='admin'){goTab('dashboard');return;}tc.innerHTML=renderSettingsTab();}
   else if(_activeTab==='users'){if(_currentRole!=='admin'){goTab('dashboard');return;}loadUsersAndRender();}
+  else if(_activeTab==='tools'){tc.innerHTML=renderToolsTab();}
   else if(_activeTab==='journals'){jLoad().then(function(){tc.innerHTML=renderJournalTab();jShowView('list');});}
   else if(_activeTab==='messages'){tc.innerHTML=renderMessagesTab();}
   else if(_activeTab.startsWith('page:')){tc.innerHTML=renderPageTab(_activeTab.split(':')[1]);initPageEditor();}
@@ -386,6 +387,7 @@ function renderSidebar(){
   });
   html+='<div class="sb-section">Quản lý</div>';
   html+='<button class="sb-item'+(_activeTab==='journals'?' active':'')+'" onclick="goTab(\'journals\',this)"><span class="material-symbols-outlined icon">library_books</span>Tạp chí KH</button>';
+  html+='<button class="sb-item'+(_activeTab==='tools'?' active':'')+'" onclick="goTab(\'tools\',this)"><span class="material-symbols-outlined icon">calculate</span>Công cụ KH</button>';
   html+='<button class="sb-item'+(_activeTab==='messages'?' active':'')+'" onclick="goTab(\'messages\',this)"><span class="material-symbols-outlined icon">inbox</span>Tin nhắn <span id="msgBadge" style="margin-left:auto;background:var(--red);color:#fff;font-size:.6rem;padding:2px 6px;border-radius:999px;display:'+((_msgCount>0)?'inline':'none')+'">'+_msgCount+'</span></button>';
   if(_currentRole==='admin'){
     html+='<button class="sb-item'+(_activeTab==='users'?' active':'')+'" onclick="goTab(\'users\',this)"><span class="material-symbols-outlined icon">group</span>Tài khoản</button>';
@@ -769,6 +771,77 @@ async function saveGHSettings(){
   AUTH={user:user,repo:repo,token:token};
   localStorage.setItem('pa',JSON.stringify(AUTH));
   try{var db=initFB();await db.collection('config').doc('github').set(AUTH);showAlert('Đã lưu GitHub token!','success');}catch(e){showAlert('Lỗi: '+e.message,'error');}
+}
+
+// ══════════════════════════════════════════════
+// TOOLS MANAGEMENT
+// ══════════════════════════════════════════════
+function renderToolsTab(){
+  var html='<div class="page-header"><h1>Công Cụ Khoa Học</h1><p>Quản lý các công cụ hỗ trợ nghiên cứu</p></div>';
+
+  // Tool cards
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">';
+
+  // Calculator card
+  html+='<div class="card" style="cursor:pointer" onclick="window.open(\'../comau.html\',\'_blank\')">';
+  html+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><div style="width:48px;height:48px;border-radius:14px;background:var(--primary-lt);display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="color:var(--primary);font-size:24px">calculate</span></div><div><div class="card-title" style="margin-bottom:0">Tính Cỡ Mẫu</div><div class="card-sub">Hỗ trợ tính toán mẫu nghiên cứu</div></div></div>';
+  html+='<p style="font-size:.78rem;color:var(--text2);margin-bottom:8px">3 phương pháp: SPSS (Hair), Taro Yamane, Cochran</p>';
+  html+='<span style="font-size:.72rem;color:var(--primary);font-weight:700">Mở công cụ →</span>';
+  html+='</div>';
+
+  // Tracuu card
+  html+='<div class="card" style="cursor:pointer" onclick="window.open(\'../tracuu.html\',\'_blank\')">';
+  html+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><div style="width:48px;height:48px;border-radius:14px;background:var(--secondary-lt);display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="color:var(--secondary);font-size:24px">library_books</span></div><div><div class="card-title" style="margin-bottom:0">Tra Cứu Tạp Chí</div><div class="card-sub">HĐGSNN 2025</div></div></div>';
+  html+='<p style="font-size:.78rem;color:var(--text2);margin-bottom:8px">Tra cứu điểm, ISSN, ngành của tạp chí khoa học</p>';
+  html+='<span style="font-size:.72rem;color:var(--primary);font-weight:700">Mở công cụ →</span>';
+  html+='</div>';
+  html+='</div>';
+
+  // Calculator settings
+  html+='<div class="card"><div class="card-title"><span class="material-symbols-outlined" style="font-size:18px;color:var(--primary)">tune</span> Cài đặt Tính Cỡ Mẫu</div>';
+  html+='<p style="font-size:.78rem;color:var(--text2);margin-bottom:12px">Tuỳ chỉnh tiêu đề, mô tả, và giá trị mặc định của công cụ tính cỡ mẫu.</p>';
+  html+='<div class="fr"><div class="fg"><label>Tiêu đề</label><input type="text" id="tc-title" placeholder="Tính Cỡ Mẫu Nghiên Cứu"></div><div class="fg"><label>Mô tả</label><input type="text" id="tc-desc" placeholder="Công cụ hỗ trợ..."></div></div>';
+  html+='<div class="section-title" style="margin-top:10px">Giá trị mặc định</div>';
+  html+='<div class="fr"><div class="fg"><label>Sai số mặc định (%)</label><input type="number" id="tc-e" placeholder="5"></div><div class="fg"><label>Dự phòng mặc định (%)</label><input type="number" id="tc-reserve" placeholder="10"></div></div>';
+  html+='<div class="fr"><div class="fg"><label>Tỷ lệ p mặc định</label><input type="number" id="tc-p" step="0.01" placeholder="0.5"></div><div class="fg"><label>Mức tin cậy mặc định</label><select id="tc-z"><option value="1.96">95% (Z=1.96)</option><option value="2.58">99% (Z=2.58)</option></select></div></div>';
+  html+='<div class="section-title" style="margin-top:10px">Phương pháp (A) — SPSS</div>';
+  html+='<div class="fr"><div class="fg"><label>Tên phương pháp A</label><input type="text" id="tc-a-name" placeholder="Phân tích SPSS — EFA & Hồi quy"></div><div class="fg"><label>Mô tả A</label><input type="text" id="tc-a-desc" placeholder="Theo Hoàng Trọng & Hair"></div></div>';
+  html+='<div class="section-title" style="margin-top:10px">Phương pháp (B) — Yamane</div>';
+  html+='<div class="fr"><div class="fg"><label>Tên phương pháp B</label><input type="text" id="tc-b-name" placeholder="Khảo sát cộng đồng — Đã biết tổng thể"></div><div class="fg"><label>Mô tả B</label><input type="text" id="tc-b-desc" placeholder="Công thức Taro Yamane"></div></div>';
+  html+='<div class="section-title" style="margin-top:10px">Phương pháp (C) — Cochran</div>';
+  html+='<div class="fr"><div class="fg"><label>Tên phương pháp C</label><input type="text" id="tc-c-name" placeholder="Khảo sát cộng đồng — Chưa biết tổng thể"></div><div class="fg"><label>Mô tả C</label><input type="text" id="tc-c-desc" placeholder="Công thức Cochran"></div></div>';
+  html+='<button class="btn btn-primary" onclick="saveToolSettings()" style="margin-top:10px"><span class="material-symbols-outlined" style="font-size:14px">save</span>Lưu cài đặt</button>';
+  html+='</div>';
+
+  // Load settings after render
+  setTimeout(loadToolSettings,50);
+  return html;
+}
+
+async function loadToolSettings(){
+  try{
+    var db=initFB();var snap=await db.collection('config').doc('tool_calculator').get();
+    if(!snap.exists)return;var d=snap.data();
+    var fields={title:'tc-title',desc:'tc-desc',defaultE:'tc-e',defaultReserve:'tc-reserve',defaultP:'tc-p',defaultZ:'tc-z',
+      methodAName:'tc-a-name',methodADesc:'tc-a-desc',methodBName:'tc-b-name',methodBDesc:'tc-b-desc',methodCName:'tc-c-name',methodCDesc:'tc-c-desc'};
+    Object.keys(fields).forEach(function(k){var el=document.getElementById(fields[k]);if(el&&d[k])el.value=d[k];});
+  }catch(e){}
+}
+
+async function saveToolSettings(){
+  var data={
+    title:v('tc-title'),desc:v('tc-desc'),
+    defaultE:v('tc-e'),defaultReserve:v('tc-reserve'),defaultP:v('tc-p'),defaultZ:v('tc-z'),
+    methodAName:v('tc-a-name'),methodADesc:v('tc-a-desc'),
+    methodBName:v('tc-b-name'),methodBDesc:v('tc-b-desc'),
+    methodCName:v('tc-c-name'),methodCDesc:v('tc-c-desc')
+  };
+  // Remove empty values
+  Object.keys(data).forEach(function(k){if(!data[k])delete data[k];});
+  try{
+    await initFB().collection('config').doc('tool_calculator').set(data,{merge:true});
+    showAlert('Đã lưu cài đặt công cụ!','success');
+  }catch(e){showAlert('Lỗi: '+e.message,'error');}
 }
 
 // ══════════════════════════════════════════════
