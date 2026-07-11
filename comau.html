@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tính Cỡ Mẫu Nghiên Cứu</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#F5F3FF;--white:#fff;--purple:#7C3AED;--purple-lt:#EDE9FE;--purple-dim:#A78BFA;--purple-dark:#5B21B6;--orange:#F97316;--orange-lt:#FFF7ED;--green:#059669;--green-lt:#ECFDF5;--red:#EF4444;--red-lt:#FEF2F2;--text:#1E1E2E;--text2:#4B5563;--text3:#9CA3AF;--border:#E5E7EB;--shadow:0 4px 20px rgba(124,58,237,.08)}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400}
+
+/* Container */
+.calc-wrap{width:100%;max-width:680px}
+.calc-header{text-align:center;margin-bottom:24px}
+.calc-header h1{font-size:1.6rem;font-weight:900;color:var(--purple-dark);margin-bottom:4px}
+.calc-header p{font-size:.85rem;color:var(--text2)}
+
+/* Steps indicator */
+.steps{display:flex;justify-content:center;gap:8px;margin-bottom:24px}
+.step{display:flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;color:var(--text3)}
+.step .num{width:26px;height:26px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:.7rem;color:var(--text3);transition:all .2s}
+.step.active .num{background:var(--purple);color:#fff}
+.step.done .num{background:var(--green);color:#fff}
+.step.active{color:var(--purple)}
+.step.done{color:var(--green)}
+.step-line{width:32px;height:2px;background:var(--border);align-self:center}
+
+/* Card */
+.card{background:var(--white);border-radius:20px;padding:28px;border:1.5px solid var(--border);box-shadow:var(--shadow);animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* Screen 1: Method cards */
+.method-grid{display:flex;flex-direction:column;gap:10px}
+.method-card{display:flex;align-items:center;gap:16px;padding:18px 20px;border:1.5px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;background:var(--white)}
+.method-card:hover{border-color:var(--purple-dim);background:var(--purple-lt);transform:translateY(-2px);box-shadow:0 6px 20px rgba(124,58,237,.1)}
+.method-card .m-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px}
+.method-card:nth-child(1) .m-icon{background:var(--purple-lt);color:var(--purple)}
+.method-card:nth-child(2) .m-icon{background:var(--orange-lt);color:var(--orange)}
+.method-card:nth-child(3) .m-icon{background:var(--green-lt);color:var(--green)}
+.method-card .m-info{flex:1}
+.method-card .m-name{font-size:.92rem;font-weight:800;color:var(--text);margin-bottom:2px}
+.method-card .m-sub{font-size:.72rem;color:var(--text2)}
+.method-card .m-arrow{color:var(--text3);transition:transform .2s}
+.method-card:hover .m-arrow{transform:translateX(4px);color:var(--purple)}
+
+/* Screen 2: Input form */
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
+.fg input,.fg select{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.88rem;color:var(--text);outline:none;background:var(--bg);transition:border-color .15s}
+.fg input:focus,.fg select:focus{border-color:var(--purple)}
+.fg input.err{border-color:var(--red);background:var(--red-lt)}
+.fg .hint{font-size:.68rem;color:var(--text3);margin-top:3px}
+.fg .err-msg{font-size:.68rem;color:var(--red);margin-top:3px;display:none}
+.fg input.err ~ .err-msg{display:block}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.btn-row{display:flex;gap:8px;margin-top:16px}
+.btn{padding:11px 24px;border-radius:12px;font-size:.85rem;font-weight:700;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.btn:hover{opacity:.9}
+.btn-purple{background:var(--purple);color:#fff;box-shadow:0 4px 14px rgba(124,58,237,.25)}
+.btn-purple:hover{background:var(--purple-dark)}
+.btn-ghost{background:var(--white);color:var(--text2);border:1.5px solid var(--border)}
+.btn-ghost:hover{border-color:var(--purple);color:var(--purple)}
+
+/* Screen 3: Results */
+.result-box{text-align:center;padding:20px 0}
+.r-label{font-size:.78rem;color:var(--text2);font-weight:600;margin-bottom:4px}
+.r-small{font-size:2rem;font-weight:900;color:var(--text);margin-bottom:16px}
+.r-divider{width:60px;height:3px;background:linear-gradient(90deg,var(--purple),var(--orange));border-radius:2px;margin:0 auto 16px}
+.r-main-label{font-size:.85rem;color:var(--purple);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+.r-main{font-size:3.5rem;font-weight:900;color:var(--purple);line-height:1;margin-bottom:6px}
+.r-unit{font-size:.88rem;color:var(--text2);font-weight:600}
+.formula-box{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:14px 18px;margin-top:20px;text-align:left}
+.formula-box h4{font-size:.75rem;font-weight:700;color:var(--purple);text-transform:uppercase;margin-bottom:6px}
+.formula-box p{font-size:.78rem;color:var(--text2);line-height:1.6}
+.formula-box code{background:var(--purple-lt);color:var(--purple-dark);padding:1px 6px;border-radius:4px;font-size:.75rem;font-weight:700}
+
+/* Footer */
+.calc-footer{text-align:center;margin-top:20px;font-size:.72rem;color:var(--text3);line-height:1.5}
+.calc-footer a{color:var(--purple);font-weight:600;text-decoration:none}
+
+@media(max-width:500px){.row2{grid-template-columns:1fr}.r-main{font-size:2.5rem}.card{padding:20px}}
+</style>
+</head>
+<body>
+
+<div class="calc-wrap">
+  <div class="calc-header">
+    <h1>📐 Tính Cỡ Mẫu Nghiên Cứu</h1>
+    <p>Công cụ hỗ trợ tính toán cỡ mẫu cho nghiên cứu định lượng</p>
+  </div>
+
+  <div class="steps" id="stepsBar">
+    <div class="step active" id="s1"><span class="num">1</span>Phương pháp</div>
+    <div class="step-line"></div>
+    <div class="step" id="s2"><span class="num">2</span>Nhập liệu</div>
+    <div class="step-line"></div>
+    <div class="step" id="s3"><span class="num">3</span>Kết quả</div>
+  </div>
+
+  <div id="screenContainer"></div>
+
+  <div class="calc-footer">
+    Hệ thống hỗ trợ tính toán phương pháp nghiên cứu định lượng<br>
+    <a href="index.html">← Về trang chủ</a> · <a href="tracuu.html">Tra cứu tạp chí</a>
+  </div>
+</div>
+
+<script>
+var _method = '';
+
+function setStep(n){
+  ['s1','s2','s3'].forEach(function(id,i){
+    var el=document.getElementById(id);
+    el.className='step';
+    if(i+1<n)el.className='step done';
+    else if(i+1===n)el.className='step active';
+  });
+}
+
+function showScreen1(){
+  _method='';setStep(1);
+  document.getElementById('screenContainer').innerHTML=
+  '<div class="card"><h3 style="font-size:1rem;font-weight:800;margin-bottom:14px;color:var(--text)">Bạn muốn tính cỡ mẫu theo phương pháp nào?</h3>'
+  +'<div class="method-grid">'
+  +'<div class="method-card" onclick="pickMethod(\'A\')">'
+    +'<div class="m-icon"><span class="material-symbols-outlined">analytics</span></div>'
+    +'<div class="m-info"><div class="m-name">(A) Phân tích SPSS — EFA & Hồi quy</div><div class="m-sub">Theo Hoàng Trọng & Hair · Dùng cho khảo sát có thang đo Likert</div></div>'
+    +'<span class="material-symbols-outlined m-arrow">arrow_forward</span>'
+  +'</div>'
+  +'<div class="method-card" onclick="pickMethod(\'B\')">'
+    +'<div class="m-icon"><span class="material-symbols-outlined">groups</span></div>'
+    +'<div class="m-info"><div class="m-name">(B) Khảo sát cộng đồng — Đã biết tổng thể</div><div class="m-sub">Công thức Taro Yamane · Biết trước dân số / quy mô tổng thể</div></div>'
+    +'<span class="material-symbols-outlined m-arrow">arrow_forward</span>'
+  +'</div>'
+  +'<div class="method-card" onclick="pickMethod(\'C\')">'
+    +'<div class="m-icon"><span class="material-symbols-outlined">calculate</span></div>'
+    +'<div class="m-info"><div class="m-name">(C) Khảo sát cộng đồng — Chưa biết tổng thể</div><div class="m-sub">Công thức Cochran · Không biết trước quy mô tổng thể</div></div>'
+    +'<span class="material-symbols-outlined m-arrow">arrow_forward</span>'
+  +'</div>'
+  +'</div></div>';
+}
+
+function pickMethod(m){
+  _method=m;setStep(2);
+  var h='<div class="card">';
+  var titles={A:'Phân tích SPSS (EFA & Hồi quy)',B:'Taro Yamane (Đã biết tổng thể)',C:'Cochran (Chưa biết tổng thể)'};
+  h+='<h3 style="font-size:.95rem;font-weight:800;margin-bottom:4px;color:var(--purple)"><span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle">edit_note</span> '+titles[m]+'</h3>';
+  h+='<p style="font-size:.75rem;color:var(--text3);margin-bottom:16px">Nhập các thông số để tính cỡ mẫu.</p>';
+
+  if(m==='A'){
+    h+='<div class="row2"><div class="fg"><label>Số lượng biến quan sát (câu hỏi) *</label><input type="number" id="inp-obs" min="1" placeholder="VD: 25"><div class="hint">Tổng số câu hỏi/item trong bảng khảo sát</div><div class="err-msg">Vui lòng nhập số > 0</div></div>';
+    h+='<div class="fg"><label>Số lượng biến độc lập *</label><input type="number" id="inp-indep" min="1" placeholder="VD: 5"><div class="hint">Số biến độc lập trong mô hình hồi quy</div><div class="err-msg">Vui lòng nhập số > 0</div></div></div>';
+  }else if(m==='B'){
+    h+='<div class="row2"><div class="fg"><label>Quy mô tổng thể dân số (N) *</label><input type="number" id="inp-pop" min="1" placeholder="VD: 5000"><div class="hint">Tổng số người trong dân số nghiên cứu</div><div class="err-msg">Vui lòng nhập số > 0</div></div>';
+    h+='<div class="fg"><label>Sai số cho phép (e, %) *</label><input type="number" id="inp-e" min="0.1" max="50" step="0.1" value="5" placeholder="5"><div class="hint">Thường dùng 5% hoặc 3%</div><div class="err-msg">Nhập từ 0.1 đến 50</div></div></div>';
+  }else{
+    h+='<div class="row2"><div class="fg"><label>Mức độ tin cậy (Z) *</label><select id="inp-z"><option value="1.96">95% (Z = 1.96)</option><option value="2.58">99% (Z = 2.58)</option><option value="1.645">90% (Z = 1.645)</option></select><div class="hint">Độ tin cậy của kết quả nghiên cứu</div></div>';
+    h+='<div class="fg"><label>Tỷ lệ ước tính (p) *</label><input type="number" id="inp-p" min="0.01" max="0.99" step="0.01" value="0.5" placeholder="0.5"><div class="hint">Dùng 0.5 nếu chưa biết tỷ lệ</div><div class="err-msg">Nhập từ 0.01 đến 0.99</div></div></div>';
+    h+='<div class="fg"><label>Sai số cho phép (e, %) *</label><input type="number" id="inp-e" min="0.1" max="50" step="0.1" value="5" placeholder="5"><div class="hint">Thường dùng 5%</div><div class="err-msg">Nhập từ 0.1 đến 50</div></div>';
+  }
+
+  h+='<div class="divider"></div>';
+  h+='<div class="fg"><label>Tỷ lệ dự phòng phiếu hỏng (%)</label><input type="number" id="inp-reserve" min="0" max="50" step="1" value="10" placeholder="10"><div class="hint">Phần trăm phiếu dự kiến không hợp lệ (mặc định 10%)</div></div>';
+
+  h+='<div class="btn-row"><button class="btn btn-ghost" onclick="showScreen1()"><span class="material-symbols-outlined" style="font-size:16px">arrow_back</span>Quay lại</button><button class="btn btn-purple" onclick="calculate()"><span class="material-symbols-outlined" style="font-size:16px">calculate</span>Tính Toán</button></div>';
+  h+='</div>';
+  document.getElementById('screenContainer').innerHTML=h;
+}
+
+function getVal(id){
+  var el=document.getElementById(id);if(!el)return null;
+  var v=parseFloat(el.value);
+  if(isNaN(v)||v<=0){el.classList.add('err');return null;}
+  el.classList.remove('err');return v;
+}
+
+function calculate(){
+  var n=0,formula='',detail='';
+
+  if(_method==='A'){
+    var obs=getVal('inp-obs'),indep=getVal('inp-indep');
+    if(!obs||!indep)return;
+    var n1=Math.max(obs*5,100);
+    var n2=50+8*indep;
+    n=Math.max(n1,n2);
+    formula='n₁ = max(Biến quan sát × 5, 100) = max('+obs+'×5, 100) = '+n1+'\nn₂ = 50 + 8 × Biến độc lập = 50 + 8×'+indep+' = '+n2+'\nn = max(n₁, n₂) = '+n;
+    detail='Theo Hair et al. (2014): EFA cần tối thiểu 5 mẫu/biến quan sát (min 100). Theo Tabachnick & Fidell: Hồi quy cần n ≥ 50 + 8m (m = số biến độc lập).';
+  }else if(_method==='B'){
+    var pop=getVal('inp-pop'),e=getVal('inp-e');
+    if(!pop||!e)return;
+    var eDecimal=e/100;
+    n=pop/(1+pop*eDecimal*eDecimal);
+    formula='n = N / (1 + N × e²)\nn = '+pop+' / (1 + '+pop+' × '+eDecimal+'²)\nn = '+pop+' / (1 + '+pop+' × '+(eDecimal*eDecimal).toFixed(6)+')\nn = '+(Math.ceil(n));
+    detail='Công thức Taro Yamane (1967). N = '+pop+', sai số e = '+e+'%.';
+    n=Math.ceil(n);
+  }else{
+    var z=parseFloat(document.getElementById('inp-z').value);
+    var p=getVal('inp-p'),e=getVal('inp-e');
+    if(!p||!e)return;
+    var eDecimal=e/100;
+    n=(z*z*p*(1-p))/(eDecimal*eDecimal);
+    formula='n = Z² × p × (1-p) / e²\nn = '+z+'² × '+p+' × '+(1-p)+' / '+eDecimal+'²\nn = '+(z*z).toFixed(4)+' × '+(p*(1-p)).toFixed(4)+' / '+(eDecimal*eDecimal).toFixed(6)+'\nn = '+(Math.ceil(n));
+    detail='Công thức Cochran (1977). Z = '+z+' ('+document.getElementById('inp-z').selectedOptions[0].text+'), p = '+p+', e = '+e+'%.';
+    n=Math.ceil(n);
+  }
+
+  var reserve=parseFloat(document.getElementById('inp-reserve').value)||10;
+  var nReal=Math.ceil(n/(1-reserve/100));
+
+  setStep(3);
+  var h='<div class="card"><div class="result-box">';
+  h+='<div class="r-label">Cỡ mẫu lý thuyết tối thiểu</div>';
+  h+='<div class="r-small">'+n+' <span style="font-size:.88rem;color:var(--text3)">mẫu</span></div>';
+  h+='<div class="r-divider"></div>';
+  h+='<div class="r-main-label">Số phiếu thực tế cần phát ra</div>';
+  h+='<div class="r-main">'+nReal+'</div>';
+  h+='<div class="r-unit">phiếu khảo sát (đã cộng '+reserve+'% dự phòng)</div>';
+  h+='</div>';
+
+  h+='<div class="formula-box"><h4>📝 Công thức áp dụng</h4>';
+  h+='<pre style="font-size:.78rem;color:var(--text);white-space:pre-wrap;margin-bottom:8px;font-family:\'Fira Code\',monospace">'+formula+'</pre>';
+  h+='<p>'+detail+'</p>';
+  h+='<p style="margin-top:6px"><code>N thực tế</code> = <code>n</code> / (1 − '+reserve+'%) = '+n+' / '+(1-reserve/100).toFixed(2)+' = <strong>'+nReal+'</strong> phiếu</p>';
+  h+='</div>';
+
+  h+='<div class="btn-row" style="justify-content:center;margin-top:16px"><button class="btn btn-purple" onclick="showScreen1()"><span class="material-symbols-outlined" style="font-size:16px">refresh</span>Tính lại từ đầu</button></div>';
+  h+='</div>';
+  document.getElementById('screenContainer').innerHTML=h;
+}
+
+showScreen1();
+</script>
+</body>
+</html>
