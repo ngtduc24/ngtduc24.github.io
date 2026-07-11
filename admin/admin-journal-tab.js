@@ -95,7 +95,7 @@ function jVAdd(){
 async function jAddM(){
   var n=v('ja-n'),f=document.getElementById('ja-f').value,s=v('ja-s');
   if(!n||!f||!s){showAlert('Nhập tên, ngành và điểm!','error');return;}
-  var j={name:n,issn:v('ja-i'),type:document.getElementById('ja-t').value,pub:v('ja-p'),field:f,score:s,importedAt:new Date().toISOString(),image:(document.getElementById('ja-img')||{}).value||'',foundedYear:(document.getElementById('ja-yr')||{}).value||'',description:(document.getElementById('ja-desc')||{}).value||''};
+  var j={name:n,issn:v('ja-i'),type:document.getElementById('ja-t').value,pub:v('ja-p'),field:f,score:s,importedAt:new Date().toISOString(),image:document.getElementById('ja-img').value||'',foundedYear:(document.getElementById('ja-yr')||{}).value||'',description:(document.getElementById('ja-desc')||{}).value||''};
   if(_jList.find(function(x){return jKey(x)===jKey(j);})){showAlert('Trùng! "'+n+'" đã có trong ngành này.','error');return;}
   var ref=await initFB().collection('journals').add(j);j._id=ref.id;_jList.push(j);
   await jSH('add',[j]);
@@ -158,7 +158,7 @@ function jEditOne(id){
   html+='<div class="fr"><div class="fg"><label>Tên tạp chí *</label><input type="text" id="je-name" value="'+jE(j.name)+'"></div><div class="fg"><label>ISSN</label><input type="text" id="je-issn" value="'+jE(j.issn)+'"></div></div>';
   html+='<div class="fr"><div class="fg"><label>Loại</label><select id="je-type"><option'+(j.type==='Tạp chí'?' selected':'')+'>Tạp chí</option><option'+(j.type==='Kỷ yếu'?' selected':'')+'>Kỷ yếu</option></select></div><div class="fg"><label>Ngành *</label><select id="je-field">'+J_FIELDS.map(function(f){return '<option'+(f===j.field?' selected':'')+'>'+f+'</option>';}).join('')+'</select></div></div>';
   html+='<div class="fr"><div class="fg"><label>Cơ quan xuất bản</label><input type="text" id="je-pub" value="'+jE(j.pub)+'"></div><div class="fg"><label>Điểm *</label><input type="text" id="je-score" value="'+jE(j.score)+'"></div></div>';
-  html+='<div class="fr"><div class="fg"><label>Ảnh đại diện (URL)</label><input type="url" id="je-img" value="'+jE(j.image||'')+'" placeholder="https://..."></div><div class="fg"><label>Năm thành lập</label><input type="text" id="je-year" value="'+jE(j.foundedYear||'')+'" placeholder="VD: 1995"></div></div>';
+  html+='<div class="fr"><div class="fg"><label>Ảnh đại diện</label><div style="display:flex;gap:8px;align-items:center">'+(j.image?'<img src="'+jE(j.image)+'" style="height:48px;width:48px;border-radius:8px;object-fit:cover;border:1px solid var(--border)">':'')+'<div style="position:relative;flex:1"><input type="file" id="je-imgfile" accept="image/*" onchange="jUpImg(this,\'je-img\')" style="font-size:.75rem"><input type="hidden" id="je-img" value="'+jE(j.image||'')+'"><div id="je-img-spin" style="display:none;font-size:.72rem;color:var(--primary)">⏳ Đang tải...</div></div></div></div><div class="fg"><label>Năm thành lập</label><input type="text" id="je-year" value="'+jE(j.foundedYear||'')+'" placeholder="VD: 1995"></div></div>';
   html+='<div class="fg"><label>Mô tả chi tiết</label><textarea id="je-desc" rows="3" style="resize:vertical">'+jE(j.description||'')+'</textarea></div>';
   html+='<div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-primary" onclick="jDoEditOne()"><span class="material-symbols-outlined" style="font-size:14px">save</span>Lưu</button><button class="btn btn-ghost" onclick="document.getElementById(\'jEditForm\').remove()">Hủy</button></div></div>';
   // Remove existing edit form
@@ -370,6 +370,30 @@ async function jDelField(){
   _jList=_jList.filter(function(j){return j.field!==f;});showAlert('Đã xóa '+ids.length+'.','success');
 }
 
+
+// ═══ IMAGE UPLOAD ═══
+async function jUpImg(fileInput, hiddenId){
+  var file=fileInput.files[0];if(!file)return;
+  var spinId=hiddenId+'-spin';
+  var spin=document.getElementById(spinId);if(spin)spin.style.display='block';
+  try{
+    if(typeof uploadImageToGH==='function'){
+      var url=await uploadImageToGH(file);
+      document.getElementById(hiddenId).value=url;
+      if(spin)spin.innerHTML='✅ Đã tải: <img src="'+url+'" style="height:40px;border-radius:6px;vertical-align:middle;margin-left:4px">';
+    }else{
+      // Fallback: convert to base64 data URL (stored in Firestore directly)
+      var reader=new FileReader();
+      reader.onload=function(e){
+        document.getElementById(hiddenId).value=e.target.result;
+        if(spin)spin.innerHTML='✅ Đã tải (base64)';
+      };
+      reader.readAsDataURL(file);
+    }
+  }catch(e){
+    if(spin)spin.innerHTML='❌ Lỗi: '+e.message;
+  }
+}
 // ═══ COLUMN RESIZE ═══
 function jColResize(e){
   e.preventDefault();
@@ -387,8 +411,8 @@ function jColResize(e){
 // ═══ SETTINGS ═══
 function jVSettings(){
   var h='<div class="jcard"><h3><span class="material-symbols-outlined">settings</span>Cài đặt Tạp chí Khoa học</h3>';
-  h+='<div class="fg"><label>Ảnh đại diện mặc định (URL)</label><input type="url" id="js-defimg" placeholder="https://... Ảnh hiển thị khi tạp chí chưa có ảnh riêng"><p style="font-size:.7rem;color:var(--text3);margin-top:3px">Ảnh này sẽ hiện trong trang tra cứu khi tạp chí chưa được upload ảnh riêng.</p></div>';
-  h+='<div id="js-imgpreview" style="margin-bottom:10px"></div>';
+  h+='<div class="fg"><label>Ảnh đại diện mặc định</label><div style="display:flex;gap:10px;align-items:center"><div id="js-imgpreview2" style="width:64px;height:64px;border-radius:10px;border:1.5px dashed var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;background:var(--surface2)"><span class="material-symbols-outlined" style="color:var(--text3)">image</span></div><div style="flex:1"><input type="file" id="js-defimgfile" accept="image/*" onchange="jUpImg(this,\'js-defimg\')" style="font-size:.75rem"><input type="hidden" id="js-defimg" value=""><div id="js-defimg-spin" style="display:none;font-size:.72rem;color:var(--primary)">⏳ Đang tải...</div><p style="font-size:.7rem;color:var(--text3);margin-top:3px">Ảnh mặc định khi tạp chí chưa có ảnh riêng.</p></div></div></div>';
+  
   h+='<button class="btn btn-primary" onclick="jSaveSettings()"><span class="material-symbols-outlined" style="font-size:14px">save</span>Lưu cài đặt</button>';
   h+='</div>';
   // Load current settings
@@ -402,7 +426,9 @@ async function jLoadSettings(){
       var data=snap.data();
       if(data.defaultImage){
         document.getElementById('js-defimg').value=data.defaultImage;
-        document.getElementById('js-imgpreview').innerHTML='<img src="'+data.defaultImage+'" style="height:80px;border-radius:10px;border:1.5px solid var(--border)">';
+        document.getElementById('js-defimg').value=data.defaultImage;
+        var prev=document.getElementById('js-imgpreview2');
+        if(prev)prev.innerHTML='<img src="'+data.defaultImage+'" style="width:100%;height:100%;object-fit:cover">';
       }
     }
   }catch(e){}
