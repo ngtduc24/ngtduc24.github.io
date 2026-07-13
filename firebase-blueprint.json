@@ -1,0 +1,54 @@
+{
+  "version": "1.0",
+  "collections": {
+    "users": {
+      "fields": {
+        "id": "string",
+        "username": "string",
+        "fullName": "string",
+        "email": "string",
+        "role": "string",
+        "permissions": "array",
+        "createdAt": "string",
+        "password": "string"
+      }
+    },
+    "scientific_journals": {
+      "fields": {
+        "id": "string",
+        "name": "string",
+        "issn": "string",
+        "type": "string",
+        "publisher": "string",
+        "field": "string",
+        "score": "number",
+        "establishedDate": "string",
+        "paperCount": "number",
+        "rating": "number",
+        "description": "string",
+        "coverImage": "string",
+        "dateImported": "string"
+      }
+    },
+    "settings": {
+      "fields": {
+        "id": "string",
+        "defaultCoverImage": "string"
+      }
+    },
+    "system_notifications": {
+      "fields": {
+        "id": "string",
+        "title": "string",
+        "description": "string",
+        "timestamp": "string",
+        "type": "string",
+        "targetAudience": "string",
+        "targetUserIds": "array",
+        "senderId": "string",
+        "senderName": "string",
+        "priority": "string"
+      }
+    }
+  }
+}
