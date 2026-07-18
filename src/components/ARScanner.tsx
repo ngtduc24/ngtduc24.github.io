@@ -13,6 +13,31 @@ export default function ARScanner({ target, onClose }: ARScannerProps) {
   const [error, setError] = useState<string | null>(null);
   const [mindUrl, setMindUrl] = useState<string | null>(null);
 
+  // Ép camera + canvas AR phủ full màn hình trên mobile (khắc phục khung hình không đầy)
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.id = 'ar-fullscreen-fix';
+    style.textContent = `
+      html, body { margin: 0 !important; padding: 0 !important; overflow: hidden !important; height: 100%; }
+      a-scene, .a-canvas, a-scene canvas {
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+      }
+      video:not(#ar-video) {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        object-fit: cover !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => { document.getElementById('ar-fullscreen-fix')?.remove(); };
+  }, []);
+
   useEffect(() => {
     let active = true;
 
@@ -145,6 +170,12 @@ export default function ARScanner({ target, onClose }: ARScannerProps) {
 
     containerRef.current.innerHTML = sceneHtml;
 
+    // Buộc A-Frame/MindAR tính lại kích thước sau khi camera khởi động (tránh khung hình bị hụt)
+    const forceResize = () => window.dispatchEvent(new Event('resize'));
+    const t1 = window.setTimeout(forceResize, 300);
+    const t2 = window.setTimeout(forceResize, 1200);
+    window.addEventListener('orientationchange', forceResize);
+
     // Handle video play/pause on target found/lost event
     if (target.content_type === 'video') {
       const targetEntity = containerRef.current.querySelector('[mindar-image-target]');
@@ -161,6 +192,9 @@ export default function ARScanner({ target, onClose }: ARScannerProps) {
     }
 
     return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.removeEventListener('orientationchange', forceResize);
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
       }
