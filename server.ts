@@ -411,6 +411,171 @@ app.post("/api/fcm/send", async (req, res) => {
   }
 });
 
+const getYouTubeId = (url: string): string | null => {
+  if (!url) return null;
+  const trimmed = url.trim();
+
+  // If it is already a 11-char ID
+  if (trimmed.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  // 1. Shorts format: youtube.com/shorts/VIDEO_ID
+  const shortsMatch = trimmed.match(/\/shorts\/([a-zA-Z0-9_-]{11})/i);
+  if (shortsMatch) return shortsMatch[1];
+
+  // 2. Live format: youtube.com/live/VIDEO_ID
+  const liveMatch = trimmed.match(/\/live\/([a-zA-Z0-9_-]{11})/i);
+  if (liveMatch) return liveMatch[1];
+
+  // 3. Embed format: youtube.com/embed/VIDEO_ID
+  const embedMatch = trimmed.match(/\/embed\/([a-zA-Z0-9_-]{11})/i);
+  if (embedMatch) return embedMatch[1];
+
+  // 4. Standard/Mobile format: watch?v=VIDEO_ID or &v=VIDEO_ID
+  const vMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/i);
+  if (vMatch) return vMatch[1];
+
+  // 5. Shortened format: youtu.be/VIDEO_ID
+  const youtuMatch = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/i);
+  if (youtuMatch) return youtuMatch[1];
+
+  // 6. Generic regex backup
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = trimmed.match(regExp);
+  if (match && match[2] && match[2].length === 11) {
+    return match[2];
+  }
+
+  return null;
+};
+
+function parseISO8601Duration(duration: string): string {
+  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) return '10';
+  const hours = parseInt(match[1] || '0', 10);
+  const minutes = parseInt(match[2] || '0', 10);
+  const seconds = parseInt(match[3] || '0', 10);
+  
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function formatSecondsToDuration(totalSeconds: number): string {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+app.get("/api/youtube-duration", async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({ error: "Thiếu URL video YouTube." });
+    }
+
+    const videoId = getYouTubeId(url);
+    if (!videoId) {
+      return res.status(400).json({ error: "URL YouTube không hợp lệ." });
+    }
+
+    const ytUrl = `https://www.youtube.com/watch?v=${videoId}&has_verified=1&bpctr=9999999999`;
+    
+    // We fetch with user-agent, cookies to bypass Google/YouTube consent form, and language to receive standard meta properties
+    const response = await fetch(ytUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+        'Cookie': 'CONSENT=YES+cb.20210328-17-p0.en+FX+917; GPS=1; YSC=1; VISITOR_INFO1_LIVE=1',
+        'Accept-Language': 'en-US,en;q=0.9,vi;q=0.8'
+      }
+    });
+
+    if (!response.ok) {
+      return res.status(500).json({ error: "Không thể lấy thông tin từ YouTube." });
+    }
+
+    const html = await response.text();
+    let durationStr: string | null = null;
+
+    // Pattern 1: Meta itemprop="duration"
+    const metaMatch = html.match(/<meta itemprop="duration" content="([^"]+)">/i);
+    if (metaMatch) {
+      durationStr = parseISO8601Duration(metaMatch[1]);
+    }
+
+    // Pattern 2: Meta property="og:video:duration" or property="video:duration"
+    if (!durationStr) {
+      const ogMatch = html.match(/<meta property="og:video:duration" content="(\d+)">/i) || 
+                      html.match(/<meta property="video:duration" content="(\d+)">/i);
+      if (ogMatch) {
+        const seconds = parseInt(ogMatch[1], 10);
+        durationStr = formatSecondsToDuration(seconds);
+      }
+    }
+
+    // Pattern 3: "lengthText":{"simpleText":"5:39"}
+    if (!durationStr) {
+      const lengthTextMatch = html.match(/"lengthText"\s*:\s*\{\s*"simpleText"\s*:\s*"([^"]+)"\s*\}/i);
+      if (lengthTextMatch) {
+        durationStr = lengthTextMatch[1];
+      }
+    }
+
+    // Pattern 4: "lengthSeconds":"339" or "lengthSeconds":339
+    if (!durationStr) {
+      const lengthSecondsMatch = html.match(/"lengthSeconds"\s*:\s*"(\d+)"/i) || 
+                                 html.match(/"lengthSeconds"\s*:\s*(\d+)/i);
+      if (lengthSecondsMatch) {
+        const seconds = parseInt(lengthSecondsMatch[1], 10);
+        durationStr = formatSecondsToDuration(seconds);
+      }
+    }
+
+    // Pattern 5: "approxDurationMs":"339000" or "approxDurationMs":339000
+    if (!durationStr) {
+      const approxMatch = html.match(/"approxDurationMs"\s*:\s*"(\d+)"/i) || 
+                          html.match(/"approxDurationMs"\s*:\s*(\d+)/i);
+      if (approxMatch) {
+        const ms = parseInt(approxMatch[1], 10);
+        const seconds = Math.floor(ms / 1000);
+        durationStr = formatSecondsToDuration(seconds);
+      }
+    }
+
+    // Pattern 6: ytInitialPlayerResponse JSON Parsing fallback
+    if (!durationStr) {
+      try {
+        const jsonMatch = html.match(/ytInitialPlayerResponse\s*=\s*({.+?});/i);
+        if (jsonMatch) {
+          const json = JSON.parse(jsonMatch[1]);
+          if (json?.videoDetails?.lengthSeconds) {
+            const seconds = parseInt(json.videoDetails.lengthSeconds, 10);
+            durationStr = formatSecondsToDuration(seconds);
+          }
+        }
+      } catch (e) {
+        // ignore parse error
+      }
+    }
+
+    if (durationStr) {
+      return res.json({ duration: durationStr });
+    }
+
+    return res.status(404).json({ error: "Không tìm thấy thời lượng của video. Vui lòng tự nhập." });
+  } catch (error: any) {
+    console.error("Lỗi lấy thời lượng YouTube:", error);
+    return res.status(500).json({ error: "Lỗi hệ thống khi phân tích thời lượng." });
+  }
+});
+
 async function startServer() {
   app.get("/tracuu", (req, res) => {
     res.redirect("/tracuu.html");

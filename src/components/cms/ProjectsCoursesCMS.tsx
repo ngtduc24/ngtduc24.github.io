@@ -66,8 +66,224 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
   const [showCourseSettings, setShowCourseSettings] = useState(false);
   
   // Active course builder states
-  const [activeCourseEditorTab, setActiveCourseEditorTab] = useState<'info' | 'students'>('info');
+  const [activeCourseEditorTab, setActiveCourseEditorTab] = useState<'info' | 'curriculum' | 'students'>('info');
   const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
+  const [fetchingLessons, setFetchingLessons] = useState<Record<string, boolean>>({});
+
+  const getYouTubeId = (url: string): string | null => {
+    if (!url) return null;
+    const trimmed = url.trim();
+
+    if (trimmed.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+      return trimmed;
+    }
+
+    const shortsMatch = trimmed.match(/\/shorts\/([a-zA-Z0-9_-]{11})/i);
+    if (shortsMatch) return shortsMatch[1];
+
+    const liveMatch = trimmed.match(/\/live\/([a-zA-Z0-9_-]{11})/i);
+    if (liveMatch) return liveMatch[1];
+
+    const embedMatch = trimmed.match(/\/embed\/([a-zA-Z0-9_-]{11})/i);
+    if (embedMatch) return embedMatch[1];
+
+    const vMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/i);
+    if (vMatch) return vMatch[1];
+
+    const youtuMatch = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/i);
+    if (youtuMatch) return youtuMatch[1];
+
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = trimmed.match(regExp);
+    if (match && match[2] && match[2].length === 11) {
+      return match[2];
+    }
+
+    return null;
+  };
+
+  const formatSecondsToDuration = (totalSeconds: number): string => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const detectYouTubeDurationClientSide = (videoId: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!(window as any).YT) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+      }
+
+      const tempDivId = `yt-temp-player-${Date.now()}`;
+      const tempDiv = document.createElement('div');
+      tempDiv.id = tempDivId;
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.width = '0px';
+      tempDiv.style.height = '0px';
+      tempDiv.style.opacity = '0';
+      tempDiv.style.pointerEvents = 'none';
+      document.body.appendChild(tempDiv);
+
+      let player: any;
+      let hasResolved = false;
+
+      const timeoutId = setTimeout(() => {
+        if (!hasResolved) {
+          hasResolved = true;
+          cleanup();
+          reject(new Error('Thời gian chờ phản hồi từ YouTube quá hạn.'));
+        }
+      }, 15000);
+
+      const cleanup = () => {
+        try {
+          if (player && typeof player.destroy === 'function') {
+            player.destroy();
+          }
+        } catch (e) {
+          console.error('Error destroying temporary player:', e);
+        }
+        const el = document.getElementById(tempDivId);
+        if (el) el.remove();
+        tempDiv.remove();
+      };
+
+      const tryGetDuration = (tgtPlayer: any) => {
+        if (hasResolved) return;
+        try {
+          const dur = tgtPlayer.getDuration();
+          if (dur && dur > 0) {
+            hasResolved = true;
+            clearTimeout(timeoutId);
+            cleanup();
+            resolve(formatSecondsToDuration(dur));
+          }
+        } catch (e) {
+          console.error('Error getting duration:', e);
+        }
+      };
+
+      const createPlayer = () => {
+        try {
+          player = new (window as any).YT.Player(tempDivId, {
+            height: '0',
+            width: '0',
+            videoId: videoId,
+            playerVars: {
+              autoplay: 1,
+              controls: 0,
+              showinfo: 0,
+              rel: 0,
+              mute: 1,
+              playsinline: 1
+            },
+            events: {
+              onReady: (event: any) => {
+                tryGetDuration(event.target);
+              },
+              onStateChange: (event: any) => {
+                tryGetDuration(event.target);
+                if (event.data === 1 || event.data === (window as any).YT?.PlayerState?.PLAYING) {
+                  tryGetDuration(event.target);
+                }
+              },
+              onError: (event: any) => {
+                if (!hasResolved) {
+                  hasResolved = true;
+                  clearTimeout(timeoutId);
+                  cleanup();
+                  reject(new Error(`YouTube Player Error (Code ${event.data}).`));
+                }
+              }
+            }
+          });
+        } catch (err) {
+          if (!hasResolved) {
+            hasResolved = true;
+            clearTimeout(timeoutId);
+            cleanup();
+            reject(err);
+          }
+        }
+      };
+
+      if ((window as any).YT && (window as any).YT.Player) {
+        createPlayer();
+      } else {
+        const previousReady = (window as any).onYouTubeIframeAPIReady;
+        (window as any).onYouTubeIframeAPIReady = () => {
+          if (typeof previousReady === 'function') {
+            previousReady();
+          }
+          createPlayer();
+        };
+      }
+    });
+  };
+
+  const handleAutoDetectDuration = async (lessonId: string, videoUrl: string, chapterId: string) => {
+    if (!videoUrl) {
+      addNotification('Vui lòng điền URL video trước khi tự động lấy thời lượng.', 'warning');
+      return;
+    }
+    
+    setFetchingLessons(prev => ({ ...prev, [lessonId]: true }));
+
+    const updateLessonDuration = (durStr: string) => {
+      if (!editingCourse) return;
+      const chapters = (editingCourse.chapters || []).map(chap => {
+        if (chap.id === chapterId) {
+          const lessons = (chap.lessons || []).map(l => {
+            if (l.id === lessonId) {
+              return { ...l, duration: durStr };
+            }
+            return l;
+          });
+          return { ...chap, lessons };
+        }
+        return chap;
+      });
+      setEditingCourse({ ...editingCourse, chapters });
+    };
+
+    try {
+      // 1. Try server-side scraper first
+      const res = await fetch(`/api/youtube-duration?url=${encodeURIComponent(videoUrl)}`);
+      const data = await res.json();
+      
+      if (res.ok && data.duration) {
+        updateLessonDuration(data.duration);
+        addNotification(`Đã tự động nhận diện thời lượng (Server): ${data.duration}`, 'success');
+        return;
+      }
+
+      // 2. Fallback to client-side detection via YouTube player API if server-side gets blocked
+      const videoId = getYouTubeId(videoUrl);
+      if (!videoId) {
+        throw new Error('Đường dẫn YouTube không đúng định dạng.');
+      }
+
+      addNotification('Đang tải dữ liệu trực tiếp từ trình phát YouTube...', 'info');
+      const clientDuration = await detectYouTubeDurationClientSide(videoId);
+      
+      updateLessonDuration(clientDuration);
+      addNotification(`Đã tự động nhận diện thời lượng (Client): ${clientDuration}`, 'success');
+
+    } catch (err: any) {
+      console.error('Duration detection failed:', err);
+      addNotification('Không tìm thấy thời lượng của video. Vui lòng tự nhập.', 'warning');
+    } finally {
+      setFetchingLessons(prev => ({ ...prev, [lessonId]: false }));
+    }
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -1235,6 +1451,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
           <div className="flex border-b border-slate-200 px-6 bg-slate-50">
             {[
               { id: 'info', label: 'Thông tin cơ bản', icon: FileText },
+              { id: 'curriculum', label: 'Đề cương & Bài giảng', icon: PlayCircle },
               { id: 'students', label: 'Danh sách học viên', icon: Users },
             ].map(tab => {
               const TabIcon = tab.icon;
@@ -1408,22 +1625,35 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
               </form>
             )}
 
-            {/* SUB-TAB 2: CURRICULUM CHAPTER & LESSONS BUILDER (DISABLED) */}
-            {false && (
+            {/* SUB-TAB 2: CURRICULUM CHAPTER & LESSONS BUILDER */}
+            {activeCourseEditorTab === 'curriculum' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <span className="text-xs font-bold text-slate-600">Sơ đồ giáo trình ({editingCourse.chapters.length} Chương)</span>
+                  <span className="text-xs font-bold text-slate-600">Sơ đồ giáo trình ({(editingCourse.chapters || []).length} Chương)</span>
                   <button
                     type="button"
-                    onClick={() => {}}
-                    className="inline-flex items-center gap-1.5 bg-brand hover:bg-brand-hover text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase transition-all"
+                    onClick={() => {
+                      const currentChapters = editingCourse.chapters || [];
+                      const newChapter: CourseChapter = {
+                        id: `chap_${Date.now()}`,
+                        courseId: editingCourse.id,
+                        title: `Chương ${currentChapters.length + 1}`,
+                        sortOrder: currentChapters.length,
+                        lessons: []
+                      };
+                      setEditingCourse({
+                        ...editingCourse,
+                        chapters: [...currentChapters, newChapter]
+                      });
+                    }}
+                    className="inline-flex items-center gap-1.5 bg-brand hover:bg-brand-hover text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase transition-all cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Thêm Chương mới</span>
                   </button>
                 </div>
 
-                {editingCourse.chapters.length === 0 ? (
+                {(!editingCourse.chapters || editingCourse.chapters.length === 0) ? (
                   <div className="text-center py-12 text-slate-400 text-xs">
                     Giáo trình rỗng. Nhấn "Thêm Chương mới" để bắt đầu xây dựng bài giảng.
                   </div>
@@ -1447,31 +1677,79 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                             <button
                               type="button"
                               disabled={chapIdx === 0}
-                              onClick={() => {}}
-                              className="p-1 bg-white border border-slate-200 rounded hover:text-brand disabled:opacity-40"
+                              onClick={() => {
+                                const currentChapters = [...(editingCourse.chapters || [])];
+                                const temp = currentChapters[chapIdx];
+                                currentChapters[chapIdx] = currentChapters[chapIdx - 1];
+                                currentChapters[chapIdx - 1] = temp;
+                                const updatedChapters = currentChapters.map((chap, idx) => ({ ...chap, sortOrder: idx }));
+                                setEditingCourse({ ...editingCourse, chapters: updatedChapters });
+                              }}
+                              className="p-1 bg-white border border-slate-200 rounded hover:text-brand disabled:opacity-40 cursor-pointer"
+                              title="Di chuyển lên"
                             >
                               <ArrowUp className="w-3.5 h-3.5" />
                             </button>
                             <button
                               type="button"
-                              disabled={chapIdx === editingCourse.chapters.length - 1}
-                              onClick={() => {}}
-                              className="p-1 bg-white border border-slate-200 rounded hover:text-brand disabled:opacity-40"
+                              disabled={chapIdx === (editingCourse.chapters || []).length - 1}
+                              onClick={() => {
+                                const currentChapters = [...(editingCourse.chapters || [])];
+                                const temp = currentChapters[chapIdx];
+                                currentChapters[chapIdx] = currentChapters[chapIdx + 1];
+                                currentChapters[chapIdx + 1] = temp;
+                                const updatedChapters = currentChapters.map((chap, idx) => ({ ...chap, sortOrder: idx }));
+                                setEditingCourse({ ...editingCourse, chapters: updatedChapters });
+                              }}
+                              className="p-1 bg-white border border-slate-200 rounded hover:text-brand disabled:opacity-40 cursor-pointer"
+                              title="Di chuyển xuống"
                             >
                               <ArrowDown className="w-3.5 h-3.5" />
                             </button>
                             <button
                               type="button"
-                              onClick={() => {}}
-                              className="bg-brand/15 hover:bg-brand/20 text-brand-hover px-2.5 py-1 rounded text-[10px] font-black uppercase flex items-center gap-1"
+                              onClick={() => {
+                                const currentChapters = editingCourse.chapters || [];
+                                const updatedChapters = currentChapters.map((chap, idx) => {
+                                  if (idx === chapIdx) {
+                                    const currentLessons = chap.lessons || [];
+                                    const newLesson: CourseLesson = {
+                                      id: `les_${Date.now()}`,
+                                      chapterId: chap.id,
+                                      courseId: editingCourse.id,
+                                      title: `Bài giảng mới`,
+                                      sortOrder: currentLessons.length,
+                                      videoUrl: '',
+                                      textContent: '',
+                                      allowPreview: false,
+                                      isRequired: true
+                                    };
+                                    return {
+                                      ...chap,
+                                      lessons: [...currentLessons, newLesson]
+                                    };
+                                  }
+                                  return chap;
+                                });
+                                setEditingCourse({ ...editingCourse, chapters: updatedChapters });
+                                setExpandedChapterId(chapter.id);
+                              }}
+                              className="bg-brand/15 hover:bg-brand/20 text-brand-hover px-2.5 py-1 rounded text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer"
                             >
                               <Plus className="w-3.5 h-3.5" />
                               <span>Thêm Bài</span>
                             </button>
                             <button
                               type="button"
-                              onClick={() => {}}
-                              className="p-1 text-rose-500 hover:bg-rose-50 rounded"
+                              onClick={() => {
+                                const currentChapters = editingCourse.chapters || [];
+                                const updatedChapters = currentChapters
+                                  .filter((_, idx) => idx !== chapIdx)
+                                  .map((chap, idx) => ({ ...chap, sortOrder: idx }));
+                                setEditingCourse({ ...editingCourse, chapters: updatedChapters });
+                              }}
+                              className="p-1 text-rose-500 hover:bg-rose-50 rounded cursor-pointer"
+                              title="Xóa chương học"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -1487,7 +1765,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                 type="text"
                                 value={chapter.title}
                                 onChange={(e) => {
-                                  const chapters = [...editingCourse.chapters];
+                                  const chapters = [...(editingCourse.chapters || [])];
                                   chapters[chapIdx].title = e.target.value;
                                   setEditingCourse({ ...editingCourse, chapters });
                                 }}
@@ -1500,7 +1778,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                         {/* Lessons inside chapter */}
                         {expandedChapterId === chapter.id && (
                           <div className="p-4 space-y-3 bg-slate-50/20">
-                            {chapter.lessons.length === 0 ? (
+                            {(!chapter.lessons || chapter.lessons.length === 0) ? (
                               <p className="text-center py-4 text-slate-400 text-[11px]">Chưa có bài học trong chương này.</p>
                             ) : (
                               chapter.lessons.map((lesson, lesIdx) => (
@@ -1509,15 +1787,28 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                     <span className="text-[10px] font-bold text-slate-500">Bài {lesIdx + 1}: {lesson.title || 'Mới'}</span>
                                     <button
                                       type="button"
-                                      onClick={() => {}}
-                                      className="text-rose-500 hover:text-rose-700 text-xs flex items-center gap-1"
+                                      onClick={() => {
+                                        const currentChapters = editingCourse.chapters || [];
+                                        const updatedChapters = currentChapters.map(chap => {
+                                          if (chap.id === chapter.id) {
+                                            const currentLessons = chap.lessons || [];
+                                            const updatedLessons = currentLessons
+                                              .filter(l => l.id !== lesson.id)
+                                              .map((l, idx) => ({ ...l, sortOrder: idx }));
+                                            return { ...chap, lessons: updatedLessons };
+                                          }
+                                          return chap;
+                                        });
+                                        setEditingCourse({ ...editingCourse, chapters: updatedChapters });
+                                      }}
+                                      className="text-rose-500 hover:text-rose-700 text-xs flex items-center gap-1 cursor-pointer"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
                                       <span>Xóa Bài</span>
                                     </button>
                                   </div>
 
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div className="space-y-1">
                                       <label className="text-[9px] font-black text-slate-400">Tiêu đề bài học</label>
                                       <input
@@ -1525,9 +1816,9 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                         required
                                         value={lesson.title}
                                         onChange={(e) => {
-                                          const chapters = editingCourse.chapters.map(chap => {
+                                          const chapters = (editingCourse.chapters || []).map(chap => {
                                             if (chap.id === chapter.id) {
-                                              const lessons = chap.lessons.map(l => l.id === lesson.id ? { ...l, title: e.target.value } : l);
+                                              const lessons = (chap.lessons || []).map(l => l.id === lesson.id ? { ...l, title: e.target.value } : l);
                                               return { ...chap, lessons };
                                             }
                                             return chap;
@@ -1545,9 +1836,9 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                       resourceType="video"
                                       folder="portfolio/courses/lessons"
                                       onChange={(url) => {
-                                          const chapters = editingCourse.chapters.map(chap => {
+                                          const chapters = (editingCourse.chapters || []).map(chap => {
                                             if (chap.id === chapter.id) {
-                                              const lessons = chap.lessons.map(l => l.id === lesson.id ? { ...l, videoUrl: url } : l);
+                                              const lessons = (chap.lessons || []).map(l => l.id === lesson.id ? { ...l, videoUrl: url } : l);
                                               return { ...chap, lessons };
                                             }
                                             return chap;
@@ -1555,6 +1846,42 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                           setEditingCourse({ ...editingCourse, chapters });
                                         }}
                                     />
+
+                                    <div className="space-y-1">
+                                      <label className="text-[9px] font-black text-slate-400">Thời lượng bài học</label>
+                                      <div className="relative flex items-center">
+                                        <input
+                                          type="text"
+                                          placeholder="Ví dụ: 10 hoặc 5:39"
+                                          value={lesson.duration || ''}
+                                          onChange={(e) => {
+                                            const chapters = (editingCourse.chapters || []).map(chap => {
+                                              if (chap.id === chapter.id) {
+                                                const lessons = (chap.lessons || []).map(l => l.id === lesson.id ? { ...l, duration: e.target.value } : l);
+                                                return { ...chap, lessons };
+                                              }
+                                              return chap;
+                                            });
+                                            setEditingCourse({ ...editingCourse, chapters });
+                                          }}
+                                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs focus:outline-none pr-24"
+                                        />
+                                        {lesson.videoUrl && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleAutoDetectDuration(lesson.id, lesson.videoUrl || '', chapter.id)}
+                                            disabled={fetchingLessons[lesson.id]}
+                                            className="absolute right-1.5 bg-slate-200 hover:bg-slate-300 disabled:opacity-50 text-[10px] font-bold text-slate-700 px-2 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                                          >
+                                            {fetchingLessons[lesson.id] ? (
+                                              <span className="w-3 h-3 border-2 border-slate-600 border-t-transparent rounded-full animate-spin"></span>
+                                            ) : (
+                                              <span>Tự động lấy</span>
+                                            )}
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
                                   </div>
 
                                   {/* Lesson textual summary */}
@@ -1564,9 +1891,9 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                       rows={2}
                                       value={lesson.textContent}
                                       onChange={(e) => {
-                                        const chapters = editingCourse.chapters.map(chap => {
+                                        const chapters = (editingCourse.chapters || []).map(chap => {
                                           if (chap.id === chapter.id) {
-                                            const lessons = chap.lessons.map(l => l.id === lesson.id ? { ...l, textContent: e.target.value } : l);
+                                            const lessons = (chap.lessons || []).map(l => l.id === lesson.id ? { ...l, textContent: e.target.value } : l);
                                             return { ...chap, lessons };
                                           }
                                           return chap;
@@ -1579,40 +1906,40 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
 
                                   {/* Preview & requirement flags */}
                                   <div className="flex flex-wrap items-center gap-4">
-                                    <label className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
+                                    <label className="flex items-center gap-1.5 text-xs text-slate-600 font-medium cursor-pointer">
                                       <input
                                         type="checkbox"
                                         checked={lesson.allowPreview}
                                         onChange={(e) => {
-                                          const chapters = editingCourse.chapters.map(chap => {
+                                          const chapters = (editingCourse.chapters || []).map(chap => {
                                             if (chap.id === chapter.id) {
-                                              const lessons = chap.lessons.map(l => l.id === lesson.id ? { ...l, allowPreview: e.target.checked } : l);
+                                              const lessons = (chap.lessons || []).map(l => l.id === lesson.id ? { ...l, allowPreview: e.target.checked } : l);
                                               return { ...chap, lessons };
                                             }
                                             return chap;
                                           });
                                           setEditingCourse({ ...editingCourse, chapters });
                                         }}
-                                        className="rounded text-brand w-3.5 h-3.5"
+                                        className="rounded text-brand w-3.5 h-3.5 cursor-pointer"
                                       />
                                       <span>Cho phép xem thử trước khi đăng ký học</span>
                                     </label>
                                     
-                                    <label className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
+                                    <label className="flex items-center gap-1.5 text-xs text-slate-600 font-medium cursor-pointer">
                                       <input
                                         type="checkbox"
                                         checked={lesson.isRequired}
                                         onChange={(e) => {
-                                          const chapters = editingCourse.chapters.map(chap => {
+                                          const chapters = (editingCourse.chapters || []).map(chap => {
                                             if (chap.id === chapter.id) {
-                                              const lessons = chap.lessons.map(l => l.id === lesson.id ? { ...l, isRequired: e.target.checked } : l);
+                                              const lessons = (chap.lessons || []).map(l => l.id === lesson.id ? { ...l, isRequired: e.target.checked } : l);
                                               return { ...chap, lessons };
                                             }
                                             return chap;
                                           });
                                           setEditingCourse({ ...editingCourse, chapters });
                                         }}
-                                        className="rounded text-brand w-3.5 h-3.5"
+                                        className="rounded text-brand w-3.5 h-3.5 cursor-pointer"
                                       />
                                       <span>Bắt buộc học để cấp chứng chỉ</span>
                                     </label>
@@ -1632,10 +1959,16 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                   <button
                     type="button"
                     onClick={async () => {
-                      await savePortfolioCourse(editingCourse);
+                      const finalCourse = {
+                        ...editingCourse,
+                        lessonsCount: (editingCourse.chapters || []).reduce((sum, chap) => sum + (chap.lessons || []).length, 0)
+                      };
+                      setEditingCourse(finalCourse);
+                      setCourses(current => current.map(c => c.id === finalCourse.id ? finalCourse : c));
+                      await savePortfolioCourse(finalCourse);
                       triggerSuccess('Lưu kết cấu giáo trình thành công!');
                     }}
-                    className="bg-brand hover:bg-brand-hover text-white font-bold text-xs uppercase tracking-widest py-3 px-6 rounded-xl transition-colors"
+                    className="bg-brand hover:bg-brand-hover text-white font-bold text-xs uppercase tracking-widest py-3 px-6 rounded-xl transition-colors cursor-pointer"
                   >
                     Lưu kết cấu giáo trình
                   </button>

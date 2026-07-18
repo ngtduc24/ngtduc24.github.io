@@ -194,6 +194,8 @@ export interface CourseStudent {
   paymentStatus: 'pending' | 'paid' | 'failed';
   hasCertificate?: boolean;
   isLocked?: boolean;
+  lessonNotes?: Record<string, any[]>;
+  lessonHighlights?: Record<string, string[]>;
 }
 
 export interface PortfolioResearch {

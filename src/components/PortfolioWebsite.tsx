@@ -246,12 +246,63 @@ function scrollToLink(link: string) {
 
 const getYouTubeEmbedUrl = (url: string): string | null => {
   if (!url) return null;
+  const trimmed = url.trim();
+  
+  // Try direct 11-character video ID
+  if (trimmed.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    return `https://www.youtube.com/embed/${trimmed}?autoplay=0&rel=0`;
+  }
+  
+  // 1. Shorts format: youtube.com/shorts/VIDEO_ID
+  const shortsMatch = trimmed.match(/\/shorts\/([a-zA-Z0-9_-]{11})/i);
+  if (shortsMatch) {
+    return `https://www.youtube.com/embed/${shortsMatch[1]}?autoplay=0&rel=0`;
+  }
+  
+  // 2. Live format: youtube.com/live/VIDEO_ID
+  const liveMatch = trimmed.match(/\/live\/([a-zA-Z0-9_-]{11})/i);
+  if (liveMatch) {
+    return `https://www.youtube.com/embed/${liveMatch[1]}?autoplay=0&rel=0`;
+  }
+  
+  // 3. Embed format: youtube.com/embed/VIDEO_ID
+  const embedMatch = trimmed.match(/\/embed\/([a-zA-Z0-9_-]{11})/i);
+  if (embedMatch) {
+    return `https://www.youtube.com/embed/${embedMatch[1]}?autoplay=0&rel=0`;
+  }
+  
+  // 4. Standard/Mobile watch format: watch?v=VIDEO_ID or &v=VIDEO_ID
+  const vMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/i);
+  if (vMatch) {
+    return `https://www.youtube.com/embed/${vMatch[1]}?autoplay=0&rel=0`;
+  }
+  
+  // 5. Shortened format: youtu.be/VIDEO_ID
+  const youtuMatch = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/i);
+  if (youtuMatch) {
+    return `https://www.youtube.com/embed/${youtuMatch[1]}?autoplay=0&rel=0`;
+  }
+  
+  // 6. Generic regex backup
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
-  if (match && match[2].length === 11) {
+  const match = trimmed.match(regExp);
+  if (match && match[2] && match[2].length === 11) {
     return `https://www.youtube.com/embed/${match[2]}?autoplay=0&rel=0`;
   }
+  
   return null;
+};
+
+const formatLessonDuration = (dur: string | number | undefined) => {
+  if (!dur) return '10 phút';
+  const str = String(dur).trim();
+  if (str.includes(':')) {
+    return str;
+  }
+  if (/^\d+$/.test(str)) {
+    return `${str} phút`;
+  }
+  return str;
 };
 
 function SectionHeading({ eyebrow, title, description, centered = false }: { eyebrow?: string; title: string; description: string; centered?: boolean }) {
@@ -613,26 +664,35 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
       try {
         const students = await getCourseStudents({ userId: viewer.id, courseId: course.id });
         if (students && students.length > 0) {
-          const student = students[0];
-          setEnrollment({
-            id: student.id,
-            studentName: student.studentName || student.name || viewer.fullName,
-            studentEmail: student.studentEmail || student.email || viewer.email,
-            courseId: course.id,
-            progress: student.progress || 0,
-            paymentStatus: student.paymentStatus === 'paid' ? 'paid' : 'pending',
-            registrationDate: student.registrationDate || student.registerDate,
-            isLocked: student.paymentStatus !== 'paid',
-            completedLessons: student.completedLessons || []
-          });
-        } else {
-          // Fallback to existing student data if any
-          const legacyEnrollment = course?.students?.find(student =>
-            student.accountId === viewer.id || student.email === viewer.email || student.studentEmail === viewer.email
+          // Find the student record belonging to the current user
+          const student = students.find(s => 
+            s.accountId === viewer.id || 
+            s.studentEmail === viewer.email || 
+            s.id === `${viewer.id}_${course.id}`
           );
-          if (legacyEnrollment) {
-            setEnrollment(legacyEnrollment);
+          if (student) {
+            setEnrollment({
+              ...student,
+              id: student.id,
+              studentName: student.studentName || student.name || viewer.fullName,
+              studentEmail: student.studentEmail || student.email || viewer.email,
+              courseId: course.id,
+              progress: student.progress || 0,
+              paymentStatus: student.paymentStatus === 'paid' ? 'paid' : 'pending',
+              registrationDate: student.registrationDate || student.registerDate,
+              isLocked: student.paymentStatus !== 'paid',
+              completedLessons: student.completedLessons || []
+            });
+            return;
           }
+        }
+        
+        // Fallback to legacy or course.students if not found
+        const legacyEnrollment = course?.students?.find(student =>
+          student.accountId === viewer.id || student.email === viewer.email || student.studentEmail === viewer.email
+        );
+        if (legacyEnrollment) {
+          setEnrollment(legacyEnrollment);
         }
       } catch (err) {
         console.error('Error loading enrollment from Supabase:', err);
@@ -648,7 +708,20 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
       // If parent updated course students, re-check enrollment
       const myEnrollment = course.students?.find(s => s.accountId === viewer.id);
       if (myEnrollment) {
-        setEnrollment({ ...myEnrollment, isLocked: false });
+        setEnrollment(prev => {
+          if (!prev) {
+            return { ...myEnrollment, isLocked: false };
+          }
+          // Safe-merge incoming data with our freshest local state to prevent losing notes
+          return {
+            ...myEnrollment,
+            isLocked: false,
+            lessonNotes: prev.lessonNotes || myEnrollment.lessonNotes || {},
+            lessonHighlights: prev.lessonHighlights || myEnrollment.lessonHighlights || {},
+            completedLessons: prev.completedLessons || myEnrollment.completedLessons || [],
+            progress: prev.progress !== undefined ? prev.progress : (myEnrollment.progress || 0)
+          };
+        });
       }
     }
   }, [course?.students, viewer?.id]);
@@ -672,30 +745,103 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
   const activeLesson = useMemo(() => courseLessons.find(l => l.id === activeLessonId) || courseLessons[0], [courseLessons, activeLessonId]);
   const courseProgress = courseLessons.length ? Math.round((completedLessonIds.length / courseLessons.length) * 100) : 0;
 
-  // Load notes and highlights for active lesson
+  // Load notes and highlights for active lesson - unique to each logged-in account
+  const loadedLessonRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (activeLessonId) {
-      const savedNotes = localStorage.getItem(`notes_${activeLessonId}`);
-      if (savedNotes) setNotes(JSON.parse(savedNotes));
-      else setNotes([]);
+      const key = `${viewer?.id || 'anon'}_${activeLessonId}`;
+      if (loadedLessonRef.current === key) {
+        return;
+      }
+      loadedLessonRef.current = key;
 
-      const savedHighlights = localStorage.getItem(`highlights_${activeLessonId}`);
-      if (savedHighlights) setLessonHighlights(JSON.parse(savedHighlights));
-      else setLessonHighlights([]);
+      if (viewer && enrollment) {
+        const dbNotes = enrollment.lessonNotes?.[activeLessonId];
+        const dbHighlights = enrollment.lessonHighlights?.[activeLessonId];
+        
+        if (dbNotes) {
+          setNotes(dbNotes);
+        } else {
+          const savedNotes = localStorage.getItem(`notes_${viewer.id}_${activeLessonId}`) || localStorage.getItem(`notes_${activeLessonId}`);
+          if (savedNotes) setNotes(JSON.parse(savedNotes));
+          else setNotes([]);
+        }
+
+        if (dbHighlights) {
+          setLessonHighlights(dbHighlights);
+        } else {
+          const savedHighlights = localStorage.getItem(`highlights_${viewer.id}_${activeLessonId}`) || localStorage.getItem(`highlights_${activeLessonId}`);
+          if (savedHighlights) setLessonHighlights(JSON.parse(savedHighlights));
+          else setLessonHighlights([]);
+        }
+      } else {
+        const savedNotes = localStorage.getItem(`notes_${activeLessonId}`);
+        if (savedNotes) setNotes(JSON.parse(savedNotes));
+        else setNotes([]);
+
+        const savedHighlights = localStorage.getItem(`highlights_${activeLessonId}`);
+        if (savedHighlights) setLessonHighlights(JSON.parse(savedHighlights));
+        else setLessonHighlights([]);
+      }
     }
-  }, [activeLessonId]);
+  }, [activeLessonId, enrollment?.id, viewer?.id]);
 
   const saveNotes = (updated: any[]) => {
     setNotes(updated);
     if (activeLessonId) {
-      localStorage.setItem(`notes_${activeLessonId}`, JSON.stringify(updated));
+      if (viewer) {
+        localStorage.setItem(`notes_${viewer.id}_${activeLessonId}`, JSON.stringify(updated));
+        if (enrollment) {
+          const updatedEnrollment: CourseStudent = {
+            ...enrollment,
+            lessonNotes: {
+              ...(enrollment.lessonNotes || {}),
+              [activeLessonId]: updated
+            }
+          };
+          setEnrollment(updatedEnrollment);
+          saveCourseStudent(updatedEnrollment).catch(err => console.error("Error saving notes to Supabase:", err));
+          
+          if (onUpdateCourse && course) {
+            onUpdateCourse({
+              ...course,
+              students: (course.students || []).map(s => s.id === updatedEnrollment.id ? updatedEnrollment : s)
+            });
+          }
+        }
+      } else {
+        localStorage.setItem(`notes_${activeLessonId}`, JSON.stringify(updated));
+      }
     }
   };
 
   const saveHighlights = (updated: string[]) => {
     setLessonHighlights(updated);
     if (activeLessonId) {
-      localStorage.setItem(`highlights_${activeLessonId}`, JSON.stringify(updated));
+      if (viewer) {
+        localStorage.setItem(`highlights_${viewer.id}_${activeLessonId}`, JSON.stringify(updated));
+        if (enrollment) {
+          const updatedEnrollment: CourseStudent = {
+            ...enrollment,
+            lessonHighlights: {
+              ...(enrollment.lessonHighlights || {}),
+              [activeLessonId]: updated
+            }
+          };
+          setEnrollment(updatedEnrollment);
+          saveCourseStudent(updatedEnrollment).catch(err => console.error("Error saving highlights to Supabase:", err));
+          
+          if (onUpdateCourse && course) {
+            onUpdateCourse({
+              ...course,
+              students: (course.students || []).map(s => s.id === updatedEnrollment.id ? updatedEnrollment : s)
+            });
+          }
+        }
+      } else {
+        localStorage.setItem(`highlights_${activeLessonId}`, JSON.stringify(updated));
+      }
     }
   };
 
@@ -734,12 +880,20 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
     const progress = courseLessons.length ? Math.round((next.length / courseLessons.length) * 100) : 0;
 
     try {
-      await saveCourseStudent({
+      const updatedEnrollment: CourseStudent = {
         ...enrollment,
         completedLessons: next,
         progress: progress
-      });
-      setEnrollment(prev => prev ? { ...prev, completedLessons: next, progress } : null);
+      };
+      await saveCourseStudent(updatedEnrollment);
+      setEnrollment(updatedEnrollment);
+      
+      if (onUpdateCourse) {
+        onUpdateCourse({
+          ...course,
+          students: (course.students || []).map(s => s.id === updatedEnrollment.id ? updatedEnrollment : s)
+        });
+      }
     } catch (err) {
       console.error('Update progress error:', err);
     }
@@ -1120,7 +1274,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                             </h2>
                             <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-400 font-bold">
                               <span className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                                <Clock className="h-3.5 w-3.5" /> {activeLesson.duration || 10} phút học
+                                <Clock className="h-3.5 w-3.5" /> {formatLessonDuration(activeLesson.duration)} học
                               </span>
                               {activeLesson.practiceFileUrl && (
                                 <a 
@@ -1493,7 +1647,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                                       </p>
                                       <div className="mt-1 flex items-center gap-2 text-[9px] text-slate-400 font-bold">
                                         <Clock className="h-3 w-3 shrink-0" />
-                                        <span className={isActive ? 'text-emerald-200' : ''}>{lesson.duration || 10} phút</span>
+                                        <span className={isActive ? 'text-emerald-200' : ''}>{formatLessonDuration(lesson.duration)}</span>
                                         {lesson.practiceFileUrl && (
                                           <>
                                             <span className="h-1 w-1 rounded-full bg-white/20" />

@@ -32,11 +32,50 @@ export default function CloudinaryUploadField({
 
   const getYouTubeEmbedUrl = (url: string): string | null => {
     if (!url) return null;
+    const trimmed = url.trim();
+    
+    // Try direct 11-character video ID
+    if (trimmed.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+      return `https://www.youtube.com/embed/${trimmed}`;
+    }
+    
+    // 1. Shorts format: youtube.com/shorts/VIDEO_ID
+    const shortsMatch = trimmed.match(/\/shorts\/([a-zA-Z0-9_-]{11})/i);
+    if (shortsMatch) {
+      return `https://www.youtube.com/embed/${shortsMatch[1]}`;
+    }
+    
+    // 2. Live format: youtube.com/live/VIDEO_ID
+    const liveMatch = trimmed.match(/\/live\/([a-zA-Z0-9_-]{11})/i);
+    if (liveMatch) {
+      return `https://www.youtube.com/embed/${liveMatch[1]}`;
+    }
+    
+    // 3. Embed format: youtube.com/embed/VIDEO_ID
+    const embedMatch = trimmed.match(/\/embed\/([a-zA-Z0-9_-]{11})/i);
+    if (embedMatch) {
+      return `https://www.youtube.com/embed/${embedMatch[1]}`;
+    }
+    
+    // 4. Standard/Mobile watch format: watch?v=VIDEO_ID or &v=VIDEO_ID
+    const vMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/i);
+    if (vMatch) {
+      return `https://www.youtube.com/embed/${vMatch[1]}`;
+    }
+    
+    // 5. Shortened format: youtu.be/VIDEO_ID
+    const youtuMatch = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/i);
+    if (youtuMatch) {
+      return `https://www.youtube.com/embed/${youtuMatch[1]}`;
+    }
+    
+    // 6. Generic regex backup
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    if (match && match[2].length === 11) {
+    const match = trimmed.match(regExp);
+    if (match && match[2] && match[2].length === 11) {
       return `https://www.youtube.com/embed/${match[2]}`;
     }
+    
     return null;
   };
 
