@@ -1,0 +1,61 @@
+--- src/components/UserManagement.tsx
++++ src/components/UserManagement.tsx
+@@ -20,7 +20,7 @@
+ import { saveDefaultSettingsToSupabase } from '../lib/data';
+ import { useNotifications } from './NotificationContext';
+ import { useConfirmation } from './ConfirmationContext';
+-import { authAdminClient, auth } from '../lib/firebase';
+-import { createUserWithEmailAndPassword, deleteUser as deleteAuthUser, signOut } from 'firebase/auth';
++import { auth } from '../lib/firebase';
++import { deleteUser as deleteAuthUser } from 'firebase/auth';
+ import { uploadImageToCloudinary } from '../lib/upload';
+ import MediaSourcePicker from './MediaSourcePicker';
+@@ -217,14 +217,29 @@
+ 
+       let authUserId = '';
+       try {
+-        const userCred = await createUserWithEmailAndPassword(authAdminClient, normalizedEmail, newPassword);
+-        console.log("Current user after create:", currentUser.id, "auth:", auth.currentUser?.uid, "authAdminClient:", authAdminClient.currentUser?.uid);
+-        createdAuthUser = userCred.user;
+-        authUserId = userCred.user.uid;
++        const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
++        if (!apiKey) {
++          throw new Error("Missing Firebase API Key");
++        }
++        
++        const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
++          method: 'POST',
++          headers: {
++            'Content-Type': 'application/json'
++          },
++          body: JSON.stringify({
++            email: normalizedEmail,
++            password: newPassword,
++            returnSecureToken: true
++          })
++        });
++        
++        const data = await response.json();
++        if (!response.ok) {
++          throw new Error(data.error?.message || "Lỗi khi tạo tài khoản Auth");
++        }
++        
++        authUserId = data.localId;
++        // We don't have createdAuthUser anymore, so we don't need to sign out
+       } catch (authErr: any) {
+         console.error("Lỗi khi tạo Auth:", authErr);
+@@ -279,14 +294,6 @@
+         createdAt: new Date().toLocaleDateString('vi-VN'),
+       };
+ 
+-      try {
+-        if (createdAuthUser) {
+-          await signOut(authAdminClient);
+-        }
+-      } catch (e) {
+-        console.warn("Lỗi khi sign out secondary auth:", e);
+-      }
+-
+       await onSaveUser(newUser);
+ 
+       // Reset Form

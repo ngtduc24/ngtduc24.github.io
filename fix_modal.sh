@@ -1,0 +1,1 @@
+sed -i -z 's|src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150      {activeScannerTarget && (data=${encodeURIComponent(`${window.location.origin}/ar/${newlyCreatedTarget.id}`)}`}|src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150\&data=${encodeURIComponent(`${window.location.origin}/ar/${newlyCreatedTarget.id}`)}`}|g' src/components/ARModule.tsx
