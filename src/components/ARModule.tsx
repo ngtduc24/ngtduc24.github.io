@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { QrCode, RefreshCw, Search, AlertCircle, X, Link2, ExternalLink, Download, Check, Plus, Loader2, Upload, Box, ArrowLeft, Pencil, Trash2, Save } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadARAssetToSupabase } from '../lib/upload';
+import { UserAccount } from '../types';
 
 interface ARTarget {
   id: string;
@@ -148,7 +149,7 @@ function ARDropZone({ label, hint, accept, previewUrl, kind, fileName, onFile }:
   );
 }
 
-function ARCreateView({ onCancel, onCreated }: { onCancel: () => void; onCreated: () => void }) {
+function ARCreateView({ currentUser, onCancel, onCreated }: { currentUser?: UserAccount | null; onCancel: () => void; onCreated: () => void }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [contentType, setContentType] = useState<'image' | 'gif' | 'video' | '3d'>('image');
@@ -177,7 +178,7 @@ function ARCreateView({ onCancel, onCreated }: { onCancel: () => void; onCreated
       const target_image_url = await uploadARAssetToSupabase(targetFile);
       const content_url = await uploadARAssetToSupabase(contentFile);
       const thumbnail_url = thumbFile ? await uploadARAssetToSupabase(thumbFile) : target_image_url;
-      const { error } = await supabase.from('ar_targets').insert({ name: name.trim(), description: description.trim(), target_image_url, thumbnail_url, content_type: contentType, content_url, scale, rotation, active: true });
+      const { error } = await supabase.from('ar_targets').insert({ name: name.trim(), description: description.trim(), target_image_url, thumbnail_url, content_type: contentType, content_url, scale, rotation, active: true, owner_id: currentUser?.id ?? null });
       if (error) throw error;
       onCreated();
     } catch (e: any) {
@@ -331,7 +332,7 @@ function AREditModal({ target, onClose, onSaved }: { target: ARTarget; onClose: 
   );
 }
 
-export default function ARModule() {
+export default function ARModule({ currentUser }: { currentUser?: UserAccount | null }) {
   const [targets, setTargets] = useState<ARTarget[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -356,7 +357,11 @@ export default function ARModule() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: sbError } = await supabase.from('ar_targets').select('*').order('created_at', { ascending: false });
+      let query = supabase.from('ar_targets').select('*').order('created_at', { ascending: false });
+      if (currentUser?.id) {
+        query = query.eq('owner_id', currentUser.id);
+      }
+      const { data, error: sbError } = await query;
       if (sbError) throw sbError;
       setTargets(data || []);
     } catch (e: any) {
@@ -366,12 +371,12 @@ export default function ARModule() {
     }
   };
 
-  useEffect(() => { fetchTargets(); }, []);
+  useEffect(() => { fetchTargets(); }, [currentUser?.id]);
 
   const filtered = targets.filter(t => t.name?.toLowerCase().includes(searchTerm.toLowerCase()));
 
   if (showCreate) {
-    return <ARCreateView onCancel={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); fetchTargets(); }} />;
+    return <ARCreateView currentUser={currentUser} onCancel={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); fetchTargets(); }} />;
   }
 
   return (
@@ -383,7 +388,7 @@ export default function ARModule() {
               <QrCode className="w-6 h-6 opacity-90" />
               <h1 className="text-xl font-black tracking-tight">Quản lý AR Targets</h1>
             </div>
-            <p className="text-sm text-brand/20">Click vào thẻ để xem QR code và chia sẻ link.</p>
+            <p className="text-sm text-brand/20">Chỉ hiển thị AR do tài khoản của bạn tạo. Click vào thẻ để xem QR code và chia sẻ link.</p>
           </div>
           <div className="shrink-0 flex items-center gap-2"><button type="button" onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 bg-white text-brand hover:bg-white/90 text-xs font-bold px-3 py-2 rounded-xl transition shadow-sm"><Plus className="w-4 h-4" />Tạo AR Target Mới</button><button onClick={fetchTargets} disabled={loading} className="shrink-0 flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-3 py-2 rounded-xl transition disabled:opacity-50">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
