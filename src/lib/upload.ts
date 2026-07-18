@@ -85,13 +85,60 @@ async function uploadDirectlyToCloudinary(source: File | string, options: Cloudi
   return parseUploadResponse(response);
 }
 
+// Tải lên có ký. Lấy chữ ký từ Supabase Edge Function, chỉ người đã đăng nhập mới có.
+async function uploadSignedToCloudinary(source: File | string, options: CloudinaryUploadOptions): Promise<CloudinaryUploadResult | null> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+  if (!supabaseUrl) return null;
+
+  const idToken = await auth.currentUser?.getIdToken().catch(() => null);
+  if (!idToken) throw new Error('Bạn cần đăng nhập để tải tệp lên.');
+
+  const folder = `smart_research_vn/${safeFolder(options.folder || 'shared_library')}`;
+  const signResp = await fetch(`${supabaseUrl.replace(/\/$/, '')}/functions/v1/sign-upload`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+    body: JSON.stringify({ folder }),
+  });
+  if (!signResp.ok) {
+    if (signResp.status === 401) throw new Error('Bạn cần đăng nhập để tải tệp lên.');
+    return null;
+  }
+  const sign = await signResp.json().catch(() => null);
+  if (!sign || !sign.cloudName || !sign.signature || !sign.apiKey || !sign.timestamp) return null;
+
+  const resourceType = options.resourceType || 'auto';
+  const endpointType = resourceType === 'image' || resourceType === 'video' || resourceType === 'raw' ? resourceType : 'auto';
+  const formData = new FormData();
+  formData.append('file', source);
+  formData.append('api_key', String(sign.apiKey));
+  formData.append('timestamp', String(sign.timestamp));
+  formData.append('signature', String(sign.signature));
+  formData.append('folder', String(sign.folder || folder));
+
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${encodeURIComponent(sign.cloudName)}/${endpointType}/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+  return parseUploadResponse(response);
+}
+
 export async function uploadMediaToCloudinary(source: File | string, options: CloudinaryUploadOptions = {}): Promise<string> {
   try {
     let data: CloudinaryUploadResult | null = null;
+    // 1) Ưu tiên tải lên có ký, chỉ tài khoản đã đăng nhập mới tải được
     try {
-      data = await uploadDirectlyToCloudinary(source, options);
-    } catch (directError) {
-      console.warn('Direct client-side Cloudinary upload failed. Falling back to secure server-side upload:', directError);
+      data = await uploadSignedToCloudinary(source, options);
+    } catch (signedError) {
+      if (signedError instanceof Error && /đăng nhập/.test(signedError.message)) throw signedError;
+      console.warn('Signed Cloudinary upload failed:', signedError);
+    }
+    // 2) Dự phòng: unsigned nếu vẫn còn cấu hình preset (có thể bỏ khi đã bật ký)
+    if (!data) {
+      try {
+        data = await uploadDirectlyToCloudinary(source, options);
+      } catch (directError) {
+        console.warn('Direct client-side Cloudinary upload failed. Falling back to secure server-side upload:', directError);
+      }
     }
 
     if (!data) {
