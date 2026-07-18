@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { QrCode, RefreshCw, Search, AlertCircle, X, Link2, ExternalLink, Download, Check, Plus, Loader2, Upload, Box, ArrowLeft } from 'lucide-react';
+import { QrCode, RefreshCw, Search, AlertCircle, X, Link2, ExternalLink, Download, Check, Plus, Loader2, Upload, Box, ArrowLeft, Pencil, Trash2, Save } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadARAssetToSupabase } from '../lib/upload';
 
@@ -9,6 +9,9 @@ interface ARTarget {
   thumbnail_url?: string;
   description?: string;
   created_at?: string;
+  scale?: number;
+  rotation?: number;
+  active?: boolean;
 }
 
 function ARDetailModal({ target, onClose }: { target: ARTarget; onClose: () => void }) {
@@ -250,6 +253,84 @@ function ARCreateView({ onCancel, onCreated }: { onCancel: () => void; onCreated
   );
 }
 
+function AREditModal({ target, onClose, onSaved }: { target: ARTarget; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(target.name || '');
+  const [description, setDescription] = useState(target.description || '');
+  const [scale, setScale] = useState<number>(target.scale ?? 1);
+  const [rotation, setRotation] = useState<number>(target.rotation ?? 0);
+  const [active, setActive] = useState<boolean>(target.active ?? true);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    if (!name.trim()) { setErr('Vui lòng nhập tên AR.'); return; }
+    setSaving(true); setErr(null);
+    try {
+      const { error } = await supabase.from('ar_targets').update({
+        name: name.trim(),
+        description: description.trim(),
+        scale,
+        rotation,
+        active,
+      }).eq('id', target.id);
+      if (error) throw error;
+      onSaved();
+    } catch (e: any) {
+      setErr(e.message || 'Lỗi khi cập nhật AR target');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <Pencil className="w-5 h-5 text-brand" />
+            <h2 className="text-base font-bold text-slate-800">Sửa AR Target</h2>
+          </div>
+          <button onClick={onClose} className="h-8 w-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Tên AR <span className="text-rose-500">*</span></label>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nhập tên AR target" className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Mô tả</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Nhập mô tả" className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none resize-none" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Tỷ lệ (scale)</label>
+              <input type="number" step="0.1" value={scale} onChange={(e) => setScale(parseFloat(e.target.value) || 1)} className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Góc xoay (độ)</label>
+              <input type="number" value={rotation} onChange={(e) => setRotation(parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
+            </div>
+          </div>
+          <label className="flex items-center gap-3 cursor-pointer select-none">
+            <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="w-4 h-4 accent-emerald-500" />
+            <span className="text-sm font-semibold text-slate-700">Đang bật (cho phép quét)</span>
+          </label>
+          {err && <div className="flex items-center gap-2 text-sm text-rose-600 bg-rose-50 rounded-xl p-3"><AlertCircle className="w-4 h-4 shrink-0" />{err}</div>}
+          <div className="flex justify-end gap-3 pt-1">
+            <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50">Hủy</button>
+            <button type="button" onClick={handleSave} disabled={saving} className="px-6 py-2.5 rounded-xl bg-brand text-white text-sm font-bold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ARModule() {
   const [targets, setTargets] = useState<ARTarget[]>([]);
   const [loading, setLoading] = useState(true);
@@ -257,6 +338,19 @@ export default function ARModule() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTarget, setSelectedTarget] = useState<ARTarget | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [editTarget, setEditTarget] = useState<ARTarget | null>(null);
+
+  const handleDelete = async (target: ARTarget, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm(`Xóa AR target "${target.name}"? Hành động này không thể hoàn tác.`)) return;
+    try {
+      const { error: delError } = await supabase.from('ar_targets').delete().eq('id', target.id);
+      if (delError) throw delError;
+      setTargets(prev => prev.filter(t => t.id !== target.id));
+    } catch (err: any) {
+      alert('Lỗi khi xóa AR target: ' + (err.message || err));
+    }
+  };
 
   const fetchTargets = async () => {
     setLoading(true);
@@ -329,7 +423,15 @@ export default function ARModule() {
       {!loading && filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map(target => (
-            <button key={target.id} onClick={() => setSelectedTarget(target)} className="group text-left bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-lg hover:border-brand/20 hover:-translate-y-1 transition-all duration-200 cursor-pointer">
+            <div key={target.id} role="button" tabIndex={0} onClick={() => setSelectedTarget(target)} className="group relative text-left bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-lg hover:border-brand/20 hover:-translate-y-1 transition-all duration-200 cursor-pointer">
+              <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5">
+                <button type="button" title="Sửa" onClick={(e) => { e.stopPropagation(); setEditTarget(target); }} className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/90 hover:bg-white text-slate-600 hover:text-brand shadow-sm border border-slate-200 transition">
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button type="button" title="Xóa" onClick={(e) => handleDelete(target, e)} className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/90 hover:bg-rose-500 text-slate-600 hover:text-white shadow-sm border border-slate-200 transition">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
               <div className="relative h-40 bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden">
                 {target.thumbnail_url ? (
                   <img src={target.thumbnail_url} alt={target.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -348,7 +450,7 @@ export default function ARModule() {
                   <span className="text-[10px] text-slate-400 font-mono truncate">ID: {target.id}</span>
                 </div>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       )}
@@ -357,6 +459,7 @@ export default function ARModule() {
       )}
       
       {selectedTarget && <ARDetailModal target={selectedTarget} onClose={() => setSelectedTarget(null)} />}
+      {editTarget && <AREditModal target={editTarget} onClose={() => setEditTarget(null)} onSaved={() => { setEditTarget(null); fetchTargets(); }} />}
     </div>
   );
 }
