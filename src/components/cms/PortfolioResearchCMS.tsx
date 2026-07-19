@@ -3,6 +3,7 @@ import { Award, Edit3, Plus, Search, Trash2, Star, Pin } from 'lucide-react';
 import { getPortfolioResearch, savePortfolioResearch, deletePortfolioResearch } from '../../lib/portfolioData';
 import { PortfolioResearch } from '../portfolioTypes';
 import CloudinaryUploadField from './CloudinaryUploadField';
+import { uploadFileToSupabase } from '../../lib/upload';
 import { useConfirmation } from '../ConfirmationContext';
 import { useNotifications } from '../NotificationContext';
 
@@ -55,12 +56,27 @@ export default function PortfolioResearchCMS({ createOnMount = false }: { create
   const [items, setItems] = useState<PortfolioResearch[]>([]);
   const [editing, setEditing] = useState<PortfolioResearch | null>(createOnMount ? emptyResearch() : null);
   const [query, setQuery] = useState('');
+  const [pdfUploading, setPdfUploading] = useState(false);
   const { confirm } = useConfirmation();
   const { addNotification } = useNotifications();
 
   useEffect(() => { getPortfolioResearch().then(setItems); }, []);
 
   const update = (patch: Partial<PortfolioResearch>) => setEditing(prev => prev ? { ...prev, ...patch } : prev);
+
+  const handlePdf = async (file?: File | null) => {
+    if (!file) return;
+    setPdfUploading(true);
+    try {
+      const url = await uploadFileToSupabase(file, 'ar_assets', 'research/pdf/');
+      update({ pdfUrl: url });
+      addNotification('Đã tải tệp PDF lên.', 'success');
+    } catch (e: any) {
+      addNotification(e.message || 'Lỗi khi tải tệp PDF.', 'error');
+    } finally {
+      setPdfUploading(false);
+    }
+  };
 
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -130,7 +146,6 @@ export default function PortfolioResearchCMS({ createOnMount = false }: { create
             <label className="space-y-1"><span className={labelClass}>Từ khóa tiếng Việt, cách nhau dấu phẩy</span><input value={editing.keywordsVi.join(', ')} onChange={e => update({ keywordsVi: toList(e.target.value) })} className={fieldClass} /></label>
             <label className="space-y-1"><span className={labelClass}>Từ khóa tiếng Anh, cách nhau dấu phẩy</span><input value={editing.keywordsEn.join(', ')} onChange={e => update({ keywordsEn: toList(e.target.value) })} className={fieldClass} /></label>
           </div>
-          <label className="block space-y-1"><span className={labelClass}>Nội dung chi tiết</span><textarea rows={10} value={editing.content} onChange={e => update({ content: e.target.value })} placeholder="Nội dung đầy đủ của bài nghiên cứu..." className={`${fieldClass} resize-y leading-6`} /></label>
           <label className="block space-y-1"><span className={labelClass}>Trích dẫn chuẩn APA</span><textarea rows={3} value={editing.citationApa} onChange={e => update({ citationApa: e.target.value })} placeholder="Tác giả. (Năm). Tiêu đề. Tạp chí, Tập(Số), Trang." className={`${fieldClass} resize-y leading-6`} /></label>
         </section>
 
@@ -138,7 +153,20 @@ export default function PortfolioResearchCMS({ createOnMount = false }: { create
           <h4 className="text-xs font-black text-slate-700">Tệp và liên kết</h4>
           <div className="grid gap-4 sm:grid-cols-2">
             <CloudinaryUploadField label="Ảnh bìa" value={editing.coverImage} onChange={coverImage => update({ coverImage })} accept="image/*" resourceType="image" folder="portfolio/research" />
-            <CloudinaryUploadField label="Tệp PDF" value={editing.pdfUrl} onChange={pdfUrl => update({ pdfUrl })} accept=".pdf,application/pdf" resourceType="raw" folder="portfolio/research/pdf" />
+            <div className="space-y-2">
+              <span className={labelClass}>Tệp PDF</span>
+              {editing.pdfUrl ? (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <a href={editing.pdfUrl} target="_blank" rel="noreferrer" className="truncate text-xs font-bold text-brand hover:underline">Xem tệp PDF đã tải lên</a>
+                  <button type="button" onClick={() => update({ pdfUrl: '' })} className="shrink-0 rounded-lg bg-rose-50 px-2.5 py-1 text-[10px] font-bold text-rose-500 hover:bg-rose-100">Xóa</button>
+                </div>
+              ) : (
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-5 text-xs font-bold text-slate-500 transition-colors hover:border-brand hover:bg-white">
+                  <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={e => handlePdf(e.target.files?.[0])} />
+                  {pdfUploading ? 'Đang tải PDF lên...' : 'Chọn tệp PDF để tải lên'}
+                </label>
+              )}
+            </div>
           </div>
           <label className="block space-y-1"><span className={labelClass}>Link nhà xuất bản</span><input value={editing.publisherUrl} onChange={e => update({ publisherUrl: e.target.value })} placeholder="https://..." className={fieldClass} /></label>
         </section>

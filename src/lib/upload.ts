@@ -238,3 +238,21 @@ export async function uploadARAssetToSupabase(file: File): Promise<string> {
   
   return publicData.publicUrl;
 }
+
+export async function uploadFileToSupabase(file: File, bucket = 'ar_assets', prefix = ''): Promise<string> {
+  if (!supabase) {
+    throw new Error('Supabase client chưa được khởi tạo');
+  }
+  const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+  const base = file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40) || 'file';
+  const fileName = `${prefix}${Date.now()}-${Math.random().toString(36).substring(2, 8)}-${base}.${ext}`;
+  const { error } = await supabase.storage.from(bucket).upload(fileName, file, { cacheControl: '3600', upsert: true });
+  if (error) {
+    throw new Error(`Lỗi tải tệp lên: ${error.message}`);
+  }
+  const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(fileName);
+  if (!publicData?.publicUrl) {
+    throw new Error('Không thể lấy public URL từ Supabase Storage');
+  }
+  return publicData.publicUrl;
+}

@@ -1735,6 +1735,11 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                     </div>
                   )}
                 </div>
+                {item.data.pdfUrl && (
+                  <div className="overflow-hidden rounded-[2rem] border border-slate-200 shadow-sm">
+                    <iframe src={item.data.pdfUrl} title="Tài liệu PDF" className="h-[80vh] w-full" />
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-4">
                   {item.data.publisherUrl && <a href={item.data.publisherUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-6 py-3.5 text-sm font-black text-white shadow-xl shadow-emerald-900/20 hover:bg-emerald-500">Nguồn xuất bản <ExternalLink className="h-4 w-4" /></a>}
                   {item.data.pdfUrl && <a href={item.data.pdfUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-black text-slate-700 hover:bg-slate-50">Tải tài liệu PDF <Download className="h-4 w-4" /></a>}
