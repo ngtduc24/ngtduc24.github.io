@@ -7,6 +7,7 @@ import ProjectsCoursesCMS from './ProjectsCoursesCMS';
 import { useConfirmation } from '../ConfirmationContext';
 import { useNotifications } from '../NotificationContext';
 import CategoryManagerModal from './CategoryManagerModal';
+import PortfolioResearchCMS from './PortfolioResearchCMS';
 import { auth } from '../../lib/firebase';
 
 type SelectedContentType = 'article' | 'project' | 'course' | 'research' | null;
@@ -86,7 +87,7 @@ export default function PortfolioContentManager() {
 
       {selectedType === 'project' ? <div key={`project-${editorVersion}`}><ProjectsCoursesCMS initialSubTab="projects" createOnMount showSubTabs={false} /></div> :
       selectedType === 'course' ? <div key={`course-${editorVersion}`}><ProjectsCoursesCMS initialSubTab="courses" createOnMount showSubTabs={false} /></div> :
-      selectedType === 'research' ? <div key={`research-${editorVersion}`}><p className="text-center py-10 text-slate-500 text-xs">Phân hệ Nghiên cứu đang được cập nhật.</p></div> :
+      selectedType === 'research' ? <div key={`research-${editorVersion}`}><PortfolioResearchCMS /></div> :
       editing ? (
         <form onSubmit={save} className="space-y-5 rounded-2xl bg-white">
           <div className="flex items-center justify-between gap-4"><div><h3 className="text-base font-black text-slate-800">{posts.some(item => item.id === editing.id) ? 'Chỉnh sửa bài viết' : 'Soạn bài viết mới'}</h3><p className="mt-1 text-[10px] text-slate-500">Trình biên tập bài viết thông thường.</p></div><button type="button" onClick={() => setEditing(null)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">Quay lại</button></div>
