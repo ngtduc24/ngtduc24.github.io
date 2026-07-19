@@ -51,9 +51,9 @@ const emptyResearch = (): PortfolioResearch => ({
 
 const toList = (value: string) => value.split(',').map(v => v.trim()).filter(Boolean);
 
-export default function PortfolioResearchCMS() {
+export default function PortfolioResearchCMS({ createOnMount = false }: { createOnMount?: boolean }) {
   const [items, setItems] = useState<PortfolioResearch[]>([]);
-  const [editing, setEditing] = useState<PortfolioResearch | null>(null);
+  const [editing, setEditing] = useState<PortfolioResearch | null>(createOnMount ? emptyResearch() : null);
   const [query, setQuery] = useState('');
   const { confirm } = useConfirmation();
   const { addNotification } = useNotifications();
