@@ -18,6 +18,7 @@ import BannerAboutCMS from './cms/BannerAboutCMS';
 import ProjectsCoursesCMS from './cms/ProjectsCoursesCMS';
 import PortfolioNavigationManager from './cms/PortfolioNavigationManager';
 import PortfolioContentManager from './cms/PortfolioContentManager';
+import PortfolioResearchCMS from './cms/PortfolioResearchCMS';
 import { getPortfolioCourses, getPortfolioLectures, getPortfolioProjects, getPortfolioResearch } from '../lib/portfolioData';
 
 type PortfolioDivision = 'profile' | 'content' | 'projects' | 'courses' | 'research' | 'navigation';
@@ -212,7 +213,7 @@ export default function PortfolioCMS() {
         {activeDivision === 'content' && <PortfolioContentManager />}
         {activeDivision === 'projects' && <ProjectsCoursesCMS initialSubTab="projects" showSubTabs={false} />}
         {activeDivision === 'courses' && <ProjectsCoursesCMS initialSubTab="courses" showSubTabs={false} />}
-        {activeDivision === 'research' && <div className="text-center py-10 text-slate-500 text-xs">Phân hệ Nghiên cứu đang được cập nhật.</div>}
+        {activeDivision === 'research' && <PortfolioResearchCMS />}
         {activeDivision === 'navigation' && <PortfolioNavigationManager />}
       </section>
     </div>
