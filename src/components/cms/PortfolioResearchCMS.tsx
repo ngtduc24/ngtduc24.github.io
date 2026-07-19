@@ -92,7 +92,7 @@ export default function PortfolioResearchCMS({ createOnMount = false }: { create
           <button type="button" onClick={() => setEditing(null)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">Quay lại</button>
         </div>
 
-        <section className="space-y-4 rounded-2xl bg-slate-50 p-5">
+        <section className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
           <h4 className="text-xs font-black text-slate-700">Thông tin chính</h4>
           <label className="block space-y-1"><span className={labelClass}>Tiêu đề tiếng Việt *</span><input required value={editing.titleVi} onChange={e => update({ titleVi: e.target.value })} className={fieldClass} /></label>
           <label className="block space-y-1"><span className={labelClass}>Tiêu đề tiếng Anh</span><input value={editing.titleEn} onChange={e => update({ titleEn: e.target.value })} className={fieldClass} /></label>
@@ -107,7 +107,7 @@ export default function PortfolioResearchCMS({ createOnMount = false }: { create
           <label className="block space-y-1"><span className={labelClass}>Đơn vị công tác</span><input value={editing.affiliation} onChange={e => update({ affiliation: e.target.value })} className={fieldClass} /></label>
         </section>
 
-        <section className="space-y-4 rounded-2xl bg-slate-50 p-5">
+        <section className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
           <h4 className="text-xs font-black text-slate-700">Thông tin xuất bản</h4>
           <label className="block space-y-1"><span className={labelClass}>Tạp chí hoặc hội nghị</span><input value={editing.journalOrConference} onChange={e => update({ journalOrConference: e.target.value })} className={fieldClass} /></label>
           <div className="grid gap-3 sm:grid-cols-4">
@@ -122,7 +122,7 @@ export default function PortfolioResearchCMS({ createOnMount = false }: { create
           </div>
         </section>
 
-        <section className="space-y-4 rounded-2xl bg-slate-50 p-5">
+        <section className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
           <h4 className="text-xs font-black text-slate-700">Nội dung</h4>
           <label className="block space-y-1"><span className={labelClass}>Tóm tắt tiếng Việt</span><textarea rows={4} value={editing.abstractVi} onChange={e => update({ abstractVi: e.target.value })} className={`${fieldClass} resize-y leading-6`} /></label>
           <label className="block space-y-1"><span className={labelClass}>Tóm tắt tiếng Anh (Abstract)</span><textarea rows={4} value={editing.abstractEn} onChange={e => update({ abstractEn: e.target.value })} className={`${fieldClass} resize-y leading-6`} /></label>
@@ -134,7 +134,7 @@ export default function PortfolioResearchCMS({ createOnMount = false }: { create
           <label className="block space-y-1"><span className={labelClass}>Trích dẫn chuẩn APA</span><textarea rows={3} value={editing.citationApa} onChange={e => update({ citationApa: e.target.value })} placeholder="Tác giả. (Năm). Tiêu đề. Tạp chí, Tập(Số), Trang." className={`${fieldClass} resize-y leading-6`} /></label>
         </section>
 
-        <section className="space-y-4 rounded-2xl bg-slate-50 p-5">
+        <section className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
           <h4 className="text-xs font-black text-slate-700">Tệp và liên kết</h4>
           <div className="grid gap-4 sm:grid-cols-2">
             <CloudinaryUploadField label="Ảnh bìa" value={editing.coverImage} onChange={coverImage => update({ coverImage })} accept="image/*" resourceType="image" folder="portfolio/research" />
@@ -143,10 +143,10 @@ export default function PortfolioResearchCMS({ createOnMount = false }: { create
           <label className="block space-y-1"><span className={labelClass}>Link nhà xuất bản</span><input value={editing.publisherUrl} onChange={e => update({ publisherUrl: e.target.value })} placeholder="https://..." className={fieldClass} /></label>
         </section>
 
-        <section className="grid gap-3 rounded-2xl bg-slate-50 p-5 sm:grid-cols-3">
+        <section className="grid gap-3 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:grid-cols-3">
           <label className="space-y-1"><span className={labelClass}>Quyền xem</span><select value={editing.viewPermission} onChange={e => update({ viewPermission: e.target.value as PortfolioResearch['viewPermission'] })} className={fieldClass}>{permissionOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></label>
-          <label className="flex items-center justify-between self-end rounded-xl bg-white p-3 text-xs font-bold text-slate-700">Bài nổi bật <input type="checkbox" checked={editing.isFeatured} onChange={e => update({ isFeatured: e.target.checked })} /></label>
-          <label className="flex items-center justify-between self-end rounded-xl bg-white p-3 text-xs font-bold text-slate-700">Ghim lên đầu <input type="checkbox" checked={editing.isPinned} onChange={e => update({ isPinned: e.target.checked })} /></label>
+          <label className="flex items-center justify-between self-end rounded-xl bg-slate-50 p-3 text-xs font-bold text-slate-700">Bài nổi bật <input type="checkbox" checked={editing.isFeatured} onChange={e => update({ isFeatured: e.target.checked })} /></label>
+          <label className="flex items-center justify-between self-end rounded-xl bg-slate-50 p-3 text-xs font-bold text-slate-700">Ghim lên đầu <input type="checkbox" checked={editing.isPinned} onChange={e => update({ isPinned: e.target.checked })} /></label>
         </section>
 
         <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
