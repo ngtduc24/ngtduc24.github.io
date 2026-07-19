@@ -1787,20 +1787,6 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
         </div>
       </section>
 
-      {/* 5. Footer (Simple unified footer for detail page) */}
-      <footer className="border-t border-slate-100 bg-white py-12">
-        <div className={`${sectionShell} flex flex-col items-center justify-between gap-6 text-center sm:flex-row sm:text-left`}>
-          <div>
-            <p className="text-lg font-black text-slate-950">Multimedia Portfolio</p>
-            <p className="mt-1 text-xs font-medium text-slate-500">© {new Date().getFullYear()} Designed & Developed with Passion.</p>
-          </div>
-          <div className="flex gap-4">
-            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
-              <ChevronDown className="h-5 w-5 rotate-180" />
-            </button>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
