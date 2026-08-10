@@ -14,33 +14,43 @@ export default function PublicARScanner() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const pathParts = window.location.pathname.split('/');
         const targetId = new URLSearchParams(window.location.search).get('ar');
 
         if (!targetId) {
-          throw new Error("Không tìm thấy ID target.");
+          throw new Error('Không tìm thấy ID target.');
         }
 
-        const [settingsData, { data: targetData, error: targetError }] = await Promise.all([
-          getDefaultSettingsFromSupabase(),
-          supabase.from('ar_targets').select('*').eq('id', targetId).single()
-        ]);
+        const { data: targetData, error: targetError } = await supabase
+          .from('ar_targets')
+          .select('*')
+          .eq('id', targetId)
+          .maybeSingle();
 
         if (targetError) throw targetError;
-        if (!targetData) throw new Error("Target không tồn tại.");
-        if (!targetData.active) throw new Error("Target này đang bị tắt.");
+        if (!targetData) throw new Error('Target không tồn tại.');
 
-        setSettings(settingsData);
+        // Chỉ chặn khi cột active thực sự bằng false. Nếu cột chưa tồn tại hoặc để trống
+        // thì vẫn cho quét, tránh lỗi giả "Target này đang bị tắt" do lệch schema.
+        const isDisabled = targetData.active === false || targetData.status === 'inactive';
+        if (isDisabled) throw new Error('Target này đang bị tắt.');
+
         setTarget(targetData as ARTarget);
       } catch (err: any) {
-        console.error("Lỗi tải public AR:", err);
-        setError(err.message || "Lỗi khi tải trải nghiệm AR");
+        console.error('Lỗi tải public AR:', err);
+        setError(err?.message || 'Lỗi khi tải trải nghiệm AR');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
+  }, []);
+
+  // Logo chỉ là phần trang trí, tải song song và không được chặn màn hình quét.
+  useEffect(() => {
+    getDefaultSettingsFromSupabase()
+      .then(setSettings)
+      .catch((err) => console.warn('Không tải được cấu hình hiển thị:', err));
   }, []);
 
   if (loading) {
