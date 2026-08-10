@@ -597,6 +597,14 @@ export default function App() {
   };
 
 
+  // Link AR công khai phải hiển thị ngay, không chờ bước khởi tạo phân quyền,
+  // nếu không thì Supabase hoặc Firestore chậm sẽ làm màn hình quét đứng vĩnh viễn.
+  const isPublicARRoute = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('ar');
+
+  if (isPublicARRoute) {
+    return <PublicARScanner />;
+  }
+
   if (!initialized) {
     return (
       <div className="min-h-screen w-screen flex items-center justify-center bg-slate-900 text-white">
@@ -606,12 +614,6 @@ export default function App() {
         </div>
       </div>
     );
-  }
-
-  const isPublicARRoute = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('ar');
-  
-  if (isPublicARRoute) {
-    return <PublicARScanner />;
   }
 
   const isForcePublic = typeof window !== 'undefined' && window.location.search.includes('public=true');
