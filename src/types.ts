@@ -203,11 +203,16 @@ export interface ARTarget {
   id: string;
   name: string;
   target_image_url: string;
+  // Tệp .mind đã biên dịch sẵn lúc tạo target, giúp bỏ hẳn bước biên dịch trên điện thoại khi quét.
+  mind_file_url?: string;
   content_type: 'video' | 'image' | 'gif' | '3d';
   content_url: string;
   scale: number;
   rotation: number;
   active: boolean;
+  description?: string;
+  thumbnail_url?: string;
+  owner_id?: string | null;
   created_at?: string;
   updated_at?: string;
 }
