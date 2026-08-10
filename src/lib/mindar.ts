@@ -35,14 +35,23 @@ function loadScript(src: string, errorMessage: string): Promise<void> {
   return promise;
 }
 
-// Bộ biên dịch phải được nạp trước bản dựng dành cho A-Frame, vì cả hai cùng ghi vào window.MINDAR.
+// Tệp mindar-image.prod.js là một ES module thuần, chỉ dài vài trăm byte và import tiếp các chunk khác.
+// Thẻ script thường không thực thi được nó, trình duyệt báo lỗi cú pháp nhưng vẫn phát sự kiện load,
+// nên window.MINDAR không bao giờ được gán. Phải nạp bằng dynamic import mới lấy được Compiler.
 export async function loadMindARCompiler(): Promise<any> {
   const existing = (window as any).MINDAR?.IMAGE?.Compiler;
   if (existing) return existing;
 
-  await loadScript(COMPILER_URL, 'Không tải được bộ biên dịch MindAR. Kiểm tra kết nối mạng hoặc CDN.');
+  const moduleUrl = COMPILER_URL;
+  let mod: any = null;
+  try {
+    mod = await import(/* @vite-ignore */ moduleUrl);
+  } catch (err) {
+    console.error('Lỗi nạp module MindAR:', err);
+    throw new Error('Không tải được bộ biên dịch MindAR. Kiểm tra kết nối mạng hoặc CDN.');
+  }
 
-  const Compiler = (window as any).MINDAR?.IMAGE?.Compiler;
+  const Compiler = mod?.Compiler || (window as any).MINDAR?.IMAGE?.Compiler;
   if (!Compiler) throw new Error('Bộ biên dịch MindAR không khả dụng sau khi tải.');
   return Compiler;
 }
