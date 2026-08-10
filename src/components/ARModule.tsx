@@ -2,18 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { QrCode, RefreshCw, Search, AlertCircle, X, Link2, ExternalLink, Download, Check, Plus, Loader2, Upload, Box, ArrowLeft, Pencil, Trash2, Save } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadARAssetToSupabase } from '../lib/upload';
-import { UserAccount } from '../types';
-
-interface ARTarget {
-  id: string;
-  name: string;
-  thumbnail_url?: string;
-  description?: string;
-  created_at?: string;
-  scale?: number;
-  rotation?: number;
-  active?: boolean;
-}
+import { compileImageToMindBlob } from '../lib/mindar';
+import { UserAccount, ARTarget } from '../types';
 
 function ARDetailModal({ target, onClose }: { target: ARTarget; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
@@ -163,6 +153,7 @@ function ARCreateView({ currentUser, onCancel, onCreated }: { currentUser?: User
   const [rotation, setRotation] = useState(0);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [progressText, setProgressText] = useState('');
 
   const pick = (setFile: any, setPrev: any) => (f: File) => { setFile(f); setPrev(URL.createObjectURL(f)); };
   const contentAccept = contentType === 'video' ? 'video/*' : contentType === '3d' ? '.glb,.gltf' : 'image/*';
@@ -175,16 +166,52 @@ function ARCreateView({ currentUser, onCancel, onCreated }: { currentUser?: User
     if (!contentFile) { setErr('Vui lòng chọn tệp nội dung.'); return; }
     setSaving(true);
     try {
+      setProgressText('Đang tải ảnh target lên...');
       const target_image_url = await uploadARAssetToSupabase(targetFile);
+
+      setProgressText('Đang tải nội dung hiển thị lên...');
       const content_url = await uploadARAssetToSupabase(contentFile);
-      const thumbnail_url = thumbFile ? await uploadARAssetToSupabase(thumbFile) : target_image_url;
-      const { error } = await supabase.from('ar_targets').insert({ name: name.trim(), description: description.trim(), target_image_url, thumbnail_url, content_type: contentType, content_url, scale, rotation, active: true, owner_id: currentUser?.id ?? null });
+
+      const thumbnail_url = thumbFile
+        ? await uploadARAssetToSupabase(thumbFile)
+        : target_image_url;
+
+      // Biên dịch ảnh target thành tệp .mind ngay tại đây, một lần duy nhất.
+      // Nhờ vậy người quét bằng điện thoại không phải chờ biên dịch lại mỗi lần mở link.
+      let mind_file_url: string | null = null;
+      try {
+        setProgressText('Đang biên dịch ảnh target, vui lòng chờ...');
+        const mindBlob = await compileImageToMindBlob(targetFile, (percent) => {
+          setProgressText(`Đang biên dịch ảnh target ${percent}%`);
+        });
+        const mindFile = new File([mindBlob], `${Date.now()}-target.mind`, { type: 'application/octet-stream' });
+        mind_file_url = await uploadARAssetToSupabase(mindFile);
+      } catch (compileError) {
+        // Không chặn việc tạo target. Trình quét vẫn có thể biên dịch dự phòng phía người dùng.
+        console.warn('Không biên dịch được tệp .mind lúc tạo target:', compileError);
+      }
+
+      setProgressText('Đang lưu vào cơ sở dữ liệu...');
+      const { error } = await supabase.from('ar_targets').insert({
+        name: name.trim(),
+        description: description.trim(),
+        target_image_url,
+        mind_file_url,
+        thumbnail_url,
+        content_type: contentType,
+        content_url,
+        scale,
+        rotation,
+        active: true,
+        owner_id: currentUser?.id ?? null,
+      });
       if (error) throw error;
       onCreated();
     } catch (e: any) {
       setErr(e.message || 'Lỗi khi tạo AR target');
     } finally {
       setSaving(false);
+      setProgressText('');
     }
   };
 
@@ -242,6 +269,7 @@ function ARCreateView({ currentUser, onCancel, onCreated }: { currentUser?: User
       </div>
 
       {err && <div className="flex items-center gap-2 text-sm text-rose-600 bg-rose-50 rounded-xl p-3"><AlertCircle className="w-4 h-4 shrink-0" />{err}</div>}
+      {saving && progressText && <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 rounded-xl p-3"><Loader2 className="w-4 h-4 shrink-0 animate-spin" />{progressText}</div>}
 
       <div className="flex justify-end gap-3">
         <button type="button" onClick={onCancel} className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50">Hủy</button>
