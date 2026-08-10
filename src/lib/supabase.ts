@@ -25,4 +25,26 @@ if (supabaseUrl && !supabaseUrl.startsWith('http')) {
   supabaseUrl = `https://${supabaseUrl}`;
 }
 
-export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder');
+// Gắn Firebase ID token vào mọi truy vấn Supabase.
+// Hệ thống xác thực người dùng bằng Firebase, còn Supabase được khai báo Firebase
+// là nhà cung cấp xác thực bên thứ ba, nhờ vậy policy RLS mới phân biệt được
+// khách vãng lai với tài khoản đã đăng nhập. Khi chưa đăng nhập thì trả về null
+// và thư viện tự dùng khóa công khai, các trang công khai vẫn đọc dữ liệu bình thường.
+// Dùng dynamic import để tránh phụ thuộc vòng giữa hai tệp khởi tạo.
+const getFirebaseAccessToken = async (): Promise<string | null> => {
+  try {
+    const { auth } = await import('./firebase');
+    const user = auth.currentUser;
+    if (!user) return null;
+    return await user.getIdToken();
+  } catch (error) {
+    console.warn('Không lấy được Firebase ID token cho Supabase:', error);
+    return null;
+  }
+};
+
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder',
+  { accessToken: getFirebaseAccessToken },
+);
