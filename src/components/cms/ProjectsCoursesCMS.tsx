@@ -103,9 +103,10 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
   };
 
   const formatSecondsToDuration = (totalSeconds: number): string => {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+    const total = Math.max(0, Math.round(Number(totalSeconds) || 0));
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const seconds = total % 60;
 
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
@@ -113,13 +114,40 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const getVimeoId = (url: string): string | null => {
+    if (!url) return null;
+    const m = url.trim().match(/vimeo\.com\/(?:video\/|channels\/[^/]+\/|groups\/[^/]+\/videos\/)?(\d+)/i);
+    return m ? m[1] : null;
+  };
+
+  const detectVimeoDuration = async (url: string): Promise<string> => {
+    const res = await fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`);
+    if (!res.ok) {
+      throw new Error('Không gọi được Vimeo oEmbed.');
+    }
+    const data = await res.json();
+    if (!data || typeof data.duration !== 'number' || data.duration <= 0) {
+      throw new Error('Vimeo không trả về thời lượng.');
+    }
+    return formatSecondsToDuration(data.duration);
+  };
+
   const detectYouTubeDurationClientSide = (videoId: string): Promise<string> => {
     return new Promise((resolve, reject) => {
-      if (!(window as any).YT) {
+      const ytApiReady = !!(window as any).YT && !!(window as any).YT.Player;
+      const ytApiScriptExists = !!document.querySelector('script[data-yt-iframe-api="1"]')
+        || !!document.querySelector('script[src*="youtube.com/iframe_api"]');
+
+      if (!ytApiReady && !ytApiScriptExists) {
         const tag = document.createElement('script');
         tag.src = 'https://www.youtube.com/iframe_api';
+        tag.setAttribute('data-yt-iframe-api', '1');
         const firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+        if (firstScriptTag && firstScriptTag.parentNode) {
+          firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        } else {
+          document.head.appendChild(tag);
+        }
       }
 
       const tempDivId = `yt-temp-player-${Date.now()}`;
@@ -255,31 +283,46 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
     };
 
     try {
-      // 1. Try server-side scraper first
-      const res = await fetch(`/api/youtube-duration?url=${encodeURIComponent(videoUrl)}`);
-      const data = await res.json();
-      
-      if (res.ok && data.duration) {
-        updateLessonDuration(data.duration);
-        addNotification(`Đã tự động nhận diện thời lượng (Server): ${data.duration}`, 'success');
+      // 1. Vimeo dùng oEmbed công khai, chạy được cả trên hosting tĩnh
+      if (getVimeoId(videoUrl)) {
+        const vimeoDuration = await detectVimeoDuration(videoUrl);
+        updateLessonDuration(vimeoDuration);
+        addNotification(`Đã tự động nhận diện thời lượng (Vimeo): ${vimeoDuration}`, 'success');
         return;
       }
 
-      // 2. Fallback to client-side detection via YouTube player API if server-side gets blocked
       const videoId = getYouTubeId(videoUrl);
       if (!videoId) {
-        throw new Error('Đường dẫn YouTube không đúng định dạng.');
+        throw new Error('Đường dẫn video không đúng định dạng (chỉ hỗ trợ YouTube và Vimeo).');
       }
 
+      // 2. Thử API phía server, chỉ dùng kết quả khi thật sự nhận về JSON hợp lệ.
+      //    Trên GitHub Pages endpoint này không tồn tại nên phải bỏ qua êm để xuống bước 3.
+      try {
+        const res = await fetch(`/api/youtube-duration?url=${encodeURIComponent(videoUrl)}`);
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data && data.duration) {
+            updateLessonDuration(data.duration);
+            addNotification(`Đã tự động nhận diện thời lượng (Server): ${data.duration}`, 'success');
+            return;
+          }
+        }
+      } catch (serverErr) {
+        console.warn('Không dùng được API phía server, chuyển sang trình phát YouTube.', serverErr);
+      }
+
+      // 3. Fallback to client-side detection via YouTube player API if server-side gets blocked
       addNotification('Đang tải dữ liệu trực tiếp từ trình phát YouTube...', 'info');
       const clientDuration = await detectYouTubeDurationClientSide(videoId);
-      
+
       updateLessonDuration(clientDuration);
       addNotification(`Đã tự động nhận diện thời lượng (Client): ${clientDuration}`, 'success');
 
     } catch (err: any) {
       console.error('Duration detection failed:', err);
-      addNotification('Không tìm thấy thời lượng của video. Vui lòng tự nhập.', 'warning');
+      addNotification(err?.message || 'Không tìm thấy thời lượng của video. Vui lòng tự nhập.', 'warning');
     } finally {
       setFetchingLessons(prev => ({ ...prev, [lessonId]: false }));
     }
