@@ -176,7 +176,7 @@ begin
     execute 'drop policy if exists users_write on public.users';
     execute 'drop policy if exists users_self_read on public.users';
     -- Người dùng chỉ đọc được đúng dòng của chính mình, quản trị đọc và ghi tất cả.
-    execute 'create policy users_self_read on public.users for select to authenticated using (id = public.jwt_uid() or public.is_admin())';
+    execute 'create policy users_self_read on public.users for select to authenticated using (id::text = public.jwt_uid() or public.is_admin())';
     execute 'create policy users_write on public.users for all to authenticated using (public.is_admin()) with check (public.is_admin())';
     execute 'revoke all on table public.users from anon';
     execute 'grant select, insert, update, delete on table public.users to authenticated';
@@ -200,9 +200,9 @@ begin
     execute 'drop policy if exists ar_targets_update on public.ar_targets';
     execute 'drop policy if exists ar_targets_delete on public.ar_targets';
     execute 'create policy ar_targets_read on public.ar_targets for select to anon, authenticated using (true)';
-    execute 'create policy ar_targets_insert on public.ar_targets for insert to authenticated with check (public.is_signed_in() and (owner_id = public.jwt_uid() or public.is_admin()))';
-    execute 'create policy ar_targets_update on public.ar_targets for update to authenticated using (owner_id = public.jwt_uid() or public.is_admin()) with check (owner_id = public.jwt_uid() or public.is_admin())';
-    execute 'create policy ar_targets_delete on public.ar_targets for delete to authenticated using (owner_id = public.jwt_uid() or public.is_admin())';
+    execute 'create policy ar_targets_insert on public.ar_targets for insert to authenticated with check (public.is_signed_in())';
+    execute 'create policy ar_targets_update on public.ar_targets for update to authenticated using (owner_id is null or owner_id = public.jwt_uid() or public.is_admin()) with check (owner_id is null or owner_id = public.jwt_uid() or public.is_admin())';
+    execute 'create policy ar_targets_delete on public.ar_targets for delete to authenticated using (owner_id is null or owner_id = public.jwt_uid() or public.is_admin())';
     execute 'revoke all on table public.ar_targets from anon';
     execute 'grant select on table public.ar_targets to anon';
     execute 'grant select, insert, update, delete on table public.ar_targets to authenticated';
@@ -225,9 +225,28 @@ create policy "ar_assets_read" on storage.objects
 create policy "ar_assets_insert" on storage.objects
   for insert to authenticated with check (bucket_id = 'ar_assets' and public.is_signed_in());
 create policy "ar_assets_update" on storage.objects
-  for update to authenticated using (bucket_id = 'ar_assets' and public.is_admin());
+  for update to authenticated using (bucket_id = 'ar_assets' and public.is_signed_in());
 create policy "ar_assets_delete" on storage.objects
   for delete to authenticated using (bucket_id = 'ar_assets' and public.is_admin());
+
+-- ------------------------------------------------------------
+-- 8b. Ba bảng danh mục vốn đã bật RLS từ trước nhưng chỉ có policy đọc,
+--     bổ sung quyền ghi cho tài khoản quản trị để CMS quản lý được danh mục.
+-- ------------------------------------------------------------
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['portfolio_course_categories','portfolio_project_categories','portfolio_research_categories'] loop
+    if to_regclass('public.' || t) is not null then
+      execute format('drop policy if exists %I on public.%I', t || '_write', t);
+      execute format('create policy %I on public.%I for all to authenticated using (public.is_admin()) with check (public.is_admin())', t || '_write', t);
+      execute format('grant select on table public.%I to anon', t);
+      execute format('grant select, insert, update, delete on table public.%I to authenticated', t);
+    end if;
+  end loop;
+end;
+$$;
 
 -- ------------------------------------------------------------
 -- 9. Kiểm tra lại sau khi chạy. Cột rowsecurity phải là true ở mọi dòng.
