@@ -20,8 +20,8 @@ export const STATS_TABLE = 'app_stats';
 
 function handleSupabaseError(error: any, context: string, tableName: string) {
   if (error.code === '42501' || error.message?.includes('row-level security')) {
-    console.error(`❌ Lỗi bảo mật (RLS) tại ${context}: Bảng '${tableName}' đang bị khóa.`);
-    console.error(`👉 Cách sửa: Chạy lệnh SQL 'ALTER TABLE ${tableName} DISABLE ROW LEVEL SECURITY;' trong Supabase.`);
+    console.error(`❌ Lỗi phân quyền (RLS) tại ${context}: tài khoản hiện tại không có quyền trên bảng '${tableName}'.`);
+    console.error(`👉 Cách sửa: đăng nhập bằng tài khoản quản trị, hoặc kiểm tra policy của bảng '${tableName}' theo file SECURITY_RLS.sql. Tuyệt đối không tắt Row Level Security để chữa lỗi này, vì khóa anon nằm công khai trong bundle nên tắt RLS đồng nghĩa mở toàn bộ dữ liệu cho mọi người.`);
   } else if (error.message?.includes('schema cache')) {
     console.error(`❌ Lỗi Cache tại ${context}: Supabase chưa nhận diện được cột mới của bảng '${tableName}'.`);
     console.error(`👉 Cách sửa: Hãy vào Supabase Dashboard -> Settings -> API -> Nhấn nút "Reload PostgREST" để xóa cache.`);
