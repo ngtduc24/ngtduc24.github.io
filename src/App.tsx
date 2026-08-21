@@ -32,6 +32,9 @@ import { requestFCMToken, getMessagingInstance } from './lib/firebase';
 import { AppSettings, UserAccount } from './types';
 import { onMessage } from 'firebase/messaging';
 
+// Khóa lưu khu vực đang mở (portfolio công khai hay trang quản trị) để tải lại trang không bị nhảy ra ngoài.
+const ENTRY_VIEW_STORAGE_KEY = 'app_entry_view';
+
 export default function App() {
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
@@ -68,8 +71,29 @@ export default function App() {
       sessionStorage.removeItem('resume_admin_after_refresh');
       return 'admin';
     }
+    // Giữ nguyên khu vực đang làm việc khi người dùng tự bấm F5 hoặc trình duyệt khôi phục tab.
+    // Dùng sessionStorage nên tab mới mở vẫn vào trang portfolio công khai như trước.
+    try {
+      const saved = sessionStorage.getItem(ENTRY_VIEW_STORAGE_KEY);
+      if (saved === 'admin' || saved === 'portfolio') {
+        return saved;
+      }
+    } catch (e) {
+      // Trình duyệt chặn sessionStorage thì bỏ qua, quay về mặc định.
+    }
     return 'portfolio';
   });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    // Không lưu trạng thái màn hình đăng nhập, tránh việc tải lại trang lại rơi vào form đăng nhập.
+    if (entryView === 'login') return;
+    try {
+      sessionStorage.setItem(ENTRY_VIEW_STORAGE_KEY, entryView);
+    } catch (e) {
+      // Bỏ qua khi trình duyệt chặn sessionStorage.
+    }
+  }, [entryView]);
   const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
   const [profileModalReadOnly, setProfileModalReadOnly] = useState<boolean>(false);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
