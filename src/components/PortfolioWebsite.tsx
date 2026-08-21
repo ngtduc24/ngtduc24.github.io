@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { sanitizeHtml, isSafeUrl } from '../lib/sanitizeHtml';
 import {
   ArrowRight,
   Award,
@@ -1009,7 +1010,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
             {item.type === 'article' && (
               <article className="prose prose-slate prose-sm sm:prose-base max-w-none">
                 <p className="text-xl font-semibold leading-relaxed text-slate-600">{item.data.excerpt}</p>
-                <div className="mt-10" dangerouslySetInnerHTML={{ __html: item.data.content || "" }} />
+                <div className="mt-10" dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data.content) }} />
                 <div className="mt-12 flex flex-wrap gap-2">
                   {item.data.tags.map(tag => (
                     <span key={tag} className="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-bold text-slate-600">#{tag}</span>
@@ -1020,7 +1021,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
 
             {item.type === 'project' && (
               <div className="space-y-12">
-                <div className="prose prose-slate prose-sm sm:prose-base max-w-none" dangerouslySetInnerHTML={{ __html: item.data.detailedContent || item.data.briefDescription }} />
+                <div className="prose prose-slate prose-sm sm:prose-base max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data.detailedContent || item.data.briefDescription) }} />
                 
                 <div className="grid gap-6 sm:grid-cols-2">
                   {[
@@ -1227,7 +1228,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                         </div>
 
                         {/* Detailed Description */}
-                        <div className="prose prose-slate prose-sm sm:prose-base max-w-none" dangerouslySetInnerHTML={{ __html: course.detailedDescription || course.briefDescription }} />
+                        <div className="prose prose-slate prose-sm sm:prose-base max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHtml(course.detailedDescription || course.briefDescription) }} />
                         
                         {/* Course Outcomes & Requirements */}
                         <div className="grid gap-6 sm:grid-cols-2">
@@ -1278,7 +1279,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                               </span>
                               {activeLesson.practiceFileUrl && (
                                 <a 
-                                  href={activeLesson.practiceFileUrl} 
+                                  href={isSafeUrl(activeLesson.practiceFileUrl) ? activeLesson.practiceFileUrl : undefined} 
                                   target="_blank" 
                                   rel="noreferrer" 
                                   className="flex items-center gap-1 text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded hover:underline"
@@ -1735,14 +1736,14 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                     </div>
                   )}
                 </div>
-                {item.data.pdfUrl && (
+                {isSafeUrl(item.data.pdfUrl) && (
                   <div className="overflow-hidden rounded-[2rem] border border-slate-200 shadow-sm">
-                    <iframe src={item.data.pdfUrl} title="Tài liệu PDF" className="h-[80vh] w-full" />
+                    <iframe src={item.data.pdfUrl} title="Tài liệu PDF" className="h-[80vh] w-full" sandbox="allow-same-origin allow-scripts allow-popups" />
                   </div>
                 )}
                 <div className="flex flex-wrap gap-4">
-                  {item.data.publisherUrl && <a href={item.data.publisherUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-6 py-3.5 text-sm font-black text-white shadow-xl shadow-emerald-900/20 hover:bg-emerald-500">Nguồn xuất bản <ExternalLink className="h-4 w-4" /></a>}
-                  {item.data.pdfUrl && <a href={item.data.pdfUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-black text-slate-700 hover:bg-slate-50">Tải tài liệu PDF <Download className="h-4 w-4" /></a>}
+                  {isSafeUrl(item.data.publisherUrl) && <a href={item.data.publisherUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-6 py-3.5 text-sm font-black text-white shadow-xl shadow-emerald-900/20 hover:bg-emerald-500">Nguồn xuất bản <ExternalLink className="h-4 w-4" /></a>}
+                  {isSafeUrl(item.data.pdfUrl) && <a href={item.data.pdfUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-black text-slate-700 hover:bg-slate-50">Tải tài liệu PDF <Download className="h-4 w-4" /></a>}
                 </div>
               </div>
             )}
@@ -2524,7 +2525,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
           <div className={sectionShell}>
             <div className="grid items-center gap-12 lg:grid-cols-[0.85fr_1.15fr]">
               <Reveal className="relative"><div className="absolute -inset-5 rounded-[2.5rem] bg-emerald-100/70 blur-2xl" /><img src={about.avatarUrl} alt={`Chân dung ${about.fullName}`} loading="lazy" className="relative aspect-[4/5] w-full rounded-[2.25rem] object-cover shadow-2xl" /><div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/60 bg-white/90 p-5 backdrop-blur"><p className="text-xl font-black text-slate-950">{about.artistName}</p><p className="mt-1 text-xs font-bold text-emerald-600">{about.jobTitle}</p></div></Reveal>
-              <Reveal><SectionHeading eyebrow={about.showAboutLabel !== false ? "Giới thiệu bản thân" : undefined} title={about.fullName || about.artistName} description={about.briefBio} /><p className="mt-6 text-sm leading-8 text-slate-600">{about.detailedAbout}</p><blockquote className="mt-7 rounded-2xl border-l-4 border-emerald-500 bg-emerald-50 p-5 text-sm font-semibold italic leading-7 text-slate-700"><Quote className="mb-2 h-5 w-5 text-emerald-600" />“{about.creativePhilosophy}”</blockquote><div className="mt-7 flex flex-wrap gap-2">{about.specialties.map(value => <span key={value} className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600">{value}</span>)}</div>{about.showCvButton && <a href={about.cvUrl || '#'} className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700"><Download className="h-4 w-4" /> Tải hồ sơ năng lực</a>}</Reveal>
+              <Reveal><SectionHeading eyebrow={about.showAboutLabel !== false ? "Giới thiệu bản thân" : undefined} title={about.fullName || about.artistName} description={about.briefBio} /><p className="mt-6 text-sm leading-8 text-slate-600">{about.detailedAbout}</p><blockquote className="mt-7 rounded-2xl border-l-4 border-emerald-500 bg-emerald-50 p-5 text-sm font-semibold italic leading-7 text-slate-700"><Quote className="mb-2 h-5 w-5 text-emerald-600" />“{about.creativePhilosophy}”</blockquote><div className="mt-7 flex flex-wrap gap-2">{about.specialties.map(value => <span key={value} className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600">{value}</span>)}</div>{about.showCvButton && <a href={isSafeUrl(about.cvUrl) ? about.cvUrl : '#'} className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700"><Download className="h-4 w-4" /> Tải hồ sơ năng lực</a>}</Reveal>
             </div>
           </div>
         </section>
