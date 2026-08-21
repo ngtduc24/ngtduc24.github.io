@@ -5,27 +5,39 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
     function isAdmin() {
-      return isSignedIn() && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // General rule for all documents
+    // Những trường quyết định quyền hạn. Người dùng thường không được tự sửa chúng
+    // trên hồ sơ của chính mình, nếu không họ sẽ tự nâng quyền lên ngang admin mà
+    // vẫn giữ nguyên vai trò để qua mặt phần kiểm tra ở giao diện.
+    function privilegeFieldsUnchanged() {
+      return request.resource.data.role == resource.data.role
+        && request.resource.data.get('permissions', []) == resource.data.get('permissions', [])
+        && request.resource.data.get('isActive', true) == resource.data.get('isActive', true);
+    }
+
+    // Quy tắc chung cho mọi tài liệu. Ghi vẫn chỉ dành cho admin.
     match /{document=**} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
 
-    // Specific rules for users
+    // Hồ sơ người dùng. Quy tắc trong Firestore mang tính cộng dồn nên khối này chỉ
+    // nới thêm quyền tự sửa hồ sơ của chính mình, và nới có điều kiện chặt chẽ.
     match /users/{userId} {
-      allow create: if isOwner(userId) && request.resource.data.role != 'admin';
-      allow update: if isOwner(userId) && request.resource.data.role == resource.data.role;
+      allow create: if isOwner(userId)
+        && request.resource.data.role != 'admin'
+        && request.resource.data.get('permissions', []).size() == 0;
+      allow update: if isOwner(userId) && privilegeFieldsUnchanged();
     }
   }
 }
