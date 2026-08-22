@@ -693,7 +693,14 @@ export const savePortfolioProject = async (item: PortfolioProject) => { await sa
 export const deletePortfolioProject = async (id: string) => { await deleteOne('portfolio_projects', id, 'projects'); };
 
 export const getPortfolioCourses = () => loadCollection('portfolio_courses', 'courses', DEFAULT_COURSES, { row: courseRow });
-export const savePortfolioCourse = async (item: PortfolioCourse) => { await saveOne('portfolio_courses', 'courses', item, DEFAULT_COURSES, courseRow); };
+export const savePortfolioCourse = async (item: PortfolioCourse) => {
+  // Bảng portfolio_courses cho phép đọc công khai để trang portfolio hiển thị được khóa học,
+  // nên tuyệt đối không nhét danh sách học viên vào đây. Danh sách đó chứa họ tên, email và
+  // tình trạng thanh toán, và được lưu riêng ở bảng portfolio_course_students, nơi chỉ tài
+  // khoản đã đăng nhập mới đọc được. Khi tải lên, học viên luôn được ghép lại từ bảng riêng.
+  const safeItem: PortfolioCourse = { ...item, students: [] };
+  await saveOne('portfolio_courses', 'courses', safeItem, DEFAULT_COURSES, courseRow);
+};
 export const deletePortfolioCourse = async (id: string) => { await deleteOne('portfolio_courses', id, 'courses'); };
 
 export const getCourseChapters = (courseId: string) => loadCollection('portfolio_course_chapters', `chapters_${courseId}`, courseId === 'course_1' ? DEFAULT_CHAPTERS : [], { filter: ['course_id', courseId], orderBy: 'sort_order', row: chapterRow(courseId) });
