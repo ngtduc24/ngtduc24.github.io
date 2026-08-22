@@ -147,8 +147,9 @@ end;
 $$;
 
 -- ------------------------------------------------------------
--- 5. Bảng đếm lượt xem. Khách vãng lai cần tăng số đếm nên được phép ghi,
---    nhưng bảng này chỉ chứa con số thống kê, không có dữ liệu cá nhân.
+-- 5. Bảng đếm lượt xem. Khách vãng lai cần cộng số đếm nên được phép cập nhật,
+--    nhưng không được thêm dòng mới và không được xóa. Bảng này chỉ chứa con số
+--    thống kê, không có dữ liệu cá nhân nào.
 -- ------------------------------------------------------------
 do $$
 begin
@@ -156,9 +157,14 @@ begin
     execute 'alter table public.app_stats enable row level security';
     execute 'drop policy if exists app_stats_read on public.app_stats';
     execute 'drop policy if exists app_stats_write on public.app_stats';
+    execute 'drop policy if exists app_stats_update on public.app_stats';
+    execute 'drop policy if exists app_stats_admin on public.app_stats';
     execute 'create policy app_stats_read on public.app_stats for select to anon, authenticated using (true)';
-    execute 'create policy app_stats_write on public.app_stats for all to anon, authenticated using (true) with check (true)';
-    execute 'grant select, insert, update on table public.app_stats to anon, authenticated';
+    execute 'create policy app_stats_update on public.app_stats for update to anon, authenticated using (true) with check (true)';
+    execute 'create policy app_stats_admin on public.app_stats for all to authenticated using (public.is_admin()) with check (public.is_admin())';
+    execute 'revoke all on table public.app_stats from anon';
+    execute 'grant select, update on table public.app_stats to anon';
+    execute 'grant select, insert, update, delete on table public.app_stats to authenticated';
   end if;
 end;
 $$;
@@ -249,9 +255,62 @@ end;
 $$;
 
 -- ------------------------------------------------------------
--- 9. Kiểm tra lại sau khi chạy. Cột rowsecurity phải là true ở mọi dòng.
+-- 8c. Gỡ danh sách học viên ra khỏi bảng portfolio_courses.
+--     Bảng này cho đọc công khai, mà ứng dụng lại lưu nguyên đối tượng khóa học
+--     vào cột data, trong đó có mảng students chứa họ tên, email và tình trạng
+--     thanh toán. Dữ liệu học viên vẫn còn nguyên ở bảng portfolio_course_students.
+--     Phần mã nguồn đã sửa ở hàm savePortfolioCourse trong src/lib/portfolioData.ts
+--     để lần lưu sau không ghi lại vào đây nữa.
 -- ------------------------------------------------------------
+update public.portfolio_courses
+set data = jsonb_set(data - 'students', '{students}', '[]'::jsonb)
+where data ? 'students'
+  and jsonb_array_length(coalesce(data->'students', '[]'::jsonb)) > 0;
+
+-- ------------------------------------------------------------
+-- 8d. Chốt chặn cuối cùng ở tầng đặc quyền của Postgres.
+--     Policy quyết định thấy được dòng nào, còn đặc quyền quyết định có được
+--     đụng vào bảng hay không. Thu hồi sạch quyền ghi của khách vãng lai trên
+--     mọi bảng, kể cả những bảng cũ còn sót quyền từ file schema đời trước,
+--     rồi cấp lại đúng một quyền duy nhất là cập nhật bộ đếm lượt xem.
+-- ------------------------------------------------------------
+do $$
+declare
+  r record;
+begin
+  for r in select tablename from pg_tables where schemaname = 'public' loop
+    execute format('revoke insert, update, delete, truncate on table public.%I from anon', r.tablename);
+  end loop;
+  if to_regclass('public.app_stats') is not null then
+    execute 'grant update on table public.app_stats to anon';
+  end if;
+end;
+$$;
+
+-- ------------------------------------------------------------
+-- 9. Kiểm tra lại sau khi chạy.
+-- ------------------------------------------------------------
+
+-- 9.1 Cột rowsecurity phải là true ở mọi dòng.
 select tablename, rowsecurity
 from pg_tables
 where schemaname = 'public'
 order by rowsecurity, tablename;
+
+-- 9.2 Khách vãng lai chỉ được giữ đúng một quyền ghi, là UPDATE trên app_stats.
+--     Nếu truy vấn này trả về bất kỳ dòng nào khác, đó là một lỗ hổng.
+select table_name, privilege_type
+from information_schema.role_table_grants
+where grantee = 'anon'
+  and table_schema = 'public'
+  and privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE')
+order by table_name, privilege_type;
+
+-- 9.3 Không bảng nào được phép bật RLS mà thiếu policy, trừ app_admins và app_users
+--     là hai bảng cố ý khóa hoàn toàn.
+select t.tablename, count(p.policyname) as so_policy
+from pg_tables t
+left join pg_policies p on p.schemaname = t.schemaname and p.tablename = t.tablename
+where t.schemaname = 'public'
+group by t.tablename
+order by so_policy, t.tablename;
