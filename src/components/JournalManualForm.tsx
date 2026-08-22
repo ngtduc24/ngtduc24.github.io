@@ -37,7 +37,7 @@ export default function JournalManualForm({
         </p>
       </div>
 
-      <form onSubmit={handleFormSubmit} className="space-y-6">
+      <form onSubmit={(e) => { e.preventDefault(); handleFormSubmit(e); }} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1 md:col-span-2">
             <label className="text-[11px] font-bold text-slate-500 uppercase">Tên tạp chí khoa học *</label>
