@@ -97,6 +97,8 @@ import {
   PortfolioResearch,
   PortfolioSkill,
   PortfolioGlobalSettings,
+  HomeSectionKey,
+  isHomeSectionVisible,
   CourseStudent,
   PortfolioLecture,
   CourseChapter,
@@ -1807,6 +1809,8 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
   const [navigation, setNavigation] = useState<PortfolioNavigation[]>([]);
   const [posts, setPosts] = useState<PortfolioPost[]>([]);
   const [globalSettings, setGlobalSettings] = useState<PortfolioGlobalSettings | null>(null);
+  // Bật tắt hiển thị từng khối trên trang chủ theo cấu hình trong trang quản trị.
+  const showSection = (key: HomeSectionKey) => isHomeSectionVisible(globalSettings, key);
 
   const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -2438,7 +2442,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
         ) : collectionPage ? (
           <PortfolioCollectionPage page={collectionPage} cards={collectionCards[collectionPage]} onOpen={showDetail} projectsSettings={projectsSettings} coursesSettings={coursesSettings} onCollectionPage={showCollectionPage} onEnroll={handleEnroll} registering={registering} viewer={currentUser} />
         ) : <>
-        {banner.visible && (
+        {showSection('banner') && banner.visible && (
           <section id="banner" className="relative scroll-mt-0 bg-slate-950">
               <div className="relative min-h-[720px] overflow-hidden bg-slate-950 sm:min-h-[780px]">
                 {banner.mediaType === 'video' && banner.videoUrl ? (
@@ -2495,7 +2499,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
           </section>
         )}
 
-        {banner.visible && (
+        {showSection('quickLinks') && banner.visible && (
           <div className={`${sectionShell} relative z-20 -mt-16 sm:-mt-20 mb-8 sm:mb-12`}>
             <div className={`mx-auto grid max-w-6xl overflow-hidden rounded-[2rem] shadow-2xl shadow-slate-950/10 sm:grid-cols-2 lg:grid-cols-4 ${glassStyle}`} style={{ backgroundColor: bgColor }}>
               {(banner.quickLinks && banner.quickLinks.length > 0 ? banner.quickLinks : [
@@ -2521,7 +2525,8 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
           </div>
         )}
 
-        <section id="about" className="scroll-mt-24 bg-white py-24 sm:py-28">
+        {showSection('about') && (
+<section id="about" className="scroll-mt-24 bg-white py-24 sm:py-28">
           <div className={sectionShell}>
             <div className="grid items-center gap-12 lg:grid-cols-[0.85fr_1.15fr]">
               <Reveal className="relative"><div className="absolute -inset-5 rounded-[2.5rem] bg-emerald-100/70 blur-2xl" /><img src={about.avatarUrl} alt={`Chân dung ${about.fullName}`} loading="lazy" className="relative aspect-[4/5] w-full rounded-[2.25rem] object-cover shadow-2xl" /><div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/60 bg-white/90 p-5 backdrop-blur"><p className="text-xl font-black text-slate-950">{about.artistName}</p><p className="mt-1 text-xs font-bold text-emerald-600">{about.jobTitle}</p></div></Reveal>
@@ -2529,17 +2534,21 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
             </div>
           </div>
         </section>
+        )}
 
+        {(showSection('education') || showSection('experience')) && (
         <section className="bg-white py-24 sm:py-28" aria-label="Học vấn và kinh nghiệm">
           <div className={sectionShell}>
             <div className="grid gap-8 lg:grid-cols-2">
-              <Reveal><div id="education" className="scroll-mt-28"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-600"><GraduationCap className="h-5 w-5" /></span><h3 className="text-2xl font-black text-slate-950">Học vấn</h3></div><div className="mt-6 space-y-4">{education.map(item => <article key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-6"><p className="text-xs font-extrabold text-emerald-600">{item.startDate} — {item.isOngoing ? 'Hiện tại' : item.endDate}</p><h4 className="mt-2 text-base font-black text-slate-950">{item.degree}</h4><p className="mt-1 text-xs font-bold text-slate-500">{item.major} • {item.school}</p><p className="mt-3 text-sm leading-6 text-slate-600">{item.description}</p>{item.achievement && <p className="mt-3 flex gap-2 text-xs font-bold text-emerald-700"><Award className="h-4 w-4 shrink-0" />{item.achievement}</p>}</article>)}</div></div></Reveal>
-              <Reveal delay={0.08}><div id="experience" className="scroll-mt-28"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-600"><BriefcaseBusiness className="h-5 w-5" /></span><h3 className="text-2xl font-black text-slate-950">Kinh nghiệm</h3></div><div className="mt-6 space-y-4">{experience.map(item => <article key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-6"><p className="text-xs font-extrabold text-emerald-600">{item.startDate} — {item.isOngoing ? 'Hiện tại' : item.endDate}</p><h4 className="mt-2 text-base font-black text-slate-950">{item.title}</h4><p className="mt-1 text-xs font-bold text-slate-500">{item.company}</p><p className="mt-3 text-sm leading-6 text-slate-600">{item.description}</p></article>)}</div></div></Reveal>
+              {showSection('education') && <Reveal><div id="education" className="scroll-mt-28"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-600"><GraduationCap className="h-5 w-5" /></span><h3 className="text-2xl font-black text-slate-950">Học vấn</h3></div><div className="mt-6 space-y-4">{education.map(item => <article key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-6"><p className="text-xs font-extrabold text-emerald-600">{item.startDate} — {item.isOngoing ? 'Hiện tại' : item.endDate}</p><h4 className="mt-2 text-base font-black text-slate-950">{item.degree}</h4><p className="mt-1 text-xs font-bold text-slate-500">{item.major} • {item.school}</p><p className="mt-3 text-sm leading-6 text-slate-600">{item.description}</p>{item.achievement && <p className="mt-3 flex gap-2 text-xs font-bold text-emerald-700"><Award className="h-4 w-4 shrink-0" />{item.achievement}</p>}</article>)}</div></div></Reveal>}
+              {showSection('experience') && <Reveal delay={0.08}><div id="experience" className="scroll-mt-28"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-600"><BriefcaseBusiness className="h-5 w-5" /></span><h3 className="text-2xl font-black text-slate-950">Kinh nghiệm</h3></div><div className="mt-6 space-y-4">{experience.map(item => <article key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-6"><p className="text-xs font-extrabold text-emerald-600">{item.startDate} — {item.isOngoing ? 'Hiện tại' : item.endDate}</p><h4 className="mt-2 text-base font-black text-slate-950">{item.title}</h4><p className="mt-1 text-xs font-bold text-slate-500">{item.company}</p><p className="mt-3 text-sm leading-6 text-slate-600">{item.description}</p></article>)}</div></div></Reveal>}
             </div>
           </div>
         </section>
+        )}
 
-        <section id="skills" className="scroll-mt-24 bg-[#effaf5] py-24 sm:py-28">
+        {showSection('skills') && (
+<section id="skills" className="scroll-mt-24 bg-[#effaf5] py-24 sm:py-28">
           <div className={sectionShell}>
             <Reveal><SectionHeading eyebrow="Kỹ năng & Dịch vụ" title="Giải pháp sáng tạo từ ý tưởng đến trải nghiệm" description="Kết hợp mỹ thuật, chuyển động và công nghệ để tạo nên những sản phẩm đa phương tiện rõ ràng, đẹp và có giá trị sử dụng." centered /></Reveal>
             <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -2547,8 +2556,10 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
             </div>
           </div>
         </section>
+        )}
 
-        <section id="projects" className="scroll-mt-24 bg-slate-950 py-20 text-white sm:py-24">
+        {showSection('projects') && (
+<section id="projects" className="scroll-mt-24 bg-slate-950 py-20 text-white sm:py-24">
           <div className={sectionShell}>
             <Reveal>
               <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
@@ -2599,8 +2610,10 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
             </div>
           </div>
         </section>
+        )}
 
-        <section id="courses" className="scroll-mt-24 bg-[#effaf5] py-20 sm:py-24">
+        {showSection('courses') && (
+<section id="courses" className="scroll-mt-24 bg-[#effaf5] py-20 sm:py-24">
           <div className={sectionShell}>
             <Reveal><div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end"><SectionHeading eyebrow="Khóa học trực tuyến" title="Học từ quy trình sáng tạo thực tế" description="Các chương trình học có cấu trúc rõ ràng, tập trung vào thực hành và kết quả đầu ra có thể đưa vào Portfolio." /><button onClick={() => showCollectionPage('courses')} className="inline-flex w-fit items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-xs font-black text-white hover:bg-emerald-700">Xem tất cả khóa học <ArrowRight className="h-4 w-4" /></button></div></Reveal>
             <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -2642,16 +2655,21 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
             </div>
           </div>
         </section>
+        )}
 
-        <section id="research" className="scroll-mt-24 bg-white py-20 sm:py-24">
+        {showSection('research') && (
+<section id="research" className="scroll-mt-24 bg-white py-20 sm:py-24">
           <div className={sectionShell}>
             <Reveal><div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end"><SectionHeading eyebrow="Nghiên cứu khoa học" title="Công trình & xuất bản học thuật" description="Các nghiên cứu tại giao điểm giữa thiết kế đa phương tiện, trải nghiệm người dùng và công nghệ sáng tạo." /><button onClick={() => showCollectionPage('research')} className="inline-flex w-fit items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-xs font-black text-white hover:bg-emerald-700">Xem tất cả nghiên cứu <ArrowRight className="h-4 w-4" /></button></div></Reveal>
             <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{visibleResearch.slice(0, 6).map(item => <Reveal key={item.id}><button onClick={() => showDetail({ type: 'research', data: item })} className="group flex h-full w-full flex-col overflow-hidden rounded-[1.5rem] bg-slate-50 text-left ring-1 ring-slate-100 transition hover:-translate-y-1 hover:bg-emerald-50 hover:shadow-xl"><div className="aspect-[16/8] overflow-hidden">{item.coverImage ? <img src={item.coverImage} alt={item.titleVi} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" loading="lazy" /> : <div className="grid h-full place-items-center bg-gradient-to-br from-emerald-100 to-slate-100 text-emerald-600"><Award className="h-10 w-10" /></div>}</div><div className="flex flex-1 flex-col p-5"><div className="flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-wider text-emerald-600"><span className="truncate">{researchTypeLabel[item.type]}</span><span className="shrink-0">{item.publishYear}</span></div><h3 className="mt-3 line-clamp-2 text-lg font-black leading-snug text-slate-950">{item.titleVi}</h3><p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">{item.abstractVi}</p><p className="mt-auto pt-4 text-[10px] font-bold text-slate-400">{item.authors.slice(0, 2).join(', ')}</p></div></button></Reveal>)}</div>
           </div>
         </section>
+        )}
 
 
-        <section id="contact" className="scroll-mt-24 bg-white py-24 sm:py-28"><div className={sectionShell}><Reveal><div className="relative overflow-hidden rounded-[2.5rem] bg-slate-950 p-8 text-white sm:p-12 lg:p-16"><div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl" /><div className="relative grid gap-12 lg:grid-cols-[1fr_0.9fr]"><div><span className="text-xs font-extrabold uppercase tracking-[0.18em] text-emerald-400">Liên hệ hợp tác</span><h2 className="mt-5 text-3xl font-black leading-tight tracking-[-0.035em] sm:text-5xl">Bạn có một ý tưởng thú vị?</h2><p className="mt-5 max-w-xl text-sm leading-7 text-slate-300">Hãy cùng biến ý tưởng đó thành một trải nghiệm đa phương tiện rõ ràng, đẹp và đáng nhớ.</p><a href={`mailto:${about.email}`} className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-black text-white hover:bg-emerald-400"><Mail className="h-4 w-4" /> Bắt đầu trao đổi</a></div><div className="grid gap-3"><a href={`mailto:${about.email}`} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400"><Mail className="h-5 w-5" /></span><span><small className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Email</small><strong className="text-sm">{about.email}</strong></span></a><a href={`tel:${about.phone}`} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400"><Phone className="h-5 w-5" /></span><span><small className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Điện thoại</small><strong className="text-sm">{about.phone}</strong></span></a><div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400"><MapPin className="h-5 w-5" /></span><span><small className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Địa điểm</small><strong className="text-sm">{about.location}</strong></span></div><div className="mt-2 flex flex-wrap gap-2">{about.socialLinks.map(link => { const Icon = link.platform.toLowerCase().includes('github') ? Github : link.platform.toLowerCase().includes('linkedin') ? Linkedin : Share2; return <a key={link.platform} href={link.url} target="_blank" rel="noreferrer" aria-label={link.platform} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-bold hover:bg-emerald-500"><Icon className="h-4 w-4" />{link.platform}</a>; })}</div></div></div></div></Reveal></div></section>
+        {showSection('contact') && (
+<section id="contact" className="scroll-mt-24 bg-white py-24 sm:py-28"><div className={sectionShell}><Reveal><div className="relative overflow-hidden rounded-[2.5rem] bg-slate-950 p-8 text-white sm:p-12 lg:p-16"><div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl" /><div className="relative grid gap-12 lg:grid-cols-[1fr_0.9fr]"><div><span className="text-xs font-extrabold uppercase tracking-[0.18em] text-emerald-400">Liên hệ hợp tác</span><h2 className="mt-5 text-3xl font-black leading-tight tracking-[-0.035em] sm:text-5xl">Bạn có một ý tưởng thú vị?</h2><p className="mt-5 max-w-xl text-sm leading-7 text-slate-300">Hãy cùng biến ý tưởng đó thành một trải nghiệm đa phương tiện rõ ràng, đẹp và đáng nhớ.</p><a href={`mailto:${about.email}`} className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-black text-white hover:bg-emerald-400"><Mail className="h-4 w-4" /> Bắt đầu trao đổi</a></div><div className="grid gap-3"><a href={`mailto:${about.email}`} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400"><Mail className="h-5 w-5" /></span><span><small className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Email</small><strong className="text-sm">{about.email}</strong></span></a><a href={`tel:${about.phone}`} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400"><Phone className="h-5 w-5" /></span><span><small className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Điện thoại</small><strong className="text-sm">{about.phone}</strong></span></a><div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400"><MapPin className="h-5 w-5" /></span><span><small className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Địa điểm</small><strong className="text-sm">{about.location}</strong></span></div><div className="mt-2 flex flex-wrap gap-2">{about.socialLinks.map(link => { const Icon = link.platform.toLowerCase().includes('github') ? Github : link.platform.toLowerCase().includes('linkedin') ? Linkedin : Share2; return <a key={link.platform} href={link.url} target="_blank" rel="noreferrer" aria-label={link.platform} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-bold hover:bg-emerald-500"><Icon className="h-4 w-4" />{link.platform}</a>; })}</div></div></div></div></Reveal></div></section>
+        )}
         </>}
       </main>
 

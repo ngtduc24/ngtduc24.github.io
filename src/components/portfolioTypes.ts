@@ -264,9 +264,48 @@ export interface PortfolioNavigation {
   locked?: boolean;
 }
 
+// Danh sách các khối đang hiển thị trên trang chủ portfolio.
+// Mỗi khóa tương ứng với một section trong PortfolioWebsite.
+export type HomeSectionKey =
+  | 'banner'
+  | 'quickLinks'
+  | 'about'
+  | 'education'
+  | 'experience'
+  | 'skills'
+  | 'projects'
+  | 'courses'
+  | 'research'
+  | 'contact';
+
+export type HomeSectionVisibility = Partial<Record<HomeSectionKey, boolean>>;
+
+// Nhãn tiếng Việt cho từng khối, dùng chung cho bảng bật tắt trong trang quản trị.
+export const HOME_SECTION_LABELS: Array<{ key: HomeSectionKey; label: string; hint: string }> = [
+  { key: 'banner', label: 'Banner đầu trang', hint: 'Ảnh hoặc video lớn kèm tiêu đề và nút kêu gọi ở đầu trang chủ.' },
+  { key: 'quickLinks', label: 'Dải bốn ô giới thiệu nhanh', hint: 'Bốn ô nhỏ nằm đè lên mép dưới của banner.' },
+  { key: 'about', label: 'Giới thiệu bản thân', hint: 'Ảnh chân dung, tiểu sử, triết lý sáng tạo và nút tải hồ sơ năng lực.' },
+  { key: 'education', label: 'Học vấn', hint: 'Cột bên trái trong khối học vấn và kinh nghiệm.' },
+  { key: 'experience', label: 'Kinh nghiệm', hint: 'Cột bên phải trong khối học vấn và kinh nghiệm.' },
+  { key: 'skills', label: 'Kỹ năng và dịch vụ', hint: 'Lưới thẻ kỹ năng kèm thanh phần trăm thành thạo.' },
+  { key: 'projects', label: 'Dự án tuyển chọn', hint: 'Khối nền tối giới thiệu các dự án nổi bật.' },
+  { key: 'courses', label: 'Khóa học trực tuyến', hint: 'Lưới thẻ khóa học kèm giá và số học viên.' },
+  { key: 'research', label: 'Nghiên cứu khoa học', hint: 'Lưới thẻ công trình và bài báo học thuật.' },
+  { key: 'contact', label: 'Liên hệ hợp tác', hint: 'Khối cuối trang gồm email, điện thoại, địa điểm và mạng xã hội.' }
+];
+
+// Khối chưa từng được cấu hình thì mặc định là đang bật, để dữ liệu cũ không bị mất hiển thị.
+export const isHomeSectionVisible = (
+  settings: PortfolioGlobalSettings | null | undefined,
+  key: HomeSectionKey
+): boolean => settings?.homeSections?.[key] !== false;
+
 export interface PortfolioGlobalSettings {
   menuOpacity: number; // 0 - 100
   menuGlassEffect: boolean;
+  // Bật tắt hiển thị từng khối trên trang chủ. Trường này có thể vắng mặt ở
+  // dữ liệu cũ, khi đó mọi khối được coi là đang bật.
+  homeSections?: HomeSectionVisibility;
 }
 
 export interface CourseChapter {
