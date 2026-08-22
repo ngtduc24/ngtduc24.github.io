@@ -431,6 +431,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
 
   // --- 2. COURSE ACTIONS ---
   const handleSaveCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
     
     if (!editingCourse) return;
 
@@ -678,7 +679,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
       {/* SETTINGS PROJECT FORM VIEW */}
       {activeSubTab === 'projects' && showProjSettings && projectsSettings && (
         <div className="space-y-6">
-          <form onSubmit={async (e) => {
+          <form onSubmit={async (e) => { e.preventDefault();
             
             await savePortfolioProjectsSettings(projectsSettings);
             triggerSuccess('Đã lưu cài đặt trang Dự án thành công!');
@@ -968,7 +969,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
       {/* COURSE SETTINGS VIEW */}
       {activeSubTab === 'courses' && showCourseSettings && coursesSettings && (
         <div className="space-y-6">
-          <form onSubmit={async (e) => {
+          <form onSubmit={async (e) => { e.preventDefault();
             
             await savePortfolioCoursesSettings(coursesSettings);
             triggerSuccess('Đã lưu cài đặt trang Khóa học thành công!');
