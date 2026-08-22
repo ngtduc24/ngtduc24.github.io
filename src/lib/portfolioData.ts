@@ -95,7 +95,19 @@ const DEFAULT_COURSES_SETTINGS: PortfolioCoursesSettings = {
 
 const DEFAULT_GLOBAL_SETTINGS: PortfolioGlobalSettings = {
   menuOpacity: 95,
-  menuGlassEffect: true
+  menuGlassEffect: true,
+  homeSections: {
+    banner: true,
+    quickLinks: true,
+    about: true,
+    education: true,
+    experience: true,
+    skills: true,
+    projects: true,
+    courses: true,
+    research: true,
+    contact: true
+  }
 };
 
 const DEFAULT_ABOUT: PortfolioAbout = {
