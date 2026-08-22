@@ -6,7 +6,13 @@ import {
   Newspaper, Phone, Plus, Presentation, RotateCcw, Smartphone, Sparkles, Trash2, Undo2, User,
   Video
 } from 'lucide-react';
-import { PortfolioNavigation, PortfolioGlobalSettings } from '../portfolioTypes';
+import {
+  PortfolioNavigation,
+  PortfolioGlobalSettings,
+  HomeSectionKey,
+  HOME_SECTION_LABELS,
+  isHomeSectionVisible
+} from '../portfolioTypes';
 import {
   DEFAULT_PORTFOLIO_NAVIGATION,
   getPortfolioNavigation,
@@ -277,6 +283,19 @@ export default function PortfolioNavigationManager() {
     addNotification(synced ? 'Đã lưu cài đặt giao diện menu.' : 'Lỗi đồng bộ cài đặt.', synced ? 'success' : 'error');
   };
 
+  const handleToggleHomeSection = async (key: HomeSectionKey, visible: boolean) => {
+    if (!globalSettings) return;
+    const nextSections = { ...(globalSettings.homeSections || {}), [key]: visible };
+    await handleGlobalSettingsChange({ homeSections: nextSections });
+  };
+
+  const setAllHomeSections = async (visible: boolean) => {
+    if (!globalSettings) return;
+    const nextSections: Record<string, boolean> = {};
+    HOME_SECTION_LABELS.forEach(item => { nextSections[item.key] = visible; });
+    await handleGlobalSettingsChange({ homeSections: nextSections });
+  };
+
   const resetDefaults = async () => {
     if (!(await confirm({ title: 'Khôi phục menu mặc định', message: 'Khôi phục toàn bộ menu mặc định? Bạn có thể dùng Hoàn tác ngay sau thao tác này.', confirmText: 'Khôi phục' }))) return;
     await persist(cloneItems(DEFAULT_PORTFOLIO_NAVIGATION), 'Đã khôi phục menu mặc định.');
@@ -337,6 +356,67 @@ export default function PortfolioNavigationManager() {
               </label>
             </div>
           </div>
+        </section>
+      )}
+
+      {globalSettings && (
+        <section className="rounded-2xl bg-white p-5 shadow-xs border border-slate-100 space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h3 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                <Layout className="h-4 w-4 text-brand" />
+                <span>Hiển thị các khối trên trang chủ</span>
+              </h3>
+              <p className="mt-1 text-[10px] text-slate-500">
+                Tắt một khối thì khối đó biến mất khỏi trang chủ công khai, dữ liệu bên trong vẫn được giữ nguyên và hiện lại ngay khi bạn bật.
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <span className="rounded-xl bg-slate-50 px-3 py-2 text-[10px] font-bold text-slate-500">
+                Đang bật {HOME_SECTION_LABELS.filter(item => isHomeSectionVisible(globalSettings, item.key)).length}/{HOME_SECTION_LABELS.length}
+              </span>
+              <button type="button" onClick={() => setAllHomeSections(true)} className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-2 text-[10px] font-bold text-slate-600 shadow-xs hover:bg-slate-50">
+                <Eye className="h-3.5 w-3.5" /> Bật tất cả
+              </button>
+              <button type="button" onClick={() => setAllHomeSections(false)} className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-2 text-[10px] font-bold text-slate-600 shadow-xs hover:bg-slate-50">
+                <EyeOff className="h-3.5 w-3.5" /> Tắt tất cả
+              </button>
+            </div>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            {HOME_SECTION_LABELS.map(item => {
+              const visible = isHomeSectionVisible(globalSettings, item.key);
+              return (
+                <label
+                  key={item.key}
+                  className={`flex cursor-pointer items-start justify-between gap-3 rounded-2xl border p-3.5 transition-colors ${
+                    visible ? 'border-brand/30 bg-brand/5' : 'border-slate-100 bg-slate-50'
+                  }`}
+                >
+                  <span className="min-w-0">
+                    <span className={`block text-[11px] font-black ${visible ? 'text-slate-800' : 'text-slate-400'}`}>
+                      {item.label}
+                    </span>
+                    <span className="mt-1 block text-[10px] leading-4 text-slate-500">{item.hint}</span>
+                  </span>
+                  <span className="relative inline-flex shrink-0 items-center pt-0.5">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={visible}
+                      onChange={(e) => handleToggleHomeSection(item.key, e.target.checked)}
+                    />
+                    <span className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+
+          <p className="rounded-xl bg-amber-50 px-3 py-2 text-[10px] leading-4 text-amber-700">
+            Lưu ý, khối Banner đầu trang còn một công tắc riêng nằm trong phần biên tập Banner. Nếu tắt ở đó thì banner vẫn ẩn dù công tắc tại đây đang bật.
+          </p>
         </section>
       )}
 
