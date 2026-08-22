@@ -7,7 +7,7 @@ interface CategoryManagerModalProps {
   categories: PortfolioCategory[];
   setCategories: (categories: PortfolioCategory[]) => void;
   onClose: () => void;
-  onSave?: (items: PortfolioCategory[]) => void;
+  onSave?: (items: PortfolioCategory[]) => void | Promise<boolean | void>;
   onCategoryUpdate?: (oldName: string, newName: string) => void;
   onCategoryDelete?: (name: string) => void;
 }
@@ -21,14 +21,26 @@ export default function CategoryManagerModal({
   onCategoryDelete
 }: CategoryManagerModalProps) {
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const { confirm } = useConfirmation();
 
-  const handleSave = (updated: PortfolioCategory[]) => {
+  // Trước đây hàm này gọi lưu rồi bỏ mặc kết quả. Khi máy chủ từ chối, dữ liệu chỉ
+  // nằm lại trong bộ nhớ trình duyệt nên nhìn thì tưởng đã lưu, tải lại trang mới
+  // phát hiện là mất. Nay phải chờ kết quả và báo rõ cho người dùng khi thất bại.
+  const handleSave = async (updated: PortfolioCategory[]) => {
     setCategories(updated);
-    if (onSave) {
-      onSave(updated);
-    } else {
-      savePortfolioCategories(updated);
+    setSyncError(null);
+    setSaving(true);
+    try {
+      const synced = await (onSave ? onSave(updated) : savePortfolioCategories(updated));
+      if (synced === false) {
+        setSyncError('Không lưu được lên máy chủ. Thay đổi mới chỉ nằm trên máy bạn và sẽ mất khi tải lại trang. Hãy kiểm tra kết nối mạng hoặc đăng nhập lại bằng tài khoản quản trị.');
+      }
+    } catch (e: any) {
+      setSyncError('Lỗi khi lưu danh mục: ' + (e?.message || 'không rõ nguyên nhân'));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -41,6 +53,17 @@ export default function CategoryManagerModal({
             <X className="h-5 w-5" />
           </button>
         </div>
+
+        {saving && (
+          <div className="mb-4 rounded-xl bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-500">
+            Đang lưu danh mục...
+          </div>
+        )}
+        {syncError && (
+          <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-semibold leading-4 text-rose-700">
+            {syncError}
+          </div>
+        )}
 
         <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
           {categories.map(cat => (
