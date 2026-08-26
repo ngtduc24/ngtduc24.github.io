@@ -312,7 +312,7 @@ const loadYouTubeIframeApi = (): Promise<any> => {
 // Khi video chạy hết, hoặc khi học viên đã xem qua chín mươi lăm phần trăm thời lượng,
 // hàm onFinish được gọi đúng một lần để hệ thống ghi nhận bài học đã hoàn thành.
 const YouTubeLessonPlayer: React.FC<{ videoId: string; onFinish?: () => void }> = ({ videoId, onFinish }) => {
-  const hostRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const finishedRef = useRef(false);
   const finishHandlerRef = useRef(onFinish);
@@ -332,9 +332,23 @@ const YouTubeLessonPlayer: React.FC<{ videoId: string; onFinish?: () => void }> 
 
     loadYouTubeIframeApi()
       .then(YT => {
-        if (cancelled || !hostRef.current) return;
-        playerRef.current = new YT.Player(hostRef.current, {
+        const container = containerRef.current;
+        if (cancelled || !container) return;
+
+        // Thư viện YouTube thay thế hẳn thẻ được truyền vào bằng một thẻ iframe của nó.
+        // Nếu đưa thẳng thẻ do React quản lý thì lúc rời bài học React sẽ đi tìm một thẻ
+        // không còn tồn tại và báo lỗi, làm hỏng luôn phần ghi nhận tiến độ. Vì vậy thẻ
+        // dành cho trình phát được tạo thủ công, nằm ngoài tầm quản lý của React.
+        container.innerHTML = '';
+        const mountPoint = document.createElement('div');
+        mountPoint.style.width = '100%';
+        mountPoint.style.height = '100%';
+        container.appendChild(mountPoint);
+
+        playerRef.current = new YT.Player(mountPoint, {
           videoId,
+          width: '100%',
+          height: '100%',
           playerVars: { rel: 0, playsinline: 1, modestbranding: 1 },
           events: {
             onStateChange: (event: any) => {
@@ -342,6 +356,7 @@ const YouTubeLessonPlayer: React.FC<{ videoId: string; onFinish?: () => void }> 
             }
           }
         });
+
         // Một số video bị ngắt ở vài giây cuối nên không phát ra sự kiện kết thúc,
         // vì vậy vẫn cần kiểm tra thêm theo mốc phần trăm đã xem.
         watchTimer = window.setInterval(() => {
@@ -350,7 +365,7 @@ const YouTubeLessonPlayer: React.FC<{ videoId: string; onFinish?: () => void }> 
           const total = player.getDuration();
           const played = player.getCurrentTime();
           if (total > 0 && played / total >= 0.95) markFinished();
-        }, 5000);
+        }, 3000);
       })
       .catch(() => { if (!cancelled) setUsePlainFrame(true); });
 
@@ -359,6 +374,7 @@ const YouTubeLessonPlayer: React.FC<{ videoId: string; onFinish?: () => void }> 
       if (watchTimer) window.clearInterval(watchTimer);
       try { playerRef.current?.destroy?.(); } catch { /* trình phát đã bị gỡ khỏi cây DOM */ }
       playerRef.current = null;
+      if (containerRef.current) containerRef.current.innerHTML = '';
     };
   }, [videoId]);
 
@@ -373,11 +389,7 @@ const YouTubeLessonPlayer: React.FC<{ videoId: string; onFinish?: () => void }> 
     );
   }
 
-  return (
-    <div className="h-full w-full">
-      <div ref={hostRef} className="h-full w-full" />
-    </div>
-  );
+  return <div ref={containerRef} className="h-full w-full [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:border-0" />;
 };
 
 const formatLessonDuration = (dur: string | number | undefined) => {
@@ -957,10 +969,14 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
   };
 
   // Ghi lại danh sách bài đã hoàn thành và phần trăm tiến độ tương ứng.
+  // Thanh tiến độ luôn được cập nhật ngay, kể cả khi người xem là quản trị viên
+  // không có dòng ghi danh. Phần lưu xuống máy chủ chỉ chạy khi thật sự có ghi danh,
+  // vì tiến độ của quản trị viên không nên bị tính thành một học viên của khóa.
   const persistCompletedLessons = async (next: string[]) => {
-    if (!course || !enrollment) return;
+    if (!course) return;
     setCompletedLessonIds(next);
     const progress = courseLessons.length ? Math.round((next.length / courseLessons.length) * 100) : 0;
+    if (!enrollment) return;
 
     try {
       const updatedEnrollment: CourseStudent = {
@@ -983,7 +999,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
   };
 
   const toggleLessonComplete = async (lessonId: string) => {
-    if (!course || !viewer || !canLearn || !enrollment) return;
+    if (!course || !viewer || !canLearn) return;
 
     const next = completedLessonIds.includes(lessonId)
       ? completedLessonIds.filter(id => id !== lessonId)
@@ -995,7 +1011,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
   // Dùng cho việc tự động ghi nhận khi xem hết video, chỉ thêm chứ không bỏ đánh dấu,
   // để một lần tua lại video không làm mất tiến độ đã có.
   const markLessonComplete = async (lessonId: string) => {
-    if (!course || !viewer || !canLearn || !enrollment) return;
+    if (!course || !viewer || !canLearn) return;
     if (completedLessonIds.includes(lessonId)) return;
     await persistCompletedLessons([...completedLessonIds, lessonId]);
   };
