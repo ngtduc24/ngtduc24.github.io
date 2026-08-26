@@ -14,7 +14,7 @@ import {
   Image,
   PanelLeftOpen,
   PanelLeftClose,
-  Scan
+  Wrench
 } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
 import { useConfirmation } from './ConfirmationContext';
@@ -52,10 +52,17 @@ export default function Sidebar({
     { id: 'calculator', label: 'Tính Cỡ Mẫu Nghiên Cứu', icon: Calculator },
     { id: 'qualitative_analysis', label: 'Phân tích định tính', icon: FolderKanban },
     { id: 'quantitative_analysis', label: 'Phân tích số liệu định lượng', icon: Calculator },
-    { id: 'ar_module', label: 'Tạo AR', icon: Scan },
+    { id: 'utilities', label: 'Tiện ích', icon: Wrench },
     { id: 'portfolio_cms', label: 'Quản trị Portfolio', icon: Shield },
     { id: 'notifications', label: 'Thông báo', icon: Bell }
-  ].filter(item => item.id === 'notifications' || currentUser.role === 'admin' || currentUser.permissions.includes(item.id));
+  ].filter(item => {
+    if (item.id === 'notifications' || currentUser.role === 'admin') return true;
+    // Quyền ar_module cũ vẫn mở được mục Tiện ích, vì chức năng Tạo AR đã dời vào đây.
+    if (item.id === 'utilities') {
+      return currentUser.permissions.includes('utilities') || currentUser.permissions.includes('ar_module');
+    }
+    return currentUser.permissions.includes(item.id);
+  });
 
   const adminItems = [
     ...(currentUser.role === 'admin' ? [{ id: 'users', label: 'Quản lý & Phân quyền', icon: Users }] : []),

@@ -26,8 +26,14 @@ import { uploadImageToCloudinary } from '../lib/upload';
 import MediaSourcePicker from './MediaSourcePicker';
 import { Image as ImageIcon } from 'lucide-react';
 
-const ADMIN_PERMISSIONS = ['dashboard', 'calculator', 'scientific_journals', 'tasks', 'qualitative_analysis', 'quantitative_analysis', 'ar_module', 'media_library', 'portfolio_cms', 'settings', 'notifications', 'users'];
+const ADMIN_PERMISSIONS = ['dashboard', 'calculator', 'scientific_journals', 'tasks', 'qualitative_analysis', 'quantitative_analysis', 'utilities', 'media_library', 'portfolio_cms', 'settings', 'notifications', 'users'];
 const MEMBER_PERMISSIONS = ['portfolio_courses'];
+
+// Chức năng Tạo AR trước đây là một mục riêng mang mã ar_module, nay đã được gộp
+// vào module Tiện ích. Hàm này đổi mã quyền cũ sang mã mới để bảng phân quyền hiển
+// thị đúng trạng thái, những tài khoản được cấp quyền từ trước không bị mất quyền.
+const normalizePermissions = (permissions?: string[]) =>
+  Array.from(new Set((permissions || []).map(item => (item === 'ar_module' ? 'utilities' : item))));
 
 interface UserManagementProps {
   settings?: AppSettings;
@@ -182,7 +188,7 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
     { id: 'tasks', label: 'Dự án & Công việc' },
     { id: 'qualitative_analysis', label: 'Phân tích định tính' },
     { id: 'quantitative_analysis', label: 'Phân tích định lượng' },
-    { id: 'ar_module', label: 'Tạo AR' },
+    { id: 'utilities', label: 'Tiện ích (Tạo AR, chỉnh kích thước ảnh)' },
     { id: 'media_library', label: 'Thư viện' },
     { id: 'portfolio_cms', label: 'Quản trị Portfolio' },
     { id: 'settings', label: 'Cấu hình hệ thống' },
@@ -353,7 +359,7 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
     // If the target user is Admin, they always have all permissions
     if (user.role === 'admin' || user.role === 'member') return;
 
-    let updatedPerms = [...user.permissions];
+    let updatedPerms = normalizePermissions(user.permissions);
     if (updatedPerms.includes(permId)) {
       // Must keep at least dashboard or some permission
       updatedPerms = updatedPerms.filter(p => p !== permId);
@@ -755,7 +761,7 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
                       ) : (
                         <div className="flex flex-wrap gap-1.5 max-w-sm">
                           {availablePermissions.map(p => {
-                            const isGranted = user.permissions.includes(p.id);
+                            const isGranted = normalizePermissions(user.permissions).includes(p.id);
                             return (
                               <button
                                 key={p.id}
@@ -788,7 +794,7 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
                             setEditEmail(user.email || '');
                             setEditPassword('');
                             setEditRole(user.role);
-                            setEditPermissions(user.permissions || []);
+                            setEditPermissions(normalizePermissions(user.permissions));
                             setEditCanManageSettings(!!user.canManageSettings);
                             setIsAdding(false);
                           }}
