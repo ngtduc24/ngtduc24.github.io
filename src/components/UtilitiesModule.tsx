@@ -29,8 +29,8 @@ export const UTILITY_TOOLS: UtilityTool[] = [
   },
   {
     id: 'image_resize',
-    label: 'Chỉnh kích thước ảnh',
-    description: 'Thu nhỏ và đổi định dạng nhiều ảnh cùng lúc, xử lý ngay trên máy nên ảnh không rời khỏi thiết bị.',
+    label: 'Phóng to ảnh',
+    description: 'Phóng to ảnh theo phần trăm tùy chọn và làm rõ chi tiết, có thể nhờ Gemini dựng lại ảnh ở độ phân giải cao hơn.',
     icon: ImageIcon
   }
 ];
