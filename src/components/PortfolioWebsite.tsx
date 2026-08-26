@@ -968,6 +968,35 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
     onEnroll(course);
   };
 
+  // Đường link rút gọn dùng để chia sẻ. Mỗi nội dung có một trang tĩnh riêng chứa
+  // sẵn tiêu đề, mô tả và ảnh bìa, nhờ vậy Zalo và Facebook mới hiện được phần xem
+  // trước. Các trang tĩnh này do scripts/prerender-share.mjs sinh ra lúc build.
+  const shareUrl = useMemo(() => {
+    const folder =
+      item.type === 'course' ? 'c'
+      : item.type === 'project' ? 'p'
+      : item.type === 'research' ? 'r'
+      : item.type === 'article' ? 'b'
+      : null;
+    const id = (item.data as { id?: string })?.id;
+    if (!folder || !id) return '';
+    return `${window.location.origin}/${folder}/${id}/`;
+  }, [item]);
+
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const handleCopyShareLink = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareCopied(true);
+      window.setTimeout(() => setShareCopied(false), 2500);
+    } catch {
+      // Trình duyệt chặn quyền ghi bộ nhớ tạm thì mở hộp thoại để người dùng tự chép.
+      window.prompt('Sao chép đường link chia sẻ', shareUrl);
+    }
+  };
+
   // Ghi lại danh sách bài đã hoàn thành và phần trăm tiến độ tương ứng.
   // Thanh tiến độ luôn được cập nhật ngay, kể cả khi người xem là quản trị viên
   // không có dòng ghi danh. Phần lưu xuống máy chủ chỉ chạy khi thật sự có ghi danh,
@@ -1085,10 +1114,20 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
         )}
         
         {/* Back button */}
-        <div className={sectionShell + " relative z-20 pt-28"}>
+        <div className={sectionShell + " relative z-20 flex flex-wrap items-center gap-3 pt-28"}>
           <button onClick={() => window.history.back()} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold text-white backdrop-blur-md hover:bg-white/20 transition-colors">
             <ArrowRight className="h-4 w-4 rotate-180" /> Quay lại
           </button>
+          {shareUrl && (
+            <button
+              onClick={handleCopyShareLink}
+              title="Sao chép đường link rút gọn, khi dán lên Zalo hoặc Facebook sẽ hiện đúng tiêu đề và ảnh bìa"
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold text-white backdrop-blur-md hover:bg-white/20 transition-colors"
+            >
+              {shareCopied ? <Check className="h-4 w-4 text-emerald-300" /> : <Share2 className="h-4 w-4" />}
+              {shareCopied ? 'Đã sao chép link' : 'Chia sẻ'}
+            </button>
+          )}
         </div>
       </section>
  
