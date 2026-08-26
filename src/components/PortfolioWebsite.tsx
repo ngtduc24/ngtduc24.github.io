@@ -80,7 +80,8 @@ import {
   getPortfolioGlobalSettings,
   getCourseChapters,
   getCourseLessons,
-  getCourseStudents
+  getCourseStudents,
+  getCourseStudentCounts
 } from '../lib/portfolioData';
 import { UserAccount } from '../types';
 import {
@@ -247,53 +248,136 @@ function scrollToLink(link: string) {
   window.open(link, '_blank', 'noopener,noreferrer');
 }
 
-const getYouTubeEmbedUrl = (url: string): string | null => {
+// Tách mã video YouTube ra khỏi mọi dạng đường dẫn mà người soạn bài hay dán vào.
+const getYouTubeVideoId = (url: string): string | null => {
   if (!url) return null;
   const trimmed = url.trim();
-  
-  // Try direct 11-character video ID
-  if (trimmed.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
-    return `https://www.youtube.com/embed/${trimmed}?autoplay=0&rel=0`;
+
+  // Người dùng dán thẳng mã video mười một ký tự
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
+
+  const patterns = [
+    /\/shorts\/([a-zA-Z0-9_-]{11})/i,
+    /\/live\/([a-zA-Z0-9_-]{11})/i,
+    /\/embed\/([a-zA-Z0-9_-]{11})/i,
+    /[?&]v=([a-zA-Z0-9_-]{11})/i,
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/i
+  ];
+  for (const pattern of patterns) {
+    const found = trimmed.match(pattern);
+    if (found) return found[1];
   }
-  
-  // 1. Shorts format: youtube.com/shorts/VIDEO_ID
-  const shortsMatch = trimmed.match(/\/shorts\/([a-zA-Z0-9_-]{11})/i);
-  if (shortsMatch) {
-    return `https://www.youtube.com/embed/${shortsMatch[1]}?autoplay=0&rel=0`;
-  }
-  
-  // 2. Live format: youtube.com/live/VIDEO_ID
-  const liveMatch = trimmed.match(/\/live\/([a-zA-Z0-9_-]{11})/i);
-  if (liveMatch) {
-    return `https://www.youtube.com/embed/${liveMatch[1]}?autoplay=0&rel=0`;
-  }
-  
-  // 3. Embed format: youtube.com/embed/VIDEO_ID
-  const embedMatch = trimmed.match(/\/embed\/([a-zA-Z0-9_-]{11})/i);
-  if (embedMatch) {
-    return `https://www.youtube.com/embed/${embedMatch[1]}?autoplay=0&rel=0`;
-  }
-  
-  // 4. Standard/Mobile watch format: watch?v=VIDEO_ID or &v=VIDEO_ID
-  const vMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/i);
-  if (vMatch) {
-    return `https://www.youtube.com/embed/${vMatch[1]}?autoplay=0&rel=0`;
-  }
-  
-  // 5. Shortened format: youtu.be/VIDEO_ID
-  const youtuMatch = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/i);
-  if (youtuMatch) {
-    return `https://www.youtube.com/embed/${youtuMatch[1]}?autoplay=0&rel=0`;
-  }
-  
-  // 6. Generic regex backup
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = trimmed.match(regExp);
-  if (match && match[2] && match[2].length === 11) {
-    return `https://www.youtube.com/embed/${match[2]}?autoplay=0&rel=0`;
-  }
-  
+
+  const backup = trimmed.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/);
+  if (backup && backup[2] && backup[2].length === 11) return backup[2];
+
   return null;
+};
+
+const getYouTubeEmbedUrl = (url: string): string | null => {
+  const id = getYouTubeVideoId(url);
+  return id ? `https://www.youtube.com/embed/${id}?autoplay=0&rel=0` : null;
+};
+
+// Nạp thư viện IFrame Player của YouTube đúng một lần cho cả trang.
+// Trình phát mặc định bằng thẻ iframe thường không phát ra sự kiện nào,
+// nên không thể biết học viên đã xem hết video hay chưa.
+let youTubeApiPromise: Promise<any> | null = null;
+const loadYouTubeIframeApi = (): Promise<any> => {
+  const globalWindow = window as any;
+  if (globalWindow.YT && globalWindow.YT.Player) return Promise.resolve(globalWindow.YT);
+  if (youTubeApiPromise) return youTubeApiPromise;
+
+  youTubeApiPromise = new Promise((resolve, reject) => {
+    const previousCallback = globalWindow.onYouTubeIframeAPIReady;
+    globalWindow.onYouTubeIframeAPIReady = () => {
+      if (typeof previousCallback === 'function') previousCallback();
+      resolve(globalWindow.YT);
+    };
+    if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+      const script = document.createElement('script');
+      script.src = 'https://www.youtube.com/iframe_api';
+      script.async = true;
+      script.onerror = () => reject(new Error('Không tải được thư viện trình phát YouTube'));
+      document.head.appendChild(script);
+    }
+    window.setTimeout(() => reject(new Error('Quá hạn chờ thư viện trình phát YouTube')), 15000);
+  });
+
+  youTubeApiPromise.catch(() => { youTubeApiPromise = null; });
+  return youTubeApiPromise;
+};
+
+// Trình phát bài giảng YouTube có theo dõi tiến độ xem.
+// Khi video chạy hết, hoặc khi học viên đã xem qua chín mươi lăm phần trăm thời lượng,
+// hàm onFinish được gọi đúng một lần để hệ thống ghi nhận bài học đã hoàn thành.
+const YouTubeLessonPlayer: React.FC<{ videoId: string; onFinish?: () => void }> = ({ videoId, onFinish }) => {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<any>(null);
+  const finishedRef = useRef(false);
+  const finishHandlerRef = useRef(onFinish);
+  const [usePlainFrame, setUsePlainFrame] = useState(false);
+  finishHandlerRef.current = onFinish;
+
+  useEffect(() => {
+    finishedRef.current = false;
+    let cancelled = false;
+    let watchTimer: number | undefined;
+
+    const markFinished = () => {
+      if (finishedRef.current) return;
+      finishedRef.current = true;
+      finishHandlerRef.current?.();
+    };
+
+    loadYouTubeIframeApi()
+      .then(YT => {
+        if (cancelled || !hostRef.current) return;
+        playerRef.current = new YT.Player(hostRef.current, {
+          videoId,
+          playerVars: { rel: 0, playsinline: 1, modestbranding: 1 },
+          events: {
+            onStateChange: (event: any) => {
+              if (event.data === YT.PlayerState.ENDED) markFinished();
+            }
+          }
+        });
+        // Một số video bị ngắt ở vài giây cuối nên không phát ra sự kiện kết thúc,
+        // vì vậy vẫn cần kiểm tra thêm theo mốc phần trăm đã xem.
+        watchTimer = window.setInterval(() => {
+          const player = playerRef.current;
+          if (!player || typeof player.getDuration !== 'function') return;
+          const total = player.getDuration();
+          const played = player.getCurrentTime();
+          if (total > 0 && played / total >= 0.95) markFinished();
+        }, 5000);
+      })
+      .catch(() => { if (!cancelled) setUsePlainFrame(true); });
+
+    return () => {
+      cancelled = true;
+      if (watchTimer) window.clearInterval(watchTimer);
+      try { playerRef.current?.destroy?.(); } catch { /* trình phát đã bị gỡ khỏi cây DOM */ }
+      playerRef.current = null;
+    };
+  }, [videoId]);
+
+  if (usePlainFrame) {
+    return (
+      <iframe
+        src={`https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0`}
+        className="h-full w-full border-0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
+      />
+    );
+  }
+
+  return (
+    <div className="h-full w-full">
+      <div ref={hostRef} className="h-full w-full" />
+    </div>
+  );
 };
 
 const formatLessonDuration = (dur: string | number | undefined) => {
@@ -872,13 +956,9 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
     onEnroll(course);
   };
 
-  const toggleLessonComplete = async (lessonId: string) => {
-    if (!course || !viewer || !canLearn || !enrollment) return;
-    
-    const next = completedLessonIds.includes(lessonId)
-      ? completedLessonIds.filter(id => id !== lessonId)
-      : [...completedLessonIds, lessonId];
-    
+  // Ghi lại danh sách bài đã hoàn thành và phần trăm tiến độ tương ứng.
+  const persistCompletedLessons = async (next: string[]) => {
+    if (!course || !enrollment) return;
     setCompletedLessonIds(next);
     const progress = courseLessons.length ? Math.round((next.length / courseLessons.length) * 100) : 0;
 
@@ -890,7 +970,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
       };
       await saveCourseStudent(updatedEnrollment);
       setEnrollment(updatedEnrollment);
-      
+
       if (onUpdateCourse) {
         onUpdateCourse({
           ...course,
@@ -900,6 +980,24 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
     } catch (err) {
       console.error('Update progress error:', err);
     }
+  };
+
+  const toggleLessonComplete = async (lessonId: string) => {
+    if (!course || !viewer || !canLearn || !enrollment) return;
+
+    const next = completedLessonIds.includes(lessonId)
+      ? completedLessonIds.filter(id => id !== lessonId)
+      : [...completedLessonIds, lessonId];
+
+    await persistCompletedLessons(next);
+  };
+
+  // Dùng cho việc tự động ghi nhận khi xem hết video, chỉ thêm chứ không bỏ đánh dấu,
+  // để một lần tua lại video không làm mất tiến độ đã có.
+  const markLessonComplete = async (lessonId: string) => {
+    if (!course || !viewer || !canLearn || !enrollment) return;
+    if (completedLessonIds.includes(lessonId)) return;
+    await persistCompletedLessons([...completedLessonIds, lessonId]);
   };
 
   const handleSelectLesson = async (lessonId: string | null) => {
@@ -931,7 +1029,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
     }
     if (item.type === 'course') {
       const course = item.data;
-      const studentCount = course.students?.length || 0;
+      const studentCount = course.studentsCount || course.students?.length || 0;
       const lessonCount = courseLessons.length;
       
       return [
@@ -1097,15 +1195,13 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                         </div>
                       ) : activeLesson ? (
                         (() => {
-                          const ytUrl = getYouTubeEmbedUrl(activeLesson.videoUrl || '');
-                          if (ytUrl) {
+                          const ytId = getYouTubeVideoId(activeLesson.videoUrl || '');
+                          if (ytId) {
                             return (
-                              <iframe
-                                key={activeLesson.videoUrl}
-                                src={ytUrl}
-                                className="h-full w-full border-0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                allowFullScreen
+                              <YouTubeLessonPlayer
+                                key={activeLesson.id}
+                                videoId={ytId}
+                                onFinish={() => markLessonComplete(activeLesson.id)}
                               />
                             );
                           } else if (activeLesson.videoUrl) {
@@ -1117,7 +1213,13 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                                 autoPlay
                                 playsInline
                                 className="h-full w-full object-cover"
-                                onEnded={() => toggleLessonComplete(activeLesson.id)}
+                                onEnded={() => markLessonComplete(activeLesson.id)}
+                                onTimeUpdate={event => {
+                                  const media = event.currentTarget;
+                                  if (media.duration > 0 && media.currentTime / media.duration >= 0.95) {
+                                    markLessonComplete(activeLesson.id);
+                                  }
+                                }}
                               />
                             );
                           } else {
@@ -1825,7 +1927,14 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
   const [projectFilter, setProjectFilter] = useState('Tất cả');
   const [researchQuery, setResearchQuery] = useState('');
   const [registering, setRegistering] = useState(false);
+  const [enrollNotice, setEnrollNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const mobileNavigationRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!enrollNotice) return;
+    const timer = window.setTimeout(() => setEnrollNotice(null), 7000);
+    return () => window.clearTimeout(timer);
+  }, [enrollNotice]);
 
   const handleEnroll = async (course: PortfolioCourse) => {
     if (!currentUser) {
@@ -1833,28 +1942,42 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
       return;
     }
     setRegistering(true);
+    setEnrollNotice(null);
     try {
       const success = await enrollCourse(course, currentUser);
-      if (success) {
-        const enrollmentId = `${currentUser.id}_${course.id}`;
-        const newEnrollment: CourseStudent = {
-          id: enrollmentId,
-          accountId: currentUser.id,
-          studentName: currentUser.fullName,
-          studentEmail: currentUser.email,
-          courseId: course.id,
-          paymentStatus: 'paid',
-          registrationDate: new Date().toISOString(),
-          progress: 0,
-          completedLessons: []
-        };
-        handleUpdateCourse({
-          ...course,
-          students: [...(course.students || []), newEnrollment]
+      if (!success) {
+        // Trước đây lỗi ghi dữ liệu bị nuốt mất, học viên bấm đăng ký mà không thấy
+        // phản hồi nào nên tưởng nút hỏng. Nay báo rõ để còn biết đường xử lý.
+        setEnrollNotice({
+          type: 'error',
+          text: 'Chưa lưu được đăng ký lên máy chủ. Vui lòng đăng nhập lại rồi thử lần nữa, nếu vẫn lỗi hãy báo quản trị viên.'
         });
+        return;
       }
+
+      const enrollmentId = `${currentUser.id}_${course.id}`;
+      const alreadyEnrolled = (course.students || []).some(student => student.id === enrollmentId);
+      const newEnrollment: CourseStudent = {
+        id: enrollmentId,
+        accountId: currentUser.id,
+        studentName: currentUser.fullName,
+        studentEmail: currentUser.email,
+        courseId: course.id,
+        paymentStatus: 'paid',
+        registrationDate: new Date().toISOString(),
+        progress: 0,
+        completedLessons: []
+      };
+      handleUpdateCourse({
+        ...course,
+        students: alreadyEnrolled
+          ? (course.students || []).map(student => student.id === enrollmentId ? newEnrollment : student)
+          : [...(course.students || []), newEnrollment]
+      });
+      setEnrollNotice({ type: 'success', text: 'Đã ghi danh thành công. Học viên có thể bắt đầu xem bài giảng.' });
     } catch (err) {
       console.error('Enrollment error:', err);
+      setEnrollNotice({ type: 'error', text: 'Đăng ký khóa học không thành công. Vui lòng kiểm tra kết nối mạng rồi thử lại.' });
     } finally {
       setRegistering(false);
     }
@@ -1889,8 +2012,8 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
     Promise.all([
       getPortfolioBanner(), getPortfolioAbout(), getPortfolioEducation(), getPortfolioExperience(), getPortfolioSkills(),
       getPortfolioProjects(), getPortfolioCourses(), getCourseStudents(), getPortfolioResearch(), getPortfolioLectures(), getPortfolioNavigation(), getPortfolioPosts(),
-      getPortfolioProjectsSettings(), getPortfolioCoursesSettings(), getPortfolioGlobalSettings()
-    ]).then(([bannerData, aboutData, educationData, experienceData, skillData, projectData, courseData, studentData, researchData, lectureData, navigationData, postData, projSettingsData, coursesSettingsData, globalSettingsData]) => {
+      getPortfolioProjectsSettings(), getPortfolioCoursesSettings(), getPortfolioGlobalSettings(), getCourseStudentCounts()
+    ]).then(([bannerData, aboutData, educationData, experienceData, skillData, projectData, courseData, studentData, researchData, lectureData, navigationData, postData, projSettingsData, coursesSettingsData, globalSettingsData, studentCounts]) => {
       if (!mounted) return;
       setBanner(bannerData);
       setProjectsSettings(projSettingsData);
@@ -1904,7 +2027,10 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
       
       const mappedCourses = courseData.map(course => ({
         ...course,
-        students: studentData.filter(s => s.courseId === course.id)
+        // studentData chỉ chứa dòng ghi danh của chính người đang xem, dùng để mở khóa bài học.
+        // Con số học viên hiển thị công khai lấy từ hàm đếm riêng bên cơ sở dữ liệu.
+        students: studentData.filter(s => s.courseId === course.id),
+        studentsCount: studentCounts[course.id] ?? course.studentsCount ?? 0
       }));
       setCourses(mappedCourses.filter(item => item.status === 'published'));
       setResearch(researchData);
@@ -2128,6 +2254,19 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
   return (
     <div className="min-h-screen overflow-x-hidden bg-white font-sans text-slate-800 selection:bg-emerald-200 selection:text-emerald-950 lg:pb-0">
       <a href="#main-content" className="fixed left-4 top-3 z-[120] -translate-y-20 rounded-lg bg-slate-950 px-4 py-2 text-sm font-bold text-white focus:translate-y-0">Bỏ qua menu</a>
+
+      {enrollNotice && (
+        <div
+          role="status"
+          className={`fixed bottom-6 left-1/2 z-[130] w-[min(92vw,28rem)] -translate-x-1/2 rounded-2xl px-5 py-4 text-sm font-semibold shadow-2xl ring-1 ${
+            enrollNotice.type === 'success'
+              ? 'bg-emerald-600 text-white ring-emerald-500/40'
+              : 'bg-rose-600 text-white ring-rose-500/40'
+          }`}
+        >
+          {enrollNotice.text}
+        </div>
+      )}
 
       <header className="fixed inset-x-0 top-0 z-50 bg-transparent flex justify-center py-4 pointer-events-none px-4 md:px-8">
         <motion.div 
