@@ -585,7 +585,7 @@ async function loadCollection<T extends { id: string }>(
   table: PortfolioTable,
   localKey: string,
   defaultValue: T[],
-  options?: { filter?: [string, string]; orderBy?: string; row?: (item: T) => Record<string, unknown> }
+  options?: { filter?: [string, string]; orderBy?: string; row?: (item: T) => Record<string, unknown>; seed?: boolean }
 ): Promise<T[]> {
   try {
     let request: any = supabase.from(table).select('data');
@@ -597,6 +597,12 @@ async function loadCollection<T extends { id: string }>(
       const values = data.map((row: any) => row.data as T);
       setLocalFallback(localKey, values);
       return values;
+    }
+    // Có bảng không được phép gieo dữ liệu mẫu, ví dụ bảng ghi danh học viên.
+    // Kết quả rỗng ở đó là đúng chứ không phải dấu hiệu bảng chưa có dữ liệu.
+    if (options?.seed === false) {
+      setLocalFallback(localKey, []);
+      return [];
     }
     const seed = getLocalSeed(localKey, defaultValue);
     if (seed.length) {
@@ -723,11 +729,35 @@ export const getCourseLessons = (courseId: string) => loadCollection('portfolio_
 export const saveCourseLessons = async (courseId: string, items: CourseLesson[]) => { await saveCollection('portfolio_course_lessons', `lessons_${courseId}`, items.map(item => ({ ...item, courseId })), lessonRow(courseId)); };
 export const deleteCourseLessonDoc = async (id: string) => { await deleteOne('portfolio_course_lessons', id); };
 
-export const getCourseStudents = (filters?: { userId?: string; courseId?: string }) => {
-  let options: any = { row: studentRow };
-  // Note: user_id column is missing from schema, so we can't filter by it at DB level for now
+export const getCourseStudents = async (filters?: { userId?: string; courseId?: string }) => {
+  // Bảng ghi danh không bao giờ được gieo dữ liệu mẫu, vì kết quả rỗng nghĩa là
+  // tài khoản này chưa đăng ký khóa nào chứ không phải bảng chưa khởi tạo.
+  const options: any = { row: studentRow, seed: false };
   if (filters?.courseId) options.filter = ['course_id', filters.courseId];
-  return loadCollection('portfolio_course_students', 'students', DEFAULT_STUDENTS, options);
+  const rows = await loadCollection('portfolio_course_students', 'students', DEFAULT_STUDENTS, options);
+  // Chính sách bảo mật phía cơ sở dữ liệu đã giới hạn học viên chỉ đọc được dòng của
+  // chính mình, phần lọc này chỉ để giao diện luôn nhất quán ở mọi tình huống.
+  if (filters?.userId) {
+    return rows.filter(row => !row.accountId || row.accountId === filters.userId);
+  }
+  return rows;
+};
+
+// Trang công khai chỉ cần con số học viên chứ không cần danh sách họ tên và email,
+// nên số đếm được lấy qua một hàm riêng thay vì đọc cả bảng ghi danh.
+export const getCourseStudentCounts = async (): Promise<Record<string, number>> => {
+  try {
+    const { data, error } = await supabase.rpc('course_student_counts');
+    if (error || !Array.isArray(data)) return {};
+    const counts: Record<string, number> = {};
+    (data as any[]).forEach(row => {
+      if (row?.course_id) counts[row.course_id] = Number(row.student_count) || 0;
+    });
+    return counts;
+  } catch (error) {
+    console.warn('Không lấy được số học viên theo khóa:', error);
+    return {};
+  }
 };
 
 export const enrollCourse = async (course: PortfolioCourse, viewer: { id: string; fullName: string; email: string }) => {
