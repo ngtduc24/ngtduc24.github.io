@@ -19,10 +19,10 @@ import UserNotifications from './components/UserNotifications';
 import MediaLibrary from './components/MediaLibrary';
 import PortfolioWebsite from './components/PortfolioWebsite';
 import PortfolioCMS from './components/PortfolioCMS';
-import ARModule from './components/ARModule';
+import UtilitiesModule from './components/UtilitiesModule';
 import PublicARScanner from './components/PublicARScanner';
 import { TaskProvider } from './components/TaskContext';
-import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Scan } from 'lucide-react';
+import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench } from 'lucide-react';
 import { supabase } from "./lib/supabase";
 import { saveUser, deleteUser, getUsers, getUserById, mapUserFromDB, seedDefaultUsersIfNeeded, getDefaultSettingsFromSupabase, saveDefaultSettingsToSupabase, testSupabaseConnection, getNotificationsFromSupabase, USERS_TABLE } from './lib/data';
 import { auth, db } from './lib/firebase';
@@ -213,6 +213,8 @@ export default function App() {
       calculator: 'Tính toán cỡ mẫu',
       qualitative_analysis: 'Phân tích định tính',
       quantitative_analysis: 'Phân tích số liệu định lượng',
+      utilities: 'Tiện ích',
+      ar_module: 'Tiện ích',
       portfolio_cms: 'Quản trị Portfolio',
       notifications: 'Thông báo hệ thống',
       notifications_admin: 'Quản trị thông báo',
@@ -475,13 +477,18 @@ export default function App() {
     if (!currentUser) return false;
     if (currentUser.role === 'admin') return true;
     if (currentUser.role === 'member') return tabId === 'portfolio_website';
-    
+
     if (tabId === 'notifications') return true; // All registered users have notifications inbox access
     if (tabId === 'portfolio_website') return true;
     if (tabId === 'users') return false; // Only admin can ever see users panel
     if (tabId === 'settings') return currentUser.permissions.includes('settings');
     if (tabId === 'notifications_admin') return currentUser.permissions.includes('notifications');
     if (tabId === 'backup') return false;
+    // Mục Tạo AR nay nằm trong Tiện ích. Tài khoản nào đã được cấp quyền ar_module
+    // từ trước thì vẫn vào được, không cần quản trị viên cấp lại quyền.
+    if (tabId === 'utilities' || tabId === 'ar_module') {
+      return currentUser.permissions.includes('utilities') || currentUser.permissions.includes('ar_module');
+    }
     return currentUser.permissions.includes(tabId);
   };
 
@@ -594,8 +601,12 @@ export default function App() {
             onBackToInbox={() => setCurrentTab('notifications')}
           />
         );
+      case 'utilities':
+        return <UtilitiesModule currentUser={currentUser} />;
+      // Mã cũ của mục Tạo AR. Giữ lại để tài khoản nào đang mở sẵn mục này, hoặc có
+      // đường dẫn cũ lưu trong trình duyệt, vẫn vào đúng nơi thay vì gặp trang trắng.
       case 'ar_module':
-        return <ARModule currentUser={currentUser} />;
+        return <UtilitiesModule currentUser={currentUser} initialTool="ar" />;
       case 'public_search':
         return <PublicJournalSearch onLoginClick={() => setCurrentTab('dashboard')} />;
       case 'portfolio_website':
@@ -698,7 +709,7 @@ export default function App() {
       { id: 'calculator', label: 'Tính cỡ mẫu', icon: Calculator },
       { id: 'qualitative_analysis', label: 'Phân tích định tính', icon: Layers },
       { id: 'quantitative_analysis', label: 'Phân tích định lượng', icon: Calculator },
-      { id: 'ar_module', label: 'Tạo AR', icon: Scan },
+      { id: 'utilities', label: 'Tiện ích', icon: Wrench },
       { id: 'portfolio_cms', label: 'Quản trị Portfolio', icon: Shield },
       { id: 'notifications', icon: Bell, label: 'Thông báo' },
     ];
@@ -706,7 +717,7 @@ export default function App() {
     const allowed = items.filter(item => {
       if (item.id === 'notifications') return true;
       if (currentUser.role === 'admin') return true;
-      return currentUser.permissions.includes(item.id);
+      return hasPermission(item.id);
     });
 
     if (currentUser.role === 'admin') {
