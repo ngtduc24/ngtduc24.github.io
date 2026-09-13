@@ -1897,7 +1897,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                 </div>
                 {isSafeUrl(item.data.pdfUrl) && (
                   <div className="overflow-hidden rounded-[2rem] border border-slate-200 shadow-sm">
-                    <iframe src={item.data.pdfUrl} title="Tài liệu PDF" className="h-[80vh] w-full" sandbox="allow-same-origin allow-scripts allow-popups" />
+                    <iframe src={item.data.pdfUrl} title="Tài liệu PDF" className="h-[80vh] w-full" />
                   </div>
                 )}
                 <div className="flex flex-wrap gap-4">
