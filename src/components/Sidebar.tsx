@@ -76,7 +76,7 @@ export default function Sidebar({
     if (window.innerWidth < 768) setSidebarOpen(false);
   };
 
-  const renderItem = (item: { id: string; label: string; icon: React.ElementType }) => {
+  const renderItem = (item: { id: string; label: string; icon: any }) => {
     const Icon = item.icon;
     const active = currentTab === item.id;
     return (

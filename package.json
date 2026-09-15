@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "@react-three/drei": "^10.7.8",
+    "@react-three/fiber": "^9.7.0",
     "@supabase/supabase-js": "^2.110.2",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.1.14",
@@ -22,6 +24,7 @@
     "@tiptap/extension-text-align": "^3.27.4",
     "@tiptap/react": "^3.27.4",
     "@tiptap/starter-kit": "^3.27.4",
+    "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.21",
     "cloudinary": "^2.10.0",
@@ -40,7 +43,7 @@
     "react-dom": "^19.0.1",
     "simple-statistics": "^7.9.3",
     "tailwindcss": "^4.1.14",
-    "three": "^0.150.1",
+    "three": "^0.186.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.3",
     "xlsx": "^0.18.5"

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { ARTarget, AppSettings } from '../types';
 import { getDefaultSettingsFromSupabase } from '../lib/data';
+import { unpackARTarget } from '../lib/arHelpers';
 import ARScanner from './ARScanner';
 import { Loader2 } from 'lucide-react';
 
@@ -34,7 +35,7 @@ export default function PublicARScanner() {
         const isDisabled = targetData.active === false || targetData.status === 'inactive';
         if (isDisabled) throw new Error('Target này đang bị tắt.');
 
-        setTarget(targetData as ARTarget);
+        setTarget(unpackARTarget(targetData));
       } catch (err: any) {
         console.error('Lỗi tải public AR:', err);
         setError(err?.message || 'Lỗi khi tải trải nghiệm AR');

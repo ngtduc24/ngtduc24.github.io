@@ -4,6 +4,10 @@ import { supabase } from '../lib/supabase';
 import { uploadARAssetToSupabase } from '../lib/upload';
 import { compileImageToMindBlob } from '../lib/mindar';
 import { UserAccount, ARTarget } from '../types';
+import ARStudioWorkspace from './ARStudioWorkspace';
+import { unpackARTarget, packARTargetPayload } from '../lib/arHelpers';
+import { useConfirmation } from './ConfirmationContext';
+import { useNotifications } from './NotificationContext';
 
 function ARDetailModal({ target, onClose }: { target: ARTarget; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
@@ -96,8 +100,9 @@ function ARDetailModal({ target, onClose }: { target: ARTarget; onClose: () => v
                 <Download className="w-3.5 h-3.5" />
                 {qrDownloading ? 'Đang tải...' : 'Tải QR về máy'}
               </button>
-            </div>
+
           </div>
+        </div>
         </div>
       </div>
     </div>
@@ -151,6 +156,15 @@ function ARCreateView({ currentUser, onCancel, onCreated }: { currentUser?: User
   const [thumbPreview, setThumbPreview] = useState('');
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const [posX, setPosX] = useState(0);
+  const [posY, setPosY] = useState(0);
+  const [posZ, setPosZ] = useState(0);
+  const [isTransparentVideo, setIsTransparentVideo] = useState(false);
+  const [chromaKeyColor, setChromaKeyColor] = useState('#00ff00');
+  const [autoPlayVideo, setAutoPlayVideo] = useState(true);
+  const [loopVideo, setLoopVideo] = useState(true);
+  const [buttonLabel, setButtonLabel] = useState('');
+  const [buttonUrl, setButtonUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [progressText, setProgressText] = useState('');
@@ -192,9 +206,9 @@ function ARCreateView({ currentUser, onCancel, onCreated }: { currentUser?: User
       }
 
       setProgressText('Đang lưu vào cơ sở dữ liệu...');
-      const { error } = await supabase.from('ar_targets').insert({
+      const payload = packARTargetPayload({
         name: name.trim(),
-        description: description.trim(),
+        rawTextDescription: description.trim(),
         target_image_url,
         mind_file_url,
         thumbnail_url,
@@ -202,9 +216,19 @@ function ARCreateView({ currentUser, onCancel, onCreated }: { currentUser?: User
         content_url,
         scale,
         rotation,
+        position_x: posX,
+        position_y: posY,
+        position_z: posZ,
+        is_transparent_video: isTransparentVideo,
+        chroma_key_color: chromaKeyColor,
+        auto_play_video: autoPlayVideo,
+        loop_video: loopVideo,
+        button_label: buttonLabel,
+        button_url: buttonUrl,
         active: true,
         owner_id: currentUser?.id ?? null,
       });
+      const { error } = await supabase.from('ar_targets').insert(payload);
       if (error) throw error;
       onCreated();
     } catch (e: any) {
@@ -241,8 +265,69 @@ function ARCreateView({ currentUser, onCancel, onCreated }: { currentUser?: User
               <input type="number" step="0.1" value={scale} onChange={(e) => setScale(parseFloat(e.target.value) || 1)} className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Góc xoay (độ)</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Góc xoay X (độ)</label>
               <input type="number" value={rotation} onChange={(e) => setRotation(parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Vị trí X</label>
+              <input type="number" step="0.1" value={posX} onChange={(e) => setPosX(parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Vị trí Y</label>
+              <input type="number" step="0.1" value={posY} onChange={(e) => setPosY(parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Vị trí Z</label>
+              <input type="number" step="0.1" value={posZ} onChange={(e) => setPosZ(parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
+            </div>
+          </div>
+          
+          <div className="pt-4 border-t border-slate-100">
+            <h4 className="text-sm font-bold text-slate-800 mb-3">Tính năng nâng cao (Nhóm 2)</h4>
+            
+            {contentType === 'video' && (
+              <div className="space-y-3 mb-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input type="checkbox" checked={isTransparentVideo} onChange={(e) => setIsTransparentVideo(e.target.checked)} className="w-4 h-4 accent-brand" />
+                  <span className="text-xs font-semibold text-slate-700">Video tách nền (Chroma Key)</span>
+                </label>
+                {isTransparentVideo && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Màu nền cần tách (Mã Hex)</label>
+                    <div className="flex gap-2">
+                      <input type="color" value={chromaKeyColor} onChange={(e) => setChromaKeyColor(e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
+                      <input type="text" value={chromaKeyColor} onChange={(e) => setChromaKeyColor(e.target.value)} placeholder="#00ff00" className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none uppercase" />
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" checked={autoPlayVideo} onChange={(e) => setAutoPlayVideo(e.target.checked)} className="w-4 h-4 accent-brand" />
+                    <span className="text-xs font-semibold text-slate-700">Tự động phát</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" checked={loopVideo} onChange={(e) => setLoopVideo(e.target.checked)} className="w-4 h-4 accent-brand" />
+                    <span className="text-xs font-semibold text-slate-700">Lặp lại</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+              <p className="text-xs font-semibold text-slate-600">Nút bấm tương tác (hiển thị dưới vật thể)</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Tên nút</label>
+                  <input value={buttonLabel} onChange={(e) => setButtonLabel(e.target.value)} placeholder="VD: Xem chi tiết" className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Đường dẫn URL</label>
+                  <input value={buttonUrl} onChange={(e) => setButtonUrl(e.target.value)} placeholder="https://..." className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -268,6 +353,32 @@ function ARCreateView({ currentUser, onCancel, onCreated }: { currentUser?: User
         </div>
       </div>
 
+      {targetPreview && contentPreview && (
+        <div className="bg-slate-900 rounded-2xl p-5 shadow-sm overflow-hidden relative flex flex-col items-center justify-center min-h-[300px]">
+          <p className="absolute top-4 left-4 text-xs font-bold text-white/50 z-10">Live Preview (Mô phỏng 2D)</p>
+          <div className="relative w-64 max-w-full">
+            <img src={targetPreview} alt="Target" className="w-full h-auto opacity-50 rounded-lg shadow-2xl" />
+            <div 
+              className="absolute top-0 left-0 w-full h-full flex items-center justify-center origin-center transition-transform"
+              style={{
+                transform: `translate3d(${posX * 100}%, ${-posY * 100}%, ${posZ * 10}px) scale(${scale}) rotateX(${rotation}deg)`
+              }}
+            >
+              {contentType === 'image' || contentType === 'gif' ? (
+                <img src={contentPreview} alt="Content" className="w-full h-auto drop-shadow-xl" />
+              ) : contentType === 'video' ? (
+                <video src={contentPreview} className="w-full h-auto drop-shadow-xl" autoPlay loop muted />
+              ) : (
+                <div className="w-full aspect-square bg-brand/80 flex flex-col items-center justify-center text-white text-xs font-bold rounded-lg backdrop-blur-md shadow-2xl border border-brand/50">
+                  <span className="text-2xl mb-1">🧊</span>
+                  3D Model
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {err && <div className="flex items-center gap-2 text-sm text-rose-600 bg-rose-50 rounded-xl p-3"><AlertCircle className="w-4 h-4 shrink-0" />{err}</div>}
       {saving && progressText && <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 rounded-xl p-3"><Loader2 className="w-4 h-4 shrink-0 animate-spin" />{progressText}</div>}
 
@@ -287,6 +398,15 @@ function AREditModal({ target, onClose, onSaved }: { target: ARTarget; onClose: 
   const [description, setDescription] = useState(target.description || '');
   const [scale, setScale] = useState<number>(target.scale ?? 1);
   const [rotation, setRotation] = useState<number>(target.rotation ?? 0);
+  const [posX, setPosX] = useState<number>(target.position_x ?? 0);
+  const [posY, setPosY] = useState<number>(target.position_y ?? 0);
+  const [posZ, setPosZ] = useState<number>(target.position_z ?? 0);
+  const [isTransparentVideo, setIsTransparentVideo] = useState<boolean>(target.is_transparent_video ?? false);
+  const [chromaKeyColor, setChromaKeyColor] = useState<string>(target.chroma_key_color ?? '#00ff00');
+  const [autoPlayVideo, setAutoPlayVideo] = useState<boolean>(target.auto_play_video ?? true);
+  const [loopVideo, setLoopVideo] = useState<boolean>(target.loop_video ?? true);
+  const [buttonLabel, setButtonLabel] = useState<string>(target.button_label ?? '');
+  const [buttonUrl, setButtonUrl] = useState<string>(target.button_url ?? '');
   const [active, setActive] = useState<boolean>(target.active ?? true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -295,13 +415,23 @@ function AREditModal({ target, onClose, onSaved }: { target: ARTarget; onClose: 
     if (!name.trim()) { setErr('Vui lòng nhập tên AR.'); return; }
     setSaving(true); setErr(null);
     try {
-      const { error } = await supabase.from('ar_targets').update({
+      const payload = packARTargetPayload({
         name: name.trim(),
-        description: description.trim(),
+        rawTextDescription: description.trim(),
         scale,
         rotation,
+        position_x: posX,
+        position_y: posY,
+        position_z: posZ,
+        is_transparent_video: isTransparentVideo,
+        chroma_key_color: chromaKeyColor,
+        auto_play_video: autoPlayVideo,
+        loop_video: loopVideo,
+        button_label: buttonLabel,
+        button_url: buttonUrl,
         active,
-      }).eq('id', target.id);
+      });
+      const { error } = await supabase.from('ar_targets').update(payload).eq('id', target.id);
       if (error) throw error;
       onSaved();
     } catch (e: any) {
@@ -338,10 +468,72 @@ function AREditModal({ target, onClose, onSaved }: { target: ARTarget; onClose: 
               <input type="number" step="0.1" value={scale} onChange={(e) => setScale(parseFloat(e.target.value) || 1)} className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Góc xoay (độ)</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Góc xoay X (độ)</label>
               <input type="number" value={rotation} onChange={(e) => setRotation(parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
             </div>
           </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Vị trí X</label>
+              <input type="number" step="0.1" value={posX} onChange={(e) => setPosX(parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Vị trí Y</label>
+              <input type="number" step="0.1" value={posY} onChange={(e) => setPosY(parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Vị trí Z</label>
+              <input type="number" step="0.1" value={posZ} onChange={(e) => setPosZ(parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
+            </div>
+          </div>
+          
+          <div className="pt-4 border-t border-slate-100">
+            <h4 className="text-sm font-bold text-slate-800 mb-3">Tính năng nâng cao (Nhóm 2)</h4>
+            
+            {target.content_type === 'video' && (
+              <div className="space-y-3 mb-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input type="checkbox" checked={isTransparentVideo} onChange={(e) => setIsTransparentVideo(e.target.checked)} className="w-4 h-4 accent-brand" />
+                  <span className="text-xs font-semibold text-slate-700">Video tách nền (Chroma Key)</span>
+                </label>
+                {isTransparentVideo && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Màu nền cần tách (Mã Hex)</label>
+                    <div className="flex gap-2">
+                      <input type="color" value={chromaKeyColor} onChange={(e) => setChromaKeyColor(e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
+                      <input type="text" value={chromaKeyColor} onChange={(e) => setChromaKeyColor(e.target.value)} placeholder="#00ff00" className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none uppercase" />
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" checked={autoPlayVideo} onChange={(e) => setAutoPlayVideo(e.target.checked)} className="w-4 h-4 accent-brand" />
+                    <span className="text-xs font-semibold text-slate-700">Tự động phát</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" checked={loopVideo} onChange={(e) => setLoopVideo(e.target.checked)} className="w-4 h-4 accent-brand" />
+                    <span className="text-xs font-semibold text-slate-700">Lặp lại</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+              <p className="text-xs font-semibold text-slate-600">Nút bấm tương tác (hiển thị dưới vật thể)</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Tên nút</label>
+                  <input value={buttonLabel} onChange={(e) => setButtonLabel(e.target.value)} placeholder="VD: Xem chi tiết" className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Đường dẫn URL</label>
+                  <input value={buttonUrl} onChange={(e) => setButtonUrl(e.target.value)} placeholder="https://..." className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-brand outline-none" />
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <label className="flex items-center gap-3 cursor-pointer select-none">
             <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="w-4 h-4 accent-emerald-500" />
             <span className="text-sm font-semibold text-slate-700">Đang bật (cho phép quét)</span>
@@ -361,6 +553,8 @@ function AREditModal({ target, onClose, onSaved }: { target: ARTarget; onClose: 
 }
 
 export default function ARModule({ currentUser }: { currentUser?: UserAccount | null }) {
+  const { confirm } = useConfirmation();
+  const { addNotification } = useNotifications();
   const [targets, setTargets] = useState<ARTarget[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -371,13 +565,21 @@ export default function ARModule({ currentUser }: { currentUser?: UserAccount | 
 
   const handleDelete = async (target: ARTarget, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm(`Xóa AR target "${target.name}"? Hành động này không thể hoàn tác.`)) return;
+    const confirmed = await confirm({
+      title: 'Xác nhận xóa AR Target',
+      message: `Bạn có chắc chắn muốn xóa AR target "${target.name}" không? Thao tác này sẽ xóa vĩnh viễn và không thể hoàn tác.`,
+      confirmText: 'Xóa ngay',
+      cancelText: 'Hủy'
+    });
+    if (!confirmed) return;
+
     try {
       const { error: delError } = await supabase.from('ar_targets').delete().eq('id', target.id);
       if (delError) throw delError;
       setTargets(prev => prev.filter(t => t.id !== target.id));
+      addNotification(`Đã xóa AR target "${target.name}" thành công`, 'success');
     } catch (err: any) {
-      alert('Lỗi khi xóa AR target: ' + (err.message || err));
+      addNotification('Lỗi khi xóa AR target: ' + (err.message || err), 'error');
     }
   };
 
@@ -391,7 +593,7 @@ export default function ARModule({ currentUser }: { currentUser?: UserAccount | 
       }
       const { data, error: sbError } = await query;
       if (sbError) throw sbError;
-      setTargets(data || []);
+      setTargets((data || []).map(unpackARTarget));
     } catch (e: any) {
       setError(e.message || 'Không thể tải danh sách AR targets');
     } finally {
@@ -404,7 +606,30 @@ export default function ARModule({ currentUser }: { currentUser?: UserAccount | 
   const filtered = targets.filter(t => t.name?.toLowerCase().includes(searchTerm.toLowerCase()));
 
   if (showCreate) {
-    return <ARCreateView currentUser={currentUser} onCancel={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); fetchTargets(); }} />;
+    return (
+      <ARStudioWorkspace
+        currentUser={currentUser}
+        onClose={() => setShowCreate(false)}
+        onSaved={() => {
+          setShowCreate(false);
+          fetchTargets();
+        }}
+      />
+    );
+  }
+
+  if (editTarget) {
+    return (
+      <ARStudioWorkspace
+        initialTarget={editTarget}
+        currentUser={currentUser}
+        onClose={() => setEditTarget(null)}
+        onSaved={() => {
+          setEditTarget(null);
+          fetchTargets();
+        }}
+      />
+    );
   }
 
   return (
@@ -492,7 +717,6 @@ export default function ARModule({ currentUser }: { currentUser?: UserAccount | 
       )}
       
       {selectedTarget && <ARDetailModal target={selectedTarget} onClose={() => setSelectedTarget(null)} />}
-      {editTarget && <AREditModal target={editTarget} onClose={() => setEditTarget(null)} onSaved={() => { setEditTarget(null); fetchTargets(); }} />}
     </div>
   );
 }

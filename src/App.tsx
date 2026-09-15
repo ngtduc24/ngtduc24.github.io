@@ -62,7 +62,6 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const [initialized, setInitialized] = useState(false);
   const [dbConnected, setDbConnected] = useState<boolean | null>(null);
   const [entryView, setEntryView] = useState<'portfolio' | 'login' | 'admin'>(() => {
     if (typeof window === 'undefined') return 'portfolio';
@@ -284,25 +283,27 @@ export default function App() {
       try { return JSON.parse(localStorage.getItem('local_users_cache') || '[]'); } catch { return []; }
     })();
 
-    const initFirebaseSync = async () => {
-      // 0. Test connection (Keep this for other Supabase tables if any, or disable)
-      const isConnected = await testSupabaseConnection();
-      setDbConnected(isConnected);
+    const initFirebaseSync = () => {
+      // Chạy kiểm tra kết nối nền không làm nghẽn giao diện người dùng
+      testSupabaseConnection()
+        .then(isConnected => {
+          if (active) setDbConnected(isConnected);
+        })
+        .catch(() => {
+          if (active) setDbConnected(false);
+        });
 
-      // Tải danh sách người dùng từ Firestore để phục vụ việc chuyển đổi username -> email khi đăng nhập
-      let loadedUsers = latestUsers;
-      try {
-        const dbUsers = await getUsers();
-        if (dbUsers && dbUsers.length > 0) {
-          loadedUsers = dbUsers;
-          localStorage.setItem('local_users_cache', JSON.stringify(dbUsers));
-        }
-      } catch (err) {
-        console.warn("Lỗi khi tải trước danh sách người dùng:", err);
-      }
-
-      setUsers(loadedUsers);
-      setInitialized(true);
+      // Tải danh sách người dùng từ Firestore trong nền
+      getUsers()
+        .then(dbUsers => {
+          if (active && dbUsers && dbUsers.length > 0) {
+            setUsers(dbUsers);
+            localStorage.setItem('local_users_cache', JSON.stringify(dbUsers));
+          }
+        })
+        .catch(err => {
+          console.warn("Lỗi khi tải trước danh sách người dùng:", err);
+        });
     };
 
     initFirebaseSync();
@@ -638,17 +639,6 @@ export default function App() {
 
   if (isPublicARRoute) {
     return <PublicARScanner />;
-  }
-
-  if (!initialized) {
-    return (
-      <div className="min-h-screen w-screen flex items-center justify-center bg-slate-900 text-white">
-        <div className="text-center space-y-2">
-          <RefreshCw className="w-8 h-8 animate-spin text-purple-500 mx-auto" />
-          <p className="text-xs font-semibold text-slate-400">Đang khởi động hệ thống phân quyền...</p>
-        </div>
-      </div>
-    );
   }
 
   const isForcePublic = typeof window !== 'undefined' && window.location.search.includes('public=true');

@@ -41,7 +41,7 @@ function setLocalFallback<T>(key: string, value: T): void {
 }
 
 // Default Seed Data
-const DEFAULT_BANNER: PortfolioBanner = {
+export const DEFAULT_BANNER: PortfolioBanner = {
   backgroundImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=80',
   title: 'XÓA NHÒA RANH GIỚI GIỮA NGHỆ THUẬT & CÔNG NGHỆ',
   description: 'Tôi là Alex Nguyễn — Giám đốc Nghệ thuật & Nhà Thiết kế Đa phương tiện sáng tạo ra các trải nghiệm thị giác đỉnh cao, đồ họa chuyển động và không gian tương tác kỹ thuật số.',
@@ -72,14 +72,14 @@ const DEFAULT_BANNER: PortfolioBanner = {
   ]
 };
 
-const DEFAULT_PROJECTS_SETTINGS: PortfolioProjectsSettings = {
+export const DEFAULT_PROJECTS_SETTINGS: PortfolioProjectsSettings = {
   banner: { ...DEFAULT_BANNER, title: 'Dự án', description: 'Các dự án tiêu biểu', quickLinks: [], showText: true },
   pageTitle: 'Dự án',
   postsPerCategory: 4,
   layoutStyle: 'grid'
 };
 
-const DEFAULT_COURSES_SETTINGS: PortfolioCoursesSettings = {
+export const DEFAULT_COURSES_SETTINGS: PortfolioCoursesSettings = {
   banner: { 
     ...DEFAULT_BANNER, 
     title: 'Khóa học trực tuyến', 
@@ -93,7 +93,7 @@ const DEFAULT_COURSES_SETTINGS: PortfolioCoursesSettings = {
   layoutStyle: 'grid'
 };
 
-const DEFAULT_GLOBAL_SETTINGS: PortfolioGlobalSettings = {
+export const DEFAULT_GLOBAL_SETTINGS: PortfolioGlobalSettings = {
   menuOpacity: 95,
   menuGlassEffect: true,
   homeSections: {
@@ -110,7 +110,7 @@ const DEFAULT_GLOBAL_SETTINGS: PortfolioGlobalSettings = {
   }
 };
 
-const DEFAULT_ABOUT: PortfolioAbout = {
+export const DEFAULT_ABOUT: PortfolioAbout = {
   fullName: 'Nguyễn Minh Quân (Alex)',
   artistName: 'Alex Nguyễn',
   jobTitle: 'Art Director & Multimedia Creative Technologist',

@@ -81,7 +81,12 @@ import {
   getCourseChapters,
   getCourseLessons,
   getCourseStudents,
-  getCourseStudentCounts
+  getCourseStudentCounts,
+  DEFAULT_BANNER,
+  DEFAULT_ABOUT,
+  DEFAULT_GLOBAL_SETTINGS,
+  DEFAULT_PROJECTS_SETTINGS,
+  DEFAULT_COURSES_SETTINGS
 } from '../lib/portfolioData';
 import { UserAccount } from '../types';
 import {
@@ -1952,24 +1957,94 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
 }
 
 export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthenticated = false, currentUser = null, onUpdateUser, onLogout }: PortfolioWebsiteProps) {
-  const [banner, setBanner] = useState<PortfolioBanner | null>(null);
-  const [projectsSettings, setProjectsSettings] = useState<PortfolioProjectsSettings | null>(null);
-  const [coursesSettings, setCoursesSettings] = useState<PortfolioCoursesSettings | null>(null);
-  const [about, setAbout] = useState<PortfolioAbout | null>(null);
-  const [education, setEducation] = useState<PortfolioEducation[]>([]);
-  const [experience, setExperience] = useState<PortfolioExperience[]>([]);
-  const [skills, setSkills] = useState<PortfolioSkill[]>([]);
-  const [projects, setProjects] = useState<PortfolioProject[]>([]);
-  const [courses, setCourses] = useState<PortfolioCourse[]>([]);
-  const [research, setResearch] = useState<PortfolioResearch[]>([]);
-  const [lectures, setLectures] = useState<PortfolioLecture[]>([]);
-  const [navigation, setNavigation] = useState<PortfolioNavigation[]>([]);
-  const [posts, setPosts] = useState<PortfolioPost[]>([]);
-  const [globalSettings, setGlobalSettings] = useState<PortfolioGlobalSettings | null>(null);
+  const [banner, setBanner] = useState<PortfolioBanner | null>(() => {
+    try {
+      const cached = localStorage.getItem('portfolio_banner');
+      return cached ? JSON.parse(cached) : DEFAULT_BANNER;
+    } catch { return DEFAULT_BANNER; }
+  });
+  const [projectsSettings, setProjectsSettings] = useState<PortfolioProjectsSettings | null>(() => {
+    try {
+      const cached = localStorage.getItem('portfolio_projects_settings');
+      return cached ? JSON.parse(cached) : DEFAULT_PROJECTS_SETTINGS;
+    } catch { return DEFAULT_PROJECTS_SETTINGS; }
+  });
+  const [coursesSettings, setCoursesSettings] = useState<PortfolioCoursesSettings | null>(() => {
+    try {
+      const cached = localStorage.getItem('portfolio_courses_settings');
+      return cached ? JSON.parse(cached) : DEFAULT_COURSES_SETTINGS;
+    } catch { return DEFAULT_COURSES_SETTINGS; }
+  });
+  const [about, setAbout] = useState<PortfolioAbout | null>(() => {
+    try {
+      const cached = localStorage.getItem('portfolio_about');
+      return cached ? JSON.parse(cached) : DEFAULT_ABOUT;
+    } catch { return DEFAULT_ABOUT; }
+  });
+  const [education, setEducation] = useState<PortfolioEducation[]>(() => {
+    try {
+      const cached = localStorage.getItem('portfolio_education');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
+  const [experience, setExperience] = useState<PortfolioExperience[]>(() => {
+    try {
+      const cached = localStorage.getItem('portfolio_experience');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
+  const [skills, setSkills] = useState<PortfolioSkill[]>(() => {
+    try {
+      const cached = localStorage.getItem('portfolio_skills');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
+  const [projects, setProjects] = useState<PortfolioProject[]>(() => {
+    try {
+      const cached = localStorage.getItem('portfolio_projects');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
+  const [courses, setCourses] = useState<PortfolioCourse[]>(() => {
+    try {
+      const cached = localStorage.getItem('portfolio_courses');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
+  const [research, setResearch] = useState<PortfolioResearch[]>(() => {
+    try {
+      const cached = localStorage.getItem('portfolio_research');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
+  const [lectures, setLectures] = useState<PortfolioLecture[]>(() => {
+    try {
+      const cached = localStorage.getItem('portfolio_lectures');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
+  const [navigation, setNavigation] = useState<PortfolioNavigation[]>(() => {
+    try {
+      const cached = localStorage.getItem('portfolio_navigation');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
+  const [posts, setPosts] = useState<PortfolioPost[]>(() => {
+    try {
+      const cached = localStorage.getItem('portfolio_posts');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
+  const [globalSettings, setGlobalSettings] = useState<PortfolioGlobalSettings | null>(() => {
+    try {
+      const cached = localStorage.getItem('portfolio_global_settings');
+      return cached ? JSON.parse(cached) : DEFAULT_GLOBAL_SETTINGS;
+    } catch { return DEFAULT_GLOBAL_SETTINGS; }
+  });
   // Bật tắt hiển thị từng khối trên trang chủ theo cấu hình trong trang quản trị.
   const showSection = (key: HomeSectionKey) => isHomeSectionVisible(globalSettings, key);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState('banner');
   const [detail, setDetail] = useState<DetailItem | null>(null);
@@ -2302,7 +2377,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
   const opacityHex = globalSettings ? Math.round((globalSettings.menuOpacity / 100) * 255).toString(16).padStart(2, '0') : 'f2';
   const bgColor = globalSettings ? `#ffffff${opacityHex}` : 'white';
 
-  if (loading || !banner || !about) {
+  if (!banner || !about) {
     return <div className="grid min-h-screen place-items-center bg-[#f7fbf9]"><div className="text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin text-emerald-600" /><p className="mt-3 text-sm font-bold text-slate-500">Đang chuẩn bị Portfolio...</p></div></div>;
   }
 

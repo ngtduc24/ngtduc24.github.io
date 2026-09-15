@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from "../lib/supabase";
 import { db } from '../lib/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
+import { useConfirmation } from './ConfirmationContext';
 
 interface HeaderProps {
   currentTab: string;
@@ -20,6 +21,7 @@ interface HeaderProps {
 }
 
 export default function Header({ currentTab, sidebarOpen, setSidebarOpen, currentUser, settings, onProfileClick, onLogout, setCurrentTab }: HeaderProps) {
+  const { confirm } = useConfirmation();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -663,8 +665,14 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
                   </button>
 
                   <button 
-                    onClick={() => {
-                      if (confirm("Bạn có chắc muốn xoá bộ nhớ đệm (Cache)? Thao tác này sẽ xoá các cài đặt tạm thời và yêu cầu tải lại trang.")) {
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: "Xác nhận xóa bộ nhớ đệm",
+                        message: "Bạn có chắc muốn xoá bộ nhớ đệm (Cache)? Thao tác này sẽ xoá các cài đặt tạm thời và yêu cầu tải lại trang.",
+                        confirmText: "Xóa và tải lại",
+                        cancelText: "Hủy"
+                      });
+                      if (ok) {
                         localStorage.clear();
                         sessionStorage.clear();
                         window.location.reload();

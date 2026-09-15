@@ -209,6 +209,23 @@ export interface ARTarget {
   content_url: string;
   scale: number;
   rotation: number;
+  position_x?: number;
+  position_y?: number;
+  position_z?: number;
+  // Group 2 Features
+  is_transparent_video?: boolean;
+  chroma_key_color?: string; // hex color string e.g. '#00ff00'
+  auto_play_video?: boolean;
+  loop_video?: boolean;
+  button_label?: string;
+  button_url?: string;
+
+  // Group 3 Features: Capture & 3D Gestures
+  enable_capture?: boolean; // Bật/tắt nút chụp ảnh AR
+  allow_user_rotate?: boolean; // Bật/tắt tương tác xoay 3D
+  allow_user_scale?: boolean; // Bật/tắt tương tác thu phóng (pinch scale) 3D
+  allow_user_drag?: boolean; // Bật/tắt tương tác kéo di chuyển (drag) 3D
+  
   active: boolean;
   description?: string;
   thumbnail_url?: string;

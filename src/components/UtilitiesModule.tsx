@@ -17,7 +17,7 @@ interface UtilityTool {
   id: UtilityToolId;
   label: string;
   description: string;
-  icon: React.ElementType;
+  icon: any;
 }
 
 export const UTILITY_TOOLS: UtilityTool[] = [
