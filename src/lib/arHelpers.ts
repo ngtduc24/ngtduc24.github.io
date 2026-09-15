@@ -37,6 +37,11 @@ export function unpackARTarget(raw: any): ARTarget {
     allow_user_rotate: raw.allow_user_rotate ?? extraConfig.allow_user_rotate ?? true,
     allow_user_scale: raw.allow_user_scale ?? extraConfig.allow_user_scale ?? true,
     allow_user_drag: raw.allow_user_drag ?? extraConfig.allow_user_drag ?? false,
+    // Overlay man hinh quet (mac dinh hien)
+    show_logo: raw.show_logo ?? extraConfig.show_logo ?? true,
+    show_gesture_hint: raw.show_gesture_hint ?? extraConfig.show_gesture_hint ?? true,
+    show_close_button: raw.show_close_button ?? extraConfig.show_close_button ?? true,
+    show_scan_hint: raw.show_scan_hint ?? extraConfig.show_scan_hint ?? true,
   };
 }
 
@@ -61,6 +66,10 @@ export function packARTargetPayload(target: Partial<ARTarget> & { rawTextDescrip
     allow_user_rotate: target.allow_user_rotate ?? true,
     allow_user_scale: target.allow_user_scale ?? true,
     allow_user_drag: target.allow_user_drag ?? false,
+    show_logo: target.show_logo ?? true,
+    show_gesture_hint: target.show_gesture_hint ?? true,
+    show_close_button: target.show_close_button ?? true,
+    show_scan_hint: target.show_scan_hint ?? true,
   };
 
   return {

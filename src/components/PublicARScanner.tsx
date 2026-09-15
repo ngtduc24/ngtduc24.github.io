@@ -77,7 +77,7 @@ export default function PublicARScanner() {
 
   return (
     <div className="fixed inset-0 w-full h-full bg-black z-50">
-      {settings?.webAppIcon && (
+      {settings?.webAppIcon && target.show_logo !== false && (
         <div className="absolute top-6 left-6 z-[70] bg-black/40 p-2 rounded-xl backdrop-blur-md border border-white/10">
           <img src={settings.webAppIcon} alt="Logo" className="h-8 object-contain" />
         </div>

@@ -225,7 +225,13 @@ export interface ARTarget {
   allow_user_rotate?: boolean; // Bật/tắt tương tác xoay 3D
   allow_user_scale?: boolean; // Bật/tắt tương tác thu phóng (pinch scale) 3D
   allow_user_drag?: boolean; // Bật/tắt tương tác kéo di chuyển (drag) 3D
-  
+
+  // Overlay màn hình quét: bật/tắt riêng từng thông tin hiển thị chồng trên camera
+  show_logo?: boolean; // Logo góc trên trái
+  show_gesture_hint?: boolean; // Băng gợi ý thao tác Tương tác 3D
+  show_close_button?: boolean; // Nút đóng X góc trên phải
+  show_scan_hint?: boolean; // Chữ hướng dẫn hướng camera vào ảnh target
+
   active: boolean;
   description?: string;
   thumbnail_url?: string;

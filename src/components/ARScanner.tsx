@@ -43,6 +43,11 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
   const hasAnyGesture = allowRotate || allowScale || allowDrag;
   const enableCapture = target.enable_capture !== false;
 
+  // Overlay man hinh quet, bat/tat rieng tung target (mac dinh hien).
+  const gestureHintEnabled = target.show_gesture_hint !== false;
+  const showCloseButton = target.show_close_button !== false;
+  const scanHintEnabled = target.show_scan_hint !== false;
+
   // Ép camera và canvas AR phủ full màn hình trên mobile.
   useEffect(() => {
     const style = document.createElement('style');
@@ -254,7 +259,7 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
       }
       onFound = () => {
         setTargetVisible(true);
-        if (hasAnyGesture) {
+        if (hasAnyGesture && gestureHintEnabled) {
           setShowGestureHint(true);
           if (hintTimeout) window.clearTimeout(hintTimeout);
           hintTimeout = window.setTimeout(() => setShowGestureHint(false), 4000);
@@ -557,13 +562,15 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
       )}
 
       {/* Top Controls */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 z-[60] bg-black/50 hover:bg-black/80 text-white p-3 rounded-full transition-colors shadow-lg border border-white/10"
-        title="Đóng AR"
-      >
-        <X className="w-6 h-6" />
-      </button>
+      {showCloseButton && (
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-[60] bg-black/50 hover:bg-black/80 text-white p-3 rounded-full transition-colors shadow-lg border border-white/10"
+          title="Đóng AR"
+        >
+          <X className="w-6 h-6" />
+        </button>
+      )}
 
       {!loading && !error && target.content_type === 'video' && (
         <button
@@ -590,6 +597,15 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
                 .filter(Boolean)
                 .join(' • ')}
             </span>
+          </div>
+        </div>
+      )}
+
+      {/* Scan instruction hint (hien khi chua tim thay target) */}
+      {!loading && !error && scanHintEnabled && !targetVisible && (
+        <div className="absolute bottom-32 inset-x-0 flex justify-center z-[58] px-6 pointer-events-none animate-in fade-in duration-500">
+          <div className="bg-black/55 backdrop-blur-md text-white text-xs sm:text-sm px-4 py-2.5 rounded-2xl border border-white/10 shadow-lg text-center max-w-xs leading-snug">
+            Hướng camera vào ảnh mục tiêu để bắt đầu trải nghiệm AR
           </div>
         </div>
       )}
