@@ -224,7 +224,12 @@ export default function ARStudioWorkspace({
     transform.size = 0.85;
     transform.setSpace('world');
     transform.attach(contentGroup);
-    scene.add(transform);
+    // three r169+ tach control khoi Object3D, phai add phan helper vao scene qua getHelper.
+    // Giu tuong thich nguoc voi ban three cu (add thang control).
+    const transformHelper = typeof (transform as any).getHelper === 'function'
+      ? (transform as any).getHelper()
+      : (transform as unknown as THREE.Object3D);
+    scene.add(transformHelper);
     transformRef.current = transform;
 
     // When dragging gizmo, disable orbit controls
@@ -275,6 +280,7 @@ export default function ARStudioWorkspace({
     return () => {
       cancelAnimationFrame(animationFrameId);
       resizeObserver.disconnect();
+      scene.remove(transformHelper);
       transform.dispose();
       orbit.dispose();
       renderer.dispose();
