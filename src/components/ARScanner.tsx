@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   X, Loader2, Volume2, VolumeX, Camera, Download, Share2, Sparkles, Check, RefreshCw
 } from 'lucide-react';
@@ -15,8 +15,9 @@ interface ARScannerProps {
 const escapeAttr = (value: string) => String(value || '').replace(/"/g, '&quot;');
 
 export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps) {
-  // Decode metadata JSON if present
-  const target = unpackARTarget(rawTarget);
+  // Giai ma metadata JSON mot lan va ghim on dinh theo rawTarget.
+  // Neu tao object moi moi lan render, effect dung a-scene se chay lai va lam camera khoi dong lai.
+  const target = useMemo(() => unpackARTarget(rawTarget), [rawTarget]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
@@ -461,30 +462,49 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
     setTimeout(() => setFlashActive(false), 300);
 
     try {
-      // Find camera video element
+      // Luong camera nam o the video khong phai #ar-video
       const video = document.querySelector('video:not(#ar-video)') as HTMLVideoElement | null;
-      const canvas = containerRef.current?.querySelector('canvas.a-canvas') as HTMLCanvasElement | null;
+      const sceneEl = containerRef.current?.querySelector('a-scene') as any;
+      const glCanvas =
+        (sceneEl?.renderer?.domElement as HTMLCanvasElement | undefined) ||
+        (containerRef.current?.querySelector('canvas.a-canvas') as HTMLCanvasElement | null);
 
       if (!video) {
         throw new Error('Không tìm thấy luồng camera');
       }
 
-      const width = video.videoWidth || window.innerWidth;
-      const height = video.videoHeight || window.innerHeight;
+      // Kich thuoc anh xuat theo canvas WebGL de vat the 3D khop 1:1 voi khung hinh.
+      const outW = glCanvas?.width || video.videoWidth || window.innerWidth;
+      const outH = glCanvas?.height || video.videoHeight || window.innerHeight;
 
       const captureCanvas = document.createElement('canvas');
-      captureCanvas.width = width;
-      captureCanvas.height = height;
+      captureCanvas.width = outW;
+      captureCanvas.height = outH;
       const ctx = captureCanvas.getContext('2d');
 
       if (!ctx) throw new Error('Không thể khởi tạo canvas 2D');
 
-      // 1. Draw camera video frame
-      ctx.drawImage(video, 0, 0, width, height);
+      // 1. Ve khung camera theo kieu phu (cover) dung nhu CSS object-fit: cover tren man hinh.
+      const vW = video.videoWidth || outW;
+      const vH = video.videoHeight || outH;
+      const coverScale = Math.max(outW / vW, outH / vH);
+      const dw = vW * coverScale;
+      const dh = vH * coverScale;
+      const dx = (outW - dw) / 2;
+      const dy = (outH - dh) / 2;
+      ctx.drawImage(video, dx, dy, dw, dh);
 
-      // 2. Draw 3D WebGL overlay
-      if (canvas) {
-        ctx.drawImage(canvas, 0, 0, width, height);
+      // 2. Ep three.js render mot khung ngay truoc khi doc, roi ve dong bo de bat duoc vat the 3D,
+      //    hinh anh hoac video AR. A-Frame khong giu preserveDrawingBuffer nen phai render lai tai cho.
+      if (sceneEl?.renderer && sceneEl?.object3D && sceneEl?.camera) {
+        try {
+          sceneEl.renderer.render(sceneEl.object3D, sceneEl.camera);
+        } catch (renderErr) {
+          console.warn('Không render lại được khung AR trước khi chụp:', renderErr);
+        }
+      }
+      if (glCanvas) {
+        ctx.drawImage(glCanvas, 0, 0, outW, outH);
       }
 
       const dataUrl = captureCanvas.toDataURL('image/png', 0.95);
