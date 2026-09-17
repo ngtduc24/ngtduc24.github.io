@@ -24,7 +24,7 @@ import PublicARScanner from './components/PublicARScanner';
 import { TaskProvider } from './components/TaskContext';
 import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban } from 'lucide-react';
 import { supabase } from "./lib/supabase";
-import { saveUser, deleteUser, getUsers, getUserById, mapUserFromDB, seedDefaultUsersIfNeeded, getDefaultSettingsFromSupabase, saveDefaultSettingsToSupabase, testSupabaseConnection, getNotificationsFromSupabase, USERS_TABLE } from './lib/data';
+import { saveUser, deleteUser, getUsers, getUserById, mapUserFromDB, seedDefaultUsersIfNeeded, getDefaultSettingsFromSupabase, saveDefaultSettingsToSupabase, testSupabaseConnection, getNotificationsFromSupabase, subscribeToNotificationChanges, USERS_TABLE } from './lib/data';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, onSnapshot } from 'firebase/firestore';
@@ -229,7 +229,7 @@ export default function App() {
       setUnreadNotificationsCount(newUnreadSupabase + newUnreadLocal);
     };
 
-    const unsubscribeFirestore = onSnapshot(collection(db, 'system_notifications'), () => {
+    const unsubscribeFirestore = subscribeToNotificationChanges(() => {
       loadNotifs();
     });
 

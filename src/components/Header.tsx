@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, Bell, User, HelpCircle, RefreshCw, Check, Trash2, ShieldAlert, Sparkles, AlertTriangle, BookOpen, ClipboardList, Info, X, LogOut, Settings, Database, Search, ExternalLink, Clock } from 'lucide-react';
 import { UserAccount, Task, AppSettings, AppNotification } from '../types';
-import { getNotificationsFromSupabase } from '../lib/data';
+import { getNotificationsFromSupabase, subscribeToNotificationChanges } from '../lib/data';
 import { subscribeToTasks, isTaskRelevantToUser } from '../lib/tasks';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from "../lib/supabase";
@@ -49,7 +49,7 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
 
   // Subscribe to real-time system notifications from Supabase
   useEffect(() => {
-    const unsubscribeFirestore = onSnapshot(collection(db, 'system_notifications'), () => {
+    const unsubscribeFirestore = subscribeToNotificationChanges(() => {
       loadSystemNotifs();
     });
 

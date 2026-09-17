@@ -1030,6 +1030,21 @@ export async function getNotificationsFromSupabase(): Promise<AppNotification[]>
   }
 }
 
+// Lắng nghe mọi thay đổi của bảng thông báo trên Supabase, chỉ báo là "có thay đổi"
+// để nơi gọi tự tải lại theo cách riêng của mình.
+export function subscribeToNotificationChanges(onChange: () => void) {
+  const channel = supabase
+    .channel('system_notifications_ping_' + Math.random().toString(36).substring(2, 9))
+    .on('postgres_changes', { event: '*', schema: 'public', table: NOTIFICATIONS_TABLE }, () => {
+      onChange();
+    })
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}
+
 export function subscribeToNotifications(callback: (notifications: AppNotification[]) => void) {
   // Use Supabase Realtime
   const channel = supabase

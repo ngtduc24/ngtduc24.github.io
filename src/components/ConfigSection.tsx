@@ -1,7 +1,8 @@
 import React from 'react';
-import { X, Shield } from 'lucide-react';
+import { X, Shield, DatabaseZap } from 'lucide-react';
 import { AppSettings, UserAccount } from '../types';
 import { saveDefaultSettingsToSupabase } from '../lib/data';
+import { migrateTasksFromFirebase } from '../lib/tasks';
 import { useNotifications } from './NotificationContext';
 
 export default function ConfigSection({ users, currentUser, settings, onRefreshSettings, onUpdateUser, isUserAdmin, handleToggleTaskPermission, onlyPermissions }: { 
@@ -17,6 +18,26 @@ export default function ConfigSection({ users, currentUser, settings, onRefreshS
   const { addNotification } = useNotifications();
   const [newType, setNewType] = React.useState('');
   const [editingType, setEditingType] = React.useState<string | null>(null);
+
+  const [isMigrating, setIsMigrating] = React.useState(false);
+
+  const handleMigrateTasks = async () => {
+    setIsMigrating(true);
+    try {
+      const result = await migrateTasksFromFirebase();
+      if (result.moved === 0 && result.skipped === 0) {
+        addNotification("Không tìm thấy công việc cũ nào trên Firebase.", "info");
+      } else if (result.moved === 0) {
+        addNotification(`Toàn bộ ${result.skipped} công việc cũ đã có sẵn trên Supabase.`, "info");
+      } else {
+        addNotification(`Đã chuyển ${result.moved} công việc từ Firebase sang Supabase.`, "success");
+      }
+    } catch (err: any) {
+      addNotification(err?.message || "Không chuyển được dữ liệu công việc.", "error");
+    } finally {
+      setIsMigrating(false);
+    }
+  };
 
   const [taskBannerTitle, setTaskBannerTitle] = React.useState(settings.taskBannerTitle || "");
   const [taskBannerDescription, setTaskBannerDescription] = React.useState(settings.taskBannerDescription || "");
@@ -77,6 +98,28 @@ export default function ConfigSection({ users, currentUser, settings, onRefreshS
     <div className="space-y-6">
       {!onlyPermissions && (
         <>
+          {isUserAdmin && (
+            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-3">
+              <h2 className="text-sm font-bold flex items-center gap-2">
+                <DatabaseZap className="w-4 h-4 text-brand" />
+                <span>Chuyển dữ liệu công việc từ Firebase sang Supabase</span>
+              </h2>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Module công việc nay lưu dữ liệu trên Supabase. Nếu hệ thống còn công việc cũ nằm trên Firebase,
+                hãy bấm nút dưới đây 1 lần để chép sang Supabase. Công việc đã có sẵn trên Supabase sẽ được bỏ qua,
+                nên bấm nhiều lần cũng không làm trùng dữ liệu.
+              </p>
+              <button
+                type="button"
+                onClick={handleMigrateTasks}
+                disabled={isMigrating}
+                className="px-5 py-2.5 bg-brand hover:bg-brand-hover disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+              >
+                {isMigrating ? "Đang chuyển dữ liệu..." : "Chuyển dữ liệu công việc sang Supabase"}
+              </button>
+            </div>
+          )}
+
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4">
             <h2 className="text-sm font-bold">Quản lý loại công việc</h2>
             <div className="flex gap-2">
