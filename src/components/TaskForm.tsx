@@ -84,7 +84,12 @@ export default function TaskForm({ onClose, onCreated, users, settings, taskToEd
       );
     }
     
-    await saveTaskToSupabase(newTask);
+    try {
+      await saveTaskToSupabase(newTask);
+    } catch (err: any) {
+      addNotification(err?.message || "Không lưu được công việc lên máy chủ. Vui lòng thử lại.", "error");
+      return;
+    }
 
     // Gửi thông báo cho người được giao nhiệm vụ
     if (isNew && assignedTo && assignedTo !== currentUser.id) {

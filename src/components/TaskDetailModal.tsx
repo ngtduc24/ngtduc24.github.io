@@ -62,7 +62,15 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
 
   // Chỉ Admin, Người giao việc và Người nhận việc mới được xem nội dung báo cáo hoàn thành
   const canViewCompletionReport = isAdmin || isAssignee || isCreator;
-  const canModifyTask = isAdmin || isAssignee || isCreator;
+
+  // Công việc đã hoàn thành thì khóa lại. Không ai bấm hoàn thành hay sửa báo cáo được nữa,
+  // báo cáo đã nộp chỉ còn để xem và xuất file.
+  const isCompleted = localTask.status === 'Completed';
+  const canModifyTask = (isAdmin || isAssignee || isCreator) && !isCompleted && localTask.status !== 'Cancelled';
+
+  // Chỉ người nhận việc (hoặc người tự làm, hoặc admin) mới thấy nút hoàn thành và nộp báo cáo.
+  // Người giao việc không thấy nút này.
+  const canSubmitReport = canModifyTask && (isAssignee || isAdmin || (isCreator && !localTask.assignedTo));
 
   const creator = users.find(u => u.id === localTask.creatorId || u.id === localTask.createdBy);
   const assignee = users.find(u => u.id === localTask.assignedTo);
@@ -177,7 +185,12 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
     let updatedTask: Task = { ...localTask, subtasks: updatedSubtasks };
     updatedTask = addTaskHistory(updatedTask, historyAction, currentUser.id, currentUser.fullName, historyDetails);
 
-    await saveTaskToSupabase(updatedTask);
+    try {
+      await saveTaskToSupabase(updatedTask);
+    } catch (err: any) {
+      addNotification(err?.message || 'Không lưu được thay đổi lên máy chủ.', 'error');
+      return;
+    }
     setLocalTask(updatedTask);
     setSubtasks(updatedSubtasks);
     onUpdate();
@@ -206,7 +219,12 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
           `Đã hoàn thành việc nhỏ "${st.title}" kèm báo cáo kết quả nghiệm thu.`
         );
 
-        await saveTaskToSupabase(updatedTask);
+        try {
+          await saveTaskToSupabase(updatedTask);
+        } catch (err: any) {
+          addNotification(err?.message || 'Không lưu được báo cáo lên máy chủ.', 'error');
+          return;
+        }
         setLocalTask(updatedTask);
         setSubtasks(updatedSubtasks);
         onUpdate();
@@ -229,7 +247,12 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
         `Đã nộp báo cáo hoàn thành công việc.`
       );
 
-      await saveTaskToSupabase(updatedTask);
+      try {
+        await saveTaskToSupabase(updatedTask);
+      } catch (err: any) {
+        addNotification(err?.message || 'Không lưu được báo cáo lên máy chủ. Công việc chưa được ghi nhận hoàn thành.', 'error');
+        return;
+      }
       setLocalTask(updatedTask);
       onUpdate();
       addNotification('Đã ghi nhận báo cáo nghiệm thu và hoàn thành công việc!', 'success');
@@ -420,66 +443,78 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
               </div>
             </div>
 
+            {/* Công việc đã hoàn thành: chỉ hiện thông tin và nút xuất file, không còn nút thao tác */}
+            {isCompleted && canViewCompletionReport && (
+              <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <Award className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-emerald-950">Công việc đã được nghiệm thu hoàn tất</h4>
+                    <p className="text-[11px] text-emerald-700">
+                      {localTask.completionReport
+                        ? `Hoàn thành bởi ${localTask.completionReport.completedByName} lúc ${new Date(localTask.completionReport.completedAt).toLocaleString('vi-VN')}. Báo cáo đã được lưu và chỉ chờ xuất file.`
+                        : 'Báo cáo nghiệm thu đã được lưu trữ trong hệ thống.'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handlePrintTaskReport}
+                  className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  title="In hoặc xuất PDF báo cáo này"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Xuất PDF</span>
+                </button>
+              </div>
+            )}
+
+            {/* Người giao việc: chỉ theo dõi, không có nút hoàn thành và nút báo cáo */}
+            {!isCompleted && !canSubmitReport && isCreator && localTask.status !== 'Cancelled' && (
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center shrink-0">
+                  <FileCheck2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800">Đang chờ người nhận thực hiện</h4>
+                  <p className="text-[11px] text-slate-500">
+                    {assignee ? `${assignee.fullName} sẽ bấm hoàn thành và nộp báo cáo nghiệm thu.` : 'Công việc chưa có người nhận.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Task Completion Action / Status Bar */}
-            {canModifyTask && (
+            {canSubmitReport && (
               <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-                    {localTask.status === 'Completed' ? <Award className="w-5 h-5" /> : <FileCheck2 className="w-5 h-5" />}
+                    <FileCheck2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-emerald-950">
-                      {localTask.status === 'Completed' ? 'Công việc đã được nghiệm thu hoàn tất' : 'Trạng thái hoàn thành công việc'}
-                    </h4>
+                    <h4 className="text-xs font-bold text-emerald-950">Trạng thái hoàn thành công việc</h4>
                     <p className="text-[11px] text-emerald-700">
-                      {localTask.status === 'Completed' 
-                        ? 'Báo cáo nghiệm thu đã được lưu trữ trong hệ thống.' 
-                        : 'Khi làm xong, hãy bấm Hoàn thành để mở trình soạn thảo báo cáo nghiệm thu chuyên nghiệp.'}
+                      Khi làm xong, hãy bấm Hoàn thành để mở trình soạn báo cáo nghiệm thu. Báo cáo chỉ nộp được 1 lần.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 w-full sm:w-auto">
-                  {localTask.status === 'Completed' ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setCompletionModalConfig({
-                          isOpen: true,
-                          itemType: 'task',
-                          title: localTask.name,
-                          initialReport: localTask.completionReport,
-                        })}
-                        className="px-3 py-2 bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-800 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                        <span>Sửa báo cáo</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handlePrintTaskReport}
-                        className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
-                        title="In hoặc xuất PDF báo cáo này"
-                      >
-                        <Printer className="w-3.5 h-3.5" />
-                        <span>In PDF</span>
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setCompletionModalConfig({
-                        isOpen: true,
-                        itemType: 'task',
-                        title: localTask.name,
-                        initialReport: localTask.completionReport,
-                      })}
-                      className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Hoàn thành & Báo cáo kết quả</span>
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setCompletionModalConfig({
+                      isOpen: true,
+                      itemType: 'task',
+                      title: localTask.name,
+                      initialReport: localTask.completionReport,
+                    })}
+                    className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Hoàn thành & Báo cáo kết quả</span>
+                  </button>
                 </div>
               </div>
             )}

@@ -233,6 +233,16 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
   const handleAction = async (task: Task, action: string) => {
     const isCreator = task.creatorId === currentUser.id;
     const isAssigned = task.assignedTo === currentUser.id;
+    const isSelfTask = isCreator && !task.assignedTo;
+
+    if (task.status === 'Completed' && action !== 'delete' && action !== 'permanent_delete' && action !== 'restore') {
+        addNotification("Công việc đã hoàn thành nên không thể thao tác thêm.", "error");
+        return;
+    }
+    if ((action === 'complete' || action === 'run' || action === 'pause') && !isUserAdmin && !isAssigned && !isSelfTask) {
+        addNotification("Chỉ người nhận việc mới thực hiện được thao tác này.", "error");
+        return;
+    }
 
     if ((action === 'delete' || action === 'permanent_delete') && !isUserAdmin && !currentUser?.canDeleteTask) {
         addNotification("Bạn không có quyền xoá công việc này.", "error");
@@ -277,26 +287,42 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
       case 'delete':
         confirm('Xác nhận xóa', 'Bạn có chắc chắn muốn xoá công việc này không?', async () => {
           const deletedTask = addTaskHistory({ ...updatedTask, isDeleted: true }, 'Chuyển vào thùng rác', currentUser.id, currentUser.fullName);
-          await saveTaskToSupabase(deletedTask);
-          addNotification("Công việc đã được chuyển vào thùng rác.", "info");
+          try {
+            await saveTaskToSupabase(deletedTask);
+            addNotification("Công việc đã được chuyển vào thùng rác.", "info");
+          } catch (err: any) {
+            addNotification(err?.message || "Không xóa được công việc trên máy chủ.", "error");
+          }
         });
         return;
       case 'permanent_delete':
         confirm('Xác nhận xóa vĩnh viễn', 'Bạn có chắc chắn muốn xóa vĩnh viễn công việc này? Thao tác này không thể hoàn tác.', async () => {
-          await deleteTaskFromSupabase(task.id);
-          addNotification("Đã xóa vĩnh viễn công việc thành công.", "success");
+          try {
+            await deleteTaskFromSupabase(task.id);
+            addNotification("Đã xóa vĩnh viễn công việc thành công.", "success");
+          } catch (err: any) {
+            addNotification(err?.message || "Không xóa được công việc trên máy chủ.", "error");
+          }
         });
         return;
       case 'restore':
         confirm('Xác nhận khôi phục', 'Bạn có chắc chắn muốn khôi phục công việc này từ thùng rác?', async () => {
           const restoredTask = addTaskHistory({ ...updatedTask, isDeleted: false }, 'Khôi phục từ thùng rác', currentUser.id, currentUser.fullName);
-          await saveTaskToSupabase(restoredTask);
-          addNotification("Đã khôi phục công việc thành công.", "success");
+          try {
+            await saveTaskToSupabase(restoredTask);
+            addNotification("Đã khôi phục công việc thành công.", "success");
+          } catch (err: any) {
+            addNotification(err?.message || "Không khôi phục được công việc trên máy chủ.", "error");
+          }
         });
         return;
     }
-    await saveTaskToSupabase(updatedTask);
-    if (action !== 'delete' && action !== 'restore' && action !== 'permanent_delete') addNotification(`Công việc ${task.name} đã được cập nhật.`, "success");
+    try {
+      await saveTaskToSupabase(updatedTask);
+      if (action !== 'delete' && action !== 'restore' && action !== 'permanent_delete') addNotification(`Công việc ${task.name} đã được cập nhật.`, "success");
+    } catch (err: any) {
+      addNotification(err?.message || "Không lưu được thay đổi lên máy chủ.", "error");
+    }
   };
 
   const toggleSelectTask = (taskId: string) => {
@@ -346,8 +372,8 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
           addNotification(`Đã chuyển ${tasksToDelete.length} công việc vào thùng rác thành công.`, "success");
         }
         setSelectedTaskIds([]);
-      } catch (err) {
-        addNotification("Có lỗi xảy ra khi thực hiện thao tác xóa hàng loạt.", "error");
+      } catch (err: any) {
+        addNotification(err?.message || "Có lỗi xảy ra khi thực hiện thao tác xóa hàng loạt.", "error");
       }
     });
   };
@@ -379,8 +405,8 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
           addNotification(`Đã chuyển toàn bộ ${sortedTasks.length} công việc vào thùng rác thành công.`, "success");
         }
         setSelectedTaskIds([]);
-      } catch (err) {
-        addNotification("Có lỗi xảy ra khi xóa toàn bộ.", "error");
+      } catch (err: any) {
+        addNotification(err?.message || "Có lỗi xảy ra khi xóa toàn bộ.", "error");
       }
     });
   };
@@ -400,8 +426,8 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
         }
         addNotification(`Đã khôi phục ${tasksToRestore.length} công việc thành công.`, "success");
         setSelectedTaskIds([]);
-      } catch (err) {
-        addNotification("Có lỗi xảy ra khi khôi phục công việc.", "error");
+      } catch (err: any) {
+        addNotification(err?.message || "Có lỗi xảy ra khi khôi phục công việc.", "error");
       }
     });
   };
@@ -840,7 +866,12 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
               currentUser.fullName,
               'Đã nộp báo cáo hoàn thành công việc.'
             );
-            await saveTaskToSupabase(updatedTask);
+            try {
+              await saveTaskToSupabase(updatedTask);
+            } catch (err: any) {
+              addNotification(err?.message || "Không lưu được báo cáo lên máy chủ. Công việc chưa được ghi nhận hoàn thành.", "error");
+              return;
+            }
             setTaskToComplete(null);
             addNotification("Đã ghi nhận báo cáo và hoàn thành công việc!", "success");
 

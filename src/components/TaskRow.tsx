@@ -44,10 +44,17 @@ export default function TaskRow({ task, users, currentUser, progress, onAction, 
   const isCreator = task.creatorId === currentUser?.id;
   const isAssigned = task.assignedTo === currentUser?.id;
 
-  const canEdit = isUserAdmin || isCreator;
-  const canDelete = isUserAdmin || !!currentUser?.canDeleteTask;
-  const canPerformAction = isUserAdmin || isCreator || isAssigned;
-  const canComplete = isAssigned || isCreator || isUserAdmin;
+  // Task đã hoàn thành thì khóa hoàn toàn. Mọi người chỉ còn xem thông tin và trạng thái.
+  const isLocked = task.status === 'Completed';
+
+  const canEdit = (isUserAdmin || isCreator) && !isLocked;
+  const canDelete = (isUserAdmin || !!currentUser?.canDeleteTask) && (isUserAdmin || !isLocked);
+  // Người tự làm là người tạo task mà không giao cho ai.
+  const isSelfTask = isCreator && !task.assignedTo;
+  // Chỉ người nhận việc, người tự làm và admin mới được chạy, dừng và hoàn thành.
+  const canPerformAction = (isUserAdmin || isAssigned || isSelfTask) && !isLocked;
+  const canComplete = (isUserAdmin || isAssigned || isSelfTask) && !isLocked;
+  const hasMenu = task.isDeleted ? canDelete : (canEdit || canDelete);
 
   return (
     <div className={`p-4 sm:p-5 border rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 transition-all ${rowClass}`}>
@@ -77,18 +84,35 @@ export default function TaskRow({ task, users, currentUser, progress, onAction, 
         </div>
       </div>
 
-      <div className="w-full md:flex-1 md:max-w-xs">
-        <div className="flex justify-between text-xs mb-1 font-bold">
-          <span className="text-slate-400">Tiến độ</span>
-          <span className="text-slate-800">{Math.round(progress)}%</span>
+      {isLocked ? (
+        <div className="w-full md:flex-1 md:max-w-xs">
+          <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-xl">
+            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div className="min-w-0">
+              <span className="block text-[11px] font-bold text-emerald-800">Đã hoàn thành</span>
+              <span className="block text-[10px] text-emerald-700 truncate">
+                {task.completionReport
+                  ? `${task.completionReport.completedByName} • ${new Date(task.completionReport.completedAt).toLocaleString()}`
+                  : 'Công việc đã được nghiệm thu'}
+              </span>
+            </div>
+          </div>
         </div>
-        <div className="w-full bg-slate-100 rounded-full h-2">
-          <div className={`${progressColor} h-2 rounded-full transition-all duration-300`} style={{ width: `${progress}%` }}></div>
+      ) : (
+        <div className="w-full md:flex-1 md:max-w-xs">
+          <div className="flex justify-between text-xs mb-1 font-bold">
+            <span className="text-slate-400">Tiến độ</span>
+            <span className="text-slate-800">{Math.round(progress)}%</span>
+          </div>
+          <div className="w-full bg-slate-100 rounded-full h-2">
+            <div className={`${progressColor} h-2 rounded-full transition-all duration-300`} style={{ width: `${progress}%` }}></div>
+          </div>
         </div>
-      </div>
-      
+      )}
+
       <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-slate-100/60">
-        <span className="text-[11px] font-semibold text-slate-400 md:hidden">Thao tác nhanh:</span>
+        {!isLocked && <span className="text-[11px] font-semibold text-slate-400 md:hidden">Thao tác nhanh:</span>}
+        {isLocked && <span className="text-[11px] font-semibold text-emerald-700 md:hidden">Công việc đã xong</span>}
         <div className="flex items-center gap-2">
           {!task.isDeleted && task.status !== 'Completed' && task.status !== 'Cancelled' && canPerformAction && (
             <>
@@ -106,7 +130,7 @@ export default function TaskRow({ task, users, currentUser, progress, onAction, 
               )}
             </div>
           )}
-          <div className="relative">
+          <div className={`relative ${hasMenu ? '' : 'hidden'}`}>
             <button className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors" onClick={onToggleMenu}>
               <MoreVertical className="w-4 h-4 text-slate-600"/>
             </button>

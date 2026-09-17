@@ -76,9 +76,22 @@ export async function saveTaskToSupabase(task: Task) {
     };
     const cleanTask = removeUndefined(task);
     await setDoc(taskRef, cleanTask, { merge: true });
-  } catch (error) {
-    console.warn(`Failed to save task ${task.name} to Firebase, saved locally:`, error);
+  } catch (error: any) {
+    console.warn(`Failed to save task ${task.name} to Firebase:`, error);
+    throw new Error(describeTaskWriteError(error));
   }
+}
+
+// Chuyển lỗi kỹ thuật của Firebase thành câu tiếng Việt dễ hiểu cho người dùng.
+export function describeTaskWriteError(error: any): string {
+  const code = error?.code || '';
+  if (code === 'permission-denied') {
+    return 'Máy chủ từ chối lưu công việc này vì tài khoản của bạn chưa đủ quyền ghi dữ liệu. Vui lòng báo quản trị viên kiểm tra lại quy tắc bảo mật Firestore.';
+  }
+  if (code === 'unavailable' || code === 'deadline-exceeded') {
+    return 'Không kết nối được máy chủ nên công việc chưa được lưu. Vui lòng kiểm tra đường mạng rồi thử lại.';
+  }
+  return error?.message || 'Không lưu được công việc lên máy chủ. Vui lòng thử lại.';
 }
 
 // Delete a task from Supabase (Migrated to Firebase)
@@ -90,8 +103,9 @@ export async function deleteTaskFromSupabase(taskId: string) {
   try {
     const taskRef = doc(db, TASKS_TABLE, taskId);
     await deleteDoc(taskRef);
-  } catch (error) {
-    console.warn(`Failed to delete task with ID ${taskId} from Firebase, deleted locally:`, error);
+  } catch (error: any) {
+    console.warn(`Failed to delete task with ID ${taskId} from Firebase:`, error);
+    throw new Error(describeTaskWriteError(error));
   }
 }
 

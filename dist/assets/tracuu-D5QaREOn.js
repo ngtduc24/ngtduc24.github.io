@@ -1,1 +1,0 @@
-import{c as r,j as o,r as t,P as e}from"./index-K4tKlqJc.js";r.createRoot(document.getElementById("root")).render(o.jsx(t.StrictMode,{children:o.jsx(e,{onLoginClick:()=>{window.location.href="./"}})}));

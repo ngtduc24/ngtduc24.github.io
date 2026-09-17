@@ -28,6 +28,7 @@ import { Task, UserAccount, AppSettings, ScientificJournal } from '../types';
 import TaskRow from './TaskRow';
 import TaskDetailModal from './TaskDetailModal';
 import TaskForm from './TaskForm';
+import TaskCompletionModal from './TaskCompletionModal';
 import { saveTaskToSupabase, deleteTaskFromSupabase, addTaskHistory, isTaskRelevantToUser } from '../lib/tasks';
 import { useNotifications } from './NotificationContext';
 import { useConfirmation } from './ConfirmationContext';
@@ -141,6 +142,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const [currentTime, setCurrentTime] = useState(new Date());
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
+  const [taskToComplete, setTaskToComplete] = useState<Task | null>(null);
   const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -204,8 +206,18 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                       task.createdBy === currentUser.username ||
                       (currentUser.fullName && task.createdByName === currentUser.fullName);
 
+    const isSelfTask = isCreator && !task.assignedTo;
+
     if (!isUserAdmin && !isAssigned && !isCreator) {
         addNotification("Bạn không có quyền thực hiện thao tác này trên công việc không thuộc về bạn.", "error");
+        return;
+    }
+    if (task.status === 'Completed' && action !== 'delete') {
+        addNotification("Công việc đã hoàn thành nên không thể thao tác thêm.", "error");
+        return;
+    }
+    if ((action === 'complete' || action === 'run' || action === 'pause') && !isUserAdmin && !isAssigned && !isSelfTask) {
+        addNotification("Chỉ người nhận việc mới thực hiện được thao tác này.", "error");
         return;
     }
     const now = new Date().toISOString();
@@ -231,10 +243,9 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
         updatedTask = addTaskHistory(updatedTask, 'Bắt đầu/Tiếp tục công việc', currentUser.id, currentUser.fullName);
         break;
       case 'complete':
-        updatedTask.status = 'Completed';
-        updatedTask.progress = 100;
-        updatedTask = addTaskHistory(updatedTask, 'Hoàn thành công việc', currentUser.id, currentUser.fullName);
-        break;
+        // Hoàn thành luôn phải đi kèm báo cáo nghiệm thu, giống trang Quản lý công việc.
+        setTaskToComplete(task);
+        return;
       case 'cancel':
         updatedTask.status = 'Cancelled';
         updatedTask = addTaskHistory(updatedTask, 'Hủy bỏ công việc', currentUser.id, currentUser.fullName);
@@ -242,12 +253,20 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
       case 'delete':
         confirm('Xác nhận xóa', 'Bạn có chắc chắn muốn xoá công việc này không?', async () => {
           const deletedTask = addTaskHistory({ ...updatedTask, isDeleted: true }, 'Chuyển vào thùng rác', currentUser.id, currentUser.fullName);
-          await saveTaskToSupabase(deletedTask);
-          addNotification("Đã xóa công việc", "success");
+          try {
+            await saveTaskToSupabase(deletedTask);
+            addNotification("Đã xóa công việc", "success");
+          } catch (err: any) {
+            addNotification(err?.message || "Không xóa được công việc trên máy chủ.", "error");
+          }
         });
         return;
     }
-    await saveTaskToSupabase(updatedTask);
+    try {
+      await saveTaskToSupabase(updatedTask);
+    } catch (err: any) {
+      addNotification(err?.message || "Không lưu được thay đổi lên máy chủ.", "error");
+    }
   };
 
   const isUserAdmin = currentUser?.role === 'admin';
@@ -555,6 +574,39 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
 
       {editingTask && <TaskForm onClose={() => setEditingTask(null)} onCreated={() => setEditingTask(null)} users={users} taskToEdit={editingTask} settings={settings!} currentUser={currentUser} />}
       {viewingTask && <TaskDetailModal task={viewingTask} onClose={() => setViewingTask(null)} onUpdate={() => {}} currentUser={currentUser} users={users} />}
+
+      {taskToComplete && currentUser && (
+        <TaskCompletionModal
+          title={taskToComplete.name}
+          itemType="task"
+          initialReport={taskToComplete.completionReport}
+          currentUser={currentUser}
+          onClose={() => setTaskToComplete(null)}
+          onSubmit={async (report) => {
+            let updatedTask: Task = {
+              ...taskToComplete,
+              status: 'Completed',
+              progress: 100,
+              completionReport: report,
+            };
+            updatedTask = addTaskHistory(
+              updatedTask,
+              'Hoàn thành công việc & Báo cáo kết quả',
+              currentUser.id,
+              currentUser.fullName,
+              'Đã nộp báo cáo hoàn thành công việc.'
+            );
+            try {
+              await saveTaskToSupabase(updatedTask);
+            } catch (err: any) {
+              addNotification(err?.message || "Không lưu được báo cáo lên máy chủ. Công việc chưa được ghi nhận hoàn thành.", "error");
+              return;
+            }
+            setTaskToComplete(null);
+            addNotification("Đã ghi nhận báo cáo và hoàn thành công việc!", "success");
+          }}
+        />
+      )}
 
       {showBannerSettings && (
         <div 
