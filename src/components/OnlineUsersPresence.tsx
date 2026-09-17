@@ -7,9 +7,10 @@ import {
   Clock, 
   Radio,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Monitor
 } from 'lucide-react';
-import { subscribeToOnlineUsers } from '../lib/presence';
+import { subscribeToOnlineUsers, getCurrentSessionId } from '../lib/presence';
 import { OnlinePresenceUser, UserAccount } from '../types';
 
 interface OnlineUsersPresenceProps {
@@ -22,6 +23,7 @@ export default function OnlineUsersPresence({ currentUser }: OnlineUsersPresence
   const [onlineUsers, setOnlineUsers] = useState<OnlinePresenceUser[]>([]);
   const [selectedRole, setSelectedRole] = useState<'all' | 'admin' | 'user' | 'member'>('all');
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const mySessionId = getCurrentSessionId();
 
   useEffect(() => {
     // Đăng ký lắng nghe thời gian thực qua Supabase Realtime Presence
@@ -34,13 +36,14 @@ export default function OnlineUsersPresence({ currentUser }: OnlineUsersPresence
     };
   }, []);
 
-  // Đảm bảo admin hiện tại luôn xuất hiện trong danh sách hiển thị
+  // Đảm bảo phiên hiện tại luôn xuất hiện trong danh sách hiển thị
   const allUsersWithCurrent = useMemo(() => {
     const list = [...onlineUsers];
-    const exists = list.some((u) => u.id === currentUser.id);
+    const exists = list.some((u) => u.id === currentUser.id && (u.sessionId === mySessionId || !u.sessionId));
     if (!exists && currentUser) {
       list.unshift({
         id: currentUser.id,
+        sessionId: mySessionId,
         username: currentUser.username,
         fullName: currentUser.fullName,
         email: currentUser.email,
@@ -50,7 +53,7 @@ export default function OnlineUsersPresence({ currentUser }: OnlineUsersPresence
       });
     }
     return list;
-  }, [onlineUsers, currentUser]);
+  }, [onlineUsers, currentUser, mySessionId]);
 
   // Thống kê số lượng theo vai trò
   const counts = useMemo(() => {
@@ -233,12 +236,15 @@ export default function OnlineUsersPresence({ currentUser }: OnlineUsersPresence
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
-                {paginatedUsers.map((user) => {
-                  const isCurrent = user.id === currentUser.id;
+                {paginatedUsers.map((user, idx) => {
+                  const isCurrentTab = user.id === currentUser.id && user.sessionId === mySessionId;
+                  const isSameUserOtherSession = user.id === currentUser.id && user.sessionId !== mySessionId;
+                  const itemKey = user.sessionId ? `${user.id}_${user.sessionId}` : `${user.id}_${idx}`;
+
                   return (
                     <tr 
-                      key={user.id} 
-                      className={`transition-colors ${isCurrent ? 'bg-brand/5 hover:bg-brand/10' : 'hover:bg-slate-50/60'}`}
+                      key={itemKey} 
+                      className={`transition-colors ${isCurrentTab ? 'bg-brand/5 hover:bg-brand/10' : 'hover:bg-slate-50/60'}`}
                     >
                       {/* Thành viên: Avatar + Tên */}
                       <td className="py-3 px-4">
@@ -261,9 +267,15 @@ export default function OnlineUsersPresence({ currentUser }: OnlineUsersPresence
                           <div>
                             <div className="flex items-center gap-1.5">
                               <span className="font-bold text-slate-800 text-xs">{user.fullName}</span>
-                              {isCurrent && (
+                              {isCurrentTab && (
                                 <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-brand text-white leading-none">
-                                  Bạn
+                                  Bạn (Tab này)
+                                </span>
+                              )}
+                              {isSameUserOtherSession && (
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 leading-none">
+                                  <Monitor className="w-2.5 h-2.5" />
+                                  Tab/Thiết bị khác
                                 </span>
                               )}
                             </div>
@@ -312,7 +324,7 @@ export default function OnlineUsersPresence({ currentUser }: OnlineUsersPresence
               <div className="text-xs text-slate-500">
                 Hiển thị <span className="font-bold text-slate-700">{(safeCurrentPage - 1) * PAGE_SIZE + 1}</span> -{' '}
                 <span className="font-bold text-slate-700">{Math.min(safeCurrentPage * PAGE_SIZE, filteredUsers.length)}</span> trên{' '}
-                <span className="font-bold text-slate-700">{filteredUsers.length}</span> thành viên
+                <span className="font-bold text-slate-700">{filteredUsers.length}</span> kết nối
               </div>
 
               <div className="flex items-center gap-1.5">

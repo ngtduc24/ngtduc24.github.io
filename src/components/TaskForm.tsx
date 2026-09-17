@@ -233,7 +233,14 @@ export default function TaskForm({ onClose, onCreated, users, settings, taskToEd
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
           <h2 className="text-lg font-bold text-slate-800">{taskToEdit ? 'Sửa công việc' : 'Tạo công việc mới'}</h2>

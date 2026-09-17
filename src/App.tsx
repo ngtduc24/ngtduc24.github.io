@@ -39,7 +39,20 @@ const ENTRY_VIEW_STORAGE_KEY = 'app_entry_view';
 
 export default function App() {
   const [users, setUsers] = useState<UserAccount[]>([]);
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
+  // Khởi tạo currentUser từ cache để khi tải lại trang không bị giật màn hình đăng nhập
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const savedUser = localStorage.getItem('logged_in_user');
+      if (savedUser) {
+        return JSON.parse(savedUser) as UserAccount;
+      }
+    } catch (e) {
+      // Bỏ qua nếu lỗi parse cache
+    }
+    return null;
+  });
+  const [authInitialized, setAuthInitialized] = useState<boolean>(false);
   const [currentTab, setCurrentTab] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const tabFromUrl = getTabFromUrl();
@@ -411,6 +424,7 @@ export default function App() {
     // cache giao diện và không được dùng để tự khôi phục quyền đăng nhập.
     const unsubscribeAuth = onAuthStateChanged(auth, async firebaseUser => {
       if (!active) return;
+      setAuthInitialized(true);
       if (!firebaseUser) {
         unsubscribeUsers();
         unsubscribeUsers = () => {};
@@ -749,8 +763,9 @@ export default function App() {
     );
   }
 
-  // Only show the login form after the visitor explicitly requests Admin access.
-  if (!currentUser || entryView === 'login') {
+  // Only show the login form after the visitor explicitly requests Admin access,
+  // or when authentication check has completed and there is no logged in user.
+  if (entryView === 'login' || (authInitialized && !currentUser)) {
     return (
       <LoginScreen 
         users={users} 
@@ -760,6 +775,18 @@ export default function App() {
         }} 
         onBackToPublic={() => setEntryView('portfolio')}
       />
+    );
+  }
+
+  // Nếu đang khôi phục phiên đăng nhập khi F5 từ trang admin, hiển thị skeleton mượt mà không flash login
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-xs font-semibold text-slate-500">Đang đồng bộ quyền truy cập...</p>
+        </div>
+      </div>
     );
   }
 

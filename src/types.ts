@@ -44,6 +44,7 @@ export interface UserAccount {
 
 export interface OnlinePresenceUser {
   id: string;
+  sessionId?: string;
   username?: string;
   fullName: string;
   email?: string;
@@ -139,6 +140,18 @@ export interface AppSettings {
   quantBannerImage?: string;
 }
 
+export interface TaskCompletionReport {
+  id: string;
+  summary: string; // Nội dung báo cáo công việc hoàn thành
+  deliverables?: string[]; // Danh sách đường link sản phẩm/kết quả bàn giao
+  completedAt: string; // ISO string
+  completedBy: string; // User ID
+  completedByName: string;
+  completedByRole?: string;
+  subtaskId?: string; // ID của subtask nếu báo cáo cho subtask
+  subtaskTitle?: string; // Tiêu đề subtask
+}
+
 export interface Subtask {
   id: string;
   title: string;
@@ -148,6 +161,7 @@ export interface Subtask {
   progress: number;
   pauseDuration: number;
   lastPausedAt?: string;
+  completionReport?: TaskCompletionReport;
 }
 
 export interface Task {
@@ -180,6 +194,7 @@ export interface Task {
   isDeleted?: boolean;
   history?: TaskHistoryEntry[];
   comments?: any[];
+  completionReport?: TaskCompletionReport;
 }
 
 export interface TaskHistoryEntry {

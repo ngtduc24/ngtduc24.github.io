@@ -1,12 +1,14 @@
 import { uploadImageToCloudinary } from '../lib/upload';
 import MediaSourcePicker from './MediaSourcePicker';
 import React, { useState, useEffect } from 'react';
-import { Settings, Plus, Search, BookOpen, Layers, X, Sparkles, CheckCircle2, PlayCircle, AlertCircle, XCircle, Coins, Wallet } from 'lucide-react';
+import { Settings, Plus, Search, BookOpen, Layers, X, Sparkles, CheckCircle2, PlayCircle, AlertCircle, XCircle, Coins, Wallet, FileCheck } from 'lucide-react';
 import { useTasks } from './TaskContext';
 import TaskForm from './TaskForm';
 import TaskDetailModal from './TaskDetailModal';
 import TaskRow from './TaskRow';
 import ConfigSection from './ConfigSection';
+import TaskCompletionReportModal from './TaskCompletionReportModal';
+import TaskCompletionModal from './TaskCompletionModal';
 import { Task, TaskStatus, UserAccount, AppSettings } from '../types';
 import { saveTaskToSupabase, deleteTaskFromSupabase, addTaskHistory, isTaskRelevantToUser } from '../lib/tasks';
 import { saveDefaultSettingsToSupabase, pushNotificationToSupabase } from '../lib/data';
@@ -86,6 +88,8 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
   const [editingType, setEditingType] = useState<string | null>(null);
   const [showBanner, setShowBanner] = useState(true);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [taskToComplete, setTaskToComplete] = useState<Task | null>(null);
 
   // Reset selection when tab, search, or status filter changes
   useEffect(() => {
@@ -264,27 +268,8 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
         updatedTask = addTaskHistory(updatedTask, 'Bắt đầu/Tiếp tục công việc', currentUser.id, currentUser.fullName);
         break;
       case 'complete':
-        updatedTask.status = 'Completed';
-        updatedTask.progress = 100;
-        updatedTask = addTaskHistory(updatedTask, 'Hoàn thành công việc', currentUser.id, currentUser.fullName);
-        addNotification("Công việc đã hoàn thành!", "success");
-        
-        // Gửi thông báo hệ thống nếu người hoàn thành khác người tạo
-        if (updatedTask.creatorId && updatedTask.creatorId !== currentUser.id) {
-          try {
-            await pushNotificationToSupabase({
-              title: 'Công việc đã hoàn tất',
-              description: `${currentUser.fullName} đã hoàn thành công việc: "${task.name}"`,
-              type: 'task',
-              targetAudience: 'custom_users',
-              targetUserIds: [updatedTask.creatorId],
-              senderId: currentUser.id,
-              senderName: currentUser.fullName,
-              metadata: { taskId: task.id }
-            });
-          } catch (err) {}
-        }
-        break;
+        setTaskToComplete(task);
+        return;
       case 'cancel':
         updatedTask.status = 'Cancelled';
         updatedTask = addTaskHistory(updatedTask, 'Hủy bỏ công việc', currentUser.id, currentUser.fullName);
@@ -606,6 +591,15 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
               Thùng rác ({tasks.filter(t => t.isDeleted).length})
             </button>
           )}
+          <button 
+            type="button"
+            onClick={() => setShowReportModal(true)}
+            className="px-4 py-2 rounded-lg text-xs font-bold text-emerald-700 hover:bg-emerald-50 transition-all flex items-center gap-1.5 cursor-pointer"
+            title="Xem báo cáo công việc hoàn thành và xuất PDF"
+          >
+            <FileCheck className="w-3.5 h-3.5" />
+            <span>Báo cáo</span>
+          </button>
       </div>
 
       {/* Actions & Filters */}
@@ -619,15 +613,28 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
           
           {/* Filters & Actions Row */}
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between w-full">
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="w-full sm:w-auto px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs text-slate-700">
-                  <option value="All">Tất cả trạng thái</option>
-                  <option value="In Progress">Đang thực hiện</option>
-                  <option value="Paused">Tạm dừng</option>
-                  <option value="Completed">Hoàn thành</option>
-                  <option value="Cancelled">Đã hủy</option>
-              </select>
+              <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="w-full sm:w-auto px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs text-slate-700">
+                    <option value="All">Tất cả trạng thái</option>
+                    <option value="In Progress">Đang thực hiện</option>
+                    <option value="Paused">Tạm dừng</option>
+                    <option value="Completed">Hoàn thành</option>
+                    <option value="Cancelled">Đã hủy</option>
+                </select>
+
+                <button 
+                  type="button"
+                  onClick={() => setShowReportModal(true)}
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                  title="Xem danh sách công việc đã xong & Xuất file báo cáo PDF"
+                >
+                  <FileCheck className="w-4 h-4 text-emerald-600" />
+                  <span>Báo cáo hoàn thành (PDF)</span>
+                </button>
+              </div>
+
               {(isUserAdmin || currentUser.canCreateTask) && (
-                <button onClick={() => setActiveTab('add-task')} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white px-6 py-2.5 rounded-xl text-xs font-bold transition-colors">
+                <button onClick={() => setActiveTab('add-task')} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white px-6 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer">
                   <Plus className="w-4 h-4" /> Tạo task mới
                 </button>
               )}
@@ -753,7 +760,14 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
       {/* Banner Settings Removed */}
 
       {showBannerSettings && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowBannerSettings(false);
+            }
+          }}
+        >
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-4">
             <h2 className="text-sm font-extrabold text-slate-800">Cài đặt Banner Module Quản Lý</h2>
             <form onSubmit={handleSaveBanner} className="space-y-4">
@@ -792,8 +806,8 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
                 {bannerImg && <img src={bannerImg} alt="Preview" className="h-16 rounded-xl object-cover mt-2" />}
               </div>
               <div className="flex gap-2 justify-end pt-4">
-                <button type="button" onClick={() => setShowBannerSettings(false)} className="px-4 py-2 text-slate-500 text-xs font-bold rounded-xl hover:bg-slate-100">Hủy</button>
-                <button type="submit" disabled={isUploading} className="px-6 py-2 bg-brand text-white rounded-xl text-sm font-bold shadow-sm">{isUploading ? 'Đang tải...' : 'Lưu cài đặt'}</button>
+                <button type="button" onClick={() => setShowBannerSettings(false)} className="px-4 py-2 text-slate-500 text-xs font-bold rounded-xl hover:bg-slate-100 cursor-pointer">Hủy</button>
+                <button type="submit" disabled={isUploading} className="px-6 py-2 bg-brand text-white rounded-xl text-sm font-bold shadow-sm cursor-pointer">{isUploading ? 'Đang tải...' : 'Lưu cài đặt'}</button>
               </div>
             </form>
           </div>
@@ -803,6 +817,61 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
       {isAdding && <TaskForm onClose={() => setIsAdding(false)} onCreated={() => { setIsAdding(false); addNotification("Tạo task mới thành công", "success"); }} users={users} settings={settings} currentUser={currentUser} />}
       {editingTask && <TaskForm onClose={() => setEditingTask(null)} onCreated={() => setEditingTask(null)} users={users} taskToEdit={editingTask} settings={settings} currentUser={currentUser} />}
       {viewingTask && <TaskDetailModal task={viewingTask} onClose={() => setViewingTask(null)} onUpdate={() => {}} currentUser={currentUser} users={users} />}
+
+      {/* Modal báo cáo hoàn thành công việc */}
+      {taskToComplete && (
+        <TaskCompletionModal
+          title={taskToComplete.name}
+          itemType="task"
+          initialReport={taskToComplete.completionReport}
+          currentUser={currentUser}
+          onClose={() => setTaskToComplete(null)}
+          onSubmit={async (report) => {
+            let updatedTask: Task = {
+              ...taskToComplete,
+              status: 'Completed',
+              progress: 100,
+              completionReport: report,
+            };
+            updatedTask = addTaskHistory(
+              updatedTask,
+              'Hoàn thành công việc & Báo cáo kết quả',
+              currentUser.id,
+              currentUser.fullName,
+              'Đã nộp báo cáo hoàn thành công việc.'
+            );
+            await saveTaskToSupabase(updatedTask);
+            setTaskToComplete(null);
+            addNotification("Đã ghi nhận báo cáo và hoàn thành công việc!", "success");
+
+            if (updatedTask.creatorId && updatedTask.creatorId !== currentUser.id) {
+              try {
+                await pushNotificationToSupabase({
+                  title: 'Công việc đã hoàn tất',
+                  description: `${currentUser.fullName} đã hoàn thành công việc: "${taskToComplete.name}"`,
+                  type: 'task',
+                  targetAudience: 'custom_users',
+                  targetUserIds: [updatedTask.creatorId],
+                  senderId: currentUser.id,
+                  senderName: currentUser.fullName,
+                  metadata: { taskId: taskToComplete.id }
+                });
+              } catch (err) {}
+            }
+          }}
+        />
+      )}
+
+      {/* Modal Bảng báo cáo công việc hoàn thành và xuất PDF */}
+      {showReportModal && (
+        <TaskCompletionReportModal
+          tasks={tasks}
+          users={users}
+          currentUser={currentUser}
+          onClose={() => setShowReportModal(false)}
+          onSelectTask={(task) => setViewingTask(task)}
+        />
+      )}
     </div>
   );
 }
