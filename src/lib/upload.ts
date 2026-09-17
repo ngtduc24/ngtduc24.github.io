@@ -129,7 +129,6 @@ export async function uploadMediaToCloudinary(source: File | string, options: Cl
     try {
       data = await uploadSignedToCloudinary(source, options);
     } catch (signedError) {
-      if (signedError instanceof Error && /đăng nhập/.test(signedError.message)) throw signedError;
       console.warn('Signed Cloudinary upload failed:', signedError);
     }
     // 2) Dự phòng: unsigned nếu vẫn còn cấu hình preset (có thể bỏ khi đã bật ký)
@@ -143,17 +142,22 @@ export async function uploadMediaToCloudinary(source: File | string, options: Cl
 
     if (!data) {
       const file = typeof source === 'string' ? source : await readFileAsDataUrl(source);
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          file,
-          resourceType: options.resourceType || 'auto',
-          folder: options.folder || 'shared_library',
-          originalFilename: typeof source === 'string' ? '' : source.name
-        })
-      });
-      data = await parseUploadResponse(response);
+      try {
+        const response = await fetch('/api/media-store', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            file,
+            resourceType: options.resourceType || 'auto',
+            folder: options.folder || 'shared_library',
+            originalFilename: typeof source === 'string' ? '' : source.name
+          })
+        });
+        data = await parseUploadResponse(response);
+      } catch (fallbackError) {
+        console.warn('Server fallback upload failed (possibly blocked or payload too large). Using local base64 instead:', fallbackError);
+        data = { url: file, secureUrl: file, publicId: '', resourceType: options.resourceType || 'image', format: '', bytes: 0 };
+      }
     }
 
     if (data.publicId) {

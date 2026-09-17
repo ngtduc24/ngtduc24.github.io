@@ -57,8 +57,8 @@ export default function TaskForm({ onClose, onCreated, users, settings, taskToEd
       description,
       tag,
       deadline: dead.toISOString(),
-      hasIncome,
-      income: hasIncome ? income : undefined,
+      hasIncome: isAdmin ? hasIncome : (taskToEdit?.hasIncome ?? false),
+      income: isAdmin ? (hasIncome ? income : undefined) : taskToEdit?.income,
       subtasks,
       fileNames,
       assignedTo: assignedTo || undefined,
@@ -195,14 +195,16 @@ export default function TaskForm({ onClose, onCreated, users, settings, taskToEd
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs bg-white" rows={4} placeholder="Nhập mô tả công việc..." />
       </div>
 
-      <div className="space-y-3 p-4 bg-slate-50 rounded-xl">
-        <h3 className="font-bold text-xs text-slate-700 uppercase tracking-wider">Thu nhập</h3>
-        <div className="flex gap-4 text-xs font-semibold text-slate-600">
-          <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" checked={!hasIncome} onChange={() => setHasIncome(false)} className="accent-emerald-600" /> Không</label>
-          <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" checked={hasIncome} onChange={() => setHasIncome(true)} className="accent-emerald-600" /> Có</label>
+      {isAdmin && (
+        <div className="space-y-3 p-4 bg-slate-50 rounded-xl">
+          <h3 className="font-bold text-xs text-slate-700 uppercase tracking-wider">Thu nhập</h3>
+          <div className="flex gap-4 text-xs font-semibold text-slate-600">
+            <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" checked={!hasIncome} onChange={() => setHasIncome(false)} className="accent-emerald-600" /> Không</label>
+            <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" checked={hasIncome} onChange={() => setHasIncome(true)} className="accent-emerald-600" /> Có</label>
+          </div>
+          {hasIncome && <input type="number" value={income} onChange={(e) => setIncome(Number(e.target.value))} className="w-full px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs bg-white" placeholder="Số tiền VNĐ" />}
         </div>
-        {hasIncome && <input type="number" value={income} onChange={(e) => setIncome(Number(e.target.value))} className="w-full px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs bg-white" placeholder="Số tiền VNĐ" />}
-      </div>
+      )}
 
       <div className="flex justify-end gap-2 mt-6 border-t border-slate-100 pt-4">
         {onClose && (

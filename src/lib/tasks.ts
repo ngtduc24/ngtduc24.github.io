@@ -1,6 +1,6 @@
 import { db } from './firebase';
 import { collection, doc, setDoc, deleteDoc, getDocs, onSnapshot } from 'firebase/firestore';
-import { Task, TaskHistoryEntry } from '../types';
+import { Task, TaskHistoryEntry, UserAccount } from '../types';
 
 export const TASKS_TABLE = 'tasks';
 
@@ -144,4 +144,24 @@ export function subscribeToTasks(callback: TaskListener) {
       unsubscribeFirestore = null;
     }
   };
+}
+
+/**
+ * Kiểm tra xem công việc có thuộc quyền hạn hoặc liên quan đến người dùng hiện tại hay không:
+ * - Quản trị viên (admin): Toàn quyền thấy và quản lý toàn bộ task.
+ * - Người dùng thông thường: Chỉ thấy task do mình tạo (creatorId/createdBy), hoặc task được giao cho mình (assignedTo).
+ */
+export function isTaskRelevantToUser(task: Task | null | undefined, user: UserAccount | null | undefined): boolean {
+  if (!task || !user) return false;
+  if (user.role === 'admin') return true;
+
+  const isAssigned = task.assignedTo === user.id || 
+                    (Boolean(task.assignedTo) && Boolean(user.username) && task.assignedTo === user.username);
+  
+  const isCreator = task.creatorId === user.id ||
+                    task.createdBy === user.id ||
+                    (Boolean(task.createdBy) && Boolean(user.username) && task.createdBy === user.username) ||
+                    (Boolean(user.fullName) && Boolean(task.createdByName) && task.createdByName === user.fullName);
+
+  return Boolean(isAssigned || isCreator);
 }

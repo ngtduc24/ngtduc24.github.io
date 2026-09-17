@@ -89,6 +89,7 @@ import {
   DEFAULT_COURSES_SETTINGS
 } from '../lib/portfolioData';
 import { UserAccount } from '../types';
+import { setCustomPageSEO } from '../lib/seoConfig';
 import {
   PortfolioAbout,
   PortfolioBanner,
@@ -2344,7 +2345,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
   }, [projects, courses, research, lectures, posts]);
 
   useEffect(() => {
-    const owner = about?.artistName || 'Multimedia Portfolio';
+    const owner = about?.artistName || about?.fullName || 'Multimedia Portfolio';
     const collectionTitles: Record<CollectionPage, string> = {
       projects: 'Dự án',
       courses: 'Khóa học',
@@ -2366,12 +2367,44 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
     };
 
     let pageTitle = generatedMenuItem?.label || (collectionPage ? (collectionPage === 'projects' && projectsSettings?.pageTitle ? projectsSettings.pageTitle : collectionPage === 'courses' && coursesSettings?.pageTitle ? coursesSettings.pageTitle : collectionTitles[collectionPage]) : sectionTitles[activeSection] || 'Trang chủ');
+    let pageDesc = about?.briefBio || banner?.description || 'Hồ sơ năng lực, dự án thiết kế, khóa học trực tuyến và công trình nghiên cứu khoa học.';
+    let pageImage: string | undefined = about?.avatarUrl || banner?.backgroundImage || undefined;
+
     if (detail) {
-      if (detail.type === 'research') pageTitle = detail.data.titleVi;
-      else pageTitle = detail.data.title;
+      if (detail.type === 'research') {
+        pageTitle = detail.data.titleVi || detail.data.titleEn;
+        pageDesc = detail.data.abstractVi || pageDesc;
+        pageImage = detail.data.coverImage || pageImage;
+      } else if (detail.type === 'project') {
+        pageTitle = detail.data.title;
+        pageDesc = detail.data.briefDescription || pageDesc;
+        pageImage = detail.data.coverImage || pageImage;
+      } else if (detail.type === 'course') {
+        pageTitle = detail.data.title;
+        pageDesc = detail.data.briefDescription || pageDesc;
+        pageImage = detail.data.coverImage || pageImage;
+      } else if (detail.type === 'article') {
+        pageTitle = detail.data.title;
+        pageDesc = detail.data.excerpt || pageDesc;
+        pageImage = detail.data.coverImage || pageImage;
+      } else if (detail.type === 'lecture') {
+        pageTitle = detail.data.title;
+        pageDesc = detail.data.description || pageDesc;
+        pageImage = detail.data.coverImage || pageImage;
+      }
+    } else if (collectionPage) {
+      pageDesc = collectionPageMeta[collectionPage]?.description || pageDesc;
     }
-    document.title = `${pageTitle} | ${owner}`;
-  }, [about?.artistName, activeSection, collectionPage, detail, generatedMenuItem?.label, projectsSettings?.pageTitle, coursesSettings?.pageTitle]);
+
+    const fullTitle = `${pageTitle} | ${owner}`;
+    setCustomPageSEO({
+      title: fullTitle,
+      description: pageDesc,
+      keywords: `portfolio, ${owner}, ${pageTitle}, thiết kế đa phương tiện, nghiên cứu khoa học, khóa học`,
+      ogImage: pageImage,
+      canonicalUrl: window.location.href
+    });
+  }, [about?.artistName, about?.fullName, about?.briefBio, about?.avatarUrl, banner?.description, banner?.backgroundImage, activeSection, collectionPage, detail, generatedMenuItem?.label, projectsSettings?.pageTitle, coursesSettings?.pageTitle]);
 
   const glassStyle = globalSettings?.menuGlassEffect ? 'backdrop-blur-xl' : '';
   const opacityHex = globalSettings ? Math.round((globalSettings.menuOpacity / 100) * 255).toString(16).padStart(2, '0') : 'f2';

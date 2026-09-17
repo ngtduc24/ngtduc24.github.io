@@ -159,3 +159,22 @@ create table if not exists public.media_library (
 );
 create index if not exists media_library_type_idx on public.media_library (resource_type, created_at desc);
 
+-- ============================================================
+-- PHÂN QUYỀN TRUY CẬP (RLS)
+-- Tương tự các bảng app_settings, scientific_journals trong hệ thống,
+-- tạm tắt RLS để ứng dụng Web (xác thực qua Firebase) có toàn quyền
+-- Thêm/Sửa/Xóa dữ liệu thông qua Supabase API Client.
+-- ============================================================
+alter table if exists public.portfolio_settings disable row level security;
+alter table if exists public.portfolio_education disable row level security;
+alter table if exists public.portfolio_experience disable row level security;
+alter table if exists public.portfolio_skills disable row level security;
+alter table if exists public.portfolio_projects disable row level security;
+alter table if exists public.portfolio_courses disable row level security;
+alter table if exists public.portfolio_course_chapters disable row level security;
+alter table if exists public.portfolio_course_lessons disable row level security;
+alter table if exists public.portfolio_course_students disable row level security;
+alter table if exists public.portfolio_research disable row level security;
+alter table if exists public.portfolio_lectures disable row level security;
+alter table if exists public.media_library disable row level security;
+

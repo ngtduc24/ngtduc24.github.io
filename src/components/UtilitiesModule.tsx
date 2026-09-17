@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Image as ImageIcon, Scan, Wrench } from 'lucide-react';
+import { Image as ImageIcon, Scan, Wrench, LayoutTemplate } from 'lucide-react';
 import ARModule from './ARModule';
+import SocialDesigner from './SocialDesigner/SocialDesigner';
 import ImageResizer from './utilities/ImageResizer';
 import { UserAccount } from '../types';
 
@@ -11,7 +12,7 @@ import { UserAccount } from '../types';
  * công cụ mới thì thanh điều hướng không bị dài ra thêm.
  */
 
-export type UtilityToolId = 'ar' | 'image_resize';
+export type UtilityToolId = 'ar' | 'image_resize' | 'social_design';
 
 interface UtilityTool {
   id: UtilityToolId;
@@ -32,6 +33,12 @@ export const UTILITY_TOOLS: UtilityTool[] = [
     label: 'Phóng to ảnh',
     description: 'Phóng to ảnh theo phần trăm tùy chọn và làm rõ chi tiết, có thể nhờ Gemini dựng lại ảnh ở độ phân giải cao hơn.',
     icon: ImageIcon
+  },
+  {
+    id: 'social_design',
+    label: 'Thiết kế Ảnh Social',
+    description: 'Tạo nhanh ảnh mạng xã hội cho bài báo, tin tức từ các khung mẫu có sẵn với tính năng tự động canh chỉnh.',
+    icon: LayoutTemplate
   }
 ];
 
@@ -80,7 +87,7 @@ export default function UtilitiesModule({ currentUser, initialTool = 'ar' }: Uti
         <p className="mt-3 text-[11px] leading-relaxed text-slate-500">{active.description}</p>
       </div>
 
-      {activeTool === 'ar' ? <ARModule currentUser={currentUser} /> : <ImageResizer />}
+      {activeTool === 'ar' ? <ARModule currentUser={currentUser} /> : activeTool === 'image_resize' ? <ImageResizer /> : <SocialDesigner currentUser={currentUser} />}
     </div>
   );
 }

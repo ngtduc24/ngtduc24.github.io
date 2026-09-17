@@ -37,11 +37,26 @@ export function unpackARTarget(raw: any): ARTarget {
     allow_user_rotate: raw.allow_user_rotate ?? extraConfig.allow_user_rotate ?? true,
     allow_user_scale: raw.allow_user_scale ?? extraConfig.allow_user_scale ?? true,
     allow_user_drag: raw.allow_user_drag ?? extraConfig.allow_user_drag ?? false,
-    // Overlay man hinh quet (mac dinh hien)
+    // Rotation 3 Axes & Lighting
+    rotation_x: raw.rotation_x ?? extraConfig.rotation_x ?? (typeof raw.rotation === 'number' ? raw.rotation : 0),
+    rotation_y: raw.rotation_y ?? extraConfig.rotation_y ?? 0,
+    rotation_z: raw.rotation_z ?? extraConfig.rotation_z ?? 0,
+    light_intensity: raw.light_intensity ?? extraConfig.light_intensity ?? 1.2,
+    light_pos_x: raw.light_pos_x ?? extraConfig.light_pos_x ?? 5,
+    light_pos_y: raw.light_pos_y ?? extraConfig.light_pos_y ?? 10,
+    light_pos_z: raw.light_pos_z ?? extraConfig.light_pos_z ?? 7,
+    light_rot_x: raw.light_rot_x ?? extraConfig.light_rot_x ?? 0,
+    light_rot_y: raw.light_rot_y ?? extraConfig.light_rot_y ?? 0,
+    light_rot_z: raw.light_rot_z ?? extraConfig.light_rot_z ?? 0,
+    light_scale: raw.light_scale ?? extraConfig.light_scale ?? 1.0,
+    // Mobile HUD Customization
     show_logo: raw.show_logo ?? extraConfig.show_logo ?? true,
-    show_gesture_hint: raw.show_gesture_hint ?? extraConfig.show_gesture_hint ?? true,
     show_close_button: raw.show_close_button ?? extraConfig.show_close_button ?? true,
-    show_scan_hint: raw.show_scan_hint ?? extraConfig.show_scan_hint ?? true,
+    show_gesture_hint: raw.show_gesture_hint ?? extraConfig.show_gesture_hint ?? true,
+    show_target_name: raw.show_target_name ?? extraConfig.show_target_name ?? false,
+    // Multi-Object & Material PBR Configuration
+    scene_objects: raw.scene_objects ?? extraConfig.scene_objects ?? [],
+    material_config: raw.material_config ?? extraConfig.material_config ?? undefined,
   };
 }
 
@@ -66,10 +81,23 @@ export function packARTargetPayload(target: Partial<ARTarget> & { rawTextDescrip
     allow_user_rotate: target.allow_user_rotate ?? true,
     allow_user_scale: target.allow_user_scale ?? true,
     allow_user_drag: target.allow_user_drag ?? false,
+    rotation_x: typeof target.rotation_x === 'number' ? target.rotation_x : (typeof target.rotation === 'number' ? target.rotation : 0),
+    rotation_y: typeof target.rotation_y === 'number' ? target.rotation_y : 0,
+    rotation_z: typeof target.rotation_z === 'number' ? target.rotation_z : 0,
+    light_intensity: typeof target.light_intensity === 'number' ? target.light_intensity : 1.2,
+    light_pos_x: typeof target.light_pos_x === 'number' ? target.light_pos_x : 5,
+    light_pos_y: typeof target.light_pos_y === 'number' ? target.light_pos_y : 10,
+    light_pos_z: typeof target.light_pos_z === 'number' ? target.light_pos_z : 7,
+    light_rot_x: typeof target.light_rot_x === 'number' ? target.light_rot_x : 0,
+    light_rot_y: typeof target.light_rot_y === 'number' ? target.light_rot_y : 0,
+    light_rot_z: typeof target.light_rot_z === 'number' ? target.light_rot_z : 0,
+    light_scale: typeof target.light_scale === 'number' ? target.light_scale : 1.0,
     show_logo: target.show_logo ?? true,
-    show_gesture_hint: target.show_gesture_hint ?? true,
     show_close_button: target.show_close_button ?? true,
-    show_scan_hint: target.show_scan_hint ?? true,
+    show_gesture_hint: target.show_gesture_hint ?? true,
+    show_target_name: target.show_target_name ?? false,
+    scene_objects: target.scene_objects ?? [],
+    material_config: target.material_config ?? undefined,
   };
 
   return {

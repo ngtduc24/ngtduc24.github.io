@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Menu, Bell, User, HelpCircle, RefreshCw, Check, Trash2, ShieldAlert, Sparkles, AlertTriangle, BookOpen, ClipboardList, Info, X, LogOut, Settings, Database, Search, ExternalLink, Clock } from 'lucide-react';
 import { UserAccount, Task, AppSettings, AppNotification } from '../types';
 import { getNotificationsFromSupabase } from '../lib/data';
-import { subscribeToTasks } from '../lib/tasks';
+import { subscribeToTasks, isTaskRelevantToUser } from '../lib/tasks';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from "../lib/supabase";
 import { db } from '../lib/firebase';
@@ -58,10 +58,13 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
       const mapped: AppNotification[] = firestoreNotifs
         .filter(fn => {
           let isTarget = false;
-          if (fn.targetAudience === 'all') isTarget = true;
+          if (fn.targetAudience === 'all') {
+            // Thông báo công việc (task): chỉ admin nhận broadcast chung, user thường chỉ nhận khi được chỉ định
+            isTarget = fn.type !== 'task' || currentUser.role === 'admin';
+          }
           else if (fn.targetAudience === 'all_admins' && currentUser.role === 'admin') isTarget = true;
-          else if (fn.targetAudience === 'custom_admins' && currentUser.role === 'admin' && fn.targetUserIds?.includes(currentUser.id)) isTarget = true;
-          else if (fn.targetAudience === 'custom_users' && fn.targetUserIds?.includes(currentUser.id)) isTarget = true;
+          else if (fn.targetAudience === 'custom_admins' && currentUser.role === 'admin' && (fn.targetUserIds?.includes(currentUser.id) || fn.targetUserIds?.includes(currentUser.username))) isTarget = true;
+          else if (fn.targetAudience === 'custom_users' && (fn.targetUserIds?.includes(currentUser.id) || fn.targetUserIds?.includes(currentUser.username))) isTarget = true;
           
           if (!isTarget) return false;
           return localStorage.getItem(`notif_deleted_${currentUser.id}_${fn.id}`) !== 'true';
@@ -132,8 +135,9 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
 
         tasks.forEach(task => {
           if (task.isDeleted) return;
+          if (!isTaskRelevantToUser(task, currentUser)) return;
 
-          // 1. Check for tasks expiring in 24 hours
+          // 1. Cảnh báo hạn chót trong 24 giờ cho người liên quan (người được giao, người tạo, hoặc admin)
           const deadline = new Date(task.deadline);
           const diffMs = deadline.getTime() - Date.now();
           const isUrgent = diffMs > 0 && diffMs <= 24 * 60 * 60 * 1000;
@@ -158,8 +162,8 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
             }
           }
 
-          // 2. Check for tasks assigned to the current user
-          const isAssignedToMe = task.assignedTo === currentUser.id;
+          // 2. Thông báo nhiệm vụ mới được giao cho chính người dùng này
+          const isAssignedToMe = task.assignedTo === currentUser.id || (Boolean(task.assignedTo) && Boolean(currentUser.username) && task.assignedTo === currentUser.username);
           if (isAssignedToMe) {
             const assignId = `task-assigned-${task.id}-${currentUser.id}`;
             const exists = updated.some(n => n.id === assignId);
@@ -179,6 +183,24 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
             }
           }
         });
+
+        // Dọn dẹp các thông báo local (task-expiring-*, task-assigned-*) nếu task đó không thuộc quyền sở hữu của user hoặc đã xóa
+        const originalLength = updated.length;
+        updated = updated.filter(n => {
+          if (n.id.startsWith('task-expiring-') || n.id.startsWith('task-assigned-')) {
+            const taskId = n.metadata?.taskId;
+            if (taskId) {
+              const foundTask = tasks.find(t => t.id === taskId);
+              if (!foundTask || foundTask.isDeleted || !isTaskRelevantToUser(foundTask, currentUser)) {
+                return false;
+              }
+            }
+          }
+          return true;
+        });
+        if (updated.length !== originalLength) {
+          hasChanges = true;
+        }
 
         if (hasChanges) {
           // Keep only local notifications for localStorage sync
@@ -272,6 +294,19 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
       }
       
       if (taskId) {
+        // Kiểm tra quyền xem task trước khi mở
+        const targetTask = allTasks.find(t => t.id === taskId);
+        if (targetTask && !isTaskRelevantToUser(targetTask, currentUser)) {
+          setSelectedSystemNotification({
+            id: n.id,
+            title: 'Không có quyền truy cập',
+            description: 'Công việc này không được giao cho bạn hoặc không do bạn tạo. Bạn không có quyền xem chi tiết.',
+            timestamp: new Date().toISOString(),
+            type: 'warning',
+            unread: false
+          });
+          return;
+        }
         localStorage.setItem('auto_open_task_id', taskId);
         window.dispatchEvent(new CustomEvent('app_open_task', { detail: taskId }));
       }

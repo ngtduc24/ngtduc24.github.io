@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { UserAccount, Task, AppSettings, AppNotification } from '../types';
 import { getNotificationsFromSupabase, subscribeToNotifications } from '../lib/data';
-import { subscribeToTasks } from '../lib/tasks';
+import { subscribeToTasks, isTaskRelevantToUser } from '../lib/tasks';
 import { useConfirmation } from './ConfirmationContext';
 
 interface UserNotificationsProps {
@@ -31,6 +31,7 @@ interface UserNotificationsProps {
 export default function UserNotifications({ currentUser, settings, setCurrentTab, onUnreadCountChange }: UserNotificationsProps) {
   const { confirm } = useConfirmation();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'task' | 'system'>('all');
   const [selectedSystemNotification, setSelectedSystemNotification] = useState<AppNotification | null>(null);
@@ -60,10 +61,13 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
         .filter(fn => {
           // Filter by audience
           let isTarget = false;
-          if (fn.targetAudience === 'all') isTarget = true;
+          if (fn.targetAudience === 'all') {
+            // Thông báo công việc (task): chỉ admin nhận broadcast chung, user thường chỉ nhận khi được chỉ định
+            isTarget = fn.type !== 'task' || currentUser.role === 'admin';
+          }
           else if (fn.targetAudience === 'all_admins' && currentUser.role === 'admin') isTarget = true;
-          else if (fn.targetAudience === 'custom_admins' && currentUser.role === 'admin' && fn.targetUserIds?.includes(currentUser.id)) isTarget = true;
-          else if (fn.targetAudience === 'custom_users' && fn.targetUserIds?.includes(currentUser.id)) isTarget = true;
+          else if (fn.targetAudience === 'custom_admins' && currentUser.role === 'admin' && (fn.targetUserIds?.includes(currentUser.id) || fn.targetUserIds?.includes(currentUser.username))) isTarget = true;
+          else if (fn.targetAudience === 'custom_users' && (fn.targetUserIds?.includes(currentUser.id) || fn.targetUserIds?.includes(currentUser.username))) isTarget = true;
           
           if (!isTarget) return false;
           return localStorage.getItem(`notif_deleted_${currentUser.id}_${fn.id}`) !== 'true';
@@ -94,16 +98,18 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
     });
 
   
-  // Subscribe to tasks for assignments and deadlines
+    // Subscribe to tasks for assignments and deadlines
     const unsubscribeTasks = subscribeToTasks((tasks) => {
+      setAllTasks(tasks);
       setNotifications(prev => {
         let updated = [...prev];
         let hasChanges = false;
 
         tasks.forEach(task => {
           if (task.isDeleted) return;
+          if (!isTaskRelevantToUser(task, currentUser)) return;
 
-          // Deadline within 24h
+          // 1. Cảnh báo hạn chót trong vòng 24 giờ cho người liên quan
           const deadline = new Date(task.deadline);
           const diffMs = deadline.getTime() - Date.now();
           const isUrgent = diffMs > 0 && diffMs <= 24 * 60 * 60 * 1000;
@@ -128,8 +134,8 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
             }
           }
 
-          // Assigned to current user
-          const isAssignedToMe = task.assignedTo === currentUser.id;
+          // 2. Thông báo khi task được giao cho chính người dùng này
+          const isAssignedToMe = task.assignedTo === currentUser.id || (Boolean(task.assignedTo) && Boolean(currentUser.username) && task.assignedTo === currentUser.username);
           if (isAssignedToMe) {
             const assignId = `task-assigned-${task.id}-${currentUser.id}`;
             const exists = updated.some(n => n.id === assignId);
@@ -149,6 +155,24 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
             }
           }
         });
+
+        // Dọn sạch các thông báo local (task-expiring-*, task-assigned-*) nếu task đó không thuộc quyền sở hữu của user hoặc đã xóa
+        const originalLength = updated.length;
+        updated = updated.filter(n => {
+          if (n.id.startsWith('task-expiring-') || n.id.startsWith('task-assigned-')) {
+            const taskId = n.metadata?.taskId;
+            if (taskId) {
+              const foundTask = tasks.find(t => t.id === taskId);
+              if (!foundTask || foundTask.isDeleted || !isTaskRelevantToUser(foundTask, currentUser)) {
+                return false;
+              }
+            }
+          }
+          return true;
+        });
+        if (updated.length !== originalLength) {
+          hasChanges = true;
+        }
 
         if (hasChanges) {
           const localOnly = updated.filter(n => n.id.startsWith('task-'));
@@ -267,6 +291,19 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
       }
       
       if (taskId) {
+        // Kiểm tra quyền xem task trước khi mở
+        const targetTask = allTasks.find(t => t.id === taskId);
+        if (targetTask && !isTaskRelevantToUser(targetTask, currentUser)) {
+          setSelectedSystemNotification({
+            id: n.id,
+            title: 'Không có quyền truy cập',
+            description: 'Công việc này không được giao cho bạn hoặc không do bạn tạo. Bạn không có quyền xem chi tiết.',
+            timestamp: new Date().toISOString(),
+            type: 'warning',
+            unread: false
+          });
+          return;
+        }
         localStorage.setItem('auto_open_task_id', taskId);
         window.dispatchEvent(new CustomEvent('app_open_task', { detail: taskId }));
       }

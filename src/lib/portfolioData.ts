@@ -593,25 +593,14 @@ async function loadCollection<T extends { id: string }>(
     if (options?.orderBy) request = request.order(options.orderBy, { ascending: true });
     const { data, error } = await request;
     if (error) throw error;
-    if (data?.length) {
+    // Khi truy vấn thành công, dữ liệu trên Supabase (kể cả rỗng [] do người dùng đã xóa hết)
+    // là nguồn chuẩn duy nhất (source of truth). Tuyệt đối không tự động nạp lại bài mẫu.
+    if (Array.isArray(data)) {
       const values = data.map((row: any) => row.data as T);
       setLocalFallback(localKey, values);
       return values;
     }
-    // Có bảng không được phép gieo dữ liệu mẫu, ví dụ bảng ghi danh học viên.
-    // Kết quả rỗng ở đó là đúng chứ không phải dấu hiệu bảng chưa có dữ liệu.
-    if (options?.seed === false) {
-      setLocalFallback(localKey, []);
-      return [];
-    }
-    const seed = getLocalSeed(localKey, defaultValue);
-    if (seed.length) {
-      const rows = seed.map(item => ({ id: item.id, data: item, ...(options?.row?.(item) || {}) }));
-      const { error: seedError } = await supabase.from(table).upsert(rows);
-      if (seedError) throw seedError;
-    }
-    setLocalFallback(localKey, seed);
-    return seed;
+    return [];
   } catch (error) {
     console.error(`Supabase ${table} load failed:`, error);
     return getLocalSeed(localKey, defaultValue);
@@ -642,7 +631,7 @@ async function saveOne<T extends { id: string }>(
   defaultValue: T[],
   row?: (item: T) => Record<string, unknown>
 ): Promise<boolean> {
-  const current = getLocalSeed(localKey, defaultValue);
+  const current = getLocalSeed<T[]>(localKey, []);
   const index = current.findIndex(value => value.id === item.id);
   if (index >= 0) current[index] = item;
   else current.push(item);

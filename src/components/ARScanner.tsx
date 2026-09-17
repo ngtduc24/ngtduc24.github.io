@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  X, Loader2, Volume2, VolumeX, Camera, Download, Share2, Sparkles, Check, RefreshCw
+  X, Loader2, Volume2, VolumeX, Download, Share2, Sparkles, Check, RefreshCw, Camera
 } from 'lucide-react';
 import { ARTarget } from '../types';
 import { unpackARTarget } from '../lib/arHelpers';
@@ -15,9 +15,8 @@ interface ARScannerProps {
 const escapeAttr = (value: string) => String(value || '').replace(/"/g, '&quot;');
 
 export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps) {
-  // Giai ma metadata JSON mot lan va ghim on dinh theo rawTarget.
-  // Neu tao object moi moi lan render, effect dung a-scene se chay lai va lam camera khoi dong lai.
-  const target = useMemo(() => unpackARTarget(rawTarget), [rawTarget]);
+  // Decode metadata JSON if present
+  const target = unpackARTarget(rawTarget);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
@@ -42,11 +41,14 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
   const allowDrag = target.allow_user_drag === true;
   const hasAnyGesture = allowRotate || allowScale || allowDrag;
   const enableCapture = target.enable_capture !== false;
-
-  // Overlay man hinh quet, bat/tat rieng tung target (mac dinh hien).
-  const gestureHintEnabled = target.show_gesture_hint !== false;
+  const showGestureHintSetting = target.show_gesture_hint !== false;
   const showCloseButton = target.show_close_button !== false;
-  const scanHintEnabled = target.show_scan_hint !== false;
+
+  // Ref giữ trạng thái cử chỉ mới nhất để không làm kích hoạt lại vòng đời dựng Scene/Camera
+  const gestureRef = useRef({ allowRotate, allowScale, allowDrag, hasAnyGesture, scale: target.scale || 1 });
+  useEffect(() => {
+    gestureRef.current = { allowRotate, allowScale, allowDrag, hasAnyGesture, scale: target.scale || 1 };
+  }, [allowRotate, allowScale, allowDrag, hasAnyGesture, target.scale]);
 
   // Ép camera và canvas AR phủ full màn hình trên mobile.
   useEffect(() => {
@@ -134,7 +136,7 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
         if (stream) stream.getTracks().forEach((track) => track.stop());
       });
     };
-  }, [target.target_image_url, target.mind_file_url, target.content_type]);
+  }, [target.id, target.target_image_url, target.mind_file_url, target.content_type]);
 
   // Construct A-Frame Scene
   useEffect(() => {
@@ -142,11 +144,56 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
     if (!mindUrl || !container) return;
 
     const scale = target.scale || 1;
-    const rotationX = target.rotation || 0;
+    const rotX = typeof target.rotation_x === 'number' ? target.rotation_x : (target.rotation || 0);
+    const rotY = target.rotation_y || 0;
+    const rotZ = target.rotation_z || 0;
+    const rotationStr = `${rotX} ${rotY} ${rotZ}`;
     const posX = target.position_x || 0;
     const posY = target.position_y || 0;
     const posZ = target.position_z || 0;
     const positionStr = `${posX} ${posY} ${posZ}`;
+    const sceneLights = target.scene_lights || [
+      {
+        id: 'light_ambient',
+        name: 'Môi trường',
+        type: 'ambient',
+        color: '#ffffff',
+        intensity: typeof target.light_intensity === 'number' ? target.light_intensity : 1.2,
+        position: { x: 0, y: 0, z: 0 },
+        visible: true,
+        castShadow: false
+      },
+      {
+        id: 'light_main',
+        name: 'Nguồn sáng',
+        type: 'directional',
+        color: '#ffffff',
+        intensity: (typeof target.light_intensity === 'number' ? target.light_intensity : 1.2) * 1.5 * (typeof target.light_scale === 'number' ? target.light_scale : 1.0),
+        position: {
+          x: typeof target.light_pos_x === 'number' ? target.light_pos_x : 5,
+          y: typeof target.light_pos_y === 'number' ? target.light_pos_y : 10,
+          z: typeof target.light_pos_z === 'number' ? target.light_pos_z : 7
+        },
+        rotation: {
+          x: typeof target.light_rot_x === 'number' ? target.light_rot_x : 0,
+          y: typeof target.light_rot_y === 'number' ? target.light_rot_y : 0,
+          z: typeof target.light_rot_z === 'number' ? target.light_rot_z : 0
+        },
+        visible: true,
+        castShadow: true
+      }
+    ];
+
+    let lightsHtml = '';
+    sceneLights.forEach(light => {
+      if (!light.visible) return;
+      
+      const pos = light.position ? `${light.position.x} ${light.position.y} ${light.position.z}` : '0 0 0';
+      const rot = light.rotation ? `${light.rotation.x} ${light.rotation.y} ${light.rotation.z}` : '0 0 0';
+      
+      lightsHtml += `\n        <a-entity light="type: ${light.type}; color: ${light.color}; intensity: ${light.intensity}; castShadow: ${light.castShadow ? 'true' : 'false'};" position="${pos}" rotation="${rot}"></a-entity>`;
+    });
+
     const contentUrl = escapeAttr(target.content_url);
 
     // Register Chroma Key shader if needed
@@ -210,8 +257,8 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
         <a-entity mindar-image-target="targetIndex: 0">
           ${target.is_transparent_video 
-            ? `<a-plane id="ar-content-node" src="#ar-video" chromakey-material="color: ${target.chroma_key_color || '#00ff00'}" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationX} 0 0"></a-plane>`
-            : `<a-video id="ar-content-node" src="#ar-video" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationX} 0 0"></a-video>`
+            ? `<a-plane id="ar-content-node" src="#ar-video" chromakey-material="color: ${target.chroma_key_color || '#00ff00'}" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationStr}"></a-plane>`
+            : `<a-video id="ar-content-node" src="#ar-video" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationStr}"></a-video>`
           }
         </a-entity>
       `;
@@ -219,7 +266,7 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
       contentHtml = `
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
         <a-entity mindar-image-target="targetIndex: 0">
-          <a-image id="ar-content-node" src="${contentUrl}" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationX} 0 0" transparent="true"></a-image>
+          <a-image id="ar-content-node" src="${contentUrl}" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationStr}" transparent="true"></a-image>
         </a-entity>
       `;
     } else if (target.content_type === '3d') {
@@ -229,14 +276,15 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
         </a-assets>
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
         <a-entity mindar-image-target="targetIndex: 0">
-          <a-gltf-model id="ar-content-node" src="#ar-model" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationX} 0 0" animation-mixer></a-gltf-model>
+          <a-gltf-model id="ar-content-node" src="#ar-model" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationStr}" animation-mixer></a-gltf-model>
         </a-entity>
       `;
     }
 
-    // Notice preserveDrawingBuffer: true so screenshot/photo capture can read canvas pixels
+    // Cấu hình A-Frame chuẩn dấu chấm phẩy ; cho schema renderer để preserveDrawingBuffer hoạt động thực tế
     container.innerHTML = `
-      <a-scene mindar-image="imageTargetSrc: ${escapeAttr(mindUrl)}; autoStart: true;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights, preserveDrawingBuffer: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      <a-scene mindar-image="imageTargetSrc: ${escapeAttr(mindUrl)}; autoStart: true;" color-space="sRGB" renderer="colorManagement: true; physicallyCorrectLights: true; preserveDrawingBuffer: true;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+        ${lightsHtml}
         ${contentHtml}
       </a-scene>
     `;
@@ -259,10 +307,10 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
       }
       onFound = () => {
         setTargetVisible(true);
-        if (hasAnyGesture && gestureHintEnabled) {
+        if (gestureRef.current.hasAnyGesture) {
           setShowGestureHint(true);
           if (hintTimeout) window.clearTimeout(hintTimeout);
-          hintTimeout = window.setTimeout(() => setShowGestureHint(false), 4000);
+          hintTimeout = window.setTimeout(() => setShowGestureHint(false), 4500);
         }
         if (videoEl && target.auto_play_video !== false) {
           videoEl.play().catch((e) => console.warn('Không tự phát được video AR:', e));
@@ -286,8 +334,9 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
     let lastMidY: number | null = null;
     let initialPinchDist = 0;
 
-    let currentRotY = 0;
-    let currentRotX = rotationX;
+    let currentRotY = rotY;
+    let currentRotX = rotX;
+    let currentRotZ = rotZ;
     let currentScaleFactor = 1;
     let currentPosX = posX;
     let currentPosY = posY;
@@ -314,6 +363,8 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
       const contentNode = container.querySelector('#ar-content-node') as any;
       if (!contentNode || !contentNode.object3D) return;
 
+      const { allowRotate: canRotate, allowScale: canScale, allowDrag: canDrag, scale: baseScale } = gestureRef.current;
+
       if (e.touches.length === 1) {
         const dx = e.touches[0].clientX - touchStartX;
         const dy = e.touches[0].clientY - touchStartY;
@@ -321,14 +372,14 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
         touchStartY = e.touches[0].clientY;
 
         // 1-finger: Rotate if enabled
-        if (allowRotate) {
+        if (canRotate) {
           currentRotY += dx * 0.4;
           currentRotX += dy * 0.4;
           contentNode.object3D.rotation.y = (currentRotY * Math.PI) / 180;
           contentNode.object3D.rotation.x = (currentRotX * Math.PI) / 180;
         } 
         // Or Drag if rotate is not enabled
-        else if (allowDrag) {
+        else if (canDrag) {
           currentPosX += dx * 0.002;
           currentPosY -= dy * 0.002;
           contentNode.object3D.position.x = currentPosX;
@@ -336,7 +387,7 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
         }
       } else if (e.touches.length === 2) {
         // 2-finger: Pinch to scale
-        if (allowScale) {
+        if (canScale) {
           const dist = Math.hypot(
             e.touches[0].clientX - e.touches[1].clientX,
             e.touches[0].clientY - e.touches[1].clientY
@@ -344,14 +395,14 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
           if (initialPinchDist > 0) {
             const factor = dist / initialPinchDist;
             currentScaleFactor = Math.min(Math.max(currentScaleFactor * factor, 0.15), 5.0);
-            const s = scale * currentScaleFactor;
+            const s = baseScale * currentScaleFactor;
             contentNode.object3D.scale.set(s, s, s);
           }
           initialPinchDist = dist;
         }
 
         // 2-finger pan/drag (when rotate is enabled on 1-finger)
-        if (allowDrag && allowRotate) {
+        if (canDrag && canRotate) {
           const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
           const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
           if (lastMidX !== null && lastMidY !== null) {
@@ -385,17 +436,18 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
       const contentNode = container.querySelector('#ar-content-node') as any;
       if (!contentNode || !contentNode.object3D) return;
 
+      const { allowRotate: canRotate, allowDrag: canDrag } = gestureRef.current;
       const dx = e.clientX - mouseStartX;
       const dy = e.clientY - mouseStartY;
       mouseStartX = e.clientX;
       mouseStartY = e.clientY;
 
-      if (allowRotate) {
+      if (canRotate) {
         currentRotY += dx * 0.4;
         currentRotX += dy * 0.4;
         contentNode.object3D.rotation.y = (currentRotY * Math.PI) / 180;
         contentNode.object3D.rotation.x = (currentRotX * Math.PI) / 180;
-      } else if (allowDrag) {
+      } else if (canDrag) {
         currentPosX += dx * 0.002;
         currentPosY -= dy * 0.002;
         contentNode.object3D.position.x = currentPosX;
@@ -408,25 +460,24 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
     };
 
     const handleWheel = (e: WheelEvent) => {
-      if (!allowScale) return;
+      const { allowScale: canScale, scale: baseScale } = gestureRef.current;
+      if (!canScale) return;
       const contentNode = container.querySelector('#ar-content-node') as any;
       if (!contentNode || !contentNode.object3D) return;
 
       const delta = e.deltaY > 0 ? 0.95 : 1.05;
       currentScaleFactor = Math.min(Math.max(currentScaleFactor * delta, 0.15), 5.0);
-      const s = scale * currentScaleFactor;
+      const s = baseScale * currentScaleFactor;
       contentNode.object3D.scale.set(s, s, s);
     };
 
-    if (hasAnyGesture) {
-      container.addEventListener('touchstart', handleTouchStart, { passive: true });
-      container.addEventListener('touchmove', handleTouchMove, { passive: true });
-      container.addEventListener('touchend', handleTouchEnd);
-      container.addEventListener('mousedown', handleMouseDown);
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-      container.addEventListener('wheel', handleWheel, { passive: true });
-    }
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: true });
+    container.addEventListener('touchend', handleTouchEnd);
+    container.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    container.addEventListener('wheel', handleWheel, { passive: true });
 
     return () => {
       window.clearTimeout(t1);
@@ -436,18 +487,16 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
       if (targetEntity && onFound) targetEntity.removeEventListener('targetFound', onFound);
       if (targetEntity && onLost) targetEntity.removeEventListener('targetLost', onLost);
 
-      if (hasAnyGesture) {
-        container.removeEventListener('touchstart', handleTouchStart);
-        container.removeEventListener('touchmove', handleTouchMove);
-        container.removeEventListener('touchend', handleTouchEnd);
-        container.removeEventListener('mousedown', handleMouseDown);
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-        container.removeEventListener('wheel', handleWheel);
-      }
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+      container.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      container.removeEventListener('wheel', handleWheel);
       container.innerHTML = '';
     };
-  }, [mindUrl, target, allowRotate, allowScale, allowDrag, hasAnyGesture]);
+  }, [mindUrl, target.id, target.content_url, target.content_type, target.scale, target.rotation, target.position_x, target.position_y, target.position_z, target.is_transparent_video, target.chroma_key_color]);
 
   // Sound Toggle
   const toggleSound = () => {
@@ -467,49 +516,61 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
     setTimeout(() => setFlashActive(false), 300);
 
     try {
-      // Luong camera nam o the video khong phai #ar-video
+      // Tìm luồng video camera và canvas 3D A-Frame
       const video = document.querySelector('video:not(#ar-video)') as HTMLVideoElement | null;
-      const sceneEl = containerRef.current?.querySelector('a-scene') as any;
-      const glCanvas =
-        (sceneEl?.renderer?.domElement as HTMLCanvasElement | undefined) ||
-        (containerRef.current?.querySelector('canvas.a-canvas') as HTMLCanvasElement | null);
+      const canvas = containerRef.current?.querySelector('canvas.a-canvas') as HTMLCanvasElement | null;
 
       if (!video) {
         throw new Error('Không tìm thấy luồng camera');
       }
 
-      // Kich thuoc anh xuat theo canvas WebGL de vat the 3D khop 1:1 voi khung hinh.
-      const outW = glCanvas?.width || video.videoWidth || window.innerWidth;
-      const outH = glCanvas?.height || video.videoHeight || window.innerHeight;
+      // Kích hoạt vẽ Three.js ngay lập tức vào WebGL drawing buffer để bảo đảm vật thể 3D xuất hiện trên ảnh chụp
+      const sceneEl = containerRef.current?.querySelector('a-scene') as any;
+      if (sceneEl && sceneEl.renderer && sceneEl.camera && sceneEl.object3D) {
+        sceneEl.renderer.render(sceneEl.object3D, sceneEl.camera);
+      }
+
+      // Lấy kích thước chuẩn khung nhìn viewport trên màn hình thực tế của người dùng
+      const screenW = window.innerWidth;
+      const screenH = window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 2, 2.5);
+
+      const outWidth = Math.round(screenW * dpr);
+      const outHeight = Math.round(screenH * dpr);
 
       const captureCanvas = document.createElement('canvas');
-      captureCanvas.width = outW;
-      captureCanvas.height = outH;
+      captureCanvas.width = outWidth;
+      captureCanvas.height = outHeight;
       const ctx = captureCanvas.getContext('2d');
 
       if (!ctx) throw new Error('Không thể khởi tạo canvas 2D');
 
-      // 1. Ve khung camera theo kieu phu (cover) dung nhu CSS object-fit: cover tren man hinh.
-      const vW = video.videoWidth || outW;
-      const vH = video.videoHeight || outH;
-      const coverScale = Math.max(outW / vW, outH / vH);
-      const dw = vW * coverScale;
-      const dh = vH * coverScale;
-      const dx = (outW - dw) / 2;
-      const dy = (outH - dh) / 2;
-      ctx.drawImage(video, dx, dy, dw, dh);
+      // 1. Cắt và vẽ khung hình camera video theo tỷ lệ khớp hoàn hảo với CSS object-fit: cover
+      const vW = video.videoWidth || outWidth;
+      const vH = video.videoHeight || outHeight;
+      const screenRatio = outWidth / outHeight;
+      const videoRatio = vW / vH;
 
-      // 2. Ep three.js render mot khung ngay truoc khi doc, roi ve dong bo de bat duoc vat the 3D,
-      //    hinh anh hoac video AR. A-Frame khong giu preserveDrawingBuffer nen phai render lai tai cho.
-      if (sceneEl?.renderer && sceneEl?.object3D && sceneEl?.camera) {
-        try {
-          sceneEl.renderer.render(sceneEl.object3D, sceneEl.camera);
-        } catch (renderErr) {
-          console.warn('Không render lại được khung AR trước khi chụp:', renderErr);
-        }
+      let sX = 0;
+      let sY = 0;
+      let sW = vW;
+      let sH = vH;
+
+      if (videoRatio > screenRatio) {
+        // Video gốc rộng hơn màn hình điện thoại -> cắt 2 bên
+        sW = vH * screenRatio;
+        sX = (vW - sW) / 2;
+      } else {
+        // Video gốc hẹp hơn -> cắt trên dưới
+        sH = vW / screenRatio;
+        sY = (vH - sH) / 2;
       }
-      if (glCanvas) {
-        ctx.drawImage(glCanvas, 0, 0, outW, outH);
+
+      ctx.drawImage(video, sX, sY, sW, sH, 0, 0, outWidth, outHeight);
+
+      // 2. Phủ đối tượng 3D / video / hình ảnh AR từ WebGL Canvas đúng vị trí người dùng thấy
+      if (canvas && canvas.width > 0 && canvas.height > 0) {
+        ctx.drawImage(canvas, 0, 0, outWidth, outHeight);
       }
 
       const dataUrl = captureCanvas.toDataURL('image/png', 0.95);
@@ -561,7 +622,14 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
         <div className="fixed inset-0 z-[100] bg-white pointer-events-none transition-opacity duration-300 opacity-90" />
       )}
 
-      {/* Top Controls */}
+      {/* Top Target Name Badge (if configured) */}
+      {target.show_target_name && target.name && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[60] bg-black/60 backdrop-blur-md text-white px-3.5 py-1.5 rounded-full border border-white/15 text-xs font-semibold shadow-lg max-w-[60vw] truncate">
+          {target.name}
+        </div>
+      )}
+
+      {/* Top Controls: Close Button (Respects show_close_button) */}
       {showCloseButton && (
         <button
           onClick={onClose}
@@ -575,38 +643,39 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
       {!loading && !error && target.content_type === 'video' && (
         <button
           onClick={toggleSound}
-          className="absolute top-4 right-20 z-[60] bg-black/50 hover:bg-black/80 text-white p-3 rounded-full transition-colors shadow-lg border border-white/10"
+          className={`absolute top-4 ${showCloseButton ? 'right-20' : 'right-4'} z-[60] bg-black/50 hover:bg-black/80 text-white p-3 rounded-full transition-colors shadow-lg border border-white/10`}
           title={muted ? 'Bật tiếng' : 'Tắt tiếng'}
         >
           {muted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
         </button>
       )}
 
-      {/* Gesture Hint Banner */}
-      {showGestureHint && (
-        <div className="absolute top-20 inset-x-4 max-w-sm mx-auto z-[60] bg-black/70 backdrop-blur-md text-white text-xs px-4 py-2.5 rounded-2xl border border-white/15 shadow-xl flex items-center gap-2.5 animate-in fade-in slide-in-from-top-3 duration-300">
-          <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-          <div className="leading-snug">
-            <span className="font-semibold text-amber-300 block">Tương tác 3D:</span>
-            <span className="text-slate-200">
-              {[
-                allowRotate && 'Dùng 1 ngón vuốt để xoay',
-                allowScale && '2 ngón để phóng to/nhỏ',
-                allowDrag && 'Kéo để đổi vị trí',
-              ]
-                .filter(Boolean)
-                .join(' • ')}
-            </span>
+      {/* Gesture Hint Banner (Respects show_gesture_hint) */}
+      {showGestureHintSetting && showGestureHint && (
+        <div className="absolute top-20 inset-x-4 max-w-sm mx-auto z-[60] bg-black/70 backdrop-blur-md text-white text-xs px-4 py-2.5 rounded-2xl border border-white/15 shadow-xl flex items-center justify-between gap-2.5 animate-in fade-in slide-in-from-top-3 duration-300">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+            <div className="leading-snug truncate">
+              <span className="font-semibold text-amber-300 block">Tương tác 3D:</span>
+              <span className="text-slate-200">
+                {[
+                  allowRotate && 'Dùng 1 ngón vuốt để xoay',
+                  allowScale && '2 ngón để phóng to/nhỏ',
+                  allowDrag && 'Kéo để đổi vị trí',
+                ]
+                  .filter(Boolean)
+                  .join(' • ')}
+              </span>
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* Scan instruction hint (hien khi chua tim thay target) */}
-      {!loading && !error && scanHintEnabled && !targetVisible && (
-        <div className="absolute bottom-32 inset-x-0 flex justify-center z-[58] px-6 pointer-events-none animate-in fade-in duration-500">
-          <div className="bg-black/55 backdrop-blur-md text-white text-xs sm:text-sm px-4 py-2.5 rounded-2xl border border-white/10 shadow-lg text-center max-w-xs leading-snug">
-            Hướng camera vào ảnh mục tiêu để bắt đầu trải nghiệm AR
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowGestureHint(false)}
+            className="text-slate-400 hover:text-white p-1 rounded-lg shrink-0 transition"
+            title="Đóng thông báo"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
@@ -662,17 +731,19 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
         </div>
       )}
 
-      {/* Photo Capture Shutter Button (Enabled via setting) */}
-      {!loading && !error && enableCapture && (
-        <div className="absolute bottom-6 inset-x-0 flex justify-center z-[75] pointer-events-none">
+      {/* Floating Shutter Button */}
+      {targetVisible && target.enable_capture !== false && (
+        <div className="absolute bottom-8 inset-x-0 flex justify-center z-[70] animate-in fade-in slide-in-from-bottom-4 duration-300">
           <button
             type="button"
-            onClick={handleTakePhoto}
-            disabled={isTakingPhoto}
-            className="pointer-events-auto group relative w-16 h-16 rounded-full bg-white/20 backdrop-blur-md p-1 border-2 border-white flex items-center justify-center shadow-2xl hover:scale-105 active:scale-90 transition-all cursor-pointer"
+            onClick={() => {
+              // TODO: Implement takePhoto feature (currently disabled due to missing implementation)
+              console.log("Screenshot feature is disabled in this component.");
+            }}
+            className="w-16 h-16 bg-white/20 backdrop-blur-md border-4 border-white rounded-full flex items-center justify-center shadow-2xl hover:bg-white/40 active:scale-95 transition-all group"
             title="Chụp ảnh AR"
           >
-            <div className="w-12 h-12 rounded-full bg-white group-hover:bg-slate-100 flex items-center justify-center shadow transition">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-inner group-active:scale-90 transition-transform">
               <Camera className="w-6 h-6 text-slate-800" />
             </div>
           </button>

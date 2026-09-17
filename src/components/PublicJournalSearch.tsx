@@ -17,7 +17,10 @@ import {
   Building2,
   Calendar,
   Loader2,
-  Sparkles
+  Sparkles,
+  Share2,
+  Copy,
+  Check
 } from "lucide-react";
 import { 
   ScientificJournal, 
@@ -28,23 +31,30 @@ import {
   incrementStatInSupabase,
   getDefaultSettingsFromSupabase
 } from "../lib/data";
+import { setCustomPageSEO } from "../lib/seoConfig";
 
 interface PublicJournalSearchProps {
   onLoginClick: () => void;
 }
 
 export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearchProps) {
+  const getInitialParam = (key: string, fallback: string = "") => {
+    if (typeof window === "undefined") return fallback;
+    return new URLSearchParams(window.location.search).get(key) || fallback;
+  };
+
   const [journals, setJournals] = useState<ScientificJournal[]>([]);
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedField, setSelectedField] = useState<string>("all");
-  const [selectedType, setSelectedType] = useState<string>("all");
-  const [selectedScore, setSelectedScore] = useState<string>("all");
-  const [selectedTime, setSelectedTime] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>(() => getInitialParam("q", ""));
+  const [selectedField, setSelectedField] = useState<string>(() => getInitialParam("field", "all"));
+  const [selectedType, setSelectedType] = useState<string>(() => getInitialParam("type", "all"));
+  const [selectedScore, setSelectedScore] = useState<string>(() => getInitialParam("score", "all"));
+  const [selectedTime, setSelectedTime] = useState<string>(() => getInitialParam("time", "all"));
   const [selectedJournal, setSelectedJournal] = useState<ScientificJournal | null>(null);
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
 
-  // Track visit stats on mount
+  // Track visit stats on mount and load data
   useEffect(() => {
     incrementStatInSupabase("public_search");
     
@@ -56,6 +66,13 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
         ]);
         setJournals(journalData);
         setSettings(settingsData);
+
+        // Khôi phục chi tiết tạp chí nếu URL có id
+        const initialId = getInitialParam("id", "");
+        if (initialId && journalData.length > 0) {
+          const found = journalData.find(j => j.id === initialId);
+          if (found) setSelectedJournal(found);
+        }
       } catch (err) {
         console.error("Lỗi tải dữ liệu:", err);
       } finally {
@@ -64,6 +81,84 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
     };
     loadData();
   }, []);
+
+  // Tự động đồng bộ URL (Deep Linking) và cập nhật Title/Meta SEO động
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const url = new URL(window.location.href);
+
+    if (searchQuery.trim()) {
+      url.searchParams.set("q", searchQuery.trim());
+    } else {
+      url.searchParams.delete("q");
+    }
+
+    if (selectedField !== "all") {
+      url.searchParams.set("field", selectedField);
+    } else {
+      url.searchParams.delete("field");
+    }
+
+    if (selectedType !== "all") {
+      url.searchParams.set("type", selectedType);
+    } else {
+      url.searchParams.delete("type");
+    }
+
+    if (selectedScore !== "all") {
+      url.searchParams.set("score", selectedScore);
+    } else {
+      url.searchParams.delete("score");
+    }
+
+    if (selectedTime !== "all") {
+      url.searchParams.set("time", selectedTime);
+    } else {
+      url.searchParams.delete("time");
+    }
+
+    if (selectedJournal) {
+      url.searchParams.set("id", selectedJournal.id);
+    } else {
+      url.searchParams.delete("id");
+    }
+
+    if (window.location.search !== url.search) {
+      window.history.replaceState(null, "", url.toString());
+    }
+
+    // Dynamic SEO Title & Description
+    let seoTitle = "Tra Cứu Điểm Báo Khoa Học & Tạp Chí ISI/Scopus | SmartResearch";
+    let seoDesc = "Cổng tra cứu điểm báo khoa học, định danh tạp chí uy tín ISI, Scopus, tính điểm công trình nghiên cứu và cơ sở dữ liệu học thuật toàn diện.";
+
+    if (selectedJournal) {
+      seoTitle = `${selectedJournal.name} (${selectedJournal.score ? `Điểm: ${selectedJournal.score}` : selectedJournal.field || 'Tạp chí khoa học'}) | SmartResearch`;
+      seoDesc = `Thông tin chi tiết tạp chí ${selectedJournal.name}, nhà xuất bản: ${selectedJournal.publisher || 'Đang cập nhật'}, mã ISSN: ${selectedJournal.issn || 'Chưa rõ'}, điểm công trình: ${selectedJournal.score || 'N/A'}.`;
+    } else if (searchQuery.trim()) {
+      seoTitle = `Tìm kiếm: "${searchQuery.trim()}" | Tra Cứu Điểm Báo Khoa Học`;
+      seoDesc = `Kết quả tra cứu điểm báo và tạp chí khoa học cho từ khóa "${searchQuery.trim()}". Cơ sở dữ liệu tạp chí uy tín ISI, Scopus.`;
+    } else if (selectedField !== "all") {
+      seoTitle = `Chuyên ngành: ${selectedField} | Tra Cứu Điểm Báo Khoa Học`;
+      seoDesc = `Danh mục tạp chí khoa học và điểm công trình nghiên cứu thuộc khối ngành ${selectedField}.`;
+    }
+
+    setCustomPageSEO({
+      title: seoTitle,
+      description: seoDesc,
+      keywords: `tra cứu điểm báo, ${selectedField !== 'all' ? selectedField : ''}, ${searchQuery ? searchQuery : ''}, tạp chí khoa học, isi, scopus, tính điểm bài báo`,
+      canonicalUrl: window.location.href
+    });
+  }, [searchQuery, selectedField, selectedType, selectedScore, selectedTime, selectedJournal]);
+
+  const handleCopySearchLink = () => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 2200);
+      });
+    }
+  };
 
   const getScoreColor = (score: string) => {
     const parts = score.split('-');
@@ -286,9 +381,43 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
             </div>
           </div>
 
-          {/* Total Results */}
-          <div className="text-right shrink-0">
-            <span className="text-xs sm:text-sm font-semibold text-slate-500">
+          {/* Total Results and Share Actions */}
+          <div className="flex items-center gap-2.5 sm:self-center shrink-0">
+            <button
+              onClick={handleCopySearchLink}
+              title="Sao chép liên kết kết quả tìm kiếm này để chia sẻ"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer border border-slate-200/80"
+            >
+              {copiedLink ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="text-emerald-700">Đã chép link!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Chia sẻ link</span>
+                </>
+              )}
+            </button>
+
+            {(searchQuery || selectedField !== "all" || selectedScore !== "all" || selectedType !== "all" || selectedTime !== "all") && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedField("all");
+                  setSelectedScore("all");
+                  setSelectedType("all");
+                  setSelectedTime("all");
+                }}
+                title="Xóa toàn bộ bộ lọc"
+                className="text-xs font-semibold text-slate-400 hover:text-rose-600 underline cursor-pointer px-1"
+              >
+                Đặt lại
+              </button>
+            )}
+
+            <span className="text-xs sm:text-sm font-semibold text-slate-500 pl-1 border-l border-slate-200">
               Tìm thấy <strong className="text-purple-700 text-base font-extrabold">{filteredJournals.length}</strong> kết quả
             </span>
           </div>
@@ -421,8 +550,24 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
               </div>
             </div>
             
-            <div className="p-4 border-t border-slate-100 text-right">
-              <button onClick={() => setSelectedJournal(null)} className="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition-all">Đóng lại</button>
+            <div className="p-4 border-t border-slate-100 flex items-center justify-between">
+              <button 
+                onClick={handleCopySearchLink}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold rounded-xl transition-all border border-purple-200/60"
+              >
+                {copiedLink ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-600" />
+                    <span>Đã sao chép link tạp chí!</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-4 h-4" />
+                    <span>Sao chép link tạp chí này</span>
+                  </>
+                )}
+              </button>
+              <button onClick={() => setSelectedJournal(null)} className="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all">Đóng lại</button>
             </div>
           </div>
         </div>

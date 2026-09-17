@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Play, Pause, Trash2, CheckCircle, Calendar, DollarSign, User, FileText, History } from 'lucide-react';
 import { Task, Subtask, UserAccount } from '../types';
-import { saveTaskToSupabase, addTaskHistory } from '../lib/tasks';
+import { saveTaskToSupabase, addTaskHistory, isTaskRelevantToUser } from '../lib/tasks';
 import { useNotifications } from './NotificationContext';
 import { useConfirmation } from './ConfirmationContext';
 
@@ -19,7 +19,8 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
   const [localTask, setLocalTask] = useState<Task>(task);
   const [subtasks, setSubtasks] = useState(task.subtasks || []);
   const isAdmin = currentUser?.role === 'admin';
-  const isCreatorOrAssigned = isAdmin || task.assignedTo === currentUser?.id || task.creatorId === currentUser?.id;
+  const hasAccess = isTaskRelevantToUser(task, currentUser);
+  const isCreatorOrAssigned = hasAccess;
 
   const creator = users.find(u => u.id === localTask.creatorId);
   const assignee = users.find(u => u.id === localTask.assignedTo);
@@ -31,6 +32,27 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
     setLocalTask(task);
     setSubtasks(task.subtasks || []);
   }, [task]);
+
+  if (!hasAccess) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+        <div className="bg-white rounded-2xl p-6 max-w-md w-full text-center shadow-xl border border-slate-100">
+          <div className="w-12 h-12 rounded-full bg-red-100 text-red-500 mx-auto flex items-center justify-center mb-4">
+            <X className="w-6 h-6" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-800 mb-2">Không có quyền truy cập</h3>
+          <p className="text-sm text-slate-500 mb-6">Bạn không có quyền xem thông tin chi tiết của công việc này.</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubtaskAction = async (st: Subtask, action: 'toggle' | 'delete' | 'run' | 'pause') => {
     if (localTask.status === 'Completed' || localTask.status === 'Cancelled') {
@@ -121,7 +143,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
                     <span className="text-slate-700">{new Date(localTask.deadline).toLocaleString()}</span>
                   </div>
                 </div>
-                {localTask.hasIncome && (
+                {isAdmin && localTask.hasIncome && (
                   <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-emerald-50/50 border border-emerald-100/40 rounded-xl px-3 py-2">
                     <DollarSign className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>

@@ -8,7 +8,7 @@ import TaskDetailModal from './TaskDetailModal';
 import TaskRow from './TaskRow';
 import ConfigSection from './ConfigSection';
 import { Task, TaskStatus, UserAccount, AppSettings } from '../types';
-import { saveTaskToSupabase, deleteTaskFromSupabase, addTaskHistory } from '../lib/tasks';
+import { saveTaskToSupabase, deleteTaskFromSupabase, addTaskHistory, isTaskRelevantToUser } from '../lib/tasks';
 import { saveDefaultSettingsToSupabase, pushNotificationToSupabase } from '../lib/data';
 import { useNotifications } from './NotificationContext';
 import { useConfirmation } from './ConfirmationContext';
@@ -98,6 +98,11 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
       if (autoOpenTaskId && tasks.length > 0) {
         const foundTask = tasks.find(t => t.id === autoOpenTaskId);
         if (foundTask) {
+          if (!isTaskRelevantToUser(foundTask, currentUser)) {
+            addNotification("Bạn không có quyền xem chi tiết công việc này.", "error");
+            localStorage.removeItem('auto_open_task_id');
+            return;
+          }
           setViewingTask(foundTask);
           localStorage.removeItem('auto_open_task_id');
         }
@@ -110,6 +115,11 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
       const taskId = (e as CustomEvent).detail;
       const foundTask = tasks.find(t => t.id === taskId);
       if (foundTask) {
+        if (!isTaskRelevantToUser(foundTask, currentUser)) {
+          addNotification("Bạn không có quyền xem chi tiết công việc này.", "error");
+          localStorage.removeItem('auto_open_task_id');
+          return;
+        }
         setViewingTask(foundTask);
         localStorage.removeItem('auto_open_task_id');
       }
@@ -411,10 +421,9 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
     });
   };
 
-  const filteredTasks = tasks.filter(task => {
-    const isVisible = isUserAdmin || task.assignedTo === currentUser.id || task.creatorId === currentUser.id;
-    if (!isVisible) return false;
+  const userScopedTasks = tasks.filter(task => isTaskRelevantToUser(task, currentUser));
 
+  const filteredTasks = userScopedTasks.filter(task => {
     const matchesTab = activeTab === 'trash' ? task.isDeleted : !task.isDeleted;
     if (!matchesTab) return false;
 
@@ -432,24 +441,34 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
     return 0;
   });
 
-  const completedCount = tasks.filter(t => !t.isDeleted && t.status === 'Completed').length;
-  const runningCount = tasks.filter(t => !t.isDeleted && t.status === 'In Progress').length;
-  const cancelledCount = tasks.filter(t => !t.isDeleted && t.status === 'Cancelled').length;
-  const expiringCount = tasks.filter(t => {
-    if (t.isDeleted) return false;
+  // Thống kê:
+  // - Admin: Thấy thống kê tổng toàn bộ task của hệ thống
+  // - User: Chỉ thống kê những task thuộc user đó mà thôi
+  const statsTasks = isUserAdmin 
+    ? tasks.filter(t => !t.isDeleted) 
+    : userScopedTasks.filter(t => !t.isDeleted);
+
+  const completedCount = statsTasks.filter(t => t.status === 'Completed').length;
+  const runningCount = statsTasks.filter(t => t.status === 'In Progress').length;
+  const cancelledCount = statsTasks.filter(t => t.status === 'Cancelled').length;
+  const expiringCount = statsTasks.filter(t => {
     if (t.status === 'Completed' || t.status === 'Cancelled') return false;
     const deadline = new Date(t.deadline);
     const diffMs = deadline.getTime() - currentTime.getTime();
     return diffMs > 0 && diffMs <= 24 * 60 * 60 * 1000;
   }).length;
 
-  const totalExpectedIncome = tasks
-    .filter(t => !t.isDeleted && t.status !== 'Cancelled' && t.hasIncome && t.income)
-    .reduce((sum, t) => sum + (t.income || 0), 0);
+  const totalExpectedIncome = isUserAdmin
+    ? statsTasks
+        .filter(t => t.status !== 'Cancelled' && t.hasIncome && t.income)
+        .reduce((sum, t) => sum + (t.income || 0), 0)
+    : 0;
 
-  const totalCompletedIncome = tasks
-    .filter(t => !t.isDeleted && t.status === 'Completed' && t.hasIncome && t.income)
-    .reduce((sum, t) => sum + (t.income || 0), 0);
+  const totalCompletedIncome = isUserAdmin
+    ? statsTasks
+        .filter(t => t.status === 'Completed' && t.hasIncome && t.income)
+        .reduce((sum, t) => sum + (t.income || 0), 0)
+    : 0;
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
@@ -481,7 +500,7 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
       )}
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 ${isUserAdmin ? 'lg:grid-cols-3 xl:grid-cols-5' : 'lg:grid-cols-4'} gap-4`}>
         {/* Card 1: Completed Tasks */}
         <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between">
           <div className="space-y-1">
@@ -530,21 +549,23 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
           </div>
         </div>
 
-        {/* Card 5: Income Statistics */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between col-span-1 sm:col-span-2 lg:col-span-1">
-          <div className="space-y-1 w-full">
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Thu nhập đã nhận</span>
-            <div className="text-xl font-black text-slate-800 tracking-tight leading-none truncate max-w-[12rem]" title={`${totalCompletedIncome.toLocaleString()} VNĐ`}>
-              {totalCompletedIncome.toLocaleString()} <span className="text-xs font-bold text-slate-500">đ</span>
+        {/* Card 5: Income Statistics - CHỈ ADMIN TOÀN QUYỀN MỚI THẤY */}
+        {isUserAdmin && (
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between col-span-1 sm:col-span-2 lg:col-span-1">
+            <div className="space-y-1 w-full">
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Thu nhập đã nhận</span>
+              <div className="text-xl font-black text-slate-800 tracking-tight leading-none truncate max-w-[12rem]" title={`${totalCompletedIncome.toLocaleString()} VNĐ`}>
+                {totalCompletedIncome.toLocaleString()} <span className="text-xs font-bold text-slate-500">đ</span>
+              </div>
+              <span className="text-[11px] text-slate-400 font-medium block truncate" title={`Dự kiến: ${totalExpectedIncome.toLocaleString()} đ`}>
+                Dự kiến: {totalExpectedIncome.toLocaleString()} đ
+              </span>
             </div>
-            <span className="text-[11px] text-slate-400 font-medium block truncate" title={`Dự kiến: ${totalExpectedIncome.toLocaleString()} đ`}>
-              Dự kiến: {totalExpectedIncome.toLocaleString()} đ
-            </span>
+            <div className="p-3.5 bg-purple-50 rounded-2xl text-purple-600 transition-colors">
+              <Coins className="w-6 h-6" />
+            </div>
           </div>
-          <div className="p-3.5 bg-purple-50 rounded-2xl text-purple-600 transition-colors">
-            <Coins className="w-6 h-6" />
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Tabs */}

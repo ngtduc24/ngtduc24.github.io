@@ -39,5 +39,11 @@ service cloud.firestore {
         && request.resource.data.get('permissions', []).size() == 0;
       allow update: if isOwner(userId) && privilegeFieldsUnchanged();
     }
+
+    // Presets cấu hình vị trí và kiểu chữ cho công cụ thiết kế mạng xã hội
+    match /social_presets/{presetId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
+    }
   }
 }

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
 import { useConfirmation } from './ConfirmationContext';
+import { getTabUrl } from '../lib/seoConfig';
 
 interface SidebarProps {
   currentTab: string;
@@ -79,14 +80,22 @@ export default function Sidebar({
   const renderItem = (item: { id: string; label: string; icon: any }) => {
     const Icon = item.icon;
     const active = currentTab === item.id;
+    const href = getTabUrl(item.id);
     return (
-      <button
+      <a
         key={item.id}
-        type="button"
-        onClick={() => navigate(item.id)}
+        href={href}
+        onClick={(e) => {
+          // Cho phép mở tab mới khi giữ phím Ctrl/Cmd hoặc click chuột giữa
+          if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
+            e.preventDefault();
+            navigate(item.id);
+          }
+        }}
         aria-label={item.label}
+        aria-current={active ? 'page' : undefined}
         title={!sidebarOpen ? item.label : undefined}
-        className={`group relative flex h-11 w-full items-center rounded-xl transition-all duration-200 ${sidebarOpen ? 'gap-3 px-3' : 'justify-center px-0'} ${active ? 'bg-brand/25 text-white shadow-[0_0_24px_rgba(16,185,129,.2)]' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}
+        className={`group relative flex h-11 w-full items-center rounded-xl transition-all duration-200 cursor-pointer ${sidebarOpen ? 'gap-3 px-3' : 'justify-center px-0'} ${active ? 'bg-brand/25 text-white shadow-[0_0_24px_rgba(16,185,129,.2)]' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}
       >
         <span className={`relative grid h-8 w-8 shrink-0 place-items-center rounded-lg transition-all ${active ? 'bg-brand text-white shadow-lg shadow-brand/40 animate-[pulse_2s_ease-in-out_infinite]' : 'bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white'}`}>
           <Icon className="h-4.5 w-4.5" />
@@ -94,7 +103,7 @@ export default function Sidebar({
         </span>
         {sidebarOpen && <span className="min-w-0 flex-1 truncate text-left text-xs font-semibold">{item.label}</span>}
         {!sidebarOpen && <span className="pointer-events-none absolute left-full z-[80] ml-3 whitespace-nowrap rounded-lg bg-slate-950 px-3 py-2 text-[11px] font-bold text-white opacity-0 shadow-xl transition-opacity group-hover:opacity-100">{item.label}</span>}
-      </button>
+      </a>
     );
   };
 

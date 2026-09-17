@@ -1,16 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { ARTarget, AppSettings } from '../types';
 import { getDefaultSettingsFromSupabase } from '../lib/data';
 import { unpackARTarget } from '../lib/arHelpers';
 import ARScanner from './ARScanner';
 import { Loader2 } from 'lucide-react';
+import { setCustomPageSEO } from '../lib/seoConfig';
 
 export default function PublicARScanner() {
   const [target, setTarget] = useState<ARTarget | null>(null);
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCustomPageSEO({
+      title: 'Quét thực tế tăng cường AR 3D | SmartResearch',
+      description: 'Trải nghiệm tương tác thực tế tăng cường AR trên nền tảng web không cần cài đặt ứng dụng.',
+      canonicalUrl: window.location.href
+    });
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,6 +63,12 @@ export default function PublicARScanner() {
       .catch((err) => console.warn('Không tải được cấu hình hiển thị:', err));
   }, []);
 
+  const handleClose = useCallback(() => {
+    window.location.href = '/';
+  }, []);
+
+  const stableTarget = useMemo(() => target, [target?.id, target?.content_url, target?.scale, target?.rotation]);
+
   if (loading) {
     return (
       <div className="min-h-screen w-screen flex flex-col items-center justify-center bg-slate-900 text-white">
@@ -63,7 +78,7 @@ export default function PublicARScanner() {
     );
   }
 
-  if (error || !target) {
+  if (error || !stableTarget) {
     return (
       <div className="min-h-screen w-screen flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center">
         <div className="w-16 h-16 bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mb-4">
@@ -77,12 +92,12 @@ export default function PublicARScanner() {
 
   return (
     <div className="fixed inset-0 w-full h-full bg-black z-50">
-      {settings?.webAppIcon && target.show_logo !== false && (
+      {stableTarget.show_logo !== false && settings?.webAppIcon && (
         <div className="absolute top-6 left-6 z-[70] bg-black/40 p-2 rounded-xl backdrop-blur-md border border-white/10">
           <img src={settings.webAppIcon} alt="Logo" className="h-8 object-contain" />
         </div>
       )}
-      <ARScanner target={target} onClose={() => { window.location.href = '/'; }} />
+      <ARScanner target={stableTarget} onClose={handleClose} />
     </div>
   );
 }

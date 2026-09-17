@@ -28,9 +28,10 @@ import { Task, UserAccount, AppSettings, ScientificJournal } from '../types';
 import TaskRow from './TaskRow';
 import TaskDetailModal from './TaskDetailModal';
 import TaskForm from './TaskForm';
-import { saveTaskToSupabase, deleteTaskFromSupabase, addTaskHistory } from '../lib/tasks';
+import { saveTaskToSupabase, deleteTaskFromSupabase, addTaskHistory, isTaskRelevantToUser } from '../lib/tasks';
 import { useNotifications } from './NotificationContext';
 import { useConfirmation } from './ConfirmationContext';
+import OnlineUsersPresence from './OnlineUsersPresence';
 
 interface DashboardProps {
   onSwitchTab: (tab: string) => void;
@@ -196,8 +197,15 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
 
   const handleAction = async (task: Task, action: 'pause' | 'run' | 'complete' | 'delete' | 'cancel') => {
     if (!currentUser) return;
-    if (currentUser?.role !== 'admin' && task.assignedTo !== currentUser?.id) {
-        addNotification("Bạn không có quyền thực hiện thao tác này trên task không được giao cho bạn.", "error");
+    const isUserAdmin = currentUser?.role === 'admin';
+    const isAssigned = task.assignedTo === currentUser.id || (task.assignedTo && task.assignedTo === currentUser.username);
+    const isCreator = task.creatorId === currentUser.id || 
+                      task.createdBy === currentUser.id || 
+                      task.createdBy === currentUser.username ||
+                      (currentUser.fullName && task.createdByName === currentUser.fullName);
+
+    if (!isUserAdmin && !isAssigned && !isCreator) {
+        addNotification("Bạn không có quyền thực hiện thao tác này trên công việc không thuộc về bạn.", "error");
         return;
     }
     const now = new Date().toISOString();
@@ -242,17 +250,62 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     await saveTaskToSupabase(updatedTask);
   };
 
-  const completedTasksCount = tasks.filter(t => t.status === 'Completed').length;
-  const recentTasks = tasks.filter(t => t.status !== 'Completed' && t.status !== 'Cancelled').sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+  const isUserAdmin = currentUser?.role === 'admin';
+  const userPermissions = currentUser?.permissions || [];
 
-  // Stat data
+  // Kiểm tra quyền theo phân quyền của người dùng:
+  const canAccessCalculator = isUserAdmin || userPermissions.includes('calculator');
+  const canAccessJournals = isUserAdmin || userPermissions.includes('scientific_journals');
+  const canAccessTasks = isUserAdmin || userPermissions.includes('tasks');
+
+  // Lọc task theo quyền sở hữu:
+  // - Admin: Xem toàn bộ task trong hệ thống
+  // - User thường: Chỉ xem các task được giao, task nhận, hoặc task do chính user tạo
+  const visibleTasks = tasks.filter(t => !t.isDeleted && isTaskRelevantToUser(t, currentUser));
+
+  // Số lượng task hoàn thành: Admin đếm toàn hệ thống, User đếm trong phạm vi công việc của mình
+  const completedTasksCount = (isUserAdmin ? tasks.filter(t => !t.isDeleted) : visibleTasks)
+    .filter(t => t.status === 'Completed').length;
+
+  const recentTasks = visibleTasks
+    .filter(t => t.status !== 'Completed' && t.status !== 'Cancelled')
+    .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+
+  // Stat data - Lọc động theo quyền của người dùng:
+  // - Chỉ hiện 'Lượt tính mẫu' nếu user có quyền calculator
+  // - Chỉ hiện 'Tạp chí lưu trữ', 'Ngành/Lĩnh vực', 'Tra cứu điểm báo' nếu user có quyền scientific_journals
+  // - Chỉ hiện 'Task hoàn thành' nếu user có quyền tasks
   const stats = [
-    { label: 'Lượt tính mẫu', value: `${statsData.calculator} lượt`, change: 'Thời gian thực', icon: Calculator, color: 'from-brand to-brand-hover', shadow: 'shadow-brand/15' },
-    { label: 'Tạp chí lưu trữ', value: `${journalsCount} tạp chí`, change: 'Dữ liệu chuẩn', icon: Layers, color: 'from-blue-500 to-sky-500', shadow: 'shadow-blue-500/15' },
-    { label: 'Ngành/Lĩnh vực', value: `${disciplinesCount} lĩnh vực`, change: 'Đa dạng hoá', icon: Microscope, color: 'from-indigo-500 to-purple-500', shadow: 'shadow-indigo-500/15' },
-    { label: 'Tra cứu điểm báo', value: `${statsData.public_search} lượt`, change: 'Cổng công cộng', icon: BookOpen, color: 'from-emerald-500 to-teal-500', shadow: 'shadow-emerald-500/15' },
-    { label: 'Task hoàn thành', value: `${completedTasksCount} lượt`, change: 'Hệ thống an toàn', icon: CheckCircle2, color: 'from-amber-500 to-orange-500', shadow: 'shadow-amber-500/15' },
+    ...(canAccessCalculator ? [{ 
+      label: 'Lượt tính mẫu', 
+      value: `${statsData.calculator} lượt`, 
+      change: 'Thời gian thực', 
+      icon: Calculator, 
+      color: 'from-brand to-brand-hover', 
+      shadow: 'shadow-brand/15' 
+    }] : []),
+    ...(canAccessJournals ? [
+      { label: 'Tạp chí lưu trữ', value: `${journalsCount} tạp chí`, change: 'Dữ liệu chuẩn', icon: Layers, color: 'from-blue-500 to-sky-500', shadow: 'shadow-blue-500/15' },
+      { label: 'Ngành/Lĩnh vực', value: `${disciplinesCount} lĩnh vực`, change: 'Đa dạng hoá', icon: Microscope, color: 'from-indigo-500 to-purple-500', shadow: 'shadow-indigo-500/15' },
+      { label: 'Tra cứu điểm báo', value: `${statsData.public_search} lượt`, change: 'Cổng công cộng', icon: BookOpen, color: 'from-emerald-500 to-teal-500', shadow: 'shadow-emerald-500/15' }
+    ] : []),
+    ...(canAccessTasks ? [{ 
+      label: 'Task hoàn thành', 
+      value: `${completedTasksCount} lượt`, 
+      change: 'Hệ thống an toàn', 
+      icon: CheckCircle2, 
+      color: 'from-amber-500 to-orange-500', 
+      shadow: 'shadow-amber-500/15' 
+    }] : []),
   ];
+
+  const getStatsGridClass = (count: number) => {
+    if (count >= 5) return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5';
+    if (count === 4) return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4';
+    if (count === 3) return 'grid-cols-1 sm:grid-cols-3';
+    if (count === 2) return 'grid-cols-1 sm:grid-cols-2';
+    return 'grid-cols-1';
+  };
 
   const quickCalculations = [
     { title: 'Phân tích SPSS (EFA & Hồi quy)', subtitle: 'Hoàng Trọng & Hair', link: 'calculator', badge: 'SPSS', count: '489 lượt' },
@@ -294,65 +347,69 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
               <Sparkles className="w-6 h-6 text-white" />
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] uppercase font-bold tracking-wider text-white/80">Chào mừng quay trở lại, {currentUser?.fullName}</span>
-                <h1 className="text-xl md:text-2xl font-bold tracking-tight font-display text-slate-50">{settings?.dashboardBannerTitle || "Hệ Thống Tính Toán Cỡ Mẫu Toàn Diện"}</h1>
+                <h1 className="text-xl md:text-2xl font-bold tracking-tight font-display text-slate-50">{settings?.dashboardBannerTitle || "Hệ Thống Quản Lý Toàn Diện"}</h1>
               </div>
             </div>
-            <p className="text-xs text-white/90 max-w-2xl leading-relaxed">{settings?.systemDescription || "Hỗ trợ đắc lực cho các nhà nghiên cứu khoa học, sinh viên làm luận văn tốt nghiệp, và nghiên cứu viên khảo sát cộng đồng."}</p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <button 
-                onClick={() => onSwitchTab('calculator')}
-                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 font-bold text-xs text-white transition-all shadow-lg shadow-white/5 cursor-pointer border border-white/20"
-              >
-                Bắt đầu tính cỡ mẫu
-              </button>
-            </div>
-          </div>
-
-          <div className="hidden md:flex flex-col items-end shrink-0 gap-2 relative z-10">
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex items-center gap-4">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                <Calculator className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-white">{statsData.calculator.toLocaleString('vi-VN')}</div>
-                <div className="text-[10px] uppercase tracking-wider font-bold text-white/60">Tổng lượt tính mẫu</div>
-              </div>
-            </div>
+            <p className="text-xs text-white/90 max-w-2xl leading-relaxed">{settings?.systemDescription || "Hệ thống hỗ trợ nghiên cứu khoa học, điều hành công việc và quản lý dữ liệu toàn diện."}</p>
           </div>
         </div>
       )}
 
-      {/* Grid statistics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {stats.map((stat, i) => {
-          const Icon = stat.icon;
-          return (
-            <div 
-              key={i} 
-              className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</span>
-                <div className={`p-2 rounded-xl bg-gradient-to-br ${stat.color} text-white shadow-lg ${stat.shadow}`}>
-                  <Icon className="w-4 h-4" />
+      {/* Grid statistics - Tự động thích ứng theo số lượng quyền hạn */}
+      {stats.length > 0 && (
+        <div className={`grid ${getStatsGridClass(stats.length)} gap-4`}>
+          {stats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <div 
+                key={i} 
+                className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</span>
+                  <div className={`p-2 rounded-xl bg-gradient-to-br ${stat.color} text-white shadow-lg ${stat.shadow}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <h3 className="text-2xl font-bold text-slate-800 font-display leading-none">{stat.value}</h3>
+                  <div className="flex items-center gap-1.5 mt-1 text-xs">
+                    <span className="text-emerald-500 font-bold">{stat.change}</span>
+                    <span className="text-slate-400">tăng trưởng</span>
+                  </div>
                 </div>
               </div>
-              <div className="mt-4">
-                <h3 className="text-2xl font-bold text-slate-800 font-display leading-none">{stat.value}</h3>
-                <div className="flex items-center gap-1.5 mt-1 text-xs">
-                  <span className="text-emerald-500 font-bold">{stat.change}</span>
-                  <span className="text-slate-400">tăng trưởng</span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
-      {/* Active Tasks */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-        <h3 className="font-bold text-slate-800 text-lg mb-4">Công việc cần thực hiện</h3>
-        {recentTasks.length === 0 ? <p className="text-xs text-slate-500">Không có công việc nào.</p> :
+      {/* Danh sách thành viên đang trực tuyến - Dành riêng cho Quản trị viên (Admin) qua Supabase Realtime */}
+      {isUserAdmin && (
+        <OnlineUsersPresence currentUser={currentUser} />
+      )}
+
+      {/* Active Tasks - Chỉ hiển thị cho người dùng có quyền tasks */}
+      {canAccessTasks && (
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-slate-800 text-lg">Công việc cần thực hiện</h3>
+            {isUserAdmin ? (
+              <span className="text-xs font-semibold px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200/60 rounded-lg">
+                Toàn hệ thống ({recentTasks.length})
+              </span>
+            ) : (
+              <span className="text-xs font-semibold px-2.5 py-1 bg-brand/10 text-brand rounded-lg">
+                Của tôi ({recentTasks.length})
+              </span>
+            )}
+          </div>
+          {recentTasks.length === 0 ? (
+            <div className="py-8 text-center text-slate-400">
+              <CheckCircle2 className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+              <p className="text-xs font-medium">Hiện tại không có công việc nào cần thực hiện.</p>
+            </div>
+          ) : (
             <div className="space-y-4">
               {recentTasks.map((task, index) => {
                 const deadline = new Date(task.deadline);
@@ -377,117 +434,124 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                 );
               })}
             </div>
-        }
-      </div>
+          )}
+        </div>
+      )}
 
-      {/* Main Grid: Action and guides */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        
-        {/* Quick Search Card */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-xs lg:col-span-2 xl:col-span-3 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+      {/* Main Grid: Action and guides - Chỉ hiển thị khi có ít nhất 1 trong 2 quyền */}
+      {(canAccessJournals || canAccessCalculator) && (
+        <div className={`grid gap-6 ${canAccessJournals && canAccessCalculator ? 'grid-cols-1 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
+          
+          {/* Quick Search Card - Chỉ hiển thị khi có quyền scientific_journals */}
+          {canAccessJournals && (
+            <div className={`bg-white rounded-2xl border border-slate-100 p-5 shadow-xs flex flex-col justify-between ${canAccessCalculator ? 'lg:col-span-2 xl:col-span-3' : 'col-span-1'}`}>
               <div>
-                <h3 className="font-bold text-slate-800 font-display text-base">Tìm kiếm nhanh bài báo khoa học</h3>
-                <p className="text-xs text-slate-400">Tra cứu nhanh điểm số tạp chí từ hệ thống cơ sở dữ liệu quốc gia</p>
+                <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                  <div>
+                    <h3 className="font-bold text-slate-800 font-display text-base">Tìm kiếm nhanh bài báo khoa học</h3>
+                    <p className="text-xs text-slate-400">Tra cứu nhanh điểm số tạp chí từ hệ thống cơ sở dữ liệu quốc gia</p>
+                  </div>
+                </div>
+
+                {/* Search Input Box */}
+                <div className="relative mb-4">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Nhập tên tạp chí, mã ISSN, lĩnh vực cần tìm..."
+                    value={dashboardSearch}
+                    onChange={(e) => setDashboardSearch(e.target.value)}
+                    className="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-brand focus:ring-1 focus:ring-brand rounded-xl pl-10 pr-4 py-3 text-xs font-semibold text-slate-800 focus:outline-none transition-all"
+                  />
+                </div>
+
+                {/* Results */}
+                <div className="space-y-2.5">
+                  {dashboardSearch.trim() === "" ? (
+                    <div className="py-8 text-center text-slate-400 text-xs">
+                      Nhập từ khóa phía trên để bắt đầu hiển thị danh sách tạp chí đề xuất nhanh.
+                    </div>
+                  ) : filteredDashboardJournals.length === 0 ? (
+                    <div className="py-8 text-center text-slate-400 text-xs">
+                      Không tìm thấy kết quả phù hợp.
+                    </div>
+                  ) : (
+                    filteredDashboardJournals.slice(0, 3).map((j, idx) => (
+                      <div 
+                        key={j.id}
+                        className="p-3 bg-slate-50 hover:bg-brand/10 border border-slate-150 rounded-xl flex items-center justify-between text-xs"
+                      >
+                        <div>
+                          <h4 className="font-bold text-slate-800 line-clamp-1">{j.name}</h4>
+                          <p className="text-[10px] text-slate-400 mt-0.5">ISSN: {j.issn || "—"} • {j.field || "N/A"}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded border border-indigo-100/40">
+                            Điểm: {j.score || "0"}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* View all journals / navigate */}
+              <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+                <button
+                  onClick={() => onSwitchTab('scientific_journals')}
+                  className="text-xs font-bold text-brand hover:text-brand-hover hover:underline flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>Truy cập Cổng Tra Cứu Tạp Chí Đầy Đủ</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
+          )}
 
-            {/* Search Input Box */}
-            <div className="relative mb-4">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Nhập tên tạp chí, mã ISSN, lĩnh vực cần tìm..."
-                value={dashboardSearch}
-                onChange={(e) => setDashboardSearch(e.target.value)}
-                className="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-brand focus:ring-1 focus:ring-brand rounded-xl pl-10 pr-4 py-3 text-xs font-semibold text-slate-800 focus:outline-none transition-all"
-              />
-            </div>
-
-            {/* Results */}
-            <div className="space-y-2.5">
-              {dashboardSearch.trim() === "" ? (
-                <div className="py-8 text-center text-slate-400 text-xs">
-                  Nhập từ khóa phía trên để bắt đầu hiển thị danh sách tạp chí đề xuất nhanh.
-                </div>
-              ) : filteredDashboardJournals.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 text-xs">
-                  Không tìm thấy kết quả phù hợp.
-                </div>
-              ) : (
-                filteredDashboardJournals.slice(0, 3).map((j, idx) => (
-                  <div 
-                    key={j.id}
-                    className="p-3 bg-slate-50 hover:bg-brand/10 border border-slate-150 rounded-xl flex items-center justify-between text-xs"
-                  >
-                    <div>
-                      <h4 className="font-bold text-slate-800 line-clamp-1">{j.name}</h4>
-                      <p className="text-[10px] text-slate-400 mt-0.5">ISSN: {j.issn || "—"} • {j.field || "N/A"}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded border border-indigo-100/40">
-                        Điểm: {j.score || "0"}
+          {/* Shortcuts Panel - Chỉ hiển thị khi có quyền calculator */}
+          {canAccessCalculator && (
+            <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-xs flex flex-col justify-between col-span-1">
+              <div>
+                <h3 className="font-bold text-slate-800 font-display text-base border-b border-slate-100 pb-4 mb-4">
+                  Phím tắt tính cỡ mẫu nhanh
+                </h3>
+                <div className="space-y-3">
+                  {quickCalculations.map((calc, i) => (
+                    <div 
+                      key={i}
+                      onClick={() => onSwitchTab(calc.link)}
+                      className="p-3 bg-slate-50 hover:bg-brand-light/30 rounded-xl cursor-pointer flex items-center justify-between group transition-all shadow-xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-brand-light text-brand flex items-center justify-center font-bold text-xs shrink-0">
+                          {i+1}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-slate-700 text-xs truncate group-hover:text-brand transition-colors">{calc.title}</h4>
+                          <p className="text-[10px] text-slate-400 truncate">{calc.subtitle}</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold text-brand bg-brand-light px-2 py-0.5 rounded shrink-0">
+                        {calc.badge}
                       </span>
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* View all journals / navigate */}
-          <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end">
-            <button
-              onClick={() => onSwitchTab('scientific_journals')}
-              className="text-xs font-bold text-brand hover:text-brand-hover hover:underline flex items-center gap-1.5 cursor-pointer"
-            >
-              <span>Truy cập Cổng Tra Cứu Tạp Chí Đầy Đủ</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Shortcuts Panel */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-xs flex flex-col justify-between">
-          <div>
-            <h3 className="font-bold text-slate-800 font-display text-base border-b border-slate-100 pb-4 mb-4">
-              Phím tắt tính cỡ mẫu nhanh
-            </h3>
-            <div className="space-y-3">
-              {quickCalculations.map((calc, i) => (
-                <div 
-                  key={i}
-                  onClick={() => onSwitchTab(calc.link)}
-                  className="p-3 bg-slate-50 hover:bg-brand-light/30 rounded-xl cursor-pointer flex items-center justify-between group transition-all shadow-xs"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-brand-light text-brand flex items-center justify-center font-bold text-xs shrink-0">
-                      {i+1}
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="font-bold text-slate-700 text-xs truncate group-hover:text-brand transition-colors">{calc.title}</h4>
-                      <p className="text-[10px] text-slate-400 truncate">{calc.subtitle}</p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold text-brand bg-brand-light px-2 py-0.5 rounded shrink-0">
-                    {calc.badge}
-                  </span>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              <button 
+                onClick={() => onSwitchTab('calculator')}
+                className="w-full mt-4 py-2.5 rounded-xl border border-brand/20 hover:bg-brand-light/50 text-brand font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-brand-light/30"
+              >
+                <span>Mở Trình Tính Toán Chi Tiết</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </button>
             </div>
-          </div>
+          )}
 
-          <button 
-            onClick={() => onSwitchTab('calculator')}
-            className="w-full mt-4 py-2.5 rounded-xl border border-brand/20 hover:bg-brand-light/50 text-brand font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-brand-light/30"
-          >
-            <span>Mở Trình Tính Toán Chi Tiết</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </button>
         </div>
-
-      </div>
+      )}
 
       {editingTask && <TaskForm onClose={() => setEditingTask(null)} onCreated={() => setEditingTask(null)} users={users} taskToEdit={editingTask} settings={settings!} currentUser={currentUser} />}
       {viewingTask && <TaskDetailModal task={viewingTask} onClose={() => setViewingTask(null)} onUpdate={() => {}} currentUser={currentUser} users={users} />}

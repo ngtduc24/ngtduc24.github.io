@@ -3,11 +3,15 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 
 dotenv.config();
+
+// Đảm bảo khi chạy từ file bundle đã build (dist/server.cjs), luôn kích hoạt chế độ production
+if (typeof __filename !== 'undefined' && __filename.endsWith('.cjs')) {
+  process.env.NODE_ENV = 'production';
+}
 
 const app = express();
 const PORT = 3000;
@@ -15,6 +19,11 @@ const PORT = 3000;
 // Cho phép ảnh, video và tài liệu dùng chung qua Cloudinary/Thư viện.
 app.use(express.json({ limit: "150mb" }));
 app.use(express.urlencoded({ limit: "150mb", extended: true }));
+
+// Health check endpoints for platform monitoring
+app.get(["/api/health", "/health"], (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
 
 // Initialize Gemini Client lazily to prevent startup crashes if key is missing
 let aiClient: GoogleGenAI | null = null;
@@ -85,7 +94,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-app.post("/api/upload", async (req, res) => {
+app.post("/api/media-store", async (req, res) => {
   let tempFilePath: string | null = null;
   try {
     const { image, file, resourceType = 'auto', folder = 'shared_library', originalFilename = '' } = req.body;
@@ -581,18 +590,34 @@ async function startServer() {
     res.redirect("/tracuu.html");
   });
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    
-    app.use(vite.middlewares);
+  const isCjsBundle = typeof __filename !== 'undefined' && __filename.endsWith('.cjs');
+  const distPath = path.join(process.cwd(), 'dist');
+  const hasDist = fs.existsSync(path.join(distPath, 'index.html'));
+  const isProduction = process.env.NODE_ENV === "production" || isCjsBundle;
+
+  if (!isProduction && !hasDist) {
+    try {
+      const { createServer: createViteServer } = await import("vite");
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+    } catch (err) {
+      console.warn("Không thể khởi động Vite middleware, chuyển sang phục vụ file tĩnh:", err);
+      serveStaticAssets();
+    }
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    serveStaticAssets();
+  }
+
+  function serveStaticAssets() {
+    const resolvedDistPath = fs.existsSync(path.join(process.cwd(), 'dist'))
+      ? path.join(process.cwd(), 'dist')
+      : (typeof __dirname !== 'undefined' ? __dirname : path.join(process.cwd(), 'dist'));
+
     // Cấu hình các HTTP headers để hướng dẫn Cloudflare tự động cache toàn bộ file tĩnh (JS, CSS, Ảnh, Fonts...)
-    app.use(express.static(distPath, {
+    app.use(express.static(resolvedDistPath, {
       maxAge: '1y',
       setHeaders: (res, filePath) => {
         if (filePath.endsWith('.html')) {
@@ -604,15 +629,28 @@ async function startServer() {
         }
       }
     }));
+
     app.get('*', (req, res) => {
       res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
-      res.sendFile(path.join(distPath, 'index.html'));
+      const indexPath = path.join(resolvedDistPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(200).send("App is running");
+      }
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
+  });
+
+  server.on("error", (err: any) => {
+    console.error("Server listen error:", err);
   });
 }
 
-startServer();
+startServer().catch((err) => {
+  console.error("Failed to start server:", err);
+  process.exit(1);
+});

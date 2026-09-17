@@ -22,7 +22,7 @@ import PortfolioCMS from './components/PortfolioCMS';
 import UtilitiesModule from './components/UtilitiesModule';
 import PublicARScanner from './components/PublicARScanner';
 import { TaskProvider } from './components/TaskContext';
-import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench } from 'lucide-react';
+import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban } from 'lucide-react';
 import { supabase } from "./lib/supabase";
 import { saveUser, deleteUser, getUsers, getUserById, mapUserFromDB, seedDefaultUsersIfNeeded, getDefaultSettingsFromSupabase, saveDefaultSettingsToSupabase, testSupabaseConnection, getNotificationsFromSupabase, USERS_TABLE } from './lib/data';
 import { auth, db } from './lib/firebase';
@@ -31,6 +31,8 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { requestFCMToken, getMessagingInstance } from './lib/firebase';
 import { AppSettings, UserAccount } from './types';
 import { onMessage } from 'firebase/messaging';
+import { updateDocumentSEO, getTabFromUrl, getSeoMeta } from './lib/seoConfig';
+import { trackUserPresence, untrackUserPresence } from './lib/presence';
 
 // Khóa lưu khu vực đang mở (portfolio công khai hay trang quản trị) để tải lại trang không bị nhảy ra ngoài.
 const ENTRY_VIEW_STORAGE_KEY = 'app_entry_view';
@@ -40,14 +42,13 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [currentTab, setCurrentTab] = useState<string>(() => {
     if (typeof window !== 'undefined') {
+      const tabFromUrl = getTabFromUrl();
+      if (tabFromUrl) return tabFromUrl;
       return localStorage.getItem('app_last_active_tab') || 'dashboard';
     }
     return 'dashboard';
   });
 
-  useEffect(() => {
-    localStorage.setItem('app_last_active_tab', currentTab);
-  }, [currentTab]);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
   useEffect(() => {
@@ -65,6 +66,10 @@ export default function App() {
   const [dbConnected, setDbConnected] = useState<boolean | null>(null);
   const [entryView, setEntryView] = useState<'portfolio' | 'login' | 'admin'>(() => {
     if (typeof window === 'undefined') return 'portfolio';
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('tab')) {
+      return 'admin';
+    }
     const shouldResumeAdmin = sessionStorage.getItem('resume_admin_after_refresh') === 'true';
     if (shouldResumeAdmin) {
       sessionStorage.removeItem('resume_admin_after_refresh');
@@ -82,6 +87,49 @@ export default function App() {
     }
     return 'portfolio';
   });
+
+  // Đồng bộ tiêu đề trang (SEO), OpenGraph và URL hai chiều
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    if (entryView === 'portfolio') {
+      updateDocumentSEO('portfolio');
+      return;
+    }
+
+    if (entryView === 'admin') {
+      updateDocumentSEO(currentTab);
+      localStorage.setItem('app_last_active_tab', currentTab);
+
+      // Cập nhật query param ?tab=slug mà không làm reload trang
+      const meta = getSeoMeta(currentTab);
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('tab') !== meta.slug) {
+        url.searchParams.set('tab', meta.slug);
+        url.searchParams.delete('portfolio');
+        window.history.pushState({ tab: currentTab }, '', url.toString());
+      }
+    }
+  }, [currentTab, entryView]);
+
+  // Lắng nghe sự kiện người dùng bấm nút Back / Forward trên trình duyệt
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handlePopState = () => {
+      const tab = getTabFromUrl();
+      if (tab) {
+        setCurrentTab(tab);
+        updateDocumentSEO(tab);
+        if (entryView !== 'admin') {
+          setEntryView('admin');
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [entryView]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -119,6 +167,23 @@ export default function App() {
         return () => unsubscribe();
       }
     }
+  }, [currentUser]);
+
+  // Theo dõi trạng thái trực tuyến qua Supabase Realtime Presence
+  useEffect(() => {
+    if (currentUser) {
+      trackUserPresence(currentUser);
+    } else {
+      untrackUserPresence();
+    }
+
+    const handleBeforeUnload = () => {
+      untrackUserPresence();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, [currentUser]);
 
   // Real-time listener for unread notifications count
@@ -159,10 +224,13 @@ export default function App() {
       const notifs = await getNotificationsFromSupabase();
       currentSupabaseNotifs = notifs.filter(fn => {
         let isTarget = false;
-        if (fn.targetAudience === 'all') isTarget = true;
+        if (fn.targetAudience === 'all') {
+          // Thông báo task chỉ admin nhận broadcast chung, user thường chỉ nhận khi được chỉ định
+          isTarget = fn.type !== 'task' || currentUser.role === 'admin';
+        }
         else if (fn.targetAudience === 'all_admins' && currentUser.role === 'admin') isTarget = true;
-        else if (fn.targetAudience === 'custom_admins' && currentUser.role === 'admin' && fn.targetUserIds?.includes(currentUser.id)) isTarget = true;
-        else if (fn.targetAudience === 'custom_users' && fn.targetUserIds?.includes(currentUser.id)) isTarget = true;
+        else if (fn.targetAudience === 'custom_admins' && currentUser.role === 'admin' && (fn.targetUserIds?.includes(currentUser.id) || fn.targetUserIds?.includes(currentUser.username))) isTarget = true;
+        else if (fn.targetAudience === 'custom_users' && (fn.targetUserIds?.includes(currentUser.id) || fn.targetUserIds?.includes(currentUser.username))) isTarget = true;
         return isTarget;
       });
       updateCounts();
@@ -466,6 +534,7 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    await untrackUserPresence();
     await signOut(auth);
     setCurrentUser(null);
     localStorage.removeItem('logged_in_user');
@@ -641,7 +710,11 @@ export default function App() {
     return <PublicARScanner />;
   }
 
-  const isForcePublic = typeof window !== 'undefined' && window.location.search.includes('public=true');
+  const isForcePublic = typeof window !== 'undefined' && (
+    window.location.search.includes('public=true') ||
+    new URLSearchParams(window.location.search).get('tab') === 'tra-cuu' ||
+    new URLSearchParams(window.location.search).get('tab') === 'public_search'
+  );
   if (isForcePublic) {
     return (
       <PublicJournalSearch 
@@ -693,12 +766,12 @@ export default function App() {
   const getNavItems = () => {
     if (!currentUser) return [];
     const items = [
-      { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
-      { id: 'tasks', label: 'Dự án', icon: ClipboardList },
-      { id: 'scientific_journals', label: 'Tra cứu báo', icon: BookOpen },
-      { id: 'calculator', label: 'Tính cỡ mẫu', icon: Calculator },
-      { id: 'qualitative_analysis', label: 'Phân tích định tính', icon: Layers },
-      { id: 'quantitative_analysis', label: 'Phân tích định lượng', icon: Calculator },
+      { id: 'dashboard', label: 'Tổng quan Dashboard', icon: LayoutDashboard },
+      { id: 'tasks', label: 'Quản lý Công việc', icon: ClipboardList },
+      { id: 'scientific_journals', label: 'Quản lý điểm báo khoa học', icon: BookOpen },
+      { id: 'calculator', label: 'Tính Cỡ Mẫu Nghiên Cứu', icon: Calculator },
+      { id: 'qualitative_analysis', label: 'Phân tích định tính', icon: FolderKanban },
+      { id: 'quantitative_analysis', label: 'Phân tích số liệu định lượng', icon: Calculator },
       { id: 'utilities', label: 'Tiện ích', icon: Wrench },
       { id: 'portfolio_cms', label: 'Quản trị Portfolio', icon: Shield },
       { id: 'notifications', icon: Bell, label: 'Thông báo' },
@@ -711,7 +784,7 @@ export default function App() {
     });
 
     if (currentUser.role === 'admin') {
-      allowed.push({ id: 'users', label: 'Quản lý thành viên', icon: Users });
+      allowed.push({ id: 'users', label: 'Quản lý & Phân quyền', icon: Users });
     }
 
     if (currentUser.role === 'admin' || currentUser.permissions.includes('notifications')) {
@@ -723,7 +796,7 @@ export default function App() {
     }
 
     if (currentUser.role === 'admin' || currentUser.permissions.includes('settings')) {
-      allowed.push({ id: 'settings', label: 'Cài đặt', icon: Settings });
+      allowed.push({ id: 'settings', label: 'Cấu hình hệ thống', icon: Settings });
     }
 
     return allowed;
