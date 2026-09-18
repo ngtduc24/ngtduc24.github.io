@@ -256,40 +256,62 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
           init: function () {
             const sceneEl = this.el;
             const T = AFRAME.THREE;
+            let done = false;
             const setup = () => {
+              if (done) return;
               const renderer = sceneEl.renderer;
               if (!renderer || !T) return;
+              done = true;
               try {
                 renderer.toneMapping = T.ACESFilmicToneMapping;
-                renderer.toneMappingExposure = 1.0;
-                const pmrem = new T.PMREMGenerator(renderer);
-                pmrem.compileEquirectangularShader();
+                renderer.toneMappingExposure = 1.1;
+                try { (renderer as any).useLegacyLights = false; } catch (_e) {}
 
-                // Dựng ảnh môi trường dạng gradient dọc, sáng trên tối dưới, làm nguồn phản chiếu mềm.
-                const canvas = document.createElement('canvas');
-                canvas.width = 32;
-                canvas.height = 256;
-                const c2d = canvas.getContext('2d');
-                if (c2d) {
-                  const grad = c2d.createLinearGradient(0, 0, 0, 256);
-                  grad.addColorStop(0, '#f4f6f8');
-                  grad.addColorStop(0.5, '#b8bec6');
-                  grad.addColorStop(1, '#5c626b');
-                  c2d.fillStyle = grad;
-                  c2d.fillRect(0, 0, 32, 256);
+                // Đèn nền gắn thẳng vào scene, cường độ mạnh, bảo đảm vật thể luôn sáng
+                // dù ảnh môi trường có dựng được hay không. Đây là điểm chắc chắn nhất.
+                const hemi = new T.HemisphereLight(0xffffff, 0x8d8d8d, 3.0);
+                hemi.position.set(0, 1, 0);
+                sceneEl.object3D.add(hemi);
+                const amb = new T.AmbientLight(0xffffff, 1.3);
+                sceneEl.object3D.add(amb);
+                const dir = new T.DirectionalLight(0xffffff, 2.6);
+                dir.position.set(5, 10, 7);
+                sceneEl.object3D.add(dir);
+
+                // Ảnh môi trường cho vật liệu kim loại phản chiếu, phần phụ thêm.
+                try {
+                  const pmrem = new T.PMREMGenerator(renderer);
+                  pmrem.compileEquirectangularShader();
+                  const canvas = document.createElement('canvas');
+                  canvas.width = 32;
+                  canvas.height = 256;
+                  const c2d = canvas.getContext('2d');
+                  if (c2d) {
+                    const grad = c2d.createLinearGradient(0, 0, 0, 256);
+                    grad.addColorStop(0, '#f4f6f8');
+                    grad.addColorStop(0.5, '#b8bec6');
+                    grad.addColorStop(1, '#5c626b');
+                    c2d.fillStyle = grad;
+                    c2d.fillRect(0, 0, 32, 256);
+                  }
+                  const tex = new T.CanvasTexture(canvas);
+                  tex.mapping = T.EquirectangularReflectionMapping;
+                  sceneEl.object3D.environment = pmrem.fromEquirectangular(tex).texture;
+                  tex.dispose();
+                  pmrem.dispose();
+                } catch (e) {
+                  console.warn('Không dựng được ảnh môi trường AR:', e);
                 }
-                const tex = new T.CanvasTexture(canvas);
-                tex.mapping = T.EquirectangularReflectionMapping;
-                const envRT = pmrem.fromEquirectangular(tex);
-                sceneEl.object3D.environment = envRT.texture;
-                tex.dispose();
-                pmrem.dispose();
               } catch (e) {
-                console.warn('Không dựng được môi trường chiếu sáng AR:', e);
+                console.warn('Không thiết lập chiếu sáng AR:', e);
               }
             };
+            // Chạy khi renderer sẵn sàng, thử nhiều mốc để chắc chắn kích hoạt một lần.
             if (sceneEl.renderer) setup();
-            else sceneEl.addEventListener('render-target-loaded', setup, { once: true } as any);
+            sceneEl.addEventListener('render-target-loaded', setup);
+            sceneEl.addEventListener('loaded', setup);
+            window.setTimeout(setup, 800);
+            window.setTimeout(setup, 2000);
           }
         });
       }
@@ -331,7 +353,7 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
 
     // Cấu hình A-Frame chuẩn dấu chấm phẩy ; cho schema renderer để preserveDrawingBuffer hoạt động thực tế
     container.innerHTML = `
-      <a-scene scanner-env mindar-image="imageTargetSrc: ${escapeAttr(mindUrl)}; autoStart: true;" color-space="sRGB" renderer="colorManagement: true; physicallyCorrectLights: true; preserveDrawingBuffer: true;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      <a-scene scanner-env mindar-image="imageTargetSrc: ${escapeAttr(mindUrl)}; autoStart: true;" color-space="sRGB" renderer="colorManagement: true; toneMapping: ACESFilmic; preserveDrawingBuffer: true;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         ${lightsHtml}
         ${contentHtml}
       </a-scene>
@@ -366,6 +388,13 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
                 }
                 if (typeof cfg.transmission === 'number' && 'transmission' in mat) mat.transmission = cfg.transmission;
                 if (typeof cfg.ior === 'number' && 'ior' in mat) mat.ior = cfg.ior;
+              } else {
+                // Không có cấu hình chất liệu. Lưới an toàn để vật thể không đen tuyền.
+                // Vật liệu kim loại tuyệt đối chỉ sáng nhờ phản chiếu, nếu môi trường
+                // chưa dựng được sẽ thành đen, nên hạ độ kim loại và nâng độ nhám để
+                // đèn trực tiếp tạo được ánh sáng khuếch tán thấy rõ.
+                if (typeof mat.metalness === 'number' && mat.metalness > 0.75) mat.metalness = 0.5;
+                if (typeof mat.roughness === 'number' && mat.roughness < 0.2) mat.roughness = 0.35;
               }
               mat.needsUpdate = true;
             });

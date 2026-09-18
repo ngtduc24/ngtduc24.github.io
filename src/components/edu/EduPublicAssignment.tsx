@@ -11,7 +11,8 @@ import {
   Trash2,
   X,
   Plus,
-  Download
+  Download,
+  LogOut
 } from 'lucide-react';
 import { EduAssignment, EduClass, EduSchool, EduSubmission, EduUser, EduGrade } from '../../types/edu';
 import { getAssignmentByLinkId, getSubmissionByMssv, saveSubmission, getGradesForUser } from '../../lib/edu';
@@ -38,6 +39,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
   const [files, setFiles] = useState<any[]>([]);
   const [textContent, setTextContent] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'info' | 'warning' | 'danger', message: string, title?: string } | null>(null);
 
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -143,69 +145,93 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !assignment) return;
-
-    // Validate file type (basic extension check)
+  const isFileAllowed = (file: File) => {
     const ext = file.name.split('.').pop()?.toLowerCase();
-    const isAllowed = (assignment.allowedFileTypes || []).some(t => {
+    const allowed = assignment?.allowedFileTypes || [];
+    if (allowed.length === 0) return true;
+    return allowed.some(t => {
       if (t === 'pdf') return ext === 'pdf';
       if (t === 'doc') return ['doc', 'docx'].includes(ext || '');
       if (t === 'image') return ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '');
       if (t === 'video') return ['mp4', 'mov', 'avi'].includes(ext || '');
       return true;
     });
+  };
 
-    if (!isAllowed) {
-      addNotification("Định dạng file không được phép!", "error");
-      return;
-    }
-
-    setUploading(true);
-    setUploadProgress(10);
-    setNotification(null);
-    try {
-      const reader = new FileReader();
-      reader.onprogress = (data) => {
-        if (data.lengthComputable) {
-          const progress = Math.round((data.loaded / data.total) * 50) + 10;
-          setUploadProgress(progress);
-        }
-      };
-
-      reader.onload = async () => {
+  // Đọc và tải một tệp lên, dùng lại cho cả nút chọn tệp và thao tác kéo thả.
+  const uploadSingleFile = (file: File) => new Promise<void>((resolve) => {
+    const reader = new FileReader();
+    reader.onprogress = (data) => {
+      if (data.lengthComputable) {
+        const progress = Math.round((data.loaded / data.total) * 50) + 10;
+        setUploadProgress(progress);
+      }
+    };
+    reader.onload = async () => {
+      try {
         setUploadProgress(70);
         const url = await uploadImageToCloudinary(reader.result as string);
         setUploadProgress(100);
-        
-        setTimeout(() => {
-          setFiles(prev => [...prev, {
-            url,
-            name: file.name,
-            type: file.type,
-            submittedAt: new Date().toISOString()
-          }]);
-          setNotification({
-            type: 'success',
-            title: 'Well done!',
-            message: `Tệp "${file.name}" đã được tải lên thành công.`
-          });
-          setUploading(false);
-          setUploadProgress(0);
-        }, 300);
-      };
-      reader.readAsDataURL(file);
-    } catch (err) {
-      console.error(err);
+        setFiles(prev => [...prev, {
+          url,
+          name: file.name,
+          type: file.type,
+          submittedAt: new Date().toISOString()
+        }]);
+        setNotification({
+          type: 'success',
+          title: 'Well done!',
+          message: `Tệp "${file.name}" đã được tải lên thành công.`
+        });
+      } catch (err) {
+        console.error(err);
+        setNotification({
+          type: 'danger',
+          title: 'Oh snap!',
+          message: 'Lỗi tải tệp tin lên. Vui lòng thử lại.'
+        });
+      } finally {
+        resolve();
+      }
+    };
+    reader.onerror = () => {
       setNotification({
         type: 'danger',
         title: 'Oh snap!',
-        message: 'Lỗi tải tệp tin lên. Vui lòng thử lại.'
+        message: 'Không đọc được tệp. Vui lòng thử lại.'
       });
-      setUploading(false);
-      setUploadProgress(0);
+      resolve();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  const uploadFiles = async (fileList: FileList | File[] | null) => {
+    if (!fileList || !assignment) return;
+    const arr = Array.from(fileList);
+    if (arr.length === 0) return;
+    setNotification(null);
+    for (const file of arr) {
+      if (!isFileAllowed(file)) {
+        addNotification("Định dạng file không được phép!", "error");
+        continue;
+      }
+      setUploading(true);
+      setUploadProgress(10);
+      await uploadSingleFile(file);
     }
+    setUploading(false);
+    setUploadProgress(0);
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    uploadFiles(e.target.files);
+    e.target.value = '';
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    uploadFiles(e.dataTransfer.files);
   };
 
   const handleSubmit = async () => {
@@ -308,8 +334,8 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
       {/* Stripe Progress Bar */}
       {(uploading || submitting) && (
         <div className="fixed top-0 left-0 right-0 z-[100] h-1 bg-slate-200 overflow-hidden">
-          <div 
-            className="h-full bg-[#321fdb] transition-all duration-300 relative"
+          <div
+            className="h-full bg-brand transition-all duration-300 relative"
             style={{ 
               width: `${uploadProgress}%`,
               backgroundImage: 'linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent)',
@@ -352,7 +378,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                       value={mssv}
                       onChange={e => setMssv(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleVerifyMssv()}
-                      className="w-full bg-white border border-slate-200 focus:border-[#321fdb] focus:ring-0 focus:outline-none rounded-sm px-4 py-3 text-[15px] text-slate-700 placeholder:text-slate-400 transition-all"
+                      className="w-full bg-white border border-slate-200 focus:border-brand focus:ring-0 focus:outline-none rounded-sm px-4 py-3 text-[15px] text-slate-700 placeholder:text-slate-400 transition-all"
                     />
                   </div>
                 </div>
@@ -360,7 +386,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                 <button 
                   onClick={handleVerifyMssv}
                   disabled={isVerifying || !mssv.trim()}
-                  className="w-full bg-[#321fdb] hover:bg-[#2a1ab9] disabled:opacity-50 text-white py-3.5 rounded-sm text-[15px] font-medium transition-all flex items-center justify-center gap-3 active:scale-[0.98] uppercase tracking-wide shadow-sm"
+                  className="w-full bg-brand hover:bg-brand-hover disabled:opacity-50 text-white py-3.5 rounded-sm text-[15px] font-medium transition-all flex items-center justify-center gap-3 active:scale-[0.98] uppercase tracking-wide shadow-sm"
                 >
                   {isVerifying ? 'ĐANG XỬ LÝ...' : 'Tiếp tục'}
                 </button>
@@ -369,205 +395,188 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
           </div>
         </div>
       ) : (
-        <div className="animate-fadeIn">
-          {/* Header Section - Inspired by Image 1 (Dashboard Header) */}
-          <div className="bg-white border-b border-slate-200">
-            <div className="w-full px-6 py-10">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-                <div className="space-y-1">
-                  <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Chào mừng quay trở lại, {identifiedUser.fullName}!</h1>
-                  <p className="text-slate-500 font-medium">Hệ thống quản lý bài tập và kết quả học tập Edu.</p>
-                </div>
-                
-                <div className="flex flex-wrap items-center gap-x-12 gap-y-6">
-                  <div className="flex items-center gap-12 border-r border-slate-200 pr-12 hidden md:flex">
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Mã sinh viên</p>
-                      <p className="text-lg font-bold text-[#3c4b64]">{identifiedUser.mssv}</p>
+        <div className="animate-fadeIn min-h-screen px-4 py-8 sm:py-12">
+          <div className="w-full max-w-3xl mx-auto space-y-6">
+            {/* Lời chào ngắn */}
+            <div className="px-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Chào mừng, {identifiedUser.fullName}</h1>
+              <p className="text-[13px] text-slate-500 mt-0.5">
+                Mã sinh viên {identifiedUser.mssv}
+                {deadlineDate && ` • Hạn nộp ${deadlineDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}`}
+              </p>
+            </div>
+
+            {/* Kết quả học tập */}
+            {grades.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {grades.map((item, idx) => (
+                  <div key={idx} className={`p-6 rounded-2xl shadow-sm transition-all border ${idx === 0 ? 'bg-brand text-white border-transparent' : 'bg-white border-slate-200'}`}>
+                    <p className={`text-[11px] font-bold uppercase tracking-widest ${idx === 0 ? 'text-white/70' : 'text-slate-400'}`}>{item.column.name}</p>
+                    <div className="flex items-end gap-2 mt-3">
+                      <p className="text-4xl font-bold leading-none">{item.grade?.score !== undefined ? item.grade.score : '-'}</p>
+                      <p className={`text-[13px] font-bold mb-1 ${idx === 0 ? 'text-white/50' : 'text-slate-300'}`}>/ 10</p>
                     </div>
-                    {deadlineDate && (
-                      <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Hạn nộp bài</p>
-                        <p className="text-lg font-bold text-[#3c4b64]">
-                          {deadlineDate.toLocaleDateString('vi-VN', { month: 'short', day: '2-digit', year: 'numeric' })}
-                        </p>
-                      </div>
+                    {item.grade?.note && (
+                      <p className={`text-[12px] italic leading-relaxed pt-3 mt-3 border-t ${idx === 0 ? 'border-white/15 text-white/80' : 'border-slate-100 text-slate-500'}`}>“{item.grade.note}”</p>
                     )}
                   </div>
-                </div>
-              </div>
-
-              {/* Sub-navigation - Simplified */}
-              <div className="flex items-center gap-8 mt-12 border-b border-slate-100">
-                <button className="px-1 py-4 text-[#321fdb] font-bold text-[14px] border-b-2 border-[#321fdb] transition-all">Tổng quan</button>
-              </div>
-            </div>
-          </div>
-
-          <div className="w-full px-6 py-12 space-y-12">
-            {/* Grades Cards - Inspired by Image 4 plain/colored cards */}
-            {grades.length > 0 && (
-              <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-1.5 h-6 bg-[#321fdb] rounded-full" />
-                  <h3 className="text-lg font-bold text-slate-800 uppercase tracking-tight">Kết quả học tập</h3>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {grades.map((item, idx) => (
-                    <div key={idx} className={`p-8 rounded-sm shadow-sm transition-all border ${idx === 0 ? 'bg-[#321fdb] text-white border-transparent' : idx === 1 ? 'bg-[#3c4b64] text-white border-transparent' : 'bg-white border-slate-200'}`}>
-                      <div className="space-y-4">
-                        <p className={`text-[11px] font-bold uppercase tracking-widest ${idx < 2 ? 'text-white/60' : 'text-slate-400'}`}>{item.column.name}</p>
-                        <div className="flex items-end gap-2">
-                          <p className="text-4xl font-bold leading-none">
-                            {item.grade?.score !== undefined ? item.grade.score : '-'}
-                          </p>
-                          <p className={`text-[13px] font-bold mb-1 ${idx < 2 ? 'text-white/40' : 'text-slate-300'}`}>/ 10</p>
-                        </div>
-                        {item.grade?.note && (
-                          <p className={`text-[12px] italic leading-relaxed pt-3 border-t ${idx < 2 ? 'border-white/10 text-white/70' : 'border-slate-50 text-slate-500'}`}>“{item.grade.note}”</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                ))}
               </div>
             )}
 
             {notification && (
-              <Alert 
-                type={notification.type} 
-                message={notification.message} 
-                title={notification.title} 
-                onClose={() => setNotification(null)} 
+              <Alert
+                type={notification.type}
+                message={notification.message}
+                title={notification.title}
+                onClose={() => setNotification(null)}
               />
             )}
 
-            {/* Assignment Main Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Left Column: Instructions & Details */}
-              <div className="lg:col-span-2 space-y-8">
-                <div className="bg-white rounded-sm border border-slate-200 overflow-hidden shadow-sm">
-                  <div className="p-6 border-b border-slate-100 bg-[#f8f9fa] flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#321fdb] text-white flex items-center justify-center rounded-sm shadow-sm">
-                        <Upload className="w-5 h-5" />
-                      </div>
-                      <h2 className="text-lg font-bold text-slate-800 uppercase tracking-tight">Nộp bài làm</h2>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <select 
-                        value={assignment.id}
-                        onChange={(e) => handleSelectAssignment(e.target.value)}
-                        className="bg-white border border-slate-200 rounded-sm px-4 py-2 text-[13px] font-medium text-slate-700 focus:outline-none focus:border-[#321fdb] transition-all min-w-[200px]"
-                      >
-                        {classAssignments.map(a => (
-                          <option key={a.id} value={a.id}>{a.title}</option>
-                        ))}
-                      </select>
-                    </div>
+            {/* Thẻ nộp bài chính */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+              {/* Đầu thẻ */}
+              <div className="flex items-center justify-between gap-4 px-6 sm:px-8 py-6 border-b border-slate-100">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-12 h-12 rounded-xl bg-brand text-white flex items-center justify-center shadow-sm shrink-0">
+                    <Upload className="w-6 h-6" />
                   </div>
-
-                  <div className="p-8 space-y-10">
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-[14px] font-bold text-slate-800 uppercase tracking-wide">Yêu cầu & Hướng dẫn</h4>
-                        <div className="flex gap-2">
-                          {(assignment.allowedFileTypes || []).map(type => (
-                            <span key={type} className="px-3 py-1 bg-blue-50 text-[#321fdb] rounded-sm text-[10px] font-bold uppercase tracking-wider">{type}</span>
-                          ))}
-                        </div>
-                      </div>
-                      <div 
-                        className="prose prose-slate max-w-none text-slate-600 text-[15px] leading-relaxed p-6 bg-slate-50 border border-slate-100 rounded-sm"
-                        dangerouslySetInnerHTML={{ __html: assignment.content || 'Không có hướng dẫn cụ thể.' }}
-                      />
-                    </div>
-
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-[14px] font-bold text-slate-800 uppercase tracking-wide">Tệp tin bài nộp</h4>
-                        {canEdit && (
-                          <button 
-                            onClick={() => document.getElementById('file-upload-input')?.click()}
-                            disabled={uploading}
-                            className="bg-[#321fdb] hover:bg-[#2a1ab9] text-white px-5 py-2 rounded-sm text-[12px] font-bold transition-all uppercase tracking-wide flex items-center gap-2"
-                          >
-                            <Plus className="w-4 h-4" /> {uploading ? 'Đang tải...' : 'Tải tệp mới'}
-                          </button>
-                        )}
-                      </div>
-                      
-                      <input id="file-upload-input" type="file" className="hidden" multiple onChange={handleFileUpload} />
-
-                      <div className="space-y-3">
-                        {files.map((file, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-sm group hover:border-[#321fdb] transition-all shadow-sm">
-                            <div className="flex items-center gap-4 min-w-0">
-                              <div className="w-10 h-10 bg-slate-50 text-[#321fdb] rounded-sm flex items-center justify-center border border-slate-100">
-                                {file.type.includes('pdf') ? <FileText className="w-5 h-5" /> : 
-                                 file.type.includes('image') ? <ImageIcon className="w-5 h-5" /> :
-                                 <FileText className="w-5 h-5" />}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-[14px] font-bold text-slate-700 truncate">{file.name}</p>
-                                <p className="text-[11px] text-slate-400 font-medium uppercase tracking-tighter">Đã tải lên vào {new Date(file.submittedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</p>
-                              </div>
-                            </div>
-                            {canEdit && (
-                              <button 
-                                onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))}
-                                className="p-2 text-slate-300 hover:text-rose-500 transition-all"
-                              >
-                                <Trash2 className="w-4.5 h-4.5" />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        {files.length === 0 && (
-                          <div className="py-16 text-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-sm space-y-3">
-                            <Upload className="w-10 h-10 text-slate-300 mx-auto" />
-                            <p className="text-[13px] font-bold text-slate-400 uppercase tracking-widest">Chưa có tệp bài làm nào</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                  <div className="min-w-0">
+                    <h2 className="text-lg font-bold text-slate-800 uppercase tracking-tight">Nộp bài làm</h2>
+                    <p className="text-[13px] text-slate-500 truncate">Vui lòng nộp bài đúng định dạng và thời hạn quy định</p>
                   </div>
                 </div>
+                <select
+                  value={assignment.id}
+                  onChange={(e) => handleSelectAssignment(e.target.value)}
+                  className="bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-[13px] font-medium text-slate-700 focus:outline-none focus:border-brand transition-all min-w-[160px] shrink-0"
+                >
+                  {classAssignments.map(a => (
+                    <option key={a.id} value={a.id}>{a.title}</option>
+                  ))}
+                </select>
               </div>
 
-              {/* Right Column: Submission Action */}
-              <div className="space-y-8">
-                <div className="space-y-4">
-                  {canEdit ? (
-                    <button 
-                      onClick={handleSubmit}
-                      disabled={submitting || (files.length === 0 && !textContent.trim())}
-                      className="w-full bg-[#321fdb] hover:bg-[#2a1ab9] disabled:opacity-50 text-white py-5 rounded-sm text-[15px] font-bold shadow-lg transition-all active:scale-[0.98] uppercase tracking-widest"
-                    >
-                      {submitting ? 'ĐANG XỬ LÝ...' : (submission ? 'CẬP NHẬT BÀI NỘP' : 'XÁC NHẬN NỘP BÀI')}
-                    </button>
-                  ) : (
-                    <div className="bg-rose-50 border border-rose-100 p-6 rounded-sm flex items-center gap-4 text-rose-600">
-                      <Lock className="w-6 h-6 shrink-0" />
-                      <p className="text-[13px] font-bold uppercase tracking-wide">{lockReason}</p>
+              <div className="px-6 sm:px-8 py-8 space-y-8">
+                {/* Yêu cầu và hướng dẫn */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h4 className="text-[13px] font-bold text-slate-800 uppercase tracking-wide">Yêu cầu & Hướng dẫn</h4>
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      {(assignment.allowedFileTypes || []).map(type => (
+                        <span key={type} className="px-3 py-1 bg-brand-light text-brand rounded-md text-[10px] font-bold uppercase tracking-wider">{type}</span>
+                      ))}
                     </div>
-                  )}
-                  <p className="text-[11px] text-center text-slate-400 font-bold uppercase tracking-widest">Bạn có thể chỉnh sửa trước thời hạn chót</p>
+                  </div>
+                  <div
+                    className="prose prose-slate max-w-none text-slate-600 text-[15px] leading-relaxed p-5 bg-slate-50 border border-slate-100 rounded-xl"
+                    dangerouslySetInnerHTML={{ __html: assignment.content || 'Không có hướng dẫn cụ thể.' }}
+                  />
                 </div>
 
-                <div className="pt-8 border-t border-slate-200">
-                  <button 
-                    onClick={() => {
-                      setIdentifiedUser(null);
-                      setSubmission(null);
-                      setMssv('');
-                      setNotification(null);
-                    }}
-                    className="w-full bg-slate-200 hover:bg-slate-300 text-slate-600 py-3 rounded-sm text-[13px] font-bold transition-all uppercase tracking-wide"
-                  >
-                    Đăng xuất tài khoản
-                  </button>
+                {/* Tệp tin bài nộp */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <h4 className="text-[13px] font-bold text-slate-800 uppercase tracking-wide">Tệp tin bài nộp</h4>
+                    {canEdit && (
+                      <button
+                        onClick={() => document.getElementById('file-upload-input')?.click()}
+                        disabled={uploading}
+                        className="bg-brand hover:bg-brand-hover disabled:opacity-50 text-white px-5 py-2.5 rounded-lg text-[12px] font-bold transition-all uppercase tracking-wide flex items-center gap-2 shrink-0"
+                      >
+                        <Plus className="w-4 h-4" /> {uploading ? 'Đang tải...' : 'Tải tệp mới'}
+                      </button>
+                    )}
+                  </div>
+
+                  <input id="file-upload-input" type="file" className="hidden" multiple onChange={handleFileInput} />
+
+                  {/* Vùng kéo thả */}
+                  {canEdit && (
+                    <div
+                      onClick={() => document.getElementById('file-upload-input')?.click()}
+                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={handleDrop}
+                      className={`cursor-pointer rounded-xl border-2 border-dashed px-6 py-12 text-center transition-all ${isDragging ? 'border-brand bg-brand-light' : 'border-slate-200 bg-slate-50/70 hover:border-brand'}`}
+                    >
+                      <Upload className={`w-9 h-9 mx-auto mb-3 transition-colors ${isDragging ? 'text-brand' : 'text-slate-300'}`} />
+                      <p className="text-[14px] font-bold text-slate-500 uppercase tracking-wide">Kéo thả tệp vào đây</p>
+                      <p className="text-[12px] text-slate-400 mt-1">Hoặc nhấn “Tải tệp mới” để chọn tệp</p>
+                    </div>
+                  )}
+
+                  <p className="text-center text-[12px] text-slate-400">Hỗ trợ các định dạng PDF, DOC, DOCX, PPT, PPTX, ZIP, RAR (Tối đa 50MB mỗi tệp)</p>
+
+                  {/* Danh sách tệp đã nộp */}
+                  {files.length > 0 && (
+                    <div className="space-y-3">
+                      {files.map((file, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl group hover:border-brand transition-all shadow-sm">
+                          <div className="flex items-center gap-4 min-w-0">
+                            <div className="w-10 h-10 bg-brand-light text-brand rounded-lg flex items-center justify-center shrink-0">
+                              {file.type.includes('pdf') ? <FileText className="w-5 h-5" /> :
+                               file.type.includes('image') ? <ImageIcon className="w-5 h-5" /> :
+                               <FileText className="w-5 h-5" />}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[14px] font-bold text-slate-700 truncate">{file.name}</p>
+                              <p className="text-[11px] text-slate-400 font-medium">Đã tải lên vào {new Date(file.submittedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</p>
+                            </div>
+                          </div>
+                          {canEdit && (
+                            <button
+                              onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))}
+                              className="p-2 text-slate-300 hover:text-rose-500 transition-all shrink-0"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Thông báo khóa khi hết hạn hoặc đã chấm điểm */}
+                {!canEdit && (
+                  <div className="bg-rose-50 border border-rose-100 p-5 rounded-xl flex items-center gap-4 text-rose-600">
+                    <Lock className="w-5 h-5 shrink-0" />
+                    <p className="text-[13px] font-bold uppercase tracking-wide">{lockReason}</p>
+                  </div>
+                )}
+
+                {/* Hai nút hành động */}
+                <div className="pt-6 border-t border-slate-100 space-y-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {canEdit && (
+                      <button
+                        onClick={handleSubmit}
+                        disabled={submitting || (files.length === 0 && !textContent.trim())}
+                        className="flex-1 bg-gradient-to-r from-brand to-brand-hover hover:opacity-95 disabled:opacity-50 text-white py-4 rounded-xl text-[14px] font-bold shadow-lg transition-all active:scale-[0.99] uppercase tracking-wide flex items-center justify-center gap-2.5"
+                      >
+                        <Upload className="w-5 h-5" />
+                        {submitting ? 'Đang xử lý...' : (submission ? 'Cập nhật bài nộp' : 'Xác nhận nộp bài')}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setIdentifiedUser(null);
+                        setSubmission(null);
+                        setMssv('');
+                        setNotification(null);
+                        setFiles([]);
+                        setGrades([]);
+                      }}
+                      className={`${canEdit ? 'sm:flex-1' : 'w-full'} bg-slate-100 hover:bg-slate-200 text-slate-600 py-4 rounded-xl text-[14px] font-bold transition-all uppercase tracking-wide flex items-center justify-center gap-2.5`}
+                    >
+                      <LogOut className="w-5 h-5" />
+                      Đăng xuất tài khoản
+                    </button>
+                  </div>
+                  {canEdit && (
+                    <p className="text-[11px] text-center text-brand font-semibold">Bạn có thể chỉnh sửa trước thời hạn chót</p>
+                  )}
                 </div>
               </div>
             </div>
