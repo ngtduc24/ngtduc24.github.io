@@ -458,7 +458,7 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
           href="/tracuu.html"
           target="_blank"
           rel="noopener noreferrer"
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100/70 text-xs font-semibold text-emerald-700 hover:text-emerald-800 border border-emerald-200/60 transition-all shadow-sm"
+          className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-[#e9f7ef] text-[11px] font-bold text-[#00a65a] border border-[#00a65a] transition-all uppercase tracking-wider"
         >
           <span>Trang Tra Cứu</span>
           <ExternalLink className="w-3.5 h-3.5" />
@@ -471,7 +471,7 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
             sessionStorage.setItem('resume_admin_after_refresh', 'true');
             window.location.reload();
           }}
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-brand-light/30 text-xs font-semibold text-slate-600 hover:text-brand border border-slate-200/60 transition-all"
+          className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-[11px] font-bold text-slate-500 border border-slate-200 transition-all uppercase tracking-wider"
         >
           <span>Làm mới</span>
           <RefreshCw className="w-3.5 h-3.5" />
@@ -617,21 +617,20 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
         <div className="relative">
           <button 
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            className={`flex items-center gap-2 pl-2 border-l border-slate-100 p-1.5 rounded-xl cursor-pointer transition-all group ${isUserMenuOpen ? 'bg-slate-100' : 'hover:bg-slate-50'}`}
-            title="Tài khoản người dùng"
+            className={`flex items-center gap-3 pl-3 border-l border-slate-100 p-1 rounded-2xl cursor-pointer transition-all group ${isUserMenuOpen ? 'bg-slate-100' : 'hover:bg-slate-50'}`}
           >
             <div className="hidden sm:block text-right">
-              <span className="block text-xs font-bold text-slate-700 group-hover:text-brand transition-colors">{currentUser.fullName}</span>
-              <span className="block text-[9px] text-slate-400 -mt-0.5">{currentUser?.role === 'admin' ? 'Admin' : 'User'}</span>
+              <span className="block text-xs font-bold text-slate-800 tracking-tight">{currentUser.fullName}</span>
+              <span className="block text-[10px] font-bold text-[#00a65a] bg-[#e9f7ef] px-2 py-0.5 rounded-md mt-0.5 uppercase tracking-wider">{currentUser?.role === 'admin' ? 'Admin' : 'User'}</span>
             </div>
             {currentUser.avatarUrl ? (
               <img 
                 src={currentUser.avatarUrl} 
                 alt={currentUser.fullName} 
-                className="w-8 h-8 rounded-lg object-cover border border-brand/20 shadow-xs"
+                className="w-9 h-9 rounded-xl object-cover border border-[#00a65a]/10 shadow-sm"
               />
             ) : (
-              <div className="w-8 h-8 rounded-lg bg-brand-light text-brand flex items-center justify-center font-bold text-xs border border-brand/10">
+              <div className="w-9 h-9 rounded-xl bg-[#e9f7ef] text-[#00a65a] flex items-center justify-center font-bold text-sm border border-[#00a65a]/10 shadow-sm">
                 {currentUser.fullName?.substring(0, 1).toUpperCase()}
               </div>
             )}

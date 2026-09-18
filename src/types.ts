@@ -9,7 +9,7 @@ export interface UserAccount {
   fullName: string;
   email: string;
   role: 'admin' | 'user' | 'member';
-  permissions: string[]; // Allowed tab IDs: 'dashboard', 'calculator', 'website'
+  permissions: string[]; // Allowed tab IDs: 'dashboard', 'calculator', 'website', 'edu'
   canAssignTask?: boolean; // Can assign tasks
   canReceiveTask?: boolean; // Can receive/execute tasks
   canRunPauseTask?: boolean; // Can start/pause tasks
@@ -36,6 +36,14 @@ export interface UserAccount {
   canImportQuantitative?: boolean;
   canExportQuantitative?: boolean;
   canManageQuantitativeSettings?: boolean;
+  // Edu Permissions
+  canManageEdu?: boolean;
+  canCreateEdu?: boolean;
+  canEditEdu?: boolean;
+  canDeleteEdu?: boolean;
+  canImportEdu?: boolean;
+  canExportEdu?: boolean;
+  canGradeEdu?: boolean;
   createdAt: string;
   password?: string;
   avatarUrl?: string;

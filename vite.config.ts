@@ -19,6 +19,7 @@ export default defineConfig(() => {
         input: {
           main: path.resolve(process.cwd(), 'index.html'),
           tracuu: path.resolve(process.cwd(), 'tracuu.html'),
+          edu: path.resolve(process.cwd(), 'edu.html'),
         },
       },
     },

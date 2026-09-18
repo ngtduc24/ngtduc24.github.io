@@ -99,6 +99,13 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
     description: 'Thiết lập thông số vận hành, kết nối Supabase, Firebase Firestore và sao lưu dữ liệu nghiên cứu.',
     keywords: 'cấu hình hệ thống, sao lưu dữ liệu, database settings, backup',
   },
+  edu: {
+    id: 'edu',
+    slug: 'quan-ly-giao-duc',
+    title: 'Hệ thống Quản lý Giáo dục & Đào tạo | SmartResearch',
+    description: 'Nền tảng quản lý trường học, lớp học, danh sách sinh viên, bài tập và bảng điểm học thuật chuyên nghiệp.',
+    keywords: 'quản lý giáo dục, quản lý sinh viên, bảng điểm, bài tập trực tuyến, đào tạo khoa học',
+  },
   portfolio: {
     id: 'portfolio',
     slug: 'portfolio',

@@ -21,8 +21,9 @@ import PortfolioWebsite from './components/PortfolioWebsite';
 import PortfolioCMS from './components/PortfolioCMS';
 import UtilitiesModule from './components/UtilitiesModule';
 import PublicARScanner from './components/PublicARScanner';
+import EduModule from './components/EduModule';
 import { TaskProvider } from './components/TaskContext';
-import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban } from 'lucide-react';
+import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban, GraduationCap } from 'lucide-react';
 import { supabase } from "./lib/supabase";
 import { saveUser, deleteUser, getUsers, getUserById, mapUserFromDB, seedDefaultUsersIfNeeded, getDefaultSettingsFromSupabase, saveDefaultSettingsToSupabase, testSupabaseConnection, getNotificationsFromSupabase, subscribeToNotificationChanges, USERS_TABLE } from './lib/data';
 import { auth, db } from './lib/firebase';
@@ -301,6 +302,7 @@ export default function App() {
       users: 'Quản lý và phân quyền',
       media_library: 'Thư viện hệ thống',
       settings: 'Cấu hình hệ thống',
+      edu: 'Quản lý Giáo dục & Đào tạo',
     };
 
     if (entryView === 'admin') {
@@ -687,6 +689,8 @@ export default function App() {
         );
       case 'utilities':
         return <UtilitiesModule currentUser={currentUser} />;
+      case 'edu':
+        return <EduModule currentUser={currentUser} settings={settings} />;
       // Mã cũ của mục Tạo AR. Giữ lại để tài khoản nào đang mở sẵn mục này, hoặc có
       // đường dẫn cũ lưu trong trình duyệt, vẫn vào đúng nơi thay vì gặp trang trắng.
       case 'ar_module':
@@ -799,6 +803,7 @@ export default function App() {
       { id: 'calculator', label: 'Tính Cỡ Mẫu Nghiên Cứu', icon: Calculator },
       { id: 'qualitative_analysis', label: 'Phân tích định tính', icon: FolderKanban },
       { id: 'quantitative_analysis', label: 'Phân tích số liệu định lượng', icon: Calculator },
+      { id: 'edu', label: 'Quản lý Giáo dục', icon: GraduationCap },
       { id: 'utilities', label: 'Tiện ích', icon: Wrench },
       { id: 'portfolio_cms', label: 'Quản trị Portfolio', icon: Shield },
       { id: 'notifications', icon: Bell, label: 'Thông báo' },
