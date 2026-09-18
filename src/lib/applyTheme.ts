@@ -1,6 +1,9 @@
 // Áp màu thương hiệu vào biến CSS dùng chung cho mọi entry, kể cả các trang công
 // khai (tracuu, edu) để màu đồng bộ với màu admin đặt trong cấu hình hệ thống.
-// Logic giữ giống hệt App.tsx để không lệch nhau.
+//
+// Đồng thời lưu 3 giá trị màu đã tính vào localStorage. Đoạn script nội tuyến
+// trong thẻ head của các file html đọc cache này và áp NGAY trước khi trang vẽ,
+// nhờ vậy khi F5 màu đúng hiện ra liền, không còn nháy màu mặc định rồi mới đổi.
 
 interface ThemeLike {
   themeColor?: string;
@@ -8,36 +11,39 @@ interface ThemeLike {
   secondaryColor?: string;
 }
 
-export function applyBrandTheme(settings: ThemeLike | null | undefined) {
-  const root = document.documentElement;
-  const theme = settings?.themeColor || 'green-black';
+export const BRAND_CACHE_KEY = 'brandThemeCache';
 
+const PRESETS: Record<string, { brand: string; hover: string; light: string }> = {
+  'green-black': { brand: '#10b981', hover: '#059669', light: '#ecfdf5' },
+  'purple-indigo': { brand: '#712cf9', hover: '#5b21d3', light: '#f3eeff' },
+  'blue-cyan': { brand: '#3b82f6', hover: '#2563eb', light: '#eff6ff' },
+  'red-orange': { brand: '#ef4444', hover: '#dc2626', light: '#fef2f2' },
+  'amber-yellow': { brand: '#f59e0b', hover: '#d97706', light: '#fefbeb' },
+};
+
+export function resolveBrand(settings: ThemeLike | null | undefined) {
   if (settings?.primaryColor && settings?.secondaryColor) {
-    root.style.setProperty('--color-brand', settings.primaryColor);
-    root.style.setProperty('--color-brand-hover', settings.secondaryColor);
-    root.style.setProperty('--color-brand-light', `${settings.primaryColor}15`);
-    return;
+    return {
+      brand: settings.primaryColor,
+      hover: settings.secondaryColor,
+      light: `${settings.primaryColor}15`,
+    };
   }
+  const theme = settings?.themeColor || 'green-black';
+  return PRESETS[theme] || PRESETS['green-black'];
+}
 
-  if (theme === 'green-black') {
-    root.style.setProperty('--color-brand', '#10b981');
-    root.style.setProperty('--color-brand-hover', '#059669');
-    root.style.setProperty('--color-brand-light', '#ecfdf5');
-  } else if (theme === 'purple-indigo') {
-    root.style.setProperty('--color-brand', '#712cf9');
-    root.style.setProperty('--color-brand-hover', '#5b21d3');
-    root.style.setProperty('--color-brand-light', '#f3eeff');
-  } else if (theme === 'blue-cyan') {
-    root.style.setProperty('--color-brand', '#3b82f6');
-    root.style.setProperty('--color-brand-hover', '#2563eb');
-    root.style.setProperty('--color-brand-light', '#eff6ff');
-  } else if (theme === 'red-orange') {
-    root.style.setProperty('--color-brand', '#ef4444');
-    root.style.setProperty('--color-brand-hover', '#dc2626');
-    root.style.setProperty('--color-brand-light', '#fef2f2');
-  } else if (theme === 'amber-yellow') {
-    root.style.setProperty('--color-brand', '#f59e0b');
-    root.style.setProperty('--color-brand-hover', '#d97706');
-    root.style.setProperty('--color-brand-light', '#fefbeb');
+export function applyBrandTheme(settings: ThemeLike | null | undefined) {
+  const { brand, hover, light } = resolveBrand(settings);
+  const root = document.documentElement.style;
+  root.setProperty('--color-brand', brand);
+  root.setProperty('--color-brand-hover', hover);
+  root.setProperty('--color-brand-light', light);
+
+  // Lưu cache để lần tải sau áp màu ngay trong thẻ head, tránh nháy màu.
+  try {
+    localStorage.setItem(BRAND_CACHE_KEY, JSON.stringify({ brand, hover, light }));
+  } catch (_e) {
+    // localStorage có thể bị chặn ở chế độ riêng tư, bỏ qua không ảnh hưởng.
   }
 }

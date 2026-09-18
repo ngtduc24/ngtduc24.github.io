@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { applyBrandTheme } from './lib/applyTheme';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import DashboardOverview from './components/DashboardOverview';
@@ -325,37 +326,8 @@ export default function App() {
   }, [settings.webAppIcon]);
 
   useEffect(() => {
-    const theme = settings.themeColor || 'green-black';
-    const root = document.documentElement;
-    
-    if (settings.primaryColor && settings.secondaryColor) {
-      root.style.setProperty('--color-brand', settings.primaryColor);
-      root.style.setProperty('--color-brand-hover', settings.secondaryColor);
-      // Generate a light version for brand-light, simple approximation or could do more complex
-      root.style.setProperty('--color-brand-light', `${settings.primaryColor}15`); 
-    } else {
-      if (theme === 'green-black') {
-        root.style.setProperty('--color-brand', '#10b981'); // Emerald
-        root.style.setProperty('--color-brand-hover', '#059669');
-        root.style.setProperty('--color-brand-light', '#ecfdf5');
-      } else if (theme === 'purple-indigo') {
-        root.style.setProperty('--color-brand', '#712cf9'); // Purple
-        root.style.setProperty('--color-brand-hover', '#5b21d3');
-        root.style.setProperty('--color-brand-light', '#f3eeff');
-      } else if (theme === 'blue-cyan') {
-        root.style.setProperty('--color-brand', '#3b82f6'); // Blue
-        root.style.setProperty('--color-brand-hover', '#2563eb');
-        root.style.setProperty('--color-brand-light', '#eff6ff');
-      } else if (theme === 'red-orange') {
-        root.style.setProperty('--color-brand', '#ef4444'); // Red
-        root.style.setProperty('--color-brand-hover', '#dc2626');
-        root.style.setProperty('--color-brand-light', '#fef2f2');
-      } else if (theme === 'amber-yellow') {
-        root.style.setProperty('--color-brand', '#f59e0b'); // Amber
-        root.style.setProperty('--color-brand-hover', '#d97706');
-        root.style.setProperty('--color-brand-light', '#fefbeb');
-      }
-    }
+    // Dùng chung hàm áp màu, đồng thời lưu cache để lần tải sau không nháy màu.
+    applyBrandTheme(settings);
   }, [settings.themeColor, settings.primaryColor, settings.secondaryColor]);
 
   // Initialize and sync with Firebase

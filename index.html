@@ -3,6 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function(){
+        try {
+          var c = JSON.parse(localStorage.getItem('brandThemeCache') || 'null');
+          if (c && c.brand) {
+            var s = document.documentElement.style;
+            s.setProperty('--color-brand', c.brand);
+            if (c.hover) s.setProperty('--color-brand-hover', c.hover);
+            if (c.light) s.setProperty('--color-brand-light', c.light);
+          }
+        } catch(e){}
+      })();
+    </script>
     <title>Andy Nguyễn - Truyền thông đa phương tiện và Thiết kế đồ họa</title>
     <meta name="description" content="Hồ sơ năng lực, dự án thiết kế, khóa học trực tuyến và công trình nghiên cứu khoa học về truyền thông đa phương tiện, thiết kế đồ họa hai chiều và ba chiều." />
 
