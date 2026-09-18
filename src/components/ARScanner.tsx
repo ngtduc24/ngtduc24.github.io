@@ -247,6 +247,54 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
       }
     }
 
+    // Gắn môi trường chiếu sáng IBL cho scene A-Frame để vật liệu PBR và kim loại không bị đen.
+    // Dùng đúng THREE của A-Frame (cùng renderer) nên không xung đột với three của ứng dụng.
+    if (typeof (window as any).AFRAME !== 'undefined') {
+      const AFRAME = (window as any).AFRAME;
+      if (!AFRAME.components['scanner-env']) {
+        AFRAME.registerComponent('scanner-env', {
+          init: function () {
+            const sceneEl = this.el;
+            const T = AFRAME.THREE;
+            const setup = () => {
+              const renderer = sceneEl.renderer;
+              if (!renderer || !T) return;
+              try {
+                renderer.toneMapping = T.ACESFilmicToneMapping;
+                renderer.toneMappingExposure = 1.0;
+                const pmrem = new T.PMREMGenerator(renderer);
+                pmrem.compileEquirectangularShader();
+
+                // Dựng ảnh môi trường dạng gradient dọc, sáng trên tối dưới, làm nguồn phản chiếu mềm.
+                const canvas = document.createElement('canvas');
+                canvas.width = 32;
+                canvas.height = 256;
+                const c2d = canvas.getContext('2d');
+                if (c2d) {
+                  const grad = c2d.createLinearGradient(0, 0, 0, 256);
+                  grad.addColorStop(0, '#f4f6f8');
+                  grad.addColorStop(0.5, '#b8bec6');
+                  grad.addColorStop(1, '#5c626b');
+                  c2d.fillStyle = grad;
+                  c2d.fillRect(0, 0, 32, 256);
+                }
+                const tex = new T.CanvasTexture(canvas);
+                tex.mapping = T.EquirectangularReflectionMapping;
+                const envRT = pmrem.fromEquirectangular(tex);
+                sceneEl.object3D.environment = envRT.texture;
+                tex.dispose();
+                pmrem.dispose();
+              } catch (e) {
+                console.warn('Không dựng được môi trường chiếu sáng AR:', e);
+              }
+            };
+            if (sceneEl.renderer) setup();
+            else sceneEl.addEventListener('render-target-loaded', setup, { once: true } as any);
+          }
+        });
+      }
+    }
+
     let contentHtml = '';
 
     if (target.content_type === 'video') {
@@ -283,11 +331,49 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
 
     // Cấu hình A-Frame chuẩn dấu chấm phẩy ; cho schema renderer để preserveDrawingBuffer hoạt động thực tế
     container.innerHTML = `
-      <a-scene mindar-image="imageTargetSrc: ${escapeAttr(mindUrl)}; autoStart: true;" color-space="sRGB" renderer="colorManagement: true; physicallyCorrectLights: true; preserveDrawingBuffer: true;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      <a-scene scanner-env mindar-image="imageTargetSrc: ${escapeAttr(mindUrl)}; autoStart: true;" color-space="sRGB" renderer="colorManagement: true; physicallyCorrectLights: true; preserveDrawingBuffer: true;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         ${lightsHtml}
         ${contentHtml}
       </a-scene>
     `;
+
+    // Khi model 3D tải xong, áp chất liệu đã lưu từ studio và bật phản chiếu môi trường để hết đen.
+    let modelNode: any = null;
+    let onModelLoaded: (() => void) | null = null;
+    if (target.content_type === '3d') {
+      modelNode = container.querySelector('#ar-content-node');
+      if (modelNode) {
+        const cfg = target.material_config;
+        onModelLoaded = () => {
+          const root = (modelNode.getObject3D && modelNode.getObject3D('mesh')) || modelNode.object3D;
+          if (!root || !root.traverse) return;
+          root.traverse((child: any) => {
+            if (!child.isMesh || !child.material) return;
+            const mats = Array.isArray(child.material) ? child.material : [child.material];
+            mats.forEach((mat: any) => {
+              if ('envMapIntensity' in mat) {
+                mat.envMapIntensity = Math.max(mat.envMapIntensity || 0, 1);
+              }
+              if (cfg) {
+                if (cfg.baseColor && mat.color) mat.color.set(cfg.baseColor);
+                if (typeof cfg.roughness === 'number' && 'roughness' in mat) mat.roughness = cfg.roughness;
+                if (typeof cfg.metalness === 'number' && 'metalness' in mat) mat.metalness = cfg.metalness;
+                if (cfg.emissive && mat.emissive) mat.emissive.set(cfg.emissive);
+                if (typeof cfg.emissiveIntensity === 'number' && 'emissiveIntensity' in mat) mat.emissiveIntensity = cfg.emissiveIntensity;
+                if (typeof cfg.opacity === 'number') {
+                  mat.opacity = cfg.opacity;
+                  if (cfg.opacity < 0.99) mat.transparent = true;
+                }
+                if (typeof cfg.transmission === 'number' && 'transmission' in mat) mat.transmission = cfg.transmission;
+                if (typeof cfg.ior === 'number' && 'ior' in mat) mat.ior = cfg.ior;
+              }
+              mat.needsUpdate = true;
+            });
+          });
+        };
+        modelNode.addEventListener('model-loaded', onModelLoaded);
+      }
+    }
 
     const forceResize = () => window.dispatchEvent(new Event('resize'));
     const t1 = window.setTimeout(forceResize, 300);
@@ -494,9 +580,10 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
       container.removeEventListener('wheel', handleWheel);
+      if (modelNode && onModelLoaded) modelNode.removeEventListener('model-loaded', onModelLoaded);
       container.innerHTML = '';
     };
-  }, [mindUrl, target.id, target.content_url, target.content_type, target.scale, target.rotation, target.position_x, target.position_y, target.position_z, target.is_transparent_video, target.chroma_key_color]);
+  }, [mindUrl, target.id, target.content_url, target.content_type, target.scale, target.rotation, target.position_x, target.position_y, target.position_z, target.is_transparent_video, target.chroma_key_color, target.material_config]);
 
   // Sound Toggle
   const toggleSound = () => {
@@ -736,11 +823,9 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
         <div className="absolute bottom-8 inset-x-0 flex justify-center z-[70] animate-in fade-in slide-in-from-bottom-4 duration-300">
           <button
             type="button"
-            onClick={() => {
-              // TODO: Implement takePhoto feature (currently disabled due to missing implementation)
-              console.log("Screenshot feature is disabled in this component.");
-            }}
-            className="w-16 h-16 bg-white/20 backdrop-blur-md border-4 border-white rounded-full flex items-center justify-center shadow-2xl hover:bg-white/40 active:scale-95 transition-all group"
+            onClick={handleTakePhoto}
+            disabled={isTakingPhoto}
+            className="w-16 h-16 bg-white/20 backdrop-blur-md border-4 border-white rounded-full flex items-center justify-center shadow-2xl hover:bg-white/40 active:scale-95 transition-all group disabled:opacity-60"
             title="Chụp ảnh AR"
           >
             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-inner group-active:scale-90 transition-transform">

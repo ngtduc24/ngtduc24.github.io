@@ -1084,6 +1084,8 @@ export default function ARStudioWorkspace({
         position_y: posY,
         position_z: posZ,
         scene_lights: sceneLights,
+        material_config: mainMaterial,
+        scene_objects: extraObjects,
         is_transparent_video: isTransparentVideo,
         chroma_key_color: chromaKeyColor,
         auto_play_video: autoPlayVideo,

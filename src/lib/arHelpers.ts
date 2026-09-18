@@ -57,6 +57,7 @@ export function unpackARTarget(raw: any): ARTarget {
     // Multi-Object & Material PBR Configuration
     scene_objects: raw.scene_objects ?? extraConfig.scene_objects ?? [],
     material_config: raw.material_config ?? extraConfig.material_config ?? undefined,
+    scene_lights: raw.scene_lights ?? extraConfig.scene_lights ?? undefined,
   };
 }
 
@@ -98,6 +99,7 @@ export function packARTargetPayload(target: Partial<ARTarget> & { rawTextDescrip
     show_target_name: target.show_target_name ?? false,
     scene_objects: target.scene_objects ?? [],
     material_config: target.material_config ?? undefined,
+    scene_lights: target.scene_lights ?? undefined,
   };
 
   return {
