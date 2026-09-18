@@ -271,11 +271,16 @@ export default function App() {
     systemDescription: "Hệ thống hỗ trợ tính toán phương pháp nghiên cứu định lượng chuẩn hóa."
   });
 
+  // Cờ đánh dấu đã tải cấu hình thật từ server. Chưa tải xong thì KHÔNG áp màu,
+  // để không ghi đè màu đúng mà script trong head đã áp sẵn từ cache (tránh nháy).
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+
   // Load configuration from Supabase
   const loadConfig = async () => {
     try {
       const s = await getDefaultSettingsFromSupabase();
       setSettings(s);
+      setSettingsLoaded(true);
     } catch (e) {
       console.error("Lỗi khi load config hệ thống:", e);
     }
@@ -326,9 +331,11 @@ export default function App() {
   }, [settings.webAppIcon]);
 
   useEffect(() => {
-    // Dùng chung hàm áp màu, đồng thời lưu cache để lần tải sau không nháy màu.
+    // Chỉ áp màu sau khi đã tải cấu hình thật, tránh áp màu mặc định đè lên
+    // màu đúng mà script trong head đã đặt sẵn, gây nháy khi F5.
+    if (!settingsLoaded) return;
     applyBrandTheme(settings);
-  }, [settings.themeColor, settings.primaryColor, settings.secondaryColor]);
+  }, [settingsLoaded, settings.themeColor, settings.primaryColor, settings.secondaryColor]);
 
   // Initialize and sync with Firebase
   useEffect(() => {
