@@ -5,6 +5,8 @@ import EduPublicAssignment from './components/edu/EduPublicAssignment.tsx';
 import './index.css';
 import { NotificationProvider } from './components/NotificationContext.tsx';
 import { ConfirmationProvider } from './components/ConfirmationContext.tsx';
+import { getDefaultSettingsFromSupabase } from './lib/data';
+import { applyBrandTheme } from './lib/applyTheme';
 
 function TraCuuRoot() {
   const [eduLinkId, setEduLinkId] = useState<string | null>(null);
@@ -15,6 +17,13 @@ function TraCuuRoot() {
     if (edu) {
       setEduLinkId(edu);
     }
+  }, []);
+
+  // Nạp màu thương hiệu admin đã đặt để trang công khai đồng bộ màu hệ thống.
+  useEffect(() => {
+    getDefaultSettingsFromSupabase()
+      .then(applyBrandTheme)
+      .catch((err) => console.warn('Không nạp được màu hệ thống cho trang tra cứu:', err));
   }, []);
 
   if (eduLinkId) {

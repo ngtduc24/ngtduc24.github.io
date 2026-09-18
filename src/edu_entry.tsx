@@ -12,6 +12,7 @@ import { ConfirmationProvider } from './components/ConfirmationContext';
 import { auth } from './lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { getUserById, getUsers, getDefaultSettingsFromSupabase } from './lib/data';
+import { applyBrandTheme } from './lib/applyTheme';
 import { UserAccount, AppSettings } from './types';
 import { untrackUserPresence, trackUserPresence } from './lib/presence';
 
@@ -28,6 +29,7 @@ function EduApp() {
       try {
         const s = await getDefaultSettingsFromSupabase();
         setSettings(s);
+        applyBrandTheme(s);
         const u = await getUsers();
         setUsers(u);
       } catch (e) {
