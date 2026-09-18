@@ -17,7 +17,7 @@ export default function SocialDesigner({ currentUser }: SocialDesignerProps) {
       {/* Header / Tab Navigation */}
       <div className="bg-white border-b border-slate-200 p-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-brand-light text-brand flex items-center justify-center">
             <LayoutTemplate className="w-4 h-4" />
           </div>
           <div>
@@ -31,7 +31,7 @@ export default function SocialDesigner({ currentUser }: SocialDesignerProps) {
             onClick={() => setActiveTab('design')}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-semibold transition ${
               activeTab === 'design' 
-                ? 'bg-white text-indigo-600 shadow-sm' 
+                ? 'bg-white text-brand shadow-sm' 
                 : 'text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -44,7 +44,7 @@ export default function SocialDesigner({ currentUser }: SocialDesignerProps) {
             }}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-semibold transition ${
               activeTab === 'settings' 
-                ? 'bg-white text-indigo-600 shadow-sm' 
+                ? 'bg-white text-brand shadow-sm' 
                 : isAdmin ? 'text-slate-500 hover:text-slate-700' : 'text-slate-400 cursor-not-allowed opacity-60'
             }`}
             title={!isAdmin ? "Chỉ quản trị viên mới có thể cài đặt kho khung" : ""}

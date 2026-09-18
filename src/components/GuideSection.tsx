@@ -19,7 +19,7 @@ export default function GuideSection() {
       title: '2. Công thức Taro Yamane (1967)',
       subtitle: 'Khảo sát cộng đồng khi đã xác định được quy mô tổng thể (N)',
       icon: Users,
-      color: 'bg-blue-50 text-blue-600 border-blue-100',
+      color: 'bg-brand-light text-brand border-brand-light',
       description: 'Thường được áp dụng trong khảo sát xã hội học khi bạn có dữ liệu chính xác về quy mô dân số (ví dụ: Tổng số nhân viên công ty, số hộ dân của một phường, tổng số sinh viên của một trường đại học).',
       details: [
         { name: 'Công thức toán học:', math: 'n = N / (1 + N × e²)', text: 'Trong đó: n là cỡ mẫu tối thiểu cần khảo sát; N là quy mô tổng thể dân số; e là sai số cho phép (ví dụ: e = 5% tức là 0.05, e = 10% tức là 0.1).' },
@@ -30,7 +30,7 @@ export default function GuideSection() {
       title: '3. Công thức Cochran (1977)',
       subtitle: 'Khảo sát cộng đồng khi quy mô dân số rất lớn hoặc chưa thể xác định',
       icon: BookOpen,
-      color: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+      color: 'bg-brand-light text-brand border-brand-light',
       description: 'Dành cho nghiên cứu khảo sát thị trường tự do, khảo sát ý kiến khách hàng vãng lai hoặc khảo sát dân cư một thành phố lớn có quy mô vô hạn (hoặc quy mô chưa xác định rõ).',
       details: [
         { name: 'Công thức gốc:', math: 'n = (Z² × p × (1 - p)) / e²', text: 'Trong đó: Z là giá trị tra bảng phân phối chuẩn tương ứng với mức tin cậy lựa chọn (Z = 1.96 cho độ tin cậy 95%, Z = 2.58 cho độ tin cậy 99%); p là tỷ lệ ước tính của tổng thể (được chọn p = 0.5 để tối đa hóa phương sai, giúp cỡ mẫu tính ra đạt giá trị an toàn cao nhất); e là sai số cho phép.' },
@@ -103,8 +103,8 @@ export default function GuideSection() {
       </div>
 
       {/* Recommended steps banner */}
-      <div className="bg-emerald-50/30 border border-emerald-100/60 rounded-2xl p-5 flex items-start gap-3.5">
-        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+      <div className="bg-brand-light/30 border border-brand-light/60 rounded-2xl p-5 flex items-start gap-3.5">
+        <CheckCircle2 className="w-5 h-5 text-brand shrink-0 mt-0.5" />
         <div className="space-y-1">
           <h4 className="font-bold text-slate-800 text-xs sm:text-sm">Lời khuyên khi tính toán cỡ mẫu thực tế:</h4>
           <ul className="list-disc list-inside text-xs text-slate-600 space-y-1.5 leading-relaxed pl-1">

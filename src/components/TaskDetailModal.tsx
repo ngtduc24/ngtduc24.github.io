@@ -365,8 +365,8 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
-                    localTask.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' :
-                    localTask.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
+                    localTask.status === 'Completed' ? 'bg-brand-light text-brand-hover' :
+                    localTask.status === 'In Progress' ? 'bg-brand-light text-brand-hover' :
                     localTask.status === 'Paused' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'
                   }`}>
                     {localTask.status === 'Completed' ? 'Đã hoàn thành' :
@@ -397,11 +397,11 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
                 </div>
               </div>
               {isAdmin && localTask.hasIncome && (
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-emerald-50/60 border border-emerald-100/60 rounded-xl px-3 py-2.5">
-                  <DollarSign className="w-4 h-4 text-emerald-600 shrink-0" />
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-brand-light/60 border border-brand-light/60 rounded-xl px-3 py-2.5">
+                  <DollarSign className="w-4 h-4 text-brand shrink-0" />
                   <div>
-                    <span className="text-[10px] text-emerald-600/80 block font-normal">Thu nhập (Income)</span>
-                    <span className="text-emerald-700 font-bold">{localTask.income?.toLocaleString()} VNĐ</span>
+                    <span className="text-[10px] text-brand/80 block font-normal">Thu nhập (Income)</span>
+                    <span className="text-brand-hover font-bold">{localTask.income?.toLocaleString()} VNĐ</span>
                   </div>
                 </div>
               )}
@@ -419,7 +419,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
               <div className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl">
                 <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Người tạo công việc</span>
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-brand-light text-brand flex items-center justify-center font-bold text-xs uppercase shrink-0">
                     {creator?.fullName ? creator.fullName.charAt(0) : '?'}
                   </div>
                   <div className="min-w-0">
@@ -432,7 +432,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
               <div className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl">
                 <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Người nhận công việc (Assignee)</span>
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-brand-light text-brand flex items-center justify-center font-bold text-xs uppercase shrink-0">
                     {assignee?.fullName ? assignee.fullName.charAt(0) : '?'}
                   </div>
                   <div className="min-w-0">
@@ -445,14 +445,14 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
 
             {/* Công việc đã hoàn thành: chỉ hiện thông tin và nút xuất file, không còn nút thao tác */}
             {isCompleted && canViewCompletionReport && (
-              <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="bg-brand-light border border-brand/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <div className="w-10 h-10 rounded-xl bg-brand text-white flex items-center justify-center shrink-0 shadow-sm">
                     <Award className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-emerald-950">Công việc đã được nghiệm thu hoàn tất</h4>
-                    <p className="text-[11px] text-emerald-700">
+                    <h4 className="text-xs font-bold text-brand-hover">Công việc đã được nghiệm thu hoàn tất</h4>
+                    <p className="text-[11px] text-brand-hover">
                       {localTask.completionReport
                         ? `Hoàn thành bởi ${localTask.completionReport.completedByName} lúc ${new Date(localTask.completionReport.completedAt).toLocaleString('vi-VN')}. Báo cáo đã được lưu và chỉ chờ xuất file.`
                         : 'Báo cáo nghiệm thu đã được lưu trữ trong hệ thống.'}
@@ -462,7 +462,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
                 <button
                   type="button"
                   onClick={handlePrintTaskReport}
-                  className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  className="px-3 py-2 bg-brand hover:bg-brand-hover text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
                   title="In hoặc xuất PDF báo cáo này"
                 >
                   <Printer className="w-3.5 h-3.5" />
@@ -488,14 +488,14 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
 
             {/* Task Completion Action / Status Bar */}
             {canSubmitReport && (
-              <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="bg-gradient-to-r from-brand-light via-brand-light to-brand-light border border-brand/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <div className="w-10 h-10 rounded-xl bg-brand text-white flex items-center justify-center shrink-0 shadow-sm">
                     <FileCheck2 className="w-5 h-5" />
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-emerald-950">Trạng thái hoàn thành công việc</h4>
-                    <p className="text-[11px] text-emerald-700">
+                    <p className="text-[11px] text-brand-hover">
                       Khi làm xong, hãy bấm Hoàn thành để mở trình soạn báo cáo nghiệm thu. Báo cáo chỉ nộp được 1 lần.
                     </p>
                   </div>
@@ -510,7 +510,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
                       title: localTask.name,
                       initialReport: localTask.completionReport,
                     })}
-                    className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    className="w-full sm:w-auto px-5 py-2.5 bg-brand hover:bg-brand-hover text-white text-xs font-bold rounded-xl shadow-md shadow-brand/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Hoàn thành & Báo cáo kết quả</span>
@@ -522,10 +522,10 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
             {/* BÁO CÁO HOÀN THÀNH CỦA TASK CHÍNH (Chỉ Admin, Người giao, Người nhận được xem) */}
             {canViewCompletionReport ? (
               localTask.completionReport && (
-                <div className="bg-emerald-50/40 border border-emerald-200/80 rounded-2xl p-5 space-y-3">
-                  <div className="flex items-center justify-between border-b border-emerald-100 pb-3">
-                    <div className="flex items-center gap-2 text-xs font-extrabold text-emerald-900">
-                      <FileCheck2 className="w-4 h-4 text-emerald-600" />
+                <div className="bg-brand-light/40 border border-brand/80 rounded-2xl p-5 space-y-3">
+                  <div className="flex items-center justify-between border-b border-brand-light pb-3">
+                    <div className="flex items-center gap-2 text-xs font-extrabold text-brand-hover">
+                      <FileCheck2 className="w-4 h-4 text-brand" />
                       <span>Báo Cáo Nghiệm Thu & Kết Quả Hoàn Thành</span>
                     </div>
                     <div className="text-[10px] text-slate-500">
@@ -533,7 +533,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
                     </div>
                   </div>
 
-                  <div className="text-xs text-slate-700 whitespace-pre-wrap font-sans leading-relaxed bg-white p-4 rounded-xl border border-emerald-100 shadow-2xs">
+                  <div className="text-xs text-slate-700 whitespace-pre-wrap font-sans leading-relaxed bg-white p-4 rounded-xl border border-brand-light shadow-2xs">
                     {localTask.completionReport.summary}
                   </div>
 
@@ -549,9 +549,9 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
                             href={link}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-emerald-50 border border-emerald-200 hover:border-emerald-300 rounded-xl text-xs font-semibold text-emerald-700 transition-colors shadow-2xs"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-brand-light border border-brand hover:border-brand rounded-xl text-xs font-semibold text-brand-hover transition-colors shadow-2xs"
                           >
-                            <ExternalLink className="w-3 h-3 text-emerald-600" />
+                            <ExternalLink className="w-3 h-3 text-brand" />
                             <span className="truncate max-w-xs">{link}</span>
                           </a>
                         ))}
@@ -564,7 +564,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
                     <button
                       type="button"
                       onClick={handlePrintTaskReport}
-                      className="text-emerald-700 hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                      className="text-brand-hover hover:underline font-bold flex items-center gap-1 cursor-pointer"
                     >
                       <Printer className="w-3 h-3" /> Xuất phiếu nghiệm thu PDF
                     </button>
@@ -607,14 +607,14 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
                             {st.title}
                           </h5>
                           {st.completed && (
-                            <span className="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md">
+                            <span className="text-[9px] font-bold bg-brand-light text-brand-hover px-2 py-0.5 rounded-md">
                               Đã hoàn thành
                             </span>
                           )}
                         </div>
                         {st.description && <p className="text-[11px] text-slate-500 mt-0.5">{st.description}</p>}
                         <div className="w-full bg-slate-200 h-1.5 rounded-full mt-2 overflow-hidden">
-                          <div className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300" style={{width: `${st.progress || 0}%`}}></div>
+                          <div className="bg-brand h-1.5 rounded-full transition-all duration-300" style={{width: `${st.progress || 0}%`}}></div>
                         </div>
                       </div>
 
@@ -646,8 +646,8 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
                           onClick={() => handleSubtaskAction(st, 'toggle')} 
                           className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                             st.completed 
-                              ? "text-emerald-600 bg-emerald-100/70 hover:bg-emerald-200/80" 
-                              : "text-slate-400 hover:text-emerald-600 hover:bg-white border border-slate-200"
+                              ? "text-brand bg-brand-light/70 hover:bg-brand/80" 
+                              : "text-slate-400 hover:text-brand hover:bg-white border border-slate-200"
                           }`}
                           title={st.completed ? "Bấm để đổi trạng thái" : "Bấm hoàn thành & nhập báo cáo"}
                         >
@@ -669,9 +669,9 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
 
                     {/* Hiển thị báo cáo kết quả của subtask nếu có (chỉ người có quyền xem) */}
                     {canViewCompletionReport && st.completionReport && (
-                      <div className="p-3 bg-white rounded-xl border border-emerald-100 text-[11px] space-y-1.5 shadow-2xs">
+                      <div className="p-3 bg-white rounded-xl border border-brand-light text-[11px] space-y-1.5 shadow-2xs">
                         <div className="flex items-center justify-between text-slate-500 font-semibold border-b border-slate-100 pb-1">
-                          <span className="flex items-center gap-1 text-emerald-800">
+                          <span className="flex items-center gap-1 text-brand-hover">
                             <Sparkles className="w-3 h-3 text-emerald-600" /> Báo cáo hoàn thành việc nhỏ:
                           </span>
                           <span className="text-[10px] text-slate-400">
@@ -687,7 +687,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
                                 href={dLink}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 hover:bg-emerald-50 border border-slate-200 rounded text-[10px] text-emerald-700 transition-colors"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 hover:bg-brand-light border border-slate-200 rounded text-[10px] text-brand-hover transition-colors"
                               >
                                 <ExternalLink className="w-2.5 h-2.5" />
                                 <span className="truncate max-w-[180px]">{dLink}</span>

@@ -28,7 +28,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           <div key={n.id} role="status" className={`rounded-2xl px-4 py-3 text-sm font-semibold text-white shadow-xl animate-slideUp ${
             n.type === 'success' ? 'bg-emerald-600' :
             n.type === 'error' ? 'bg-rose-600' :
-            n.type === 'warning' ? 'bg-amber-500' : 'bg-blue-600'
+            n.type === 'warning' ? 'bg-amber-500' : 'bg-brand'
           }`}>
             {n.message}
           </div>

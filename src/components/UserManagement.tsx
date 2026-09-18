@@ -637,7 +637,7 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
                   </div>
                 </div>
               ) : newRole === 'member' ? (
-                <p className="text-[11px] text-emerald-700 font-medium border-t border-slate-200/60 pt-3 animate-fadeIn">
+                <p className="text-[11px] text-brand-hover font-medium border-t border-slate-200/60 pt-3 animate-fadeIn">
                   Member chỉ được xem Portfolio, tham gia và học các khóa học online; không được truy cập trang quản trị.
                 </p>
               ) : (
@@ -714,7 +714,7 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
                           <div className="font-bold text-slate-800 flex items-center gap-1.5">
                             <span>{user.fullName}</span>
                             {isMe && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded-sm">
+                              <span className="text-[9px] font-bold px-1.5 py-0.2 bg-brand-light text-brand-hover rounded-sm">
                                 Bạn
                               </span>
                             )}
@@ -739,7 +739,7 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border cursor-pointer transition-all ${
                           isAdmin 
                             ? 'bg-brand-light text-brand border-brand/20' 
-                            : isMember ? 'bg-blue-50 text-blue-600 border-blue-100'
+                            : isMember ? 'bg-brand-light text-brand border-brand-light'
                             : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200/60'
                         } disabled:opacity-75 disabled:cursor-not-allowed`}
                       >
@@ -755,7 +755,7 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
                           Toàn quyền hệ thống (Full Access)
                         </span>
                       ) : isMember ? (
-                        <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md">
+                        <span className="text-[10px] text-brand font-bold bg-brand-light px-2 py-1 rounded-md">
                           Chỉ xem và học khóa học online
                         </span>
                       ) : (
@@ -912,7 +912,7 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
                   </div>
                 </div>
                       )}
-              {editRole === 'member' && <p className="rounded-xl bg-blue-50 p-3 text-[11px] font-semibold text-blue-700">Member chỉ được xem Portfolio, ghi danh và học các khóa học online.</p>}
+              {editRole === 'member' && <p className="rounded-xl bg-brand-light p-3 text-[11px] font-semibold text-brand-hover">Member chỉ được xem Portfolio, ghi danh và học các khóa học online.</p>}
 
               <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
                 <button

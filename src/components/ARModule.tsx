@@ -80,7 +80,7 @@ function ARDetailModal({ target, onClose }: { target: ARTarget; onClose: () => v
               <span className="text-xs text-slate-600 truncate font-mono block">{arLink}</span>
             </div>
             <div className="flex gap-2">
-              <button onClick={handleCopy} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold transition-all ${copied ? 'bg-emerald-500 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>
+              <button onClick={handleCopy} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold transition-all ${copied ? 'bg-brand text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>
                 {copied ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
                 {copied ? 'Đã sao chép!' : 'Share link'}
               </button>
@@ -535,7 +535,7 @@ function AREditModal({ target, onClose, onSaved }: { target: ARTarget; onClose: 
           </div>
           
           <label className="flex items-center gap-3 cursor-pointer select-none">
-            <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="w-4 h-4 accent-emerald-500" />
+            <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="w-4 h-4 accent-brand" />
             <span className="text-sm font-semibold text-slate-700">Đang bật (cho phép quét)</span>
           </label>
           {err && <div className="flex items-center gap-2 text-sm text-rose-600 bg-rose-50 rounded-xl p-3"><AlertCircle className="w-4 h-4 shrink-0" />{err}</div>}

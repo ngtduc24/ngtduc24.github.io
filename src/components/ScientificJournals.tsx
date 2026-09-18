@@ -1599,7 +1599,7 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
                 <label className="block text-sm font-medium text-slate-600 mb-1">Biểu tượng</label>
                 <div className="grid grid-cols-6 gap-2">
                   {Object.entries(BANNER_ICONS).map(([iconName, IconComp]) => (
-                    <button key={iconName} type="button" onClick={() => setBannerIcon(iconName)} title={iconName} className={bannerIcon === iconName ? "p-2 rounded-lg border border-emerald-600 bg-emerald-50 text-emerald-700 flex items-center justify-center" : "p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 flex items-center justify-center"}>
+                    <button key={iconName} type="button" onClick={() => setBannerIcon(iconName)} title={iconName} className={bannerIcon === iconName ? "p-2 rounded-lg border border-brand bg-brand-light text-brand-hover flex items-center justify-center" : "p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 flex items-center justify-center"}>
                       <IconComp className="w-4 h-4" />
                     </button>
                   ))}
@@ -1642,7 +1642,7 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
       {alertMessage && (
         <div className={`p-4 rounded-2xl flex items-start gap-3 border shadow-xs animate-slideDown ${
           alertMessage.type === "success" 
-            ? "bg-emerald-50 text-emerald-800 border-emerald-100" 
+            ? "bg-brand-light text-brand-hover border-brand-light" 
             : alertMessage.type === "warning"
             ? "bg-amber-50 text-amber-800 border-amber-100"
             : "bg-rose-50 text-rose-800 border-rose-100"
@@ -1677,7 +1677,7 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
             </span>
             <span className="text-[11px] text-slate-500 font-medium block">Số lượng chuyên ngành đa dạng</span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-brand-light text-brand flex items-center justify-center">
             <Microscope className="w-6 h-6" />
           </div>
         </div>
@@ -2064,7 +2064,7 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
                             {j.publisher}
                           </td>
                           <td className="py-4 px-4 text-left">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50/70 text-indigo-700">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-brand-light/70 text-brand-hover">
                               {j.field || "N/A"}
                             </span>
                           </td>
@@ -2204,7 +2204,7 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
                           {j.publisher}
                         </td>
                         <td className="py-4 px-4">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50/70 text-indigo-700">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-brand-light/70 text-brand-hover">
                             {j.field || "N/A"}
                           </span>
                         </td>
@@ -2233,7 +2233,7 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
                               <>
                                 <button
                                   onClick={() => handleApproveJournal(j.id, j.name)}
-                                  className="px-2.5 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs transition-all hover:scale-105 cursor-pointer"
+                                  className="px-2.5 py-1.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs transition-all hover:scale-105 cursor-pointer"
                                   title="Phê duyệt tạp chí"
                                 >
                                   <span>Duyệt</span>
@@ -2554,7 +2554,7 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
                                 showNotification("error", "Lỗi khi cập nhật ngành.");
                               }
                             }}
-                            className="px-2 py-1 bg-emerald-600 text-white text-[10px] font-bold rounded-lg hover:bg-emerald-700 transition-all cursor-pointer"
+                            className="px-2 py-1 bg-brand text-white text-[10px] font-bold rounded-lg hover:bg-brand-hover transition-all cursor-pointer"
                           >
                             Lưu
                           </button>
@@ -2689,7 +2689,7 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
                                 showNotification("error", "Lỗi khi cập nhật phân loại.");
                               }
                             }}
-                            className="px-2 py-1 bg-emerald-600 text-white text-[10px] font-bold rounded-lg hover:bg-emerald-700 transition-all cursor-pointer"
+                            className="px-2 py-1 bg-brand text-white text-[10px] font-bold rounded-lg hover:bg-brand-hover transition-all cursor-pointer"
                           >
                             Lưu
                           </button>
@@ -2775,7 +2775,7 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
                            }
                          }
                        }}
-                       className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
+                       className="px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
                      >
                        <span>Khôi phục đã chọn ({selectedTrashIds.length})</span>
                      </button>
@@ -2816,7 +2816,7 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
                        }
                      }
                    }}
-                   className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold border border-emerald-200 transition-all cursor-pointer"
+                   className="px-4 py-2 bg-brand-light hover:bg-brand-light text-brand-hover rounded-xl text-xs font-bold border border-brand transition-all cursor-pointer"
                  >
                    Khôi phục tất cả
                  </button>
@@ -2929,7 +2929,7 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
                                   }
                                 }
                               }}
-                              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-xl border border-emerald-100 transition-all cursor-pointer"
+                              className="px-3 py-1.5 bg-brand-light hover:bg-brand-light text-brand-hover text-[10px] font-bold rounded-xl border border-brand-light transition-all cursor-pointer"
                             >
                               Khôi phục
                             </button>

@@ -46,6 +46,46 @@ export function loadTextureCached(url: string, isColor = false): Promise<THREE.T
 }
 
 /**
+ * Nhiều model tự dựng hoặc xuất từ AI Studio không có tọa độ UV, khiến texture
+ * không hiện lên bề mặt và chỉ thấy màu gốc. Hàm này sinh UV chiếu phẳng theo
+ * hộp bao của hình học, lấy 2 trục dài nhất, để texture hiển thị được.
+ */
+function ensurePlanarUV(geometry: THREE.BufferGeometry) {
+  if (!geometry || !geometry.attributes || !geometry.attributes.position) return;
+  if (geometry.attributes.uv) return; // đã có UV thì giữ nguyên
+
+  geometry.computeBoundingBox();
+  const bb = geometry.boundingBox;
+  if (!bb) return;
+
+  const size = new THREE.Vector3();
+  bb.getSize(size);
+
+  // Chọn 2 trục có kích thước lớn nhất làm mặt phẳng chiếu.
+  const dims: Array<{ axis: 'x' | 'y' | 'z'; len: number }> = [
+    { axis: 'x' as const, len: size.x },
+    { axis: 'y' as const, len: size.y },
+    { axis: 'z' as const, len: size.z },
+  ].sort((a, b) => b.len - a.len);
+  const uAxis = dims[0].axis;
+  const vAxis = dims[1].axis;
+  const uLen = size[uAxis] || 1;
+  const vLen = size[vAxis] || 1;
+
+  const pos = geometry.attributes.position as THREE.BufferAttribute;
+  const count = pos.count;
+  const uv = new Float32Array(count * 2);
+  for (let i = 0; i < count; i++) {
+    const pu = pos[`get${uAxis.toUpperCase()}` as 'getX'](i);
+    const pv = pos[`get${vAxis.toUpperCase()}` as 'getX'](i);
+    uv[i * 2] = (pu - bb.min[uAxis]) / uLen;
+    uv[i * 2 + 1] = (pv - bb.min[vAxis]) / vLen;
+  }
+  geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  geometry.attributes.uv.needsUpdate = true;
+}
+
+/**
  * Traverses an Object3D and updates all Mesh child materials with PBR properties.
  */
 export async function applyPBRMaterialToObject(
@@ -71,6 +111,17 @@ export async function applyPBRMaterialToObject(
           mat.copy(oldMat as THREE.Material);
         }
         mesh.material = mat;
+      }
+
+      // Nếu vật liệu có bất kỳ texture map nào mà hình học thiếu UV thì sinh UV,
+      // nếu không texture sẽ không hiển thị và chỉ thấy màu gốc.
+      const hasAnyMap = !!(
+        config.baseColorMap || config.roughnessMap || config.metalnessMap ||
+        config.normalMap || config.displacementMap || config.aoMap ||
+        config.emissiveMap || config.alphaMap || config.specularMap
+      );
+      if (hasAnyMap && mesh.geometry) {
+        ensurePlanarUV(mesh.geometry as THREE.BufferGeometry);
       }
 
       // 1. Base Color (Albedo / Diffuse)

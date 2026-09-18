@@ -408,26 +408,26 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
   const getIconForType = (type: AppNotification['type']) => {
     switch (type) {
       case 'task':
-        return <ClipboardList className="w-4 h-4 text-emerald-600" />;
+        return <ClipboardList className="w-4 h-4 text-brand" />;
       case 'journal':
         return <BookOpen className="w-4 h-4 text-brand" />;
       case 'warning':
         return <AlertTriangle className="w-4 h-4 text-amber-600" />;
       default:
-        return <Info className="w-4 h-4 text-blue-600" />;
+        return <Info className="w-4 h-4 text-brand" />;
     }
   };
 
   const getBgForType = (type: AppNotification['type']) => {
     switch (type) {
       case 'task':
-        return 'bg-emerald-50 border border-emerald-100';
+        return 'bg-brand-light border border-brand-light';
       case 'journal':
         return 'bg-brand/10 border border-brand/20';
       case 'warning':
         return 'bg-amber-50 border border-amber-100';
       default:
-        return 'bg-blue-50 border border-blue-100';
+        return 'bg-brand-light border border-brand-light';
     }
   };
 
@@ -458,7 +458,7 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
           href="/tracuu.html"
           target="_blank"
           rel="noopener noreferrer"
-          className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-[#e9f7ef] text-[11px] font-bold text-[#00a65a] border border-[#00a65a] transition-all uppercase tracking-wider"
+          className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-brand-light text-[11px] font-bold text-brand border border-brand transition-all uppercase tracking-wider"
         >
           <span>Trang Tra Cứu</span>
           <ExternalLink className="w-3.5 h-3.5" />
@@ -519,7 +519,7 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
                       <>
                         <button 
                           onClick={handleMarkAllAsRead}
-                          className="p-1.5 hover:bg-white text-slate-400 hover:text-emerald-600 rounded-lg transition-colors cursor-pointer"
+                          className="p-1.5 hover:bg-white text-slate-400 hover:text-brand rounded-lg transition-colors cursor-pointer"
                           title="Đánh dấu tất cả là đã đọc"
                         >
                           <Check className="w-3.5 h-3.5" />
@@ -621,16 +621,16 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
           >
             <div className="hidden sm:block text-right">
               <span className="block text-xs font-bold text-slate-800 tracking-tight">{currentUser.fullName}</span>
-              <span className="block text-[10px] font-bold text-[#00a65a] bg-[#e9f7ef] px-2 py-0.5 rounded-md mt-0.5 uppercase tracking-wider">{currentUser?.role === 'admin' ? 'Admin' : 'User'}</span>
+              <span className="block text-[10px] font-bold text-brand bg-brand-light px-2 py-0.5 rounded-md mt-0.5 uppercase tracking-wider">{currentUser?.role === 'admin' ? 'Admin' : 'User'}</span>
             </div>
             {currentUser.avatarUrl ? (
               <img 
                 src={currentUser.avatarUrl} 
                 alt={currentUser.fullName} 
-                className="w-9 h-9 rounded-xl object-cover border border-[#00a65a]/10 shadow-sm"
+                className="w-9 h-9 rounded-xl object-cover border border-brand/10 shadow-sm"
               />
             ) : (
-              <div className="w-9 h-9 rounded-xl bg-[#e9f7ef] text-[#00a65a] flex items-center justify-center font-bold text-sm border border-[#00a65a]/10 shadow-sm">
+              <div className="w-9 h-9 rounded-xl bg-brand-light text-brand flex items-center justify-center font-bold text-sm border border-brand/10 shadow-sm">
                 {currentUser.fullName?.substring(0, 1).toUpperCase()}
               </div>
             )}
@@ -775,7 +775,7 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
                 selectedSystemNotification.type === 'error' ? 'bg-rose-500' :
                 selectedSystemNotification.type === 'success' ? 'bg-emerald-500' :
                 selectedSystemNotification.type === 'journal' ? 'bg-brand' :
-                'bg-blue-500'
+                'bg-brand'
               }`} />
 
               {/* Modal Header */}

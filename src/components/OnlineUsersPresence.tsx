@@ -106,22 +106,22 @@ export default function OnlineUsersPresence({ currentUser }: OnlineUsersPresence
     switch (role) {
       case 'admin':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200/60 shadow-xs">
-            <ShieldCheck className="w-3 h-3 text-purple-600" />
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-light text-brand-hover border border-brand/60 shadow-xs">
+            <ShieldCheck className="w-3 h-3 text-brand" />
             Admin
           </span>
         );
       case 'user':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-xs">
-            <UserCheck className="w-3 h-3 text-emerald-600" />
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-light text-brand-hover border border-brand/60 shadow-xs">
+            <UserCheck className="w-3 h-3 text-brand" />
             User
           </span>
         );
       case 'member':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200/60 shadow-xs">
-            <UserIcon className="w-3 h-3 text-sky-600" />
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-light text-brand-hover border border-brand/60 shadow-xs">
+            <UserIcon className="w-3 h-3 text-brand" />
             Thành viên
           </span>
         );
@@ -139,8 +139,8 @@ export default function OnlineUsersPresence({ currentUser }: OnlineUsersPresence
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-slate-800 text-lg font-display">Thành viên đang truy cập</h3>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand/10 text-brand border border-brand/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand animate-ping"></span>
                 Supabase Realtime
               </span>
             </div>
@@ -172,8 +172,8 @@ export default function OnlineUsersPresence({ currentUser }: OnlineUsersPresence
           onClick={() => handleRoleChange('admin')}
           className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
             selectedRole === 'admin'
-              ? 'bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-600/20'
-              : 'bg-purple-50/50 hover:bg-purple-50 border-purple-200/60 text-purple-900'
+              ? 'bg-brand border-brand text-white shadow-md shadow-brand/20'
+              : 'bg-brand-light/50 hover:bg-brand-light border-brand/60 text-brand-hover'
           }`}
         >
           <div className="flex items-center justify-between">
@@ -188,8 +188,8 @@ export default function OnlineUsersPresence({ currentUser }: OnlineUsersPresence
           onClick={() => handleRoleChange('user')}
           className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
             selectedRole === 'user'
-              ? 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-600/20'
-              : 'bg-emerald-50/50 hover:bg-emerald-50 border-emerald-200/60 text-emerald-900'
+              ? 'bg-brand border-brand text-white shadow-md shadow-brand/20'
+              : 'bg-brand-light/50 hover:bg-brand-light border-brand/60 text-brand-hover'
           }`}
         >
           <div className="flex items-center justify-between">
@@ -204,8 +204,8 @@ export default function OnlineUsersPresence({ currentUser }: OnlineUsersPresence
           onClick={() => handleRoleChange('member')}
           className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
             selectedRole === 'member'
-              ? 'bg-sky-600 border-sky-600 text-white shadow-md shadow-sky-600/20'
-              : 'bg-sky-50/50 hover:bg-sky-50 border-sky-200/60 text-sky-900'
+              ? 'bg-brand border-brand text-white shadow-md shadow-brand/20'
+              : 'bg-brand-light/50 hover:bg-brand-light border-brand/60 text-brand-hover'
           }`}
         >
           <div className="flex items-center justify-between">
@@ -262,7 +262,7 @@ export default function OnlineUsersPresence({ currentUser }: OnlineUsersPresence
                                 {user.fullName.charAt(0).toUpperCase()}
                               </div>
                             )}
-                            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white"></span>
+                            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-brand border-2 border-white"></span>
                           </div>
                           <div>
                             <div className="flex items-center gap-1.5">
@@ -306,8 +306,8 @@ export default function OnlineUsersPresence({ currentUser }: OnlineUsersPresence
 
                       {/* Trạng thái */}
                       <td className="py-3 px-4 text-right">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/70">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-brand-light text-brand-hover border border-brand/70">
+                          <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
                           Trực tuyến
                         </span>
                       </td>

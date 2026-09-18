@@ -136,7 +136,7 @@ export default function QuantitativeAnalysis({ users = [], currentUser, onSaveUs
                 <label className="block text-sm font-medium text-slate-600 mb-1">Biểu tượng</label>
                 <div className="grid grid-cols-6 gap-2">
                   {Object.entries(BANNER_ICONS).map(([iconName, IconComp]) => (
-                    <button key={iconName} type="button" onClick={() => setBannerIcon(iconName)} title={iconName} className={bannerIcon === iconName ? "p-2 rounded-lg border border-emerald-600 bg-emerald-50 text-emerald-700 flex items-center justify-center" : "p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 flex items-center justify-center"}>
+                    <button key={iconName} type="button" onClick={() => setBannerIcon(iconName)} title={iconName} className={bannerIcon === iconName ? "p-2 rounded-lg border border-brand bg-brand-light text-brand-hover flex items-center justify-center" : "p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 flex items-center justify-center"}>
                       <IconComp className="w-4 h-4" />
                     </button>
                   ))}

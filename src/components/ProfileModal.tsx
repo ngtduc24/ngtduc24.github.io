@@ -102,7 +102,7 @@ export default function ProfileModal({ user, onSaveProfile, onClose, isReadOnly 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fadeIn" id="profile-modal-root">
       <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-brand to-indigo-900 px-6 py-5 text-white flex items-center justify-between relative">
+        <div className="bg-gradient-to-r from-brand to-brand-hover px-6 py-5 text-white flex items-center justify-between relative">
           <div className="space-y-1">
             <h3 className="text-base font-bold flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-amber-300" />
@@ -125,7 +125,7 @@ export default function ProfileModal({ user, onSaveProfile, onClose, isReadOnly 
             </div>
           )}
           {success && (
-            <div className="p-3.5 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-600 text-xs font-semibold">
+            <div className="p-3.5 bg-brand-light border border-brand-light rounded-2xl text-brand text-xs font-semibold">
               {success}
             </div>
           )}
@@ -145,7 +145,7 @@ export default function ProfileModal({ user, onSaveProfile, onClose, isReadOnly 
                     className="w-18 h-18 rounded-full object-cover border-4 border-white shadow-md"
                   />
                 ) : (
-                  <div className="w-18 h-18 rounded-full bg-gradient-to-tr from-brand to-indigo-500 text-white font-black text-xl flex items-center justify-center border-4 border-white shadow-md">
+                  <div className="w-18 h-18 rounded-full bg-gradient-to-tr from-brand to-brand text-white font-black text-xl flex items-center justify-center border-4 border-white shadow-md">
                     {fullName?.substring(0, 2).toUpperCase()}
                   </div>
                 )}

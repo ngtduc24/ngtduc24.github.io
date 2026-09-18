@@ -49,7 +49,7 @@ export default function WebsiteIntegration() {
       <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1 bg-purple-50 text-[#712cf9] px-2.5 py-0.5 rounded-full text-xs font-semibold mb-2">
+            <div className="inline-flex items-center gap-1 bg-brand-light text-brand px-2.5 py-0.5 rounded-full text-xs font-semibold mb-2">
               <Globe className="w-3.5 h-3.5" />
               <span>ngtduc24.github.io</span>
             </div>
@@ -63,7 +63,7 @@ export default function WebsiteIntegration() {
             href="https://ngtduc24.github.io/" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md shadow-purple-600/10 cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs shadow-md shadow-brand/10 cursor-pointer"
           >
             <span>Mở Website gốc của tôi</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -78,7 +78,7 @@ export default function WebsiteIntegration() {
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
               <div className="flex items-center gap-2">
-                <FileCode className="w-4.5 h-4.5 text-blue-600" />
+                <FileCode className="w-4.5 h-4.5 text-brand" />
                 <h4 className="font-bold text-slate-800 text-sm sm:text-base font-display">
                   1. Mã thêm nút vào Sidebar
                 </h4>
@@ -89,7 +89,7 @@ export default function WebsiteIntegration() {
               >
                 {copiedCode === 'sidebar' ? (
                   <>
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                    <CheckCircle className="w-3.5 h-3.5 text-brand" />
                     <span>Đã sao chép</span>
                   </>
                 ) : (
@@ -103,12 +103,12 @@ export default function WebsiteIntegration() {
             <p className="text-xs text-slate-500 mb-3 leading-relaxed">
               Dán đoạn mã HTML sau vào tệp quản lý thanh bên (Sidebar) của bạn (ví dụ: `sidebar.html`, `index.html` hoặc file thành phần React của repository của bạn). Nó sẽ tạo ra một liên kết tuyệt đẹp dẫn thẳng tới hệ thống tính cỡ mẫu này:
             </p>
-            <pre className="text-xs bg-slate-900 text-emerald-400 p-4 rounded-xl overflow-x-auto font-mono leading-relaxed h-52">
+            <pre className="text-xs bg-slate-900 text-brand p-4 rounded-xl overflow-x-auto font-mono leading-relaxed h-52">
               {sidebarCodeSnippet}
             </pre>
           </div>
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-400">
-            <HelpCircle className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <HelpCircle className="w-3.5 h-3.5 text-brand shrink-0" />
             <span>Mẹo: URL sẽ tự động trỏ về địa chỉ lưu trữ của hệ thống tính toán này.</span>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function WebsiteIntegration() {
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
               <div className="flex items-center gap-2">
-                <Code className="w-4.5 h-4.5 text-emerald-600" />
+                <Code className="w-4.5 h-4.5 text-brand" />
                 <h4 className="font-bold text-slate-800 text-sm sm:text-base font-display">
                   2. Mã Nhúng Iframe Trực Tiếp
                 </h4>
@@ -129,7 +129,7 @@ export default function WebsiteIntegration() {
               >
                 {copiedCode === 'iframe' ? (
                   <>
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                    <CheckCircle className="w-3.5 h-3.5 text-brand" />
                     <span>Đã sao chép</span>
                   </>
                 ) : (
@@ -143,12 +143,12 @@ export default function WebsiteIntegration() {
             <p className="text-xs text-slate-500 mb-3 leading-relaxed">
               Nếu bạn muốn hệ thống tính cỡ mẫu hoạt động ngay bên trong giao diện trang Admin (không mở tab mới), hãy sử dụng thẻ iframe được thiết kế chuẩn phản hồi (responsive) sau:
             </p>
-            <pre className="text-xs bg-slate-900 text-emerald-400 p-4 rounded-xl overflow-x-auto font-mono leading-relaxed h-52">
+            <pre className="text-xs bg-slate-900 text-brand p-4 rounded-xl overflow-x-auto font-mono leading-relaxed h-52">
               {iframeEmbedCode}
             </pre>
           </div>
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-400">
-            <HelpCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+            <HelpCircle className="w-3.5 h-3.5 text-brand shrink-0" />
             <span>Đã cấp quyền truy cập bảng tạm (clipboard-write) để người dùng có thể sao chép kết quả ngay từ iframe.</span>
           </div>
         </div>
@@ -164,7 +164,7 @@ export default function WebsiteIntegration() {
           </div>
           
           <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200/80 w-full sm:w-auto max-w-md">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+            <span className="w-2 h-2 rounded-full bg-brand shrink-0" />
             <input 
               type="text" 
               value={iframeUrl} 

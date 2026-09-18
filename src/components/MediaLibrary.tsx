@@ -249,7 +249,7 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-100 w-fit">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-brand animate-pulse" />
           Tổng số: <span className="font-extrabold text-brand ml-1">{images.length} tệp tin</span>
         </div>
       </div>
@@ -333,7 +333,7 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
               <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex">
                 <div 
                   style={{ width: `${Math.max((images.filter(i => i.type !== 'video').reduce((sum, img) => sum + (img.bytes || 0), 0) / (LIMIT_GB * 1024 * 1024 * 1024)) * 100, 0.5)}%` }} 
-                  className="bg-sky-500 h-full transition-all duration-500" 
+                  className="bg-brand h-full transition-all duration-500" 
                   title={`Hình ảnh: ${formatFileSize(images.filter(i => i.type !== 'video').reduce((sum, img) => sum + (img.bytes || 0), 0))}`}
                 />
                 <div 
@@ -347,7 +347,7 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
               <div className="grid grid-cols-1 gap-2 pt-1">
                 <div className="flex items-center justify-between text-[11px] font-medium text-slate-600">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-sky-500 block shrink-0" />
+                    <span className="w-2.5 h-2.5 rounded-sm bg-brand block shrink-0" />
                     <span>Hình ảnh ({imageCount})</span>
                   </div>
                   <span className="font-semibold text-slate-700">
@@ -530,7 +530,7 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
                         className="p-2 bg-white/20 hover:bg-white/40 text-white rounded-lg backdrop-blur-xs transition-colors cursor-pointer"
                         title="Copy đường dẫn"
                       >
-                        {copiedUrl === img.url ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
+                        {copiedUrl === img.url ? <Check className="w-4 h-4 text-brand" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
 
@@ -563,13 +563,13 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
                         onClick={() => handleCopyUrl(img.url)}
                         className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
                           copiedUrl === img.url
-                            ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                            ? 'bg-brand-light text-brand border-brand-light'
                             : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200'
                         }`}
                       >
                         {copiedUrl === img.url ? (
                           <>
-                            <Check className="w-3 h-3 text-emerald-500" />
+                            <Check className="w-3 h-3 text-brand" />
                             <span>Đã sao chép!</span>
                           </>
                         ) : (

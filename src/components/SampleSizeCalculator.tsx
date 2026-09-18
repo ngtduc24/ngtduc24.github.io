@@ -71,7 +71,7 @@ export default function SampleSizeCalculator({ settings, onRefreshSettings, curr
       addNotification("Lỗi lưu cài đặt!", "error");
     }
   };
-  const brandColor = settings.bannerColor || '#712cf9';
+  const brandColor = settings.bannerColor || 'var(--color-brand)';
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [method, setMethod] = useState<MethodType | null>(null);
 
@@ -253,26 +253,26 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
 </head>
 <body class="flex flex-col items-center justify-center p-4 sm:p-6 md:p-8">
 
-    <div class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl shadow-purple-900/10 border border-slate-100 overflow-hidden">
+    <div class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl shadow-brand-hover/10 border border-slate-100 overflow-hidden">
         <!-- Header -->
-        <div class="bg-gradient-to-r from-[#712cf9] to-[#5b21d3] p-6 sm:p-8 text-white relative">
+        <div class="bg-gradient-to-r from-brand to-brand-hover p-6 sm:p-8 text-white relative">
             <div class="flex items-center gap-3 mb-2">
                 <div class="bg-white/10 p-2 rounded-xl">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                     </svg>
                 </div>
-                <span class="text-xs font-semibold tracking-widest uppercase text-purple-200">SAMPLE SIZE ASSISTANT</span>
+                <span class="text-xs font-semibold tracking-widest uppercase text-brand">SAMPLE SIZE ASSISTANT</span>
             </div>
             <h1 class="text-2xl sm:text-3xl font-bold tracking-tight font-display">Cỡ Mẫu Nghiên Cứu Khoa Học</h1>
-            <p class="text-xs sm:text-sm text-purple-100 mt-1">Hệ thống hỗ trợ tính toán phương pháp nghiên cứu định lượng tự động, chính xác.</p>
+            <p class="text-xs sm:text-sm text-brand-light mt-1">Hệ thống hỗ trợ tính toán phương pháp nghiên cứu định lượng tự động, chính xác.</p>
         </div>
 
         <!-- Progress Indicator -->
         <div class="px-6 sm:px-8 pt-6 pb-2">
             <div class="flex items-center justify-between text-xs font-medium text-slate-400 border-b border-slate-100 pb-4">
-                <div id="step-tab-1" class="flex items-center gap-1.5 text-[#712cf9] font-semibold">
-                    <span class="w-5 h-5 rounded-full bg-[#f3eeff] border border-[#712cf9] flex items-center justify-center text-xs">1</span>
+                <div id="step-tab-1" class="flex items-center gap-1.5 text-brand font-semibold">
+                    <span class="w-5 h-5 rounded-full bg-brand-light border border-brand flex items-center justify-center text-xs">1</span>
                     Phương pháp
                 </div>
                 <div class="flex-1 mx-4 h-[2px] bg-slate-100" id="step-line-1"></div>
@@ -293,38 +293,38 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
             <div id="step-1" class="space-y-4">
                 <h2 class="text-lg font-semibold text-slate-800 mb-2">Bạn muốn tính cỡ mẫu theo phương pháp nào?</h2>
                 
-                <button onclick="selectMethod('A')" class="w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-[#712cf9]/30 hover:bg-[#f8f6fc]/40 transition-all duration-200 group flex gap-4 items-start">
-                    <div class="bg-purple-50 text-[#712cf9] p-3 rounded-xl group-hover:bg-[#f3eeff] transition-colors">
+                <button onclick="selectMethod('A')" class="w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-brand/30 hover:bg-brand-light/40 transition-all duration-200 group flex gap-4 items-start">
+                    <div class="bg-brand-light text-brand p-3 rounded-xl group-hover:bg-brand-light transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                         </svg>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-slate-800 text-sm sm:text-base group-hover:text-[#712cf9] transition-colors">Nhóm phân tích SPSS (EFA & Hồi quy)</h3>
+                        <h3 class="font-semibold text-slate-800 text-sm sm:text-base group-hover:text-brand transition-colors">Nhóm phân tích SPSS (EFA & Hồi quy)</h3>
                         <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">Theo Hoàng Trọng & Hair. Dựa trên số lượng biến quan sát (thang đo Likert) và số lượng biến độc lập.</p>
                     </div>
                 </button>
 
-                <button onclick="selectMethod('B')" class="w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-[#712cf9]/30 hover:bg-[#f8f6fc]/40 transition-all duration-200 group flex gap-4 items-start">
-                    <div class="bg-blue-50 text-blue-600 p-3 rounded-xl group-hover:bg-blue-100 transition-colors">
+                <button onclick="selectMethod('B')" class="w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-brand/30 hover:bg-brand-light/40 transition-all duration-200 group flex gap-4 items-start">
+                    <div class="bg-brand-light text-brand p-3 rounded-xl group-hover:bg-brand-light transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                         </svg>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-slate-800 text-sm sm:text-base group-hover:text-[#712cf9] transition-colors">Khảo sát cộng đồng - Đã biết tổng thể</h3>
+                        <h3 class="font-semibold text-slate-800 text-sm sm:text-base group-hover:text-brand transition-colors">Khảo sát cộng đồng - Đã biết tổng thể</h3>
                         <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">Áp dụng công thức Taro Yamane. Dành cho khảo sát khi đã biết chính xác quy mô tổng số dân (N).</p>
                     </div>
                 </button>
 
-                <button onclick="selectMethod('C')" class="w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-[#712cf9]/30 hover:bg-[#f8f6fc]/40 transition-all duration-200 group flex gap-4 items-start">
-                    <div class="bg-emerald-50 text-emerald-600 p-3 rounded-xl group-hover:bg-emerald-100 transition-colors">
+                <button onclick="selectMethod('C')" class="w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-brand/30 hover:bg-brand-light/40 transition-all duration-200 group flex gap-4 items-start">
+                    <div class="bg-brand-light text-brand p-3 rounded-xl group-hover:bg-brand-light transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
                         </svg>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-slate-800 text-sm sm:text-base group-hover:text-[#712cf9] transition-colors">Khảo sát cộng đồng - Chưa biết tổng thể</h3>
+                        <h3 class="font-semibold text-slate-800 text-sm sm:text-base group-hover:text-brand transition-colors">Khảo sát cộng đồng - Chưa biết tổng thể</h3>
                         <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">Áp dụng công thức Cochran. Dùng khi dân số nghiên cứu quá lớn, vô hạn hoặc chưa thể xác định chính xác.</p>
                     </div>
                 </button>
@@ -332,7 +332,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
 
             <!-- STEP 2: INPUT PARAMETERS -->
             <div id="step-2" class="hidden space-y-5">
-                <div class="flex items-center gap-2 text-xs text-[#712cf9] font-semibold bg-[#f3eeff] px-3 py-1.5 rounded-lg w-max mb-1">
+                <div class="flex items-center gap-2 text-xs text-brand font-semibold bg-brand-light px-3 py-1.5 rounded-lg w-max mb-1">
                     <span id="method-badge"></span>
                 </div>
                 
@@ -346,7 +346,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                 <div class="space-y-1.5">
                     <label class="block text-sm font-semibold text-slate-700">Tỷ lệ dự phòng phiếu hỏng (%)</label>
                     <div class="relative">
-                        <input type="number" id="input-backupRate" value="10" oninput="clearError('backupRate')" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#712cf9] focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all" />
+                        <input type="number" id="input-backupRate" value="10" oninput="clearError('backupRate')" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all" />
                         <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold">%</span>
                     </div>
                     <p id="error-backupRate" class="text-xs text-rose-500 hidden mt-1"></p>
@@ -356,7 +356,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                     <button onclick="goBackToStep1()" class="flex-1 py-3 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-sm transition-all flex items-center justify-center gap-2">
                         Quay lại
                     </button>
-                    <button onclick="calculateSample()" class="flex-[2] py-3 px-4 rounded-xl bg-[#712cf9] hover:bg-[#5b21d3] text-white font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20">
+                    <button onclick="calculateSample()" class="flex-[2] py-3 px-4 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand/20">
                         Tính Toán
                     </button>
                 </div>
@@ -365,7 +365,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
             <!-- STEP 3: RESULTS -->
             <div id="step-3" class="hidden text-center space-y-6">
                 <div>
-                    <span class="text-xs font-bold tracking-widest text-[#712cf9] uppercase">KẾT QUẢ PHÂN TÍCH</span>
+                    <span class="text-xs font-bold tracking-widest text-brand uppercase">KẾT QUẢ PHÂN TÍCH</span>
                     <h2 class="text-xl font-bold text-slate-800 mt-1" id="result-method-title"></h2>
                 </div>
 
@@ -377,10 +377,10 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                         <span class="text-[10px] text-slate-400 mt-1">Tính theo công thức khoa học</span>
                     </div>
 
-                    <div class="bg-[#f8f6fc] rounded-2xl p-5 border-2 border-[#712cf9]/20 flex flex-col justify-center items-center relative overflow-hidden">
-                        <span class="text-xs font-semibold text-[#712cf9] mb-1">Số phiếu thực tế cần phát ra</span>
-                        <div class="text-4xl font-extrabold text-[#712cf9]" id="result-actual">0</div>
-                        <span class="text-[10px] text-[#712cf9]/70 mt-1 font-medium" id="result-backup-desc">Đã cộng dự phòng</span>
+                    <div class="bg-brand-light rounded-2xl p-5 border-2 border-brand/20 flex flex-col justify-center items-center relative overflow-hidden">
+                        <span class="text-xs font-semibold text-brand mb-1">Số phiếu thực tế cần phát ra</span>
+                        <div class="text-4xl font-extrabold text-brand" id="result-actual">0</div>
+                        <span class="text-[10px] text-brand/70 mt-1 font-medium" id="result-backup-desc">Đã cộng dự phòng</span>
                     </div>
                 </div>
 
@@ -397,7 +397,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                     <button onclick="copyToClipboard()" class="w-full sm:flex-1 py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-xs transition-all flex items-center justify-center gap-2">
                         Sao chép kết quả
                     </button>
-                    <button onclick="calculateAgain()" class="w-full sm:flex-[2] py-3 px-4 rounded-xl bg-[#712cf9] hover:bg-[#5b21d3] text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
+                    <button onclick="calculateAgain()" class="w-full sm:flex-[2] py-3 px-4 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
                         Tính lại từ đầu
                     </button>
                 </div>
@@ -428,12 +428,12 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
 
         function selectMethod(method) {
             currentMethod = method;
-            document.getElementById('step-tab-1').className = "flex items-center gap-1.5 text-emerald-600 font-semibold";
+            document.getElementById('step-tab-1').className = "flex items-center gap-1.5 text-brand font-semibold";
             document.getElementById('step-tab-1').innerHTML = '<span>✓</span> Phương pháp';
-            document.getElementById('step-line-1').className = "flex-1 mx-4 h-[2px] bg-emerald-500";
+            document.getElementById('step-line-1').className = "flex-1 mx-4 h-[2px] bg-brand";
             
-            document.getElementById('step-tab-2').className = "flex items-center gap-1.5 text-[#712cf9] font-semibold";
-            document.getElementById('step-num-2').className = "w-5 h-5 rounded-full bg-[#f3eeff] border border-[#712cf9] flex items-center justify-center text-xs";
+            document.getElementById('step-tab-2').className = "flex items-center gap-1.5 text-brand font-semibold";
+            document.getElementById('step-num-2').className = "w-5 h-5 rounded-full bg-brand-light border border-brand flex items-center justify-center text-xs";
 
             // Update Dynamic inputs based on selection
             const container = document.getElementById('inputs-container');
@@ -445,7 +445,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                     <div class="space-y-1.5">
                         <label class="block text-sm font-semibold text-slate-700">Số lượng biến quan sát (câu hỏi)</label>
                         <div class="relative">
-                            <input type="number" id="input-variablesCount" value="20" oninput="clearError('variablesCount')" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#712cf9] focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all" />
+                            <input type="number" id="input-variablesCount" value="20" oninput="clearError('variablesCount')" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all" />
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold">biến</span>
                         </div>
                         <p id="error-variablesCount" class="text-xs text-rose-500 hidden mt-1"></p>
@@ -453,7 +453,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                     <div class="space-y-1.5">
                         <label class="block text-sm font-semibold text-slate-700">Số lượng biến độc lập</label>
                         <div class="relative">
-                            <input type="number" id="input-independentVars" value="5" oninput="clearError('independentVars')" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#712cf9] focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all" />
+                            <input type="number" id="input-independentVars" value="5" oninput="clearError('independentVars')" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all" />
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold">biến</span>
                         </div>
                         <p id="error-independentVars" class="text-xs text-rose-500 hidden mt-1"></p>
@@ -465,7 +465,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                     <div class="space-y-1.5">
                         <label class="block text-sm font-semibold text-slate-700">Quy mô tổng thể dân số (N)</label>
                         <div class="relative">
-                            <input type="number" id="input-populationSize" value="1000" oninput="clearError('populationSize')" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#712cf9] focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all" />
+                            <input type="number" id="input-populationSize" value="1000" oninput="clearError('populationSize')" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all" />
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold">người</span>
                         </div>
                         <p id="error-populationSize" class="text-xs text-rose-500 hidden mt-1"></p>
@@ -473,7 +473,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                     <div class="space-y-1.5">
                         <label class="block text-sm font-semibold text-slate-700">Sai số cho phép (e, %)</label>
                         <div class="relative">
-                            <input type="number" id="input-marginOfError" value="5" step="0.1" oninput="clearError('marginOfError')" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#712cf9] focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all" />
+                            <input type="number" id="input-marginOfError" value="5" step="0.1" oninput="clearError('marginOfError')" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all" />
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold">%</span>
                         </div>
                         <p id="error-marginOfError" class="text-xs text-rose-500 hidden mt-1"></p>
@@ -484,7 +484,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                 container.innerHTML = \`
                     <div class="space-y-1.5">
                         <label class="block text-sm font-semibold text-slate-700">Mức độ tin cậy Z</label>
-                        <select id="input-confidenceZ" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#712cf9] focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all">
+                        <select id="input-confidenceZ" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all">
                             <option value="1.96">95% (Z = 1.96)</option>
                             <option value="2.58">99% (Z = 2.58)</option>
                         </select>
@@ -492,7 +492,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                     <div class="space-y-1.5">
                         <label class="block text-sm font-semibold text-slate-700">Tỷ lệ ước tính p</label>
                         <div class="relative">
-                            <input type="number" id="input-proportionP" value="0.5" step="0.05" oninput="clearError('proportionP')" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#712cf9] focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all" />
+                            <input type="number" id="input-proportionP" value="0.5" step="0.05" oninput="clearError('proportionP')" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all" />
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold">p</span>
                         </div>
                         <p id="error-proportionP" class="text-xs text-rose-500 hidden mt-1"></p>
@@ -500,7 +500,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                     <div class="space-y-1.5">
                         <label class="block text-sm font-semibold text-slate-700">Sai số cho phép (e, %)</label>
                         <div class="relative">
-                            <input type="number" id="input-marginOfError" value="5" step="0.1" oninput="clearError('marginOfError')" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#712cf9] focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all" />
+                            <input type="number" id="input-marginOfError" value="5" step="0.1" oninput="clearError('marginOfError')" class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand focus:outline-none rounded-xl px-4 py-3 text-slate-800 font-medium transition-all" />
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold">%</span>
                         </div>
                         <p id="error-marginOfError" class="text-xs text-rose-500 hidden mt-1"></p>
@@ -514,8 +514,8 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
 
         function goBackToStep1() {
             // Reset Progress bar
-            document.getElementById('step-tab-1').className = "flex items-center gap-1.5 text-[#712cf9] font-semibold";
-            document.getElementById('step-tab-1').innerHTML = '<span class="w-5 h-5 rounded-full bg-[#f3eeff] border border-[#712cf9] flex items-center justify-center text-xs">1</span> Phương pháp';
+            document.getElementById('step-tab-1').className = "flex items-center gap-1.5 text-brand font-semibold";
+            document.getElementById('step-tab-1').innerHTML = '<span class="w-5 h-5 rounded-full bg-brand-light border border-brand flex items-center justify-center text-xs">1</span> Phương pháp';
             document.getElementById('step-line-1').className = "flex-1 mx-4 h-[2px] bg-slate-100";
             
             document.getElementById('step-tab-2').className = "flex items-center gap-1.5";
@@ -633,12 +633,12 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
             document.getElementById('result-backup-desc').innerText = "Đã bao gồm " + backupRateVal + "% dự phòng phiếu hỏng";
 
             // Update Progress bar
-            document.getElementById('step-tab-2').className = "flex items-center gap-1.5 text-emerald-600 font-semibold";
+            document.getElementById('step-tab-2').className = "flex items-center gap-1.5 text-brand font-semibold";
             document.getElementById('step-tab-2').innerHTML = '<span>✓</span> Thông số';
-            document.getElementById('step-line-2').className = "flex-1 mx-4 h-[2px] bg-emerald-500";
+            document.getElementById('step-line-2').className = "flex-1 mx-4 h-[2px] bg-brand";
             
-            document.getElementById('step-tab-3').className = "flex items-center gap-1.5 text-[#712cf9] font-semibold";
-            document.getElementById('step-num-3').className = "w-5 h-5 rounded-full bg-[#f3eeff] border border-[#712cf9] flex items-center justify-center text-xs";
+            document.getElementById('step-tab-3').className = "flex items-center gap-1.5 text-brand font-semibold";
+            document.getElementById('step-num-3').className = "w-5 h-5 rounded-full bg-brand-light border border-brand flex items-center justify-center text-xs";
 
             // Titles
             let title = '';
@@ -658,7 +658,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                     <p class="font-medium mt-1">3. Cỡ mẫu lý thuyết tối thiểu:</p>
                     <p class="pl-3 text-slate-800 font-semibold">n = Max(n₁, n₂) = Max(\${n1}, \${n2}) = \${n.toFixed(2)}</p>
                     <p class="font-medium mt-1">4. Số phiếu thực tế phát ra (bao gồm \${backupRateVal}% dự phòng):</p>
-                    <p class="pl-3 text-[#712cf9] font-bold">N_thucte = Math.ceil(\${n.toFixed(2)} / (1 - \${backupRateVal / 100})) = \${actual} phiếu</p>
+                    <p class="pl-3 text-brand font-bold">N_thucte = Math.ceil(\${n.toFixed(2)} / (1 - \${backupRateVal / 100})) = \${actual} phiếu</p>
                 \`;
             } else if (currentMethod === 'B') {
                 title = 'Taro Yamane (Tổng thể đã biết)';
@@ -671,7 +671,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                     <p class="pl-3 mt-1">Trong đó: N = \${N} (Dân số), e = \${e}% = \${e / 100}</p>
                     <p class="pl-3 text-slate-800 font-semibold">n = \${N} / [1 + \${N} × (\${e / 100})²] = \${n.toFixed(2)}</p>
                     <p class="font-medium mt-1">2. Số phiếu thực tế phát ra (bao gồm \${backupRateVal}% dự phòng):</p>
-                    <p class="pl-3 text-[#712cf9] font-bold">N_thucte = Math.ceil(\${n.toFixed(2)} / (1 - \${backupRateVal / 100})) = \${actual} phiếu</p>
+                    <p class="pl-3 text-brand font-bold">N_thucte = Math.ceil(\${n.toFixed(2)} / (1 - \${backupRateVal / 100})) = \${actual} phiếu</p>
                 \`;
             } else if (currentMethod === 'C') {
                 title = 'Cochran (Tổng thể chưa biết)';
@@ -686,7 +686,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                     <p class="pl-3 mt-1">Z = \${z} (\${zLabel}), p = \${p}, e = \${e}% = \${e / 100}</p>
                     <p class="pl-3 text-slate-800 font-semibold">n = [\${z}² × \${p} × (1 - \${p})] / (\${e / 100})² = \${n.toFixed(2)}</p>
                     <p class="font-medium mt-1">2. Số phiếu thực tế phát ra (bao gồm \${backupRateVal}% dự phòng):</p>
-                    <p class="pl-3 text-[#712cf9] font-bold">N_thucte = Math.ceil(\${n.toFixed(2)} / (1 - \${backupRateVal / 100})) = \${actual} phiếu</p>
+                    <p class="pl-3 text-brand font-bold">N_thucte = Math.ceil(\${n.toFixed(2)} / (1 - \${backupRateVal / 100})) = \${actual} phiếu</p>
                 \`;
             }
 
@@ -699,8 +699,8 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
 
         function calculateAgain() {
             // Reset wizard progress bar
-            document.getElementById('step-tab-1').className = "flex items-center gap-1.5 text-[#712cf9] font-semibold";
-            document.getElementById('step-tab-1').innerHTML = '<span class="w-5 h-5 rounded-full bg-[#f3eeff] border border-[#712cf9] flex items-center justify-center text-xs">1</span> Phương pháp';
+            document.getElementById('step-tab-1').className = "flex items-center gap-1.5 text-brand font-semibold";
+            document.getElementById('step-tab-1').innerHTML = '<span class="w-5 h-5 rounded-full bg-brand-light border border-brand flex items-center justify-center text-xs">1</span> Phương pháp';
             document.getElementById('step-line-1').className = "flex-1 mx-4 h-[2px] bg-slate-100";
             
             document.getElementById('step-tab-2').className = "flex items-center gap-1.5";
@@ -791,7 +791,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
 
   return (
     <div className="flex justify-center p-2 sm:p-4">
-      <div className="w-full bg-white rounded-3xl shadow-2xl shadow-purple-900/5 border border-slate-100 overflow-hidden relative">
+      <div className="w-full bg-white rounded-3xl shadow-2xl shadow-brand-hover/5 border border-slate-100 overflow-hidden relative">
         
         {/* Card Header */}
         <div 
@@ -830,12 +830,12 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
           <div className="flex items-center justify-between text-xs font-medium text-slate-400 border-b border-slate-100 pb-4">
             <div 
               className={`flex items-center gap-1.5 transition-colors duration-200 ${
-                step > 1 ? 'text-emerald-600 font-semibold' : 'font-semibold'
+                step > 1 ? 'text-brand font-semibold' : 'font-semibold'
               }`}
               style={step > 1 ? undefined : { color: brandColor }}
             >
               <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] transition-all duration-200 ${
-                step > 1 ? 'bg-emerald-50 text-emerald-600 border border-emerald-300' : ''
+                step > 1 ? 'bg-brand-light text-brand border border-brand' : ''
               }`}
               style={step > 1 ? undefined : { backgroundColor: brandColor + '10', color: brandColor, borderColor: brandColor }}
               >
@@ -844,16 +844,16 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
               Phương pháp
             </div>
             
-            <div className={`flex-1 mx-3 h-[2px] transition-all duration-300 ${step > 1 ? 'bg-emerald-500' : 'bg-slate-100'}`}></div>
+            <div className={`flex-1 mx-3 h-[2px] transition-all duration-300 ${step > 1 ? 'bg-brand' : 'bg-slate-100'}`}></div>
             
             <div 
               className={`flex items-center gap-1.5 transition-colors duration-200 ${
-                step > 2 ? 'text-emerald-600 font-semibold' : step === 2 ? 'font-semibold' : 'text-slate-400'
+                step > 2 ? 'text-brand font-semibold' : step === 2 ? 'font-semibold' : 'text-slate-400'
               }`}
               style={step === 2 ? { color: brandColor } : undefined}
             >
               <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] transition-all duration-200 ${
-                step > 2 ? 'bg-emerald-50 text-emerald-600 border border-emerald-300' : 
+                step > 2 ? 'bg-brand-light text-brand border border-brand' : 
                 step === 2 ? '' : 'bg-slate-50 text-slate-400 border border-slate-200'
               }`}
               style={step === 2 ? { backgroundColor: brandColor + '10', color: brandColor, borderColor: brandColor } : undefined}
@@ -863,7 +863,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
               Nhập số liệu
             </div>
             
-            <div className={`flex-1 mx-3 h-[2px] transition-all duration-300 ${step > 2 ? 'bg-emerald-500' : 'bg-slate-100'}`}></div>
+            <div className={`flex-1 mx-3 h-[2px] transition-all duration-300 ${step > 2 ? 'bg-brand' : 'bg-slate-100'}`}></div>
             
             <div 
               className={`flex items-center gap-1.5 transition-colors duration-200 ${
@@ -989,9 +989,9 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                   {/* Method A */}
                   <button 
                     onClick={() => handleSelectMethod('A')}
-                    className="w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-purple-200 hover:bg-purple-50/10 transition-all group flex gap-4 cursor-pointer focus:outline-none"
+                    className="w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-brand hover:bg-brand-light/10 transition-all group flex gap-4 cursor-pointer focus:outline-none"
                   >
-                    <div className="p-3 rounded-xl bg-purple-50 text-[#712cf9] group-hover:bg-[#f3eeff] transition-colors shrink-0">
+                    <div className="p-3 rounded-xl bg-brand-light text-brand group-hover:bg-brand-light transition-colors shrink-0">
                       <Layers className="w-5 h-5" />
                     </div>
                     <div>
@@ -1007,9 +1007,9 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                   {/* Method B */}
                   <button 
                     onClick={() => handleSelectMethod('B')}
-                    className="w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-purple-200 hover:bg-purple-50/10 transition-all group flex gap-4 cursor-pointer focus:outline-none"
+                    className="w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-brand hover:bg-brand-light/10 transition-all group flex gap-4 cursor-pointer focus:outline-none"
                   >
-                    <div className="p-3 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors shrink-0">
+                    <div className="p-3 rounded-xl bg-brand-light text-brand group-hover:bg-brand-light transition-colors shrink-0">
                       <Users className="w-5 h-5" />
                     </div>
                     <div>
@@ -1025,9 +1025,9 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                   {/* Method C */}
                   <button 
                     onClick={() => handleSelectMethod('C')}
-                    className="w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-purple-200 hover:bg-purple-50/10 transition-all group flex gap-4 cursor-pointer focus:outline-none"
+                    className="w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-brand hover:bg-brand-light/10 transition-all group flex gap-4 cursor-pointer focus:outline-none"
                   >
-                    <div className="p-3 rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition-colors shrink-0">
+                    <div className="p-3 rounded-xl bg-brand-light text-brand group-hover:bg-brand-light transition-colors shrink-0">
                       <Globe className="w-5 h-5" />
                     </div>
                     <div>
@@ -1055,7 +1055,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                 className="space-y-4"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-[#712cf9] bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-md uppercase">
+                  <span className="text-[10px] font-bold text-brand bg-brand-light border border-brand-light px-2 py-0.5 rounded-md uppercase">
                     Phương pháp {method}
                   </span>
                   <span className="text-xs text-slate-500 font-medium">
@@ -1397,7 +1397,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
               exit={{ opacity: 0, y: 10 }}
               className="absolute bottom-4 left-4 right-4 bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-xl z-50 flex items-center gap-2 justify-center"
             >
-              <ClipboardCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+              <ClipboardCheck className="w-4 h-4 text-brand shrink-0" />
               <span>Đã sao chép báo cáo kết quả thành công!</span>
             </motion.div>
           )}
@@ -1409,7 +1409,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
               exit={{ opacity: 0, y: 10 }}
               className="absolute bottom-4 left-4 right-4 bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-xl z-50 flex items-center gap-2 justify-center"
             >
-              <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+              <Check className="w-4 h-4 text-brand shrink-0" />
               <span>Đã tải xuống file HTML đơn lẻ để lưu trữ ngoại tuyến!</span>
             </motion.div>
           )}

@@ -361,10 +361,10 @@ export default function AdminNotifications({ currentUser, users, settings, onRef
         <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs hover:shadow-md transition-all duration-300 flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Gửi tất cả thành viên</span>
-            <div className="text-2xl font-black text-emerald-600 tracking-tight leading-none">{allAudienceCount}</div>
+            <div className="text-2xl font-black text-brand tracking-tight leading-none">{allAudienceCount}</div>
             <span className="text-[11px] text-slate-400 font-medium block">Thông báo công cộng</span>
           </div>
-          <div className="p-3.5 bg-emerald-50 rounded-2xl text-emerald-600">
+          <div className="p-3.5 bg-brand-light rounded-2xl text-brand">
             <Users className="w-6 h-6" />
           </div>
         </div>
@@ -859,7 +859,7 @@ export default function AdminNotifications({ currentUser, users, settings, onRef
                 {filteredNotifications.map((notif) => {
                   // Badges configuration
                   let typeLabel = 'Hệ thống';
-                  let typeClass = 'bg-blue-50 text-blue-600 border-blue-100';
+                  let typeClass = 'bg-brand-light text-brand border-brand-light';
                   if (notif.type === 'warning') {
                     typeLabel = 'Cảnh báo';
                     typeClass = 'bg-amber-50 text-amber-600 border-amber-100';
@@ -868,7 +868,7 @@ export default function AdminNotifications({ currentUser, users, settings, onRef
                     typeClass = 'bg-rose-50 text-rose-600 border-rose-100';
                   } else if (notif.type === 'journal') {
                     typeLabel = 'Báo khoa học';
-                    typeClass = 'bg-emerald-50 text-emerald-600 border-emerald-100';
+                    typeClass = 'bg-brand-light text-brand border-brand-light';
                   }
 
                   let priorityLabel = 'Ưu tiên thấp';
@@ -899,7 +899,7 @@ export default function AdminNotifications({ currentUser, users, settings, onRef
                       <div className={`p-2.5 rounded-xl shrink-0 ${
                         notif.type === 'warning' ? 'bg-amber-50 text-amber-600' :
                         notif.type === 'task' ? 'bg-rose-50 text-rose-600' :
-                        notif.type === 'journal' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'
+                        notif.type === 'journal' ? 'bg-brand-light text-brand' : 'bg-brand-light text-brand'
                       }`}>
                         <Bell className="w-5 h-5" />
                       </div>

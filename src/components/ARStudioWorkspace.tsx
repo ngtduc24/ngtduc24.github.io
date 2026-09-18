@@ -1290,7 +1290,7 @@ export default function ARStudioWorkspace({
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-5 py-1.5 rounded-xl bg-gradient-to-r from-brand to-emerald-500 hover:from-brand/90 hover:to-emerald-500/90 text-white text-xs font-bold shadow-lg shadow-brand/30 transition disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-1.5 rounded-xl bg-gradient-to-r from-brand to-brand hover:from-brand/90 hover:to-brand/90 text-white text-xs font-bold shadow-lg shadow-brand/30 transition disabled:opacity-50"
           >
             {saving ? (
               <>
@@ -1359,7 +1359,7 @@ export default function ARStudioWorkspace({
                 }}
               >
                 <div className="flex items-center gap-2 truncate opacity-50">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-brand shrink-0" />
                   <span className="font-semibold truncate">Target Marker (Chỉ xem)</span>
                 </div>
                 <button
@@ -1386,7 +1386,7 @@ export default function ARStudioWorkspace({
                 }}
               >
                 <div className="flex items-center gap-2 truncate">
-                  <span className="w-2 h-2 rounded-full bg-indigo-400 shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-brand shrink-0" />
                   <span className="font-semibold truncate">
                     Vật thể Chính ({contentType.toUpperCase()})
                   </span>
@@ -1414,7 +1414,7 @@ export default function ARStudioWorkspace({
                   onClick={() => setSelectedHierarchyId(obj.id)}
                 >
                   <div className="flex items-center gap-2 truncate">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 shrink-0" />
+                    <span className="w-2 h-2 rounded-full bg-brand shrink-0" />
                     <span className="font-semibold truncate">
                       {obj.name}
                     </span>
@@ -1497,7 +1497,7 @@ export default function ARStudioWorkspace({
               }`}
             >
               <span>1. Ảnh Target</span>
-              {targetPreview && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+              {targetPreview && <Check className="w-3.5 h-3.5 text-brand" />}
             </button>
             <button
               type="button"
@@ -1509,7 +1509,7 @@ export default function ARStudioWorkspace({
               }`}
             >
               <span>2. Import Content</span>
-              {contentPreview && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+              {contentPreview && <Check className="w-3.5 h-3.5 text-brand" />}
             </button>
           </div>
 
@@ -1542,14 +1542,14 @@ export default function ARStudioWorkspace({
                       <img src={targetPreview} alt="Target marker" className="max-h-full max-w-full object-contain" />
 
                       {/* 8th Wall style neon tracking corners */}
-                      <div className="absolute inset-2 pointer-events-none border border-emerald-500/40 rounded-lg">
-                        <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-emerald-400" />
-                        <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-emerald-400" />
-                        <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-emerald-400" />
-                        <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-emerald-400" />
+                      <div className="absolute inset-2 pointer-events-none border border-brand/40 rounded-lg">
+                        <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-brand" />
+                        <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-brand" />
+                        <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-brand" />
+                        <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-brand" />
                       </div>
 
-                      <div className="absolute bottom-2 inset-x-2 bg-black/80 backdrop-blur-sm rounded-lg py-1 px-2 text-[10px] text-emerald-300 flex items-center justify-between">
+                      <div className="absolute bottom-2 inset-x-2 bg-black/80 backdrop-blur-sm rounded-lg py-1 px-2 text-[10px] text-brand flex items-center justify-between">
                         <span className="font-semibold flex items-center gap-1">
                           <Check className="w-3 h-3" /> Tracking Region
                         </span>
@@ -1669,7 +1669,7 @@ export default function ARStudioWorkspace({
                       <p className="text-xs font-bold text-white break-all">
                         {contentFile ? contentFile.name : 'Đã chọn tệp nội dung'}
                       </p>
-                      <p className="text-[10px] text-emerald-400">Đã nạp vào không gian 3D</p>
+                      <p className="text-[10px] text-brand">Đã nạp vào không gian 3D</p>
                     </div>
                   ) : (
                     <div className="space-y-2 py-4">
@@ -1720,7 +1720,7 @@ export default function ARStudioWorkspace({
                         setContentPreview('');
                         setSelectedHierarchyId(newExtraId);
                       }}
-                      className="w-full py-1.5 text-[11px] text-white bg-indigo-600/80 hover:bg-indigo-500 rounded transition font-medium flex items-center justify-center gap-1"
+                      className="w-full py-1.5 text-[11px] text-white bg-brand/80 hover:bg-brand rounded transition font-medium flex items-center justify-center gap-1"
                     >
                       + Thêm vào không gian như vật thể PHỤ
                     </button>
@@ -1738,7 +1738,7 @@ export default function ARStudioWorkspace({
 
           {/* Viewport Floating Status & Hotkey Helper */}
           <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-brand animate-pulse" />
             <span className="text-slate-300 font-medium">{viewportStatus}</span>
           </div>
 
@@ -1852,10 +1852,10 @@ export default function ARStudioWorkspace({
             {inspectorTab === 'transform' ? (
               <>
                 {/* 0. Trục tọa độ 3D & Kích thước Gizmo */}
-                <div className="space-y-2.5 p-3 rounded-xl bg-gradient-to-br from-indigo-950/40 to-slate-900/60 border border-indigo-500/20 shadow-sm">
+                <div className="space-y-2.5 p-3 rounded-xl bg-gradient-to-br from-brand-hover/40 to-slate-900/60 border border-brand/20 shadow-sm">
                   <div className="flex items-center justify-between text-[11px] font-bold text-slate-300">
-                    <span className="uppercase tracking-wider flex items-center gap-1.5 text-indigo-300">
-                      <Compass className="w-3.5 h-3.5 text-indigo-400" /> Kích thước trục tọa độ (Gizmo)
+                    <span className="uppercase tracking-wider flex items-center gap-1.5 text-brand">
+                      <Compass className="w-3.5 h-3.5 text-brand" /> Kích thước trục tọa độ (Gizmo)
                     </span>
                     <span className="font-mono text-amber-400 font-bold">{gizmoSize.toFixed(1)}x</span>
                   </div>
@@ -1870,7 +1870,7 @@ export default function ARStudioWorkspace({
                       step="0.1"
                       value={gizmoSize}
                       onChange={(e) => setGizmoSize(parseFloat(e.target.value) || 1.0)}
-                      className="flex-1 accent-indigo-400 h-1.5 bg-white/10 rounded-lg cursor-pointer"
+                      className="flex-1 accent-brand h-1.5 bg-white/10 rounded-lg cursor-pointer"
                     />
                     <input
                       type="number"
@@ -1879,7 +1879,7 @@ export default function ARStudioWorkspace({
                       max="3.0"
                       value={gizmoSize}
                       onChange={(e) => setGizmoSize(parseFloat(e.target.value) || 1.0)}
-                      className="w-16 bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-xs text-white font-mono text-center focus:border-indigo-400 focus:outline-none"
+                      className="w-16 bg-black/50 border border-white/10 rounded-lg px-2 py-1 text-xs text-white font-mono text-center focus:border-brand focus:outline-none"
                     />
                   </div>
                   {/* Quick Presets for Gizmo Size */}
@@ -1889,7 +1889,7 @@ export default function ARStudioWorkspace({
                       onClick={() => setGizmoSize(0.6)}
                       className={`py-1 text-[10px] rounded font-medium transition ${
                         Math.abs(gizmoSize - 0.6) < 0.05
-                          ? 'bg-indigo-600/40 text-indigo-200 border border-indigo-500/40'
+                          ? 'bg-brand/40 text-brand border border-brand/40'
                           : 'bg-white/5 text-slate-400 hover:text-white'
                       }`}
                     >
@@ -1900,7 +1900,7 @@ export default function ARStudioWorkspace({
                       onClick={() => setGizmoSize(1.0)}
                       className={`py-1 text-[10px] rounded font-medium transition ${
                         Math.abs(gizmoSize - 1.0) < 0.05
-                          ? 'bg-indigo-600/40 text-indigo-200 border border-indigo-500/40'
+                          ? 'bg-brand/40 text-brand border border-brand/40'
                           : 'bg-white/5 text-slate-400 hover:text-white'
                       }`}
                     >
@@ -1911,7 +1911,7 @@ export default function ARStudioWorkspace({
                       onClick={() => setGizmoSize(1.6)}
                       className={`py-1 text-[10px] rounded font-medium transition ${
                         Math.abs(gizmoSize - 1.6) < 0.05
-                          ? 'bg-indigo-600/40 text-indigo-200 border border-indigo-500/40'
+                          ? 'bg-brand/40 text-brand border border-brand/40'
                           : 'bg-white/5 text-slate-400 hover:text-white'
                       }`}
                     >
@@ -1922,7 +1922,7 @@ export default function ARStudioWorkspace({
                       onClick={() => setGizmoSize(2.4)}
                       className={`py-1 text-[10px] rounded font-medium transition ${
                         Math.abs(gizmoSize - 2.4) < 0.05
-                          ? 'bg-indigo-600/40 text-indigo-200 border border-indigo-500/40'
+                          ? 'bg-brand/40 text-brand border border-brand/40'
                           : 'bg-white/5 text-slate-400 hover:text-white'
                       }`}
                     >
@@ -1957,7 +1957,7 @@ export default function ARStudioWorkspace({
 
                   {/* Y Axis */}
                   <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded bg-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center border border-emerald-500/30">
+                    <span className="w-6 h-6 rounded bg-brand/20 text-brand font-bold text-xs flex items-center justify-center border border-brand/30">
                       Y
                     </span>
                     <input
@@ -1975,7 +1975,7 @@ export default function ARStudioWorkspace({
 
                   {/* Z Axis */}
                   <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded bg-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center border border-indigo-500/30">
+                    <span className="w-6 h-6 rounded bg-brand/20 text-brand font-bold text-xs flex items-center justify-center border border-brand/30">
                       Z
                     </span>
                     <input
@@ -2089,8 +2089,8 @@ export default function ARStudioWorkspace({
                   {/* Trục Y (Yaw / Xoay ngang) */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                      <span className="flex items-center gap-1.5 text-brand font-medium">
+                        <span className="w-2 h-2 rounded-full bg-brand inline-block" />
                         Trục Y (Xoay ngang)
                       </span>
                       <span className="font-mono text-white text-xs">{(selectedHierarchyId === 'main_content' ? rotationY : extraObjects.find(e => e.id === selectedHierarchyId)?.rotation?.y ?? 0)}°</span>
@@ -2107,7 +2107,7 @@ export default function ARStudioWorkspace({
                           if (selectedHierarchyId === 'main_content') setRotationY(val);
                           else setExtraObjects(prev => prev.map(o => o.id === selectedHierarchyId ? { ...o, rotation: { ...o.rotation, y: val } } : o));
                         }}
-                        className="flex-1 accent-emerald-500 h-1.5 bg-white/10 rounded-lg cursor-pointer"
+                        className="flex-1 accent-brand h-1.5 bg-white/10 rounded-lg cursor-pointer"
                       />
                       <input
                         type="number"
@@ -2117,7 +2117,7 @@ export default function ARStudioWorkspace({
                           if (selectedHierarchyId === 'main_content') setRotationY(val);
                           else setExtraObjects(prev => prev.map(o => o.id === selectedHierarchyId ? { ...o, rotation: { ...o.rotation, y: val } } : o));
                         }}
-                        className="w-16 bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-xs text-white font-mono text-center focus:border-emerald-500 focus:outline-none"
+                        className="w-16 bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-xs text-white font-mono text-center focus:border-brand focus:outline-none"
                       />
                     </div>
                   </div>
@@ -2125,8 +2125,8 @@ export default function ARStudioWorkspace({
                   {/* Trục Z (Roll / Nghiêng cạnh) */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="flex items-center gap-1.5 text-blue-400 font-medium">
-                        <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+                      <span className="flex items-center gap-1.5 text-brand font-medium">
+                        <span className="w-2 h-2 rounded-full bg-brand inline-block" />
                         Trục Z (Nghiêng cạnh)
                       </span>
                       <span className="font-mono text-white text-xs">{(selectedHierarchyId === 'main_content' ? rotationZ : extraObjects.find(e => e.id === selectedHierarchyId)?.rotation?.z ?? 0)}°</span>
@@ -2143,7 +2143,7 @@ export default function ARStudioWorkspace({
                           if (selectedHierarchyId === 'main_content') setRotationZ(val);
                           else setExtraObjects(prev => prev.map(o => o.id === selectedHierarchyId ? { ...o, rotation: { ...o.rotation, z: val } } : o));
                         }}
-                        className="flex-1 accent-blue-500 h-1.5 bg-white/10 rounded-lg cursor-pointer"
+                        className="flex-1 accent-brand h-1.5 bg-white/10 rounded-lg cursor-pointer"
                       />
                       <input
                         type="number"
@@ -2153,7 +2153,7 @@ export default function ARStudioWorkspace({
                           if (selectedHierarchyId === 'main_content') setRotationZ(val);
                           else setExtraObjects(prev => prev.map(o => o.id === selectedHierarchyId ? { ...o, rotation: { ...o.rotation, z: val } } : o));
                         }}
-                        className="w-16 bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-xs text-white font-mono text-center focus:border-blue-500 focus:outline-none"
+                        className="w-16 bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-xs text-white font-mono text-center focus:border-brand focus:outline-none"
                       />
                     </div>
                   </div>
@@ -2430,7 +2430,7 @@ export default function ARStudioWorkspace({
                       <span className="text-xs font-bold text-slate-300">
                         Nút chụp ảnh AR (Capture)
                       </span>
-                      <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-mono">
+                      <span className="text-[10px] bg-brand/20 text-brand px-1.5 py-0.5 rounded font-mono">
                         Mới
                       </span>
                     </div>
@@ -2439,7 +2439,7 @@ export default function ARStudioWorkspace({
                         type="checkbox"
                         checked={enableCapture}
                         onChange={(e) => setEnableCapture(e.target.checked)}
-                        className="w-4 h-4 accent-emerald-500 rounded mt-0.5 cursor-pointer"
+                        className="w-4 h-4 accent-brand rounded mt-0.5 cursor-pointer"
                       />
                       <div>
                         <span className="text-xs font-semibold text-slate-200 block">
@@ -2527,7 +2527,7 @@ export default function ARStudioWorkspace({
                 <button
                   type="button"
                   onClick={() => setShowMobilePreview(true)}
-                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-brand to-emerald-500 hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-brand/20 transition flex items-center justify-center gap-2 border border-white/10"
+                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-brand to-brand hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-brand/20 transition flex items-center justify-center gap-2 border border-white/10"
                 >
                   <Smartphone className="w-4 h-4" />
                   <span>Mở Trình Xem Trước Mobile (Live)</span>

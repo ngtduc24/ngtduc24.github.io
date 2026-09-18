@@ -453,7 +453,7 @@ export default function BackupManager() {
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-6 flex flex-col text-left">
           <div>
             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-              <Upload className="w-4 h-4 text-emerald-500" />
+              <Upload className="w-4 h-4 text-brand" />
               <span>Phục hồi Dữ liệu (Import)</span>
             </h2>
             <p className="text-xs text-slate-400 mt-1">
@@ -546,7 +546,7 @@ export default function BackupManager() {
               <button 
                 type="button"
                 onClick={confirmImport}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md shadow-emerald-600/10 hover:scale-102 mt-2"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-brand hover:bg-brand-hover text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md shadow-brand/10 hover:scale-102 mt-2"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Bắt Đầu Khôi Phục Dữ Liệu</span>

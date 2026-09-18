@@ -60,7 +60,7 @@ export default function EduExport({ clazz, users, gradeColumns, grades }: EduExp
     <div className="flex gap-2">
       <button 
         onClick={exportAll}
-        className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl text-[10px] font-black transition-all border border-emerald-100"
+        className="flex items-center gap-2 px-4 py-2 bg-brand-light text-brand hover:bg-brand-light rounded-xl text-[10px] font-black transition-all border border-brand-light"
       >
         <FileSpreadsheet className="w-3.5 h-3.5" />
         XUẤT BẢNG ĐIỂM

@@ -24,7 +24,7 @@ export default function ConfirmationDialog({
 
   const confirmBtnClass = isDestructive
     ? "px-6 py-2 bg-rose-500 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-rose-600 cursor-pointer transition-colors"
-    : "px-6 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-emerald-700 cursor-pointer transition-colors";
+    : "px-6 py-2 bg-brand text-white rounded-xl text-sm font-bold shadow-sm hover:bg-brand-hover cursor-pointer transition-colors";
 
   return (
     <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">

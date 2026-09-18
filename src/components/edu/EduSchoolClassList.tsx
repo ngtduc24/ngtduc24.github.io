@@ -182,7 +182,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport }: EduSchoo
     <div className="space-y-8 animate-fadeIn">
       {/* Hero Banner - Matching Image */}
       <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 flex items-center gap-6">
-        <div className="w-16 h-16 bg-[#e9f7ef] text-[#00a65a] rounded-2xl flex items-center justify-center shrink-0">
+        <div className="w-16 h-16 bg-brand-light text-brand rounded-2xl flex items-center justify-center shrink-0">
           <GraduationCap className="w-10 h-10" />
         </div>
         <div>
@@ -201,7 +201,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport }: EduSchoo
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="Tìm kiếm lớp học, trường học..."
-              className="w-full bg-white border border-slate-200 focus:border-[#00a65a] focus:ring-4 focus:ring-[#00a65a]/5 rounded-2xl pl-11 pr-4 py-3 text-[13px] font-medium transition-all"
+              className="w-full bg-white border border-slate-200 focus:border-brand focus:ring-4 focus:ring-brand/5 rounded-2xl pl-11 pr-4 py-3 text-[13px] font-medium transition-all"
             />
           </div>
           
@@ -212,14 +212,14 @@ export default function EduSchoolClassList({ onSelectClass, onImport }: EduSchoo
             }}
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider"
           >
-            <Plus className="w-4 h-4 text-[#00a65a]" />
+            <Plus className="w-4 h-4 text-brand" />
             <span>Thêm trường</span>
           </button>
 
           {onImport && (
             <button 
               onClick={onImport}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#00a65a] hover:bg-[#008d4c] text-white px-6 py-3 rounded-2xl text-[11px] font-bold transition-all shadow-lg shadow-[#00a65a]/20 uppercase tracking-wider"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white px-6 py-3 rounded-2xl text-[11px] font-bold transition-all shadow-lg shadow-brand/20 uppercase tracking-wider"
             >
               <Upload className="w-4 h-4" />
               <span>Import danh sách & tạo lớp</span>
@@ -245,19 +245,19 @@ export default function EduSchoolClassList({ onSelectClass, onImport }: EduSchoo
               placeholder="Tên trường học..."
               value={newForm.name}
               onChange={e => setNewForm({...newForm, name: e.target.value})}
-              className="w-full bg-slate-50 border border-slate-200 focus:border-[#00a65a] focus:ring-0 rounded-xl px-4 py-3 text-sm font-medium"
+              className="w-full bg-slate-50 border border-slate-200 focus:border-brand focus:ring-0 rounded-xl px-4 py-3 text-sm font-medium"
             />
             <input 
               type="text" 
               placeholder="Mô tả..."
               value={newForm.description}
               onChange={e => setNewForm({...newForm, description: e.target.value})}
-              className="w-full bg-slate-50 border border-slate-200 focus:border-[#00a65a] focus:ring-0 rounded-xl px-4 py-3 text-sm font-medium"
+              className="w-full bg-slate-50 border border-slate-200 focus:border-brand focus:ring-0 rounded-xl px-4 py-3 text-sm font-medium"
             />
           </div>
           <div className="flex justify-end gap-3">
             <button onClick={() => setIsCreatingSchool(false)} className="px-6 py-2 text-slate-500 text-[11px] font-bold uppercase tracking-wider">Hủy</button>
-            <button onClick={handleCreateSchool} className="px-8 py-2 bg-[#00a65a] text-white rounded-xl text-[11px] font-bold uppercase tracking-wider">Xác nhận</button>
+            <button onClick={handleCreateSchool} className="px-8 py-2 bg-brand text-white rounded-xl text-[11px] font-bold uppercase tracking-wider">Xác nhận</button>
           </div>
         </div>
       )}
@@ -274,7 +274,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport }: EduSchoo
             <div key={school.id} className="space-y-6">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-[#e9f7ef] text-[#00a65a] rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-8 bg-brand-light text-brand rounded-lg flex items-center justify-center">
                     <School className="w-4 h-4" />
                   </div>
                   <h2 className="text-base font-bold text-slate-800 uppercase tracking-tight">{school.name}</h2>
@@ -304,7 +304,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport }: EduSchoo
                       setIsCreatingClassForSchool(school.id);
                       setNewForm({ name: '', description: '' });
                     }}
-                    className="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-[#00a65a]/20 text-[#00a65a] rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-[#00a65a] hover:text-white transition-all"
+                    className="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-brand/20 text-brand rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-brand hover:text-white transition-all"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Thêm lớp</span>
@@ -318,11 +318,11 @@ export default function EduSchoolClassList({ onSelectClass, onImport }: EduSchoo
                   <div 
                     key={clazz.id}
                     onClick={() => onSelectClass(clazz.id)}
-                    className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-[#00a65a]/30 transition-all cursor-pointer flex flex-col overflow-hidden"
+                    className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-brand/30 transition-all cursor-pointer flex flex-col overflow-hidden"
                   >
                     <div className="p-6 flex-1">
                       <div className="flex justify-between items-start mb-4">
-                        <div className="w-10 h-10 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center group-hover:bg-[#e9f7ef] group-hover:text-[#00a65a] transition-colors">
+                        <div className="w-10 h-10 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center group-hover:bg-brand-light group-hover:text-brand transition-colors">
                           <BookOpen className="w-5 h-5" />
                         </div>
                         <button 
@@ -342,7 +342,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport }: EduSchoo
                         )}
                       </div>
                       
-                      <h3 className="text-[15px] font-bold text-slate-800 group-hover:text-[#00a65a] transition-colors mb-2 line-clamp-2 leading-snug">{clazz.name}</h3>
+                      <h3 className="text-[15px] font-bold text-slate-800 group-hover:text-brand transition-colors mb-2 line-clamp-2 leading-snug">{clazz.name}</h3>
                       <p className="text-[12px] text-slate-500 font-medium line-clamp-2 leading-relaxed">
                         {clazz.description || `Danh sách lớp học thuộc ${school.name}.`}
                       </p>
@@ -359,7 +359,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport }: EduSchoo
                           <span>{new Date(clazz.createdAt).toLocaleDateString('vi-VN')}</span>
                         </div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#00a65a] group-hover:translate-x-0.5 transition-all" />
+                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-brand group-hover:translate-x-0.5 transition-all" />
                     </div>
                   </div>
                 ))}

@@ -947,7 +947,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                 cursor: 'pointer'
               }}
               className={`px-0.5 rounded-xs hover:bg-opacity-40 transition-all font-medium text-slate-900 group relative ${
-                mainAnn.isAiSuggested ? 'border-dashed border-purple-500 bg-purple-50/30' : ''
+                mainAnn.isAiSuggested ? 'border-dashed border-brand bg-brand-light/30' : ''
               }`}
               title={codeObj?.name || 'Mã chưa xác định'}
             >
@@ -1541,9 +1541,9 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                 />
               </div>
               
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex gap-3">
-                <AlertTriangle className="w-5 h-5 text-blue-500 shrink-0" />
-                <p className="text-[10px] text-blue-700 leading-relaxed">
+              <div className="bg-brand-light border border-brand-light rounded-xl p-3 flex gap-3">
+                <AlertTriangle className="w-5 h-5 text-brand shrink-0" />
+                <p className="text-[10px] text-brand-hover leading-relaxed">
                   Việc tạo bộ mã mới cho phép bạn phân tách các hệ thống mã hóa khác nhau cho cùng một tập dữ liệu. Bạn có thể chuyển đổi giữa các bộ mã bất cứ lúc nào.
                 </p>
               </div>
@@ -1794,7 +1794,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                                 setViewingProject(proj);
                                 setShowProjectDetailsModal(true);
                               }}
-                              className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                              className="p-1.5 text-slate-500 hover:text-brand hover:bg-brand-light rounded-lg transition-colors cursor-pointer"
                               title="Xem chi tiết"
                             >
                               <Eye className="w-4 h-4" />
@@ -1808,7 +1808,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                                 setNewProjCount(proj.settings?.interviewCount || 0);
                                 setShowNewProjectModal(true);
                               }}
-                              className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                              className="p-1.5 text-slate-500 hover:text-brand hover:bg-brand-light rounded-lg transition-colors cursor-pointer"
                               title="Chỉnh sửa"
                             >
                               <FileEdit className="w-4 h-4" />
@@ -1868,7 +1868,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
               <button
                 onClick={handleAiAutoCoding}
                 disabled={isAiCodingLoading || !activeDoc}
-                className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all shadow-sm cursor-pointer"
+                className="flex items-center gap-1 bg-brand hover:bg-brand-hover disabled:bg-brand text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all shadow-sm cursor-pointer"
               >
                 {isAiCodingLoading ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -1978,15 +1978,15 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
           <div className="lg:col-span-4 space-y-6">
             {/* Active Annotation Inspector */}
             {selectedAnnotationId && (
-              <div className="bg-purple-50/50 border border-purple-200 rounded-2xl p-4 shadow-sm animate-fadeIn space-y-3">
-                <div className="flex items-center justify-between border-b border-purple-200/50 pb-2">
+              <div className="bg-brand-light/50 border border-brand rounded-2xl p-4 shadow-sm animate-fadeIn space-y-3">
+                <div className="flex items-center justify-between border-b border-brand/50 pb-2">
                   <div className="flex items-center gap-1.5">
-                    <Sparkles className="w-4.5 h-4.5 text-purple-600" />
-                    <span className="text-xs font-bold text-purple-900">Chi tiết đoạn mã hóa</span>
+                    <Sparkles className="w-4.5 h-4.5 text-brand" />
+                    <span className="text-xs font-bold text-brand-hover">Chi tiết đoạn mã hóa</span>
                   </div>
                   <button
                     onClick={() => setSelectedAnnotationId(null)}
-                    className="text-purple-400 hover:text-purple-700 cursor-pointer"
+                    className="text-brand hover:text-brand-hover cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -1999,7 +1999,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                   
                   return (
                     <div className="space-y-2 text-xs">
-                      <p className="text-slate-700 italic bg-white p-2.5 rounded-xl border border-purple-100 font-medium">
+                      <p className="text-slate-700 italic bg-white p-2.5 rounded-xl border border-brand-light font-medium">
                         "{ann.text}"
                       </p>
                       
@@ -2007,7 +2007,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                         <span className="text-[10px] text-slate-500">Mã gán:</span>
                         <span
                           style={{ color: codeObj?.color, backgroundColor: `${codeObj?.color}15` }}
-                          className="font-bold px-2.5 py-0.5 rounded-full border border-purple-200/40"
+                          className="font-bold px-2.5 py-0.5 rounded-full border border-brand/40"
                         >
                           {codeObj?.name}
                         </span>
@@ -2026,7 +2026,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                             <div className="flex gap-1.5 pt-1">
                               <button
                                 onClick={() => handleAcceptAiAnnotation(ann.id)}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold px-2 py-1 rounded cursor-pointer"
+                                className="bg-brand hover:bg-brand-hover text-white text-[10px] font-bold px-2 py-1 rounded cursor-pointer"
                               >
                                 Chấp nhận
                               </button>
@@ -2042,7 +2042,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                       </div>
 
                       {!ann.isAiSuggested && (
-                        <div className="pt-2 border-t border-purple-200/50 flex justify-end">
+                        <div className="pt-2 border-t border-brand/50 flex justify-end">
                           <button
                             onClick={() => handleDeleteAnnotation(ann.id)}
                             className="flex items-center gap-1 text-rose-600 hover:text-rose-800 font-bold text-[11px]"
@@ -2349,7 +2349,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                     </div>
 
                     <div className="flex md:flex-col justify-between items-end shrink-0 gap-2">
-                      <span className="text-[11px] font-bold text-purple-600 bg-purple-50 border border-purple-100 px-2.5 py-1 rounded-lg">
+                      <span className="text-[11px] font-bold text-brand bg-brand-light border border-brand-light px-2.5 py-1 rounded-lg">
                         {annCount} đoạn mã hóa
                       </span>
 
@@ -2408,7 +2408,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
             {/* Split (Tách) Controller */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md p-4 space-y-4">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-                <GitFork className="w-4.5 h-4.5 text-purple-600" />
+                <GitFork className="w-4.5 h-4.5 text-brand" />
                 <span className="text-xs font-bold text-slate-800">Tách Mã (Split Code)</span>
               </div>
 
@@ -2442,7 +2442,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
 
                 <button
                   type="submit"
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 rounded-xl cursor-pointer"
+                  className="w-full bg-brand hover:bg-brand-hover text-white font-bold py-2 rounded-xl cursor-pointer"
                 >
                   Thực hiện tách mã
                 </button>
@@ -2543,7 +2543,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                 {/* Export excel */}
                 <button
                   onClick={handleExportMatrixReport}
-                  className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg transition-all text-[11px] cursor-pointer shadow-sm"
+                  className="flex items-center gap-1 bg-brand hover:bg-brand-hover text-white font-bold px-3 py-1.5 rounded-lg transition-all text-[11px] cursor-pointer shadow-sm"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Excel</span>
@@ -2631,7 +2631,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
             {/* AI Academic Synthesis Panel */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md p-5 space-y-4">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-                <Sparkles className="w-5 h-5 text-purple-600 animate-pulse" />
+                <Sparkles className="w-5 h-5 text-brand animate-pulse" />
                 <h3 className="text-sm font-bold text-slate-800">Tổng hợp học thuật AI (Thematic Synthesis)</h3>
               </div>
 
@@ -2653,7 +2653,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                     <button
                       onClick={handleThematicSynthesis}
                       disabled={isAiSynthesisLoading || !selectedSynthesisCode}
-                      className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white font-bold px-4 py-2 rounded-xl shrink-0 transition-all cursor-pointer shadow flex items-center gap-1"
+                      className="bg-brand hover:bg-brand-hover disabled:bg-brand text-white font-bold px-4 py-2 rounded-xl shrink-0 transition-all cursor-pointer shadow flex items-center gap-1"
                     >
                       {isAiSynthesisLoading ? (
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -2665,10 +2665,10 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                   </div>
                 </div>
 
-                <div className="border border-purple-100 rounded-xl p-4 bg-purple-50/20 min-h-[180px] text-xs leading-relaxed text-slate-700 select-all whitespace-pre-wrap">
+                <div className="border border-brand-light rounded-xl p-4 bg-brand-light/20 min-h-[180px] text-xs leading-relaxed text-slate-700 select-all whitespace-pre-wrap">
                   {isAiSynthesisLoading ? (
                     <div className="text-center py-12 space-y-2">
-                      <RefreshCw className="w-6 h-6 animate-spin text-purple-600 mx-auto" />
+                      <RefreshCw className="w-6 h-6 animate-spin text-brand mx-auto" />
                       <p className="text-[10px] text-slate-400 font-semibold">Gemini đang đọc toàn bộ quotes, phân loại động lực và viết bài tóm tắt...</p>
                     </div>
                   ) : aiSynthesisResult ? (
@@ -3092,7 +3092,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                           <div className="text-xs text-slate-500">nguoidung@example.com</div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-lg text-xs font-bold">Admin</span>
+                          <span className="bg-brand-light text-brand-hover px-2 py-1 rounded-lg text-xs font-bold">Admin</span>
                         </td>
                         <td className="px-4 py-3 text-right">
                           <button disabled className="text-slate-300 cursor-not-allowed">
@@ -3173,7 +3173,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                 <label className="block text-sm font-medium text-slate-600 mb-1">Biểu tượng</label>
                 <div className="grid grid-cols-6 gap-2">
                   {Object.entries(BANNER_ICONS).map(([iconName, IconComp]) => (
-                    <button key={iconName} type="button" onClick={() => setBannerIcon(iconName)} title={iconName} className={bannerIcon === iconName ? "p-2 rounded-lg border border-emerald-600 bg-emerald-50 text-emerald-700 flex items-center justify-center" : "p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 flex items-center justify-center"}>
+                    <button key={iconName} type="button" onClick={() => setBannerIcon(iconName)} title={iconName} className={bannerIcon === iconName ? "p-2 rounded-lg border border-brand bg-brand-light text-brand-hover flex items-center justify-center" : "p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 flex items-center justify-center"}>
                       <IconComp className="w-4 h-4" />
                     </button>
                   ))}

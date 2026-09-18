@@ -414,7 +414,7 @@ function SectionHeading({ eyebrow, title, description, centered = false }: { eye
   return (
     <div className={`max-w-2xl ${centered ? 'mx-auto text-center' : ''}`}>
       {eyebrow && (
-        <span className="inline-flex items-center rounded-full bg-emerald-50/50 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-emerald-700 shadow-sm">
+        <span className="inline-flex items-center rounded-full bg-brand-light/50 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-brand-hover shadow-sm">
           {eyebrow}
         </span>
       )}
@@ -462,7 +462,7 @@ function CollectionImage({ card, className = '' }: { card: CollectionCard; class
     );
   }
   if (card.image) return <img src={card.image} alt={card.title} className={`h-full w-full object-cover transition duration-700 group-hover:scale-105 ${className}`} loading="lazy" />;
-  return <div className={`grid h-full w-full place-items-center bg-gradient-to-br from-emerald-100 via-teal-50 to-slate-100 text-emerald-700 ${className}`}><FileText className="h-12 w-12" /></div>;
+  return <div className={`grid h-full w-full place-items-center bg-gradient-to-br from-brand-light via-brand-light to-slate-100 text-brand-hover ${className}`}><FileText className="h-12 w-12" /></div>;
 }
 
 function PortfolioCollectionPage({ page, cards, onOpen, metaOverride, projectsSettings, coursesSettings, onCollectionPage, onEnroll, registering, viewer }: { page: CollectionPage; cards: CollectionCard[]; onOpen: (item: DetailItem) => void; metaOverride?: { label: string; eyebrow: string; title: string; description: string }; projectsSettings?: PortfolioProjectsSettings | null; coursesSettings?: PortfolioCoursesSettings | null; onCollectionPage?: (page: CollectionPage) => void; onEnroll?: (course: PortfolioCourse) => void; registering?: boolean; viewer?: UserAccount | null; }) {
@@ -518,19 +518,19 @@ function PortfolioCollectionPage({ page, cards, onOpen, metaOverride, projectsSe
               </div>
               <div className="flex flex-1 flex-col p-5 min-w-0">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600">{card.category}</span>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-brand">{card.category}</span>
                   {isCourse && courseData && (
                     <span className="text-[9px] font-bold uppercase text-slate-400">
                       · {courseData.level === 'basic' ? 'Cơ bản' : courseData.level === 'intermediate' ? 'Trung cấp' : 'Nâng cao'}
                     </span>
                   )}
                 </div>
-                <h3 className="line-clamp-2 text-base font-black leading-snug text-slate-950 group-hover:text-emerald-700">{card.title}</h3>
+                <h3 className="line-clamp-2 text-base font-black leading-snug text-slate-950 group-hover:text-brand-hover">{card.title}</h3>
                 <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">{card.description}</p>
                 {isCourse && courseData && (
                   <div className="mt-auto pt-3 flex items-center justify-between border-t border-slate-100/50">
                     <div className="flex flex-col">
-                      <span className="text-[11px] font-black text-emerald-700">
+                      <span className="text-[11px] font-black text-brand-hover">
                         {courseData.price > 0 ? `${courseData.price.toLocaleString('vi-VN')} đ` : 'Miễn phí'}
                       </span>
                       <span className="text-[9px] font-bold text-slate-400">
@@ -545,14 +545,14 @@ function PortfolioCollectionPage({ page, cards, onOpen, metaOverride, projectsSe
                           onEnroll(courseData);
                         }}
                         disabled={registering}
-                        className="relative z-20 flex h-8 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-[10px] font-black text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                        className="relative z-20 flex h-8 items-center gap-1.5 rounded-lg bg-brand px-3 text-[10px] font-black text-white hover:bg-brand-hover transition-colors disabled:opacity-50"
                       >
                         {registering ? <Loader2 className="h-3 w-3 animate-spin" /> : <BookMarked className="h-3 w-3" />}
                         Đăng ký
                       </button>
                     )}
                     {isEnrolled && (
-                      <span className="flex h-8 items-center gap-1.5 rounded-lg bg-emerald-50 px-3 text-[10px] font-black text-emerald-700 border border-emerald-100">
+                      <span className="flex h-8 items-center gap-1.5 rounded-lg bg-brand-light px-3 text-[10px] font-black text-brand-hover border border-brand-light">
                         Đã đăng ký
                       </span>
                     )}
@@ -602,14 +602,14 @@ function PortfolioCollectionPage({ page, cards, onOpen, metaOverride, projectsSe
           <div className="mb-4 flex items-center justify-end gap-2 border-b border-slate-100 pb-4">
             <button 
               onClick={() => setViewMode('grid')} 
-              className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${viewMode === 'grid' ? 'bg-emerald-100 text-emerald-700 shadow-sm' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}
+              className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${viewMode === 'grid' ? 'bg-brand-light text-brand-hover shadow-sm' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}
               title="Dạng lưới"
             >
               <LayoutGrid className="h-5 w-5" />
             </button>
             <button 
               onClick={() => setViewMode('list')} 
-              className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${viewMode === 'list' ? 'bg-emerald-100 text-emerald-700 shadow-sm' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}
+              className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${viewMode === 'list' ? 'bg-brand-light text-brand-hover shadow-sm' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}
               title="Dạng danh sách"
             >
               <List className="h-5 w-5" />
@@ -636,7 +636,7 @@ function PortfolioCollectionPage({ page, cards, onOpen, metaOverride, projectsSe
                   <div className="flex items-end justify-between gap-4 border-b border-slate-200 pb-5">
                     <h2 className="text-2xl font-black text-slate-950 sm:text-3xl">{group}</h2>
                     {allGroupCards.length > postsPerCat && (
-                      <button onClick={() => setSelectedGroup(group)} className="text-xs font-bold text-emerald-600 hover:text-emerald-700">Tất cả →</button>
+                      <button onClick={() => setSelectedGroup(group)} className="text-xs font-bold text-brand hover:text-brand-hover">Tất cả →</button>
                     )}
                   </div>
                   {renderGrid(groupCards)}
@@ -650,25 +650,25 @@ function PortfolioCollectionPage({ page, cards, onOpen, metaOverride, projectsSe
   }
 
   return (
-    <div className="bg-[#f7fbf9] pb-24 pt-28 sm:pt-32">
+    <div className="bg-brand-light pb-24 pt-28 sm:pt-32">
       <div className={sectionShell}>
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
           <div className="max-w-3xl">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-600">{meta.eyebrow}</p>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-brand">{meta.eyebrow}</p>
             <h1 className="mt-4 text-4xl font-black tracking-[-0.045em] text-slate-950 sm:text-6xl">{meta.title}</h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600">{meta.description}</p>
           </div>
           <div className="flex items-center gap-2 bg-white p-1 rounded-2xl shadow-sm border border-slate-100">
             <button 
               onClick={() => setViewMode('grid')} 
-              className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all ${viewMode === 'grid' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}
+              className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all ${viewMode === 'grid' ? 'bg-brand text-white shadow-lg shadow-brand/20' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}
               title="Dạng lưới"
             >
               <LayoutGrid className="h-5 w-5" />
             </button>
             <button 
               onClick={() => setViewMode('list')} 
-              className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all ${viewMode === 'list' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}
+              className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all ${viewMode === 'list' ? 'bg-brand text-white shadow-lg shadow-brand/20' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}
               title="Dạng danh sách"
             >
               <List className="h-5 w-5" />
@@ -682,17 +682,17 @@ function PortfolioCollectionPage({ page, cards, onOpen, metaOverride, projectsSe
               <CollectionImage card={hero} />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/25 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 p-7 text-white sm:p-9">
-                <span className="rounded-full bg-emerald-500 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider">Mới & nổi bật</span>
+                <span className="rounded-full bg-brand px-3 py-1.5 text-[10px] font-black uppercase tracking-wider">Mới & nổi bật</span>
                 <h2 className="mt-5 text-2xl font-black leading-tight sm:text-4xl">{hero.title}</h2>
                 <p className="mt-3 line-clamp-2 max-w-2xl text-sm leading-7 text-slate-200">{hero.description}</p>
               </div>
             </button>
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-1">
-              {secondary.map(card => <button key={card.id} onClick={() => onOpen(card.detail)} className="group overflow-hidden rounded-[1.75rem] bg-white text-left shadow-sm transition hover:-translate-y-1 hover:shadow-xl"><div className="aspect-[16/9] overflow-hidden"><CollectionImage card={card} /></div><div className="p-5"><p className="text-[10px] font-black uppercase tracking-wider text-emerald-600">{card.category}</p><h3 className="mt-2 line-clamp-2 text-lg font-black leading-snug text-slate-950">{card.title}</h3><p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">{card.description}</p></div></button>)}
+              {secondary.map(card => <button key={card.id} onClick={() => onOpen(card.detail)} className="group overflow-hidden rounded-[1.75rem] bg-white text-left shadow-sm transition hover:-translate-y-1 hover:shadow-xl"><div className="aspect-[16/9] overflow-hidden"><CollectionImage card={card} /></div><div className="p-5"><p className="text-[10px] font-black uppercase tracking-wider text-brand">{card.category}</p><h3 className="mt-2 line-clamp-2 text-lg font-black leading-snug text-slate-950">{card.title}</h3><p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">{card.description}</p></div></button>)}
             </div>
             <aside className="rounded-[1.75rem] bg-white p-6 shadow-sm">
               <h2 className="text-xl font-black text-slate-950">Được quan tâm</h2>
-              <div className="mt-5 divide-y divide-slate-100">{popular.map((card, index) => <button key={card.id} onClick={() => onOpen(card.detail)} className="group flex w-full gap-3 py-4 text-left"><span className="text-xl font-black text-emerald-200 group-hover:text-emerald-500">{String(index + 1).padStart(2, '0')}</span><span><strong className="line-clamp-2 text-sm leading-6 text-slate-800 group-hover:text-emerald-700">{card.title}</strong><small className="mt-1 block text-[10px] font-bold text-slate-400">{card.views.toLocaleString('vi-VN')} lượt xem</small></span></button>)}</div>
+              <div className="mt-5 divide-y divide-slate-100">{popular.map((card, index) => <button key={card.id} onClick={() => onOpen(card.detail)} className="group flex w-full gap-3 py-4 text-left"><span className="text-xl font-black text-brand group-hover:text-brand">{String(index + 1).padStart(2, '0')}</span><span><strong className="line-clamp-2 text-sm leading-6 text-slate-800 group-hover:text-brand-hover">{card.title}</strong><small className="mt-1 block text-[10px] font-bold text-slate-400">{card.views.toLocaleString('vi-VN')} lượt xem</small></span></button>)}</div>
             </aside>
           </section>
         ) : <div className="mt-12 rounded-[2rem] bg-white p-12 text-center text-sm text-slate-500">Chưa có nội dung được xuất bản.</div>}
@@ -703,7 +703,7 @@ function PortfolioCollectionPage({ page, cards, onOpen, metaOverride, projectsSe
             <section key={group} className="mt-20">
               <div className="flex items-end justify-between gap-4 border-b border-slate-200 pb-5">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-600">Chuyên mục</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-brand">Chuyên mục</p>
                   <h2 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">{group}</h2>
                 </div>
                 <span className="text-xs font-bold text-slate-400">{groupCards.length} nội dung</span>
@@ -719,13 +719,13 @@ function PortfolioCollectionPage({ page, cards, onOpen, metaOverride, projectsSe
                       <CollectionImage card={card} />
                     </div>
                     <div className="flex flex-1 flex-col p-6 min-w-0">
-                      <div className="flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-wider text-emerald-600">
+                      <div className="flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-wider text-brand">
                         <span>{card.category}</span>
                         <span className="text-slate-400">{card.date}</span>
                       </div>
-                      <h3 className="mt-3 line-clamp-2 text-xl font-black leading-snug text-slate-950 group-hover:text-emerald-700">{card.title}</h3>
+                      <h3 className="mt-3 line-clamp-2 text-xl font-black leading-snug text-slate-950 group-hover:text-brand-hover">{card.title}</h3>
                       <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">{card.description}</p>
-                      <span className="mt-auto pt-4 inline-flex items-center gap-2 text-xs font-black text-emerald-700">
+                      <span className="mt-auto pt-4 inline-flex items-center gap-2 text-xs font-black text-brand-hover">
                         Xem nội dung <ArrowRight className="h-4 w-4" />
                       </span>
                     </div>
@@ -1116,7 +1116,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
         ) : cover ? (
           <img src={cover} alt="" className="absolute inset-0 h-full w-full object-cover opacity-100" />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-900 to-slate-900" />
+          <div className="absolute inset-0 bg-gradient-to-br from-brand-hover to-slate-900" />
         )}
         
         {/* Back button */}
@@ -1130,7 +1130,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
               title="Sao chép đường link rút gọn, khi dán lên Zalo hoặc Facebook sẽ hiện đúng tiêu đề và ảnh bìa"
               className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold text-white backdrop-blur-md hover:bg-white/20 transition-colors"
             >
-              {shareCopied ? <Check className="h-4 w-4 text-emerald-300" /> : <Share2 className="h-4 w-4" />}
+              {shareCopied ? <Check className="h-4 w-4 text-brand" /> : <Share2 className="h-4 w-4" />}
               {shareCopied ? 'Đã sao chép link' : 'Chia sẻ'}
             </button>
           )}
@@ -1145,8 +1145,8 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
             style={{ backgroundColor: bgColor }}
           >
             {infoItems.map((info, idx) => (
-              <div key={idx} className="group flex items-start gap-4 p-6 transition-colors hover:bg-emerald-50/50 sm:p-8">
-                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
+              <div key={idx} className="group flex items-start gap-4 p-6 transition-colors hover:bg-brand-light/50 sm:p-8">
+                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand transition-transform group-hover:scale-110">
                   <info.icon className="h-6 w-6" />
                 </div>
                 <div>
@@ -1222,7 +1222,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                     
                     {/* Course Category & Title */}
                     <div className="mb-4">
-                      <span className="text-xs font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+                      <span className="text-xs font-black uppercase tracking-wider text-brand bg-brand-light px-3 py-1 rounded-full">
                         {course.category}
                       </span>
                       <h1 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-tight">
@@ -1248,7 +1248,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                           <button 
                             onClick={viewer ? handleInnerEnroll : onEnterSystem}
                             disabled={registering}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all transform hover:scale-105 flex items-center gap-2"
+                            className="bg-brand hover:bg-brand-hover text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all transform hover:scale-105 flex items-center gap-2"
                           >
                             {registering ? <Loader2 className="w-4 h-4 animate-spin" /> : viewer ? <BookMarked className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
                             {viewer ? "Đăng ký khóa học ngay" : "Đăng nhập ngay"}
@@ -1286,7 +1286,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                           } else {
                             return (
                               <div className="flex h-full w-full flex-col items-center justify-center bg-slate-950 text-white p-6 text-center">
-                                <BookOpen className="h-16 w-16 text-emerald-500 mb-4 animate-pulse" />
+                                <BookOpen className="h-16 w-16 text-brand mb-4 animate-pulse" />
                                 <p className="text-base font-bold text-white">Bài đọc lý thuyết</p>
                                 <p className="mt-1 text-xs text-slate-400 max-w-md">Bài học này không chứa video. Học viên hãy đọc nội dung tóm tắt chi tiết bên dưới.</p>
                               </div>
@@ -1343,15 +1343,15 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                               <button 
                                 onClick={viewer ? handleInnerEnroll : onEnterSystem}
                                 disabled={registering}
-                                className="group relative flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all transform hover:scale-105 shadow-xl shadow-emerald-600/20 disabled:opacity-50"
+                                className="group relative flex items-center gap-3 bg-brand hover:bg-brand-hover text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all transform hover:scale-105 shadow-xl shadow-brand/20 disabled:opacity-50"
                               >
                                 {registering ? <Loader2 className="w-4 h-4 animate-spin" /> : viewer ? <BookMarked className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
                                 {viewer ? "Đăng ký khóa học" : "Đăng nhập để đăng ký"}
                                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                               </button>
                             </div>
-                            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-emerald-600/10 rounded-full blur-3xl"></div>
-                            <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl"></div>
+                            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-brand/10 rounded-full blur-3xl"></div>
+                            <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-brand/10 rounded-full blur-3xl"></div>
                           </div>
                         )}
 
@@ -1367,12 +1367,12 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                             </div>
                           </div>
                           
-                          <div className="rounded-2xl bg-indigo-50/50 border border-indigo-100 p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
-                            <div className="grid h-12 w-12 place-items-center rounded-xl bg-indigo-100 text-indigo-800 shrink-0">
+                          <div className="rounded-2xl bg-brand-light/50 border border-brand-light p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
+                            <div className="grid h-12 w-12 place-items-center rounded-xl bg-brand-light text-brand-hover shrink-0">
                               <Wrench className="h-6 w-6" />
                             </div>
                             <div>
-                              <p className="text-[10px] font-black uppercase tracking-wider text-indigo-800">Bài thực hành</p>
+                              <p className="text-[10px] font-black uppercase tracking-wider text-brand-hover">Bài thực hành</p>
                               <p className="mt-1 font-black text-slate-900">
                                 {courseLessons.reduce((sum, lesson) => sum + (lesson.assignments?.length || 0), 0) || courseLessons.filter(l => l.practiceFileUrl).length || 3} bài Lab
                               </p>
@@ -1398,14 +1398,14 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                         {/* Course Outcomes & Requirements */}
                         <div className="grid gap-6 sm:grid-cols-2">
                           {course.objectives && course.objectives.length > 0 && (
-                            <div className="rounded-[1.5rem] bg-emerald-50/40 border border-emerald-100/50 p-6">
+                            <div className="rounded-[1.5rem] bg-brand-light/40 border border-brand-light/50 p-6">
                               <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                                <CheckCircle className="h-4 w-4 text-emerald-600" /> Mục tiêu khóa học
+                                <CheckCircle className="h-4 w-4 text-brand" /> Mục tiêu khóa học
                               </h4>
                               <ul className="mt-4 space-y-3 text-sm text-slate-600 font-medium">
                                 {course.objectives.map((obj, i) => (
                                   <li key={i} className="flex items-start gap-2">
-                                    <span className="text-emerald-500 mt-0.5">✦</span>
+                                    <span className="text-brand mt-0.5">✦</span>
                                     <span>{obj}</span>
                                   </li>
                                 ))}
@@ -1439,7 +1439,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                               {activeLesson.title}
                             </h2>
                             <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-400 font-bold">
-                              <span className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                              <span className="flex items-center gap-1.5 text-brand bg-brand-light px-2 py-0.5 rounded">
                                 <Clock className="h-3.5 w-3.5" /> {formatLessonDuration(activeLesson.duration)} học
                               </span>
                               {activeLesson.practiceFileUrl && (
@@ -1447,7 +1447,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                                   href={isSafeUrl(activeLesson.practiceFileUrl) ? activeLesson.practiceFileUrl : undefined} 
                                   target="_blank" 
                                   rel="noreferrer" 
-                                  className="flex items-center gap-1 text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded hover:underline"
+                                  className="flex items-center gap-1 text-brand bg-brand-light px-2 py-0.5 rounded hover:underline"
                                 >
                                   Tải file thực hành (Lab)
                                 </a>
@@ -1461,8 +1461,8 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                               onClick={() => toggleLessonComplete(activeLesson.id)}
                               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm ${
                                 completedLessonIds.includes(activeLesson.id)
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                  : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/20'
+                                  ? 'bg-brand-light text-brand-hover border border-brand'
+                                  : 'bg-brand text-white hover:bg-brand-hover shadow-brand/20'
                               }`}
                             >
                               {completedLessonIds.includes(activeLesson.id) ? (
@@ -1538,15 +1538,15 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                             <div className="flex items-center gap-1.5 bg-white border border-slate-100 p-1 rounded-xl">
                               {[
                                 { bg: 'bg-amber-50 text-amber-950 border-amber-200', dot: 'bg-amber-400', label: 'Vàng' },
-                                { bg: 'bg-emerald-50 text-emerald-950 border-emerald-200', dot: 'bg-emerald-400', label: 'Xanh' },
-                                { bg: 'bg-sky-50 text-sky-950 border-sky-200', dot: 'bg-sky-400', label: 'Lam' },
+                                { bg: 'bg-brand-light text-brand-hover border-brand', dot: 'bg-brand', label: 'Xanh' },
+                                { bg: 'bg-brand-light text-brand-hover border-brand', dot: 'bg-brand', label: 'Lam' },
                                 { bg: 'bg-rose-50 text-rose-950 border-rose-200', dot: 'bg-rose-400', label: 'Hồng' }
                               ].map((colorObj, idx) => (
                                 <button
                                   key={idx}
                                   onClick={() => setNoteBgColor(colorObj.bg)}
                                   className={`h-6 w-6 rounded-lg flex items-center justify-center transition-transform ${
-                                    noteBgColor === colorObj.bg ? 'ring-2 ring-emerald-600 scale-105' : 'hover:scale-105'
+                                    noteBgColor === colorObj.bg ? 'ring-2 ring-brand scale-105' : 'hover:scale-105'
                                   }`}
                                   title={colorObj.label}
                                 >
@@ -1562,7 +1562,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                               value={newNote}
                               onChange={(e) => setNewNote(e.target.value)}
                               placeholder="Ghi lại bài học hoặc ý tưởng thiết kế tại đây..."
-                              className="w-full min-h-[90px] rounded-2xl border border-slate-200 bg-white p-4 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition"
+                              className="w-full min-h-[90px] rounded-2xl border border-slate-200 bg-white p-4 text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none transition"
                             />
                             <div className="flex justify-between items-center">
                               <span className="text-[10px] text-slate-400 font-black uppercase tracking-wider">
@@ -1583,7 +1583,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                                   saveNotes(updated);
                                   setNewNote('');
                                 }}
-                                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 text-xs font-black transition-colors shadow-lg shadow-emerald-600/10"
+                                className="inline-flex items-center gap-2 rounded-xl bg-brand hover:bg-brand-hover text-white px-5 py-2.5 text-xs font-black transition-colors shadow-lg shadow-brand/10"
                               >
                                 <Plus className="h-4 w-4" /> Lưu ghi chú
                               </button>
@@ -1609,7 +1609,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                                       <button
                                         onClick={() => navigator.clipboard.writeText(note.text)}
                                         title="Sao chép"
-                                        className="p-1 hover:text-emerald-700 transition"
+                                        className="p-1 hover:text-brand-hover transition"
                                       >
                                         <Copy className="h-3.5 w-3.5" />
                                       </button>
@@ -1660,7 +1660,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                               value={popupNoteText}
                               onChange={(e) => setPopupNoteText(e.target.value)}
                               placeholder="Nhập nội dung ghi chú cho đoạn bôi đen này..."
-                              className="w-full rounded-xl border border-slate-800 bg-slate-950 p-2.5 text-xs text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition placeholder:text-slate-500"
+                              className="w-full rounded-xl border border-slate-800 bg-slate-950 p-2.5 text-xs text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none transition placeholder:text-slate-500"
                               autoFocus
                             />
                             <div className="flex justify-end gap-2">
@@ -1693,7 +1693,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                                   setShowNotePopup(false);
                                   window.getSelection()?.removeAllRanges();
                                 }}
-                                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-[10px] font-black text-white transition-colors"
+                                className="px-3.5 py-1.5 rounded-lg bg-brand hover:bg-brand-hover text-[10px] font-black text-white transition-colors"
                               >
                                 Lưu ghi chú
                               </button>
@@ -1722,13 +1722,13 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                         <div className="rounded-2xl bg-white/5 border border-white/10 p-4.5 space-y-3">
                           <div className="flex items-center justify-between text-[10px] font-black">
                             <span className="text-slate-400 uppercase tracking-wider">TIẾN ĐỘ HỌC TẬP</span>
-                            <span className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded font-bold">
+                            <span className="text-brand bg-brand/10 px-2 py-0.5 rounded font-bold">
                               {completedLessonIds.filter(id => courseLessons.some(l => l.id === id)).length}/{courseLessons.length} bài
                             </span>
                           </div>
                           <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                             <div 
-                              className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" 
+                              className="h-full bg-gradient-to-r from-brand to-brand transition-all duration-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" 
                               style={{ width: `${courseProgress}%` }}
                             />
                           </div>
@@ -1743,12 +1743,12 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                         onClick={() => handleSelectLesson(null)}
                         className={`flex w-full items-center justify-between gap-4 rounded-xl p-3 text-left transition-all border ${
                           activeLessonId === null 
-                            ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-600/10' 
+                            ? 'bg-brand border-brand text-white shadow-lg shadow-brand/10' 
                             : 'bg-white/5 border-white/5 hover:bg-white/10 text-slate-300'
                         }`}
                       >
                         <span className="flex items-center gap-3 text-xs font-bold">
-                          <div className={`grid h-6 w-6 place-items-center rounded-lg ${activeLessonId === null ? 'bg-white/20 text-white' : 'bg-emerald-400/20 text-emerald-400'}`}>
+                          <div className={`grid h-6 w-6 place-items-center rounded-lg ${activeLessonId === null ? 'bg-white/20 text-white' : 'bg-brand/20 text-brand'}`}>
                             <Play className="h-3 w-3 fill-current" />
                           </div>
                           Giới thiệu khóa học
@@ -1781,7 +1781,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                                       isLocked
                                         ? 'opacity-45 cursor-not-allowed bg-white/5 border-transparent'
                                         : isActive 
-                                          ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-600/10 scale-[1.02]' 
+                                          ? 'bg-brand border-brand text-white shadow-lg shadow-brand/10 scale-[1.02]' 
                                           : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/15 text-slate-300'
                                     }`}
                                   >
@@ -1798,11 +1798,11 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                                       {isLocked ? (
                                         <LockKeyhole className="h-4 w-4 text-slate-500" />
                                       ) : isCompleted ? (
-                                        <CheckCircle2 className="h-5 w-5 text-emerald-400 fill-emerald-950/30" />
+                                        <CheckCircle2 className="h-5 w-5 text-brand fill-brand-hover/30" />
                                       ) : isActive ? (
-                                        <div className="h-4 w-4 rounded-full border-2 border-emerald-300 animate-pulse bg-emerald-500/20" title="Đang học" />
+                                        <div className="h-4 w-4 rounded-full border-2 border-brand animate-pulse bg-brand/20" title="Đang học" />
                                       ) : (
-                                        <div className="h-4 w-4 rounded-full border border-white/30 group-hover:border-emerald-400 transition-colors" />
+                                        <div className="h-4 w-4 rounded-full border border-white/30 group-hover:border-brand transition-colors" />
                                       )}
                                     </div>
 
@@ -1813,11 +1813,11 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                                       </p>
                                       <div className="mt-1 flex items-center gap-2 text-[9px] text-slate-400 font-bold">
                                         <Clock className="h-3 w-3 shrink-0" />
-                                        <span className={isActive ? 'text-emerald-200' : ''}>{formatLessonDuration(lesson.duration)}</span>
+                                        <span className={isActive ? 'text-brand' : ''}>{formatLessonDuration(lesson.duration)}</span>
                                         {lesson.practiceFileUrl && (
                                           <>
                                             <span className="h-1 w-1 rounded-full bg-white/20" />
-                                            <span className="text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded text-[8px]">Lab</span>
+                                            <span className="text-brand bg-brand/10 px-1.5 py-0.5 rounded text-[8px]">Lab</span>
                                           </>
                                         )}
                                       </div>
@@ -1835,7 +1835,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                         <div className="pt-4 border-t border-white/10 space-y-3">
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Ghi chú đã lưu ({notes.length})</span>
-                            <span className="text-[9px] text-emerald-400 font-bold bg-emerald-400/10 px-1.5 py-0.5 rounded">
+                            <span className="text-[9px] text-brand font-bold bg-brand/10 px-1.5 py-0.5 rounded">
                               Bài học hiện tại
                             </span>
                           </div>
@@ -1881,8 +1881,8 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
             {item.type === 'research' && (
               <div className="space-y-8">
                 {item.data.titleEn && <p className="text-xl font-medium italic text-slate-500">{item.data.titleEn}</p>}
-                <div className="rounded-[2rem] bg-emerald-50 p-8">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-emerald-800">Tóm tắt</h3>
+                <div className="rounded-[2rem] bg-brand-light p-8">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-brand-hover">Tóm tắt</h3>
                   <p className="mt-4 text-sm leading-8 text-slate-700">{item.data.abstractVi}</p>
                 </div>
                 <div className="grid gap-6 rounded-[2rem] border border-slate-100 p-8 sm:grid-cols-2">
@@ -1907,7 +1907,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                   </div>
                 )}
                 <div className="flex flex-wrap gap-4">
-                  {isSafeUrl(item.data.publisherUrl) && <a href={item.data.publisherUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-6 py-3.5 text-sm font-black text-white shadow-xl shadow-emerald-900/20 hover:bg-emerald-500">Nguồn xuất bản <ExternalLink className="h-4 w-4" /></a>}
+                  {isSafeUrl(item.data.publisherUrl) && <a href={item.data.publisherUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl bg-brand px-6 py-3.5 text-sm font-black text-white shadow-xl shadow-brand-hover/20 hover:bg-brand">Nguồn xuất bản <ExternalLink className="h-4 w-4" /></a>}
                   {isSafeUrl(item.data.pdfUrl) && <a href={item.data.pdfUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-black text-slate-700 hover:bg-slate-50">Tải tài liệu PDF <Download className="h-4 w-4" /></a>}
                 </div>
               </div>
@@ -1921,7 +1921,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
         <div className={sectionShell}>
           <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
              <div>
-               <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-emerald-600">Discover more</span>
+               <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-brand">Discover more</span>
                <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Nội dung liên quan</h2>
              </div>
           </div>
@@ -1931,17 +1931,17 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
               <Reveal key={card.id} delay={idx * 0.05}>
                 <button 
                   onClick={() => onOpen(card.detail)}
-                  className="group flex h-full flex-col overflow-hidden rounded-[2rem] bg-white text-left shadow-sm ring-1 ring-slate-200/60 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-900/5"
+                  className="group flex h-full flex-col overflow-hidden rounded-[2rem] bg-white text-left shadow-sm ring-1 ring-slate-200/60 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-hover/5"
                 >
                   <div className="aspect-[4/3] overflow-hidden">
                     <CollectionImage card={card} />
                   </div>
                   <div className="flex flex-1 flex-col p-6">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600">{card.category}</span>
-                    <h3 className="mt-3 line-clamp-2 text-base font-black leading-snug text-slate-950 group-hover:text-emerald-700">{card.title}</h3>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-brand">{card.category}</span>
+                    <h3 className="mt-3 line-clamp-2 text-base font-black leading-snug text-slate-950 group-hover:text-brand-hover">{card.title}</h3>
                     <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-500">{card.description}</p>
                     <div className="mt-auto pt-5">
-                      <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-emerald-600 transition-colors">
+                      <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-brand transition-colors">
                         Xem chi tiết <ArrowRight className="h-3 w-3" />
                       </span>
                     </div>
@@ -2411,11 +2411,11 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
   const bgColor = globalSettings ? `#ffffff${opacityHex}` : 'white';
 
   if (!banner || !about) {
-    return <div className="grid min-h-screen place-items-center bg-[#f7fbf9]"><div className="text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin text-emerald-600" /><p className="mt-3 text-sm font-bold text-slate-500">Đang chuẩn bị Portfolio...</p></div></div>;
+    return <div className="grid min-h-screen place-items-center bg-brand-light"><div className="text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin text-brand" /><p className="mt-3 text-sm font-bold text-slate-500">Đang chuẩn bị Portfolio...</p></div></div>;
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-white font-sans text-slate-800 selection:bg-emerald-200 selection:text-emerald-950 lg:pb-0">
+    <div className="min-h-screen overflow-x-hidden bg-white font-sans text-slate-800 selection:bg-brand selection:text-brand-hover lg:pb-0">
       <a href="#main-content" className="fixed left-4 top-3 z-[120] -translate-y-20 rounded-lg bg-slate-950 px-4 py-2 text-sm font-bold text-white focus:translate-y-0">Bỏ qua menu</a>
 
       {enrollNotice && (
@@ -2423,7 +2423,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
           role="status"
           className={`fixed bottom-6 left-1/2 z-[130] w-[min(92vw,28rem)] -translate-x-1/2 rounded-2xl px-5 py-4 text-sm font-semibold shadow-2xl ring-1 ${
             enrollNotice.type === 'success'
-              ? 'bg-emerald-600 text-white ring-emerald-500/40'
+              ? 'bg-brand text-white ring-brand/40'
               : 'bg-rose-600 text-white ring-rose-500/40'
           }`}
         >
@@ -2471,7 +2471,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
                   height: isScrolled && !isNavHovered ? 34 : 40,
                 }}
                 transition={{ type: 'spring', stiffness: 220, damping: 25 }}
-                className="shrink-0 rounded-xl object-contain shadow-md shadow-emerald-600/15" 
+                className="shrink-0 rounded-xl object-contain shadow-md shadow-brand/15" 
               />
             ) : (
               <motion.span 
@@ -2480,7 +2480,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
                   height: isScrolled && !isNavHovered ? 34 : 40,
                 }}
                 transition={{ type: 'spring', stiffness: 220, damping: 25 }}
-                className="grid shrink-0 place-items-center rounded-xl bg-emerald-600 text-sm font-black text-white shadow-md shadow-emerald-600/20"
+                className="grid shrink-0 place-items-center rounded-xl bg-brand text-sm font-black text-white shadow-md shadow-brand/20"
               >
                 {(banner.logoText || about.artistName).charAt(0)}
               </motion.span>
@@ -2496,7 +2496,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
               <strong className="block truncate text-base font-black tracking-tight text-slate-950">
                 {banner.logoText || about.artistName}
               </strong>
-              <span className="block truncate text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-600">Multimedia Portfolio</span>
+              <span className="block truncate text-[10px] font-bold uppercase tracking-[0.14em] text-brand">Multimedia Portfolio</span>
             </motion.span>
           </motion.button>
 
@@ -2536,10 +2536,10 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
                     }}
                     className={`flex min-h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-xs font-extrabold transition-all duration-200 cursor-pointer ${
                       item.highlight
-                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20 hover:bg-emerald-700'
+                        ? 'bg-brand text-white shadow-md shadow-brand/20 hover:bg-brand-hover'
                         : isActive
-                          ? 'bg-emerald-100 text-slate-950 shadow-sm'
-                          : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-800'
+                          ? 'bg-brand-light text-slate-950 shadow-sm'
+                          : 'text-slate-700 hover:bg-brand-light hover:text-brand-hover'
                     }`}
                   >
                     {item.label}
@@ -2549,7 +2549,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
                     <div className={`absolute left-1/2 top-full z-50 min-w-[140px] -translate-x-1/2 rounded-2xl p-1.5 shadow-2xl shadow-slate-900/20 ring-1 ring-slate-200/50 transition-all duration-200 ${openMenuId === item.id ? 'visible translate-y-4 opacity-100' : 'invisible translate-y-2 opacity-0'} group-hover:visible group-hover:translate-y-4 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-4 group-focus-within:opacity-100 ${glassStyle}`} style={{ backgroundColor: bgColor }}>
                       <div className="flex flex-col gap-0.5">
                         {children.map(child => (
-                          <button key={child.id} onClick={() => openMenuItem(child)} className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[10px] font-bold transition-colors cursor-pointer ${child.highlight ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20' : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'}`}>
+                          <button key={child.id} onClick={() => openMenuItem(child)} className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-[10px] font-bold transition-colors cursor-pointer ${child.highlight ? 'bg-brand text-white shadow-md shadow-brand/20' : 'text-slate-600 hover:bg-brand-light hover:text-brand-hover'}`}>
                             {React.createElement(navigationIcons[child.icon] || ExternalLink, { className: 'h-3 w-3 opacity-80' })}{child.label}
                           </button>
                         ))}
@@ -2575,7 +2575,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
                 padding: isScrolled && !isNavHovered ? '8px' : '10px 16px',
               }}
               transition={{ type: 'spring', stiffness: 220, damping: 25 }}
-              className={`hidden items-center justify-center rounded-full text-xs font-extrabold text-slate-700 hover:bg-white hover:text-emerald-700 sm:inline-flex transition-all duration-300 cursor-pointer ${isScrolled && !isNavHovered ? '' : 'shadow-[0_14px_36px_-16px_rgba(15,23,42,0.4)] ' + glassStyle}`}
+              className={`hidden items-center justify-center rounded-full text-xs font-extrabold text-slate-700 hover:bg-white hover:text-brand-hover sm:inline-flex transition-all duration-300 cursor-pointer ${isScrolled && !isNavHovered ? '' : 'shadow-[0_14px_36px_-16px_rgba(15,23,42,0.4)] ' + glassStyle}`}
               style={{ backgroundColor: isScrolled && !isNavHovered ? 'transparent' : bgColor }}
             >
               <Search className="h-4 w-4 shrink-0" />
@@ -2600,7 +2600,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
                 color: isScrolled && !isNavHovered ? '#334155' : '#ffffff',
               }}
               transition={{ type: 'spring', stiffness: 220, damping: 25 }}
-              className={`hidden items-center justify-center rounded-full text-xs font-extrabold sm:inline-flex cursor-pointer ${isScrolled && !isNavHovered ? '' : 'shadow-lg shadow-emerald-600/20 hover:bg-emerald-700'}`}
+              className={`hidden items-center justify-center rounded-full text-xs font-extrabold sm:inline-flex cursor-pointer ${isScrolled && !isNavHovered ? '' : 'shadow-lg shadow-brand/20 hover:bg-brand-hover'}`}
             >
               {isAuthenticated ? (
                 isMember ? <FileText className="h-4 w-4 shrink-0" /> : <UserRound className="h-4 w-4 shrink-0" />
@@ -2629,7 +2629,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
                     padding: isScrolled && !isNavHovered ? '8px' : '10px 16px',
                   }}
                   transition={{ type: 'spring', stiffness: 220, damping: 25 }}
-                  className={`hidden items-center justify-center rounded-full text-xs font-extrabold text-slate-700 hover:bg-white hover:text-emerald-700 sm:inline-flex transition-all duration-300 cursor-pointer ${isScrolled && !isNavHovered ? '' : 'shadow-[0_14px_36px_-16px_rgba(15,23,42,0.4)] ' + glassStyle}`}
+                  className={`hidden items-center justify-center rounded-full text-xs font-extrabold text-slate-700 hover:bg-white hover:text-brand-hover sm:inline-flex transition-all duration-300 cursor-pointer ${isScrolled && !isNavHovered ? '' : 'shadow-[0_14px_36px_-16px_rgba(15,23,42,0.4)] ' + glassStyle}`}
                   style={{ backgroundColor: isScrolled && !isNavHovered ? 'transparent' : bgColor }}
                 >
                   <UserCircle className="h-4 w-4 shrink-0" />
@@ -2696,9 +2696,9 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
                   key={item.id}
                   onClick={() => openMenuItem(item)}
                   aria-current={isActive ? 'page' : undefined}
-                  className={`group flex w-[76px] shrink-0 snap-center flex-col items-center justify-end gap-1 rounded-[1.4rem] px-1 pb-2 pt-1 text-center transition-all cursor-pointer ${isActive ? 'text-emerald-700' : 'text-slate-400 hover:bg-emerald-50 hover:text-emerald-700'}`}
+                  className={`group flex w-[76px] shrink-0 snap-center flex-col items-center justify-end gap-1 rounded-[1.4rem] px-1 pb-2 pt-1 text-center transition-all cursor-pointer ${isActive ? 'text-brand-hover' : 'text-slate-400 hover:bg-brand-light hover:text-brand-hover'}`}
                 >
-                  <span className={`grid place-items-center rounded-full transition-all duration-300 ${isActive ? '-mt-5 h-14 w-14 bg-emerald-500 text-white shadow-[0_10px_22px_-7px_rgba(16,185,129,0.7)] ring-4 ring-white' : 'h-8 w-8'}`}>
+                  <span className={`grid place-items-center rounded-full transition-all duration-300 ${isActive ? '-mt-5 h-14 w-14 bg-brand text-white shadow-[0_10px_22px_-7px_rgba(16,185,129,0.7)] ring-4 ring-white' : 'h-8 w-8'}`}>
                     <Icon className={isActive ? 'h-6 w-6' : 'h-5 w-5'} />
                   </span>
                   <span className={`max-w-full truncate text-[9px] leading-none ${isActive ? 'font-black' : 'font-bold'}`}>{item.label}</span>
@@ -2707,7 +2707,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
             })}
             <a
               href="/tracuu.html"
-              className="group flex w-[76px] shrink-0 snap-center flex-col items-center justify-end gap-1 rounded-[1.4rem] px-1 pb-2 pt-1 text-center text-slate-400 transition-all hover:bg-emerald-50 hover:text-emerald-700 cursor-pointer"
+              className="group flex w-[76px] shrink-0 snap-center flex-col items-center justify-end gap-1 rounded-[1.4rem] px-1 pb-2 pt-1 text-center text-slate-400 transition-all hover:bg-brand-light hover:text-brand-hover cursor-pointer"
               aria-label="Mở trang tra cứu"
             >
               <span className="grid h-8 w-8 place-items-center rounded-full"><Search className="h-5 w-5" /></span>
@@ -2715,7 +2715,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
             </a>
             <button
               onClick={onEnterSystem}
-              className="group flex w-[76px] shrink-0 snap-center flex-col items-center justify-end gap-1 rounded-[1.4rem] px-1 pb-2 pt-1 text-center text-slate-400 transition-all hover:bg-emerald-50 hover:text-emerald-700 cursor-pointer"
+              className="group flex w-[76px] shrink-0 snap-center flex-col items-center justify-end gap-1 rounded-[1.4rem] px-1 pb-2 pt-1 text-center text-slate-400 transition-all hover:bg-brand-light hover:text-brand-hover cursor-pointer"
               aria-label={isMember ? 'Mở các khóa học của tôi' : isAuthenticated ? 'Mở trang quản trị' : 'Đăng nhập quản trị'}
             >
               <span className="grid h-8 w-8 place-items-center rounded-full"><LockKeyhole className="h-5 w-5" /></span>
@@ -2771,7 +2771,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
                 <motion.div initial={banner.animate ? { opacity: 0, y: 28 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.75 }} className={`relative z-10 mx-auto flex min-h-[720px] w-full max-w-7xl flex-col justify-center px-5 pb-28 pt-32 sm:min-h-[780px] sm:px-8 lg:px-10 ${banner.alignment === 'left' ? 'items-start text-left' : banner.alignment === 'right' ? 'items-end text-right' : 'items-center text-center'}`}>
                   {banner.showLabel !== false && (
                     <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-white backdrop-blur-md">
-                      <Sparkles className="h-4 w-4 text-emerald-300" />
+                      <Sparkles className="h-4 w-4 text-brand" />
                       {banner.labelText || 'Multimedia Designer & Artist'}
                     </span>
                   )}
@@ -2785,7 +2785,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
                   </p>
                   {banner.showButton !== false && (
                     <div className={`mt-9 flex flex-wrap gap-3 ${banner.alignment === 'left' ? 'justify-start' : banner.alignment === 'right' ? 'justify-end' : 'justify-center'}`}>
-                      <button onClick={() => scrollToLink(banner.buttonLink || '#about')} className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-black text-white shadow-xl shadow-emerald-900/20 hover:bg-emerald-400">
+                      <button onClick={() => scrollToLink(banner.buttonLink || '#about')} className="inline-flex items-center gap-2 rounded-2xl bg-brand px-6 py-3.5 text-sm font-black text-white shadow-xl shadow-brand-hover/20 hover:bg-brand">
                         {banner.buttonText || 'Tìm hiểu thêm'} <ArrowRight className="h-4 w-4" />
                       </button>
                       <button onClick={() => scrollToLink('#about')} className="inline-flex items-center gap-2 rounded-2xl border border-white/25 bg-white/10 px-6 py-3.5 text-sm font-black text-white backdrop-blur-md hover:bg-white/20">
@@ -2812,8 +2812,8 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
               ]).map((item, index) => {
                 const IconComponent = quickLinkIcons[item.icon] || Sparkles;
                 return (
-                  <div key={index} className="flex items-start gap-4 p-6 transition-colors hover:bg-emerald-50/30">
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-600">
+                  <div key={index} className="flex items-start gap-4 p-6 transition-colors hover:bg-brand-light/30">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand">
                       <IconComponent className="h-5 w-5" />
                     </span>
                     <div>
@@ -2831,8 +2831,8 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
 <section id="about" className="scroll-mt-24 bg-white py-24 sm:py-28">
           <div className={sectionShell}>
             <div className="grid items-center gap-12 lg:grid-cols-[0.85fr_1.15fr]">
-              <Reveal className="relative"><div className="absolute -inset-5 rounded-[2.5rem] bg-emerald-100/70 blur-2xl" /><img src={about.avatarUrl} alt={`Chân dung ${about.fullName}`} loading="lazy" className="relative aspect-[4/5] w-full rounded-[2.25rem] object-cover shadow-2xl" /><div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/60 bg-white/90 p-5 backdrop-blur"><p className="text-xl font-black text-slate-950">{about.artistName}</p><p className="mt-1 text-xs font-bold text-emerald-600">{about.jobTitle}</p></div></Reveal>
-              <Reveal><SectionHeading eyebrow={about.showAboutLabel !== false ? "Giới thiệu bản thân" : undefined} title={about.fullName || about.artistName} description={about.briefBio} /><p className="mt-6 text-sm leading-8 text-slate-600">{about.detailedAbout}</p><blockquote className="mt-7 rounded-2xl border-l-4 border-emerald-500 bg-emerald-50 p-5 text-sm font-semibold italic leading-7 text-slate-700"><Quote className="mb-2 h-5 w-5 text-emerald-600" />“{about.creativePhilosophy}”</blockquote><div className="mt-7 flex flex-wrap gap-2">{about.specialties.map(value => <span key={value} className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600">{value}</span>)}</div>{about.showCvButton && <a href={isSafeUrl(about.cvUrl) ? about.cvUrl : '#'} className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700"><Download className="h-4 w-4" /> Tải hồ sơ năng lực</a>}</Reveal>
+              <Reveal className="relative"><div className="absolute -inset-5 rounded-[2.5rem] bg-brand-light/70 blur-2xl" /><img src={about.avatarUrl} alt={`Chân dung ${about.fullName}`} loading="lazy" className="relative aspect-[4/5] w-full rounded-[2.25rem] object-cover shadow-2xl" /><div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/60 bg-white/90 p-5 backdrop-blur"><p className="text-xl font-black text-slate-950">{about.artistName}</p><p className="mt-1 text-xs font-bold text-brand">{about.jobTitle}</p></div></Reveal>
+              <Reveal><SectionHeading eyebrow={about.showAboutLabel !== false ? "Giới thiệu bản thân" : undefined} title={about.fullName || about.artistName} description={about.briefBio} /><p className="mt-6 text-sm leading-8 text-slate-600">{about.detailedAbout}</p><blockquote className="mt-7 rounded-2xl border-l-4 border-brand bg-brand-light p-5 text-sm font-semibold italic leading-7 text-slate-700"><Quote className="mb-2 h-5 w-5 text-brand" />“{about.creativePhilosophy}”</blockquote><div className="mt-7 flex flex-wrap gap-2">{about.specialties.map(value => <span key={value} className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600">{value}</span>)}</div>{about.showCvButton && <a href={isSafeUrl(about.cvUrl) ? about.cvUrl : '#'} className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-brand-hover"><Download className="h-4 w-4" /> Tải hồ sơ năng lực</a>}</Reveal>
             </div>
           </div>
         </section>
@@ -2842,19 +2842,19 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
         <section className="bg-white py-24 sm:py-28" aria-label="Học vấn và kinh nghiệm">
           <div className={sectionShell}>
             <div className="grid gap-8 lg:grid-cols-2">
-              {showSection('education') && <Reveal><div id="education" className="scroll-mt-28"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-600"><GraduationCap className="h-5 w-5" /></span><h3 className="text-2xl font-black text-slate-950">Học vấn</h3></div><div className="mt-6 space-y-4">{education.map(item => <article key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-6"><p className="text-xs font-extrabold text-emerald-600">{item.startDate} — {item.isOngoing ? 'Hiện tại' : item.endDate}</p><h4 className="mt-2 text-base font-black text-slate-950">{item.degree}</h4><p className="mt-1 text-xs font-bold text-slate-500">{item.major} • {item.school}</p><p className="mt-3 text-sm leading-6 text-slate-600">{item.description}</p>{item.achievement && <p className="mt-3 flex gap-2 text-xs font-bold text-emerald-700"><Award className="h-4 w-4 shrink-0" />{item.achievement}</p>}</article>)}</div></div></Reveal>}
-              {showSection('experience') && <Reveal delay={0.08}><div id="experience" className="scroll-mt-28"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-600"><BriefcaseBusiness className="h-5 w-5" /></span><h3 className="text-2xl font-black text-slate-950">Kinh nghiệm</h3></div><div className="mt-6 space-y-4">{experience.map(item => <article key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-6"><p className="text-xs font-extrabold text-emerald-600">{item.startDate} — {item.isOngoing ? 'Hiện tại' : item.endDate}</p><h4 className="mt-2 text-base font-black text-slate-950">{item.title}</h4><p className="mt-1 text-xs font-bold text-slate-500">{item.company}</p><p className="mt-3 text-sm leading-6 text-slate-600">{item.description}</p></article>)}</div></div></Reveal>}
+              {showSection('education') && <Reveal><div id="education" className="scroll-mt-28"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-light text-brand"><GraduationCap className="h-5 w-5" /></span><h3 className="text-2xl font-black text-slate-950">Học vấn</h3></div><div className="mt-6 space-y-4">{education.map(item => <article key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-6"><p className="text-xs font-extrabold text-brand">{item.startDate} — {item.isOngoing ? 'Hiện tại' : item.endDate}</p><h4 className="mt-2 text-base font-black text-slate-950">{item.degree}</h4><p className="mt-1 text-xs font-bold text-slate-500">{item.major} • {item.school}</p><p className="mt-3 text-sm leading-6 text-slate-600">{item.description}</p>{item.achievement && <p className="mt-3 flex gap-2 text-xs font-bold text-brand-hover"><Award className="h-4 w-4 shrink-0" />{item.achievement}</p>}</article>)}</div></div></Reveal>}
+              {showSection('experience') && <Reveal delay={0.08}><div id="experience" className="scroll-mt-28"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-light text-brand"><BriefcaseBusiness className="h-5 w-5" /></span><h3 className="text-2xl font-black text-slate-950">Kinh nghiệm</h3></div><div className="mt-6 space-y-4">{experience.map(item => <article key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-6"><p className="text-xs font-extrabold text-brand">{item.startDate} — {item.isOngoing ? 'Hiện tại' : item.endDate}</p><h4 className="mt-2 text-base font-black text-slate-950">{item.title}</h4><p className="mt-1 text-xs font-bold text-slate-500">{item.company}</p><p className="mt-3 text-sm leading-6 text-slate-600">{item.description}</p></article>)}</div></div></Reveal>}
             </div>
           </div>
         </section>
         )}
 
         {showSection('skills') && (
-<section id="skills" className="scroll-mt-24 bg-[#effaf5] py-24 sm:py-28">
+<section id="skills" className="scroll-mt-24 bg-brand-light py-24 sm:py-28">
           <div className={sectionShell}>
             <Reveal><SectionHeading eyebrow="Kỹ năng & Dịch vụ" title="Giải pháp sáng tạo từ ý tưởng đến trải nghiệm" description="Kết hợp mỹ thuật, chuyển động và công nghệ để tạo nên những sản phẩm đa phương tiện rõ ràng, đẹp và có giá trị sử dụng." centered /></Reveal>
             <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {skills.map((skill, index) => { const Icon = skillIcons[skill.icon] || Sparkles; return <Reveal key={skill.id} delay={Math.min(index * 0.06, 0.24)}><article className="group h-full rounded-[1.75rem] border border-emerald-100/80 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-900/5"><div className="flex items-start justify-between"><span className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white"><Icon className="h-6 w-6" /></span><span className="text-sm font-black text-emerald-600">{skill.proficiency}%</span></div><p className="mt-6 text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-600">{skill.category}</p><h3 className="mt-2 text-xl font-black text-slate-950">{skill.name}</h3><p className="mt-3 text-sm leading-7 text-slate-600">{skill.description}</p><div className="mt-6 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-emerald-500" style={{ width: `${skill.proficiency}%` }} /></div></article></Reveal>; })}
+              {skills.map((skill, index) => { const Icon = skillIcons[skill.icon] || Sparkles; return <Reveal key={skill.id} delay={Math.min(index * 0.06, 0.24)}><article className="group h-full rounded-[1.75rem] border border-brand-light/80 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-hover/5"><div className="flex items-start justify-between"><span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-light text-brand group-hover:bg-brand group-hover:text-white"><Icon className="h-6 w-6" /></span><span className="text-sm font-black text-brand">{skill.proficiency}%</span></div><p className="mt-6 text-[10px] font-bold uppercase tracking-[0.16em] text-brand">{skill.category}</p><h3 className="mt-2 text-xl font-black text-slate-950">{skill.name}</h3><p className="mt-3 text-sm leading-7 text-slate-600">{skill.description}</p><div className="mt-6 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-brand" style={{ width: `${skill.proficiency}%` }} /></div></article></Reveal>; })}
             </div>
           </div>
         </section>
@@ -2866,14 +2866,14 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
             <Reveal>
               <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
                 <div>
-                  <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-emerald-400">Selected work</span>
+                  <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-brand">Selected work</span>
                   <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-[-0.035em] sm:text-4xl">Dự án được tuyển chọn</h2>
                   <p className="mt-3 max-w-xl text-sm leading-7 text-slate-400">Những dự án thể hiện rõ nhất cách tôi kết hợp tư duy thiết kế, câu chuyện và công nghệ.</p>
                 </div>
-                <button onClick={() => showCollectionPage('projects')} className="inline-flex w-fit items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-xs font-black text-white hover:bg-emerald-400">Xem tất cả dự án <ArrowRight className="h-4 w-4" /></button>
+                <button onClick={() => showCollectionPage('projects')} className="inline-flex w-fit items-center gap-2 rounded-xl bg-brand px-5 py-3 text-xs font-black text-white hover:bg-brand">Xem tất cả dự án <ArrowRight className="h-4 w-4" /></button>
               </div>
             </Reveal>
-            <div className="mt-7 flex max-w-full gap-2 overflow-x-auto pb-1 scrollbar-none">{categories.map(category => <button key={category} onClick={() => setProjectFilter(category)} className={`shrink-0 rounded-xl px-4 py-2 text-xs font-bold ${projectFilter === category ? 'bg-emerald-500 text-white' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}>{category}</button>)}</div>
+            <div className="mt-7 flex max-w-full gap-2 overflow-x-auto pb-1 scrollbar-none">{categories.map(category => <button key={category} onClick={() => setProjectFilter(category)} className={`shrink-0 rounded-xl px-4 py-2 text-xs font-bold ${projectFilter === category ? 'bg-brand text-white' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}>{category}</button>)}</div>
             <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {visibleProjects.slice(0, 6).map((project, index) => {
                 const card: CollectionCard = {
@@ -2894,16 +2894,16 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
                     <button onClick={() => showDetail({ type: 'project', data: project })} className="group h-full w-full overflow-hidden rounded-[1.5rem] bg-white/5 text-left ring-1 ring-white/10 transition hover:-translate-y-1 hover:bg-white/10">
                       <div className="relative aspect-[16/9] overflow-hidden">
                         <CollectionImage card={card} />
-                        {project.isFeatured && <span className="absolute left-3 top-3 rounded-full bg-emerald-500 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-white">Nổi bật</span>}
+                        {project.isFeatured && <span className="absolute left-3 top-3 rounded-full bg-brand px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-white">Nổi bật</span>}
                       </div>
                       <div className="p-5">
-                        <div className="flex items-center justify-between gap-3 text-[9px] font-bold uppercase tracking-wider text-emerald-400">
+                        <div className="flex items-center justify-between gap-3 text-[9px] font-bold uppercase tracking-wider text-brand">
                           <span className="truncate">{project.category}</span>
                           <span className="shrink-0">{project.timeline}</span>
                         </div>
                         <h3 className="mt-3 line-clamp-2 text-lg font-black leading-snug">{project.title}</h3>
                         <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-400">{project.briefDescription}</p>
-                        <span className="mt-4 inline-flex items-center gap-2 text-xs font-black text-white group-hover:text-emerald-400">Xem case study <ArrowRight className="h-3.5 w-3.5" /></span>
+                        <span className="mt-4 inline-flex items-center gap-2 text-xs font-black text-white group-hover:text-brand">Xem case study <ArrowRight className="h-3.5 w-3.5" /></span>
                       </div>
                     </button>
                   </Reveal>
@@ -2915,9 +2915,9 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
         )}
 
         {showSection('courses') && (
-<section id="courses" className="scroll-mt-24 bg-[#effaf5] py-20 sm:py-24">
+<section id="courses" className="scroll-mt-24 bg-brand-light py-20 sm:py-24">
           <div className={sectionShell}>
-            <Reveal><div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end"><SectionHeading eyebrow="Khóa học trực tuyến" title="Học từ quy trình sáng tạo thực tế" description="Các chương trình học có cấu trúc rõ ràng, tập trung vào thực hành và kết quả đầu ra có thể đưa vào Portfolio." /><button onClick={() => showCollectionPage('courses')} className="inline-flex w-fit items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-xs font-black text-white hover:bg-emerald-700">Xem tất cả khóa học <ArrowRight className="h-4 w-4" /></button></div></Reveal>
+            <Reveal><div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end"><SectionHeading eyebrow="Khóa học trực tuyến" title="Học từ quy trình sáng tạo thực tế" description="Các chương trình học có cấu trúc rõ ràng, tập trung vào thực hành và kết quả đầu ra có thể đưa vào Portfolio." /><button onClick={() => showCollectionPage('courses')} className="inline-flex w-fit items-center gap-2 rounded-xl bg-brand px-5 py-3 text-xs font-black text-white hover:bg-brand-hover">Xem tất cả khóa học <ArrowRight className="h-4 w-4" /></button></div></Reveal>
             <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {courses.slice(0, 6).map(course => {
                 const card: CollectionCard = {
@@ -2935,19 +2935,19 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
                 };
                 return (
                   <Reveal key={course.id}>
-                    <button onClick={() => showDetail({ type: 'course', data: course })} className="group h-full w-full overflow-hidden rounded-[1.5rem] bg-white text-left shadow-sm ring-1 ring-emerald-100 transition hover:-translate-y-1 hover:shadow-xl">
+                    <button onClick={() => showDetail({ type: 'course', data: course })} className="group h-full w-full overflow-hidden rounded-[1.5rem] bg-white text-left shadow-sm ring-1 ring-brand-light transition hover:-translate-y-1 hover:shadow-xl">
                       <div className="relative aspect-[16/9] overflow-hidden">
                         <CollectionImage card={card} />
-                        <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[9px] font-black uppercase text-emerald-700 backdrop-blur">{levelLabel[course.level]}</span>
+                        <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[9px] font-black uppercase text-brand-hover backdrop-blur">{levelLabel[course.level]}</span>
                       </div>
                       <div className="p-5">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-emerald-600">{course.category}</p>
+                        <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-brand">{course.category}</p>
                         <h3 className="mt-2 line-clamp-2 text-lg font-black leading-snug text-slate-950">{course.title}</h3>
                         <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">{course.briefDescription}</p>
                         <div className="mt-4 flex flex-wrap items-center gap-3 text-[10px] font-bold text-slate-500">
                           <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" /> {course.lessonsCount} bài</span>
                           <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {course.studentsCount} học viên</span>
-                          <strong className="ml-auto text-sm text-emerald-600">{formatCurrency(course.salePrice || course.price)}</strong>
+                          <strong className="ml-auto text-sm text-brand">{formatCurrency(course.salePrice || course.price)}</strong>
                         </div>
                       </div>
                     </button>
@@ -2962,15 +2962,15 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
         {showSection('research') && (
 <section id="research" className="scroll-mt-24 bg-white py-20 sm:py-24">
           <div className={sectionShell}>
-            <Reveal><div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end"><SectionHeading eyebrow="Nghiên cứu khoa học" title="Công trình & xuất bản học thuật" description="Các nghiên cứu tại giao điểm giữa thiết kế đa phương tiện, trải nghiệm người dùng và công nghệ sáng tạo." /><button onClick={() => showCollectionPage('research')} className="inline-flex w-fit items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-xs font-black text-white hover:bg-emerald-700">Xem tất cả nghiên cứu <ArrowRight className="h-4 w-4" /></button></div></Reveal>
-            <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{visibleResearch.slice(0, 6).map(item => <Reveal key={item.id}><button onClick={() => showDetail({ type: 'research', data: item })} className="group flex h-full w-full flex-col overflow-hidden rounded-[1.5rem] bg-slate-50 text-left ring-1 ring-slate-100 transition hover:-translate-y-1 hover:bg-emerald-50 hover:shadow-xl"><div className="aspect-[16/8] overflow-hidden">{item.coverImage ? <img src={item.coverImage} alt={item.titleVi} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" loading="lazy" /> : <div className="grid h-full place-items-center bg-gradient-to-br from-emerald-100 to-slate-100 text-emerald-600"><Award className="h-10 w-10" /></div>}</div><div className="flex flex-1 flex-col p-5"><div className="flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-wider text-emerald-600"><span className="truncate">{researchTypeLabel[item.type]}</span><span className="shrink-0">{item.publishYear}</span></div><h3 className="mt-3 line-clamp-2 text-lg font-black leading-snug text-slate-950">{item.titleVi}</h3><p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">{item.abstractVi}</p><p className="mt-auto pt-4 text-[10px] font-bold text-slate-400">{item.authors.slice(0, 2).join(', ')}</p></div></button></Reveal>)}</div>
+            <Reveal><div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end"><SectionHeading eyebrow="Nghiên cứu khoa học" title="Công trình & xuất bản học thuật" description="Các nghiên cứu tại giao điểm giữa thiết kế đa phương tiện, trải nghiệm người dùng và công nghệ sáng tạo." /><button onClick={() => showCollectionPage('research')} className="inline-flex w-fit items-center gap-2 rounded-xl bg-brand px-5 py-3 text-xs font-black text-white hover:bg-brand-hover">Xem tất cả nghiên cứu <ArrowRight className="h-4 w-4" /></button></div></Reveal>
+            <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{visibleResearch.slice(0, 6).map(item => <Reveal key={item.id}><button onClick={() => showDetail({ type: 'research', data: item })} className="group flex h-full w-full flex-col overflow-hidden rounded-[1.5rem] bg-slate-50 text-left ring-1 ring-slate-100 transition hover:-translate-y-1 hover:bg-brand-light hover:shadow-xl"><div className="aspect-[16/8] overflow-hidden">{item.coverImage ? <img src={item.coverImage} alt={item.titleVi} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" loading="lazy" /> : <div className="grid h-full place-items-center bg-gradient-to-br from-brand-light to-slate-100 text-brand"><Award className="h-10 w-10" /></div>}</div><div className="flex flex-1 flex-col p-5"><div className="flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-wider text-brand"><span className="truncate">{researchTypeLabel[item.type]}</span><span className="shrink-0">{item.publishYear}</span></div><h3 className="mt-3 line-clamp-2 text-lg font-black leading-snug text-slate-950">{item.titleVi}</h3><p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">{item.abstractVi}</p><p className="mt-auto pt-4 text-[10px] font-bold text-slate-400">{item.authors.slice(0, 2).join(', ')}</p></div></button></Reveal>)}</div>
           </div>
         </section>
         )}
 
 
         {showSection('contact') && (
-<section id="contact" className="scroll-mt-24 bg-white py-24 sm:py-28"><div className={sectionShell}><Reveal><div className="relative overflow-hidden rounded-[2.5rem] bg-slate-950 p-8 text-white sm:p-12 lg:p-16"><div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl" /><div className="relative grid gap-12 lg:grid-cols-[1fr_0.9fr]"><div><span className="text-xs font-extrabold uppercase tracking-[0.18em] text-emerald-400">Liên hệ hợp tác</span><h2 className="mt-5 text-3xl font-black leading-tight tracking-[-0.035em] sm:text-5xl">Bạn có một ý tưởng thú vị?</h2><p className="mt-5 max-w-xl text-sm leading-7 text-slate-300">Hãy cùng biến ý tưởng đó thành một trải nghiệm đa phương tiện rõ ràng, đẹp và đáng nhớ.</p><a href={`mailto:${about.email}`} className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3.5 text-sm font-black text-white hover:bg-emerald-400"><Mail className="h-4 w-4" /> Bắt đầu trao đổi</a></div><div className="grid gap-3"><a href={`mailto:${about.email}`} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400"><Mail className="h-5 w-5" /></span><span><small className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Email</small><strong className="text-sm">{about.email}</strong></span></a><a href={`tel:${about.phone}`} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400"><Phone className="h-5 w-5" /></span><span><small className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Điện thoại</small><strong className="text-sm">{about.phone}</strong></span></a><div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400"><MapPin className="h-5 w-5" /></span><span><small className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Địa điểm</small><strong className="text-sm">{about.location}</strong></span></div><div className="mt-2 flex flex-wrap gap-2">{about.socialLinks.map(link => { const Icon = link.platform.toLowerCase().includes('github') ? Github : link.platform.toLowerCase().includes('linkedin') ? Linkedin : Share2; return <a key={link.platform} href={link.url} target="_blank" rel="noreferrer" aria-label={link.platform} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-bold hover:bg-emerald-500"><Icon className="h-4 w-4" />{link.platform}</a>; })}</div></div></div></div></Reveal></div></section>
+<section id="contact" className="scroll-mt-24 bg-white py-24 sm:py-28"><div className={sectionShell}><Reveal><div className="relative overflow-hidden rounded-[2.5rem] bg-slate-950 p-8 text-white sm:p-12 lg:p-16"><div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-brand/20 blur-3xl" /><div className="relative grid gap-12 lg:grid-cols-[1fr_0.9fr]"><div><span className="text-xs font-extrabold uppercase tracking-[0.18em] text-brand">Liên hệ hợp tác</span><h2 className="mt-5 text-3xl font-black leading-tight tracking-[-0.035em] sm:text-5xl">Bạn có một ý tưởng thú vị?</h2><p className="mt-5 max-w-xl text-sm leading-7 text-slate-300">Hãy cùng biến ý tưởng đó thành một trải nghiệm đa phương tiện rõ ràng, đẹp và đáng nhớ.</p><a href={`mailto:${about.email}`} className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-brand px-6 py-3.5 text-sm font-black text-white hover:bg-brand"><Mail className="h-4 w-4" /> Bắt đầu trao đổi</a></div><div className="grid gap-3"><a href={`mailto:${about.email}`} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10"><span className="grid h-10 w-10 place-items-center rounded-xl bg-brand/15 text-brand"><Mail className="h-5 w-5" /></span><span><small className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Email</small><strong className="text-sm">{about.email}</strong></span></a><a href={`tel:${about.phone}`} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10"><span className="grid h-10 w-10 place-items-center rounded-xl bg-brand/15 text-brand"><Phone className="h-5 w-5" /></span><span><small className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Điện thoại</small><strong className="text-sm">{about.phone}</strong></span></a><div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4"><span className="grid h-10 w-10 place-items-center rounded-xl bg-brand/15 text-brand"><MapPin className="h-5 w-5" /></span><span><small className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Địa điểm</small><strong className="text-sm">{about.location}</strong></span></div><div className="mt-2 flex flex-wrap gap-2">{about.socialLinks.map(link => { const Icon = link.platform.toLowerCase().includes('github') ? Github : link.platform.toLowerCase().includes('linkedin') ? Linkedin : Share2; return <a key={link.platform} href={link.url} target="_blank" rel="noreferrer" aria-label={link.platform} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-bold hover:bg-brand"><Icon className="h-4 w-4" />{link.platform}</a>; })}</div></div></div></div></Reveal></div></section>
         )}
         </>}
       </main>
@@ -2982,7 +2982,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
             <p className="mt-1 text-xs text-slate-500">© {new Date().getFullYear()} Multimedia Portfolio. Bảo lưu mọi quyền.</p>
           </div>
           <div className="flex flex-wrap items-center gap-4">
-            <button onClick={onEnterSystem} className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-emerald-700 cursor-pointer">
+            <button onClick={onEnterSystem} className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-brand-hover cursor-pointer">
               {isAuthenticated ? (
                 isMember ? <FileText className="h-4 w-4" /> : <UserRound className="h-4 w-4" />
               ) : (

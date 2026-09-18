@@ -304,9 +304,9 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
       shadow: 'shadow-brand/15' 
     }] : []),
     ...(canAccessJournals ? [
-      { label: 'Tạp chí lưu trữ', value: `${journalsCount} tạp chí`, change: 'Dữ liệu chuẩn', icon: Layers, color: 'from-blue-500 to-sky-500', shadow: 'shadow-blue-500/15' },
-      { label: 'Ngành/Lĩnh vực', value: `${disciplinesCount} lĩnh vực`, change: 'Đa dạng hoá', icon: Microscope, color: 'from-indigo-500 to-purple-500', shadow: 'shadow-indigo-500/15' },
-      { label: 'Tra cứu điểm báo', value: `${statsData.public_search} lượt`, change: 'Cổng công cộng', icon: BookOpen, color: 'from-emerald-500 to-teal-500', shadow: 'shadow-emerald-500/15' }
+      { label: 'Tạp chí lưu trữ', value: `${journalsCount} tạp chí`, change: 'Dữ liệu chuẩn', icon: Layers, color: 'from-brand to-brand', shadow: 'shadow-brand/15' },
+      { label: 'Ngành/Lĩnh vực', value: `${disciplinesCount} lĩnh vực`, change: 'Đa dạng hoá', icon: Microscope, color: 'from-brand to-brand', shadow: 'shadow-brand/15' },
+      { label: 'Tra cứu điểm báo', value: `${statsData.public_search} lượt`, change: 'Cổng công cộng', icon: BookOpen, color: 'from-brand to-brand', shadow: 'shadow-brand/15' }
     ] : []),
     ...(canAccessTasks ? [{ 
       label: 'Task hoàn thành', 
@@ -393,7 +393,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                 <div className="mt-4">
                   <h3 className="text-2xl font-bold text-slate-800 font-display leading-none">{stat.value}</h3>
                   <div className="flex items-center gap-1.5 mt-1 text-xs">
-                    <span className="text-emerald-500 font-bold">{stat.change}</span>
+                    <span className="text-brand font-bold">{stat.change}</span>
                     <span className="text-slate-400">tăng trưởng</span>
                   </div>
                 </div>
@@ -505,7 +505,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                           <p className="text-[10px] text-slate-400 mt-0.5">ISSN: {j.issn || "—"} • {j.field || "N/A"}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded border border-indigo-100/40">
+                          <span className="text-[10px] font-semibold bg-brand-light text-brand px-2 py-0.5 rounded border border-brand-light/40">
                             Điểm: {j.score || "0"}
                           </span>
                         </div>

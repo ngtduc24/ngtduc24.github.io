@@ -138,14 +138,14 @@ export default function TaskCompletionModal({
         aria-modal="true"
       >
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white flex items-center justify-between shadow-xs">
+        <div className="px-6 py-4 bg-gradient-to-r from-brand via-brand to-brand-hover text-white flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner">
-              <FileCheck2 className="w-5 h-5 text-emerald-100" />
+              <FileCheck2 className="w-5 h-5 text-brand-light" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full text-emerald-100">
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full text-brand-light">
                   {itemType === 'task' ? 'Task chính' : 'Việc nhỏ'}
                 </span>
                 <span className="text-xs text-emerald-100/90 font-medium">Báo cáo hoàn thành</span>
@@ -178,18 +178,18 @@ export default function TaskCompletionModal({
           )}
 
           {/* User info & Timestamp */}
-          <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-emerald-50/60 border border-emerald-100/70 rounded-2xl">
+          <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-brand-light/60 border border-brand-light/70 rounded-2xl">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-xs uppercase shadow-xs">
+              <div className="w-7 h-7 rounded-full bg-brand text-white font-bold flex items-center justify-center text-xs uppercase shadow-xs">
                 {currentUser.fullName ? currentUser.fullName.charAt(0) : 'U'}
               </div>
               <div>
-                <span className="text-[10px] text-emerald-700 block font-semibold">Người báo cáo & nghiệm thu</span>
+                <span className="text-[10px] text-brand-hover block font-semibold">Người báo cáo & nghiệm thu</span>
                 <span className="text-xs font-bold text-slate-800">{currentUser.fullName} (@{currentUser.username})</span>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-[10px] text-emerald-700 block font-semibold">Thời điểm ghi nhận</span>
+              <span className="text-[10px] text-brand-hover block font-semibold">Thời điểm ghi nhận</span>
               <span className="text-xs font-bold text-slate-700">{new Date().toLocaleString('vi-VN')}</span>
             </div>
           </div>
@@ -198,7 +198,7 @@ export default function TaskCompletionModal({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                <Sparkles className="w-3.5 h-3.5 text-brand" />
                 Nội dung báo cáo công việc hoàn thành
                 <span className="text-red-500">*</span>
               </label>
@@ -206,12 +206,12 @@ export default function TaskCompletionModal({
             </div>
 
             {/* Toolbar */}
-            <div className="border border-slate-200 rounded-2xl overflow-hidden focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all bg-white shadow-2xs">
+            <div className="border border-slate-200 rounded-2xl overflow-hidden focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20 transition-all bg-white shadow-2xs">
               <div className="flex flex-wrap items-center gap-1 p-2 bg-slate-50 border-b border-slate-200 text-slate-600">
                 <button
                   type="button"
                   onClick={() => applyFormatting('### ')}
-                  className="p-1.5 hover:bg-white hover:text-emerald-700 rounded-lg transition-colors cursor-pointer text-xs font-bold flex items-center gap-1"
+                  className="p-1.5 hover:bg-white hover:text-brand-hover rounded-lg transition-colors cursor-pointer text-xs font-bold flex items-center gap-1"
                   title="Tiêu đề (H3)"
                 >
                   <Heading2 className="w-3.5 h-3.5" />
@@ -221,7 +221,7 @@ export default function TaskCompletionModal({
                 <button
                   type="button"
                   onClick={() => applyFormatting('**', '**')}
-                  className="p-1.5 hover:bg-white hover:text-emerald-700 rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 hover:bg-white hover:text-brand-hover rounded-lg transition-colors cursor-pointer"
                   title="In đậm (Bold)"
                 >
                   <Bold className="w-3.5 h-3.5" />
@@ -229,7 +229,7 @@ export default function TaskCompletionModal({
                 <button
                   type="button"
                   onClick={() => applyFormatting('*', '*')}
-                  className="p-1.5 hover:bg-white hover:text-emerald-700 rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 hover:bg-white hover:text-brand-hover rounded-lg transition-colors cursor-pointer"
                   title="In nghiêng (Italic)"
                 >
                   <Italic className="w-3.5 h-3.5" />
@@ -238,7 +238,7 @@ export default function TaskCompletionModal({
                 <button
                   type="button"
                   onClick={() => applyFormatting('- ')}
-                  className="p-1.5 hover:bg-white hover:text-emerald-700 rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 hover:bg-white hover:text-brand-hover rounded-lg transition-colors cursor-pointer"
                   title="Danh sách gạch đầu dòng"
                 >
                   <List className="w-3.5 h-3.5" />
@@ -246,7 +246,7 @@ export default function TaskCompletionModal({
                 <button
                   type="button"
                   onClick={() => applyFormatting('1. ')}
-                  className="p-1.5 hover:bg-white hover:text-emerald-700 rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 hover:bg-white hover:text-brand-hover rounded-lg transition-colors cursor-pointer"
                   title="Danh sách đánh số"
                 >
                   <ListOrdered className="w-3.5 h-3.5" />
@@ -254,7 +254,7 @@ export default function TaskCompletionModal({
                 <button
                   type="button"
                   onClick={() => applyFormatting('> ')}
-                  className="p-1.5 hover:bg-white hover:text-emerald-700 rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 hover:bg-white hover:text-brand-hover rounded-lg transition-colors cursor-pointer"
                   title="Trích dẫn"
                 >
                   <Quote className="w-3.5 h-3.5" />
@@ -262,7 +262,7 @@ export default function TaskCompletionModal({
                 <button
                   type="button"
                   onClick={() => applyFormatting('[', '](https://...)')}
-                  className="p-1.5 hover:bg-white hover:text-emerald-700 rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 hover:bg-white hover:text-brand-hover rounded-lg transition-colors cursor-pointer"
                   title="Chèn liên kết"
                 >
                   <LinkIcon className="w-3.5 h-3.5" />
@@ -288,13 +288,13 @@ export default function TaskCompletionModal({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
+                <ExternalLink className="w-3.5 h-3.5 text-brand" />
                 Đường dẫn sản phẩm & tài liệu bàn giao (Deliverables)
               </label>
               <button
                 type="button"
                 onClick={handleAddDeliverable}
-                className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer"
+                className="text-[11px] font-bold text-brand-hover hover:text-brand-hover flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" /> Thêm liên kết
               </button>
@@ -310,7 +310,7 @@ export default function TaskCompletionModal({
                       value={item}
                       onChange={(e) => handleUpdateDeliverable(index, e.target.value)}
                       placeholder="https://drive.google.com/... hoặc https://figma.com/..."
-                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
                     />
                   </div>
                   {deliverables.length > 1 && (
@@ -344,7 +344,7 @@ export default function TaskCompletionModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+              className="px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold shadow-md shadow-brand/20 flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>{isSubmitting ? 'Đang lưu...' : 'Xác nhận hoàn thành & Lưu báo cáo'}</span>

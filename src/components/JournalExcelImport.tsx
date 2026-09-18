@@ -194,7 +194,7 @@ export default function JournalExcelImport({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5 gap-4">
         <div className="text-left space-y-1">
           <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <Upload className="w-5 h-5 text-purple-600 animate-bounce" />
+            <Upload className="w-5 h-5 text-brand animate-bounce" />
             <span>Nhập / Xuất Excel</span>
           </h2>
           <p className="text-xs text-slate-400">
@@ -206,7 +206,7 @@ export default function JournalExcelImport({
           <button
             type="button"
             onClick={handleExportTemplate}
-            className="flex items-center gap-1.5 px-3 py-2 bg-purple-50 hover:bg-purple-100/80 text-purple-700 border border-purple-100 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs whitespace-nowrap"
+            className="flex items-center gap-1.5 px-3 py-2 bg-brand-light hover:bg-brand-light/80 text-brand-hover border border-brand-light rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs whitespace-nowrap"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Tải file mẫu</span>
@@ -215,7 +215,7 @@ export default function JournalExcelImport({
           <button
             type="button"
             onClick={handleExportAll}
-            className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 hover:bg-indigo-100/80 text-indigo-700 border border-indigo-100 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs whitespace-nowrap"
+            className="flex items-center gap-1.5 px-3 py-2 bg-brand-light hover:bg-brand-light/80 text-brand-hover border border-brand-light rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs whitespace-nowrap"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
             <span>Xuất toàn bộ</span>
@@ -236,11 +236,11 @@ export default function JournalExcelImport({
               onClick={() => excelInputRef.current?.click()}
               className={`border-2 border-dashed rounded-2xl p-6 text-center space-y-3 cursor-pointer transition-all ${
                 dragOver 
-                  ? "border-purple-500 bg-purple-50/20" 
-                  : "border-slate-200 hover:border-purple-400 bg-slate-50/50 hover:bg-purple-50/10"
+                  ? "border-brand bg-brand-light/20" 
+                  : "border-slate-200 hover:border-brand bg-slate-50/50 hover:bg-brand-light/10"
               }`}
             >
-              <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mx-auto shadow-xs">
+              <div className="w-10 h-10 bg-brand-light text-brand rounded-full flex items-center justify-center mx-auto shadow-xs">
                 <Upload className="w-5 h-5" />
               </div>
               <div className="space-y-1">
@@ -249,12 +249,12 @@ export default function JournalExcelImport({
               </div>
 
               {uploadedFileName && (
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-100 text-purple-800 text-[11px] font-bold rounded-lg border border-purple-200 shadow-xs mt-2 animate-fadeIn max-w-full">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-light text-brand-hover text-[11px] font-bold rounded-lg border border-brand shadow-xs mt-2 animate-fadeIn max-w-full">
                   <span className="truncate max-w-[150px]">{uploadedFileName}</span>
                   <button 
                     type="button" 
                     onClick={handleClearFile}
-                    className="p-0.5 hover:bg-purple-200 rounded text-purple-900 shrink-0 transition-colors cursor-pointer"
+                    className="p-0.5 hover:bg-brand rounded text-brand-hover shrink-0 transition-colors cursor-pointer"
                     title="Bỏ tệp"
                   >
                     <X className="w-3 h-3" />
@@ -280,7 +280,7 @@ export default function JournalExcelImport({
               <select
                 value={selectedImportField}
                 onChange={(e) => setSelectedImportField(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all appearance-none cursor-pointer"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all appearance-none cursor-pointer"
               >
                 <option value="">-- Chọn ngành / lĩnh vực dự phòng --</option>
                 {systemFieldNames.map((field) => (
@@ -355,7 +355,7 @@ export default function JournalExcelImport({
               id="skip_duplicate_excel_sub"
               checked={skipDuplicates}
               onChange={(e) => setSkipDuplicates(e.target.checked)}
-              className="rounded border-slate-300 text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer mt-0.5"
+              className="rounded border-slate-300 text-brand focus:ring-brand w-4 h-4 cursor-pointer mt-0.5"
             />
             <div className="space-y-0.5 select-none cursor-pointer">
               <label htmlFor="skip_duplicate_excel_sub" className="text-[11px] font-bold text-slate-700 block cursor-pointer">
@@ -397,9 +397,9 @@ export default function JournalExcelImport({
                         </div>
                       </td>
                       <td className="py-3 font-mono">1234-5678</td>
-                      <td className="py-3 text-center font-bold text-purple-600">0 – 1.0</td>
+                      <td className="py-3 text-center font-bold text-brand">0 – 1.0</td>
                       <td className="py-3 text-center">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-brand-light text-brand border border-brand-light">
                           MỚI
                         </span>
                       </td>
@@ -417,7 +417,7 @@ export default function JournalExcelImport({
                             <p className="text-[9px] text-slate-400 truncate max-w-xs">{row.publisher}</p>
                           </td>
                           <td className="py-3 font-mono text-slate-500">{row.issn || "—"}</td>
-                          <td className="py-3 text-center font-bold text-purple-600">{row.score || "—"}</td>
+                          <td className="py-3 text-center font-bold text-brand">{row.score || "—"}</td>
                           <td className="py-3 text-center">
                             {isDup ? (
                               <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-extrabold ${
@@ -428,7 +428,7 @@ export default function JournalExcelImport({
                                 {skipDuplicates ? "TRÙNG (bỏ qua)" : "TRÙNG (nhập đè)"}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-brand-light text-brand border border-brand-light">
                                 MỚI
                               </span>
                             )}
@@ -476,9 +476,9 @@ export default function JournalExcelImport({
               <div className="flex items-center gap-1.5 text-slate-600 text-[11px] font-bold">
                 {totalRows > 0 ? (
                   <>
-                    <Database className="w-3.5 h-3.5 text-purple-600" />
+                    <Database className="w-3.5 h-3.5 text-brand" />
                     <span>{totalRows} dòng: </span>
-                    <span className="text-emerald-600">{newCount} mới</span>
+                    <span className="text-brand">{newCount} mới</span>
                     <span>, </span>
                     <span className="text-amber-600">{duplicateCount} trùng {skipDuplicates ? "(bỏ qua)" : ""}</span>
                   </>

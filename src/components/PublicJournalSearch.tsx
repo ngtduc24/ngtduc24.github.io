@@ -169,7 +169,7 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
     
     if (value <= 0.25) return 'text-slate-700';
     if (value <= 0.5) return 'text-orange-500';
-    if (value <= 0.75) return 'text-emerald-500';
+    if (value <= 0.75) return 'text-brand';
     return 'text-red-500';
   };
 
@@ -242,7 +242,7 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center space-y-4" id="public-search-loading">
-        <Loader2 className="w-10 h-10 animate-spin text-purple-600" />
+        <Loader2 className="w-10 h-10 animate-spin text-brand" />
         <p className="text-xs font-bold text-slate-500 animate-pulse">Đang đồng bộ dữ liệu điểm số mới nhất...</p>
       </div>
     );
@@ -390,8 +390,8 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
             >
               {copiedLink ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="text-emerald-700">Đã chép link!</span>
+                  <Check className="w-3.5 h-3.5 text-brand" />
+                  <span className="text-brand-hover">Đã chép link!</span>
                 </>
               ) : (
                 <>
@@ -418,7 +418,7 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
             )}
 
             <span className="text-xs sm:text-sm font-semibold text-slate-500 pl-1 border-l border-slate-200">
-              Tìm thấy <strong className="text-purple-700 text-base font-extrabold">{filteredJournals.length}</strong> kết quả
+              Tìm thấy <strong className="text-brand-hover text-base font-extrabold">{filteredJournals.length}</strong> kết quả
             </span>
           </div>
         </div>
@@ -427,7 +427,7 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
         <div className="bg-white rounded-3xl border border-slate-100 shadow-xs overflow-hidden">
           {loading ? (
             <div className="py-24 text-center space-y-3">
-              <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto" />
+              <div className="w-10 h-10 border-4 border-brand border-t-transparent rounded-full animate-spin mx-auto" />
               <p className="text-xs font-semibold text-slate-400">Đang đồng bộ dữ liệu điểm số mới nhất...</p>
             </div>
           ) : filteredJournals.length === 0 ? (
@@ -454,7 +454,7 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
                   {filteredJournals.map((j, idx) => (
                     <tr 
                       key={j.id} 
-                      className="hover:bg-purple-50/10 transition-colors"
+                      className="hover:bg-brand-light/10 transition-colors"
                     >
                       <td className="py-4 px-5 text-center font-mono text-[11px] text-slate-400">
                         {idx + 1}
@@ -477,7 +477,7 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
                         {j.issn || "—"}
                       </td>
                       <td className="py-4 px-4 text-left">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-[#712cf9] border border-purple-100">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-brand-light text-brand border border-brand-light">
                           {j.type || "Tạp chí"}
                         </span>
                       </td>
@@ -485,7 +485,7 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
                         {j.publisher || "—"}
                       </td>
                       <td className="py-4 px-4 text-left">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100/40">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-brand-light text-brand-hover border border-brand-light/40">
                           {j.field || "N/A"}
                         </span>
                       </td>
@@ -501,7 +501,7 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 text-center py-6 border-t border-slate-800 text-xs mt-12 space-y-2 shrink-0">
         <div className="flex items-center justify-center gap-2">
-          <Database className="w-4 h-4 text-purple-400" />
+          <Database className="w-4 h-4 text-brand" />
           <span>Hệ thống cơ sở dữ liệu quốc gia đồng bộ thời gian thực</span>
         </div>
         <p>© 2026 Smart Research VN. Được xuất bản phục vụ cộng đồng nghiên cứu khoa học.</p>
@@ -520,7 +520,7 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
                  <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-800" />
                )}
                <div className="absolute inset-0 bg-black/40" />
-               <div className="absolute top-4 left-4 bg-purple-600 text-white px-2 py-1 rounded-md text-xs font-bold uppercase">TẠP CHÍ</div>
+               <div className="absolute top-4 left-4 bg-brand text-white px-2 py-1 rounded-md text-xs font-bold uppercase">TẠP CHÍ</div>
                <button onClick={() => setSelectedJournal(null)} className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full p-1 transition-all">
                  <X className="w-5 h-5" />
                </button>
@@ -536,12 +536,12 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
             
             <div className="p-6 overflow-y-auto space-y-6">
               <div className="grid grid-cols-2 gap-4 text-xs">
-                 <div className="flex gap-2 items-center"><Hash className="w-4 h-4 text-emerald-600" /><div><p className="text-slate-500 font-semibold">MÃ ISSN</p><p className="font-bold text-slate-800">{selectedJournal.issn || "N/A"}</p></div></div>
-                 <div className="flex gap-2 items-center"><Building2 className="w-4 h-4 text-emerald-600" /><div><p className="text-slate-500 font-semibold">CƠ QUAN XUẤT BẢN</p><p className="font-bold text-slate-800">{selectedJournal.publisher || "N/A"}</p></div></div>
-                 <div className="flex gap-2 items-center"><Layers className="w-4 h-4 text-emerald-600" /><div><p className="text-slate-500 font-semibold">NGÀNH / LĨNH VỰC</p><p className="font-bold text-slate-800">{selectedJournal.field || "N/A"}</p></div></div>
-                 <div className="flex gap-2 items-center"><Award className="w-4 h-4 text-emerald-600" /><div><p className="text-slate-500 font-semibold">ĐIỂM SỐ TÍNH TOÁN</p><p className="font-bold text-slate-800">{selectedJournal.score || "0"}</p></div></div>
-                 <div className="flex gap-2 items-center"><Calendar className="w-4 h-4 text-emerald-600" /><div><p className="text-slate-500 font-semibold">NĂM THÀNH LẬP</p><p className="font-bold text-slate-800">{selectedJournal.establishedDate || "N/A"}</p></div></div>
-                 <div className="flex gap-2 items-center"><BookOpen className="w-4 h-4 text-emerald-600" /><div><p className="text-slate-500 font-semibold">SỐ LƯỢNG BÀI BÁO</p><p className="font-bold text-slate-800">{selectedJournal.paperCount || "0"}</p></div></div>
+                 <div className="flex gap-2 items-center"><Hash className="w-4 h-4 text-brand" /><div><p className="text-slate-500 font-semibold">MÃ ISSN</p><p className="font-bold text-slate-800">{selectedJournal.issn || "N/A"}</p></div></div>
+                 <div className="flex gap-2 items-center"><Building2 className="w-4 h-4 text-brand" /><div><p className="text-slate-500 font-semibold">CƠ QUAN XUẤT BẢN</p><p className="font-bold text-slate-800">{selectedJournal.publisher || "N/A"}</p></div></div>
+                 <div className="flex gap-2 items-center"><Layers className="w-4 h-4 text-brand" /><div><p className="text-slate-500 font-semibold">NGÀNH / LĨNH VỰC</p><p className="font-bold text-slate-800">{selectedJournal.field || "N/A"}</p></div></div>
+                 <div className="flex gap-2 items-center"><Award className="w-4 h-4 text-brand" /><div><p className="text-slate-500 font-semibold">ĐIỂM SỐ TÍNH TOÁN</p><p className="font-bold text-slate-800">{selectedJournal.score || "0"}</p></div></div>
+                 <div className="flex gap-2 items-center"><Calendar className="w-4 h-4 text-brand" /><div><p className="text-slate-500 font-semibold">NĂM THÀNH LẬP</p><p className="font-bold text-slate-800">{selectedJournal.establishedDate || "N/A"}</p></div></div>
+                 <div className="flex gap-2 items-center"><BookOpen className="w-4 h-4 text-brand" /><div><p className="text-slate-500 font-semibold">SỐ LƯỢNG BÀI BÁO</p><p className="font-bold text-slate-800">{selectedJournal.paperCount || "0"}</p></div></div>
               </div>
               
               <div>
@@ -553,11 +553,11 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
             <div className="p-4 border-t border-slate-100 flex items-center justify-between">
               <button 
                 onClick={handleCopySearchLink}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold rounded-xl transition-all border border-purple-200/60"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-light hover:bg-brand-light text-brand-hover text-xs font-bold rounded-xl transition-all border border-brand/60"
               >
                 {copiedLink ? (
                   <>
-                    <Check className="w-4 h-4 text-emerald-600" />
+                    <Check className="w-4 h-4 text-brand" />
                     <span>Đã sao chép link tạp chí!</span>
                   </>
                 ) : (

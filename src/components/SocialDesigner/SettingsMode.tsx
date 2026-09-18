@@ -119,7 +119,7 @@ export default function SettingsMode({ currentUser }: SettingsModeProps) {
       <div className="flex-1 p-8 overflow-y-auto">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <Layers className="w-5 h-5 text-indigo-600" />
+            <Layers className="w-5 h-5 text-brand" />
             Kho Khung Mẫu (Templates)
           </h2>
           
@@ -134,7 +134,7 @@ export default function SettingsMode({ currentUser }: SettingsModeProps) {
                     <input 
                       type="text" 
                       value={tplName} onChange={e => setTplName(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 font-medium"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand font-medium"
                       placeholder="VD: FB Post Đục Lỗ"
                       required
                     />
@@ -145,7 +145,7 @@ export default function SettingsMode({ currentUser }: SettingsModeProps) {
                       <input 
                         type="number" 
                         value={tplWidth} onChange={e => setTplWidth(parseInt(e.target.value) || 0)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 font-medium"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand font-medium"
                         required
                       />
                     </div>
@@ -154,7 +154,7 @@ export default function SettingsMode({ currentUser }: SettingsModeProps) {
                       <input 
                         type="number" 
                         value={tplHeight} onChange={e => setTplHeight(parseInt(e.target.value) || 0)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 font-medium"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand font-medium"
                         required
                       />
                     </div>
@@ -187,7 +187,7 @@ export default function SettingsMode({ currentUser }: SettingsModeProps) {
                         label="Tải ảnh Khung PNG lên"
                         resourceType="image"
                         category="Social Templates"
-                        className="text-sm font-semibold px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg shadow-sm hover:border-indigo-300 transition"
+                        className="text-sm font-semibold px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg shadow-sm hover:border-brand transition"
                       />
                     </div>
                   )}
@@ -198,7 +198,7 @@ export default function SettingsMode({ currentUser }: SettingsModeProps) {
               </div>
 
               <div className="pt-2">
-                <button type="submit" className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700 flex items-center gap-2 shadow-sm transition">
+                <button type="submit" className="bg-brand text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-brand-hover flex items-center gap-2 shadow-sm transition">
                   <Plus className="w-4 h-4" /> Khởi tạo Khung Mẫu
                 </button>
               </div>

@@ -162,13 +162,13 @@ export default function DataManagement() {
         <div className="flex bg-slate-100 p-1 rounded-lg">
           <button 
             onClick={() => setDataView('data-view')}
-            className={`px-4 py-2 rounded-md text-sm font-semibold flex items-center gap-2 transition-colors ${dataView === 'data-view' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+            className={`px-4 py-2 rounded-md text-sm font-semibold flex items-center gap-2 transition-colors ${dataView === 'data-view' ? 'bg-white text-brand-hover shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
           >
             <Table className="w-4 h-4" /> Data View
           </button>
           <button 
             onClick={() => setDataView('variable-view')}
-            className={`px-4 py-2 rounded-md text-sm font-semibold flex items-center gap-2 transition-colors ${dataView === 'variable-view' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+            className={`px-4 py-2 rounded-md text-sm font-semibold flex items-center gap-2 transition-colors ${dataView === 'variable-view' ? 'bg-white text-brand-hover shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
           >
             <ListChecks className="w-4 h-4" /> Variable View
           </button>
@@ -177,7 +177,7 @@ export default function DataManagement() {
         <div className="flex items-center gap-3">
           <button 
             onClick={loadSampleData}
-            className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors border border-emerald-200"
+            className="bg-brand-light text-brand-hover hover:bg-brand-light px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors border border-brand"
           >
             <Download className="w-4 h-4" /> Dữ liệu mẫu (Sample)
           </button>
@@ -195,7 +195,7 @@ export default function DataManagement() {
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-2">
               <div className="flex justify-between text-xs font-bold text-slate-700">
                 <span>{importProgress.message || 'Đang xử lý...'}</span>
-                <span className="text-emerald-600">
+                <span className="text-brand">
                   {importProgress.total > 0 
                     ? `${Math.round((importProgress.current / importProgress.total) * 100)}% (${importProgress.current}/${importProgress.total})` 
                     : 'Vui lòng đợi...'}
@@ -203,7 +203,7 @@ export default function DataManagement() {
               </div>
               <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
                 <div 
-                  className="bg-emerald-600 h-2.5 rounded-full transition-all duration-300 ease-out" 
+                  className="bg-brand h-2.5 rounded-full transition-all duration-300 ease-out" 
                   style={{ width: importProgress.total > 0 ? `${(importProgress.current / importProgress.total) * 100}%` : '0%' }}
                 ></div>
               </div>
@@ -240,7 +240,7 @@ export default function DataManagement() {
                       <select 
                         value={v.type}
                         onChange={(e) => updateVariable(v.id, { type: e.target.value as 'Numeric' | 'String' })}
-                        className="bg-transparent border-slate-200 rounded text-slate-700 focus:ring-emerald-500 focus:border-emerald-500 py-1"
+                        className="bg-transparent border-slate-200 rounded text-slate-700 focus:ring-brand focus:border-brand py-1"
                       >
                         <option value="Numeric">Numeric</option>
                         <option value="String">String</option>
@@ -258,7 +258,7 @@ export default function DataManagement() {
                     <td className="px-4 py-2">
                       <button 
                         onClick={() => setEditingValues(v)}
-                        className="text-emerald-600 hover:text-emerald-700 text-xs font-semibold bg-emerald-50 px-2 py-1 rounded border border-emerald-200 hover:bg-emerald-100 flex items-center gap-1"
+                        className="text-brand hover:text-brand-hover text-xs font-semibold bg-brand-light px-2 py-1 rounded border border-brand hover:bg-brand-light flex items-center gap-1"
                       >
                         <Settings2 className="w-3 h-3" />
                         {Object.keys(v.values).length > 0 ? `${Object.keys(v.values).length} Labels` : 'Define Values'}
@@ -271,7 +271,7 @@ export default function DataManagement() {
                       <select 
                         value={v.measure}
                         onChange={(e) => updateVariable(v.id, { measure: e.target.value as MeasureType })}
-                        className="bg-transparent border-slate-200 rounded text-slate-700 focus:ring-emerald-500 focus:border-emerald-500 py-1"
+                        className="bg-transparent border-slate-200 rounded text-slate-700 focus:ring-brand focus:border-brand py-1"
                       >
                         <option value="Scale">Scale</option>
                         <option value="Ordinal">Ordinal</option>
@@ -287,7 +287,7 @@ export default function DataManagement() {
                 ))}
                 <tr>
                   <td colSpan={7} className="px-4 py-3 bg-slate-50/50">
-                    <button onClick={addVariable} className="text-emerald-600 hover:text-emerald-700 text-sm font-semibold flex items-center gap-1">
+                    <button onClick={addVariable} className="text-brand hover:text-brand-hover text-sm font-semibold flex items-center gap-1">
                       <Plus className="w-4 h-4" /> Thêm biến mới
                     </button>
                   </td>
@@ -321,7 +321,7 @@ export default function DataManagement() {
                           type={v.type === 'Numeric' ? 'number' : 'text'}
                           value={row[v.name] || ''}
                           onChange={(e) => updateData(row.id, v.name, e.target.value)}
-                          className="w-full h-full bg-transparent border-none focus:ring-2 focus:ring-emerald-500 focus:ring-inset p-2 text-slate-800"
+                          className="w-full h-full bg-transparent border-none focus:ring-2 focus:ring-brand focus:ring-inset p-2 text-slate-800"
                         />
                       </td>
                     ))}
@@ -330,7 +330,7 @@ export default function DataManagement() {
                 ))}
                 <tr>
                   <td className="px-4 py-2 border-r border-slate-200 bg-slate-50 text-center">
-                    <button onClick={addDataRow} className="text-emerald-600 hover:text-emerald-700 p-1 rounded-md hover:bg-emerald-100">
+                    <button onClick={addDataRow} className="text-brand hover:text-brand-hover p-1 rounded-md hover:bg-brand-light">
                       <Plus className="w-4 h-4" />
                     </button>
                   </td>
@@ -349,7 +349,7 @@ export default function DataManagement() {
             <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50">
               <div>
                 <h3 className="font-bold text-slate-800">Value Labels</h3>
-                <p className="text-xs text-slate-500">Định nghĩa nhãn cho biến: <strong className="text-emerald-600">{editingValues.name}</strong></p>
+                <p className="text-xs text-slate-500">Định nghĩa nhãn cho biến: <strong className="text-brand">{editingValues.name}</strong></p>
               </div>
               <button onClick={() => setEditingValues(null)} className="p-1 hover:bg-slate-200 rounded-lg text-slate-500"><X className="w-5 h-5" /></button>
             </div>
@@ -363,7 +363,7 @@ export default function DataManagement() {
                     value={newValueKey}
                     onChange={e => setNewValueKey(e.target.value)}
                     placeholder="VD: 1" 
-                    className="w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    className="w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand"
                   />
                 </div>
                 <div className="w-2/3">
@@ -375,12 +375,12 @@ export default function DataManagement() {
                       onChange={e => setNewValueLabel(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && addValueLabel()}
                       placeholder="VD: Hoàn toàn không đồng ý" 
-                      className="w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                      className="w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand"
                     />
                     <button 
                       onClick={addValueLabel}
                       disabled={!newValueKey || !newValueLabel}
-                      className="bg-emerald-100 text-emerald-700 px-3 py-2 rounded-lg hover:bg-emerald-200 disabled:opacity-50"
+                      className="bg-brand-light text-brand-hover px-3 py-2 rounded-lg hover:bg-brand disabled:opacity-50"
                     >
                       <Plus className="w-5 h-5" />
                     </button>

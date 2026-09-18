@@ -59,7 +59,7 @@ function TextureChannel({ label, description, value, onChange }: TextureChannelP
             <img src={value} alt="Texture preview" className="w-full h-full object-cover" />
           </div>
           <div className="flex-1 truncate">
-            <span className="text-[10px] text-emerald-400 font-medium block truncate">Đã gắn Texture Map</span>
+            <span className="text-[10px] text-brand font-medium block truncate">Đã gắn Texture Map</span>
             <input
               type="text"
               value={value.startsWith('data:') ? '(Ảnh tải từ máy tính)' : value}
@@ -130,7 +130,7 @@ export default function MaterialInspector({
     <div className="space-y-4 text-slate-200 text-xs">
       {/* Header with target name and Reset */}
       <div className="flex items-center justify-between pb-2 border-b border-white/10">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-300">
+        <div className="flex items-center gap-1.5 text-xs font-bold text-brand">
           <Palette className="w-3.5 h-3.5 text-brand" />
           <span>Vật liệu PBR: {targetName}</span>
         </div>
@@ -245,10 +245,10 @@ export default function MaterialInspector({
       <div className="space-y-2 p-2.5 rounded-xl bg-white/5 border border-white/5">
         <div className="flex items-center justify-between">
           <span className="font-bold text-xs flex items-center gap-1.5 text-white">
-            <span className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
+            <span className="w-2.5 h-2.5 rounded-full bg-brand" />
             3. Metallic (Độ kim loại)
           </span>
-          <span className="font-mono text-cyan-400 font-bold">{metalness.toFixed(2)}</span>
+          <span className="font-mono text-brand font-bold">{metalness.toFixed(2)}</span>
         </div>
         <p className="text-[10px] text-slate-400">
           0.0: Phi kim / Điện môi (nhựa, gỗ, đá) | 1.0: Kim loại nguyên chất (đồng, bạc, vàng).
@@ -261,7 +261,7 @@ export default function MaterialInspector({
             step="0.05"
             value={metalness}
             onChange={(e) => updateProp('metalness', parseFloat(e.target.value))}
-            className="flex-1 accent-cyan-400 h-1.5 bg-white/10 rounded cursor-pointer"
+            className="flex-1 accent-brand h-1.5 bg-white/10 rounded cursor-pointer"
           />
           <input
             type="number"
@@ -308,10 +308,10 @@ export default function MaterialInspector({
       <div className="space-y-2 p-2.5 rounded-xl bg-white/5 border border-white/5">
         <div className="flex items-center justify-between">
           <span className="font-bold text-xs flex items-center gap-1.5 text-white">
-            <span className="w-2.5 h-2.5 rounded-full bg-violet-400" />
+            <span className="w-2.5 h-2.5 rounded-full bg-brand" />
             4. Specular
           </span>
-          <span className="font-mono text-violet-400 font-bold">{specular.toFixed(2)}</span>
+          <span className="font-mono text-brand font-bold">{specular.toFixed(2)}</span>
         </div>
         <p className="text-[10px] text-slate-400">
           Cường độ phản xạ ánh sáng của các vật liệu phi kim.
@@ -324,7 +324,7 @@ export default function MaterialInspector({
             step="0.05"
             value={specular}
             onChange={(e) => updateProp('specular', parseFloat(e.target.value))}
-            className="flex-1 accent-violet-400 h-1.5 bg-white/10 rounded cursor-pointer"
+            className="flex-1 accent-brand h-1.5 bg-white/10 rounded cursor-pointer"
           />
           <input
             type="number"
@@ -348,10 +348,10 @@ export default function MaterialInspector({
       <div className="space-y-2 p-2.5 rounded-xl bg-white/5 border border-white/5">
         <div className="flex items-center justify-between">
           <span className="font-bold text-xs flex items-center gap-1.5 text-white">
-            <span className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
+            <span className="w-2.5 h-2.5 rounded-full bg-brand" />
             5. Normal Map / Bump Map
           </span>
-          <span className="font-mono text-indigo-400 font-bold">{normalScale.toFixed(2)}x</span>
+          <span className="font-mono text-brand font-bold">{normalScale.toFixed(2)}x</span>
         </div>
         <p className="text-[10px] text-slate-400">
           Bẻ cong hướng ánh sáng để tạo cảm giác lồi lõm chi tiết giả mà không tăng số lượng đa giác.
@@ -365,7 +365,7 @@ export default function MaterialInspector({
             step="0.1"
             value={normalScale}
             onChange={(e) => updateProp('normalScale', parseFloat(e.target.value))}
-            className="flex-1 accent-indigo-400 h-1.5 bg-white/10 rounded cursor-pointer"
+            className="flex-1 accent-brand h-1.5 bg-white/10 rounded cursor-pointer"
           />
           <input
             type="number"
@@ -389,10 +389,10 @@ export default function MaterialInspector({
       <div className="space-y-2 p-2.5 rounded-xl bg-white/5 border border-white/5">
         <div className="flex items-center justify-between">
           <span className="font-bold text-xs flex items-center gap-1.5 text-white">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+            <span className="w-2.5 h-2.5 rounded-full bg-brand" />
             6. Displacement (Height Map)
           </span>
-          <span className="font-mono text-emerald-400 font-bold">{displacementScale.toFixed(3)}</span>
+          <span className="font-mono text-brand font-bold">{displacementScale.toFixed(3)}</span>
         </div>
         <p className="text-[10px] text-slate-400">
           Đẩy trực tiếp các đỉnh (vertex) trồi lên hoặc lõm xuống tạo chi tiết lồi lõm thực tế.
@@ -406,7 +406,7 @@ export default function MaterialInspector({
             step="0.005"
             value={displacementScale}
             onChange={(e) => updateProp('displacementScale', parseFloat(e.target.value))}
-            className="flex-1 accent-emerald-400 h-1.5 bg-white/10 rounded cursor-pointer"
+            className="flex-1 accent-brand h-1.5 bg-white/10 rounded cursor-pointer"
           />
           <input
             type="number"
@@ -552,13 +552,13 @@ export default function MaterialInspector({
       </div>
 
       {/* 10. Transmission & IOR (Kính & Chiết suất khúc xạ) */}
-      <div className="space-y-2.5 p-2.5 rounded-xl bg-gradient-to-br from-blue-950/40 to-slate-900/60 border border-blue-500/20">
+      <div className="space-y-2.5 p-2.5 rounded-xl bg-gradient-to-br from-brand-hover/40 to-slate-900/60 border border-brand/20">
         <div className="flex items-center justify-between">
-          <span className="font-bold text-xs flex items-center gap-1.5 text-blue-300">
-            <Droplets className="w-3.5 h-3.5 text-blue-400" />
+          <span className="font-bold text-xs flex items-center gap-1.5 text-brand">
+            <Droplets className="w-3.5 h-3.5 text-brand" />
             10. Transmission & IOR (Thủy tinh / Khúc xạ)
           </span>
-          <span className="font-mono text-blue-300 font-bold">IOR {ior.toFixed(2)}</span>
+          <span className="font-mono text-brand font-bold">IOR {ior.toFixed(2)}</span>
         </div>
         <p className="text-[10px] text-slate-400">
           Độ truyền sáng xuyên thấu (cho kính, nước, đá quý) kết hợp chỉ số khúc xạ bẻ cong tia sáng (IOR).
@@ -568,7 +568,7 @@ export default function MaterialInspector({
         <div className="space-y-1">
           <div className="flex items-center justify-between text-[10px] text-slate-300">
             <span>Độ truyền sáng (Transmission):</span>
-            <span className="font-mono text-blue-400">{transmission.toFixed(2)}</span>
+            <span className="font-mono text-brand">{transmission.toFixed(2)}</span>
           </div>
           <input
             type="range"
@@ -577,7 +577,7 @@ export default function MaterialInspector({
             step="0.05"
             value={transmission}
             onChange={(e) => updateProp('transmission', parseFloat(e.target.value))}
-            className="w-full accent-blue-400 h-1.5 bg-white/10 rounded cursor-pointer"
+            className="w-full accent-brand h-1.5 bg-white/10 rounded cursor-pointer"
           />
         </div>
 
@@ -585,7 +585,7 @@ export default function MaterialInspector({
         <div className="space-y-1 pt-1">
           <div className="flex items-center justify-between text-[10px] text-slate-300">
             <span>Chỉ số khúc xạ (IOR):</span>
-            <span className="font-mono text-cyan-300">{ior.toFixed(2)}</span>
+            <span className="font-mono text-brand">{ior.toFixed(2)}</span>
           </div>
           <input
             type="range"
@@ -594,7 +594,7 @@ export default function MaterialInspector({
             step="0.02"
             value={ior}
             onChange={(e) => updateProp('ior', parseFloat(e.target.value))}
-            className="w-full accent-cyan-400 h-1.5 bg-white/10 rounded cursor-pointer"
+            className="w-full accent-brand h-1.5 bg-white/10 rounded cursor-pointer"
           />
         </div>
 

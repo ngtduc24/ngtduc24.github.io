@@ -162,7 +162,7 @@ export default function EduImport({ currentUser, onSuccess }: EduImportProps) {
               key={i} 
               className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                 step === i ? 'bg-brand text-white shadow-lg shadow-brand/20' : 
-                step > i ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                step > i ? 'bg-brand-light text-brand' : 'bg-slate-100 text-slate-400'
               }`}
             >
               {step > i ? <CheckCircle2 className="w-4 h-4" /> : i}
@@ -209,7 +209,7 @@ export default function EduImport({ currentUser, onSuccess }: EduImportProps) {
         {step === 2 && (
           <div className="max-w-xl mx-auto space-y-8 animate-slideInRight">
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-emerald-600">
+              <div className="flex items-center gap-2 text-brand">
                 <CheckCircle2 className="w-5 h-5" />
                 <p className="text-sm font-bold">Đã đọc thành công {fileData.length} sinh viên</p>
               </div>

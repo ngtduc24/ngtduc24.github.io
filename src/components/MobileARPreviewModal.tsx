@@ -196,7 +196,7 @@ export default function MobileARPreviewModal({
                 <div className="absolute top-2.5 inset-x-0 z-40 flex justify-center pointer-events-none">
                   <div className="w-24 h-6 bg-black rounded-full border border-white/10 flex items-center justify-between px-3">
                     <div className="w-2.5 h-2.5 rounded-full bg-[#1a1a24] border border-white/20" />
-                    <div className="w-2 h-2 rounded-full bg-emerald-500/80 animate-pulse" />
+                    <div className="w-2 h-2 rounded-full bg-brand/80 animate-pulse" />
                   </div>
                 </div>
 
@@ -210,16 +210,16 @@ export default function MobileARPreviewModal({
                       <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:24px_24px]" />
                       {/* Reticle Target Tracker in center */}
                       {targetPreview ? (
-                        <div className="relative w-44 h-44 rounded-2xl border-2 border-emerald-400/60 p-2 shadow-2xl flex items-center justify-center bg-black/40">
+                        <div className="relative w-44 h-44 rounded-2xl border-2 border-brand/60 p-2 shadow-2xl flex items-center justify-center bg-black/40">
                           <img
                             src={targetPreview}
                             alt="Target Preview"
                             className="w-full h-full object-contain rounded-lg opacity-60"
                           />
-                          <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-emerald-400" />
-                          <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-emerald-400" />
-                          <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-emerald-400" />
-                          <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-emerald-400" />
+                          <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-brand" />
+                          <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-brand" />
+                          <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-brand" />
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-brand" />
                         </div>
                       ) : (
                         <div className="w-40 h-40 border border-dashed border-white/20 rounded-2xl flex items-center justify-center text-slate-500 text-xs">
@@ -279,18 +279,18 @@ export default function MobileARPreviewModal({
                         className="max-w-[160px] max-h-[160px] rounded-xl object-contain drop-shadow-2xl"
                       />
                     ) : (
-                      <div className="px-4 py-2 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-bold">
+                      <div className="px-4 py-2 rounded-xl bg-brand/20 border border-brand/40 text-brand text-xs font-bold">
                         Video AR
                       </div>
                     )
                   ) : (
                     // 3D Model representation
-                    <div className="w-36 h-36 rounded-2xl bg-gradient-to-tr from-brand/30 via-emerald-500/20 to-teal-400/30 border border-white/20 backdrop-blur-xs flex flex-col items-center justify-center shadow-2xl p-3 text-center">
+                    <div className="w-36 h-36 rounded-2xl bg-gradient-to-tr from-brand/30 via-brand/20 to-brand/30 border border-white/20 backdrop-blur-xs flex flex-col items-center justify-center shadow-2xl p-3 text-center">
                       <Sparkles className="w-8 h-8 text-amber-300 mb-1 animate-pulse" />
                       <span className="text-[11px] font-bold text-white leading-tight">
                         Mô hình 3D
                       </span>
-                      <span className="text-[9px] text-emerald-300 font-mono">
+                      <span className="text-[9px] text-brand font-mono">
                         Scale: {scale.toFixed(2)}x
                       </span>
                     </div>
@@ -401,7 +401,7 @@ export default function MobileARPreviewModal({
                   className="py-2 px-2 rounded-xl bg-brand/20 hover:bg-brand/30 border border-brand/40 text-center transition"
                 >
                   <span className="text-xs font-bold text-white block">Tiêu chuẩn</span>
-                  <span className="text-[9px] text-emerald-300">Khuyên dùng</span>
+                  <span className="text-[9px] text-brand">Khuyên dùng</span>
                 </button>
                 <button
                   type="button"
@@ -417,7 +417,7 @@ export default function MobileARPreviewModal({
             {/* Granular Feature Toggles */}
             <div className="bg-black/30 p-4 rounded-2xl border border-white/10 flex-1 space-y-3">
               <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
-                <Layers className="w-3.5 h-3.5 text-emerald-400" /> Tùy chỉnh chi tiết phần tử HUD
+                <Layers className="w-3.5 h-3.5 text-brand" /> Tùy chỉnh chi tiết phần tử HUD
               </span>
               <p className="text-[11px] text-slate-400">
                 Bật hoặc tắt từng phần tử để giao diện trên điện thoại thoáng đãng và sạch sẽ:
@@ -427,7 +427,7 @@ export default function MobileARPreviewModal({
                 {/* 1. Logo Toggle */}
                 <label className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 cursor-pointer transition">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-300 flex items-center justify-center">
+                    <div className="w-7 h-7 rounded-lg bg-brand/20 text-brand flex items-center justify-center">
                       <span className="text-xs font-bold">Logo</span>
                     </div>
                     <div>
@@ -484,7 +484,7 @@ export default function MobileARPreviewModal({
                 {/* 4. Target Name Badge Toggle */}
                 <label className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 cursor-pointer transition">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-300 flex items-center justify-center">
+                    <div className="w-7 h-7 rounded-lg bg-brand/20 text-brand flex items-center justify-center">
                       <span className="text-xs font-bold">Aa</span>
                     </div>
                     <div>
@@ -503,7 +503,7 @@ export default function MobileARPreviewModal({
                 {/* 5. AR Shutter Button Toggle */}
                 <label className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 cursor-pointer transition">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center">
+                    <div className="w-7 h-7 rounded-lg bg-brand/20 text-brand flex items-center justify-center">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />

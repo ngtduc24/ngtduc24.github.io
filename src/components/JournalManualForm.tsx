@@ -29,7 +29,7 @@ export default function JournalManualForm({
     <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm max-w-3xl mx-auto space-y-6 animate-fadeIn">
       <div className="border-b border-slate-100 pb-4">
         <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-          <Plus className="w-5 h-5 text-purple-600" />
+          <Plus className="w-5 h-5 text-brand" />
           <span>{isEditing ? "Cập nhật tạp chí khoa học" : "Thêm mới tạp chí thủ công"}</span>
         </h2>
         <p className="text-xs text-slate-400 mt-1">
@@ -46,7 +46,7 @@ export default function JournalManualForm({
               required
               value={formState.name || ""}
               onChange={(e) => setFormState({ ...formState, name: e.target.value })}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#712cf9]/20 focus:border-[#712cf9] transition-all"
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               placeholder="Ví dụ: Tạp chí Khoa học và Công nghệ Việt Nam"
             />
           </div>
@@ -57,7 +57,7 @@ export default function JournalManualForm({
               type="text"
               value={formState.issn || ""}
               onChange={(e) => setFormState({ ...formState, issn: e.target.value })}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#712cf9]/20 focus:border-[#712cf9] transition-all font-mono"
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all font-mono"
               placeholder="Ví dụ: 1859-1868"
             />
           </div>
@@ -67,7 +67,7 @@ export default function JournalManualForm({
             <select
               value={formState.type || "Tạp chí"}
               onChange={(e) => setFormState({ ...formState, type: e.target.value })}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#712cf9]/20 focus:border-[#712cf9] transition-all cursor-pointer"
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all cursor-pointer"
             >
               {typesList.length > 0 ? (
                 typesList.map(t => (
@@ -94,7 +94,7 @@ export default function JournalManualForm({
               type="text"
               value={formState.publisher || ""}
               onChange={(e) => setFormState({ ...formState, publisher: e.target.value })}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#712cf9]/20 focus:border-[#712cf9] transition-all"
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               placeholder="Ví dụ: Viện Hàn lâm Khoa học và Công nghệ VN"
             />
           </div>
@@ -104,7 +104,7 @@ export default function JournalManualForm({
             <select
               value={formState.field || ""}
               onChange={(e) => setFormState({ ...formState, field: e.target.value })}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#712cf9]/20 focus:border-[#712cf9] transition-all cursor-pointer"
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all cursor-pointer"
             >
               <option value="">-- Chọn ngành học --</option>
               {fieldsList.length > 0 ? (
@@ -134,7 +134,7 @@ export default function JournalManualForm({
             <select
               value={formState.score || "0 – 0,75"}
               onChange={(e) => setFormState({ ...formState, score: e.target.value })}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#712cf9]/20 focus:border-[#712cf9] transition-all cursor-pointer"
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all cursor-pointer"
             >
               <option value="0 – 0,25">0 – 0,25</option>
               <option value="0 – 0,5">0 – 0,5</option>
@@ -152,7 +152,7 @@ export default function JournalManualForm({
             <select
               value={formState.rating || 3}
               onChange={(e) => setFormState({ ...formState, rating: Number(e.target.value) })}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#712cf9]/20 focus:border-[#712cf9] transition-all cursor-pointer"
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all cursor-pointer"
             >
               <option value={1}>1 Sao</option>
               <option value={2}>2 Sao</option>
@@ -168,7 +168,7 @@ export default function JournalManualForm({
               type="text"
               value={formState.establishedDate || ""}
               onChange={(e) => setFormState({ ...formState, establishedDate: e.target.value })}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#712cf9]/20 focus:border-[#712cf9] transition-all"
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               placeholder="Ví dụ: 1995"
             />
           </div>
@@ -179,7 +179,7 @@ export default function JournalManualForm({
               type="number"
               value={formState.paperCount || 100}
               onChange={(e) => setFormState({ ...formState, paperCount: Number(e.target.value) })}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#712cf9]/20 focus:border-[#712cf9] transition-all"
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
             />
           </div>
 
@@ -214,7 +214,7 @@ export default function JournalManualForm({
               rows={3}
               value={formState.description || ""}
               onChange={(e) => setFormState({ ...formState, description: e.target.value })}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#712cf9]/20 focus:border-[#712cf9] transition-all"
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
               placeholder="Nhập giới thiệu tổng quan hoặc tóm tắt thông tin..."
             />
           </div>
@@ -230,7 +230,7 @@ export default function JournalManualForm({
           </button>
           <button
             type="submit"
-            className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md"
+            className="px-5 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md"
           >
             Lưu dữ liệu
           </button>

@@ -357,7 +357,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                   setUserForm({ stt: (users.length + 1).toString(), fullName: '', mssv: '' });
                   setIsAddingUser(true);
                 }}
-                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-all border border-emerald-100"
+                className="flex items-center gap-1.5 px-4 py-2 bg-brand-light text-brand hover:bg-brand-light rounded-xl text-xs font-bold transition-all border border-brand-light"
               >
                 <UserPlus className="w-4 h-4" />
                 <span>Thêm SV thủ công</span>
@@ -390,40 +390,40 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
           </div>
 
           {isAddingUser && (
-            <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 flex flex-wrap items-center gap-3 animate-fadeIn">
+            <div className="bg-brand-light/50 p-4 rounded-2xl border border-brand-light flex flex-wrap items-center gap-3 animate-fadeIn">
               <div className="space-y-1">
-                <label className="text-[9px] font-black text-emerald-600 uppercase ml-1">STT</label>
+                <label className="text-[9px] font-black text-brand uppercase ml-1">STT</label>
                 <input 
                   type="number" 
                   value={userForm.stt}
                   onChange={e => setUserForm({...userForm, stt: e.target.value})}
-                  className="w-16 px-3 py-2 bg-white border border-emerald-100 rounded-xl text-xs font-bold focus:outline-none focus:border-emerald-400"
+                  className="w-16 px-3 py-2 bg-white border border-brand-light rounded-xl text-xs font-bold focus:outline-none focus:border-brand"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[9px] font-black text-emerald-600 uppercase ml-1">MSSV</label>
+                <label className="text-[9px] font-black text-brand uppercase ml-1">MSSV</label>
                 <input 
                   type="text" 
                   placeholder="SV001"
                   value={userForm.mssv}
                   onChange={e => setUserForm({...userForm, mssv: e.target.value})}
-                  className="w-32 px-3 py-2 bg-white border border-emerald-100 rounded-xl text-xs font-bold focus:outline-none focus:border-emerald-400"
+                  className="w-32 px-3 py-2 bg-white border border-brand-light rounded-xl text-xs font-bold focus:outline-none focus:border-brand"
                 />
               </div>
               <div className="flex-1 min-w-[200px] space-y-1">
-                <label className="text-[9px] font-black text-emerald-600 uppercase ml-1">Họ và Tên</label>
+                <label className="text-[9px] font-black text-brand uppercase ml-1">Họ và Tên</label>
                 <input 
                   type="text" 
                   placeholder="Nguyễn Văn A"
                   value={userForm.fullName}
                   onChange={e => setUserForm({...userForm, fullName: e.target.value})}
-                  className="w-full px-3 py-2 bg-white border border-emerald-100 rounded-xl text-xs font-bold focus:outline-none focus:border-emerald-400"
+                  className="w-full px-3 py-2 bg-white border border-brand-light rounded-xl text-xs font-bold focus:outline-none focus:border-brand"
                 />
               </div>
               <div className="flex gap-2 pt-5">
                 <button 
                   onClick={handleSaveUser}
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-black shadow-sm hover:bg-emerald-700 transition-all"
+                  className="px-4 py-2 bg-brand text-white rounded-xl text-xs font-black shadow-sm hover:bg-brand-hover transition-all"
                 >
                   {editingUser ? 'CẬP NHẬT' : 'THÊM MỚI'}
                 </button>
@@ -494,7 +494,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                             Xác nhận hoàn tất
                           </button>
                         ) : (
-                          <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 flex items-center gap-0.5">
+                          <span className="text-[9px] font-bold text-brand bg-brand-light px-1.5 py-0.5 rounded border border-brand flex items-center gap-0.5">
                             <CheckCircle2 className="w-2.5 h-2.5" /> Đã chốt
                           </span>
                         )}
@@ -580,7 +580,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[9px] font-bold text-slate-400 uppercase">{assignment.allowedFileTypes.join(', ')}</span>
                           <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                          <span className={`text-[9px] font-black uppercase ${subCount === totalCount ? 'text-emerald-500' : 'text-amber-500'}`}>
+                          <span className={`text-[9px] font-black uppercase ${subCount === totalCount ? 'text-brand' : 'text-amber-500'}`}>
                             {subCount}/{totalCount} SV đã nộp
                           </span>
                         </div>

@@ -221,7 +221,7 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
                     <td className="px-6 py-8 text-center">
                       {isSubmitted ? (
                         <div className="inline-flex flex-col items-center gap-1.5">
-                          <span className="px-3 py-1 bg-[#f0fdf4] text-[#16a34a] text-[10px] font-black rounded-lg border border-[#dcfce7] uppercase tracking-widest">
+                          <span className="px-3 py-1 bg-brand-light text-[#16a34a] text-[10px] font-black rounded-lg border border-[#dcfce7] uppercase tracking-widest">
                             Submited
                           </span>
                           <span className="text-[11px] font-black text-slate-900">

@@ -653,7 +653,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                     </div>
 
                     <span className="w-fit rounded-full bg-brand-light px-2.5 py-1 text-[9px] font-bold text-brand">{proj.category}</span>
-                    <span className={`w-fit rounded-full px-2.5 py-1 text-[9px] font-bold ${proj.status === 'published' || proj.status === 'completed' ? 'bg-emerald-50 text-emerald-600' : proj.status === 'ongoing' ? 'bg-blue-50 text-blue-600' : proj.status === 'hidden' ? 'bg-slate-100 text-slate-500' : 'bg-amber-50 text-amber-600'}`}>
+                    <span className={`w-fit rounded-full px-2.5 py-1 text-[9px] font-bold ${proj.status === 'published' || proj.status === 'completed' ? 'bg-brand-light text-brand' : proj.status === 'ongoing' ? 'bg-brand-light text-brand' : proj.status === 'hidden' ? 'bg-slate-100 text-slate-500' : 'bg-amber-50 text-amber-600'}`}>
                       {proj.status === 'published' ? 'Đã xuất bản' : proj.status === 'completed' ? 'Hoàn thành' : proj.status === 'ongoing' ? 'Đang thực hiện' : proj.status === 'hidden' ? 'Đã ẩn' : 'Bản nháp'}
                     </span>
                     <span className="text-[10px] font-bold text-slate-400">{proj.viewCount.toLocaleString('vi-VN')}</span>
@@ -1458,7 +1458,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                       </div>
                     </div>
                     <span className="w-fit rounded-lg bg-brand-light px-2.5 py-1 text-[10px] font-bold text-brand">{course.category}</span>
-                    <span className={`w-fit rounded-full px-2.5 py-1 text-[10px] font-bold ${course.status === 'published' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>{course.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}</span>
+                    <span className={`w-fit rounded-full px-2.5 py-1 text-[10px] font-bold ${course.status === 'published' ? 'bg-brand-light text-brand' : 'bg-slate-100 text-slate-500'}`}>{course.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}</span>
                     <div className="text-[10px] font-semibold text-slate-600"><p>{course.studentsCount || course.students?.length || 0} học viên</p><p className="mt-1 text-slate-400">{course.lessonsCount || 0} bài học</p></div>
                     <div className="flex justify-center gap-1.5">
                       <button onClick={() => { setEditingCourse(course); setActiveCourseEditorTab('info'); }} className="rounded-xl bg-brand-light p-2 text-brand hover:bg-brand/15" title="Quản lý"><Edit3 className="h-3.5 w-3.5" /></button>
@@ -2067,7 +2067,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                             </td>
                             <td className="p-4">
                               <span className={`inline-flex items-center text-[9px] font-black px-2 py-0.5 rounded uppercase ${
-                                st.paymentStatus === 'paid' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'
+                                st.paymentStatus === 'paid' ? 'bg-brand-light text-brand border border-brand-light' : 'bg-amber-50 text-amber-600 border border-amber-100'
                               }`}>
                                 {st.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chờ kiểm duyệt'}
                               </span>

@@ -192,7 +192,7 @@ export default function LoginScreen({ users, onLoginSuccess, onBackToPublic }: L
                     </li>
                     <li>Nhấn nút <span className="font-semibold text-white">"Add new provider"</span> (Thêm nhà cung cấp mới)</li>
                     <li>Chọn <span className="font-semibold text-white">"Email/Password"</span> (Email/Mật khẩu)</li>
-                    <li>Bật dòng <span className="font-semibold text-white">"Email/Password"</span> đầu tiên sang trạng thái <span className="font-semibold text-emerald-400">Enable</span></li>
+                    <li>Bật dòng <span className="font-semibold text-white">"Email/Password"</span> đầu tiên sang trạng thái <span className="font-semibold text-brand">Enable</span></li>
                     <li>Nhấn <span className="font-semibold text-white">"Save"</span> (Lưu) để hoàn tất</li>
                     <li>Quay lại ứng dụng này và thực hiện đăng nhập!</li>
                   </ol>
@@ -214,7 +214,7 @@ export default function LoginScreen({ users, onLoginSuccess, onBackToPublic }: L
                 onChange={(e) => setLoginUsername(e.target.value)}
                 autoComplete="username"
                 placeholder="Nhập username của bạn"
-                className="w-full bg-slate-950/40 border border-slate-700/80 focus:border-[#712cf9] focus:outline-none focus:bg-slate-950/20 text-white rounded-xl pl-10 pr-4 py-3 text-xs font-semibold transition-all"
+                className="w-full bg-slate-950/40 border border-slate-700/80 focus:border-brand focus:outline-none focus:bg-slate-950/20 text-white rounded-xl pl-10 pr-4 py-3 text-xs font-semibold transition-all"
               />
             </div>
           </div>
@@ -232,7 +232,7 @@ export default function LoginScreen({ users, onLoginSuccess, onBackToPublic }: L
                 onChange={(e) => setLoginPassword(e.target.value)}
                 autoComplete="current-password"
                 placeholder="••••••••"
-                className="w-full bg-slate-950/40 border border-slate-700/80 focus:border-[#712cf9] focus:outline-none focus:bg-slate-950/20 text-white rounded-xl pl-10 pr-10 py-3 text-xs font-semibold transition-all"
+                className="w-full bg-slate-950/40 border border-slate-700/80 focus:border-brand focus:outline-none focus:bg-slate-950/20 text-white rounded-xl pl-10 pr-10 py-3 text-xs font-semibold transition-all"
               />
               <button
                 type="button"

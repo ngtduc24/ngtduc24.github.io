@@ -378,11 +378,11 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
       case 'task':
         return <ClipboardList className="w-5 h-5 text-rose-600" />;
       case 'journal':
-        return <BookOpen className="w-5 h-5 text-purple-600" />;
+        return <BookOpen className="w-5 h-5 text-brand" />;
       case 'warning':
         return <AlertTriangle className="w-5 h-5 text-amber-600" />;
       default:
-        return <Info className="w-5 h-5 text-blue-600" />;
+        return <Info className="w-5 h-5 text-brand" />;
     }
   };
 
@@ -391,11 +391,11 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
       case 'task':
         return 'bg-rose-50 border border-rose-100';
       case 'journal':
-        return 'bg-purple-50 border border-purple-100';
+        return 'bg-brand-light border border-brand-light';
       case 'warning':
         return 'bg-amber-50 border border-amber-100';
       default:
-        return 'bg-blue-50 border border-blue-100';
+        return 'bg-brand-light border border-brand-light';
     }
   };
 
@@ -476,10 +476,10 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
         <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Về công việc</span>
-            <div className="text-2xl font-black text-blue-600 tracking-tight leading-none">{taskCount}</div>
+            <div className="text-2xl font-black text-brand tracking-tight leading-none">{taskCount}</div>
             <span className="text-[11px] text-slate-400 font-medium block">Nhiệm vụ, deadline, phân công</span>
           </div>
-          <div className="p-3.5 bg-blue-50 border border-blue-100 rounded-2xl text-blue-600">
+          <div className="p-3.5 bg-brand-light border border-brand-light rounded-2xl text-brand">
             <ClipboardList className="w-6 h-6" />
           </div>
         </div>
@@ -487,10 +487,10 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
         <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Về hệ thống</span>
-            <div className="text-2xl font-black text-purple-600 tracking-tight leading-none">{systemCount}</div>
+            <div className="text-2xl font-black text-brand tracking-tight leading-none">{systemCount}</div>
             <span className="text-[11px] text-slate-400 font-medium block">Thông báo chung & Tạp chí</span>
           </div>
-          <div className="p-3.5 bg-purple-50 border border-purple-100 rounded-2xl text-purple-600">
+          <div className="p-3.5 bg-brand-light border border-brand-light rounded-2xl text-brand">
             <Sparkles className="w-6 h-6" />
           </div>
         </div>
@@ -546,7 +546,7 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
               disabled={unreadCount === 0}
               className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 transition-all cursor-pointer disabled:opacity-40"
             >
-              <CheckCheck className="w-4 h-4 text-emerald-600" />
+              <CheckCheck className="w-4 h-4 text-brand" />
               <span>Đã đọc tất cả</span>
             </button>
             <button 
@@ -593,7 +593,7 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
                     <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
                       n.type === 'task' || n.type === 'warning' 
                         ? 'bg-rose-50 text-rose-600 border border-rose-100/60' 
-                        : (n.type === 'journal' ? 'bg-purple-50 text-purple-600 border border-purple-100/60' : 'bg-blue-50 text-blue-600 border border-blue-100/60')
+                        : (n.type === 'journal' ? 'bg-brand-light text-brand border border-brand-light/60' : 'bg-brand-light text-brand border border-brand-light/60')
                     }`}>
                       {n.type === 'warning' ? 'Cảnh báo' : (n.type === 'task' ? 'Công việc' : (n.type === 'journal' ? 'Tạp chí' : 'Hệ thống'))}
                     </span>
@@ -660,7 +660,7 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
           <div className="bg-white rounded-3xl w-full max-w-lg relative overflow-hidden shadow-2xl z-10 animate-scaleUp flex flex-col p-6 space-y-4">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-blue-50 border border-blue-100 rounded-2xl text-blue-600">
+                <div className="p-3 bg-brand-light border border-brand-light rounded-2xl text-brand">
                   <Bell className="w-6 h-6" />
                 </div>
                 <div>

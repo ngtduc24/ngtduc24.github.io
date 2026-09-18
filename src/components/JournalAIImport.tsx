@@ -90,7 +90,7 @@ export default function JournalAIImport({
   if (extractedRows.length === 0) {
     return (
       <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm text-center max-w-2xl mx-auto space-y-6">
-        <div className="w-16 h-16 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mx-auto">
+        <div className="w-16 h-16 bg-brand-light text-brand rounded-full flex items-center justify-center mx-auto">
           <Sparkles className="w-8 h-8 animate-pulse" />
         </div>
         <div className="space-y-2">
@@ -109,11 +109,11 @@ export default function JournalAIImport({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
         <div className="space-y-1.5 text-left">
           <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-600" />
+            <Sparkles className="w-5 h-5 text-brand" />
             <span>Kết quả quét AI thông minh (Xem & Hiệu chỉnh)</span>
           </h2>
           <p className="text-xs text-slate-500 leading-relaxed font-medium">
-            Phát hiện <strong className="text-purple-600">{totalRows} tạp chí</strong> từ tài liệu PDF. Bạn có thể chỉnh sửa trực tiếp nội dung, chọn hoặc bỏ chọn và nhập hàng loạt vào hệ thống.
+            Phát hiện <strong className="text-brand">{totalRows} tạp chí</strong> từ tài liệu PDF. Bạn có thể chỉnh sửa trực tiếp nội dung, chọn hoặc bỏ chọn và nhập hàng loạt vào hệ thống.
           </p>
         </div>
 
@@ -200,7 +200,7 @@ export default function JournalAIImport({
                   <tr 
                     key={row.tempId} 
                     className={`transition-colors ${
-                      isSelected ? "bg-purple-50/10 hover:bg-purple-50/20" : "bg-white hover:bg-slate-50/50"
+                      isSelected ? "bg-brand-light/10 hover:bg-brand-light/20" : "bg-white hover:bg-slate-50/50"
                     }`}
                   >
                     {/* Checkbox Column */}
@@ -210,8 +210,8 @@ export default function JournalAIImport({
                         onClick={() => handleToggleRow(row.tempId)}
                         className={`inline-flex items-center justify-center w-5 h-5 rounded-md border transition-all cursor-pointer ${
                           isSelected
-                            ? "bg-purple-600 border-purple-600 text-white"
-                            : "bg-white border-slate-300 hover:border-purple-500 text-transparent"
+                            ? "bg-brand border-brand text-white"
+                            : "bg-white border-slate-300 hover:border-brand text-transparent"
                         }`}
                       >
                         <Check className="w-3.5 h-3.5 stroke-[3]" />
@@ -224,7 +224,7 @@ export default function JournalAIImport({
                         type="text"
                         value={row.name || ""}
                         onChange={(e) => handleFieldChange(row.tempId, "name", e.target.value)}
-                        className="w-full bg-slate-50/40 focus:bg-white border border-slate-200 focus:border-purple-500 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 transition-all focus:outline-none"
+                        className="w-full bg-slate-50/40 focus:bg-white border border-slate-200 focus:border-brand rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 transition-all focus:outline-none"
                         placeholder="Nhập tên tạp chí..."
                       />
                     </td>
@@ -235,7 +235,7 @@ export default function JournalAIImport({
                         type="text"
                         value={row.issn || ""}
                         onChange={(e) => handleFieldChange(row.tempId, "issn", e.target.value)}
-                        className="w-full bg-slate-50/40 focus:bg-white border border-slate-200 focus:border-purple-500 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 transition-all focus:outline-none"
+                        className="w-full bg-slate-50/40 focus:bg-white border border-slate-200 focus:border-brand rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 transition-all focus:outline-none"
                         placeholder="ISSN..."
                       />
                     </td>
@@ -245,7 +245,7 @@ export default function JournalAIImport({
                       <select
                         value={row.type || "Tạp chí"}
                         onChange={(e) => handleFieldChange(row.tempId, "type", e.target.value)}
-                        className="w-full bg-slate-50/40 focus:bg-white border border-slate-200 focus:border-purple-500 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 transition-all focus:outline-none cursor-pointer"
+                        className="w-full bg-slate-50/40 focus:bg-white border border-slate-200 focus:border-brand rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 transition-all focus:outline-none cursor-pointer"
                       >
                         {typesList.map(type => (
                           <option key={type.id || type.name} value={type.name}>
@@ -268,7 +268,7 @@ export default function JournalAIImport({
                         type="text"
                         value={row.publisher || ""}
                         onChange={(e) => handleFieldChange(row.tempId, "publisher", e.target.value)}
-                        className="w-full bg-slate-50/40 focus:bg-white border border-slate-200 focus:border-purple-500 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 transition-all focus:outline-none"
+                        className="w-full bg-slate-50/40 focus:bg-white border border-slate-200 focus:border-brand rounded-lg px-2.5 py-1.5 text-xs text-slate-700 transition-all focus:outline-none"
                         placeholder="Nhà xuất bản..."
                       />
                     </td>
@@ -278,7 +278,7 @@ export default function JournalAIImport({
                       <select
                         value={row.field || ""}
                         onChange={(e) => handleFieldChange(row.tempId, "field", e.target.value)}
-                        className="w-full bg-slate-50/40 focus:bg-white border border-slate-200 focus:border-purple-500 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 transition-all focus:outline-none cursor-pointer"
+                        className="w-full bg-slate-50/40 focus:bg-white border border-slate-200 focus:border-brand rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 transition-all focus:outline-none cursor-pointer"
                       >
                         <option value="">-- Chọn ngành --</option>
                         {fieldsList.map(field => (
@@ -299,7 +299,7 @@ export default function JournalAIImport({
                         type="text"
                         value={row.score || ""}
                         onChange={(e) => handleFieldChange(row.tempId, "score", e.target.value)}
-                        className="w-full bg-slate-50/40 focus:bg-white border border-slate-200 focus:border-purple-500 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 transition-all focus:outline-none"
+                        className="w-full bg-slate-50/40 focus:bg-white border border-slate-200 focus:border-brand rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 transition-all focus:outline-none"
                         placeholder="Ví dụ: 1.0"
                       />
                     </td>
@@ -310,7 +310,7 @@ export default function JournalAIImport({
                         type="text"
                         value={row.description || ""}
                         onChange={(e) => handleFieldChange(row.tempId, "description", e.target.value)}
-                        className="w-full bg-slate-50/40 focus:bg-white border border-slate-200 focus:border-purple-500 rounded-lg px-2.5 py-1.5 text-xs text-slate-600 transition-all focus:outline-none"
+                        className="w-full bg-slate-50/40 focus:bg-white border border-slate-200 focus:border-brand rounded-lg px-2.5 py-1.5 text-xs text-slate-600 transition-all focus:outline-none"
                         placeholder="Nhập mô tả tóm tắt..."
                       />
                     </td>

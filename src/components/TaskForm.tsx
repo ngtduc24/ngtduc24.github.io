@@ -138,13 +138,13 @@ export default function TaskForm({ onClose, onCreated, users, settings, taskToEd
     <div className="space-y-6">
       <div className="space-y-3 p-4 bg-slate-50 rounded-xl">
         <h3 className="font-bold text-xs flex items-center gap-2 text-slate-700 uppercase tracking-wider">Thông tin công việc</h3>
-        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="VD: Thiết kế giao diện Dashboard..." className="w-full px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs bg-white" />
+        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="VD: Thiết kế giao diện Dashboard..." className="w-full px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand/20 rounded-xl text-xs bg-white" />
         <label className="text-xs font-bold text-slate-500">Loại công việc</label>
-        <select value={tag} onChange={(e) => setTag(e.target.value)} className="w-full px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs bg-white">
+        <select value={tag} onChange={(e) => setTag(e.target.value)} className="w-full px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand/20 rounded-xl text-xs bg-white">
             {(settings.taskTypes || ['Work', 'Client', 'School', 'Personal']).map(t => <option key={t} value={t}>{t}</option>)}
         </select>
         <label className="text-xs font-bold text-slate-500">Giao cho nhân viên</label>
-        <select value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} disabled={!currentUser.canAssignTask && currentUser.role !== 'admin'} className="w-full px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs bg-white">
+        <select value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} disabled={!currentUser.canAssignTask && currentUser.role !== 'admin'} className="w-full px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand/20 rounded-xl text-xs bg-white">
           <option value="">{currentUser.canAssignTask || currentUser.role === 'admin' ? "Chưa giao" : "Chỉ mình bạn"}</option>
           {currentUser.canAssignTask || currentUser.role === 'admin' ? (
             users.filter(u => (u.role === 'admin' || u.canReceiveTask || (u.permissions || []).includes('tasks'))).map(u => <option key={u.id} value={u.id}>{u.fullName}</option>)
@@ -153,8 +153,8 @@ export default function TaskForm({ onClose, onCreated, users, settings, taskToEd
           )}
         </select>
         <div className="flex gap-2">
-          <input type="date" value={deadlineDate} onChange={(e) => setDeadlineDate(e.target.value)} className="flex-1 px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs bg-white" />
-          <input type="time" value={deadlineTime} onChange={(e) => setDeadlineTime(e.target.value)} className="flex-1 px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs bg-white" />
+          <input type="date" value={deadlineDate} onChange={(e) => setDeadlineDate(e.target.value)} className="flex-1 px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand/20 rounded-xl text-xs bg-white" />
+          <input type="time" value={deadlineTime} onChange={(e) => setDeadlineTime(e.target.value)} className="flex-1 px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand/20 rounded-xl text-xs bg-white" />
         </div>
         <label className="text-xs font-bold text-slate-500">Ảnh bìa</label>
         <MediaSourcePicker onSelect={setCoverImage} accept="image/*" resourceType="image" folder="tasks/covers" category="Ảnh dự án & công việc" label="Chọn ảnh bìa" disabled={isUploadingImage} />{isUploadingImage && <p className="text-xs text-brand mt-1">Đang tải ảnh lên Cloudinary...</p>}
@@ -178,7 +178,7 @@ export default function TaskForm({ onClose, onCreated, users, settings, taskToEd
               onChange={(e) => setNewSubtaskTitle(e.target.value)} 
               disabled={isTaskInactive}
               placeholder={isTaskInactive ? "Không thể thêm subtask khi task đã hoàn thành/hủy" : "Tên subtask"} 
-              className="flex-1 px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs bg-white disabled:bg-slate-100 disabled:cursor-not-allowed" 
+              className="flex-1 px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand/20 rounded-xl text-xs bg-white disabled:bg-slate-100 disabled:cursor-not-allowed" 
             />
             <button 
               disabled={isTaskInactive}
@@ -188,7 +188,7 @@ export default function TaskForm({ onClose, onCreated, users, settings, taskToEd
                     setNewSubtaskTitle('');
                 }
               }} 
-              className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded-xl transition-colors flex items-center justify-center"
+              className="bg-brand hover:bg-brand-hover disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded-xl transition-colors flex items-center justify-center"
             >
               <Plus className="w-4 h-4"/>
             </button>
@@ -197,17 +197,17 @@ export default function TaskForm({ onClose, onCreated, users, settings, taskToEd
 
       <div className="space-y-3 p-4 bg-slate-50 rounded-xl">
         <h3 className="font-bold text-xs text-slate-700 uppercase tracking-wider">Mô tả công việc</h3>
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs bg-white" rows={4} placeholder="Nhập mô tả công việc..." />
+        <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand/20 rounded-xl text-xs bg-white" rows={4} placeholder="Nhập mô tả công việc..." />
       </div>
 
       {isAdmin && (
         <div className="space-y-3 p-4 bg-slate-50 rounded-xl">
           <h3 className="font-bold text-xs text-slate-700 uppercase tracking-wider">Thu nhập</h3>
           <div className="flex gap-4 text-xs font-semibold text-slate-600">
-            <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" checked={!hasIncome} onChange={() => setHasIncome(false)} className="accent-emerald-600" /> Không</label>
-            <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" checked={hasIncome} onChange={() => setHasIncome(true)} className="accent-emerald-600" /> Có</label>
+            <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" checked={!hasIncome} onChange={() => setHasIncome(false)} className="accent-brand" /> Không</label>
+            <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" checked={hasIncome} onChange={() => setHasIncome(true)} className="accent-brand" /> Có</label>
           </div>
-          {hasIncome && <input type="number" value={income} onChange={(e) => setIncome(Number(e.target.value))} className="w-full px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-xs bg-white" placeholder="Số tiền VNĐ" />}
+          {hasIncome && <input type="number" value={income} onChange={(e) => setIncome(Number(e.target.value))} className="w-full px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand/20 rounded-xl text-xs bg-white" placeholder="Số tiền VNĐ" />}
         </div>
       )}
 
@@ -215,7 +215,7 @@ export default function TaskForm({ onClose, onCreated, users, settings, taskToEd
         {onClose && (
           <button onClick={onClose} className="px-4 py-2.5 text-slate-500 hover:text-slate-800 font-bold text-xs rounded-xl transition-all">Hủy bỏ</button>
         )}
-        <button onClick={handleCreate} className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all">{taskToEdit ? 'Lưu thay đổi' : 'Tạo Task Mới'}</button>
+        <button onClick={handleCreate} className="px-5 py-2.5 bg-brand hover:bg-brand-hover text-white font-bold text-xs rounded-xl shadow-md transition-all">{taskToEdit ? 'Lưu thay đổi' : 'Tạo Task Mới'}</button>
       </div>
     </div>
   );
@@ -225,7 +225,7 @@ export default function TaskForm({ onClose, onCreated, users, settings, taskToEd
       <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm max-w-2xl mx-auto space-y-6 animate-fadeIn">
         <div className="flex justify-between items-center pb-4 border-b border-slate-100">
           <h2 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
-            <Plus className="w-5 h-5 text-emerald-600" />
+            <Plus className="w-5 h-5 text-brand" />
             <span>{taskToEdit ? 'Sửa thông tin công việc' : 'Thêm công việc mới'}</span>
           </h2>
           {onClose && (

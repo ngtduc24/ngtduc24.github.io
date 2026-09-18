@@ -698,7 +698,7 @@ export default function Analysis({ onAnalysisComplete }: { onAnalysisComplete?: 
                   <button
                     key={item.id}
                     onClick={() => setSelectedModel(item.id as AnalysisModel)}
-                    className={`w-full flex flex-col text-left px-3 py-2 rounded-lg transition-colors ${selectedModel === item.id ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-slate-200 text-slate-700'}`}
+                    className={`w-full flex flex-col text-left px-3 py-2 rounded-lg transition-colors ${selectedModel === item.id ? 'bg-brand-light text-brand-hover' : 'hover:bg-slate-200 text-slate-700'}`}
                   >
                     <span className="font-semibold text-sm flex items-center gap-2">
                       <item.icon className="w-4 h-4" /> {item.name}
@@ -723,7 +723,7 @@ export default function Analysis({ onAnalysisComplete }: { onAnalysisComplete?: 
           <div className="animate-fadeIn flex flex-col h-full">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <Settings2 className="w-5 h-5 text-emerald-600" /> Cấu hình {analysisOptions.flatMap(g => g.items).find(i => i.id === selectedModel)?.name}
+                <Settings2 className="w-5 h-5 text-brand" /> Cấu hình {analysisOptions.flatMap(g => g.items).find(i => i.id === selectedModel)?.name}
               </h3>
               <button onClick={() => setSelectedModel(null)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500">
                 <X className="w-4 h-4" />
@@ -747,7 +747,7 @@ export default function Analysis({ onAnalysisComplete }: { onAnalysisComplete?: 
                           setTargetVars([...targetVars, v.id]);
                         }
                       }}
-                      className={`w-full text-left p-2 rounded border text-sm transition-colors ${selectedAvailableVar === v.id ? 'bg-emerald-100 border-emerald-300 text-emerald-900' : 'bg-white border-slate-200 hover:border-emerald-200 text-slate-700'}`}
+                      className={`w-full text-left p-2 rounded border text-sm transition-colors ${selectedAvailableVar === v.id ? 'bg-brand-light border-brand text-brand-hover' : 'bg-white border-slate-200 hover:border-brand text-slate-700'}`}
                     >
                       <span className="font-semibold">{v.name}</span>
                       {v.label && <span className="text-slate-500 ml-2 text-xs truncate">- {v.label}</span>}
@@ -767,7 +767,7 @@ export default function Analysis({ onAnalysisComplete }: { onAnalysisComplete?: 
                       if (selectedAvailableVar) moveAvailableToTarget();
                       else if (selectedTargetVar && targetVars.includes(selectedTargetVar)) moveTargetToAvailable();
                     }}
-                    className="p-2 bg-slate-100 hover:bg-emerald-100 text-slate-600 hover:text-emerald-700 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 bg-slate-100 hover:bg-brand-light text-slate-600 hover:text-brand-hover rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {selectedTargetVar && targetVars.includes(selectedTargetVar) ? <ArrowLeft className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
                  </button>
@@ -781,7 +781,7 @@ export default function Analysis({ onAnalysisComplete }: { onAnalysisComplete?: 
                           if (selectedAvailableVar) moveAvailableToDependent();
                           else if (selectedTargetVar && dependentVar === selectedTargetVar) moveTargetToAvailable();
                         }}
-                        className="p-2 bg-slate-100 hover:bg-emerald-100 text-slate-600 hover:text-emerald-700 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="p-2 bg-slate-100 hover:bg-brand-light text-slate-600 hover:text-brand-hover rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
                         {selectedTargetVar && dependentVar === selectedTargetVar ? <ArrowLeft className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
                      </button>
@@ -809,7 +809,7 @@ export default function Analysis({ onAnalysisComplete }: { onAnalysisComplete?: 
                           onDoubleClick={() => {
                             setTargetVars(targetVars.filter(id => id !== v.id));
                           }}
-                          className={`w-full text-left p-2 rounded border text-sm transition-colors ${selectedTargetVar === v.id ? 'bg-emerald-100 border-emerald-300 text-emerald-900' : 'bg-white border-slate-200 hover:border-emerald-200 text-slate-700'}`}
+                          className={`w-full text-left p-2 rounded border text-sm transition-colors ${selectedTargetVar === v.id ? 'bg-brand-light border-brand text-brand-hover' : 'bg-white border-slate-200 hover:border-brand text-slate-700'}`}
                         >
                           <span className="font-semibold">{v.name}</span>
                         </button>
@@ -822,9 +822,9 @@ export default function Analysis({ onAnalysisComplete }: { onAnalysisComplete?: 
                 </div>
                 
                 {selectedModel === 'regression' && (
-                  <div className="h-1/3 border border-emerald-200 rounded-lg p-3 bg-emerald-50/30 flex flex-col">
-                    <p className="text-xs font-bold text-emerald-700 mb-2 uppercase">Dependent Variable</p>
-                    <div className="flex-1 overflow-y-auto space-y-1 bg-white p-2 rounded border border-emerald-100">
+                  <div className="h-1/3 border border-brand rounded-lg p-3 bg-brand-light/30 flex flex-col">
+                    <p className="text-xs font-bold text-brand-hover mb-2 uppercase">Dependent Variable</p>
+                    <div className="flex-1 overflow-y-auto space-y-1 bg-white p-2 rounded border border-brand-light">
                       {dependentVar ? (() => {
                         const v = variables.find(varObj => varObj.id === dependentVar);
                         if (!v) return null;
@@ -835,7 +835,7 @@ export default function Analysis({ onAnalysisComplete }: { onAnalysisComplete?: 
                               setSelectedTargetVar(v.id);
                               setSelectedAvailableVar(null);
                             }}
-                            className={`w-full text-left p-2 rounded border text-sm transition-colors ${selectedTargetVar === v.id ? 'bg-emerald-100 border-emerald-300 text-emerald-900' : 'bg-white border-slate-200 hover:border-emerald-200 text-slate-700'}`}
+                            className={`w-full text-left p-2 rounded border text-sm transition-colors ${selectedTargetVar === v.id ? 'bg-brand-light border-brand text-brand-hover' : 'bg-white border-slate-200 hover:border-brand text-slate-700'}`}
                           >
                             <span className="font-semibold">{v.name}</span>
                           </button>
@@ -852,7 +852,7 @@ export default function Analysis({ onAnalysisComplete }: { onAnalysisComplete?: 
             <div className="flex justify-end pt-4 mt-4 border-t border-slate-100">
               <button 
                 onClick={handleRunAnalysis} 
-                className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-emerald-700 flex items-center gap-2 transition-colors shadow-sm shadow-emerald-200"
+                className="bg-brand text-white px-6 py-2 rounded-xl font-bold hover:bg-brand-hover flex items-center gap-2 transition-colors shadow-sm shadow-brand"
               >
                 <Play className="w-4 h-4" /> Bắt đầu Phân tích
               </button>

@@ -515,10 +515,10 @@ export default function ImageResizer() {
       )}
 
       {results.length > 0 && (
-        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-5">
+        <div className="rounded-2xl border border-brand-light bg-brand-light/40 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-black uppercase tracking-wider text-emerald-700">Kết quả ({results.length} ảnh)</p>
+              <p className="text-xs font-black uppercase tracking-wider text-brand-hover">Kết quả ({results.length} ảnh)</p>
               <p className="mt-1 text-[11px] font-semibold text-slate-600">
                 Đã phóng to lên {scale} phần trăm{results.some(item => item.usedAi) ? ', có dùng Gemini làm rõ chi tiết' : ''}
               </p>
@@ -526,7 +526,7 @@ export default function ImageResizer() {
             <button
               type="button"
               onClick={downloadAll}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white transition hover:bg-emerald-700"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-xs font-bold text-white transition hover:bg-brand-hover"
             >
               <Download className="h-4 w-4" /> Tải tất cả
             </button>
@@ -534,21 +534,21 @@ export default function ImageResizer() {
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {results.map(result => (
-              <div key={result.id} className="flex gap-3 rounded-xl border border-emerald-100 bg-white p-3">
+              <div key={result.id} className="flex gap-3 rounded-xl border border-brand-light bg-white p-3">
                 <img src={result.url} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-bold text-slate-700">{result.name}</p>
                   <p className="mt-1 text-[11px] text-slate-500">
                     {result.width} nhân {result.height}, {formatBytes(result.bytes)}
                   </p>
-                  <p className="mt-0.5 text-[11px] font-bold text-emerald-600">
+                  <p className="mt-0.5 text-[11px] font-bold text-brand">
                     {result.usedAi ? 'Có dùng Gemini' : 'Làm nét tại chỗ'}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => downloadOne(result)}
-                  className="h-7 w-7 shrink-0 rounded-lg bg-emerald-100 text-emerald-700 transition hover:bg-emerald-200"
+                  className="h-7 w-7 shrink-0 rounded-lg bg-brand-light text-brand-hover transition hover:bg-brand"
                 >
                   <Download className="mx-auto h-3.5 w-3.5" />
                 </button>

@@ -55,14 +55,14 @@ const FILTERS: Array<{
 ];
 
 const STATUS_STYLES: Record<string, string> = {
-  published: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-  completed: 'bg-blue-50 text-blue-700 border-blue-100',
+  published: 'bg-brand-light text-brand-hover border-brand-light',
+  completed: 'bg-brand-light text-brand-hover border-brand-light',
   ongoing: 'bg-amber-50 text-amber-700 border-amber-100',
   pending: 'bg-orange-50 text-orange-700 border-orange-100',
   draft: 'bg-slate-100 text-slate-600 border-slate-200',
   hidden: 'bg-rose-50 text-rose-700 border-rose-100',
   archived: 'bg-slate-100 text-slate-500 border-slate-200',
-  scheduled: 'bg-purple-50 text-purple-700 border-purple-100'
+  scheduled: 'bg-brand-light text-brand-hover border-brand-light'
 };
 
 const STATUS_LABELS: Record<string, string> = {

@@ -572,7 +572,7 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
                 Dự kiến: {totalExpectedIncome.toLocaleString()} đ
               </span>
             </div>
-            <div className="p-3.5 bg-purple-50 rounded-2xl text-purple-600 transition-colors">
+            <div className="p-3.5 bg-brand-light rounded-2xl text-brand transition-colors">
               <Coins className="w-6 h-6" />
             </div>
           </div>
@@ -620,7 +620,7 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
           <button 
             type="button"
             onClick={() => setShowReportModal(true)}
-            className="px-4 py-2 rounded-lg text-xs font-bold text-emerald-700 hover:bg-emerald-50 transition-all flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 rounded-lg text-xs font-bold text-brand-hover hover:bg-brand-light transition-all flex items-center gap-1.5 cursor-pointer"
             title="Xem báo cáo công việc hoàn thành và xuất PDF"
           >
             <FileCheck className="w-3.5 h-3.5" />
@@ -651,10 +651,10 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
                 <button 
                   type="button"
                   onClick={() => setShowReportModal(true)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 bg-brand-light hover:bg-brand-light/80 border border-brand text-brand-hover rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
                   title="Xem danh sách công việc đã xong & Xuất file báo cáo PDF"
                 >
-                  <FileCheck className="w-4 h-4 text-emerald-600" />
+                  <FileCheck className="w-4 h-4 text-brand" />
                   <span>Báo cáo hoàn thành (PDF)</span>
                 </button>
               </div>
@@ -733,7 +733,7 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
                   {activeTab === 'trash' && (
                     <button
                       onClick={handleRestoreSelected}
-                      className="flex items-center gap-1.5 px-3 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-xl text-xs font-bold transition-all"
+                      className="flex items-center gap-1.5 px-3 py-2 bg-brand-light hover:bg-brand text-brand-hover rounded-xl text-xs font-bold transition-all"
                     >
                       Khôi phục mục đã chọn
                     </button>
@@ -801,7 +801,7 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
                 <label className="block text-sm font-medium text-slate-600 mb-1">Biểu tượng</label>
                 <div className="grid grid-cols-6 gap-2">
                   {Object.entries(BANNER_ICONS).map(([iconName, IconComp]) => (
-                    <button key={iconName} type="button" onClick={() => setBannerIcon(iconName)} title={iconName} className={bannerIcon === iconName ? "p-2 rounded-lg border border-emerald-600 bg-emerald-50 text-emerald-700 flex items-center justify-center" : "p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 flex items-center justify-center"}>
+                    <button key={iconName} type="button" onClick={() => setBannerIcon(iconName)} title={iconName} className={bannerIcon === iconName ? "p-2 rounded-lg border border-brand bg-brand-light text-brand-hover flex items-center justify-center" : "p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 flex items-center justify-center"}>
                       <IconComp className="w-4 h-4" />
                     </button>
                   ))}

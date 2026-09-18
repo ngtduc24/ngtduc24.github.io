@@ -29,7 +29,7 @@ export default function Results() {
     <div className="space-y-6">
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
         <h3 className="text-lg font-bold text-slate-800">Kết quả Phân tích & Báo cáo</h3>
-        <button className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-100 transition-colors">
+        <button className="flex items-center gap-2 text-brand bg-brand-light px-4 py-2 rounded-lg text-sm font-semibold hover:bg-brand-light transition-colors">
           <Download className="w-4 h-4" /> Export Report (PDF)
         </button>
       </div>
@@ -46,7 +46,7 @@ export default function Results() {
               <div 
                 key={res.id} 
                 onClick={() => setSelectedResultId(res.id)}
-                className={`${selectedResultId === res.id ? 'bg-emerald-50 text-emerald-700' : 'hover:bg-slate-50 text-slate-600'} p-2 rounded-lg text-sm font-semibold cursor-pointer transition-colors truncate`}
+                className={`${selectedResultId === res.id ? 'bg-brand-light text-brand-hover' : 'hover:bg-slate-50 text-slate-600'} p-2 rounded-lg text-sm font-semibold cursor-pointer transition-colors truncate`}
               >
                 {results.length - idx}. {getModelName(res.model)}
               </div>
@@ -68,7 +68,7 @@ export default function Results() {
                 <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                   <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
                     <h4 className="font-bold text-slate-800 flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-emerald-600" />
+                      <FileText className="w-4 h-4 text-brand" />
                       {getModelName(res.model)}
                     </h4>
                     <span className="text-xs text-slate-400">{new Date(res.timestamp).toLocaleTimeString()}</span>
@@ -89,7 +89,7 @@ export default function Results() {
                               <th className="px-4 py-2 text-right">N</th>
                               <th className="px-4 py-2 text-right">Minimum</th>
                               <th className="px-4 py-2 text-right">Maximum</th>
-                              <th className="px-4 py-2 text-right font-bold text-emerald-700">Mean</th>
+                              <th className="px-4 py-2 text-right font-bold text-brand-hover">Mean</th>
                               <th className="px-4 py-2 text-right">Std. Deviation</th>
                             </tr>
                           </thead>
@@ -128,7 +128,7 @@ export default function Results() {
                                 </thead>
                                 <tbody>
                                   <tr>
-                                    <td className="px-4 py-4 text-2xl font-bold text-emerald-600">{res.data.reliability.alpha}</td>
+                                    <td className="px-4 py-4 text-2xl font-bold text-brand">{res.data.reliability.alpha}</td>
                                     <td className="px-4 py-4 text-lg text-slate-700">{res.data.reliability.k}</td>
                                   </tr>
                                 </tbody>
@@ -137,7 +137,7 @@ export default function Results() {
                             <div className="border border-slate-200 rounded-lg p-4 bg-slate-50 flex flex-col justify-center">
                               <p className="text-sm text-slate-500 mb-1">Diễn giải tự động:</p>
                               <p className="font-semibold text-slate-800">
-                                Hệ số Alpha đạt mức <span className="text-emerald-600 font-bold">{res.data.reliability.interpretation}</span>.
+                                Hệ số Alpha đạt mức <span className="text-brand font-bold">{res.data.reliability.interpretation}</span>.
                               </p>
                               <p className="text-xs text-slate-500 mt-2">
                                 (Thông thường Cronbach's Alpha {'>'} 0.7 được coi là thang đo có độ tin cậy tốt trong nghiên cứu khoa học xã hội).
@@ -340,7 +340,7 @@ export default function Results() {
                                          <td className="px-4 py-2 text-left font-medium">Equal variances assumed</td>
                                          <td className="px-4 py-2 text-slate-700">{ttestResult.ttest.equal.t}</td>
                                          <td className="px-4 py-2 text-slate-700">{ttestResult.ttest.equal.df}</td>
-                                         <td className="px-4 py-2 font-bold text-emerald-700">{ttestResult.ttest.equal.p}</td>
+                                         <td className="px-4 py-2 font-bold text-brand-hover">{ttestResult.ttest.equal.p}</td>
                                          <td className="px-4 py-2 text-slate-700">{ttestResult.ttest.equal.md}</td>
                                        </tr>
                                        <tr className="hover:bg-slate-50">
@@ -411,7 +411,7 @@ export default function Results() {
                                      <td className="px-4 py-2 text-slate-700">{res.data.regression.anova.regression.df}</td>
                                      <td className="px-4 py-2 text-slate-700">{res.data.regression.anova.regression.ms}</td>
                                      <td className="px-4 py-2 text-slate-700">{res.data.regression.anova.regression.F}</td>
-                                     <td className="px-4 py-2 font-bold text-emerald-700">{res.data.regression.anova.regression.sig}</td>
+                                     <td className="px-4 py-2 font-bold text-brand-hover">{res.data.regression.anova.regression.sig}</td>
                                    </tr>
                                    <tr className="hover:bg-slate-50">
                                      <td className="px-4 py-2 text-left font-medium">Residual</td>
@@ -458,7 +458,7 @@ export default function Results() {
                                        <td className="px-4 py-2 text-slate-700">{coef.stdError}</td>
                                        <td className="px-4 py-2 text-slate-700">{coef.standardizedBeta}</td>
                                        <td className="px-4 py-2 text-slate-700">{coef.t}</td>
-                                       <td className="px-4 py-2 font-bold text-emerald-700">{coef.sig}</td>
+                                       <td className="px-4 py-2 font-bold text-brand-hover">{coef.sig}</td>
                                      </tr>
                                    ))}
                                  </tbody>
@@ -522,7 +522,7 @@ export default function Results() {
                                        {Array.from({ length: res.data.efa.numComponents }).map((_, i) => {
                                            const val = parseFloat(row[`Component ${i + 1}`]);
                                            return (
-                                               <td key={i} className={`px-4 py-2 ${Math.abs(val) > 0.5 ? 'font-bold text-blue-700' : 'text-slate-500'}`}>
+                                               <td key={i} className={`px-4 py-2 ${Math.abs(val) > 0.5 ? 'font-bold text-brand-hover' : 'text-slate-500'}`}>
                                                    {row[`Component ${i + 1}`]}
                                                </td>
                                            );
@@ -547,17 +547,17 @@ export default function Results() {
 
                 {/* Smart Insights (Mock for the latest result only) */}
                 {res.id === results[0]?.id && (
-                  <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-4">
-                    <h4 className="font-bold text-emerald-800 mb-3 flex items-center gap-2">
+                  <div className="bg-brand-light/50 border border-brand-light rounded-xl p-4">
+                    <h4 className="font-bold text-brand-hover mb-3 flex items-center gap-2">
                       <CheckCircle2 className="w-5 h-5" /> Smart Insights
                     </h4>
-                    <ul className="space-y-2 text-sm text-emerald-900">
+                    <ul className="space-y-2 text-sm text-brand-hover">
                       <li className="flex gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-brand mt-1.5 shrink-0" />
                         Mô hình chạy thành công. Không phát hiện dữ liệu khuyết bất thường.
                       </li>
                       <li className="flex gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-brand mt-1.5 shrink-0" />
                         P-value dự kiến sẽ được highlight để dễ dàng nhận biết ý nghĩa thống kê.
                       </li>
                     </ul>

@@ -35,7 +35,7 @@ export default function TaskRow({ task, users, currentUser, progress, onAction, 
   else if (task.status === 'Cancelled') rowClass = 'border-slate-100 bg-slate-50';
   else if (task.isDeleted) rowClass = 'border-slate-200 bg-slate-100';
 
-  const progressColor = isOverdue ? 'bg-red-500' : task.status === 'Cancelled' ? 'bg-red-500' : task.status === 'Paused' ? 'bg-yellow-500' : 'bg-emerald-500';
+  const progressColor = isOverdue ? 'bg-red-500' : task.status === 'Cancelled' ? 'bg-red-500' : task.status === 'Paused' ? 'bg-yellow-500' : 'bg-brand';
 
   const assignedUser = users?.find(u => u.id === task.assignedTo);
   const creatorUser = users?.find(u => u.id === task.creatorId);
@@ -86,11 +86,11 @@ export default function TaskRow({ task, users, currentUser, progress, onAction, 
 
       {isLocked ? (
         <div className="w-full md:flex-1 md:max-w-xs">
-          <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-xl">
-            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div className="flex items-center gap-2 px-3 py-2 bg-brand-light border border-brand-light rounded-xl">
+            <CheckCircle className="w-4 h-4 text-brand shrink-0" />
             <div className="min-w-0">
               <span className="block text-[11px] font-bold text-emerald-800">Đã hoàn thành</span>
-              <span className="block text-[10px] text-emerald-700 truncate">
+              <span className="block text-[10px] text-brand-hover truncate">
                 {task.completionReport
                   ? `${task.completionReport.completedByName} • ${new Date(task.completionReport.completedAt).toLocaleString()}`
                   : 'Công việc đã được nghiệm thu'}
@@ -112,7 +112,7 @@ export default function TaskRow({ task, users, currentUser, progress, onAction, 
 
       <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-slate-100/60">
         {!isLocked && <span className="text-[11px] font-semibold text-slate-400 md:hidden">Thao tác nhanh:</span>}
-        {isLocked && <span className="text-[11px] font-semibold text-emerald-700 md:hidden">Công việc đã xong</span>}
+        {isLocked && <span className="text-[11px] font-semibold text-brand-hover md:hidden">Công việc đã xong</span>}
         <div className="flex items-center gap-2">
           {!task.isDeleted && task.status !== 'Completed' && task.status !== 'Cancelled' && canPerformAction && (
             <>
@@ -124,7 +124,7 @@ export default function TaskRow({ task, users, currentUser, progress, onAction, 
           )}
           {task.isDeleted && (
             <div className="flex items-center gap-1.5">
-              <button className="px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg text-xs font-bold transition-colors" onClick={() => onAction(task, 'restore')}>Khôi phục</button>
+              <button className="px-3 py-1.5 bg-brand-light hover:bg-brand text-brand-hover rounded-lg text-xs font-bold transition-colors" onClick={() => onAction(task, 'restore')}>Khôi phục</button>
               {canDelete && (
                 <button className="px-3 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-lg text-xs font-bold transition-colors" onClick={() => onAction(task, 'permanent_delete')}>Xóa vĩnh viễn</button>
               )}

@@ -34,7 +34,7 @@ export default function JournalTools({
     <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm max-w-2xl mx-auto space-y-6">
       <div className="border-b border-slate-100 pb-4 text-left">
         <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-          <Cpu className="w-5 h-5 text-purple-600" />
+          <Cpu className="w-5 h-5 text-brand" />
           <span>Công cụ quản trị & Tiện ích AI</span>
         </h2>
         <p className="text-xs text-slate-400 mt-1">
@@ -63,10 +63,10 @@ export default function JournalTools({
 
         {/* Backup and Restore section */}
         {isAdmin && (
-          <div className="p-4 rounded-2xl border border-slate-150 bg-purple-50/20 space-y-4 animate-fadeIn">
+          <div className="p-4 rounded-2xl border border-slate-150 bg-brand-light/20 space-y-4 animate-fadeIn">
             <div className="space-y-1">
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <Database className="w-4 h-4 text-purple-600" />
+                <Database className="w-4 h-4 text-brand" />
                 <span>Sao lưu & Khôi phục dữ liệu (Database Backup)</span>
               </span>
               <span className="text-[11px] text-slate-500 block">
@@ -101,7 +101,7 @@ export default function JournalTools({
                     addNotification("Gặp sự cố khi tạo file sao lưu.", "error");
                   }
                 }}
-                className="flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+                className="flex items-center gap-1.5 px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Sao lưu toàn bộ (.json)</span>
@@ -188,14 +188,14 @@ export default function JournalTools({
 
           <div 
             onClick={() => { if (!processingAI) pdfInputRef.current?.click(); }}
-            className={`border-2 border-dashed border-slate-200 hover:border-purple-400 bg-white hover:bg-purple-50/10 p-8 rounded-2xl text-center space-y-2 cursor-pointer transition-all ${
+            className={`border-2 border-dashed border-slate-200 hover:border-brand bg-white hover:bg-brand-light/10 p-8 rounded-2xl text-center space-y-2 cursor-pointer transition-all ${
               processingAI ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
             {processingAI ? (
-              <Loader2 className="w-10 h-10 animate-spin text-purple-600 mx-auto" />
+              <Loader2 className="w-10 h-10 animate-spin text-brand mx-auto" />
             ) : (
-              <Sparkles className="w-10 h-10 text-purple-500 mx-auto" />
+              <Sparkles className="w-10 h-10 text-brand mx-auto" />
             )}
             <div className="space-y-1">
               <span className="text-xs font-bold text-slate-700 block">

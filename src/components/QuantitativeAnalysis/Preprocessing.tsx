@@ -71,12 +71,12 @@ export default function Preprocessing() {
 
   return (
     <div className="grid md:grid-cols-2 gap-6">
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group" onClick={() => setActiveModal('Compute')}>
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 hover:shadow-md hover:border-brand transition-all cursor-pointer group" onClick={() => setActiveModal('Compute')}>
         <div className="flex items-center justify-between mb-4">
-          <div className="p-3 bg-blue-100 text-blue-700 rounded-xl group-hover:scale-110 transition-transform">
+          <div className="p-3 bg-brand-light text-brand-hover rounded-xl group-hover:scale-110 transition-transform">
             <Calculator className="w-6 h-6" />
           </div>
-          <Settings2 className="w-5 h-5 text-slate-400 group-hover:text-blue-500" />
+          <Settings2 className="w-5 h-5 text-slate-400 group-hover:text-brand" />
         </div>
         <h3 className="text-lg font-bold text-slate-800">Compute Variable</h3>
         <p className="text-sm text-slate-500 mt-2">
@@ -86,7 +86,7 @@ export default function Preprocessing() {
 
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 hover:shadow-md transition-shadow cursor-pointer opacity-70" onClick={() => setActiveModal('Recode')}>
         <div className="flex items-center justify-between mb-4">
-          <div className="p-3 bg-purple-100 text-purple-700 rounded-xl">
+          <div className="p-3 bg-brand-light text-brand-hover rounded-xl">
             <Scissors className="w-6 h-6" />
           </div>
           <Settings2 className="w-5 h-5 text-slate-400" />
@@ -108,7 +108,7 @@ export default function Preprocessing() {
                     value={newVarName}
                     onChange={e => setNewVarName(e.target.value)}
                     placeholder="VD: SAT_MEAN" 
-                    className="w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 uppercase font-mono"
+                    className="w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand uppercase font-mono"
                   />
                 </div>
                 <div>
@@ -118,7 +118,7 @@ export default function Preprocessing() {
                     value={newVarLabel}
                     onChange={e => setNewVarLabel(e.target.value)}
                     placeholder="VD: Nhân tố Sự hài lòng" 
-                    className="w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    className="w-full border border-slate-200 rounded-lg p-2 text-sm focus:border-brand focus:ring-1 focus:ring-brand"
                   />
                 </div>
               </div>
@@ -135,10 +135,10 @@ export default function Preprocessing() {
                         onClick={() => {
                           if (!formulaVars.includes(v.name)) setFormulaVars([...formulaVars, v.name])
                         }}
-                        className="w-full text-left p-1.5 text-sm hover:bg-blue-50 rounded flex justify-between items-center group"
+                        className="w-full text-left p-1.5 text-sm hover:bg-brand-light rounded flex justify-between items-center group"
                       >
                         <span className="font-semibold text-slate-700">{v.name}</span>
-                        <Plus className="w-3 h-3 text-blue-500 opacity-0 group-hover:opacity-100" />
+                        <Plus className="w-3 h-3 text-brand opacity-0 group-hover:opacity-100" />
                       </button>
                     ))}
                   </div>
@@ -148,7 +148,7 @@ export default function Preprocessing() {
                       <select 
                         value={formulaOp}
                         onChange={(e) => setFormulaOp(e.target.value as any)}
-                        className="border border-slate-200 rounded-lg p-1.5 text-sm font-bold text-blue-700 bg-blue-50"
+                        className="border border-slate-200 rounded-lg p-1.5 text-sm font-bold text-brand-hover bg-brand-light"
                       >
                         <option value="MEAN">Trị Trung Bình (MEAN)</option>
                         <option value="SUM">Tính Tổng (SUM)</option>
@@ -156,7 +156,7 @@ export default function Preprocessing() {
                     </div>
                     
                     <div className="flex-1 border border-slate-200 bg-white rounded-lg p-4 font-mono text-slate-800 text-sm flex flex-wrap content-start gap-1">
-                      <span className="text-blue-600 font-bold">{formulaOp}(</span>
+                      <span className="text-brand font-bold">{formulaOp}(</span>
                       {formulaVars.map((v, i) => (
                         <React.Fragment key={v}>
                           <span className="bg-slate-100 px-1 rounded border border-slate-200 flex items-center gap-1">
@@ -169,7 +169,7 @@ export default function Preprocessing() {
                           {i < formulaVars.length - 1 && <span>, </span>}
                         </React.Fragment>
                       ))}
-                      <span className="text-blue-600 font-bold">)</span>
+                      <span className="text-brand font-bold">)</span>
                     </div>
                     {formulaVars.length === 0 && <p className="text-xs text-red-500 mt-2">Vui lòng click chọn biến từ danh sách bên trái.</p>}
                   </div>
@@ -179,7 +179,7 @@ export default function Preprocessing() {
               <div className="flex justify-end pt-4 border-t border-slate-100">
                 <button 
                   onClick={handleCompute}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700"
+                  className="bg-brand text-white px-6 py-2 rounded-lg font-bold hover:bg-brand-hover"
                 >
                   Thực thi (OK)
                 </button>

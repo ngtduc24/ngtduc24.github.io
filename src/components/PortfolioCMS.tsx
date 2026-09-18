@@ -143,7 +143,7 @@ export default function PortfolioCMS() {
           <div className="space-y-1 text-left">
             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Cơ sở dữ liệu Portfolio</span>
             <span className="text-base font-extrabold text-slate-900 flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <CheckCircle2 className="w-4 h-4 text-brand" />
               Sẵn sàng đồng bộ
             </span>
             <span className="text-[11px] text-slate-500 font-medium block">Nội dung được lưu và đồng bộ trên Supabase</span>
@@ -152,7 +152,7 @@ export default function PortfolioCMS() {
             type="button"
             onClick={handleTriggerSync}
             disabled={syncing}
-            className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-500 hover:bg-indigo-100 flex items-center justify-center shrink-0 transition-colors cursor-pointer disabled:opacity-60"
+            className="w-12 h-12 rounded-xl bg-brand-light text-brand hover:bg-brand-light flex items-center justify-center shrink-0 transition-colors cursor-pointer disabled:opacity-60"
             title="Kiểm tra kết nối dữ liệu"
           >
             {syncing ? <RefreshCw className="w-6 h-6 animate-spin" /> : <Database className="w-6 h-6" />}

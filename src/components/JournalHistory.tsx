@@ -17,7 +17,7 @@ export default function JournalHistory({ importHistory, onUndo }: JournalHistory
     <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm max-w-2xl mx-auto space-y-4">
       <div className="border-b border-slate-100 pb-4">
         <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-          <History className="w-5 h-5 text-purple-600" />
+          <History className="w-5 h-5 text-brand" />
           <span>Lịch sử thao tác nghiệp vụ</span>
         </h2>
         <p className="text-xs text-slate-400 mt-1">
@@ -35,9 +35,9 @@ export default function JournalHistory({ importHistory, onUndo }: JournalHistory
           {importHistory.map((log) => (
             <div key={log.id} className="relative">
               <div className={`absolute -left-[22px] top-0.5 w-3.5 h-3.5 rounded-full border-2 border-white flex items-center justify-center shadow-xs ${
-                log.type === "add" ? "bg-emerald-500" :
-                log.type === "import" ? "bg-purple-500" :
-                log.type === "ai" ? "bg-indigo-500" : "bg-rose-500"
+                log.type === "add" ? "bg-brand" :
+                log.type === "import" ? "bg-brand" :
+                log.type === "ai" ? "bg-brand" : "bg-rose-500"
               }`} />
               <div className="space-y-1">
                 <div className="flex items-center justify-between gap-3">
