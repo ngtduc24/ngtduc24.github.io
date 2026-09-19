@@ -17,7 +17,8 @@ import {
   PanelLeftClose,
   Wrench,
   BarChart3,
-  UserCircle
+  UserCircle,
+  Home
 } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
 import { useConfirmation } from './ConfirmationContext';
@@ -51,33 +52,20 @@ export default function Sidebar({
   const localOpacity = Number(localStorage.getItem('sidebar_opacity'));
   const sidebarOpacity = Math.max(0.55, Math.min(1, settings?.sidebarOpacity ?? (Number.isFinite(localOpacity) && localOpacity > 0 ? localOpacity : 0.92)));
 
+  // Menu trái gọn theo ảnh mẫu: chỉ các mục hệ thống và tài khoản. Các chức năng chính
+  // được truy cập từ hàng biểu tượng và thẻ trên trang chủ (dashboard).
   const primaryItems = [
-    { id: 'dashboard', label: 'Tổng quan Dashboard', icon: LayoutDashboard },
-    { id: 'stats', label: 'Số liệu', icon: BarChart3 },
-    { id: 'tasks', label: 'Quản lý Công việc', icon: ClipboardList },
-    { id: 'scientific_journals', label: 'Quản lý điểm báo khoa học', icon: BookOpen },
-    { id: 'calculator', label: 'Tính Cỡ Mẫu Nghiên Cứu', icon: Calculator },
-    { id: 'qualitative_analysis', label: 'Phân tích định tính', icon: FolderKanban },
-    { id: 'quantitative_analysis', label: 'Phân tích số liệu định lượng', icon: Calculator },
-    { id: 'edu', label: 'Quản lý Giáo dục', icon: GraduationCap },
-    { id: 'utilities', label: 'Tiện ích', icon: Wrench },
-    { id: 'portfolio_cms', label: 'Quản trị Portfolio', icon: Shield },
-    { id: 'notifications', label: 'Thông báo', icon: Bell }
+    { id: 'dashboard', label: 'Thư viện', icon: Home },
+    { id: 'stats', label: 'Thống kê số liệu', icon: BarChart3 },
+    { id: 'settings', label: 'Cài đặt cấu hình', icon: Settings },
+    { id: 'notifications', label: 'Thông báo', icon: Bell },
   ].filter(item => {
-    if (item.id === 'notifications' || item.id === 'stats' || currentUser.role === 'admin') return true;
-    // Quyền ar_module cũ vẫn mở được mục Tiện ích, vì chức năng Tạo AR đã dời vào đây.
-    if (item.id === 'utilities') {
-      return currentUser.permissions.includes('utilities') || currentUser.permissions.includes('ar_module');
-    }
-    return currentUser.permissions.includes(item.id);
+    if (item.id === 'dashboard' || item.id === 'stats' || item.id === 'notifications') return true;
+    if (item.id === 'settings') return currentUser.role === 'admin' || currentUser.permissions.includes('settings');
+    return true;
   });
 
-  const adminItems = [
-    ...(currentUser.role === 'admin' ? [{ id: 'users', label: 'Quản lý & Phân quyền', icon: Users }] : []),
-    ...(currentUser.role === 'admin' || currentUser.permissions.includes('notifications') ? [{ id: 'notifications_admin', label: 'Chức năng thông báo', icon: Bell }] : []),
-    ...(currentUser.role === 'admin' || currentUser.permissions.includes('media_library') ? [{ id: 'media_library', label: 'Thư viện', icon: Image }] : []),
-    ...(currentUser.role === 'admin' || currentUser.permissions.includes('settings') ? [{ id: 'settings', label: 'Cấu hình hệ thống', icon: Settings }] : [])
-  ];
+  const adminItems: { id: string; label: string; icon: any }[] = [];
 
   const navigate = (id: string) => {
     setCurrentTab(id);
