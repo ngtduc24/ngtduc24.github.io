@@ -406,7 +406,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
                 onChange={e => setSaveToBank(e.target.checked)}
                 className="w-4 h-4 accent-brand rounded cursor-pointer"
               />
-              <span className="text-[11px] font-bold text-slate-600">Lưu bài này vào ngân hàng để dùng lại cho lớp khác</span>
+              <span className="text-[11px] font-bold text-slate-600">{selectedBankId ? 'Lưu bản chỉnh sửa này thành bài mới trong ngân hàng' : 'Lưu bài này vào ngân hàng để dùng lại cho lớp khác'}</span>
             </label>
             <button
               onClick={handleSave}

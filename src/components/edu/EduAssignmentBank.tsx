@@ -13,6 +13,7 @@ import {
 import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
 import { UserAccount } from '../../types';
 import { getSubjects, saveSubject, deleteSubject, getAssignmentBank, saveAssignmentBankItem, deleteAssignmentBankItem } from '../../lib/edu';
+import { getUsers } from '../../lib/data';
 import { uploadImageToCloudinary } from '../../lib/upload';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
@@ -63,12 +64,16 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
     content: '',
   });
 
+  // Bản đồ uid -> tên người tạo, để hiện bài do ai tạo ra.
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
+  const ownerName = (ownerId?: string) => (ownerId ? userNames[ownerId] || '' : '');
+
   const loadSubjects = async () => {
     try {
       const data = await getSubjects();
       setSubjects(data);
       setTablesMissing(false);
-      if (!selectedSubjectId && data.length > 0) setSelectedSubjectId(data[0].id);
+      // Mặc định để trống nghĩa là Tất cả, hiện toàn bộ bài không phân theo môn.
     } catch {
       setTablesMissing(true);
     } finally {
@@ -78,15 +83,26 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
 
   useEffect(() => { loadSubjects(); }, []);
 
+  // Nạp tên người dùng một lần để hiển thị người tạo bài.
   useEffect(() => {
-    if (!selectedSubjectId) { setItems([]); return; }
-    getAssignmentBank(selectedSubjectId).then(setItems).catch(() => setItems([]));
+    getUsers()
+      .then(list => {
+        const map: Record<string, string> = {};
+        list.forEach(u => { map[u.id] = u.fullName || u.username || u.email || u.id; });
+        setUserNames(map);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    // Không chọn môn (Tất cả) thì hiện toàn bộ bài, chọn môn thì lọc theo môn.
+    getAssignmentBank(selectedSubjectId || undefined).then(setItems).catch(() => setItems([]));
     setViewingItem(null);
     setEditing(null);
   }, [selectedSubjectId]);
 
   const reloadItems = () => {
-    if (selectedSubjectId) getAssignmentBank(selectedSubjectId).then(setItems).catch(() => setItems([]));
+    getAssignmentBank(selectedSubjectId || undefined).then(setItems).catch(() => setItems([]));
   };
 
   const openEditor = (item: Partial<EduAssignmentBankItem>) => {
@@ -264,7 +280,15 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
           <button onClick={handleAddSubject} className="bg-brand hover:bg-brand-hover text-white p-2 rounded-xl shrink-0"><Plus className="w-4 h-4" /></button>
         </div>
         <div className="space-y-1.5">
-          {subjects.length === 0 && <p className="text-xs text-slate-400 italic text-center py-4">Chưa có môn nào. Thêm môn để bắt đầu.</p>}
+          {/* Mục Tất cả: mặc định hiện toàn bộ bài không phân theo môn. */}
+          <div
+            onClick={() => setSelectedSubjectId('')}
+            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all cursor-pointer ${selectedSubjectId === '' ? 'bg-brand-light text-brand' : 'hover:bg-slate-50 text-slate-600'}`}
+          >
+            <BookMarked className="w-4 h-4 shrink-0" />
+            <span className="text-[13px] font-bold truncate flex-1">Tất cả bài tập</span>
+          </div>
+          {subjects.length === 0 && <p className="text-xs text-slate-400 italic text-center py-4">Chưa có môn nào. Thêm môn để phân loại bài tập.</p>}
           {subjects.map(s => (
             <div
               key={s.id}
@@ -388,17 +412,13 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
               <div className="flex items-center gap-2 text-slate-900 font-bold text-sm uppercase tracking-wide">
                 <BookMarked className="w-4 h-4 text-brand" /> Ngân hàng bài tập
               </div>
-              {selectedSubjectId && (
-                <button onClick={() => openEditor(emptyItem())} className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wide">
-                  <Plus className="w-4 h-4" /> Thêm bài tập
-                </button>
-              )}
+              <button onClick={() => openEditor(emptyItem())} className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wide">
+                <Plus className="w-4 h-4" /> Thêm bài tập
+              </button>
             </div>
 
-            {!selectedSubjectId ? (
-              <p className="text-xs text-slate-400 italic text-center py-10">Chọn một môn ở cột bên trái để xem và thêm bài tập.</p>
-            ) : items.length === 0 ? (
-              <p className="text-xs text-slate-400 italic text-center py-10">Môn này chưa có bài tập mẫu nào. Bấm Thêm bài tập để tạo.</p>
+            {items.length === 0 ? (
+              <p className="text-xs text-slate-400 italic text-center py-10">{selectedSubjectId ? 'Môn này chưa có bài tập mẫu nào. Bấm Thêm bài tập để tạo.' : 'Chưa có bài tập nào. Bấm Thêm bài tập để tạo.'}</p>
             ) : (
               <div className="space-y-2.5">
                 {items.map(item => (
@@ -428,6 +448,9 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
                       )}
                     </div>
                     <p className="text-[11px] text-slate-400 font-medium">{(viewingItem.allowedFileTypes || []).map(t => FORMAT_OPTIONS.find(f => f.id === t)?.label || t).join(', ')}</p>
+                    {ownerName(viewingItem.ownerId) && (
+                      <p className="text-[11px] text-slate-500 font-medium mt-0.5">Tạo bởi {ownerName(viewingItem.ownerId)}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {canEdit(viewingItem) && (

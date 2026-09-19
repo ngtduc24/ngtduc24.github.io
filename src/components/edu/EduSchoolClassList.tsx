@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { EduClass, EduSchool } from '../../types/edu';
 import { getClasses, getSchools, deleteSchool, deleteClass, saveSchool, saveClass } from '../../lib/edu';
+import { getUsers } from '../../lib/data';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 
@@ -28,10 +29,13 @@ interface EduSchoolClassListProps {
   onSelectClass: (classId: string) => void;
   onImport?: () => void;
   onOpenBank?: () => void;
+  isAdmin?: boolean;
 }
 
-export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank }: EduSchoolClassListProps) {
+export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank, isAdmin }: EduSchoolClassListProps) {
   const [schools, setSchools] = useState<EduSchool[]>([]);
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
+  const ownerName = (ownerId?: string) => (ownerId ? userNames[ownerId] || '' : '');
   const [classes, setClasses] = useState<(EduClass & { edu_schools: { name: string } })[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,6 +71,17 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
 
   useEffect(() => {
     loadData();
+
+    // Admin cần thấy trường lớp do ai tạo, nên nạp tên người dùng để hiển thị.
+    if (isAdmin) {
+      getUsers()
+        .then(list => {
+          const map: Record<string, string> = {};
+          list.forEach(u => { map[u.id] = u.fullName || u.username || u.email || u.id; });
+          setUserNames(map);
+        })
+        .catch(() => {});
+    }
 
     const handleClickOutside = () => setActiveDropdownId(null);
     window.addEventListener('click', handleClickOutside);
@@ -290,7 +305,10 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                     <School className="w-4 h-4" />
                   </div>
                   <h2 className="text-base font-bold text-slate-800 uppercase tracking-tight">{school.name}</h2>
-                  
+                  {isAdmin && ownerName(school.ownerId) && (
+                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full normal-case">Tạo bởi {ownerName(school.ownerId)}</span>
+                  )}
+
                   <div className="relative">
                     <button 
                       onClick={(e) => {
@@ -358,6 +376,9 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                       <p className="text-[12px] text-slate-500 font-medium line-clamp-2 leading-relaxed">
                         {clazz.description || `Danh sách lớp học thuộc ${school.name}.`}
                       </p>
+                      {isAdmin && ownerName(clazz.ownerId) && (
+                        <p className="text-[11px] font-bold text-indigo-600 mt-2">Tạo bởi {ownerName(clazz.ownerId)}</p>
+                      )}
                     </div>
 
                     <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between">

@@ -137,6 +137,7 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
             onSelectClass={handleClassSelect}
             onImport={() => setView('import')}
             onOpenBank={() => setView('assignment_bank')}
+            isAdmin={currentUser.role === 'admin'}
           />
         )}
 

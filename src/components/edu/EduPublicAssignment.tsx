@@ -431,7 +431,10 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                       <p className={`text-[13px] font-bold mb-1 ${idx === 0 ? 'text-white/50' : 'text-slate-300'}`}>/ 10</p>
                     </div>
                     {item.grade?.note && (
-                      <p className={`text-[12px] italic leading-relaxed pt-3 mt-3 border-t ${idx === 0 ? 'border-white/15 text-white/80' : 'border-slate-100 text-slate-500'}`}>“{item.grade.note}”</p>
+                      <div className={`pt-3 mt-3 border-t ${idx === 0 ? 'border-white/15' : 'border-slate-100'}`}>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider ${idx === 0 ? 'text-white/60' : 'text-slate-400'}`}>Nhận xét của giảng viên</p>
+                        <p className={`text-[12.5px] italic leading-relaxed mt-1 ${idx === 0 ? 'text-white/90' : 'text-slate-600'}`}>“{item.grade.note}”</p>
+                      </div>
                     )}
                   </div>
                 ))}
