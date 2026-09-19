@@ -6,13 +6,13 @@ import {
 import { UserAccount } from '../../types';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
-import { getSubjects, getClasses, getClassUsers, setEduAuthContext } from '../../lib/edu';
-import { EduSubject, EduClass } from '../../types/edu';
+import { getSubjects, getClasses, getClassUsers, setEduAuthContext, getGradeColumns, saveGradeColumn } from '../../lib/edu';
+import { EduSubject, EduClass, EduGradeColumn } from '../../types/edu';
 import {
   QuizQuestion, QuizOption, Quiz, QuizItem, QuestionType,
   getBankQuestions, saveQuestion, deleteQuestion, copyQuestionToMine, toggleQuestionPublic,
   getQuizzes, saveQuiz, deleteQuiz, publishQuiz, getQuizItems, addQuestionsToQuiz,
-  removeQuizItem, updateQuizItem, reorderQuizItems, getQuizClasses, assignQuizToClass, unassignQuizFromClass,
+  removeQuizItem, updateQuizItem, reorderQuizItems, getQuizAssignments, assignQuizToClass, unassignQuizFromClass,
   stripHtml,
 } from '../../lib/quiz';
 import QuizRichText from './QuizRichText';
@@ -619,7 +619,12 @@ function QuizAssign({ quiz, currentUser, onQuizChange, onBack }: { quiz: Quiz; c
   const { addNotification } = useNotifications();
   const [classes, setClasses] = useState<EduClass[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
-  const [assigned, setAssigned] = useState<Set<string>>(new Set());
+  const [assignments, setAssignments] = useState<Record<string, string>>({}); // classId -> gradeColumnId
+  const [columnsByClass, setColumnsByClass] = useState<Record<string, EduGradeColumn[]>>({});
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
+  const [pickChoice, setPickChoice] = useState<string>('');
+  const [newColName, setNewColName] = useState('');
+  const [busy, setBusy] = useState(false);
   const [q, setQ] = useState<Quiz>(quiz);
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
@@ -629,30 +634,64 @@ function QuizAssign({ quiz, currentUser, onQuizChange, onBack }: { quiz: Quiz; c
     (async () => {
       setLoading(true);
       try {
-        const [cls, asg] = await Promise.all([getClasses(), getQuizClasses(quiz.id)]);
-        setClasses(cls); setAssigned(new Set(asg));
+        const [cls, asg] = await Promise.all([getClasses(), getQuizAssignments(quiz.id)]);
+        setClasses(cls);
+        const map: Record<string, string> = {};
+        asg.forEach(a => { if (a.grade_column_id) map[a.class_id] = a.grade_column_id; });
+        setAssignments(map);
         const cnt: Record<string, number> = {};
         await Promise.all(cls.map(async c => { try { cnt[c.id] = (await getClassUsers(c.id)).length; } catch { cnt[c.id] = 0; } }));
         setCounts(cnt);
+        // Nạp tên cột điểm cho các lớp đã giao để hiển thị.
+        await Promise.all(Object.keys(map).map(async cid => { try { const cols = await getGradeColumns(cid); setColumnsByClass(prev => ({ ...prev, [cid]: cols })); } catch {} }));
       } catch (e: any) { addNotification('Lỗi tải danh sách lớp: ' + e.message, 'error'); }
       finally { setLoading(false); }
     })();
   }, [quiz.id, addNotification]);
 
-  const toggleClass = async (c: EduClass) => {
-    const isOn = assigned.has(c.id);
-    const next = new Set(assigned);
-    try {
-      if (isOn) { await unassignQuizFromClass(quiz.id, c.id); next.delete(c.id); }
-      else { await assignQuizToClass(quiz.id, c.id); next.add(c.id); }
-      setAssigned(next);
-    } catch (e: any) { addNotification('Lỗi cập nhật giao lớp: ' + e.message, 'error'); }
+  const suggestName = (cols: EduGradeColumn[]) => 'QUIZZ ' + String(cols.filter(c => /^QUIZZ /i.test(c.name)).length + 1).padStart(2, '0');
+
+  const openPicker = async (c: EduClass) => {
+    let cols = columnsByClass[c.id];
+    if (!cols) { try { cols = await getGradeColumns(c.id); setColumnsByClass(prev => ({ ...prev, [c.id]: cols! })); } catch { cols = []; } }
+    setPickerFor(c.id);
+    setPickChoice(assignments[c.id] || '');
+    setNewColName(suggestName(cols || []));
   };
+
+  const confirmPicker = async (c: EduClass) => {
+    setBusy(true);
+    try {
+      let colId = pickChoice;
+      if (pickChoice === '__new__') {
+        if (!newColName.trim()) { addNotification('Nhập tên cột điểm.', 'error'); setBusy(false); return; }
+        const cols = columnsByClass[c.id] || [];
+        const order = cols.reduce((m, x) => Math.max(m, x.order || 0), 0) + 1;
+        const saved = await saveGradeColumn({ classId: c.id, name: newColName.trim(), order, isConfirmed: false });
+        colId = saved.id;
+        setColumnsByClass(prev => ({ ...prev, [c.id]: [...(prev[c.id] || []), saved] }));
+      }
+      if (!colId) { addNotification('Hãy chọn hoặc tạo cột điểm.', 'error'); setBusy(false); return; }
+      await assignQuizToClass(quiz.id, c.id, colId);
+      setAssignments(prev => ({ ...prev, [c.id]: colId }));
+      setPickerFor(null);
+      addNotification('Đã giao đề cho lớp và gắn cột điểm.', 'success');
+    } catch (e: any) { addNotification('Lỗi giao lớp: ' + e.message, 'error'); }
+    finally { setBusy(false); }
+  };
+
+  const unassign = async (c: EduClass) => {
+    try { await unassignQuizFromClass(quiz.id, c.id); setAssignments(prev => { const n = { ...prev }; delete n[c.id]; return n; }); }
+    catch (e: any) { addNotification('Lỗi bỏ giao: ' + e.message, 'error'); }
+  };
+
+  const colName = (classId: string, colId: string) => (columnsByClass[classId] || []).find(x => x.id === colId)?.name || 'Cột điểm';
+  const assignedCount = Object.keys(assignments).length;
 
   const togglePublish = async () => {
     setPublishing(true);
     try {
-      if (q.status !== 'published' && assigned.size === 0) { addNotification('Hãy giao đề cho ít nhất một lớp trước khi phát hành.', 'warning'); setPublishing(false); return; }
+      if (q.status !== 'published' && assignedCount === 0) { addNotification('Hãy giao đề cho ít nhất một lớp (kèm cột điểm) trước khi phát hành.', 'warning'); setPublishing(false); return; }
       const saved = await publishQuiz(quiz.id, q.status !== 'published');
       setQ(saved); onQuizChange(saved);
       addNotification(saved.status === 'published' ? 'Đã phát hành đề.' : 'Đã chuyển về bản nháp.', 'success');
@@ -674,20 +713,56 @@ function QuizAssign({ quiz, currentUser, onQuizChange, onBack }: { quiz: Quiz; c
 
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <h2 className="text-base font-black text-slate-900">{q.title}</h2>
-        <p className="mt-0.5 text-xs text-slate-400">Chọn các lớp được làm đề này. Danh sách sinh viên của lớp là danh sách hợp lệ.</p>
+        <p className="mt-0.5 text-xs text-slate-400">Giao đề cho lớp, mỗi lớp bắt buộc chọn hoặc tạo một cột điểm để tự thu điểm sau khi sinh viên nộp bài.</p>
         {loading ? (
           <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-brand" /></div>
         ) : classes.length === 0 ? (
           <p className="py-8 text-center text-sm text-slate-400">Chưa có lớp nào. Hãy tạo lớp trong phần quản lý lớp trước.</p>
         ) : (
-          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
             {classes.map(c => {
-              const on = assigned.has(c.id);
+              const on = !!assignments[c.id];
+              const picking = pickerFor === c.id;
+              const cols = columnsByClass[c.id] || [];
               return (
-                <button key={c.id} onClick={() => toggleClass(c)} className={`flex items-center justify-between gap-2 rounded-2xl border px-4 py-3 text-left transition-colors ${on ? 'border-brand bg-brand-light/40' : 'border-slate-200 hover:border-slate-300'}`}>
-                  <span className="min-w-0"><span className="block truncate text-[13px] font-bold text-slate-800">{c.name}</span><span className="block text-[11px] text-slate-400">{counts[c.id] ?? 0} sinh viên</span></span>
-                  <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 ${on ? 'border-brand bg-brand text-white' : 'border-slate-300 text-transparent'}`}><Check className="h-3.5 w-3.5" /></span>
-                </button>
+                <div key={c.id} className={`rounded-2xl border p-4 transition-colors ${on ? 'border-brand bg-brand-light/30' : 'border-slate-200'}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="min-w-0"><span className="block truncate text-[13px] font-bold text-slate-800">{c.name}</span><span className="block text-[11px] text-slate-400">{counts[c.id] ?? 0} sinh viên</span></span>
+                    {on ? (
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-brand px-2.5 py-1 text-[10px] font-bold text-white"><Check className="h-3 w-3" /> Đã giao</span>
+                    ) : !picking ? (
+                      <button onClick={() => openPicker(c)} className="rounded-xl bg-slate-100 px-3 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-200">Giao lớp này</button>
+                    ) : null}
+                  </div>
+
+                  {on && !picking && (
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-brand/10 pt-2">
+                      <span className="text-[11px] font-semibold text-slate-500">Cột điểm: <strong className="text-brand">{colName(c.id, assignments[c.id])}</strong></span>
+                      <div className="flex gap-2">
+                        <button onClick={() => openPicker(c)} className="rounded-lg bg-white px-2.5 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-100">Đổi cột</button>
+                        <button onClick={() => unassign(c)} className="rounded-lg bg-rose-50 px-2.5 py-1.5 text-[10px] font-bold text-rose-500 hover:bg-rose-100">Bỏ giao</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {picking && (
+                    <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Chọn cột điểm để thu điểm</label>
+                      <select value={pickChoice} onChange={e => setPickChoice(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800 outline-none focus:border-brand focus:bg-white">
+                        <option value="">— Chọn cột điểm —</option>
+                        {cols.map(col => <option key={col.id} value={col.id}>{col.name}</option>)}
+                        <option value="__new__">+ Tạo cột điểm mới</option>
+                      </select>
+                      {pickChoice === '__new__' && (
+                        <input value={newColName} onChange={e => setNewColName(e.target.value)} placeholder="Tên cột điểm mới" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800 outline-none focus:border-brand focus:bg-white" />
+                      )}
+                      <div className="flex gap-2">
+                        <button onClick={() => confirmPicker(c)} disabled={busy || !pickChoice} className="flex-1 rounded-xl bg-brand py-2 text-[11px] font-bold text-white hover:bg-brand-hover disabled:opacity-50">{busy ? 'Đang lưu...' : 'Xác nhận giao'}</button>
+                        <button onClick={() => setPickerFor(null)} className="rounded-xl bg-slate-100 px-4 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-200">Hủy</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>

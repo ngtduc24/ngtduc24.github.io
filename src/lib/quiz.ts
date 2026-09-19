@@ -267,14 +267,16 @@ export async function reorderQuizItems(items: { id: string; order_index: number 
 
 // --------------------------- Giao đề cho lớp ---------------------------
 
-export async function getQuizClasses(quizId: string): Promise<string[]> {
-  const { data, error } = await supabase.from(ASSIGN_TABLE).select('class_id').eq('quiz_id', quizId);
+export interface QuizAssignment { class_id: string; grade_column_id: string | null; }
+
+export async function getQuizAssignments(quizId: string): Promise<QuizAssignment[]> {
+  const { data, error } = await supabase.from(ASSIGN_TABLE).select('class_id, grade_column_id').eq('quiz_id', quizId);
   if (error) throw error;
-  return (data || []).map((r: any) => r.class_id);
+  return (data || []) as QuizAssignment[];
 }
 
-export async function assignQuizToClass(quizId: string, classId: string): Promise<void> {
-  const { error } = await supabase.from(ASSIGN_TABLE).upsert({ quiz_id: quizId, class_id: classId }, { onConflict: 'quiz_id,class_id' });
+export async function assignQuizToClass(quizId: string, classId: string, gradeColumnId: string): Promise<void> {
+  const { error } = await supabase.from(ASSIGN_TABLE).upsert({ quiz_id: quizId, class_id: classId, grade_column_id: gradeColumnId }, { onConflict: 'quiz_id,class_id' });
   if (error) throw error;
 }
 
