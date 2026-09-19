@@ -29,7 +29,7 @@ import EduAssignmentDetail from './edu/EduAssignmentDetail';
 import EduGrading from './edu/EduGrading';
 import EduAssignmentBank from './edu/EduAssignmentBank';
 import EduGradeEntry from './edu/EduGradeEntry';
-import EduExamBank from './edu/EduExamBank';
+import QuizModule from './edu/QuizModule';
 import { EduClass, EduSchool } from '../types/edu';
 import { getClasses, getSchools } from '../lib/edu';
 
@@ -159,7 +159,7 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
         )}
 
         {view === 'exam_bank' && (
-          <EduExamBank currentUser={currentUser} />
+          <QuizModule currentUser={currentUser} />
         )}
         
         {view === 'import' && (

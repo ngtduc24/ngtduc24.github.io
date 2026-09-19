@@ -34,6 +34,11 @@ export function setEduAuthContext(userId: string | null, isAdmin: boolean) {
   ctxIsAdmin = !!isAdmin;
 }
 
+// Cho phép các module khác (ví dụ trắc nghiệm) dùng lại ngữ cảnh người dùng hiện tại.
+export function getEduCtx(): { userId: string | null; isAdmin: boolean } {
+  return getCtx();
+}
+
 // Lấy ngữ cảnh người dùng hiện tại. Ưu tiên giá trị đã set, nếu chưa có thì đọc thẳng
 // từ localStorage để bộ lọc luôn áp đúng, tránh phụ thuộc thời điểm khởi tạo.
 function getCtx(): { userId: string | null; isAdmin: boolean } {
