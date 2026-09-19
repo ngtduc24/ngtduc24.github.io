@@ -97,6 +97,7 @@ export interface AppSettings {
   dashboardBannerDescription?: string;
   dashboardBannerLabel?: string;
   dashboardBannerImage?: string;
+  dashboardBannerPosition?: string; // vị trí hiển thị ảnh nền đầu trang, ví dụ "50% 30%"
   notificationBannerImage?: string;
   calcBannerTitle?: string;
   calcBannerDescription?: string;

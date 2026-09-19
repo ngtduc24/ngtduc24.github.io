@@ -62,6 +62,8 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const [bannerTitle, setBannerTitle] = useState(settings?.dashboardBannerTitle || '');
   const [bannerDesc, setBannerDesc] = useState(settings?.systemDescription || '');
   const [bannerImg, setBannerImg] = useState(settings?.dashboardBannerImage || '');
+  const [bannerPos, setBannerPos] = useState(settings?.dashboardBannerPosition || '50% 50%');
+  const dragRef = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const [dbConfig, setDbConfig] = useState(() => {
     const savedUrl = localStorage.getItem('custom_supabase_url');
     const savedKey = localStorage.getItem('custom_supabase_key');
@@ -121,6 +123,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
       setBannerTitle(settings.dashboardBannerTitle || '');
       setBannerDesc(settings.systemDescription || '');
       setBannerImg(settings.dashboardBannerImage || '');
+      setBannerPos(settings.dashboardBannerPosition || '50% 50%');
     }
   }, [settings]);
 
@@ -143,7 +146,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     e.preventDefault();
     if (!settings) return;
     try {
-      await saveDefaultSettingsToSupabase({ ...settings, dashboardBannerTitle: bannerTitle, systemDescription: bannerDesc, dashboardBannerImage: bannerImg });
+      await saveDefaultSettingsToSupabase({ ...settings, dashboardBannerTitle: bannerTitle, systemDescription: bannerDesc, dashboardBannerImage: bannerImg, dashboardBannerPosition: bannerPos });
       if (onRefreshSettings) await onRefreshSettings();
       setShowBannerSettings(false);
       addNotification('Đã lưu ảnh nền và nội dung đầu trang.', 'success');
@@ -155,9 +158,9 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const handleResetBanner = async () => {
     if (!settings) return;
     try {
-      await saveDefaultSettingsToSupabase({ ...settings, dashboardBannerTitle: '', systemDescription: '', dashboardBannerImage: '' });
+      await saveDefaultSettingsToSupabase({ ...settings, dashboardBannerTitle: '', systemDescription: '', dashboardBannerImage: '', dashboardBannerPosition: '50% 50%' });
       if (onRefreshSettings) await onRefreshSettings();
-      setBannerTitle(''); setBannerDesc(''); setBannerImg('');
+      setBannerTitle(''); setBannerDesc(''); setBannerImg(''); setBannerPos('50% 50%');
       setShowBannerSettings(false);
       addNotification('Đã khôi phục đầu trang về mặc định.', 'success');
     } catch (err) {
@@ -253,10 +256,10 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
       <div
         className="relative overflow-hidden rounded-3xl border border-slate-100"
         style={hasBg
-          ? { backgroundImage: `url(${settings!.dashboardBannerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          ? { backgroundImage: `url(${settings!.dashboardBannerImage})`, backgroundSize: 'cover', backgroundPosition: settings!.dashboardBannerPosition || 'center' }
           : { background: 'linear-gradient(135deg, var(--color-brand-light, #eef2ff) 0%, #ffffff 55%, var(--color-brand-light, #f5f3ff) 100%)' }}
       >
-        {hasBg && <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px]" />}
+        {hasBg && <div className="absolute inset-0 bg-gradient-to-b from-white/45 via-white/25 to-white/45" />}
 
         {isUserAdmin && (
           <button
@@ -503,8 +506,24 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Ảnh nền đầu trang</label>
                   {bannerImg && <button type="button" onClick={() => setBannerImg('')} className="text-rose-500 text-[10px] font-bold flex items-center gap-1 bg-rose-50 px-2 py-1 rounded-lg"><X className="w-3 h-3" /> Xóa ảnh, dùng màu nền</button>}
                 </div>
-                {bannerImg && <img src={bannerImg} alt="Preview" className="h-28 w-full rounded-2xl object-cover" />}
-                <MediaSourcePicker onSelect={setBannerImg} accept="image/*" resourceType="image" folder="module-banners/dashboard" label={bannerImg ? 'Thay đổi ảnh' : 'Chọn ảnh nền'} disabled={isUploading} className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-brand text-xs font-bold text-white hover:bg-brand-hover" />
+                {bannerImg && (
+                  <div
+                    className="relative h-28 w-full cursor-move select-none overflow-hidden rounded-2xl border border-slate-200"
+                    style={{ backgroundImage: `url(${bannerImg})`, backgroundSize: 'cover', backgroundPosition: bannerPos }}
+                    onPointerDown={(e) => { e.currentTarget.setPointerCapture?.(e.pointerId); const m = (bannerPos || '').match(/(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%/); dragRef.current = { x: e.clientX, y: e.clientY, px: m ? parseFloat(m[1]) : 50, py: m ? parseFloat(m[2]) : 50 }; }}
+                    onPointerMove={(e) => {
+                      if (!dragRef.current) return;
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const nx = Math.max(0, Math.min(100, dragRef.current.px - (e.clientX - dragRef.current.x) / rect.width * 100));
+                      const ny = Math.max(0, Math.min(100, dragRef.current.py - (e.clientY - dragRef.current.y) / rect.height * 100));
+                      setBannerPos(`${Math.round(nx)}% ${Math.round(ny)}%`);
+                    }}
+                    onPointerUp={() => { dragRef.current = null; }}
+                  >
+                    <span className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 rounded-md bg-slate-900/60 px-2 py-0.5 text-[9px] font-bold text-white">Kéo để chọn vùng hiển thị trên banner</span>
+                  </div>
+                )}
+                <MediaSourcePicker onSelect={(url) => { setBannerImg(url); setBannerPos('50% 50%'); }} accept="image/*" resourceType="image" folder="module-banners/dashboard" label={bannerImg ? 'Thay đổi ảnh' : 'Chọn ảnh nền'} disabled={isUploading} className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-brand text-xs font-bold text-white hover:bg-brand-hover" />
               </div>
               <div className="flex gap-3 justify-between pt-4 border-t border-slate-100">
                 <button type="button" onClick={handleResetBanner} className="px-4 py-2.5 text-rose-600 border border-rose-200 hover:bg-rose-50 text-xs font-bold rounded-xl">Về mặc định</button>

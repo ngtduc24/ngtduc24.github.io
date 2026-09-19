@@ -78,6 +78,8 @@ export async function getDefaultSettingsFromSupabase(): Promise<AppSettings> {
       systemDescription: data.system_description || defaultSettings.systemDescription,
       dashboardBannerTitle: data.dashboard_banner_title || defaultSettings.dashboardBannerTitle,
       dashboardBannerDescription: data.dashboard_banner_description || defaultSettings.dashboardBannerDescription,
+      dashboardBannerImage: data.dashboard_banner_image_url || (typeof localStorage !== 'undefined' ? (localStorage.getItem('dashboard_banner_image') || undefined) : undefined) || defaultSettings.dashboardBannerImage,
+      dashboardBannerPosition: data.dashboard_banner_position || (typeof localStorage !== 'undefined' ? (localStorage.getItem('dashboard_banner_position') || undefined) : undefined),
       initialSeedDone: data.initial_seed_done ?? false,
       taskTypes: data.task_types || defaultSettings.taskTypes,
       notificationBannerTitle: data.notification_banner_title || defaultSettings.notificationBannerTitle,
@@ -154,6 +156,15 @@ export async function saveDefaultSettingsToSupabase(settings: AppSettings) {
       if (settings.quantBannerLabel !== undefined) extraCols.quant_banner_label = settings.quantBannerLabel;
       if (settings.quantBannerImage !== undefined) extraCols.quant_banner_image_url = settings.quantBannerImage;
       if (settings.sidebarOpacity !== undefined) extraCols.sidebar_opacity = settings.sidebarOpacity;
+      // Ảnh nền và vị trí đầu trang dashboard: lưu localStorage để hiển thị ngay, và best-effort lên DB.
+      if (settings.dashboardBannerImage !== undefined) {
+        extraCols.dashboard_banner_image_url = settings.dashboardBannerImage;
+        try { localStorage.setItem('dashboard_banner_image', settings.dashboardBannerImage || ''); } catch {}
+      }
+      if (settings.dashboardBannerPosition !== undefined) {
+        extraCols.dashboard_banner_position = settings.dashboardBannerPosition;
+        try { localStorage.setItem('dashboard_banner_position', settings.dashboardBannerPosition || ''); } catch {}
+      }
       if (Object.keys(extraCols).length > 1) {
         const { error: extraError } = await supabase.from(SETTINGS_TABLE).upsert(extraCols);
         if (extraError) console.warn('Chua luu duoc icon/banner dinh luong (thieu cot trong DB?):', extraError.message);

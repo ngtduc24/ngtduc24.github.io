@@ -58,6 +58,8 @@ export default function StatsOverview({ currentUser }: StatsOverviewProps) {
         </div>
       </div>
 
+      {isUserAdmin && <OnlineUsersPresence currentUser={currentUser} />}
+
       {tiles.length === 0 ? (
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-10 text-center text-slate-400 text-sm">
           Chưa có số liệu nào phù hợp với quyền của bạn.
@@ -135,8 +137,6 @@ export default function StatsOverview({ currentUser }: StatsOverviewProps) {
           </div>
         );
       })()}
-
-      {isUserAdmin && <OnlineUsersPresence currentUser={currentUser} />}
     </div>
   );
 }
