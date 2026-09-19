@@ -46,6 +46,7 @@ export default function EduGradeEntry({ currentUser }: Props) {
 
   // bước 5
   const [manualPairs, setManualPairs] = useState<Record<string, string>>({}); // sourceMssv -> fgRoll
+  const [previewEdits, setPreviewEdits] = useState<Record<string, string>>({}); // `${roll}__${sourceKey}` -> điểm sửa tay (chỉ ảnh hưởng file .fg)
 
   const fgClass = fgClassIdx >= 0 ? fgClasses[fgClassIdx] : null;
 
@@ -63,7 +64,7 @@ export default function EduGradeEntry({ currentUser }: Props) {
       const d = parseFg(xml);
       setDoc(d); setMeta(readMeta(d)); setFgClasses(readClasses(d));
       setStep(1); setDone(false); setDirty(false);
-      setFgClassIdx(-1); setSysClassId(''); setSelectedSources([]); setMapping({});
+      setFgClassIdx(-1); setSysClassId(''); setSelectedSources([]); setMapping({}); setManualPairs({}); setPreviewEdits({});
     } catch (e) {
       addNotification('File không đúng định dạng .fg của phần mềm nhập điểm.', 'error');
     }
@@ -240,7 +241,8 @@ export default function EduGradeEntry({ currentUser }: Props) {
         const comp = mapping[src.key];
         const idx = compIndex[comp];
         if (idx === undefined) return;
-        const raw = scoreFor(src, roll);
+        const editKey = `${roll}__${src.key}`;
+        const raw = previewEdits[editKey] !== undefined ? previewEdits[editKey] : scoreFor(src, roll);
         const norm = normalizeScore(raw ?? null);
         if (norm !== null) { row[idx] = norm; any = true; }
       });
@@ -461,6 +463,7 @@ export default function EduGradeEntry({ currentUser }: Props) {
           )}
 
           {/* Xem trước */}
+          <p className="text-[11px] font-medium text-slate-400">Có thể sửa điểm trực tiếp trong bảng này. Chỉnh sửa chỉ thay đổi điểm ghi vào file .fg, không ảnh hưởng điểm hiện có trên web.</p>
           <div className="overflow-x-auto rounded-3xl border border-slate-100 bg-white shadow-sm">
             <table className="min-w-full text-[12px]">
               <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-wider text-slate-500">
@@ -478,8 +481,21 @@ export default function EduGradeEntry({ currentUser }: Props) {
                       <td className="px-3 py-2 font-bold text-slate-700">{st.roll}</td>
                       <td className="px-3 py-2 text-slate-600">{st.name}</td>
                       {mapped.map(s => {
-                        const norm = normalizeScore(scoreFor(s, roll) ?? null);
-                        return <td key={s.key} className={`px-3 py-2 text-center font-semibold ${norm !== null ? 'bg-brand-light/40 text-brand' : 'text-slate-300'}`}>{norm ?? '—'}</td>;
+                        const editKey = `${roll}__${s.key}`;
+                        const base = normalizeScore(scoreFor(s, roll) ?? null);
+                        const val = previewEdits[editKey] !== undefined ? previewEdits[editKey] : (base ?? '');
+                        const invalid = val.trim() !== '' && normalizeScore(val) === null;
+                        return (
+                          <td key={s.key} className="px-2 py-1.5 text-center">
+                            <input
+                              value={val}
+                              onChange={e => setPreviewEdits(prev => ({ ...prev, [editKey]: e.target.value }))}
+                              inputMode="decimal"
+                              title="Sửa điểm này chỉ đổi trong file .fg, không đổi điểm trên web"
+                              className={`h-8 w-14 rounded-lg border px-2 text-center text-[12px] font-semibold outline-none focus:border-brand ${invalid ? 'border-rose-300 bg-rose-50 text-rose-600' : val.trim() !== '' ? 'border-brand/30 bg-brand-light/40 text-brand' : 'border-slate-200 bg-white text-slate-400'}`}
+                            />
+                          </td>
+                        );
                       })}
                     </tr>
                   );
@@ -501,7 +517,7 @@ export default function EduGradeEntry({ currentUser }: Props) {
               <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                 <button onClick={exportFile} className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-3 text-sm font-bold text-white hover:bg-brand-hover"><Download className="h-4 w-4" /> Xuất file .fg</button>
                 <button onClick={() => setGridOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-brand bg-white px-6 py-3 text-sm font-bold text-brand hover:bg-brand-light"><FileText className="h-4 w-4" /> Xem & sửa toàn bộ điểm</button>
-                <button onClick={() => { setStep(1); setDone(false); setFgClassIdx(-1); setSysClassId(''); setSelectedSources([]); setMapping({}); setManualPairs({}); }} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-6 py-3 text-sm font-bold text-slate-600 hover:bg-slate-200"><RefreshCw className="h-4 w-4" /> Nhập tiếp lớp khác</button>
+                <button onClick={() => { setStep(1); setDone(false); setFgClassIdx(-1); setSysClassId(''); setSelectedSources([]); setMapping({}); setManualPairs({}); setPreviewEdits({}); }} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-6 py-3 text-sm font-bold text-slate-600 hover:bg-slate-200"><RefreshCw className="h-4 w-4" /> Nhập tiếp lớp khác</button>
               </div>
             </>
           ) : (

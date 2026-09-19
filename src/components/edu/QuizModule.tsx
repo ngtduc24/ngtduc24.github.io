@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Trash2, Edit2, Save, X, FileCheck2, Clock, ListChecks, Check, ChevronLeft,
-  Search, Library, BookOpen, Users, Link2, Copy, QrCode, Send, ArrowUp, ArrowDown, Loader2, Share2, Globe
+  Search, Library, BookOpen, Users, Link2, Copy, QrCode, Send, ArrowUp, ArrowDown, Loader2, Share2, Globe, ChevronRight
 } from 'lucide-react';
 import { UserAccount } from '../../types';
 import { useNotifications } from '../NotificationContext';
@@ -18,7 +18,7 @@ import {
 import QuizRichText from './QuizRichText';
 
 interface QuizModuleProps { currentUser: UserAccount; }
-type View = 'list' | 'editor' | 'bank' | 'assign';
+type View = 'list' | 'editor' | 'bank' | 'assign' | 'detail';
 
 const emptyOptions = (): QuizOption[] => [
   { content: '', is_correct: true, order_index: 0 },
@@ -59,9 +59,9 @@ export default function QuizModule({ currentUser }: QuizModuleProps) {
     } catch (e: any) { addNotification('Không tạo được đề: ' + e.message, 'error'); }
   };
 
-  const removeQuiz = (q: Quiz) => {
+  const removeQuiz = (q: Quiz, onDone?: () => void) => {
     confirm('Xóa đề trắc nghiệm', `Xóa đề "${q.title}"? Toàn bộ câu trong đề và kết quả liên quan sẽ bị xóa. Không thể hoàn tác.`, async () => {
-      try { await deleteQuiz(q.id); addNotification('Đã xóa đề.', 'success'); loadQuizzes(); }
+      try { await deleteQuiz(q.id); addNotification('Đã xóa đề.', 'success'); if (onDone) onDone(); else loadQuizzes(); }
       catch (e: any) { addNotification('Lỗi xóa đề: ' + e.message, 'error'); }
     });
   };
@@ -96,25 +96,21 @@ export default function QuizModule({ currentUser }: QuizModuleProps) {
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {quizzes.map(q => (
-              <div key={q.id} className="flex flex-col rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+              <button key={q.id} onClick={() => { setActiveQuiz(q); setView('detail'); }} className="group flex flex-col rounded-3xl border border-slate-100 bg-white p-5 text-left shadow-sm transition-all hover:border-brand/30 hover:shadow-md">
                 <div className="flex items-start justify-between gap-3">
                   <span className={`rounded-lg px-2.5 py-1 text-[10px] font-bold ${q.status === 'published' ? 'bg-brand-light text-brand' : q.status === 'archived' ? 'bg-slate-100 text-slate-500' : 'bg-amber-50 text-amber-600'}`}>
                     {q.status === 'published' ? 'Đã phát hành' : q.status === 'archived' ? 'Lưu trữ' : 'Bản nháp'}
                   </span>
                   {q.is_public && <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600"><Globe className="h-3 w-3" /> Công khai</span>}
                 </div>
-                <h3 className="mt-3 text-sm font-black text-slate-800">{q.title}</h3>
+                <h3 className="mt-3 text-sm font-black text-slate-800 group-hover:text-brand">{q.title}</h3>
                 {q.subject_id && <p className="mt-0.5 text-[11px] font-semibold text-brand">{subjectName(q.subject_id)}</p>}
                 <div className="mt-3 flex flex-wrap gap-3 text-[11px] font-semibold text-slate-500">
                   <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {q.duration_minutes} phút</span>
                   <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {q.max_attempts} lần</span>
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
-                  <button onClick={() => { setActiveQuiz(q); setView('editor'); }} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-light py-2 text-[11px] font-bold text-brand hover:bg-brand/15"><Edit2 className="h-3.5 w-3.5" /> Sửa</button>
-                  <button onClick={() => { setActiveQuiz(q); setView('assign'); }} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-100 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><Send className="h-3.5 w-3.5" /> Giao lớp</button>
-                  <button onClick={() => removeQuiz(q)} className="flex items-center justify-center rounded-xl bg-rose-50 px-3 py-2 text-rose-500 hover:bg-rose-100" title="Xóa"><Trash2 className="h-3.5 w-3.5" /></button>
-                </div>
-              </div>
+                <span className="mt-4 inline-flex items-center gap-1 border-t border-slate-100 pt-3 text-[11px] font-bold text-brand">Xem chi tiết <ChevronRight className="h-3.5 w-3.5" /></span>
+              </button>
             ))}
           </div>
         )}
@@ -128,11 +124,19 @@ export default function QuizModule({ currentUser }: QuizModuleProps) {
       onAddedToQuiz={() => setView('editor')} />;
   }
 
+  if (view === 'detail' && activeQuiz) {
+    return <QuizDetail quiz={activeQuiz} subjects={subjects}
+      onEdit={() => setView('editor')}
+      onAssign={() => setView('assign')}
+      onDelete={() => { removeQuiz(activeQuiz, () => setView('list')); }}
+      onBack={() => setView('list')} />;
+  }
+
   if (view === 'editor' && activeQuiz) {
     return <QuizEditor quiz={activeQuiz} subjects={subjects} currentUser={currentUser}
       onQuizChange={setActiveQuiz}
       onOpenBankSelect={() => { setBankSelectMode(true); setView('bank'); }}
-      onBack={() => { setView('list'); }} />;
+      onBack={() => { setView('detail'); }} />;
   }
 
   if (view === 'assign' && activeQuiz) {
@@ -559,6 +563,101 @@ function QuizEditor({ quiz, subjects, currentUser, onQuizChange, onOpenBankSelec
       ) : (
         <QuizSettings form={form} patch={patch} totalQuestions={items.length} onSave={() => persist()} saving={savingInfo} />
       )}
+    </div>
+  );
+}
+
+// =====================================================================
+// XEM CHI TIẾT ĐỀ (chỉ đọc), có nút Sửa để chuyển sang chế độ sửa
+// =====================================================================
+function QuizDetail({ quiz, subjects, onEdit, onAssign, onDelete, onBack }: {
+  quiz: Quiz; subjects: EduSubject[]; onEdit: () => void; onAssign: () => void; onDelete: () => void; onBack: () => void;
+}) {
+  const { addNotification } = useNotifications();
+  const [items, setItems] = useState<QuizItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    getQuizItems(quiz.id).then(setItems).catch(e => addNotification('Lỗi tải câu hỏi: ' + e.message, 'error')).finally(() => setLoading(false));
+  }, [quiz.id, addNotification]);
+
+  const subjectName = subjects.find(s => s.id === quiz.subject_id)?.name || '';
+  const totalPoints = items.reduce((s, it) => s + Number(it.points || 0), 0);
+  const gradingLabel: any = { highest: 'Điểm cao nhất', first: 'Lần đầu', last: 'Lần cuối', average: 'Trung bình' };
+  const visLabel: any = { hidden: 'Không hiển thị', score_only: 'Chỉ hiển thị điểm', score_and_answers: 'Điểm kèm đáp án' };
+  const fmt = (v?: string | null) => v ? new Date(v).toLocaleString('vi-VN') : '—';
+  const Row = ({ k, v }: { k: string; v: string }) => (
+    <div className="flex items-center justify-between gap-3 py-1.5"><span className="text-[11px] font-semibold text-slate-400">{k}</span><span className="text-[12px] font-bold text-slate-700 text-right">{v}</span></div>
+  );
+
+  return (
+    <div className="space-y-5 animate-fadeIn">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <button onClick={onBack} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><ChevronLeft className="h-4 w-4" /> Danh sách đề</button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={onEdit} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Edit2 className="h-4 w-4" /> Sửa</button>
+          <button onClick={onAssign} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><Send className="h-4 w-4" /> Giao lớp</button>
+          <button onClick={onDelete} className="inline-flex items-center justify-center rounded-xl bg-rose-50 px-3 py-2.5 text-rose-500 hover:bg-rose-100" title="Xóa"><Trash2 className="h-4 w-4" /></button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+        {/* Thông tin + câu hỏi */}
+        <div className="space-y-4">
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className={`rounded-lg px-2.5 py-1 text-[10px] font-bold ${quiz.status === 'published' ? 'bg-brand-light text-brand' : quiz.status === 'archived' ? 'bg-slate-100 text-slate-500' : 'bg-amber-50 text-amber-600'}`}>{quiz.status === 'published' ? 'Đã phát hành' : quiz.status === 'archived' ? 'Lưu trữ' : 'Bản nháp'}</span>
+              {quiz.is_public && <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600"><Globe className="h-3 w-3" /> Công khai</span>}
+            </div>
+            <h1 className="mt-2 font-display text-xl font-black text-slate-900">{quiz.title}</h1>
+            {subjectName && <p className="text-[12px] font-semibold text-brand">{subjectName}</p>}
+            {quiz.description && <p className="mt-1 text-sm text-slate-500">{quiz.description}</p>}
+          </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+            <h2 className="mb-2 text-sm font-black text-slate-800">Câu hỏi ({items.length})</h2>
+            {loading ? <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-brand" /></div> :
+              items.length === 0 ? <p className="py-6 text-center text-sm text-slate-400">Đề chưa có câu hỏi.</p> :
+              <div className="space-y-3">
+                {items.map((it, i) => (
+                  <div key={it.id} className="rounded-2xl border border-slate-100 p-4">
+                    <div className="mb-1 flex items-center gap-2">
+                      <span className="inline-flex h-6 items-center rounded-full bg-brand px-2.5 text-[10px] font-black text-white">Câu {i + 1}</span>
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{it.question?.question_type === 'single' ? 'Chọn 1' : 'Chọn nhiều'}</span>
+                      <span className="text-[10px] font-semibold text-slate-400">{it.points} điểm</span>
+                    </div>
+                    <p className="text-[13px] font-semibold text-slate-800">{stripHtml(it.question?.content || '') || '(trống)'}</p>
+                    <div className="mt-2 space-y-1">
+                      {(it.question?.options || []).map((o, oi) => (
+                        <div key={oi} className={`flex items-center gap-2 text-[12px] ${o.is_correct ? 'font-bold text-brand' : 'text-slate-600'}`}>
+                          <span className={`grid h-4 w-4 shrink-0 place-items-center rounded-full border ${o.is_correct ? 'border-brand bg-brand text-white' : 'border-slate-300 text-transparent'}`}><Check className="h-2.5 w-2.5" /></span>
+                          {String.fromCharCode(65 + oi)}. {o.content}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>}
+          </div>
+        </div>
+
+        {/* Thiết lập tóm tắt */}
+        <div className="h-fit rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <h2 className="mb-2 text-sm font-black text-slate-800">Thiết lập</h2>
+          <div className="divide-y divide-slate-100">
+            <Row k="Tổng điểm" v={`${totalPoints}${quiz.scale_to_10 ? ' → thang 10' : ''}`} />
+            <Row k="Thời gian" v={`${quiz.duration_minutes} phút`} />
+            <Row k="Số lần làm" v={`${quiz.max_attempts}`} />
+            <Row k="Rút ngẫu nhiên" v={quiz.random_pick_count ? `${quiz.random_pick_count} câu` : 'Tất cả'} />
+            <Row k="Đảo câu hỏi" v={quiz.shuffle_questions ? 'Có' : 'Không'} />
+            <Row k="Đảo phương án" v={quiz.shuffle_options ? 'Có' : 'Không'} />
+            <Row k="Cách lấy điểm" v={gradingLabel[quiz.grading_method]} />
+            <Row k="Hiển thị kết quả" v={visLabel[quiz.result_visibility]} />
+            <Row k="Giám sát" v={quiz.proctor_fullscreen ? 'Toàn màn hình' : 'Tắt'} />
+            <Row k="Mở đề" v={fmt(quiz.open_at)} />
+            <Row k="Đóng đề" v={fmt(quiz.close_at)} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
