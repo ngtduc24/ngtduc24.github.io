@@ -67,28 +67,40 @@ export function readClasses(doc: Document): FgClass[] {
   }));
 }
 
-// Ghi điểm cho 1 lớp. grades: Map mã số sinh viên (viết hoa) -> mảng điểm dài
-// đúng bằng số phần tử Components của chính lớp đó.
+// Ghi điểm cho 1 lớp theo đúng cấu trúc của phần mềm trường:
+//   <Grades>
+//     <GradeComponent><Component>[nhóm]Tên</Component><Grade>8</Grade></GradeComponent>
+//     <GradeComponent><Component>...</Component><Grade xsi:nil="true" /></GradeComponent>  (ô để trống)
+//   </Grades>
+// grades: Map mã số sinh viên (viết hoa) -> mảng điểm dài bằng số Components của lớp,
+// phần tử rỗng/null nghĩa là chưa có điểm (ghi nil).
 export function writeGrades(doc: Document, classIndex: number, grades: Map<string, (string | null)[]>): void {
   const scg = doc.querySelectorAll('SubjectClassGrade')[classIndex];
   if (!scg) return;
-  // Tạo phần tử theo đúng namespace của tài liệu; nếu tạo không namespace mà
-  // file có namespace mặc định thì trình duyệt sẽ chèn xmlns="" khiến phần mềm
-  // của trường bỏ qua điểm.
   const ns = scg.namespaceURI;
   const el = (name: string) => (ns ? doc.createElementNS(ns, name) : doc.createElement(name));
-  const compCount = scg.querySelectorAll('Components > string').length;
+  const components = Array.from(scg.querySelectorAll('Components > string')).map(s => s.textContent ?? '');
   scg.querySelectorAll('Students > Student').forEach(stu => {
     const roll = (stu.querySelector('Roll')?.textContent ?? '').trim().toUpperCase();
     const row = grades.get(roll);
     if (!row) return;
     const oldNode = stu.querySelector('Grades');
     const fresh = el('Grades');
-    for (let i = 0; i < compCount; i++) {
-      const s = el('string');
-      s.textContent = row[i] ?? '';
-      fresh.appendChild(s);
-    }
+    components.forEach((comp, i) => {
+      const gc = el('GradeComponent');
+      const c = el('Component');
+      c.textContent = comp;
+      gc.appendChild(c);
+      const g = el('Grade');
+      const v = row[i];
+      if (v === null || v === undefined || String(v).trim() === '') {
+        g.setAttribute('xsi:nil', 'true'); // ô trống: ghi nil, không ghi 0
+      } else {
+        g.textContent = String(v);
+      }
+      gc.appendChild(g);
+      fresh.appendChild(gc);
+    });
     if (oldNode) stu.replaceChild(fresh, oldNode);
     else stu.appendChild(fresh);
   });
@@ -100,12 +112,26 @@ export function readGrades(doc: Document, classIndex: number): Map<string, strin
   const scg = doc.querySelectorAll('SubjectClassGrade')[classIndex];
   const map = new Map<string, string[]>();
   if (!scg) return map;
-  const compCount = scg.querySelectorAll('Components > string').length;
+  const components = Array.from(scg.querySelectorAll('Components > string')).map(s => s.textContent ?? '');
+  const compCount = components.length;
+  const compIndex: Record<string, number> = {};
+  components.forEach((c, i) => { compIndex[c] = i; });
   scg.querySelectorAll('Students > Student').forEach(stu => {
     const roll = (stu.querySelector('Roll')?.textContent ?? '').trim().toUpperCase();
-    const vals = Array.from(stu.querySelectorAll('Grades > string')).map(s => s.textContent ?? '');
     const row = new Array(compCount).fill('');
-    for (let i = 0; i < compCount; i++) row[i] = vals[i] ?? '';
+    const gcs = stu.querySelectorAll('Grades > GradeComponent');
+    if (gcs.length) {
+      gcs.forEach(gc => {
+        const comp = gc.querySelector('Component')?.textContent ?? '';
+        const val = (gc.querySelector('Grade')?.textContent ?? '').trim(); // nil => rỗng
+        const idx = compIndex[comp];
+        if (idx !== undefined) row[idx] = val;
+      });
+    } else {
+      // Tương thích định dạng cũ dạng danh sách <string>.
+      const vals = Array.from(stu.querySelectorAll('Grades > string')).map(s => s.textContent ?? '');
+      for (let i = 0; i < compCount; i++) row[i] = vals[i] ?? '';
+    }
     map.set(roll, row);
   });
   return map;
