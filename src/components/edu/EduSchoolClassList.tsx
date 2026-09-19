@@ -273,16 +273,6 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
             <span>Thêm trường</span>
           </button>
 
-          {onImport && (
-            <button
-              onClick={onImport}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white px-6 py-3 rounded-2xl text-[11px] font-bold transition-all shadow-lg shadow-brand/20 uppercase tracking-wider"
-            >
-              <Upload className="w-4 h-4" />
-              <span>Import tạo lớp</span>
-            </button>
-          )}
-
           {onOpenBank && (
             <button
               onClick={onOpenBank}
@@ -312,12 +302,17 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
               <span>Kiểm tra</span>
             </button>
           )}
-        </div>
 
-        <button className="w-full lg:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider">
-          <Filter className="w-4 h-4" />
-          <span>Bộ lọc</span>
-        </button>
+          {onImport && (
+            <button
+              onClick={onImport}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white px-6 py-3 rounded-2xl text-[11px] font-bold transition-all shadow-lg shadow-brand/20 uppercase tracking-wider"
+            >
+              <Upload className="w-4 h-4" />
+              <span>Import tạo lớp</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {isCreatingSchool && (
