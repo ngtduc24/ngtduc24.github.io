@@ -132,11 +132,15 @@ export async function saveQuestion(q: Partial<QuizQuestion>, options: QuizOption
     is_public: q.is_public ?? false,
     subject_id: q.subject_id ?? null,
   };
-  if (q.id) payload.id = q.id;
-  else { payload.owner_id = q.owner_id ?? ctx.userId; }
   payload.owner_name = q.owner_name ?? undefined;
 
-  const { data, error } = await supabase.from(Q_TABLE).upsert(payload).select('*').single();
+  let data: any, error: any;
+  if (q.id) {
+    ({ data, error } = await supabase.from(Q_TABLE).update(payload).eq('id', q.id).select('*').single());
+  } else {
+    payload.owner_id = q.owner_id ?? ctx.userId;
+    ({ data, error } = await supabase.from(Q_TABLE).insert(payload).select('*').single());
+  }
   if (error) throw error;
   const questionId = data.id;
 
@@ -209,9 +213,14 @@ export async function saveQuiz(q: Partial<Quiz>): Promise<Quiz> {
     proctor_warning_threshold: q.proctor_warning_threshold ?? 3,
     is_public: q.is_public ?? false,
   };
-  if (q.id) payload.id = q.id;
-  else { payload.owner_id = q.owner_id ?? ctx.userId; payload.owner_name = q.owner_name ?? undefined; }
-  const { data, error } = await supabase.from(QUIZ_TABLE).upsert(payload).select('*').single();
+  let data: any, error: any;
+  if (q.id) {
+    ({ data, error } = await supabase.from(QUIZ_TABLE).update(payload).eq('id', q.id).select('*').single());
+  } else {
+    payload.owner_id = q.owner_id ?? ctx.userId;
+    payload.owner_name = q.owner_name ?? undefined;
+    ({ data, error } = await supabase.from(QUIZ_TABLE).insert(payload).select('*').single());
+  }
   if (error) throw error;
   return data as Quiz;
 }
