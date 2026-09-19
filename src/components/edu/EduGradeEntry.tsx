@@ -7,7 +7,7 @@ import { useConfirmation } from '../ConfirmationContext';
 import { getClasses, getGradeColumns, getGrades, getClassUsers } from '../../lib/edu';
 import { EduClass } from '../../types/edu';
 import {
-  decodeFg, encodeFg, parseFg, serializeFg, readClasses, readMeta, writeGrades,
+  decodeFg, encodeFg, parseFg, serializeFg, readClasses, readMeta, writeGrades, readGrades,
   normalizeScore, splitComponent, normName, fgFileName, FgClass, FgMeta,
 } from '../../lib/fgCodec';
 
@@ -27,6 +27,7 @@ export default function EduGradeEntry({ currentUser }: Props) {
   const [fgClasses, setFgClasses] = useState<FgClass[]>([]);
   const [dirty, setDirty] = useState(false);
   const [done, setDone] = useState(false);
+  const [gridOpen, setGridOpen] = useState(false);
 
   // bước 2
   const [fgClassIdx, setFgClassIdx] = useState<number>(-1);
@@ -282,6 +283,10 @@ export default function EduGradeEntry({ currentUser }: Props) {
   // ============================= RENDER =============================
   const loginWarn = meta && meta.login && currentUser.username && normName(meta.login) !== normName(currentUser.username);
 
+  if (gridOpen && doc && fgClass) {
+    return <EditGrid doc={doc} classIndex={fgClassIdx} fgClass={fgClass} onClose={() => setGridOpen(false)} onSaved={() => setDirty(true)} onExport={exportFile} />;
+  }
+
   return (
     <div className="space-y-5 animate-fadeIn">
       {/* Stepper */}
@@ -331,11 +336,15 @@ export default function EduGradeEntry({ currentUser }: Props) {
           </div>
           {fgClass && (
             <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Lớp tương ứng trên hệ thống</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Lớp tương ứng trên hệ thống (để lấy điểm từ hệ thống)</label>
               <select value={sysClassId} onChange={e => setSysClassId(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-brand focus:bg-white">
                 <option value="">Chọn lớp trên hệ thống</option>
                 {sysClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
+              <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                <span className="text-[11px] text-slate-500">Hoặc nhập tay / xem lại và sửa trực tiếp điểm các cột của lớp này trong file.</span>
+                <button onClick={() => setGridOpen(true)} className="shrink-0 rounded-xl border border-brand bg-white px-4 py-2 text-[11px] font-bold text-brand hover:bg-brand-light">Nhập / sửa điểm trực tiếp</button>
+              </div>
             </div>
           )}
         </div>
@@ -384,7 +393,8 @@ export default function EduGradeEntry({ currentUser }: Props) {
             ) : (
               <ExcelSource wb={wb} sheetName={sheetName} setSheetName={setSheetName} headerRow={headerRow} setHeaderRow={setHeaderRow}
                 headers={excelHeaders} body={excelBody} mssvColIdx={mssvColIdx} setMssvColIdx={setMssvColIdx}
-                scoreCols={excelScoreCols} setScoreCols={setExcelScoreCols} onFile={onExcel} />
+                scoreCols={excelScoreCols} setScoreCols={setExcelScoreCols} onFile={onExcel}
+                onReset={() => { setWb(null); setSheetName(''); setRows([]); setMssvColIdx(-1); setExcelScoreCols(new Set()); }} />
             )}
           </div>
         </div>
@@ -490,6 +500,7 @@ export default function EduGradeEntry({ currentUser }: Props) {
               <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">Dữ liệu chỉ nằm trong phiên làm việc. Hãy xuất file .fg trước khi đóng tab. Bạn có thể nhập tiếp lớp khác rồi xuất một lần.</p>
               <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                 <button onClick={exportFile} className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-3 text-sm font-bold text-white hover:bg-brand-hover"><Download className="h-4 w-4" /> Xuất file .fg</button>
+                <button onClick={() => setGridOpen(true)} className="inline-flex items-center gap-2 rounded-xl border border-brand bg-white px-6 py-3 text-sm font-bold text-brand hover:bg-brand-light"><FileText className="h-4 w-4" /> Xem & sửa toàn bộ điểm</button>
                 <button onClick={() => { setStep(1); setDone(false); setFgClassIdx(-1); setSysClassId(''); setSelectedSources([]); setMapping({}); setManualPairs({}); }} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-6 py-3 text-sm font-bold text-slate-600 hover:bg-slate-200"><RefreshCw className="h-4 w-4" /> Nhập tiếp lớp khác</button>
               </div>
             </>
@@ -533,9 +544,9 @@ function StatCard({ color, value, label }: { color: 'brand' | 'amber' | 'rose'; 
 }
 
 // ---------------- Nguồn Excel ----------------
-function ExcelSource({ wb, sheetName, setSheetName, headerRow, setHeaderRow, headers, body, mssvColIdx, setMssvColIdx, scoreCols, setScoreCols, onFile }: {
+function ExcelSource({ wb, sheetName, setSheetName, headerRow, setHeaderRow, headers, body, mssvColIdx, setMssvColIdx, scoreCols, setScoreCols, onFile, onReset }: {
   wb: XLSX.WorkBook | null; sheetName: string; setSheetName: (s: string) => void; headerRow: number; setHeaderRow: (n: number) => void;
-  headers: any[]; body: any[][]; mssvColIdx: number; setMssvColIdx: (n: number) => void; scoreCols: Set<number>; setScoreCols: (s: Set<number>) => void; onFile: (f: File) => void;
+  headers: any[]; body: any[][]; mssvColIdx: number; setMssvColIdx: (n: number) => void; scoreCols: Set<number>; setScoreCols: (s: Set<number>) => void; onFile: (f: File) => void; onReset: () => void;
 }) {
   const toggle = (c: number) => { const n = new Set(scoreCols); n.has(c) ? n.delete(c) : n.add(c); setScoreCols(n); };
   return (
@@ -548,6 +559,10 @@ function ExcelSource({ wb, sheetName, setSheetName, headerRow, setHeaderRow, hea
         </label>
       ) : (
         <>
+          <div className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-600"><FileText className="h-3.5 w-3.5 text-brand" /> Đã tải file Excel</span>
+            <button onClick={onReset} className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:text-brand hover:bg-brand-light"><RefreshCw className="h-3.5 w-3.5" /> Chọn lại file khác</button>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div><label className="text-[10px] font-bold uppercase text-slate-500">Sheet</label>
               <select value={sheetName} onChange={e => setSheetName(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold outline-none focus:border-brand">{wb.SheetNames.map(n => <option key={n} value={n}>{n}</option>)}</select>
@@ -574,6 +589,114 @@ function ExcelSource({ wb, sheetName, setSheetName, headerRow, setHeaderRow, hea
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+// ---------------- Bảng nhập / xem / sửa điểm trực tiếp trong file .fg ----------------
+function EditGrid({ doc, classIndex, fgClass, onClose, onSaved, onExport }: {
+  doc: Document; classIndex: number; fgClass: FgClass; onClose: () => void; onSaved: () => void; onExport: () => void;
+}) {
+  const { addNotification } = useNotifications();
+  const [grid, setGrid] = useState<Record<string, string[]>>(() => {
+    const existing = readGrades(doc, classIndex);
+    const g: Record<string, string[]> = {};
+    fgClass.students.forEach(s => {
+      const roll = s.roll.toUpperCase();
+      g[roll] = existing.get(roll) ?? new Array(fgClass.components.length).fill('');
+    });
+    return g;
+  });
+  const [search, setSearch] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const cols = fgClass.components.map(c => ({ full: c, ...splitComponent(c) }));
+  const setCell = (roll: string, ci: number, val: string) => setGrid(prev => {
+    const row = [...(prev[roll] || new Array(cols.length).fill(''))];
+    row[ci] = val;
+    return { ...prev, [roll]: row };
+  });
+
+  const invalid = (v: string) => v.trim() !== '' && normalizeScore(v) === null;
+
+  const saveAll = () => {
+    setSaving(true);
+    try {
+      const map = new Map<string, (string | null)[]>();
+      fgClass.students.forEach(s => {
+        const roll = s.roll.toUpperCase();
+        const row = (grid[roll] || []).map(v => normalizeScore(v));
+        map.set(roll, row);
+      });
+      writeGrades(doc, classIndex, map);
+      onSaved();
+      addNotification('Đã lưu toàn bộ điểm vào file. Nhớ xuất file .fg.', 'success');
+    } catch (e: any) { addNotification('Lỗi lưu điểm: ' + (e.message || e), 'error'); }
+    finally { setSaving(false); }
+  };
+
+  const students = fgClass.students.filter(s => !search || s.roll.toLowerCase().includes(search.toLowerCase()) || s.name.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div className="space-y-4 animate-fadeIn">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <button onClick={onClose} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><ChevronLeft className="h-4 w-4" /> Quay lại</button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={saveAll} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Lưu tất cả điểm vào file</button>
+          <button onClick={onExport} className="inline-flex items-center gap-2 rounded-xl border border-brand bg-white px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-brand hover:bg-brand-light"><Download className="h-4 w-4" /> Xuất file .fg</button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-base font-black text-slate-900">{fgClass.className} · {fgClass.subject}</h2>
+            <p className="text-[11px] text-slate-400">{fgClass.students.length} sinh viên · {cols.length} cột điểm. Nhập trực tiếp, ô ngoài 0–10 sẽ bị coi là để trống.</p>
+          </div>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm mã hoặc tên..." className="rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-xs outline-none focus:border-brand" />
+          </div>
+        </div>
+
+        <div className="overflow-auto max-h-[70vh]">
+          <table className="min-w-full border-separate border-spacing-0 text-[12px]">
+            <thead>
+              <tr className="bg-slate-50">
+                <th className="sticky left-0 top-0 z-20 bg-slate-50 px-2 py-2 text-left text-[10px] font-black uppercase tracking-wider text-slate-500">STT</th>
+                <th className="sticky left-[44px] top-0 z-20 bg-slate-50 px-2 py-2 text-left text-[10px] font-black uppercase tracking-wider text-slate-500">MSSV</th>
+                <th className="sticky left-[132px] top-0 z-20 bg-slate-50 px-2 py-2 text-left text-[10px] font-black uppercase tracking-wider text-slate-500">Họ tên</th>
+                {cols.map((c, i) => (
+                  <th key={i} className="sticky top-0 z-10 bg-slate-50 px-2 py-2 text-center text-[10px] font-black text-slate-500" title={c.full}>
+                    <span className="block text-[8px] font-bold uppercase text-slate-400">{c.group}</span>{c.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {students.map((s, idx) => {
+                const roll = s.roll.toUpperCase();
+                return (
+                  <tr key={roll} className="odd:bg-white even:bg-slate-50/40">
+                    <td className="sticky left-0 z-10 bg-inherit px-2 py-1 text-slate-400">{idx + 1}</td>
+                    <td className="sticky left-[44px] z-10 bg-inherit px-2 py-1 font-bold text-slate-700">{s.roll}</td>
+                    <td className="sticky left-[132px] z-10 bg-inherit px-2 py-1 text-slate-600 whitespace-nowrap">{s.name}</td>
+                    {cols.map((_c, ci) => {
+                      const val = grid[roll]?.[ci] ?? '';
+                      return (
+                        <td key={ci} className="px-1 py-1">
+                          <input value={val} onChange={e => setCell(roll, ci, e.target.value)} inputMode="decimal"
+                            className={`h-8 w-14 rounded-lg border px-2 text-center text-[12px] font-semibold outline-none focus:border-brand ${invalid(val) ? 'border-rose-300 bg-rose-50 text-rose-600' : 'border-slate-200 bg-white text-slate-800'}`} />
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

@@ -89,6 +89,23 @@ export function writeGrades(doc: Document, classIndex: number, grades: Map<strin
   });
 }
 
+// Đọc điểm hiện có của 1 lớp: Map mã số sinh viên (viết hoa) -> mảng điểm dài
+// đúng bằng số phần tử Components của lớp đó (ô chưa có điểm là chuỗi rỗng).
+export function readGrades(doc: Document, classIndex: number): Map<string, string[]> {
+  const scg = doc.querySelectorAll('SubjectClassGrade')[classIndex];
+  const map = new Map<string, string[]>();
+  if (!scg) return map;
+  const compCount = scg.querySelectorAll('Components > string').length;
+  scg.querySelectorAll('Students > Student').forEach(stu => {
+    const roll = (stu.querySelector('Roll')?.textContent ?? '').trim().toUpperCase();
+    const vals = Array.from(stu.querySelectorAll('Grades > string')).map(s => s.textContent ?? '');
+    const row = new Array(compCount).fill('');
+    for (let i = 0; i < compCount; i++) row[i] = vals[i] ?? '';
+    map.set(roll, row);
+  });
+  return map;
+}
+
 export function normalizeScore(input: string | number | null): string | null {
   if (input === null || input === undefined || input === '') return null;
   const n = Number(String(input).trim().replace(',', '.'));
