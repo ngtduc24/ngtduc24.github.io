@@ -5,9 +5,11 @@ import {
   EduClass, 
   EduUser, 
   EduGradeColumn, 
-  EduAssignment, 
-  EduSubmission, 
-  EduGrade 
+  EduAssignment,
+  EduSubmission,
+  EduGrade,
+  EduSubject,
+  EduAssignmentBankItem
 } from '../types/edu';
 
 // Table names
@@ -18,6 +20,8 @@ export const GRADE_COLUMNS_TABLE = 'edu_grade_columns';
 export const ASSIGNMENTS_TABLE = 'edu_assignments';
 export const SUBMISSIONS_TABLE = 'edu_submissions';
 export const GRADES_TABLE = 'edu_grades';
+export const SUBJECTS_TABLE = 'edu_subjects';
+export const ASSIGNMENT_BANK_TABLE = 'edu_assignment_bank';
 
 // Mappers
 function mapSchool(s: any): EduSchool {
@@ -71,6 +75,8 @@ function mapAssignment(a: any): EduAssignment {
     id: a.id,
     classId: a.class_id,
     gradeColumnId: a.grade_column_id,
+    subjectId: a.subject_id,
+    bankId: a.bank_id,
     title: a.title,
     content: a.content,
     allowedFileTypes: a.allowed_file_types || [],
@@ -78,6 +84,30 @@ function mapAssignment(a: any): EduAssignment {
     createdAt: a.created_at,
     updatedAt: a.updated_at,
     shareLinkId: a.share_link_id
+  };
+}
+
+function mapSubject(s: any): EduSubject {
+  return {
+    id: s.id,
+    name: s.name,
+    description: s.description,
+    createdAt: s.created_at,
+    updatedAt: s.updated_at,
+    ownerId: s.owner_id
+  };
+}
+
+function mapBankItem(b: any): EduAssignmentBankItem {
+  return {
+    id: b.id,
+    subjectId: b.subject_id,
+    title: b.title,
+    content: b.content,
+    allowedFileTypes: b.allowed_file_types || [],
+    createdAt: b.created_at,
+    updatedAt: b.updated_at,
+    ownerId: b.owner_id
   };
 }
 
@@ -270,6 +300,8 @@ export async function saveAssignment(assignment: Partial<EduAssignment>) {
     id: assignment.id,
     class_id: assignment.classId,
     grade_column_id: assignment.gradeColumnId,
+    subject_id: assignment.subjectId,
+    bank_id: assignment.bankId,
     title: assignment.title,
     content: assignment.content,
     allowed_file_types: assignment.allowedFileTypes,
@@ -286,6 +318,60 @@ export async function deleteAssignment(id: string) {
   // Delete submissions first to be safe (if no CASCADE)
   await supabase.from(SUBMISSIONS_TABLE).delete().eq('assignment_id', id);
   const { error } = await supabase.from(ASSIGNMENTS_TABLE).delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ===== Môn học =====
+export async function getSubjects(): Promise<EduSubject[]> {
+  const { data, error } = await supabase.from(SUBJECTS_TABLE).select('*').order('name');
+  if (error) throw error;
+  return (data || []).map(mapSubject);
+}
+
+export async function saveSubject(subject: Partial<EduSubject>) {
+  const dbData: any = {
+    id: subject.id,
+    name: subject.name,
+    description: subject.description,
+    owner_id: subject.ownerId
+  };
+  Object.keys(dbData).forEach(key => dbData[key] === undefined && delete dbData[key]);
+  const { data, error } = await supabase.from(SUBJECTS_TABLE).upsert(dbData).select().single();
+  if (error) throw error;
+  return mapSubject(data);
+}
+
+export async function deleteSubject(id: string) {
+  const { error } = await supabase.from(SUBJECTS_TABLE).delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ===== Ngân hàng bài tập =====
+export async function getAssignmentBank(subjectId?: string): Promise<EduAssignmentBankItem[]> {
+  let query = supabase.from(ASSIGNMENT_BANK_TABLE).select('*').order('created_at', { ascending: false });
+  if (subjectId) query = query.eq('subject_id', subjectId);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []).map(mapBankItem);
+}
+
+export async function saveAssignmentBankItem(item: Partial<EduAssignmentBankItem>) {
+  const dbData: any = {
+    id: item.id,
+    subject_id: item.subjectId,
+    title: item.title,
+    content: item.content,
+    allowed_file_types: item.allowedFileTypes,
+    owner_id: item.ownerId
+  };
+  Object.keys(dbData).forEach(key => dbData[key] === undefined && delete dbData[key]);
+  const { data, error } = await supabase.from(ASSIGNMENT_BANK_TABLE).upsert(dbData).select().single();
+  if (error) throw error;
+  return mapBankItem(data);
+}
+
+export async function deleteAssignmentBankItem(id: string) {
+  const { error } = await supabase.from(ASSIGNMENT_BANK_TABLE).delete().eq('id', id);
   if (error) throw error;
 }
 

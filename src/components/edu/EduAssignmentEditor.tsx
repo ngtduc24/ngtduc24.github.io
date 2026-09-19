@@ -32,7 +32,8 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { EduAssignment, EduGradeColumn } from '../../types/edu';
-import { getGradeColumns, saveAssignment, getAssignments } from '../../lib/edu';
+import { getGradeColumns, saveAssignment, getAssignments, getSubjects, saveSubject, getAssignmentBank, saveAssignmentBankItem } from '../../lib/edu';
+import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
 import { useNotifications } from '../NotificationContext';
 import { uploadImageToCloudinary } from '../../lib/upload';
 
@@ -60,6 +61,15 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
   const [allowedTypes, setAllowedTypes] = useState<string[]>(['pdf']);
   const [deadline, setDeadline] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Ngân hàng bài tập theo môn
+  const [subjects, setSubjects] = useState<EduSubject[]>([]);
+  const [subjectId, setSubjectId] = useState('');
+  const [bankItems, setBankItems] = useState<EduAssignmentBankItem[]>([]);
+  const [selectedBankId, setSelectedBankId] = useState('');
+  const [saveToBank, setSaveToBank] = useState(false);
+  const [addingSubject, setAddingSubject] = useState(false);
+  const [newSubjectName, setNewSubjectName] = useState('');
 
   const { addNotification } = useNotifications();
 
@@ -102,6 +112,41 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
     content: '',
   });
 
+  // Nạp danh sách môn học (bỏ qua nếu bảng chưa tạo).
+  useEffect(() => {
+    getSubjects().then(setSubjects).catch(() => setSubjects([]));
+  }, []);
+
+  // Nạp bài tập trong ngân hàng theo môn đang chọn.
+  useEffect(() => {
+    if (!subjectId) { setBankItems([]); return; }
+    getAssignmentBank(subjectId).then(setBankItems).catch(() => setBankItems([]));
+  }, [subjectId]);
+
+  const applyBankItem = (bankId: string) => {
+    setSelectedBankId(bankId);
+    const item = bankItems.find(b => b.id === bankId);
+    if (!item) return;
+    setTitle(item.title);
+    setAllowedTypes(item.allowedFileTypes || ['pdf']);
+    editor?.commands.setContent(item.content || '');
+  };
+
+  const handleAddSubject = async () => {
+    if (!newSubjectName.trim()) return;
+    try {
+      const saved = await saveSubject({ name: newSubjectName.trim() });
+      setSubjects(prev => [...prev, saved].sort((a, b) => a.name.localeCompare(b.name)));
+      setSubjectId(saved.id);
+      setNewSubjectName('');
+      setAddingSubject(false);
+      addNotification('Đã thêm môn học', 'success');
+    } catch (err) {
+      console.error(err);
+      addNotification('Lỗi thêm môn. Có thể bảng ngân hàng chưa được tạo trên Supabase.', 'error');
+    }
+  };
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -123,6 +168,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
           if (assignment) {
             setTitle(assignment.title);
             setGradeColumnId(assignment.gradeColumnId || '');
+            setSubjectId(assignment.subjectId || '');
             setAllowedTypes(assignment.allowedFileTypes || []);
             setDeadline(assignment.deadline ? assignment.deadline.slice(0, 16) : '');
             editor?.commands.setContent(assignment.content || '');
@@ -153,11 +199,29 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
         id: assignmentId || undefined,
         classId,
         gradeColumnId,
+        subjectId: subjectId || undefined,
+        bankId: selectedBankId || undefined,
         title,
         content: editor?.getHTML(),
         allowedFileTypes: allowedTypes,
         deadline: deadline ? new Date(deadline).toISOString() : undefined,
       });
+
+      // Tùy chọn lưu bài này vào ngân hàng để tái dùng cho lớp khác.
+      if (saveToBank) {
+        try {
+          await saveAssignmentBankItem({
+            subjectId: subjectId || undefined,
+            title,
+            content: editor?.getHTML(),
+            allowedFileTypes: allowedTypes,
+          });
+        } catch (bankErr) {
+          console.error(bankErr);
+          addNotification('Đã lưu bài tập, nhưng lưu vào ngân hàng thất bại (kiểm tra bảng ngân hàng trên Supabase).', 'warning');
+        }
+      }
+
       addNotification("Đã lưu bài tập thành công", "success");
       onSuccess();
     } catch (err) {
@@ -228,10 +292,65 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
           </div>
 
           <div className="space-y-4">
+            {/* Môn học */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-400 uppercase">Môn học</label>
+              <div className="relative">
+                <select
+                  value={subjectId}
+                  onChange={e => { setSubjectId(e.target.value); setSelectedBankId(''); }}
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-brand focus:outline-none rounded-xl px-4 py-2.5 text-xs font-bold transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">-- Không thuộc môn nào --</option>
+                  {subjects.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+              </div>
+              {addingSubject ? (
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="text"
+                    value={newSubjectName}
+                    onChange={e => setNewSubjectName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleAddSubject()}
+                    placeholder="Tên môn mới"
+                    className="flex-1 bg-white border border-slate-200 focus:border-brand focus:outline-none rounded-lg px-3 py-1.5 text-xs"
+                  />
+                  <button onClick={handleAddSubject} className="bg-brand text-white px-3 py-1.5 rounded-lg text-[11px] font-bold">Thêm</button>
+                  <button onClick={() => { setAddingSubject(false); setNewSubjectName(''); }} className="text-slate-400 text-[11px] font-bold px-1">Hủy</button>
+                </div>
+              ) : (
+                <button onClick={() => setAddingSubject(true)} className="text-brand text-[11px] font-bold hover:underline">+ Thêm môn mới</button>
+              )}
+            </div>
+
+            {/* Chọn từ ngân hàng bài tập theo môn */}
+            {subjectId && bankItems.length > 0 && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase">Chọn từ ngân hàng bài tập</label>
+                <div className="relative">
+                  <select
+                    value={selectedBankId}
+                    onChange={e => applyBankItem(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-brand focus:outline-none rounded-xl px-4 py-2.5 text-xs font-bold transition-all appearance-none cursor-pointer"
+                  >
+                    <option value="">-- Tạo mới hoặc chọn bài mẫu --</option>
+                    {bankItems.map(b => (
+                      <option key={b.id} value={b.id}>{b.title}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                </div>
+                <p className="text-[10px] text-slate-400">Chọn một bài mẫu để tự điền tiêu đề, nội dung và định dạng cho lớp này.</p>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-slate-400 uppercase">Cột điểm đích</label>
               <div className="relative">
-                <select 
+                <select
                   value={gradeColumnId}
                   onChange={e => setGradeColumnId(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 focus:border-brand focus:outline-none rounded-xl px-4 py-2.5 text-xs font-bold transition-all appearance-none cursor-pointer"
@@ -279,8 +398,17 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-50">
-            <button 
+          <div className="pt-4 border-t border-slate-50 space-y-3">
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={saveToBank}
+                onChange={e => setSaveToBank(e.target.checked)}
+                className="w-4 h-4 accent-brand rounded cursor-pointer"
+              />
+              <span className="text-[11px] font-bold text-slate-600">Lưu bài này vào ngân hàng để dùng lại cho lớp khác</span>
+            </label>
+            <button
               onClick={handleSave}
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-50 text-white py-3 rounded-xl text-xs font-black shadow-lg shadow-brand/20 transition-all cursor-pointer"

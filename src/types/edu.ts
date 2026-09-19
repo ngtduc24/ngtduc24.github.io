@@ -37,10 +37,32 @@ export interface EduGradeColumn {
   updatedAt: string;
 }
 
+export interface EduSubject {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+  ownerId?: string;
+}
+
+export interface EduAssignmentBankItem {
+  id: string;
+  subjectId?: string;
+  title: string;
+  content?: string;
+  allowedFileTypes: string[];
+  createdAt: string;
+  updatedAt: string;
+  ownerId?: string;
+}
+
 export interface EduAssignment {
   id: string;
   classId: string;
   gradeColumnId?: string;
+  subjectId?: string;
+  bankId?: string;
   title: string;
   content?: string;
   allowedFileTypes: string[];
