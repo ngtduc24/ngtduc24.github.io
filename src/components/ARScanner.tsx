@@ -353,7 +353,7 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
 
     // Cấu hình A-Frame chuẩn dấu chấm phẩy ; cho schema renderer để preserveDrawingBuffer hoạt động thực tế
     container.innerHTML = `
-      <a-scene scanner-env mindar-image="imageTargetSrc: ${escapeAttr(mindUrl)}; autoStart: true;" color-space="sRGB" renderer="colorManagement: true; toneMapping: ACESFilmic; preserveDrawingBuffer: true;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      <a-scene scanner-env mindar-image="imageTargetSrc: ${escapeAttr(mindUrl)}; autoStart: true; filterMinCF: 0.0001; filterBeta: 60; missTolerance: 12; warmupTolerance: 2;" color-space="sRGB" renderer="colorManagement: true; toneMapping: ACESFilmic; preserveDrawingBuffer: true;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         ${lightsHtml}
         ${contentHtml}
       </a-scene>
