@@ -228,8 +228,8 @@ export default function EduAssignmentBank() {
             {items.map(item => (
               <button
                 key={item.id}
-                onClick={() => setViewingItem(item)}
-                className="w-full flex items-center gap-3 p-4 border border-slate-200 rounded-2xl hover:border-brand hover:bg-brand-light/40 transition-all text-left"
+                onClick={() => setViewingItem(viewingItem?.id === item.id ? null : item)}
+                className={`w-full flex items-center gap-3 p-4 border rounded-2xl transition-all text-left ${viewingItem?.id === item.id ? 'border-brand bg-brand-light/50' : 'border-slate-200 hover:border-brand hover:bg-brand-light/40'}`}
               >
                 <div className="w-10 h-10 bg-brand-light text-brand rounded-xl flex items-center justify-center shrink-0"><FileText className="w-5 h-5" /></div>
                 <div className="min-w-0 flex-1">
@@ -240,47 +240,41 @@ export default function EduAssignmentBank() {
             ))}
           </div>
         )}
-      </div>
 
-      {/* Item detail view modal */}
-      {viewingItem && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setViewingItem(null)} />
-          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden relative flex flex-col">
-            <div className="p-5 border-b border-slate-100 flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-11 h-11 bg-brand-light text-brand rounded-2xl flex items-center justify-center shrink-0"><FileText className="w-5 h-5" /></div>
-                <div className="min-w-0">
-                  <h3 className="text-base font-black text-slate-900 tracking-tight truncate">{viewingItem.title}</h3>
-                  <p className="text-[11px] text-slate-400 font-medium">{(viewingItem.allowedFileTypes || []).map(t => FORMAT_OPTIONS.find(f => f.id === t)?.label || t).join(', ')}</p>
-                </div>
+        {/* Chi tiết bài tập hiện ngay trong cột, không mở popup */}
+        {viewingItem && (
+          <div className="border border-brand/30 rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 bg-brand-light/40 border-b border-brand/20 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-[15px] font-black text-slate-900 tracking-tight truncate">{viewingItem.title}</h3>
+                <p className="text-[11px] text-slate-400 font-medium">{(viewingItem.allowedFileTypes || []).map(t => FORMAT_OPTIONS.find(f => f.id === t)?.label || t).join(', ')}</p>
               </div>
-              <button onClick={() => setViewingItem(null)} className="p-2 bg-slate-100 text-slate-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all shrink-0"><X className="w-5 h-5" /></button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => { setEditingItem({ ...viewingItem }); }}
+                  className="flex items-center gap-2 border-2 border-brand text-brand hover:bg-brand-light px-4 py-2 rounded-xl text-[11px] font-bold transition-all"
+                >
+                  <Edit3 className="w-4 h-4" /> Sửa
+                </button>
+                <button
+                  onClick={() => { const it = viewingItem; setViewingItem(null); handleDeleteItem(it); }}
+                  className="flex items-center gap-2 border-2 border-rose-300 text-rose-500 hover:bg-rose-50 px-4 py-2 rounded-xl text-[11px] font-bold transition-all"
+                >
+                  <Trash2 className="w-4 h-4" /> Xóa
+                </button>
+                <button onClick={() => setViewingItem(null)} className="p-2 text-slate-400 hover:text-slate-700 transition-all" title="Đóng"><X className="w-5 h-5" /></button>
+              </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="p-5">
               {viewingItem.content && viewingItem.content.trim() ? (
                 <div className="prose prose-slate max-w-none text-[14px] text-slate-700 leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: viewingItem.content }} />
               ) : (
                 <p className="text-sm text-slate-400 italic">Bài tập này chưa có phần yêu cầu và hướng dẫn.</p>
               )}
             </div>
-            <div className="p-5 border-t border-slate-100 flex items-center justify-end gap-3">
-              <button
-                onClick={() => { const it = viewingItem; setViewingItem(null); handleDeleteItem(it); }}
-                className="flex items-center gap-2 border-2 border-rose-300 text-rose-500 hover:bg-rose-50 px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
-              >
-                <Trash2 className="w-4 h-4" /> Xóa
-              </button>
-              <button
-                onClick={() => { setEditingItem({ ...viewingItem }); setViewingItem(null); }}
-                className="flex items-center gap-2 border-2 border-brand text-brand hover:bg-brand-light px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
-              >
-                <Edit3 className="w-4 h-4" /> Sửa
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Item editor modal */}
       {editingItem && (
