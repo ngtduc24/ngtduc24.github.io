@@ -98,14 +98,24 @@ export default function ARScanner2({ target: rawTarget, onClose }: ARScanner2Pro
     const container = containerRef.current;
     if (!ready || !container) return;
 
-    const scale = target.scale || 1;
+    // Màn hình thiết kế chuẩn hóa ảnh target theo chiều cao bằng 1, còn 8th Wall chuẩn hóa
+    // theo chiều rộng bằng 1, tức khung cục bộ có chiều rộng 1 và chiều cao 1/tỉ_lệ. Do đó
+    // để nội dung hiện đúng chỗ đã đặt, ta chia vị trí và tỉ lệ cho tỉ lệ khung hình của ảnh.
+    const data = targetDataRef.current;
+    const aspect =
+      data && data.properties && data.properties.originalHeight
+        ? data.properties.originalWidth / data.properties.originalHeight
+        : 1;
+    const k = aspect || 1;
+
+    const scale = (target.scale || 1) / k;
     const rotX = typeof target.rotation_x === 'number' ? target.rotation_x : (target.rotation || 0);
     const rotY = target.rotation_y || 0;
     const rotZ = target.rotation_z || 0;
     const rotationStr = `${rotX} ${rotY} ${rotZ}`;
-    const posX = target.position_x || 0;
-    const posY = target.position_y || 0;
-    const posZ = target.position_z || 0;
+    const posX = (target.position_x || 0) / k;
+    const posY = (target.position_y || 0) / k;
+    const posZ = (target.position_z || 0) / k;
     const positionStr = `${posX} ${posY} ${posZ}`;
     const scaleStr = `${scale} ${scale} ${scale}`;
     const contentUrl = escapeAttr(target.content_url);
