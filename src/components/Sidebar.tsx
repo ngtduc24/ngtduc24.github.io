@@ -15,7 +15,9 @@ import {
   GraduationCap,
   PanelLeftOpen,
   PanelLeftClose,
-  Wrench
+  Wrench,
+  BarChart3,
+  UserCircle
 } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
 import { useConfirmation } from './ConfirmationContext';
@@ -28,6 +30,7 @@ interface SidebarProps {
   setSidebarOpen: (open: boolean) => void;
   currentUser: UserAccount;
   onLogout: () => void;
+  onOpenProfile?: () => void;
   settings?: AppSettings;
   unreadCount?: number;
   dbConnected?: boolean | null;
@@ -40,6 +43,7 @@ export default function Sidebar({
   setSidebarOpen,
   currentUser,
   onLogout,
+  onOpenProfile,
   settings,
   unreadCount = 0
 }: SidebarProps) {
@@ -49,6 +53,7 @@ export default function Sidebar({
 
   const primaryItems = [
     { id: 'dashboard', label: 'Tổng quan Dashboard', icon: LayoutDashboard },
+    { id: 'stats', label: 'Số liệu', icon: BarChart3 },
     { id: 'tasks', label: 'Quản lý Công việc', icon: ClipboardList },
     { id: 'scientific_journals', label: 'Quản lý điểm báo khoa học', icon: BookOpen },
     { id: 'calculator', label: 'Tính Cỡ Mẫu Nghiên Cứu', icon: Calculator },
@@ -59,7 +64,7 @@ export default function Sidebar({
     { id: 'portfolio_cms', label: 'Quản trị Portfolio', icon: Shield },
     { id: 'notifications', label: 'Thông báo', icon: Bell }
   ].filter(item => {
-    if (item.id === 'notifications' || currentUser.role === 'admin') return true;
+    if (item.id === 'notifications' || item.id === 'stats' || currentUser.role === 'admin') return true;
     // Quyền ar_module cũ vẫn mở được mục Tiện ích, vì chức năng Tạo AR đã dời vào đây.
     if (item.id === 'utilities') {
       return currentUser.permissions.includes('utilities') || currentUser.permissions.includes('ar_module');
@@ -135,7 +140,20 @@ export default function Sidebar({
           {!!adminItems.length && <div className="my-3 border-t border-white/10 pt-3">{sidebarOpen && <p className="mb-2 px-3 text-left text-[9px] font-black uppercase tracking-[.18em] text-slate-500">Quản trị hệ thống</p>}{adminItems.map(renderItem)}</div>}
         </nav>
 
-        <div className={`shrink-0 border-t border-white/10 ${sidebarOpen ? 'p-4' : 'p-3'}`}>
+        <div className={`shrink-0 border-t border-white/10 space-y-2 ${sidebarOpen ? 'p-4' : 'p-3'}`}>
+          <button
+            type="button"
+            onClick={() => onOpenProfile && onOpenProfile()}
+            aria-label="Trang cá nhân"
+            title={!sidebarOpen ? 'Trang cá nhân' : undefined}
+            className={`group relative flex w-full items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white ${sidebarOpen ? 'gap-3 px-3 py-2.5' : 'h-11 justify-center'}`}
+          >
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/10 text-brand">
+              <UserCircle className="h-4.5 w-4.5" />
+            </span>
+            {sidebarOpen && <span className="min-w-0 flex-1 truncate text-left text-xs font-bold">Trang cá nhân</span>}
+            {!sidebarOpen && <span className="pointer-events-none absolute left-full z-[80] ml-3 whitespace-nowrap rounded-lg bg-slate-950 px-3 py-2 text-[11px] font-bold text-white opacity-0 shadow-xl transition-opacity group-hover:opacity-100">Trang cá nhân</span>}
+          </button>
           <button
             type="button"
             onClick={() => confirm('Xác nhận đăng xuất', 'Bạn có chắc chắn muốn đăng xuất không?', onLogout)}

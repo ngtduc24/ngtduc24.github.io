@@ -16,7 +16,14 @@ import {
   Search,
   X,
   Database,
-  Microscope
+  Microscope,
+  ClipboardList,
+  BarChart3,
+  GraduationCap,
+  Wrench,
+  FolderKanban,
+  Shield,
+  ArrowRight
 } from 'lucide-react';
 import { 
   getStatsFromSupabase, 
@@ -332,6 +339,26 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { title: 'Cochran', subtitle: 'Tổng thể dân số chưa xác định', link: 'calculator', badge: 'Cochran', count: '419 lượt' },
   ];
 
+  // Các chức năng chính hiện dưới dạng biểu tượng và thẻ truy cập nhanh trên dashboard.
+  // Các mục tiện ích tài khoản (cấu hình, thông báo, thư viện, hồ sơ, đăng xuất) nằm ở menu trái.
+  const allModules = [
+    { id: 'tasks', label: 'Quản lý Công việc', desc: 'Tạo, theo dõi và quản lý công việc cá nhân và nhóm', icon: ClipboardList },
+    { id: 'scientific_journals', label: 'Quản lý điểm báo khoa học', desc: 'Lưu trữ và phân loại điểm báo, bài viết', icon: BookOpen },
+    { id: 'calculator', label: 'Tính Cỡ Mẫu Nghiên cứu', desc: 'Hỗ trợ tính toán cỡ mẫu trong nghiên cứu', icon: Calculator },
+    { id: 'qualitative_analysis', label: 'Phân tích định tính', desc: 'Mã hóa, phân tích dữ liệu phỏng vấn, thảo luận nhóm', icon: FolderKanban },
+    { id: 'quantitative_analysis', label: 'Phân tích số liệu định lượng', desc: 'Phân tích thống kê, trực quan hóa dữ liệu', icon: BarChart3 },
+    { id: 'edu', label: 'Quản lý Giáo dục', desc: 'Quản lý lớp học, sinh viên, chương trình đào tạo', icon: GraduationCap },
+    { id: 'utilities', label: 'Tiện ích', desc: 'Các công cụ hỗ trợ khác', icon: Wrench },
+    { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Lưu trữ và quản lý hồ sơ, dự án cá nhân', icon: Shield },
+    ...(isUserAdmin ? [{ id: 'users', label: 'Quản lý & Phân quyền', desc: 'Quản trị hệ thống, phân quyền người dùng', icon: Users }] : []),
+  ];
+  const canModule = (id: string) => {
+    if (isUserAdmin) return true;
+    if (id === 'utilities') return userPermissions.includes('utilities') || userPermissions.includes('ar_module');
+    return userPermissions.includes(id);
+  };
+  const modules = allModules.filter(m => canModule(m.id));
+
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
@@ -361,51 +388,75 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
               <Settings className="w-5 h-5" />
             </button>
           )}
-          <div className="relative z-10 space-y-1.5 flex-1 text-left">
-            <div className="flex items-center gap-2">
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-white/80">Chào mừng quay trở lại, {currentUser?.fullName}</span>
-                <h1 className="text-xl md:text-2xl font-bold tracking-tight font-display text-slate-50">{settings?.dashboardBannerTitle || "Hệ Thống Quản Lý Toàn Diện"}</h1>
-              </div>
-            </div>
-            <p className="text-xs text-white/90 max-w-2xl leading-relaxed">{settings?.systemDescription || "Hệ thống hỗ trợ nghiên cứu khoa học, điều hành công việc và quản lý dữ liệu toàn diện."}</p>
+          <div className="relative z-10 space-y-2 flex-1 text-left">
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight font-display text-white">Chào mừng trở lại, {currentUser?.fullName} 👋</h1>
+            <p className="text-sm md:text-base font-bold text-white/95">{settings?.dashboardBannerTitle || 'Hôm nay bạn muốn làm gì?'}</p>
+            <p className="text-xs text-white/85 max-w-2xl leading-relaxed">{settings?.systemDescription || 'Tìm nhanh công cụ, tính năng hoặc tài liệu phục vụ học tập và nghiên cứu.'}</p>
           </div>
         </div>
       )}
 
-      {/* Grid statistics - Tự động thích ứng theo số lượng quyền hạn */}
-      {stats.length > 0 && (
-        <div className={`grid ${getStatsGridClass(stats.length)} gap-4`}>
-          {stats.map((stat, i) => {
-            const Icon = stat.icon;
-            return (
-              <div 
-                key={i} 
-                className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</span>
-                  <div className={`p-2 rounded-xl bg-gradient-to-br ${stat.color} text-white shadow-lg ${stat.shadow}`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <h3 className="text-2xl font-bold text-slate-800 font-display leading-none">{stat.value}</h3>
-                  <div className="flex items-center gap-1.5 mt-1 text-xs">
-                    <span className="text-brand font-bold">{stat.change}</span>
-                    <span className="text-slate-400">tăng trưởng</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+      {/* Truy cập nhanh: hàng biểu tượng chức năng */}
+      {modules.length > 0 && (
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+            {modules.map(m => {
+              const Icon = m.icon;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => onSwitchTab(m.id)}
+                  className="group flex flex-col items-center gap-2 text-center"
+                  title={m.label}
+                >
+                  <span className="w-14 h-14 rounded-2xl bg-brand/10 text-brand grid place-items-center shadow-sm group-hover:bg-brand group-hover:text-white group-hover:scale-105 transition-all">
+                    <Icon className="w-6 h-6" />
+                  </span>
+                  <span className="text-[11px] font-bold text-slate-600 leading-tight line-clamp-2 group-hover:text-brand">{m.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
-      {/* Danh sách thành viên đang trực tuyến - Dành riêng cho Quản trị viên (Admin) qua Supabase Realtime */}
-      {isUserAdmin && (
-        <OnlineUsersPresence currentUser={currentUser} />
+      {/* Tính năng nổi bật: thẻ truy cập nhanh có mô tả */}
+      {modules.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl bg-brand/10 text-brand grid place-items-center"><Sparkles className="w-5 h-5" /></div>
+              <div>
+                <h2 className="text-base font-black text-slate-900 font-display">Tính năng nổi bật</h2>
+                <p className="text-[11px] text-slate-400 font-medium">Truy cập nhanh các chức năng thường dùng</p>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {modules.map(m => {
+              const Icon = m.icon;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => onSwitchTab(m.id)}
+                  className="group text-left bg-white rounded-2xl border border-slate-100 shadow-xs hover:shadow-md hover:border-brand/30 transition-all p-5 flex items-start gap-4"
+                >
+                  <span className="w-11 h-11 rounded-xl bg-brand/10 text-brand grid place-items-center shrink-0 group-hover:bg-brand group-hover:text-white transition-all">
+                    <Icon className="w-5 h-5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-black text-slate-800 group-hover:text-brand transition-colors">{m.label}</h3>
+                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed mt-0.5 line-clamp-2">{m.desc}</p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-brand group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
+                </button>
+              );
+            })}
+          </div>
+        </div>
       )}
+
+      {/* Phần thống kê đã chuyển sang mục Số liệu ở menu bên trái. */}
 
       {/* Active Tasks - Chỉ hiển thị cho người dùng có quyền tasks */}
       {canAccessTasks && (

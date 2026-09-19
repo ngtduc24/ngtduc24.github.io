@@ -3,6 +3,7 @@ import { applyBrandTheme } from './lib/applyTheme';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import DashboardOverview from './components/DashboardOverview';
+import StatsOverview from './components/StatsOverview';
 import SampleSizeCalculator from './components/SampleSizeCalculator';
 import PublicJournalSearch from './components/PublicJournalSearch';
 import GuideSection from './components/GuideSection';
@@ -551,6 +552,7 @@ export default function App() {
     if (currentUser.role === 'member') return tabId === 'portfolio_website';
 
     if (tabId === 'notifications') return true; // All registered users have notifications inbox access
+    if (tabId === 'stats') return true; // Trang số liệu mở cho mọi tài khoản đã đăng nhập
     if (tabId === 'portfolio_website') return true;
     if (tabId === 'users') return false; // Only admin can ever see users panel
     if (tabId === 'settings') return currentUser.permissions.includes('settings');
@@ -603,6 +605,8 @@ export default function App() {
     switch (currentTab) {
       case 'dashboard':
         return <DashboardOverview onSwitchTab={(tab) => setCurrentTab(tab)} settings={settings} users={users} currentUser={currentUser} onRefreshSettings={loadConfig} />;
+      case 'stats':
+        return <StatsOverview currentUser={currentUser} />;
       case 'tasks':
         return <TaskProjects users={users} currentUser={currentUser} settings={settings} onRefreshSettings={loadConfig} onUpdateUser={handleSaveUser} />;
       case 'calculator':
@@ -831,6 +835,7 @@ export default function App() {
         setSidebarOpen={setSidebarOpen}
         currentUser={currentUser}
         onLogout={handleLogout}
+        onOpenProfile={() => { setProfileModalReadOnly(false); setShowProfileModal(true); }}
         settings={settings}
         unreadCount={unreadNotificationsCount}
         dbConnected={dbConnected}
