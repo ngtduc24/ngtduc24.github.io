@@ -635,6 +635,62 @@ function EditGrid({ doc, classIndex, fgClass, onClose, onSaved, onExport }: {
 
   const invalid = (v: string) => v.trim() !== '' && normalizeScore(v) === null;
 
+  // ---- Nhập điểm từ Excel vào bảng ----
+  const [xlOpen, setXlOpen] = useState(false);
+  const [xlWb, setXlWb] = useState<XLSX.WorkBook | null>(null);
+  const [xlSheet, setXlSheet] = useState('');
+  const [xlHeaderRow, setXlHeaderRow] = useState(1);
+  const [xlRows, setXlRows] = useState<any[][]>([]);
+  const [xlMssvCol, setXlMssvCol] = useState(-1);
+  const [xlMap, setXlMap] = useState<Record<string, number>>({}); // componentFull -> excel col idx
+
+  const onXlFile = async (file: File) => {
+    try { const buf = await file.arrayBuffer(); const w = XLSX.read(buf, { type: 'array' }); setXlWb(w); setXlSheet(w.SheetNames[0]); }
+    catch { addNotification('Không đọc được file Excel.', 'error'); }
+  };
+  useEffect(() => {
+    if (!xlWb || !xlSheet) return;
+    const arr = XLSX.utils.sheet_to_json<any[]>(xlWb.Sheets[xlSheet], { header: 1, blankrows: false, defval: '' });
+    setXlRows(arr);
+    const body = arr.slice(xlHeaderRow);
+    let best = -1, bestSc = -1; const ncol = Math.max(...arr.map(r => r.length), 0);
+    for (let c = 0; c < ncol; c++) { let hit = 0, tot = 0; for (const r of body) { const v = String(r[c] ?? '').trim(); if (v) { tot++; if (/^[A-Za-z]{2}\d{5}$/.test(v)) hit++; } } const sc = tot ? hit / tot : 0; if (sc > bestSc) { bestSc = sc; best = c; } }
+    setXlMssvCol(best);
+    // gợi ý map theo tên cột
+    const headers = arr[xlHeaderRow - 1] || [];
+    const m: Record<string, number> = {};
+    cols.forEach(c => { const idx = headers.findIndex((h: any) => normName(String(h)) === normName(c.label)); if (idx >= 0 && idx !== best) m[c.full] = idx; });
+    setXlMap(m);
+  }, [xlWb, xlSheet, xlHeaderRow]);
+
+  const xlHeaders = xlRows[xlHeaderRow - 1] || [];
+  const xlBody = xlRows.slice(xlHeaderRow);
+
+  const fillFromExcel = () => {
+    const byMssv = new Map<string, any[]>();
+    xlBody.forEach(r => { const k = String(r[xlMssvCol] ?? '').trim().toUpperCase(); if (k) byMssv.set(k, r); });
+    let filled = 0;
+    setGrid(prev => {
+      const next = { ...prev };
+      fgClass.students.forEach(s => {
+        const roll = s.roll.toUpperCase();
+        const r = byMssv.get(roll);
+        if (!r) return;
+        const row = [...(next[roll] || new Array(cols.length).fill(''))];
+        cols.forEach((c, ci) => {
+          const xi = xlMap[c.full];
+          if (xi === undefined || xi < 0) return;
+          const norm = normalizeScore(r[xi]);
+          if (norm !== null) { row[ci] = norm; filled++; }
+        });
+        next[roll] = row;
+      });
+      return next;
+    });
+    addNotification(`Đã điền ${filled} điểm từ Excel vào bảng. Kiểm tra rồi bấm Lưu.`, 'success');
+    setXlOpen(false);
+  };
+
   const saveAll = () => {
     setSaving(true);
     try {
@@ -658,10 +714,54 @@ function EditGrid({ doc, classIndex, fgClass, onClose, onSaved, onExport }: {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button onClick={onClose} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><ChevronLeft className="h-4 w-4" /> Quay lại</button>
         <div className="flex flex-wrap items-center gap-2">
+          <button onClick={() => setXlOpen(v => !v)} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><Upload className="h-4 w-4 text-brand" /> Nhập từ Excel</button>
           <button onClick={saveAll} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Lưu tất cả điểm vào file</button>
           <button onClick={onExport} className="inline-flex items-center gap-2 rounded-xl border border-brand bg-white px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-brand hover:bg-brand-light"><Download className="h-4 w-4" /> Xuất file .fg</button>
         </div>
       </div>
+
+      {xlOpen && (
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-black text-slate-800">Nhập điểm từ Excel</h3>
+            <button onClick={() => setXlOpen(false)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"><X className="h-4 w-4" /></button>
+          </div>
+          {!xlWb ? (
+            <label className="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 py-8 text-center hover:border-brand">
+              <Upload className="h-6 w-6 text-brand" />
+              <span className="text-xs font-bold text-slate-700">Tải file Excel (.xlsx, .xls)</span>
+              <input type="file" accept=".xlsx,.xls" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onXlFile(f); e.currentTarget.value = ''; }} />
+            </label>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-600"><FileText className="h-3.5 w-3.5 text-brand" /> Đã tải file Excel</span>
+                <button onClick={() => { setXlWb(null); setXlRows([]); setXlMap({}); setXlMssvCol(-1); }} className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:text-brand hover:bg-brand-light"><RefreshCw className="h-3.5 w-3.5" /> Chọn lại file khác</button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div><label className="text-[10px] font-bold uppercase text-slate-500">Sheet</label><select value={xlSheet} onChange={e => setXlSheet(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-2 text-xs font-semibold outline-none focus:border-brand">{xlWb.SheetNames.map(n => <option key={n} value={n}>{n}</option>)}</select></div>
+                <div><label className="text-[10px] font-bold uppercase text-slate-500">Dòng tiêu đề</label><input type="number" min={1} value={xlHeaderRow} onChange={e => setXlHeaderRow(Math.max(1, Number(e.target.value) || 1))} className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-2 text-xs font-semibold outline-none focus:border-brand" /></div>
+                <div><label className="text-[10px] font-bold uppercase text-slate-500">Cột MSSV</label><select value={xlMssvCol} onChange={e => setXlMssvCol(Number(e.target.value))} className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-2 text-xs font-semibold outline-none focus:border-brand">{xlHeaders.map((h: any, i: number) => <option key={i} value={i}>{String(h || `Cột ${i + 1}`)}</option>)}</select></div>
+              </div>
+              <div>
+                <p className="mb-1.5 text-[10px] font-bold uppercase text-slate-500">Gán cột Excel cho từng cột điểm trong file</p>
+                <div className="max-h-52 space-y-1.5 overflow-y-auto">
+                  {cols.map(c => (
+                    <div key={c.full} className="grid grid-cols-[1fr_1fr] items-center gap-2">
+                      <span className="truncate text-[12px] font-semibold text-slate-700" title={c.full}><span className="text-[9px] font-bold uppercase text-slate-400">{c.group} · </span>{c.label}</span>
+                      <select value={xlMap[c.full] ?? -1} onChange={e => setXlMap(m => ({ ...m, [c.full]: Number(e.target.value) }))} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs font-semibold outline-none focus:border-brand">
+                        <option value={-1}>— Không lấy —</option>
+                        {xlHeaders.map((h: any, i: number) => i === xlMssvCol ? null : <option key={i} value={i}>{String(h || `Cột ${i + 1}`)}</option>)}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <button onClick={fillFromExcel} className="w-full rounded-xl bg-brand py-2.5 text-[11px] font-bold uppercase tracking-wider text-white hover:bg-brand-hover">Điền điểm vào bảng</button>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
