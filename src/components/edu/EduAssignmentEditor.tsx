@@ -126,6 +126,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
 
   const applyBankItem = (bankId: string) => {
     setSelectedBankId(bankId);
+    if (bankId) setSaveToBank(false);
     const item = bankItems.find(b => b.id === bankId);
     if (!item) return;
     setTitle(item.title);
@@ -411,15 +412,18 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
           </div>
 
           <div className="pt-4 border-t border-slate-50 space-y-3">
-            <label className="flex items-center gap-2.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={saveToBank}
-                onChange={e => setSaveToBank(e.target.checked)}
-                className="w-4 h-4 accent-brand rounded cursor-pointer"
-              />
-              <span className="text-[11px] font-bold text-slate-600">{selectedBankId ? 'Lưu bản chỉnh sửa này thành bài mới trong ngân hàng' : 'Lưu bài này vào ngân hàng để dùng lại cho lớp khác'}</span>
-            </label>
+            {/* Ẩn ô lưu vào ngân hàng khi đang dùng bài chọn sẵn từ ngân hàng bài tập. */}
+            {!selectedBankId && (
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={saveToBank}
+                  onChange={e => setSaveToBank(e.target.checked)}
+                  className="w-4 h-4 accent-brand rounded cursor-pointer"
+                />
+                <span className="text-[11px] font-bold text-slate-600">Lưu bài này vào ngân hàng để dùng lại cho lớp khác</span>
+              </label>
+            )}
             <button
               onClick={handleSave}
               disabled={loading}
