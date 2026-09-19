@@ -36,7 +36,7 @@ export const UTILITY_TOOLS: UtilityTool[] = [
   },
   {
     id: 'social_design',
-    label: 'Thiết kế Ảnh Social',
+    label: 'Thiết kế ảnh',
     description: 'Tạo nhanh ảnh mạng xã hội cho bài báo, tin tức từ các khung mẫu có sẵn với tính năng tự động canh chỉnh.',
     icon: LayoutTemplate
   }

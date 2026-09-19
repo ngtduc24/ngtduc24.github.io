@@ -101,8 +101,8 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
 
   return (
     <div className="space-y-6 animate-fadeIn" id="edu-module-container">
-      {/* Module Header - Only show when NOT in list view to avoid redundancy with the new Hero Banner */}
-      {view !== 'list' && (
+      {/* Module Header - Ẩn ở danh sách và ở chi tiết lớp (chi tiết lớp có nút quay lại riêng ở tiêu đề). */}
+      {view !== 'list' && view !== 'class_detail' && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-brand/10 text-brand rounded-2xl flex items-center justify-center">
@@ -110,8 +110,7 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900 font-display">
-                {view === 'class_detail' ? 'Chi tiết lớp học' :
-                 view === 'import' ? 'Import dữ liệu' :
+                {view === 'import' ? 'Import dữ liệu' :
                  view === 'grading' ? 'Chấm điểm sinh viên' :
                  view === 'assignment_bank' ? 'Ngân hàng bài tập' :
                  'Hệ thống Giáo dục Edu'}
@@ -156,9 +155,10 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
         )}
         
         {view === 'class_detail' && selectedClassId && (
-          <EduClassDetail 
-            classId={selectedClassId} 
+          <EduClassDetail
+            classId={selectedClassId}
             currentUser={currentUser}
+            onBack={handleBack}
             onEditAssignment={(assignmentId) => handleAssignmentEdit(selectedClassId, assignmentId)}
             onViewAssignment={(assignmentId) => handleAssignmentDetail(selectedClassId, assignmentId)}
             onGrading={(assignmentId, gradeColumnId) => handleGrading(selectedClassId, assignmentId, gradeColumnId)}

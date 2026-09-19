@@ -3,6 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function(){
+        try {
+          var c = JSON.parse(localStorage.getItem('brandThemeCache') || 'null');
+          if (c && c.brand) {
+            var s = document.documentElement.style;
+            s.setProperty('--color-brand', c.brand);
+            if (c.hover) s.setProperty('--color-brand-hover', c.hover);
+            if (c.light) s.setProperty('--color-brand-light', c.light);
+          }
+        } catch(e){}
+      })();
+    </script>
     <title>Andy Nguyễn - Truyền thông đa phương tiện và Thiết kế đồ họa</title>
     <meta name="description" content="Hồ sơ năng lực, dự án thiết kế, khóa học trực tuyến và công trình nghiên cứu khoa học về truyền thông đa phương tiện, thiết kế đồ họa hai chiều và ba chiều." />
 
@@ -19,9 +32,11 @@
     <meta property="og:title" content="Andy Nguyễn - Truyền thông đa phương tiện và Thiết kế đồ họa" />
     <meta property="og:description" content="Hồ sơ năng lực, dự án thiết kế, khóa học trực tuyến và công trình nghiên cứu khoa học về truyền thông đa phương tiện, thiết kế đồ họa hai chiều và ba chiều." />
     <meta name="twitter:card" content="summary_large_image" />
-    <script type="module" crossorigin src="/assets/main-E6Izygb7.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/index-_bOsOrgm.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-SN4SrQQv.css">
+    <script type="module" crossorigin src="/assets/main-C9pLPzk9.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/applyTheme-NCx0q_uw.js">
+    <link rel="modulepreload" crossorigin href="/assets/presence-PNxOXVu6.js">
+    <link rel="modulepreload" crossorigin href="/assets/PublicJournalSearch-D9cOJIPy.js">
+    <link rel="stylesheet" crossorigin href="/assets/applyTheme-Ch5F-6qn.css">
   </head>
   <body>
     <div id="root"><div style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:system-ui,sans-serif;color:#475569;background:#f8fafc"><div style="width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#16a34a;border-radius:50%;animation:sp 1s linear infinite"></div><div>Đang tải Smart Research...</div><style>@keyframes sp{to{transform:rotate(360deg)}}</style></div></div>

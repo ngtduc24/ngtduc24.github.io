@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function(){
+        try {
+          var c = JSON.parse(localStorage.getItem('brandThemeCache') || 'null');
+          if (c && c.brand) {
+            var s = document.documentElement.style;
+            s.setProperty('--color-brand', c.brand);
+            if (c.hover) s.setProperty('--color-brand-hover', c.hover);
+            if (c.light) s.setProperty('--color-brand-light', c.light);
+          }
+        } catch(e){}
+      })();
+    </script>
+    <title>Hệ thống Quản lý Giáo dục & Đào tạo | SmartResearch</title>
+    <meta name="description" content="Nền tảng quản lý trường học, lớp học, danh sách sinh viên, bài tập và bảng điểm học thuật chuyên nghiệp." />
+    <meta name="keywords" content="quản lý giáo dục, quản lý sinh viên, bảng điểm, bài tập trực tuyến, đào tạo khoa học" />
+    
+    <!-- OpenGraph Social Cards -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Smart Research VN" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:title" content="Hệ thống Quản lý Giáo dục & Đào tạo | SmartResearch" />
+    <meta property="og:description" content="Nền tảng quản lý trường học, lớp học, danh sách sinh viên, bài tập và bảng điểm học thuật chuyên nghiệp." />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://ngtduc24.github.io/edu.html" />
+    <script type="module" crossorigin src="/assets/edu-DllIvXMs.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/applyTheme-NCx0q_uw.js">
+    <link rel="modulepreload" crossorigin href="/assets/presence-PNxOXVu6.js">
+    <link rel="stylesheet" crossorigin href="/assets/applyTheme-Ch5F-6qn.css">
+  </head>
+  <body>
+    <div id="root">
+      <div style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:system-ui,sans-serif;color:#475569;background:#f8fafc">
+        <div style="width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#10b981;border-radius:50%;animation:sp 1s linear infinite"></div>
+        <div>Đang tải Hệ thống Giáo dục Edu...</div>
+        <style>@keyframes sp{to{transform:rotate(360deg)}}</style>
+      </div>
+    </div>
+  </body>
+</html>

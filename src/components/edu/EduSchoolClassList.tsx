@@ -342,7 +342,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                   </div>
                   <h2 className="text-base font-bold text-slate-800 uppercase tracking-tight">{school.name}</h2>
                   {isAdmin && ownerName(school.ownerId) && (
-                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full normal-case">Tạo bởi {ownerName(school.ownerId)}</span>
+                    <span className="text-[10px] font-bold text-brand bg-brand-light border border-brand/20 px-2 py-0.5 rounded-full normal-case">Tạo bởi {ownerName(school.ownerId)}</span>
                   )}
 
                   <div className="relative">
@@ -381,17 +381,14 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {school.classes.map(clazz => (
-                  <div 
+                  <div
                     key={clazz.id}
                     onClick={() => onSelectClass(clazz.id)}
-                    className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-brand/30 transition-all cursor-pointer flex flex-col overflow-hidden"
+                    className="group relative bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-brand/30 transition-all cursor-pointer flex flex-col"
                   >
                     <div className="p-6 flex-1">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="w-10 h-10 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center group-hover:bg-brand-light group-hover:text-brand transition-colors">
-                          <BookOpen className="w-5 h-5" />
-                        </div>
-                        <button 
+                      <div className="flex justify-end items-start mb-2">
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setActiveDropdownId(activeDropdownId === clazz.id ? null : clazz.id);
@@ -401,7 +398,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                           <MoreVertical className="w-4 h-4" />
                         </button>
                         {activeDropdownId === clazz.id && (
-                          <div className="absolute right-4 top-14 bg-white border border-slate-100 rounded-xl shadow-xl p-1 z-20 min-w-[140px]" onClick={e => e.stopPropagation()}>
+                          <div className="absolute right-4 top-9 bg-white border border-slate-100 rounded-xl shadow-xl p-1 z-30 min-w-[140px]" onClick={e => e.stopPropagation()}>
                             <button onClick={() => { setEditingClass(clazz); setEditForm({ name: clazz.name, description: clazz.description || '' }); }} className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Edit2 className="w-3.5 h-3.5" /> Sửa</button>
                             <button onClick={() => handleDeleteClass(clazz)} className="w-full text-left px-3 py-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Trash2 className="w-3.5 h-3.5" /> Xóa</button>
                           </div>
@@ -432,7 +429,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                         );
                       })()}
                       {isAdmin && ownerName(clazz.ownerId) && (
-                        <p className="text-[11px] font-bold text-indigo-600 mt-2">Tạo bởi {ownerName(clazz.ownerId)}</p>
+                        <p className="text-[11px] font-bold text-brand mt-2">Tạo bởi {ownerName(clazz.ownerId)}</p>
                       )}
                     </div>
 

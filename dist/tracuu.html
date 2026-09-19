@@ -3,6 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function(){
+        try {
+          var c = JSON.parse(localStorage.getItem('brandThemeCache') || 'null');
+          if (c && c.brand) {
+            var s = document.documentElement.style;
+            s.setProperty('--color-brand', c.brand);
+            if (c.hover) s.setProperty('--color-brand-hover', c.hover);
+            if (c.light) s.setProperty('--color-brand-light', c.light);
+          }
+        } catch(e){}
+      })();
+    </script>
     <title>Tra Cứu Điểm Báo Khoa Học & Tạp Chí ISI/Scopus | SmartResearch</title>
     <meta name="description" content="Cổng tra cứu điểm báo khoa học, định danh tạp chí uy tín ISI, Scopus, tính điểm công trình nghiên cứu và cơ sở dữ liệu học thuật toàn diện." />
     <meta name="keywords" content="tra cứu điểm báo, tạp chí khoa học, isi, scopus, tính điểm bài báo, nghiên cứu khoa học, cơ sở dữ liệu y học" />
@@ -55,9 +68,10 @@
       ]
     }
     </script>
-    <script type="module" crossorigin src="/assets/tracuu-Cpb0NqnT.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/index-_bOsOrgm.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-SN4SrQQv.css">
+    <script type="module" crossorigin src="/assets/tracuu-C7HrvsSh.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/applyTheme-NCx0q_uw.js">
+    <link rel="modulepreload" crossorigin href="/assets/PublicJournalSearch-D9cOJIPy.js">
+    <link rel="stylesheet" crossorigin href="/assets/applyTheme-Ch5F-6qn.css">
   </head>
   <body>
     <div id="root">

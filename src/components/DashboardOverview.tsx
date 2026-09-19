@@ -4,7 +4,7 @@ import {
   Calculator, Settings, Users, BookOpen, Search, X, Database, Sparkles,
   CalendarDays, BarChart3, GraduationCap, Wrench, FolderKanban, Mail,
   Library, Image as ImageIcon, LayoutGrid, ArrowRight, Bell, ChevronDown,
-  Home, FileText, CheckCircle2, ClipboardList
+  Home, FileText, CheckCircle2, ClipboardList, Scan, LayoutTemplate, Megaphone
 } from 'lucide-react';
 import {
   getStatsFromSupabase,
@@ -76,7 +76,14 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const [journalsCount, setJournalsCount] = useState<number>(0);
   const [notifs, setNotifs] = useState<AppNotification[]>([]);
   const [search, setSearch] = useState('');
-  const [homeMode, setHomeMode] = useState<'home' | 'template'>('home');
+
+  // Thứ tự hàng biểu tượng chức năng do người dùng tự kéo thả sắp xếp, lưu theo tài khoản.
+  const ORDER_KEY = `dashboard_icon_order_${currentUser?.id || 'anon'}`;
+  const [iconOrder, setIconOrder] = useState<string[]>(() => {
+    try { const raw = localStorage.getItem(ORDER_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
+  });
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
   useEffect(() => {
     if (settings) {
@@ -132,7 +139,9 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const can = (id: string) => {
     if (isUserAdmin) return true;
     if (id === 'notifications') return true;
-    if (id === 'utilities') return perms.includes('utilities') || perms.includes('ar_module');
+    if (id === 'utilities' || id === 'ar_module' || id === 'utility_image_resize' || id === 'utility_social_design') {
+      return perms.includes('utilities') || perms.includes('ar_module');
+    }
     if (id === 'users') return false;
     return perms.includes(id);
   };
@@ -145,19 +154,43 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { id: 'qualitative_analysis', label: 'Phân tích định tính', desc: 'Mã hóa, phân tích dữ liệu phỏng vấn, thảo luận nhóm', icon: ImageIcon, color: 'emerald' },
     { id: 'quantitative_analysis', label: 'Phân tích số liệu định lượng', desc: 'Phân tích thống kê, trực quan hóa dữ liệu', icon: BarChart3, color: 'blue' },
     { id: 'edu', label: 'Quản lý Giáo dục', desc: 'Quản lý lớp học, sinh viên, chương trình đào tạo', icon: GraduationCap, color: 'purple' },
-    { id: 'utilities', label: 'Tiện ích', desc: 'Các công cụ hỗ trợ khác', icon: Wrench, color: 'red' },
+    { id: 'ar_module', label: 'Tạo AR', desc: 'Tạo điểm ảnh AR kèm mã QR để quét bằng điện thoại', icon: Scan, color: 'red' },
+    { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn', icon: ImageIcon, color: 'blue' },
+    { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn', icon: LayoutTemplate, color: 'violet' },
     { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Lưu trữ và quản lý hồ sơ cá nhân, dự án', icon: FolderKanban, color: 'teal' },
     { id: 'notifications', label: 'Thông báo', desc: 'Tài liệu, mẫu biểu, dữ liệu tham khảo', icon: Mail, color: 'amber' },
     { id: 'users', label: 'Quản lý & Phân quyền', desc: 'Quản trị hệ thống, phân quyền người dùng', icon: Users, color: 'indigo' },
     { id: 'settings', label: 'Cấu hình hệ thống', desc: 'Quản trị hệ thống, phân quyền người dùng', icon: Settings, color: 'rose' },
     { id: 'media_library', label: 'Thư viện', desc: 'Tài liệu, mẫu biểu, dữ liệu tham khảo', icon: Library, color: 'violet' },
   ];
-  const iconModules = allModules.filter(m => can(m.id));
+  const baseIcons = allModules.filter(m => can(m.id));
+  // Sắp xếp lại theo thứ tự người dùng đã kéo thả, mục chưa có trong thứ tự thì giữ nguyên phía sau.
+  const iconModules = [...baseIcons].sort((a, b) => {
+    const ia = iconOrder.indexOf(a.id); const ib = iconOrder.indexOf(b.id);
+    if (ia === -1 && ib === -1) return 0;
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
   // Thẻ nổi bật theo ảnh mẫu, không gồm Quản lý & Phân quyền và Thư viện.
   const cardModules = iconModules.filter(m => m.id !== 'users' && m.id !== 'media_library');
   const q = search.trim().toLowerCase();
   const filteredIcons = q ? iconModules.filter(m => m.label.toLowerCase().includes(q)) : iconModules;
   const filteredCards = q ? cardModules.filter(m => m.label.toLowerCase().includes(q)) : cardModules;
+
+  const persistOrder = (ids: string[]) => {
+    setIconOrder(ids);
+    try { localStorage.setItem(ORDER_KEY, JSON.stringify(ids)); } catch {}
+  };
+  const handleDropOn = (targetId: string) => {
+    if (!dragId || dragId === targetId) { setDragId(null); setOverId(null); return; }
+    const ids = iconModules.map(m => m.id);
+    const from = ids.indexOf(dragId); const to = ids.indexOf(targetId);
+    if (from === -1 || to === -1) { setDragId(null); setOverId(null); return; }
+    ids.splice(to, 0, ids.splice(from, 1)[0]);
+    persistOrder(ids);
+    setDragId(null); setOverId(null);
+  };
 
   const visibleTasks = tasks.filter(t => !t.isDeleted && isTaskRelevantToUser(t, currentUser));
   const runningTasks = visibleTasks.filter(t => t.status !== 'Completed' && t.status !== 'Cancelled');
@@ -203,32 +236,16 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
           </button>
         )}
 
-        <div className="relative z-10 px-6 py-10 md:px-10 flex flex-col lg:flex-row items-center gap-6">
-          <div className="flex-1 text-center lg:text-left space-y-4 max-w-2xl mx-auto">
+        <div className="relative z-10 px-6 py-12 md:px-10 flex flex-col items-center text-center gap-4">
+          <div className="w-full max-w-2xl space-y-4">
             <h1 className="text-3xl md:text-4xl font-black tracking-tight font-display text-brand">
               Chào mừng trở lại, {currentUser?.fullName} <span className="align-middle">👋</span>
             </h1>
             <p className="text-lg md:text-xl font-black text-slate-800">{settings?.dashboardBannerTitle || 'Hôm nay bạn muốn làm gì?'}</p>
             <p className="text-sm text-slate-500 font-medium">{settings?.systemDescription || 'Tìm nhanh công cụ, tính năng hoặc tài liệu phục vụ học tập và nghiên cứu.'}</p>
 
-            {/* Nút Trang chủ / Mẫu */}
-            <div className="flex items-center justify-center lg:justify-start gap-2">
-              <button
-                onClick={() => setHomeMode('home')}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${homeMode === 'home' ? 'bg-brand text-white shadow-lg shadow-brand/25' : 'bg-white text-slate-600 border border-slate-200 hover:border-brand'}`}
-              >
-                <Home className="w-4 h-4" /> Trang chủ
-              </button>
-              <button
-                onClick={() => setHomeMode('template')}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${homeMode === 'template' ? 'bg-brand text-white shadow-lg shadow-brand/25' : 'bg-white text-slate-600 border border-slate-200 hover:border-brand'}`}
-              >
-                <FileText className="w-4 h-4" /> Mẫu
-              </button>
-            </div>
-
-            {/* Ô tìm kiếm */}
-            <div className="flex items-center gap-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-1.5 max-w-xl mx-auto lg:mx-0">
+            {/* Ô tìm kiếm căn giữa trang */}
+            <div className="flex items-center gap-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-1.5 w-full max-w-xl mx-auto">
               <Search className="w-5 h-5 text-slate-400 ml-3 shrink-0" />
               <input
                 type="text"
@@ -240,33 +257,40 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
               <button className="bg-brand hover:bg-brand-hover text-white text-sm font-bold px-6 py-2.5 rounded-xl shrink-0 transition-colors">Tìm kiếm</button>
             </div>
           </div>
-
-          {/* Minh họa và câu trích bên phải */}
-          <div className="hidden lg:flex items-center gap-4 shrink-0">
-            <div className="relative w-52 h-36 grid place-items-center">
-              <div className="absolute inset-0 rounded-3xl bg-brand/10" />
-              <GraduationCap className="w-24 h-24 text-brand relative z-10" />
-              <BarChart3 className="w-10 h-10 text-amber-400 absolute bottom-3 left-4 z-10" />
-            </div>
-            <p className="text-xs italic text-slate-400 font-semibold max-w-[8rem] leading-relaxed">"Tri thức là nền tảng của sự phát triển"</p>
-          </div>
         </div>
       </div>
 
-      {/* ===== Hàng biểu tượng chức năng ===== */}
+      {/* ===== Hàng biểu tượng chức năng (kéo thả để sắp xếp) ===== */}
       {filteredIcons.length > 0 && (
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-4">
-          {filteredIcons.map(m => {
-            const Icon = m.icon; const c = COLORS[m.color];
-            return (
-              <button key={m.id} onClick={() => onSwitchTab(m.id)} className="group flex flex-col items-center gap-2 text-center" title={m.label}>
-                <span className={`w-14 h-14 rounded-2xl ${c.bg} ${c.text} grid place-items-center shadow-sm group-hover:scale-105 transition-transform`}>
-                  <Icon className="w-7 h-7" />
-                </span>
-                <span className="text-[11px] font-bold text-slate-600 leading-tight line-clamp-2 group-hover:text-brand">{m.label}</span>
-              </button>
-            );
-          })}
+        <div>
+          {!q && <p className="mb-3 text-[11px] font-medium text-slate-400">Nhấn giữ và kéo thả một biểu tượng để sắp xếp lại thứ tự.</p>}
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-4">
+            {filteredIcons.map(m => {
+              const Icon = m.icon; const c = COLORS[m.color];
+              const draggable = !q;
+              const isDragging = dragId === m.id;
+              const isOver = overId === m.id && dragId !== m.id;
+              return (
+                <div
+                  key={m.id}
+                  draggable={draggable}
+                  onDragStart={() => draggable && setDragId(m.id)}
+                  onDragOver={(e) => { if (draggable && dragId) { e.preventDefault(); setOverId(m.id); } }}
+                  onDragLeave={() => { if (overId === m.id) setOverId(null); }}
+                  onDrop={(e) => { if (draggable) { e.preventDefault(); handleDropOn(m.id); } }}
+                  onDragEnd={() => { setDragId(null); setOverId(null); }}
+                  onClick={() => { if (!dragId) onSwitchTab(m.id); }}
+                  title={m.label}
+                  className={`group flex flex-col items-center gap-2 text-center rounded-2xl p-1 transition-all ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 rounded-2xl' : ''}`}
+                >
+                  <span className={`w-14 h-14 rounded-2xl ${c.bg} ${c.text} grid place-items-center shadow-sm group-hover:scale-105 transition-transform pointer-events-none`}>
+                    <Icon className="w-7 h-7" />
+                  </span>
+                  <span className="text-[11px] font-bold text-slate-600 leading-tight line-clamp-2 group-hover:text-brand pointer-events-none">{m.label}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -281,7 +305,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                 <p className="text-[11px] text-slate-400 font-medium">Truy cập nhanh các chức năng thường dùng</p>
               </div>
             </div>
-            <button onClick={() => setSearch('')} className="text-xs font-bold text-brand hover:underline">Xem tất cả</button>
+            <button onClick={() => onSwitchTab('all_features')} className="text-xs font-bold text-brand hover:underline">Xem tất cả</button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {filteredCards.map(m => {
@@ -340,6 +364,19 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
             </div>
             <button onClick={() => onSwitchTab('notifications')} className="text-[11px] font-bold text-brand hover:underline flex items-center gap-1">Xem tất cả <ArrowRight className="w-3 h-3" /></button>
           </div>
+          {(isUserAdmin || perms.includes('notifications')) && (
+            <button
+              onClick={() => onSwitchTab('notifications_admin')}
+              className="mb-4 w-full flex items-center gap-3 rounded-xl bg-brand-light/60 hover:bg-brand-light text-left px-3 py-2.5 transition-colors border border-brand/10"
+            >
+              <span className="w-8 h-8 rounded-lg bg-brand text-white grid place-items-center shrink-0"><Megaphone className="w-4 h-4" /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[12px] font-black text-slate-800 leading-tight">Trung tâm thông báo</span>
+                <span className="block text-[10px] text-slate-500 font-medium">Quản lý và phát thông báo tới người dùng</span>
+              </span>
+              <ArrowRight className="w-4 h-4 text-brand shrink-0" />
+            </button>
+          )}
           {notifs.length === 0 ? (
             <p className="text-xs text-slate-400 italic text-center py-6">Chưa có thông báo nào.</p>
           ) : (

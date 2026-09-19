@@ -36,6 +36,7 @@ import { getGradeColumns, saveAssignment, getAssignments, getSubjects, saveSubje
 import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
 import { useNotifications } from '../NotificationContext';
 import { uploadImageToCloudinary } from '../../lib/upload';
+import MediaSourcePicker from '../MediaSourcePicker';
 
 interface EduAssignmentEditorProps {
   classId: string;
@@ -242,7 +243,20 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
       {/* Editor Side */}
       <div className="lg:col-span-2 space-y-4">
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col h-full min-h-[600px]">
+        {/* Khung tiêu đề riêng */}
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5 space-y-1.5">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Tiêu đề bài tập</label>
+          <input
+            type="text"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            placeholder="Nhập tên tiêu đề bài tập..."
+            className="w-full text-xl font-black text-slate-900 border-none focus:ring-0 outline-none placeholder:text-slate-300"
+          />
+        </div>
+
+        {/* Khung nội dung soạn thảo riêng */}
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-[520px]">
           <div className="p-4 bg-slate-50 border-b border-slate-100 flex flex-wrap gap-1">
             <button onClick={() => editor?.chain().focus().toggleBold().run()} className={`p-2 rounded-lg transition-all ${editor?.isActive('bold') ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><Bold className="w-4 h-4" /></button>
             <button onClick={() => editor?.chain().focus().toggleItalic().run()} className={`p-2 rounded-lg transition-all ${editor?.isActive('italic') ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><Italic className="w-4 h-4" /></button>
@@ -257,10 +271,15 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
             <button onClick={() => editor?.chain().focus().setTextAlign('center').run()} className={`p-2 rounded-lg transition-all ${editor?.isActive({ textAlign: 'center' }) ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><AlignCenter className="w-4 h-4" /></button>
             <button onClick={() => editor?.chain().focus().setTextAlign('right').run()} className={`p-2 rounded-lg transition-all ${editor?.isActive({ textAlign: 'right' }) ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><AlignRight className="w-4 h-4" /></button>
             <div className="w-px h-6 bg-slate-200 mx-1 self-center" />
-            <label className={`p-2 rounded-lg text-slate-500 cursor-pointer flex items-center ${uploadingImage ? 'opacity-50 pointer-events-none' : 'hover:bg-slate-200'}`} title="Tải ảnh từ máy lên thư viện hệ thống">
-              <input type="file" accept="image/*" className="hidden" onChange={handleInsertImageFile} disabled={uploadingImage} />
-              <ImageIcon className="w-4 h-4" />
-            </label>
+            <MediaSourcePicker
+              onSelect={(url) => editor?.chain().focus().setImage({ src: url }).run()}
+              accept="image/*"
+              resourceType="image"
+              folder="edu-assignments"
+              icon={ImageIcon}
+              label=""
+              className="p-2 rounded-lg text-slate-500 hover:bg-slate-200 flex items-center"
+            />
             <button onClick={() => {
               const url = prompt('Nhập URL liên kết:');
               if (url) editor?.chain().focus().setLink({ href: url }).run();
@@ -271,13 +290,6 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
           </div>
           
           <div className="flex-1 p-6 overflow-y-auto">
-            <input 
-              type="text" 
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="Tên tiêu đề bài tập..."
-              className="w-full text-2xl font-black text-slate-900 border-none focus:ring-0 placeholder:text-slate-300 mb-4"
-            />
             <EditorContent editor={editor} className="prose prose-slate max-w-none min-h-[400px] text-sm focus:outline-none" />
           </div>
         </div>

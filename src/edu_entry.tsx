@@ -4,7 +4,6 @@ import { createRoot } from 'react-dom/client';
 import EduModule from './components/EduModule';
 import LoginScreen from './components/LoginScreen';
 import Sidebar from './components/Sidebar';
-import Header from './components/Header';
 import ProfileModal from './components/ProfileModal';
 import './index.css';
 import { NotificationProvider } from './components/NotificationContext';
@@ -100,30 +99,17 @@ function EduApp() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50">
-      <Sidebar 
-        currentTab="edu" 
+      <Sidebar
+        currentTab="edu"
         setCurrentTab={(tab) => {
           if (tab !== 'edu') window.location.href = `/?tab=${tab}`;
-        }} 
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
+        }}
         currentUser={currentUser}
         onLogout={handleLogout}
+        onOpenProfile={() => setShowProfileModal(true)}
         settings={settings}
-        unreadCount={0}
-        dbConnected={true}
       />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header 
-          currentTab="edu"
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen} 
-          currentUser={currentUser}
-          settings={settings}
-          onProfileClick={() => setShowProfileModal(true)}
-          onLogout={handleLogout}
-          setCurrentTab={() => {}}
-        />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
           <div className="max-w-[1720px] mx-auto">
             <EduModule currentUser={currentUser} settings={settings} />

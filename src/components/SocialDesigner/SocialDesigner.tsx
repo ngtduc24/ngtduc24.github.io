@@ -21,7 +21,7 @@ export default function SocialDesigner({ currentUser }: SocialDesignerProps) {
             <LayoutTemplate className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="font-bold text-slate-800 text-sm">Thiết kế Ảnh Social</h2>
+            <h2 className="font-bold text-slate-800 text-sm">Thiết kế ảnh</h2>
             <p className="text-[10px] text-slate-500">Tạo ảnh đăng tin tức đa nền tảng</p>
           </div>
         </div>

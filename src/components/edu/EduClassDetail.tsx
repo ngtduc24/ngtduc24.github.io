@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Edit2,
   School,
+  ArrowLeft,
   X,
   UserPlus,
   FileSpreadsheet
@@ -48,9 +49,10 @@ interface EduClassDetailProps {
   onEditAssignment: (assignmentId?: string) => void;
   onViewAssignment: (assignmentId: string) => void;
   onGrading: (assignmentId: string, gradeColumnId: string) => void;
+  onBack?: () => void;
 }
 
-export default function EduClassDetail({ classId, currentUser, onEditAssignment, onViewAssignment, onGrading }: EduClassDetailProps) {
+export default function EduClassDetail({ classId, currentUser, onEditAssignment, onViewAssignment, onGrading, onBack }: EduClassDetailProps) {
   const [clazz, setClazz] = useState<(EduClass & { edu_schools: EduSchool }) | null>(null);
   const [users, setUsers] = useState<EduUser[]>([]);
   const [gradeColumns, setGradeColumns] = useState<EduGradeColumn[]>([]);
@@ -271,7 +273,18 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
     <div className="space-y-6">
       {/* Class Info Card */}
       <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="space-y-1">
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="w-10 h-10 shrink-0 rounded-2xl bg-slate-50 hover:bg-brand hover:text-white text-slate-500 grid place-items-center transition-all"
+              title="Quay lại"
+              aria-label="Quay lại"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
+          <div className="space-y-1">
           <div className="flex items-center gap-2 text-brand font-bold text-[10px] uppercase tracking-widest">
             <School className="w-3 h-3" />
             <span>{clazz.edu_schools.name}</span>
@@ -286,6 +299,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
               <ClipboardCheck className="w-3.5 h-3.5" />
               {gradeColumns.length} cột điểm
             </span>
+          </div>
           </div>
         </div>
 

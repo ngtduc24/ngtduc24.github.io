@@ -1,76 +1,48 @@
 import React from 'react';
 import {
-  Calculator,
-  LayoutDashboard,
-  BookOpen,
-  X,
   Settings,
-  Users,
-  ClipboardList,
   LogOut,
-  Shield,
-  Bell,
-  FolderKanban,
-  Image,
-  GraduationCap,
-  PanelLeftOpen,
-  PanelLeftClose,
-  Wrench,
+  Home,
   BarChart3,
-  UserCircle,
-  Home
+  UserCircle
 } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
 import { useConfirmation } from './ConfirmationContext';
 import { getTabUrl } from '../lib/seoConfig';
+import NotificationBell from './NotificationBell';
 
 interface SidebarProps {
   currentTab: string;
   setCurrentTab: (tab: string) => void;
-  sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
   currentUser: UserAccount;
   onLogout: () => void;
   onOpenProfile?: () => void;
   settings?: AppSettings;
-  unreadCount?: number;
-  dbConnected?: boolean | null;
 }
 
+/**
+ * Thanh điều hướng bên trái dạng cột hẹp theo ảnh mẫu. Mỗi mục là biểu tượng kèm nhãn
+ * xếp dọc, các nút được dồn xuống giữa và dưới cột. Chuông thông báo và tài khoản nằm
+ * ở đáy, thay cho thanh header phía trên đã bỏ.
+ */
 export default function Sidebar({
   currentTab,
   setCurrentTab,
-  sidebarOpen,
-  setSidebarOpen,
   currentUser,
   onLogout,
   onOpenProfile,
-  settings,
-  unreadCount = 0
+  settings
 }: SidebarProps) {
   const { confirm } = useConfirmation();
-  const localOpacity = Number(localStorage.getItem('sidebar_opacity'));
-  const sidebarOpacity = Math.max(0.55, Math.min(1, settings?.sidebarOpacity ?? (Number.isFinite(localOpacity) && localOpacity > 0 ? localOpacity : 0.92)));
 
-  // Menu trái gọn theo ảnh mẫu: chỉ các mục hệ thống và tài khoản. Các chức năng chính
-  // được truy cập từ hàng biểu tượng và thẻ trên trang chủ (dashboard).
   const primaryItems = [
     { id: 'dashboard', label: 'Thư viện', icon: Home },
-    { id: 'stats', label: 'Thống kê số liệu', icon: BarChart3 },
-    { id: 'settings', label: 'Cài đặt cấu hình', icon: Settings },
-    { id: 'notifications', label: 'Thông báo', icon: Bell },
+    { id: 'stats', label: 'Thống kê', icon: BarChart3 },
+    { id: 'settings', label: 'Cài đặt', icon: Settings },
   ].filter(item => {
-    if (item.id === 'dashboard' || item.id === 'stats' || item.id === 'notifications') return true;
     if (item.id === 'settings') return currentUser.role === 'admin' || currentUser.permissions.includes('settings');
     return true;
   });
-
-  const adminItems: { id: string; label: string; icon: any }[] = [];
-
-  const navigate = (id: string) => {
-    setCurrentTab(id);
-    if (window.innerWidth < 768) setSidebarOpen(false);
-  };
 
   const renderItem = (item: { id: string; label: string; icon: any }) => {
     const Icon = item.icon;
@@ -81,82 +53,71 @@ export default function Sidebar({
         key={item.id}
         href={href}
         onClick={(e) => {
-          // Cho phép mở tab mới khi giữ phím Ctrl/Cmd hoặc click chuột giữa
           if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
             e.preventDefault();
-            navigate(item.id);
+            setCurrentTab(item.id);
           }
         }}
         aria-label={item.label}
         aria-current={active ? 'page' : undefined}
-        title={!sidebarOpen ? item.label : undefined}
-        className={`group relative flex h-11 w-full items-center rounded-xl transition-all duration-200 cursor-pointer ${sidebarOpen ? 'gap-3 px-3' : 'justify-center px-0'} ${active ? 'bg-brand/20 text-white shadow-[0_0_24px_rgba(0,166,90,.2)]' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`}
+        className={`group flex w-full flex-col items-center gap-1 rounded-2xl py-2.5 transition-all ${active ? 'text-brand' : 'text-slate-500 hover:text-brand'}`}
       >
-        <span className={`relative grid h-8 w-8 shrink-0 place-items-center rounded-lg transition-all ${active ? 'bg-brand text-white shadow-lg shadow-brand/40 animate-[pulse_2s_ease-in-out_infinite]' : 'bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white'}`}>
-          <Icon className="h-4.5 w-4.5" />
-          {item.id === 'notifications' && unreadCount > 0 && <span className="absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[8px] font-black text-white">{unreadCount}</span>}
+        <span className={`grid h-10 w-10 place-items-center rounded-xl transition-all ${active ? 'bg-brand text-white shadow-lg shadow-brand/30' : 'bg-transparent group-hover:bg-slate-100'}`}>
+          <Icon className="h-5 w-5" />
         </span>
-        {sidebarOpen && <span className="min-w-0 flex-1 truncate text-left text-xs font-semibold">{item.label}</span>}
-        {!sidebarOpen && <span className="pointer-events-none absolute left-full z-[80] ml-3 whitespace-nowrap rounded-lg bg-slate-950 px-3 py-2 text-[11px] font-bold text-white opacity-0 shadow-xl transition-opacity group-hover:opacity-100">{item.label}</span>}
+        <span className="text-[10px] font-bold leading-none">{item.label}</span>
       </a>
     );
   };
 
   return (
-    <>
-      {sidebarOpen && <div className="fixed inset-0 z-45 bg-slate-900/40 backdrop-blur-xs md:hidden" onClick={() => setSidebarOpen(false)} />}
-      <aside
-        id="sidebar"
-        style={{ backgroundColor: `rgba(15, 23, 42, ${sidebarOpacity})`, backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)' }}
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col overflow-visible text-white shadow-2xl transition-all duration-300 md:static md:h-screen ${sidebarOpen ? 'translate-x-0 md:w-72' : '-translate-x-full pointer-events-none md:w-20 md:translate-x-0 md:pointer-events-auto'}`}
+    <aside
+      id="sidebar"
+      className="relative z-40 flex h-screen w-20 shrink-0 flex-col items-center border-r border-slate-200 bg-white py-4"
+    >
+      {/* Logo / avatar tài khoản ở đầu cột */}
+      <button
+        type="button"
+        onClick={() => onOpenProfile && onOpenProfile()}
+        title={currentUser.fullName}
+        className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-2xl border-2 border-brand/20 bg-brand text-sm font-black text-white shadow-lg shadow-brand/20"
       >
-        <div className={`relative shrink-0 border-b border-white/10 ${sidebarOpen ? 'p-4' : 'px-3 py-4'}`}>
-          <div className={`flex items-center ${sidebarOpen ? 'gap-3' : 'justify-center'}`}>
-            <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-2xl border-2 border-white/20 bg-brand text-sm font-black text-white shadow-lg shadow-brand/20">
-              {currentUser.avatarUrl ? <img src={currentUser.avatarUrl} alt={currentUser.fullName} className="h-full w-full object-cover" /> : currentUser.fullName?.slice(0, 2).toUpperCase()}
-            </div>
-            {sidebarOpen && <div className="min-w-0 flex-1"><p className="truncate text-sm font-black text-white">{currentUser.fullName}</p><p className="truncate text-[10px] font-semibold text-brand">{currentUser.role === 'admin' ? 'Quản trị viên' : currentUser.role === 'member' ? 'Học viên' : 'Thành viên'}</p></div>}
-            {sidebarOpen && <button type="button" onClick={() => setSidebarOpen(false)} className="hidden h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/10 text-slate-300 hover:bg-white/15 hover:text-white md:grid" title="Thu gọn sidebar" aria-label="Thu gọn sidebar"><PanelLeftClose className="h-4 w-4" /></button>}
-            <button type="button" onClick={() => setSidebarOpen(false)} className="grid h-9 w-9 place-items-center rounded-xl bg-white/10 text-slate-300 md:hidden" aria-label="Đóng sidebar"><X className="h-4 w-4" /></button>
-          </div>
-          {!sidebarOpen && <button type="button" onClick={() => setSidebarOpen(true)} className="absolute -right-3 top-1/2 hidden h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-slate-800 text-white shadow-lg hover:bg-brand md:grid" aria-label="Mở đầy đủ sidebar"><PanelLeftOpen className="h-3.5 w-3.5" /></button>}
-        </div>
+        {currentUser.avatarUrl ? <img src={currentUser.avatarUrl} alt={currentUser.fullName} className="h-full w-full object-cover" /> : currentUser.fullName?.slice(0, 2).toUpperCase()}
+      </button>
 
-        <nav className={`scrollbar-none flex-1 space-y-1.5 overflow-y-auto overflow-x-visible ${sidebarOpen ? 'p-4' : 'px-3 py-4'}`}>
-          {sidebarOpen && <p className="mb-2 px-3 text-left text-[9px] font-black uppercase tracking-[.18em] text-slate-500">Menu chức năng</p>}
-          {primaryItems.map(renderItem)}
-          {!!adminItems.length && <div className="my-3 border-t border-white/10 pt-3">{sidebarOpen && <p className="mb-2 px-3 text-left text-[9px] font-black uppercase tracking-[.18em] text-slate-500">Quản trị hệ thống</p>}{adminItems.map(renderItem)}</div>}
-        </nav>
+      {/* Nhóm chức năng chính, dồn xuống giữa cột */}
+      <nav className="flex w-full flex-1 flex-col items-center justify-center gap-1.5 px-2">
+        {primaryItems.map(renderItem)}
+      </nav>
 
-        <div className={`shrink-0 border-t border-white/10 space-y-2 ${sidebarOpen ? 'p-4' : 'p-3'}`}>
-          <button
-            type="button"
-            onClick={() => onOpenProfile && onOpenProfile()}
-            aria-label="Trang cá nhân"
-            title={!sidebarOpen ? 'Trang cá nhân' : undefined}
-            className={`group relative flex w-full items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white ${sidebarOpen ? 'gap-3 px-3 py-2.5' : 'h-11 justify-center'}`}
-          >
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/10 text-brand">
-              <UserCircle className="h-4.5 w-4.5" />
-            </span>
-            {sidebarOpen && <span className="min-w-0 flex-1 truncate text-left text-xs font-bold">Trang cá nhân</span>}
-            {!sidebarOpen && <span className="pointer-events-none absolute left-full z-[80] ml-3 whitespace-nowrap rounded-lg bg-slate-950 px-3 py-2 text-[11px] font-bold text-white opacity-0 shadow-xl transition-opacity group-hover:opacity-100">Trang cá nhân</span>}
-          </button>
-          <button
-            type="button"
-            onClick={() => confirm('Xác nhận đăng xuất', 'Bạn có chắc chắn muốn đăng xuất không?', onLogout)}
-            aria-label="Đăng xuất tài khoản"
-            title={!sidebarOpen ? 'Đăng xuất tài khoản' : undefined}
-            className={`group relative flex w-full items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-rose-500/15 hover:text-rose-300 ${sidebarOpen ? 'gap-3 px-3 py-2.5' : 'h-11 justify-center'}`}
-          >
-            <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-white/10">
-              {settings?.webAppIcon ? <img src={settings.webAppIcon} alt="Logo hệ thống" className="h-5 w-5 object-contain" /> : <Calculator className="h-4 w-4 text-brand" aria-label="Logo hệ thống" />}
-            </span>
-            {sidebarOpen && <><span className="min-w-0 flex-1 truncate text-left text-xs font-bold">Đăng xuất</span><LogOut className="h-4 w-4" /></>}
-            {!sidebarOpen && <span className="pointer-events-none absolute left-full z-[80] ml-3 whitespace-nowrap rounded-lg bg-slate-950 px-3 py-2 text-[11px] font-bold text-white opacity-0 shadow-xl transition-opacity group-hover:opacity-100">Đăng xuất tài khoản</span>}
-          </button>
-        </div>
-      </aside>
-    </>
+      {/* Đáy cột: chuông thông báo, trang cá nhân, đăng xuất */}
+      <div className="mt-auto flex w-full flex-col items-center gap-1 border-t border-slate-100 px-2 pt-3">
+        <NotificationBell currentUser={currentUser} settings={settings} setCurrentTab={setCurrentTab} />
+
+        <button
+          type="button"
+          onClick={() => onOpenProfile && onOpenProfile()}
+          aria-label="Trang cá nhân"
+          className="group flex w-full flex-col items-center gap-1 rounded-2xl py-2.5 text-slate-500 transition hover:text-brand"
+        >
+          <span className="grid h-10 w-10 place-items-center rounded-xl transition group-hover:bg-slate-100">
+            <UserCircle className="h-5 w-5" />
+          </span>
+          <span className="text-[10px] font-bold leading-none">Cá nhân</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => confirm('Xác nhận đăng xuất', 'Bạn có chắc chắn muốn đăng xuất không?', onLogout)}
+          aria-label="Đăng xuất tài khoản"
+          className="group flex w-full flex-col items-center gap-1 rounded-2xl py-2.5 text-slate-500 transition hover:text-rose-500"
+        >
+          <span className="grid h-10 w-10 place-items-center rounded-xl transition group-hover:bg-rose-50">
+            <LogOut className="h-5 w-5" />
+          </span>
+          <span className="text-[10px] font-bold leading-none">Đăng xuất</span>
+        </button>
+      </div>
+    </aside>
   );
 }

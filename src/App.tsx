@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { applyBrandTheme } from './lib/applyTheme';
 import Sidebar from './components/Sidebar';
-import Header from './components/Header';
 import DashboardOverview from './components/DashboardOverview';
+import AllFeatures from './components/AllFeatures';
 import StatsOverview from './components/StatsOverview';
 import SampleSizeCalculator from './components/SampleSizeCalculator';
 import PublicJournalSearch from './components/PublicJournalSearch';
@@ -560,7 +560,8 @@ export default function App() {
     if (tabId === 'backup') return false;
     // Mục Tạo AR nay nằm trong Tiện ích. Tài khoản nào đã được cấp quyền ar_module
     // từ trước thì vẫn vào được, không cần quản trị viên cấp lại quyền.
-    if (tabId === 'utilities' || tabId === 'ar_module') {
+    if (tabId === 'all_features') return true; // Trang tổng hợp tính năng, tự lọc theo quyền của tài khoản
+    if (tabId === 'utilities' || tabId === 'ar_module' || tabId === 'utility_image_resize' || tabId === 'utility_social_design') {
       return currentUser.permissions.includes('utilities') || currentUser.permissions.includes('ar_module');
     }
     return currentUser.permissions.includes(tabId);
@@ -605,6 +606,8 @@ export default function App() {
     switch (currentTab) {
       case 'dashboard':
         return <DashboardOverview onSwitchTab={(tab) => setCurrentTab(tab)} settings={settings} users={users} currentUser={currentUser} onRefreshSettings={loadConfig} />;
+      case 'all_features':
+        return <AllFeatures currentUser={currentUser} settings={settings} onSwitchTab={(tab) => setCurrentTab(tab)} onBack={() => setCurrentTab('dashboard')} />;
       case 'stats':
         return <StatsOverview currentUser={currentUser} />;
       case 'tasks':
@@ -685,6 +688,10 @@ export default function App() {
       // đường dẫn cũ lưu trong trình duyệt, vẫn vào đúng nơi thay vì gặp trang trắng.
       case 'ar_module':
         return <UtilitiesModule currentUser={currentUser} initialTool="ar" />;
+      case 'utility_image_resize':
+        return <UtilitiesModule currentUser={currentUser} initialTool="image_resize" />;
+      case 'utility_social_design':
+        return <UtilitiesModule currentUser={currentUser} initialTool="social_design" />;
       case 'public_search':
         return <PublicJournalSearch onLoginClick={() => setCurrentTab('dashboard')} />;
       case 'portfolio_website':
@@ -828,78 +835,17 @@ export default function App() {
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 text-slate-800 font-sans" id="app-root">
       
       {/* Sidebar Navigation */}
-      <Sidebar 
-        currentTab={currentTab} 
-        setCurrentTab={setCurrentTab} 
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
+      <Sidebar
+        currentTab={currentTab}
+        setCurrentTab={setCurrentTab}
         currentUser={currentUser}
         onLogout={handleLogout}
         onOpenProfile={() => { setProfileModalReadOnly(false); setShowProfileModal(true); }}
         settings={settings}
-        unreadCount={unreadNotificationsCount}
-        dbConnected={dbConnected}
       />
 
       {/* Main Panel Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        
-        {/* Top Navbar */}
-        <Header 
-          currentTab={currentTab}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen} 
-          currentUser={currentUser}
-          settings={settings}
-          onProfileClick={(readOnly = false) => {
-            setProfileModalReadOnly(readOnly);
-            setShowProfileModal(true);
-          }}
-          onLogout={handleLogout}
-          setCurrentTab={setCurrentTab}
-        />
-
-        {/* Responsive Horizontal Navigation Bar (Only visible when sidebar is hidden) */}
-        {!sidebarOpen && (
-          <div
-            className="bg-white px-4 py-2 flex items-center overflow-x-auto scrollbar-none shrink-0 scroll-smooth overscroll-x-contain shadow-xs md:hidden"
-            id="horizontal-nav"
-            onWheel={(event) => {
-              const navigation = event.currentTarget;
-              if (navigation.scrollWidth <= navigation.clientWidth) return;
-              if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
-                event.preventDefault();
-                navigation.scrollLeft += event.deltaY * 1.15;
-              }
-            }}
-          >
-            <div className="flex min-w-max items-center gap-1.5">
-              {getNavItems().map(item => {
-                const IconComponent = item.icon;
-                const isActive = currentTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setCurrentTab(item.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all shrink-0 relative ${
-                      isActive 
-                        ? 'bg-brand text-white shadow-sm' 
-                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/60'
-                    }`}
-                  >
-                    <IconComponent className="w-3.5 h-3.5" />
-                    <span>{item.label}</span>
-                    {item.id === 'notifications' && unreadNotificationsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-white text-[9px] font-black animate-pulse">
-                        {unreadNotificationsCount}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Dynamic Inner Tab View */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8" id="main-content">
