@@ -34,6 +34,22 @@ export function setEduAuthContext(userId: string | null, isAdmin: boolean) {
   ctxIsAdmin = !!isAdmin;
 }
 
+// Lấy ngữ cảnh người dùng hiện tại. Ưu tiên giá trị đã set, nếu chưa có thì đọc thẳng
+// từ localStorage để bộ lọc luôn áp đúng, tránh phụ thuộc thời điểm khởi tạo.
+function getCtx(): { userId: string | null; isAdmin: boolean } {
+  if (ctxUserId) return { userId: ctxUserId, isAdmin: ctxIsAdmin };
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('logged_in_user') : null;
+    if (raw) {
+      const u = JSON.parse(raw);
+      if (u && u.id) return { userId: u.id as string, isAdmin: u.role === 'admin' };
+    }
+  } catch {
+    // bỏ qua lỗi đọc cache
+  }
+  return { userId: null, isAdmin: false };
+}
+
 // Mappers
 function mapSchool(s: any): EduSchool {
   return {
@@ -153,7 +169,8 @@ function mapGrade(g: any): EduGrade {
 export async function getSchools() {
   let query = supabase.from(SCHOOLS_TABLE).select('*').order('name');
   // Mỗi người chỉ thấy trường của mình, admin thấy tất cả.
-  if (!ctxIsAdmin && ctxUserId) query = query.eq('owner_id', ctxUserId);
+  const ctx = getCtx();
+  if (!ctx.isAdmin && ctx.userId) query = query.eq('owner_id', ctx.userId);
   const { data, error } = await query;
   if (error) throw error;
   return (data || []).map(mapSchool);
@@ -165,7 +182,7 @@ export async function saveSchool(school: Partial<EduSchool>) {
     name: school.name,
     description: school.description,
     // Gán chủ sở hữu là người đang đăng nhập nếu chưa có.
-    owner_id: school.ownerId ?? ctxUserId ?? undefined
+    owner_id: school.ownerId ?? getCtx().userId ?? undefined
   };
   // Remove undefined
   Object.keys(dbData).forEach(key => (dbData as any)[key] === undefined && delete (dbData as any)[key]);
@@ -185,7 +202,8 @@ export async function getClasses(schoolId?: string) {
   let query = supabase.from(CLASSES_TABLE).select('*, edu_schools(name)').order('name');
   if (schoolId) query = query.eq('school_id', schoolId);
   // Mỗi người chỉ thấy lớp của mình, admin thấy tất cả.
-  if (!ctxIsAdmin && ctxUserId) query = query.eq('owner_id', ctxUserId);
+  const ctx = getCtx();
+  if (!ctx.isAdmin && ctx.userId) query = query.eq('owner_id', ctx.userId);
   const { data, error } = await query;
   if (error) throw error;
   return (data || []).map(c => ({
@@ -200,7 +218,7 @@ export async function saveClass(clazz: Partial<EduClass>) {
     school_id: clazz.schoolId,
     name: clazz.name,
     description: clazz.description,
-    owner_id: clazz.ownerId ?? ctxUserId ?? undefined
+    owner_id: clazz.ownerId ?? getCtx().userId ?? undefined
   };
   Object.keys(dbData).forEach(key => (dbData as any)[key] === undefined && delete (dbData as any)[key]);
 
@@ -369,7 +387,8 @@ export async function getAssignmentBank(subjectId?: string): Promise<EduAssignme
   let query = supabase.from(ASSIGNMENT_BANK_TABLE).select('*').order('created_at', { ascending: false });
   if (subjectId) query = query.eq('subject_id', subjectId);
   // Người dùng thấy bài của chính mình và các bài được bật chia sẻ công khai. Admin thấy tất cả.
-  if (!ctxIsAdmin && ctxUserId) query = query.or(`owner_id.eq.${ctxUserId},is_public.eq.true`);
+  const ctx = getCtx();
+  if (!ctx.isAdmin && ctx.userId) query = query.or(`owner_id.eq.${ctx.userId},is_public.eq.true`);
   const { data, error } = await query;
   if (error) throw error;
   return (data || []).map(mapBankItem);
@@ -382,7 +401,7 @@ export async function saveAssignmentBankItem(item: Partial<EduAssignmentBankItem
     title: item.title,
     content: item.content,
     allowed_file_types: item.allowedFileTypes,
-    owner_id: item.ownerId ?? ctxUserId ?? undefined,
+    owner_id: item.ownerId ?? getCtx().userId ?? undefined,
     is_public: item.isPublic === true
   };
   Object.keys(dbData).forEach(key => dbData[key] === undefined && delete dbData[key]);

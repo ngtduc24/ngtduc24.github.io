@@ -179,6 +179,28 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
     }
   };
 
+  // Bật tắt chia sẻ công khai ngay tại chi tiết, chỉ người tạo hoặc admin dùng được.
+  const handleTogglePublic = async (item: EduAssignmentBankItem) => {
+    const next = !item.isPublic;
+    try {
+      await saveAssignmentBankItem({
+        id: item.id,
+        subjectId: item.subjectId,
+        title: item.title,
+        content: item.content,
+        allowedFileTypes: item.allowedFileTypes,
+        ownerId: item.ownerId,
+        isPublic: next,
+      });
+      const updated = { ...item, isPublic: next };
+      setItems(prev => prev.map(x => (x.id === item.id ? updated : x)));
+      if (viewingItem?.id === item.id) setViewingItem(updated);
+      addNotification(next ? 'Đã bật chia sẻ công khai' : 'Đã tắt chia sẻ công khai', 'success');
+    } catch {
+      addNotification('Lỗi cập nhật chia sẻ', 'error');
+    }
+  };
+
   const toggleFormat = (id: string) => {
     setEditing(prev => {
       if (!prev) return prev;
@@ -414,6 +436,16 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
                   <div className="flex items-center gap-2 shrink-0">
                     {canEdit(viewingItem) && (
                       <>
+                        <button
+                          onClick={() => handleTogglePublic(viewingItem)}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold transition-all border-2 ${viewingItem.isPublic ? 'border-emerald-400 bg-emerald-50 text-emerald-600' : 'border-slate-200 bg-slate-50 text-slate-500 hover:border-emerald-300'}`}
+                          title="Bật hoặc tắt chia sẻ công khai bài này"
+                        >
+                          <span className={`w-8 h-4 rounded-full relative transition-colors ${viewingItem.isPublic ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                            <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${viewingItem.isPublic ? 'left-4' : 'left-0.5'}`} />
+                          </span>
+                          {viewingItem.isPublic ? 'Đang công khai' : 'Chia sẻ công khai'}
+                        </button>
                         <button onClick={() => openEditor({ ...viewingItem })} className="flex items-center gap-2 border-2 border-brand text-brand hover:bg-brand-light px-4 py-2 rounded-xl text-[11px] font-bold transition-all">
                           <Edit3 className="w-4 h-4" /> Sửa
                         </button>
