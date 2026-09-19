@@ -4,6 +4,7 @@ import { ARTarget, AppSettings } from '../types';
 import { getDefaultSettingsFromSupabase } from '../lib/data';
 import { unpackARTarget } from '../lib/arHelpers';
 import ARScanner from './ARScanner';
+import ARScanner2 from './ARScanner2';
 import { Loader2 } from 'lucide-react';
 import { setCustomPageSEO } from '../lib/seoConfig';
 
@@ -69,6 +70,16 @@ export default function PublicARScanner() {
 
   const stableTarget = useMemo(() => target, [target?.id, target?.content_url, target?.scale, target?.rotation]);
 
+  // Chọn engine quét. Thêm v=2 vào đường dẫn để dùng AR 2.0 bằng engine 8th Wall.
+  const useV2 = new URLSearchParams(window.location.search).get('v') === '2';
+
+  const switchEngine = useCallback(() => {
+    const url = new URL(window.location.href);
+    if (useV2) url.searchParams.delete('v');
+    else url.searchParams.set('v', '2');
+    window.location.href = url.toString();
+  }, [useV2]);
+
   if (loading) {
     return (
       <div className="min-h-screen w-screen flex flex-col items-center justify-center bg-slate-900 text-white">
@@ -97,7 +108,21 @@ export default function PublicARScanner() {
           <img src={settings.webAppIcon} alt="Logo" className="h-8 object-contain" />
         </div>
       )}
-      <ARScanner target={stableTarget} onClose={handleClose} />
+      {useV2 ? (
+        <ARScanner2 target={stableTarget} onClose={handleClose} />
+      ) : (
+        <ARScanner target={stableTarget} onClose={handleClose} />
+      )}
+
+      {/* Công tắc chọn engine quét, đặt góc dưới trái để không đè nút chụp giữa màn hình. */}
+      <button
+        type="button"
+        onClick={switchEngine}
+        className="absolute bottom-6 left-4 z-[80] bg-black/55 hover:bg-black/80 text-white px-3.5 py-2 rounded-full text-[11px] font-bold tracking-wide shadow-lg border border-white/15 backdrop-blur-md transition-colors"
+        title="Đổi engine quét AR"
+      >
+        {useV2 ? 'Dùng AR 1.0' : 'Thử AR 2.0'}
+      </button>
     </div>
   );
 }
