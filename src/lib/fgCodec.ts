@@ -74,16 +74,22 @@ export function readClasses(doc: Document): FgClass[] {
 //   </Grades>
 // grades: Map mã số sinh viên (viết hoa) -> mảng điểm dài bằng số Components của lớp,
 // phần tử rỗng/null nghĩa là chưa có điểm (ghi nil).
-export function writeGrades(doc: Document, classIndex: number, grades: Map<string, (string | null)[]>): void {
+// replace=false (mặc định): chỉ cập nhật những ô có điểm mới, giữ nguyên điểm
+//   đã có sẵn trong file ở các ô/cột không nhập (dùng cho luồng nhập/import).
+// replace=true: ghi đè toàn bộ theo mảng truyền vào, ô rỗng thành nil (dùng cho
+//   bảng nhập trực tiếp, nơi người dùng thấy sẵn điểm cũ và có thể xóa).
+export function writeGrades(doc: Document, classIndex: number, grades: Map<string, (string | null)[]>, replace = false): void {
   const scg = doc.querySelectorAll('SubjectClassGrade')[classIndex];
   if (!scg) return;
   const ns = scg.namespaceURI;
   const el = (name: string) => (ns ? doc.createElementNS(ns, name) : doc.createElement(name));
   const components = Array.from(scg.querySelectorAll('Components > string')).map(s => s.textContent ?? '');
+  const existingAll = replace ? null : readGrades(doc, classIndex); // chụp điểm cũ trước khi ghi
   scg.querySelectorAll('Students > Student').forEach(stu => {
     const roll = (stu.querySelector('Roll')?.textContent ?? '').trim().toUpperCase();
     const row = grades.get(roll);
     if (!row) return;
+    const existing = existingAll ? (existingAll.get(roll) || []) : null;
     const oldNode = stu.querySelector('Grades');
     const fresh = el('Grades');
     components.forEach((comp, i) => {
@@ -92,7 +98,11 @@ export function writeGrades(doc: Document, classIndex: number, grades: Map<strin
       c.textContent = comp;
       gc.appendChild(c);
       const g = el('Grade');
-      const v = row[i];
+      let v = row[i];
+      // Chế độ hợp nhất: ô không nhập điểm mới thì giữ điểm cũ trong file.
+      if ((v === null || v === undefined || String(v).trim() === '') && existing) {
+        v = existing[i] ?? '';
+      }
       if (v === null || v === undefined || String(v).trim() === '') {
         g.setAttribute('xsi:nil', 'true'); // ô trống: ghi nil, không ghi 0
       } else {

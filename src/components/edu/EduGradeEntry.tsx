@@ -700,7 +700,7 @@ function EditGrid({ doc, classIndex, fgClass, onClose, onSaved, onExport }: {
         const row = (grid[roll] || []).map(v => normalizeScore(v));
         map.set(roll, row);
       });
-      writeGrades(doc, classIndex, map);
+      writeGrades(doc, classIndex, map, true); // bảng trực tiếp: ghi đè đúng những gì đang hiển thị
       onSaved();
       addNotification('Đã lưu toàn bộ điểm vào file. Nhớ xuất file .fg.', 'success');
     } catch (e: any) { addNotification('Lỗi lưu điểm: ' + (e.message || e), 'error'); }
