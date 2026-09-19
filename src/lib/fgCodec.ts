@@ -72,15 +72,20 @@ export function readClasses(doc: Document): FgClass[] {
 export function writeGrades(doc: Document, classIndex: number, grades: Map<string, (string | null)[]>): void {
   const scg = doc.querySelectorAll('SubjectClassGrade')[classIndex];
   if (!scg) return;
+  // Tạo phần tử theo đúng namespace của tài liệu; nếu tạo không namespace mà
+  // file có namespace mặc định thì trình duyệt sẽ chèn xmlns="" khiến phần mềm
+  // của trường bỏ qua điểm.
+  const ns = scg.namespaceURI;
+  const el = (name: string) => (ns ? doc.createElementNS(ns, name) : doc.createElement(name));
   const compCount = scg.querySelectorAll('Components > string').length;
   scg.querySelectorAll('Students > Student').forEach(stu => {
     const roll = (stu.querySelector('Roll')?.textContent ?? '').trim().toUpperCase();
     const row = grades.get(roll);
     if (!row) return;
     const oldNode = stu.querySelector('Grades');
-    const fresh = doc.createElement('Grades');
+    const fresh = el('Grades');
     for (let i = 0; i < compCount; i++) {
-      const s = doc.createElement('string');
+      const s = el('string');
       s.textContent = row[i] ?? '';
       fresh.appendChild(s);
     }
