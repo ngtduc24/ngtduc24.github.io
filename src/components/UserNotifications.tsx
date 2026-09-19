@@ -580,11 +580,6 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
               )}
 
               <div className={`flex gap-3.5 items-start ${n.unread ? 'pl-4' : ''}`}>
-                {/* Icon wrapper */}
-                <div className={`p-3 rounded-2xl shrink-0 flex items-center justify-center ${getBgForType(n.type)}`}>
-                  {getIconForType(n.type)}
-                </div>
-
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className={`text-sm leading-tight tracking-tight ${n.unread ? 'font-black text-slate-900' : 'font-bold text-slate-700'}`}>

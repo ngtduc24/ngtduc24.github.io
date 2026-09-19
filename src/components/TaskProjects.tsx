@@ -497,7 +497,6 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
           <div className="flex flex-col items-start gap-4">
             {/* Badge */}
             <div className="flex items-center gap-1.5 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-[10px] font-bold tracking-wider uppercase backdrop-blur-xs relative z-10">
-              <ChipIcon className="w-3.5 h-3.5 text-brand-light" />
               <span>{settings?.taskBannerLabel || "Smart Research VN"}</span>
             </div>
 

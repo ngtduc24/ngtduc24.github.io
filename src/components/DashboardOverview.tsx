@@ -363,7 +363,6 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
           )}
           <div className="relative z-10 space-y-1.5 flex-1 text-left">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-white" />
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] uppercase font-bold tracking-wider text-white/80">Chào mừng quay trở lại, {currentUser?.fullName}</span>
                 <h1 className="text-xl md:text-2xl font-bold tracking-tight font-display text-slate-50">{settings?.dashboardBannerTitle || "Hệ Thống Quản Lý Toàn Diện"}</h1>

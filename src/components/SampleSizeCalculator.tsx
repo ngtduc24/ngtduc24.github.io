@@ -815,7 +815,6 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
 
           <div className="relative z-10 space-y-1.5 flex-1 text-left">
             <div className="flex items-center gap-2">
-              <Calculator className="w-6 h-6 text-white" />
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] uppercase font-bold tracking-wider text-white/80">{settings?.calcBannerLabel || "Smart Research VN"}</span>
                 <h1 className="text-xl md:text-2xl font-bold tracking-tight font-display text-slate-50">{settings?.calcBannerTitle || "Công Cụ Tính Cỡ Mẫu Chuẩn"}</h1>
