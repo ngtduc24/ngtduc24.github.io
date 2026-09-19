@@ -4,7 +4,7 @@ import {
   Calculator, Settings, Users, BookOpen, Search, X, Database, Sparkles,
   CalendarDays, BarChart3, GraduationCap, Wrench, FolderKanban, Mail,
   Library, Image as ImageIcon, LayoutGrid, ArrowRight, Bell, ChevronDown,
-  Home, FileText, CheckCircle2, ClipboardList, Scan, LayoutTemplate, Megaphone
+  Home, FileText, CheckCircle2, ClipboardList, Scan, LayoutTemplate, Megaphone, Minus, Eye
 } from 'lucide-react';
 import {
   getStatsFromSupabase,
@@ -84,6 +84,18 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   });
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
+
+  // Các biểu tượng chức năng ít dùng được người dùng ẩn bớt, lưu theo tài khoản.
+  const HIDDEN_KEY = `dashboard_icon_hidden_${currentUser?.id || 'anon'}`;
+  const [hiddenIds, setHiddenIds] = useState<string[]>(() => {
+    try { const raw = localStorage.getItem(HIDDEN_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
+  });
+  const persistHidden = (ids: string[]) => {
+    setHiddenIds(ids);
+    try { localStorage.setItem(HIDDEN_KEY, JSON.stringify(ids)); } catch {}
+  };
+  const hideIcon = (id: string) => { if (!hiddenIds.includes(id)) persistHidden([...hiddenIds, id]); };
+  const restoreHidden = () => persistHidden([]);
 
   useEffect(() => {
     if (settings) {
@@ -175,7 +187,8 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   // Thẻ nổi bật theo ảnh mẫu, không gồm Quản lý & Phân quyền và Thư viện.
   const cardModules = iconModules.filter(m => m.id !== 'users' && m.id !== 'media_library');
   const q = search.trim().toLowerCase();
-  const filteredIcons = q ? iconModules.filter(m => m.label.toLowerCase().includes(q)) : iconModules;
+  const visibleIcons = iconModules.filter(m => !hiddenIds.includes(m.id));
+  const filteredIcons = q ? iconModules.filter(m => m.label.toLowerCase().includes(q)) : visibleIcons;
   const filteredCards = q ? cardModules.filter(m => m.label.toLowerCase().includes(q)) : cardModules;
 
   const persistOrder = (ids: string[]) => {
@@ -219,7 +232,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     <div className="space-y-8">
       {/* ===== Hero đầu trang ===== */}
       <div
-        className="relative overflow-hidden rounded-3xl border border-slate-100 shadow-sm"
+        className="relative overflow-hidden rounded-3xl border border-slate-100"
         style={hasBg
           ? { backgroundImage: `url(${settings!.dashboardBannerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
           : { background: 'linear-gradient(135deg, var(--color-brand-light, #eef2ff) 0%, #ffffff 55%, var(--color-brand-light, #f5f3ff) 100%)' }}
@@ -239,7 +252,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
         <div className="relative z-10 px-6 py-12 md:px-10 flex flex-col items-center text-center gap-4">
           <div className="w-full max-w-2xl space-y-4">
             <h1 className="text-3xl md:text-4xl font-black tracking-tight font-display text-brand">
-              Chào mừng trở lại, {currentUser?.fullName} <span className="align-middle">👋</span>
+              Chào mừng trở lại, {currentUser?.fullName}
             </h1>
             <p className="text-lg md:text-xl font-black text-slate-800">{settings?.dashboardBannerTitle || 'Hôm nay bạn muốn làm gì?'}</p>
             <p className="text-sm text-slate-500 font-medium">{settings?.systemDescription || 'Tìm nhanh công cụ, tính năng hoặc tài liệu phục vụ học tập và nghiên cứu.'}</p>
@@ -260,10 +273,19 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
         </div>
       </div>
 
-      {/* ===== Hàng biểu tượng chức năng (kéo thả để sắp xếp) ===== */}
-      {filteredIcons.length > 0 && (
+      {/* ===== Hàng biểu tượng chức năng (kéo thả để sắp xếp, ẩn bớt mục ít dùng) ===== */}
+      {(filteredIcons.length > 0 || hiddenIds.length > 0) && (
         <div>
-          {!q && <p className="mb-3 text-[11px] font-medium text-slate-400">Nhấn giữ và kéo thả một biểu tượng để sắp xếp lại thứ tự.</p>}
+          {!q && (
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[11px] font-medium text-slate-400">Nhấn giữ và kéo thả để sắp xếp, di chuột vào một biểu tượng rồi bấm dấu trừ để ẩn bớt mục ít dùng.</p>
+              {hiddenIds.length > 0 && (
+                <button onClick={restoreHidden} className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 hover:bg-brand-light text-slate-600 hover:text-brand px-3 py-1 text-[11px] font-bold transition-colors">
+                  <Eye className="w-3.5 h-3.5" /> Hiện lại {hiddenIds.length} mục đã ẩn
+                </button>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-4">
             {filteredIcons.map(m => {
               const Icon = m.icon; const c = COLORS[m.color];
@@ -281,8 +303,21 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                   onDragEnd={() => { setDragId(null); setOverId(null); }}
                   onClick={() => { if (!dragId) onSwitchTab(m.id); }}
                   title={m.label}
-                  className={`group flex flex-col items-center gap-2 text-center rounded-2xl p-1 transition-all ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 rounded-2xl' : ''}`}
+                  className={`group relative flex flex-col items-center gap-2 text-center rounded-2xl p-1 transition-all ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 rounded-2xl' : ''}`}
                 >
+                  {!q && (
+                    <button
+                      type="button"
+                      draggable={false}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.stopPropagation(); hideIcon(m.id); }}
+                      title={`Ẩn "${m.label}"`}
+                      aria-label={`Ẩn ${m.label}`}
+                      className="absolute -top-1 right-2 z-10 grid h-5 w-5 place-items-center rounded-full bg-rose-500 text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 hover:bg-rose-600"
+                    >
+                      <Minus className="h-3 w-3" strokeWidth={3} />
+                    </button>
+                  )}
                   <span className={`w-14 h-14 rounded-2xl ${c.bg} ${c.text} grid place-items-center shadow-sm group-hover:scale-105 transition-transform pointer-events-none`}>
                     <Icon className="w-7 h-7" />
                   </span>
