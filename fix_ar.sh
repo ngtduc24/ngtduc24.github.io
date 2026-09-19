@@ -1,0 +1,7 @@
+sed -i "93s/const newStatus = target.status === 'active' ? 'inactive' : 'active';/const newStatus = !target.active;/g" src/components/ARModule.tsx
+sed -i "96s/.update({ status: newStatus, updated_at: new Date().toISOString() })/.update({ active: newStatus, updated_at: new Date().toISOString() })/g" src/components/ARModule.tsx
+sed -i "101s/setTargets(prev => prev.map(t => t.id === target.id ? { ...t, status: newStatus } : t));/setTargets(prev => prev.map(t => t.id === target.id ? { ...t, active: newStatus } : t));/g" src/components/ARModule.tsx
+sed -i "102s/addNotification(\`Đã \${newStatus === 'active' ? 'bật' : 'tắt'} target thành công\`, 'success');/addNotification(\`Đã \${newStatus ? 'bật' : 'tắt'} target thành công\`, 'success');/g" src/components/ARModule.tsx
+sed -i "157s/status: editingTarget ? editingTarget.status : 'active',/active: editingTarget ? editingTarget.active : true,/g" src/components/ARModule.tsx
+sed -i "264s/className={\`p-1.5 rounded-lg transition-colors \${target.status === 'active' ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}\`}/className={\`p-1.5 rounded-lg transition-colors \${target.active ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}\`}/g" src/components/ARModule.tsx
+sed -i "265s/title={target.status === 'active' ? \"Đang bật\" : \"Đang tắt\"}/title={target.active ? \"Đang bật\" : \"Đang tắt\"}/g" src/components/ARModule.tsx
