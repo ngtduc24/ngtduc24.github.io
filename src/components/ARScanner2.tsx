@@ -152,6 +152,7 @@ export default function ARScanner2({ target: rawTarget, onClose }: ARScanner2Pro
     container.innerHTML = `
       <a-scene
         xrextras-gesture-detector
+        landing-page
         xrextras-loading
         xrextras-runtime-error
         renderer="colorManagement: true"

@@ -4,6 +4,7 @@
 
 const ENGINE_URL = 'https://cdn.jsdelivr.net/npm/@8thwall/engine@0.1.0/dist/xr.js';
 const XREXTRAS_URL = 'https://cdn.jsdelivr.net/npm/@8thwall/xrextras@1/dist/xrextras.js';
+const LANDING_PAGE_URL = 'https://cdn.jsdelivr.net/npm/@8thwall/landing-page@1/dist/landing-page.js';
 const EIGHTFRAME_URL = `${import.meta.env.BASE_URL}vendor/8frame-1.5.0.min.js`;
 
 const LUMINANCE_HEIGHT = 640;
@@ -64,6 +65,9 @@ export async function loadXR8Runtime(): Promise<void> {
     await waitFor(() => !!(window as any).AFRAME, 15000, 'A-Frame');
   }
   await injectScript(ENGINE_URL, { async: true, attrs: { 'data-preload-chunks': 'slam' } });
+  // landing-page điều khiển luồng xin quyền camera và màn hình khởi động. Thiếu nó là một
+  // nguyên nhân phổ biến khiến camera đen khi khởi động trên di động.
+  await injectScript(LANDING_PAGE_URL);
   await injectScript(XREXTRAS_URL);
   await waitFor(() => !!(window as any).XR8, 20000, 'engine 8th Wall');
   await waitFor(() => !!(window as any).XRExtras, 20000, 'thư viện xrextras');
