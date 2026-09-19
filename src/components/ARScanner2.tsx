@@ -255,11 +255,6 @@ export default function ARScanner2({ target: rawTarget, onClose }: ARScanner2Pro
         <div className="fixed inset-0 z-[100] bg-white pointer-events-none transition-opacity duration-300 opacity-90" />
       )}
 
-      {/* Nhãn AR 2.0 */}
-      <div className="absolute top-4 left-4 z-[60] bg-brand/80 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-[11px] font-black tracking-wider shadow-lg">
-        AR 2.0
-      </div>
-
       {target.show_target_name && target.name && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[60] bg-black/60 backdrop-blur-md text-white px-3.5 py-1.5 rounded-full border border-white/15 text-xs font-semibold shadow-lg max-w-[60vw] truncate">
           {target.name}
