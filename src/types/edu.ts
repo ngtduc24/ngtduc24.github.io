@@ -55,6 +55,7 @@ export interface EduAssignmentBankItem {
   createdAt: string;
   updatedAt: string;
   ownerId?: string;
+  isPublic?: boolean;
 }
 
 export interface EduAssignment {

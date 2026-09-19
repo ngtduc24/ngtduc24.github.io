@@ -23,6 +23,17 @@ export const GRADES_TABLE = 'edu_grades';
 export const SUBJECTS_TABLE = 'edu_subjects';
 export const ASSIGNMENT_BANK_TABLE = 'edu_assignment_bank';
 
+// Ngữ cảnh người dùng hiện tại cho module Edu. Dùng để tách dữ liệu trường lớp sinh viên
+// theo từng người tạo, và để mặc định gán chủ sở hữu khi tạo mới. Admin thì xem được tất cả.
+// App gọi setEduAuthContext mỗi khi người dùng đăng nhập thay đổi.
+let ctxUserId: string | null = null;
+let ctxIsAdmin = false;
+
+export function setEduAuthContext(userId: string | null, isAdmin: boolean) {
+  ctxUserId = userId || null;
+  ctxIsAdmin = !!isAdmin;
+}
+
 // Mappers
 function mapSchool(s: any): EduSchool {
   return {
@@ -107,7 +118,8 @@ function mapBankItem(b: any): EduAssignmentBankItem {
     allowedFileTypes: b.allowed_file_types || [],
     createdAt: b.created_at,
     updatedAt: b.updated_at,
-    ownerId: b.owner_id
+    ownerId: b.owner_id,
+    isPublic: b.is_public === true
   };
 }
 
@@ -139,7 +151,10 @@ function mapGrade(g: any): EduGrade {
 
 // Schools
 export async function getSchools() {
-  const { data, error } = await supabase.from(SCHOOLS_TABLE).select('*').order('name');
+  let query = supabase.from(SCHOOLS_TABLE).select('*').order('name');
+  // Mỗi người chỉ thấy trường của mình, admin thấy tất cả.
+  if (!ctxIsAdmin && ctxUserId) query = query.eq('owner_id', ctxUserId);
+  const { data, error } = await query;
   if (error) throw error;
   return (data || []).map(mapSchool);
 }
@@ -149,7 +164,8 @@ export async function saveSchool(school: Partial<EduSchool>) {
     id: school.id,
     name: school.name,
     description: school.description,
-    owner_id: school.ownerId
+    // Gán chủ sở hữu là người đang đăng nhập nếu chưa có.
+    owner_id: school.ownerId ?? ctxUserId ?? undefined
   };
   // Remove undefined
   Object.keys(dbData).forEach(key => (dbData as any)[key] === undefined && delete (dbData as any)[key]);
@@ -168,6 +184,8 @@ export async function deleteSchool(id: string) {
 export async function getClasses(schoolId?: string) {
   let query = supabase.from(CLASSES_TABLE).select('*, edu_schools(name)').order('name');
   if (schoolId) query = query.eq('school_id', schoolId);
+  // Mỗi người chỉ thấy lớp của mình, admin thấy tất cả.
+  if (!ctxIsAdmin && ctxUserId) query = query.eq('owner_id', ctxUserId);
   const { data, error } = await query;
   if (error) throw error;
   return (data || []).map(c => ({
@@ -182,7 +200,7 @@ export async function saveClass(clazz: Partial<EduClass>) {
     school_id: clazz.schoolId,
     name: clazz.name,
     description: clazz.description,
-    owner_id: clazz.ownerId
+    owner_id: clazz.ownerId ?? ctxUserId ?? undefined
   };
   Object.keys(dbData).forEach(key => (dbData as any)[key] === undefined && delete (dbData as any)[key]);
 
@@ -350,6 +368,8 @@ export async function deleteSubject(id: string) {
 export async function getAssignmentBank(subjectId?: string): Promise<EduAssignmentBankItem[]> {
   let query = supabase.from(ASSIGNMENT_BANK_TABLE).select('*').order('created_at', { ascending: false });
   if (subjectId) query = query.eq('subject_id', subjectId);
+  // Người dùng thấy bài của chính mình và các bài được bật chia sẻ công khai. Admin thấy tất cả.
+  if (!ctxIsAdmin && ctxUserId) query = query.or(`owner_id.eq.${ctxUserId},is_public.eq.true`);
   const { data, error } = await query;
   if (error) throw error;
   return (data || []).map(mapBankItem);
@@ -362,7 +382,8 @@ export async function saveAssignmentBankItem(item: Partial<EduAssignmentBankItem
     title: item.title,
     content: item.content,
     allowed_file_types: item.allowedFileTypes,
-    owner_id: item.ownerId
+    owner_id: item.ownerId ?? ctxUserId ?? undefined,
+    is_public: item.isPublic === true
   };
   Object.keys(dbData).forEach(key => dbData[key] === undefined && delete dbData[key]);
   const { data, error } = await supabase.from(ASSIGNMENT_BANK_TABLE).upsert(dbData).select().single();

@@ -141,7 +141,7 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
         )}
 
         {view === 'assignment_bank' && (
-          <EduAssignmentBank />
+          <EduAssignmentBank currentUser={currentUser} />
         )}
         
         {view === 'import' && (

@@ -23,6 +23,7 @@ import PortfolioCMS from './components/PortfolioCMS';
 import UtilitiesModule from './components/UtilitiesModule';
 import PublicARScanner from './components/PublicARScanner';
 import EduModule from './components/EduModule';
+import { setEduAuthContext } from './lib/edu';
 import { TaskProvider } from './components/TaskContext';
 import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban, GraduationCap } from 'lucide-react';
 import { supabase } from "./lib/supabase";
@@ -55,6 +56,12 @@ export default function App() {
     return null;
   });
   const [authInitialized, setAuthInitialized] = useState<boolean>(false);
+
+  // Cập nhật ngữ cảnh người dùng cho module Edu để tách dữ liệu theo từng người. Admin xem tất cả.
+  useEffect(() => {
+    setEduAuthContext(currentUser?.id ?? null, currentUser?.role === 'admin');
+  }, [currentUser]);
+
   const [currentTab, setCurrentTab] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const tabFromUrl = getTabFromUrl();

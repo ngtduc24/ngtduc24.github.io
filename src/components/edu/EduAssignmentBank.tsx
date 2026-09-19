@@ -11,6 +11,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, Link as LinkIcon, Undo, Redo
 } from 'lucide-react';
 import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
+import { UserAccount } from '../../types';
 import { getSubjects, saveSubject, deleteSubject, getAssignmentBank, saveAssignmentBankItem, deleteAssignmentBankItem } from '../../lib/edu';
 import { uploadImageToCloudinary } from '../../lib/upload';
 import { useNotifications } from '../NotificationContext';
@@ -28,9 +29,13 @@ const FORMAT_OPTIONS = [
 
 const emptyItem = (): Partial<EduAssignmentBankItem> => ({ title: '', content: '', allowedFileTypes: ['pdf'] });
 
-export default function EduAssignmentBank() {
+export default function EduAssignmentBank({ currentUser }: { currentUser: UserAccount }) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
+
+  // Chỉ người tạo ra bài hoặc admin mới được sửa, xóa và bật chia sẻ công khai.
+  const canEdit = (item?: { ownerId?: string } | null) =>
+    !!item && (item.ownerId === currentUser?.id || currentUser?.role === 'admin');
 
   const [subjects, setSubjects] = useState<EduSubject[]>([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
@@ -148,6 +153,8 @@ export default function EduAssignmentBank() {
         title: editing.title,
         content: editor?.getHTML() || '',
         allowedFileTypes: editing.allowedFileTypes && editing.allowedFileTypes.length ? editing.allowedFileTypes : ['pdf'],
+        ownerId: editing.ownerId,
+        isPublic: editing.isPublic === true,
       });
       addNotification('Đã lưu bài tập vào ngân hàng', 'success');
       setEditing(null);
@@ -332,6 +339,19 @@ export default function EduAssignmentBank() {
               </div>
             </div>
 
+            <label className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={editing.isPublic === true}
+                onChange={e => setEditing({ ...editing, isPublic: e.target.checked })}
+                className="mt-0.5 w-4 h-4 accent-brand"
+              />
+              <span className="min-w-0">
+                <span className="block text-[12px] font-bold text-slate-700">Chia sẻ công khai cho mọi người</span>
+                <span className="block text-[11px] text-slate-400 leading-snug">Bật thì tất cả người dùng đều thấy và dùng lại được bài này. Tắt thì chỉ mình bạn thấy.</span>
+              </span>
+            </label>
+
             <div className="flex justify-end gap-3 pt-2">
               <button onClick={() => setEditing(null)} className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-all">Hủy</button>
               <button onClick={handleSaveItem} disabled={saving} className="flex items-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-50 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide">
@@ -380,16 +400,28 @@ export default function EduAssignmentBank() {
               <div className="border border-brand/30 rounded-2xl overflow-hidden">
                 <div className="px-5 py-4 bg-brand-light/40 border-b border-brand/20 flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h3 className="text-[15px] font-black text-slate-900 tracking-tight truncate">{viewingItem.title}</h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-[15px] font-black text-slate-900 tracking-tight truncate">{viewingItem.title}</h3>
+                      {viewingItem.isPublic && (
+                        <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">Công khai</span>
+                      )}
+                      {!canEdit(viewingItem) && (
+                        <span className="text-[9px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">Bài dùng chung</span>
+                      )}
+                    </div>
                     <p className="text-[11px] text-slate-400 font-medium">{(viewingItem.allowedFileTypes || []).map(t => FORMAT_OPTIONS.find(f => f.id === t)?.label || t).join(', ')}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => openEditor({ ...viewingItem })} className="flex items-center gap-2 border-2 border-brand text-brand hover:bg-brand-light px-4 py-2 rounded-xl text-[11px] font-bold transition-all">
-                      <Edit3 className="w-4 h-4" /> Sửa
-                    </button>
-                    <button onClick={() => { const it = viewingItem; handleDeleteItem(it); }} className="flex items-center gap-2 border-2 border-rose-300 text-rose-500 hover:bg-rose-50 px-4 py-2 rounded-xl text-[11px] font-bold transition-all">
-                      <Trash2 className="w-4 h-4" /> Xóa
-                    </button>
+                    {canEdit(viewingItem) && (
+                      <>
+                        <button onClick={() => openEditor({ ...viewingItem })} className="flex items-center gap-2 border-2 border-brand text-brand hover:bg-brand-light px-4 py-2 rounded-xl text-[11px] font-bold transition-all">
+                          <Edit3 className="w-4 h-4" /> Sửa
+                        </button>
+                        <button onClick={() => { const it = viewingItem; handleDeleteItem(it); }} className="flex items-center gap-2 border-2 border-rose-300 text-rose-500 hover:bg-rose-50 px-4 py-2 rounded-xl text-[11px] font-bold transition-all">
+                          <Trash2 className="w-4 h-4" /> Xóa
+                        </button>
+                      </>
+                    )}
                     <button onClick={() => setViewingItem(null)} className="p-2 text-slate-400 hover:text-slate-700 transition-all" title="Đóng"><X className="w-5 h-5" /></button>
                   </div>
                 </div>
