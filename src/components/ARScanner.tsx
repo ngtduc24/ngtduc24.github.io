@@ -397,7 +397,7 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
         ${assetsHtml}
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
         <a-entity id="ar-anchor" mindar-image-target="targetIndex: 0"></a-entity>
-        <a-entity smooth-follow="src: #ar-anchor; pos: 0.3; rot: 0.3">
+        <a-entity smooth-follow="src: #ar-anchor; pos: 0.25; rot: 0.25">
           ${nodeHtml}
         </a-entity>
       `;
@@ -405,11 +405,30 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
 
     // Cấu hình A-Frame chuẩn dấu chấm phẩy ; cho schema renderer để preserveDrawingBuffer hoạt động thực tế
     container.innerHTML = `
-      <a-scene scanner-env mindar-image="imageTargetSrc: ${escapeAttr(mindUrl)}; autoStart: true; filterMinCF: 0.0001; filterBeta: 1000; missTolerance: 12; warmupTolerance: 2;" color-space="sRGB" renderer="colorManagement: true; toneMapping: ACESFilmic; preserveDrawingBuffer: true;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      <a-scene scanner-env mindar-image="imageTargetSrc: ${escapeAttr(mindUrl)}; autoStart: true; filterMinCF: 0.0001; filterBeta: 200; missTolerance: 12; warmupTolerance: 3;" color-space="sRGB" renderer="colorManagement: true; toneMapping: ACESFilmic; preserveDrawingBuffer: true;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         ${lightsHtml}
         ${contentHtml}
       </a-scene>
     `;
+
+    // Nâng độ phân giải luồng camera. MindAR mở camera ở độ phân giải mặc định thường thấp
+    // nên ảnh chụp bị mờ. Sau khi camera sẵn sàng, yêu cầu luồng lên tối đa 1920x1080 bằng
+    // applyConstraints. Nếu thiết bị không hỗ trợ thì tự bỏ qua, không ảnh hưởng theo dõi.
+    const upgradeCameraResolution = () => {
+      const camVideo = document.querySelector('video:not(#ar-video)') as HTMLVideoElement | null;
+      const stream = camVideo && (camVideo.srcObject as MediaStream | null);
+      const track = stream && stream.getVideoTracks ? stream.getVideoTracks()[0] : null;
+      if (!track || !track.applyConstraints) return;
+      track
+        .applyConstraints({
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          advanced: [{ width: 1920, height: 1080 }, { width: 1280, height: 720 }],
+        })
+        .catch(() => {});
+    };
+    const camUp1 = window.setTimeout(upgradeCameraResolution, 1500);
+    const camUp2 = window.setTimeout(upgradeCameraResolution, 3500);
 
     // Khi model 3D tải xong, áp chất liệu đã lưu từ studio và bật phản chiếu môi trường để hết đen.
     let modelNode: any = null;
@@ -649,6 +668,8 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
     return () => {
       window.clearTimeout(t1);
       window.clearTimeout(t2);
+      window.clearTimeout(camUp1);
+      window.clearTimeout(camUp2);
       if (hintTimeout) window.clearTimeout(hintTimeout);
       window.removeEventListener('orientationchange', forceResize);
       if (targetEntity && onFound) targetEntity.removeEventListener('targetFound', onFound);
@@ -701,7 +722,7 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
       // Lấy kích thước chuẩn khung nhìn viewport trên màn hình thực tế của người dùng
       const screenW = window.innerWidth;
       const screenH = window.innerHeight;
-      const dpr = Math.min(window.devicePixelRatio || 2, 2.5);
+      const dpr = Math.min(window.devicePixelRatio || 2, 3);
 
       const outWidth = Math.round(screenW * dpr);
       const outHeight = Math.round(screenH * dpr);
@@ -712,6 +733,10 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
       const ctx = captureCanvas.getContext('2d');
 
       if (!ctx) throw new Error('Không thể khởi tạo canvas 2D');
+
+      // Dùng nội suy chất lượng cao khi phóng khung hình lên, giảm mờ và răng cưa.
+      ctx.imageSmoothingEnabled = true;
+      (ctx as any).imageSmoothingQuality = 'high';
 
       // 1. Cắt và vẽ khung hình camera video theo tỷ lệ khớp hoàn hảo với CSS object-fit: cover
       const vW = video.videoWidth || outWidth;
