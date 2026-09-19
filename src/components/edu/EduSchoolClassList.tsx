@@ -20,7 +20,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { EduClass, EduSchool } from '../../types/edu';
-import { getClasses, getSchools, deleteSchool, deleteClass, saveSchool, saveClass } from '../../lib/edu';
+import { getClasses, getSchools, deleteSchool, deleteClass, saveSchool, saveClass, getClassUsers, getAssignments, getSubmissions } from '../../lib/edu';
 import { getUsers } from '../../lib/data';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
@@ -53,6 +53,41 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
 
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
 
+  // Thống kê nhanh cho mỗi lớp: tổng sinh viên, bài tập đang có hạn nộp gần nhất, số đã nộp.
+  type ClassStat = { students: number; assignmentTitle?: string; deadline?: string; submitted: number };
+  const [classStats, setClassStats] = useState<Record<string, ClassStat>>({});
+
+  const loadClassStats = async (cls: { id: string }[]) => {
+    const entries = await Promise.all(cls.map(async (c) => {
+      try {
+        const [users, assignments] = await Promise.all([getClassUsers(c.id), getAssignments(c.id)]);
+        const now = Date.now();
+        const withDeadline = assignments.filter(a => a.deadline);
+        const upcoming = withDeadline
+          .filter(a => new Date(a.deadline as string).getTime() >= now)
+          .sort((a, b) => new Date(a.deadline as string).getTime() - new Date(b.deadline as string).getTime());
+        const chosen = upcoming[0]
+          || withDeadline.sort((a, b) => new Date(b.deadline as string).getTime() - new Date(a.deadline as string).getTime())[0]
+          || assignments[0];
+        let submitted = 0;
+        if (chosen) {
+          const subs = await getSubmissions(chosen.id);
+          submitted = new Set(subs.map(s => s.userId || s.mssv)).size;
+        }
+        const stat: ClassStat = {
+          students: users.length,
+          assignmentTitle: chosen?.title,
+          deadline: chosen?.deadline,
+          submitted,
+        };
+        return [c.id, stat] as const;
+      } catch {
+        return [c.id, { students: 0, submitted: 0 } as ClassStat] as const;
+      }
+    }));
+    setClassStats(Object.fromEntries(entries));
+  };
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -62,6 +97,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
       ]);
       setSchools(schoolsData);
       setClasses(classesData);
+      loadClassStats(classesData);
     } catch (err) {
       console.error(err);
     } finally {
@@ -373,9 +409,28 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                       </div>
                       
                       <h3 className="text-[15px] font-bold text-slate-800 group-hover:text-brand transition-colors mb-2 line-clamp-2 leading-snug">{clazz.name}</h3>
-                      <p className="text-[12px] text-slate-500 font-medium line-clamp-2 leading-relaxed">
-                        {clazz.description || `Danh sách lớp học thuộc ${school.name}.`}
-                      </p>
+                      {(() => {
+                        const st = classStats[clazz.id];
+                        if (!st) {
+                          return <p className="text-[12px] text-slate-400 italic">Đang tải thống kê...</p>;
+                        }
+                        return (
+                          <div className="text-[12px] text-slate-600 space-y-1.5">
+                            <p><span className="font-black text-slate-800">{st.students}</span> sinh viên</p>
+                            {st.assignmentTitle ? (
+                              <>
+                                <p className="truncate"><span className="text-slate-400">Bài đang mở </span><span className="font-bold text-slate-700">{st.assignmentTitle}</span></p>
+                                {st.deadline && (
+                                  <p><span className="text-slate-400">Hạn nộp </span><span className="font-bold text-rose-500">{new Date(st.deadline).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span></p>
+                                )}
+                                <p><span className="text-slate-400">Đã nộp </span><span className="font-black text-brand">{st.submitted}</span><span className="text-slate-400"> trên </span><span className="font-bold text-slate-700">{st.students}</span></p>
+                              </>
+                            ) : (
+                              <p className="text-slate-400 italic">Chưa có bài tập nào</p>
+                            )}
+                          </div>
+                        );
+                      })()}
                       {isAdmin && ownerName(clazz.ownerId) && (
                         <p className="text-[11px] font-bold text-indigo-600 mt-2">Tạo bởi {ownerName(clazz.ownerId)}</p>
                       )}
@@ -385,7 +440,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
                           <Users className="w-3.5 h-3.5" />
-                          <span>Sinh viên</span>
+                          <span>{classStats[clazz.id]?.students ?? '-'} sinh viên</span>
                         </div>
                         <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
                           <Calendar className="w-3.5 h-3.5" />
