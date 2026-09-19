@@ -15,7 +15,8 @@ import {
   Settings,
   MoreVertical,
   Trash2,
-  Edit2
+  Edit2,
+  BookMarked
 } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
 import { useNotifications } from './NotificationContext';
@@ -26,6 +27,7 @@ import EduClassDetail from './edu/EduClassDetail';
 import EduAssignmentEditor from './edu/EduAssignmentEditor';
 import EduAssignmentDetail from './edu/EduAssignmentDetail';
 import EduGrading from './edu/EduGrading';
+import EduAssignmentBank from './edu/EduAssignmentBank';
 import { EduClass, EduSchool } from '../types/edu';
 import { getClasses, getSchools } from '../lib/edu';
 
@@ -34,7 +36,7 @@ interface EduModuleProps {
   settings: AppSettings;
 }
 
-type EduView = 'list' | 'import' | 'class_detail' | 'assignment_edit' | 'assignment_detail' | 'grading';
+type EduView = 'list' | 'import' | 'class_detail' | 'assignment_edit' | 'assignment_detail' | 'grading' | 'assignment_bank';
 
 export default function EduModule({ currentUser, settings }: EduModuleProps) {
   const [view, setView] = useState<EduView>('list');
@@ -92,6 +94,8 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
       setView('class_detail');
     } else if (view === 'grading') {
       setView('class_detail');
+    } else if (view === 'assignment_bank') {
+      setView('list');
     }
   };
 
@@ -106,9 +110,10 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900 font-display">
-                {view === 'class_detail' ? 'Chi tiết lớp học' : 
-                 view === 'import' ? 'Import dữ liệu' : 
-                 view === 'grading' ? 'Chấm điểm sinh viên' : 
+                {view === 'class_detail' ? 'Chi tiết lớp học' :
+                 view === 'import' ? 'Import dữ liệu' :
+                 view === 'grading' ? 'Chấm điểm sinh viên' :
+                 view === 'assignment_bank' ? 'Quản lý bài tập' :
                  'Hệ thống Giáo dục Edu'}
               </h1>
               <p className="text-xs text-slate-500 font-medium">Quản lý trường học, lớp học và kết quả học tập</p>
@@ -128,10 +133,25 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
       {/* Main View Area */}
       <div className="min-h-[600px]">
         {view === 'list' && (
-          <EduSchoolClassList 
-            onSelectClass={handleClassSelect} 
-            onImport={() => setView('import')}
-          />
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <button
+                onClick={() => setView('assignment_bank')}
+                className="flex items-center gap-2 bg-white hover:bg-brand-light border border-brand text-brand px-5 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-sm transition-all cursor-pointer active:scale-95"
+              >
+                <BookMarked className="w-4 h-4" />
+                <span>Quản lý bài tập</span>
+              </button>
+            </div>
+            <EduSchoolClassList
+              onSelectClass={handleClassSelect}
+              onImport={() => setView('import')}
+            />
+          </div>
+        )}
+
+        {view === 'assignment_bank' && (
+          <EduAssignmentBank />
         )}
         
         {view === 'import' && (
