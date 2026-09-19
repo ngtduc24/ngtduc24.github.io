@@ -454,13 +454,13 @@ export default function Header({ currentTab, sidebarOpen, setSidebarOpen, curren
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
-        <a 
-          href="/tracuu.html"
+        <a
+          href="/"
           target="_blank"
           rel="noopener noreferrer"
           className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-brand-light text-[11px] font-bold text-brand border border-brand transition-all uppercase tracking-wider"
         >
-          <span>Trang Tra Cứu</span>
+          <span>Trang Chủ</span>
           <ExternalLink className="w-3.5 h-3.5" />
         </a>
 

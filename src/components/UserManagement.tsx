@@ -26,7 +26,7 @@ import { uploadImageToCloudinary } from '../lib/upload';
 import MediaSourcePicker from './MediaSourcePicker';
 import { Image as ImageIcon } from 'lucide-react';
 
-const ADMIN_PERMISSIONS = ['dashboard', 'calculator', 'scientific_journals', 'tasks', 'qualitative_analysis', 'quantitative_analysis', 'utilities', 'media_library', 'portfolio_cms', 'settings', 'notifications', 'users'];
+const ADMIN_PERMISSIONS = ['dashboard', 'calculator', 'scientific_journals', 'tasks', 'qualitative_analysis', 'quantitative_analysis', 'edu', 'utilities', 'media_library', 'portfolio_cms', 'settings', 'notifications', 'users'];
 const MEMBER_PERMISSIONS = ['portfolio_courses'];
 
 // Chức năng Tạo AR trước đây là một mục riêng mang mã ar_module, nay đã được gộp
@@ -188,6 +188,7 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
     { id: 'tasks', label: 'Dự án & Công việc' },
     { id: 'qualitative_analysis', label: 'Phân tích định tính' },
     { id: 'quantitative_analysis', label: 'Phân tích định lượng' },
+    { id: 'edu', label: 'Quản lý Giáo dục & Đào tạo' },
     { id: 'utilities', label: 'Tiện ích (Tạo AR, chỉnh kích thước ảnh)' },
     { id: 'media_library', label: 'Thư viện' },
     { id: 'portfolio_cms', label: 'Quản trị Portfolio' },
