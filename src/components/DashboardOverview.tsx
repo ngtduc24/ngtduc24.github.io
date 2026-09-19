@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import MediaSourcePicker from './MediaSourcePicker';
 import {
   Calculator, Settings, Users, BookOpen, Search, X, Database, Sparkles,
@@ -96,6 +96,16 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   };
   const hideIcon = (id: string) => { if (!hiddenIds.includes(id)) persistHidden([...hiddenIds, id]); };
   const restoreHidden = () => persistHidden([]);
+
+  // Nút dấu trừ chỉ hiện khi nhấn giữ vào biểu tượng.
+  const [activeMinusId, setActiveMinusId] = useState<string | null>(null);
+  const pressTimer = useRef<number | null>(null);
+  const longPressed = useRef(false);
+  const startPress = (id: string) => {
+    if (pressTimer.current) window.clearTimeout(pressTimer.current);
+    pressTimer.current = window.setTimeout(() => { longPressed.current = true; setActiveMinusId(id); }, 450);
+  };
+  const cancelPress = () => { if (pressTimer.current) { window.clearTimeout(pressTimer.current); pressTimer.current = null; } };
 
   useEffect(() => {
     if (settings) {
@@ -276,14 +286,11 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
       {/* ===== Hàng biểu tượng chức năng (kéo thả để sắp xếp, ẩn bớt mục ít dùng) ===== */}
       {(filteredIcons.length > 0 || hiddenIds.length > 0) && (
         <div>
-          {!q && (
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-[11px] font-medium text-slate-400">Nhấn giữ và kéo thả để sắp xếp, di chuột vào một biểu tượng rồi bấm dấu trừ để ẩn bớt mục ít dùng.</p>
-              {hiddenIds.length > 0 && (
-                <button onClick={restoreHidden} className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 hover:bg-brand-light text-slate-600 hover:text-brand px-3 py-1 text-[11px] font-bold transition-colors">
-                  <Eye className="w-3.5 h-3.5" /> Hiện lại {hiddenIds.length} mục đã ẩn
-                </button>
-              )}
+          {!q && hiddenIds.length > 0 && (
+            <div className="mb-3 flex justify-end">
+              <button onClick={restoreHidden} className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 hover:bg-brand-light text-slate-600 hover:text-brand px-3 py-1 text-[11px] font-bold transition-colors">
+                <Eye className="w-3.5 h-3.5" /> Hiện lại {hiddenIds.length} mục đã ẩn
+              </button>
             </div>
           )}
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-4">
@@ -292,28 +299,35 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
               const draggable = !q;
               const isDragging = dragId === m.id;
               const isOver = overId === m.id && dragId !== m.id;
+              const showMinus = !q && activeMinusId === m.id;
               return (
                 <div
                   key={m.id}
                   draggable={draggable}
-                  onDragStart={() => draggable && setDragId(m.id)}
+                  onDragStart={() => { if (draggable) { cancelPress(); setActiveMinusId(null); setDragId(m.id); } }}
                   onDragOver={(e) => { if (draggable && dragId) { e.preventDefault(); setOverId(m.id); } }}
                   onDragLeave={() => { if (overId === m.id) setOverId(null); }}
                   onDrop={(e) => { if (draggable) { e.preventDefault(); handleDropOn(m.id); } }}
                   onDragEnd={() => { setDragId(null); setOverId(null); }}
-                  onClick={() => { if (!dragId) onSwitchTab(m.id); }}
+                  onPointerDown={() => { if (draggable) startPress(m.id); }}
+                  onPointerUp={cancelPress}
+                  onPointerLeave={cancelPress}
+                  onClick={() => {
+                    if (longPressed.current) { longPressed.current = false; return; }
+                    if (!dragId) { setActiveMinusId(null); onSwitchTab(m.id); }
+                  }}
                   title={m.label}
                   className={`group relative flex flex-col items-center gap-2 text-center rounded-2xl p-1 transition-all ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 rounded-2xl' : ''}`}
                 >
-                  {!q && (
+                  {showMinus && (
                     <button
                       type="button"
                       draggable={false}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onClick={(e) => { e.stopPropagation(); hideIcon(m.id); }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.stopPropagation(); setActiveMinusId(null); hideIcon(m.id); }}
                       title={`Ẩn "${m.label}"`}
                       aria-label={`Ẩn ${m.label}`}
-                      className="absolute -top-1 right-2 z-10 grid h-5 w-5 place-items-center rounded-full bg-rose-500 text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 hover:bg-rose-600"
+                      className="absolute -top-1 right-2 z-10 grid h-5 w-5 place-items-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-md hover:text-slate-700"
                     >
                       <Minus className="h-3 w-3" strokeWidth={3} />
                     </button>
