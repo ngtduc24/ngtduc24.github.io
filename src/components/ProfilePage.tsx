@@ -18,6 +18,7 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
   const [fullName, setFullName] = useState(user.fullName || '');
   const [email, setEmail] = useState(user.email || '');
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl || '');
+  const [coverUrl, setCoverUrl] = useState(user.coverImage || '');
   const [editing, setEditing] = useState<'name' | 'email' | null>(null);
   const [draftName, setDraftName] = useState(fullName);
   const [draftEmail, setDraftEmail] = useState(email);
@@ -34,7 +35,7 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
 
   const persist = async (patch: Partial<UserAccount>) => {
     setSaving(true);
-    const updated: UserAccount = { ...user, fullName, email, avatarUrl, ...patch };
+    const updated: UserAccount = { ...user, fullName, email, avatarUrl, coverImage: coverUrl, ...patch };
     if (updated.password) delete updated.password;
     try {
       await onSaveProfile(updated);
@@ -66,6 +67,16 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
     setAvatarUrl('');
     const ok = await persist({ avatarUrl: '' });
     if (ok) flash('Đã xóa ảnh hồ sơ.');
+  };
+  const changeCover = async (url: string) => {
+    setCoverUrl(url);
+    const ok = await persist({ coverImage: url });
+    if (ok) flash('Đã cập nhật ảnh bìa.');
+  };
+  const removeCover = async () => {
+    setCoverUrl('');
+    const ok = await persist({ coverImage: '' });
+    if (ok) flash('Đã xóa ảnh bìa.');
   };
 
   const savePassword = async () => {
@@ -123,6 +134,44 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
 
         {/* Nội dung */}
         <div className="space-y-6">
+          {/* Ảnh bìa cá nhân với ảnh đại diện đặt chồng lên */}
+          <div className="relative overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+            <div
+              className="h-40 w-full sm:h-48"
+              style={coverUrl
+                ? { backgroundImage: `url(${coverUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                : { background: 'linear-gradient(120deg, var(--color-brand-light, #e0e7ff) 0%, #f5f3ff 50%, var(--color-brand-light, #e0f2fe) 100%)' }}
+            />
+            <div className="absolute right-3 top-3 flex items-center gap-2">
+              {coverUrl && (
+                <button onClick={removeCover} disabled={saving} className="rounded-xl bg-white/85 px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm backdrop-blur hover:text-rose-600 disabled:opacity-50">Xóa ảnh bìa</button>
+              )}
+              <MediaSourcePicker
+                onSelect={changeCover}
+                accept="image/*"
+                resourceType="image"
+                folder="users/covers"
+                category="Ảnh đại diện & bìa cá nhân"
+                label="Thay đổi ảnh bìa"
+                icon={Camera}
+                className="flex items-center gap-2 rounded-xl bg-white/85 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm backdrop-blur hover:text-brand"
+              />
+            </div>
+            <div className="flex items-end gap-4 px-6 pb-5">
+              <div className="-mt-10 shrink-0">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={fullName} className="h-20 w-20 rounded-2xl border-4 border-white object-cover shadow-md" />
+                ) : (
+                  <div className="grid h-20 w-20 place-items-center rounded-2xl border-4 border-white bg-slate-700 text-2xl font-black text-white shadow-md">{fullName?.slice(0, 1).toUpperCase()}</div>
+                )}
+              </div>
+              <div className="min-w-0 pb-1">
+                <p className="truncate text-lg font-black text-slate-900">{fullName || '(chưa đặt tên)'}</p>
+                <p className="truncate text-xs font-semibold text-slate-400">@{user.username} · {roleLabel}</p>
+              </div>
+            </div>
+          </div>
+
           <div>
             <h1 className="font-display text-2xl font-black tracking-tight text-slate-900">Hồ sơ của bạn</h1>
             <p className="mt-1 text-sm text-slate-500">Xem và cập nhật thông tin tài khoản của bạn.</p>
