@@ -38,8 +38,8 @@ interface FeatureItem {
 // Toàn bộ chức năng, chia theo nhóm để hiển thị dạng danh mục giống trang kho ứng dụng.
 const ALL_FEATURES: FeatureItem[] = [
   { id: 'calculator', label: 'Tính cỡ mẫu nghiên cứu', desc: 'Hỗ trợ tính toán cỡ mẫu trong nghiên cứu', icon: LayoutGrid, color: 'violet', group: 'Nghiên cứu và phân tích' },
-  { id: 'qualitative_analysis', label: 'Phân tích định tính', desc: 'Mã hóa, phân tích dữ liệu phỏng vấn, thảo luận nhóm', icon: ImageIcon, color: 'emerald', group: 'Nghiên cứu và phân tích' },
-  { id: 'quantitative_analysis', label: 'Phân tích số liệu định lượng', desc: 'Phân tích thống kê, trực quan hóa dữ liệu', icon: BarChart3, color: 'blue', group: 'Nghiên cứu và phân tích' },
+  { id: 'qualitative_analysis', label: 'Định tính', desc: 'Mã hóa, phân tích dữ liệu phỏng vấn, thảo luận nhóm', icon: ImageIcon, color: 'emerald', group: 'Nghiên cứu và phân tích' },
+  { id: 'quantitative_analysis', label: 'Định lượng', desc: 'Phân tích thống kê, trực quan hóa dữ liệu', icon: BarChart3, color: 'blue', group: 'Nghiên cứu và phân tích' },
   { id: 'scientific_journals', label: 'Quản lý điểm báo khoa học', desc: 'Lưu trữ và phân loại điểm báo, bài viết', icon: BookOpen, color: 'orange', group: 'Nghiên cứu và phân tích' },
 
   { id: 'edu', label: 'Quản lý Giáo dục', desc: 'Quản lý lớp học, sinh viên, chương trình đào tạo', icon: GraduationCap, color: 'purple', group: 'Giảng dạy và nội dung' },
