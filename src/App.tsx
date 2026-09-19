@@ -24,6 +24,7 @@ import PortfolioWebsite from './components/PortfolioWebsite';
 import PortfolioCMS from './components/PortfolioCMS';
 import UtilitiesModule from './components/UtilitiesModule';
 import PublicARScanner from './components/PublicARScanner';
+import QuizTake from './components/edu/QuizTake';
 import EduModule from './components/EduModule';
 import { setEduAuthContext } from './lib/edu';
 import { TaskProvider } from './components/TaskContext';
@@ -727,6 +728,12 @@ export default function App() {
 
   if (isPublicARRoute) {
     return <PublicARScanner />;
+  }
+
+  // Link làm bài trắc nghiệm công khai: sinh viên vào bằng MSSV, không cần đăng nhập.
+  const quizSlug = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('quiz') : null;
+  if (quizSlug) {
+    return <QuizTake slug={quizSlug} />;
   }
 
   const isForcePublic = typeof window !== 'undefined' && (
