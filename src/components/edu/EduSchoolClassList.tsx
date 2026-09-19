@@ -9,6 +9,7 @@ import {
   ChevronRight, 
   Search, 
   Filter,
+  BookMarked,
   GraduationCap,
   Calendar,
   MoreVertical,
@@ -26,9 +27,10 @@ import { useConfirmation } from '../ConfirmationContext';
 interface EduSchoolClassListProps {
   onSelectClass: (classId: string) => void;
   onImport?: () => void;
+  onOpenBank?: () => void;
 }
 
-export default function EduSchoolClassList({ onSelectClass, onImport }: EduSchoolClassListProps) {
+export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank }: EduSchoolClassListProps) {
   const [schools, setSchools] = useState<EduSchool[]>([]);
   const [classes, setClasses] = useState<(EduClass & { edu_schools: { name: string } })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -217,12 +219,22 @@ export default function EduSchoolClassList({ onSelectClass, onImport }: EduSchoo
           </button>
 
           {onImport && (
-            <button 
+            <button
               onClick={onImport}
               className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white px-6 py-3 rounded-2xl text-[11px] font-bold transition-all shadow-lg shadow-brand/20 uppercase tracking-wider"
             >
               <Upload className="w-4 h-4" />
-              <span>Import danh sách & tạo lớp</span>
+              <span>Import tạo lớp</span>
+            </button>
+          )}
+
+          {onOpenBank && (
+            <button
+              onClick={onOpenBank}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-brand text-brand text-[11px] font-bold hover:bg-brand-light transition-all uppercase tracking-wider"
+            >
+              <BookMarked className="w-4 h-4" />
+              <span>Ngân hàng bài tập</span>
             </button>
           )}
         </div>
