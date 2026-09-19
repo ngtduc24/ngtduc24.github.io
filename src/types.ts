@@ -47,6 +47,7 @@ export interface UserAccount {
   createdAt: string;
   password?: string;
   avatarUrl?: string;
+  coverImage?: string;
   fcmTokens?: string[];
 }
 

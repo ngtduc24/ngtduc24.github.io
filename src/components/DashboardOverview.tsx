@@ -360,7 +360,9 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
         </div>
       )}
 
-      {/* ===== Ba cột dưới: Công việc gần đây, Thông báo mới, Thống kê tổng quan ===== */}
+      {/* ===== Ba cột dưới: Công việc gần đây, Thông báo mới, Thống kê tổng quan.
+              Tạm ẩn khi đang tìm kiếm, hiện lại khi xoá nội dung tìm kiếm. ===== */}
+      {!q && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Công việc gần đây */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
@@ -453,6 +455,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
           </div>
         </div>
       </div>
+      )}
 
       {/* ===== Modal đổi ảnh nền và nội dung đầu trang (admin) ===== */}
       {showBannerSettings && (
