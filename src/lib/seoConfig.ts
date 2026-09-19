@@ -8,6 +8,20 @@ export interface SeoModuleMeta {
 }
 
 export const SEO_MODULES: Record<string, SeoModuleMeta> = {
+  profile: {
+    id: 'profile',
+    slug: 'ho-so-ca-nhan',
+    title: 'Hồ sơ cá nhân | SmartResearch',
+    description: 'Xem và cập nhật thông tin cá nhân, ảnh đại diện và mật khẩu tài khoản.',
+    keywords: 'hồ sơ, trang cá nhân, tài khoản, thông tin cá nhân',
+  },
+  all_features: {
+    id: 'all_features',
+    slug: 'tat-ca-tinh-nang',
+    title: 'Tất cả tính năng | SmartResearch',
+    description: 'Danh mục toàn bộ tính năng và công cụ trên hệ thống.',
+    keywords: 'tính năng, công cụ, danh mục chức năng',
+  },
   dashboard: {
     id: 'dashboard',
     slug: 'dashboard',

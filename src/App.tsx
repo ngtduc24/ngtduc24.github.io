@@ -3,6 +3,7 @@ import { applyBrandTheme } from './lib/applyTheme';
 import Sidebar from './components/Sidebar';
 import DashboardOverview from './components/DashboardOverview';
 import AllFeatures from './components/AllFeatures';
+import ProfilePage from './components/ProfilePage';
 import StatsOverview from './components/StatsOverview';
 import SampleSizeCalculator from './components/SampleSizeCalculator';
 import PublicJournalSearch from './components/PublicJournalSearch';
@@ -561,6 +562,7 @@ export default function App() {
     // Mục Tạo AR nay nằm trong Tiện ích. Tài khoản nào đã được cấp quyền ar_module
     // từ trước thì vẫn vào được, không cần quản trị viên cấp lại quyền.
     if (tabId === 'all_features') return true; // Trang tổng hợp tính năng, tự lọc theo quyền của tài khoản
+    if (tabId === 'profile') return true; // Trang cá nhân mở cho mọi tài khoản đã đăng nhập
     if (tabId === 'utilities' || tabId === 'ar_module' || tabId === 'utility_image_resize' || tabId === 'utility_social_design') {
       return currentUser.permissions.includes('utilities') || currentUser.permissions.includes('ar_module');
     }
@@ -608,6 +610,8 @@ export default function App() {
         return <DashboardOverview onSwitchTab={(tab) => setCurrentTab(tab)} settings={settings} users={users} currentUser={currentUser} onRefreshSettings={loadConfig} />;
       case 'all_features':
         return <AllFeatures currentUser={currentUser} settings={settings} onSwitchTab={(tab) => setCurrentTab(tab)} onBack={() => setCurrentTab('dashboard')} />;
+      case 'profile':
+        return <ProfilePage user={currentUser} onSaveProfile={handleSaveProfile} onBack={() => setCurrentTab('dashboard')} />;
       case 'stats':
         return <StatsOverview currentUser={currentUser} />;
       case 'tasks':
@@ -840,7 +844,7 @@ export default function App() {
         setCurrentTab={setCurrentTab}
         currentUser={currentUser}
         onLogout={handleLogout}
-        onOpenProfile={() => { setProfileModalReadOnly(false); setShowProfileModal(true); }}
+        onOpenProfile={() => setCurrentTab('profile')}
         settings={settings}
       />
 
