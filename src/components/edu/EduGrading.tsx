@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Users, 
   CheckCircle2, 
@@ -49,38 +49,39 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [usersData, submissionsData, gradesData] = await Promise.all([
-          getClassUsers(classId),
-          getSubmissions(assignmentId),
-          getGrades(gradeColumnId)
-        ]);
-        setUsers(usersData);
-        setSubmissions(submissionsData);
-        setGrades(gradesData);
+  const loadData = useCallback(async () => {
+    try {
+      const [usersData, submissionsData, gradesData] = await Promise.all([
+        getClassUsers(classId),
+        getSubmissions(assignmentId),
+        getGrades(gradeColumnId)
+      ]);
+      setUsers(usersData);
+      setSubmissions(submissionsData);
+      setGrades(gradesData);
 
-        // Initialize grading data
-        const initialGrading: Record<string, { score: string; note: string }> = {};
-        gradesData.forEach(g => {
-          const userId = g.userId || (g as any).user_id;
-          if (userId) {
-            initialGrading[userId] = { 
-              score: g.score !== undefined ? String(g.score) : '', 
-              note: g.note || '' 
-            };
-          }
-        });
-        setGradingData(initialGrading);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+      // Initialize grading data
+      const initialGrading: Record<string, { score: string; note: string }> = {};
+      gradesData.forEach(g => {
+        const userId = g.userId || (g as any).user_id;
+        if (userId) {
+          initialGrading[userId] = {
+            score: g.score !== undefined ? String(g.score) : '',
+            note: g.note || ''
+          };
+        }
+      });
+      setGradingData(initialGrading);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
+  }, [classId, assignmentId, gradeColumnId]);
+
+  useEffect(() => {
     loadData();
-  }, [assignmentId, gradeColumnId]);
+  }, [loadData]);
 
   const handleScoreChange = (userId: string, score: string) => {
     setGradingData(prev => ({
@@ -110,7 +111,8 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
 
       await saveGrades(gradesToSave);
       addNotification("Đã lưu điểm thành công", "success");
-      onSuccess();
+      // Nạp lại dữ liệu điểm ngay tại trang nhập điểm, không chuyển sang trang khác.
+      await loadData();
     } catch (err) {
       console.error(err);
       addNotification("Lỗi khi lưu điểm", "error");
