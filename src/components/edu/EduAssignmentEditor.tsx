@@ -28,6 +28,7 @@ import {
   Video,
   FileDigit,
   Type,
+  Box,
   ChevronDown
 } from 'lucide-react';
 import { EduAssignment, EduGradeColumn } from '../../types/edu';
@@ -47,6 +48,7 @@ const FILE_TYPES = [
   { id: 'image', label: 'Hình ảnh', icon: ImageIcon },
   { id: 'video', label: 'Video', icon: Video },
   { id: 'doc', label: 'Văn bản (Word)', icon: FileDigit },
+  { id: '3d', label: 'Mô hình 3D (FBX/OBJ)', icon: Box },
   { id: 'text', label: 'Nhập văn bản', icon: Type },
 ];
 

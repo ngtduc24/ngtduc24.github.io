@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { EduAssignment, EduClass, EduSchool, EduSubmission, EduUser, EduGrade } from '../../types/edu';
 import { getAssignmentByLinkId, getSubmissionByMssv, saveSubmission, getGradesForUser } from '../../lib/edu';
-import { uploadImageToCloudinary } from '../../lib/upload';
+import { uploadImageToCloudinary, uploadMediaToCloudinary } from '../../lib/upload';
 import { useNotifications } from '../NotificationContext';
 
 interface EduPublicAssignmentProps {
@@ -163,56 +163,55 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
       if (t === 'doc') return ['doc', 'docx'].includes(ext || '');
       if (t === 'image') return ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '');
       if (t === 'video') return ['mp4', 'mov', 'avi'].includes(ext || '');
+      if (t === '3d') return ['fbx', 'obj', 'glb', 'gltf'].includes(ext || '');
+      if (t === 'text') return false; // dạng văn bản nhập trực tiếp, không nhận tệp
       return true;
     });
   };
 
-  // Đọc và tải một tệp lên, dùng lại cho cả nút chọn tệp và thao tác kéo thả.
-  const uploadSingleFile = (file: File) => new Promise<void>((resolve) => {
+  const readAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
-    reader.onprogress = (data) => {
-      if (data.lengthComputable) {
-        const progress = Math.round((data.loaded / data.total) * 50) + 10;
-        setUploadProgress(progress);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Không đọc được tệp.'));
+    reader.readAsDataURL(file);
+  });
+
+  // Tải một tệp lên thư viện hệ thống. Ảnh và PDF đi đường ảnh, còn các tệp nhị phân
+  // như mô hình 3D (fbx, obj, glb), Word, zip thì tải dạng raw để giữ nguyên tệp gốc.
+  const uploadSingleFile = async (file: File) => {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    const isImageLike = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg'].includes(ext);
+    const isPdf = ext === 'pdf';
+    try {
+      setUploadProgress(30);
+      let url: string;
+      if (isImageLike || isPdf) {
+        const dataUrl = await readAsDataUrl(file);
+        url = await uploadImageToCloudinary(dataUrl);
+      } else {
+        url = await uploadMediaToCloudinary(file, { resourceType: 'raw', folder: 'edu_submissions' });
       }
-    };
-    reader.onload = async () => {
-      try {
-        setUploadProgress(70);
-        const url = await uploadImageToCloudinary(reader.result as string);
-        setUploadProgress(100);
-        setFiles(prev => [...prev, {
-          url,
-          name: file.name,
-          type: file.type,
-          submittedAt: new Date().toISOString()
-        }]);
-        setNotification({
-          type: 'success',
-          title: 'Well done!',
-          message: `Tệp "${file.name}" đã được tải lên thành công.`
-        });
-      } catch (err) {
-        console.error(err);
-        setNotification({
-          type: 'danger',
-          title: 'Oh snap!',
-          message: 'Lỗi tải tệp tin lên. Vui lòng thử lại.'
-        });
-      } finally {
-        resolve();
-      }
-    };
-    reader.onerror = () => {
+      setUploadProgress(100);
+      setFiles(prev => [...prev, {
+        url,
+        name: file.name,
+        type: file.type || ext,
+        submittedAt: new Date().toISOString()
+      }]);
+      setNotification({
+        type: 'success',
+        title: 'Well done!',
+        message: `Tệp "${file.name}" đã được tải lên thành công.`
+      });
+    } catch (err) {
+      console.error(err);
       setNotification({
         type: 'danger',
         title: 'Oh snap!',
-        message: 'Không đọc được tệp. Vui lòng thử lại.'
+        message: 'Lỗi tải tệp tin lên. Vui lòng thử lại.'
       });
-      resolve();
-    };
-    reader.readAsDataURL(file);
-  });
+    }
+  };
 
   const uploadFiles = async (fileList: FileList | File[] | null) => {
     if (!fileList || !assignment) return;
@@ -318,6 +317,12 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
   // Edit window logic: min(first_submission + 24h, deadline)
   let canEdit = true;
   let lockReason = '';
+
+  // Xác định hình thức nộp bài. Dạng text thì hiện khung nhập trực tiếp, còn lại
+  // (pdf, ảnh, word, 3d, video...) thì hiện phần tải tệp.
+  const allowedTypes = assignment.allowedFileTypes || [];
+  const isTextMode = allowedTypes.includes('text');
+  const hasFileMode = allowedTypes.some(t => t !== 'text');
 
   const currentGrade = grades.find(g => g.column.id === assignment.gradeColumnId)?.grade;
 
@@ -483,7 +488,23 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                   />
                 </div>
 
+                {/* Khung nhập văn bản trực tiếp cho bài dạng text */}
+                {isTextMode && (
+                  <div className="space-y-3">
+                    <h4 className="text-[13px] font-bold text-slate-800 uppercase tracking-wide">Nội dung bài làm</h4>
+                    <textarea
+                      value={textContent}
+                      onChange={(e) => setTextContent(e.target.value)}
+                      disabled={!canEdit}
+                      rows={10}
+                      placeholder="Nhập trực tiếp nội dung bài làm của bạn tại đây..."
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-brand focus:ring-2 focus:ring-brand-light focus:outline-none rounded-xl p-4 text-[14px] text-slate-700 leading-relaxed transition-all resize-y disabled:opacity-60"
+                    />
+                  </div>
+                )}
+
                 {/* Tệp tin bài nộp */}
+                {hasFileMode && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between gap-3">
                     <h4 className="text-[13px] font-bold text-slate-800 uppercase tracking-wide">Tệp tin bài nộp</h4>
@@ -515,7 +536,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                     </div>
                   )}
 
-                  <p className="text-center text-[12px] text-slate-400">Hỗ trợ các định dạng PDF, DOC, DOCX, PPT, PPTX, ZIP, RAR (Tối đa 50MB mỗi tệp)</p>
+                  <p className="text-center text-[12px] text-slate-400">Hỗ trợ PDF, DOC, DOCX, PPT, PPTX, ZIP, RAR{allowedTypes.includes('3d') ? ', FBX, OBJ, GLB' : ''} (Tối đa 50MB mỗi tệp)</p>
 
                   {/* Danh sách tệp đã nộp */}
                   {files.length > 0 && (
@@ -546,6 +567,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* Thông báo khóa khi hết hạn hoặc đã chấm điểm */}
                 {!canEdit && (

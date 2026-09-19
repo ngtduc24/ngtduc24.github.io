@@ -25,6 +25,7 @@ import { EduUser, EduClass, EduAssignment, EduSubmission, EduGrade, EduGradeColu
 import { getClassUsers, getSubmissions, getGrades, saveGrades, saveGradeColumn } from '../../lib/edu';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
+import Model3DViewer from './Model3DViewer';
 
 interface EduGradingProps {
   classId: string;
@@ -42,6 +43,7 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
   const [activeSubmission, setActiveSubmission] = useState<EduSubmission | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [previewFile, setPreviewFile] = useState<{ url: string; name: string; type: string } | null>(null);
+  const [previewText, setPreviewText] = useState<{ name: string; content: string } | null>(null);
   const [editingCommentUserId, setEditingCommentUserId] = useState<string | null>(null);
 
   const { addNotification } = useNotifications();
@@ -240,23 +242,29 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
                       )}
                     </td>
                     <td className="px-6 py-8 text-center">
-                      {isSubmitted && submission.files && submission.files.length > 0 ? (
+                      {isSubmitted && ((submission.files && submission.files.length > 0) || (submission.content && submission.content.trim())) ? (
                         <div className="flex flex-col items-center gap-2">
-                          {submission.files.map((file, idx) => (
-                            <a 
+                          {submission.files && submission.files.map((file, idx) => (
+                            <button
                               key={idx}
-                              href={file.url} 
-                              target="_blank" 
-                              rel="noreferrer"
+                              onClick={() => setPreviewFile(file)}
                               className="text-brand font-black hover:underline uppercase text-[11px] tracking-tight truncate max-w-[200px]"
-                              title={file.name}
+                              title={`Xem ${file.name}`}
                             >
                               {file.name}
-                            </a>
+                            </button>
                           ))}
+                          {submission.content && submission.content.trim() && (
+                            <button
+                              onClick={() => setPreviewText({ name: user.fullName, content: submission.content || '' })}
+                              className="text-brand font-black hover:underline uppercase text-[11px] tracking-tight"
+                            >
+                              Xem bài làm (văn bản)
+                            </button>
+                          )}
                         </div>
                       ) : (
-                        <span className="text-[10px] font-black text-slate-300 italic uppercase">No file</span>
+                        <span className="text-[10px] font-black text-slate-300 italic uppercase">Chưa nộp</span>
                       )}
                     </td>
                     <td className="px-6 py-8 text-center">
@@ -350,27 +358,62 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
               </div>
             </div>
             <div className="flex-1 bg-slate-50 p-4 overflow-hidden flex items-center justify-center">
-              {previewFile.type.includes('image') ? (
-                <img src={previewFile.url} alt={previewFile.name} className="max-w-full max-h-full object-contain rounded-xl shadow-lg" />
-              ) : previewFile.type.includes('pdf') ? (
-                <iframe src={previewFile.url} className="w-full h-full rounded-xl border-0 shadow-lg bg-white" title="PDF Preview" />
-              ) : (
-                <div className="text-center space-y-4">
-                  <div className="w-20 h-20 bg-white rounded-3xl shadow-sm flex items-center justify-center mx-auto">
-                    <FileDigit className="w-10 h-10 text-slate-300" />
+              {(() => {
+                const ext = (previewFile.name.split('.').pop() || '').toLowerCase();
+                const isImage = previewFile.type.includes('image') || ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg'].includes(ext);
+                const isPdf = previewFile.type.includes('pdf') || ext === 'pdf';
+                const is3D = ['fbx', 'obj', 'glb', 'gltf'].includes(ext);
+                if (isImage) {
+                  return <img src={previewFile.url} alt={previewFile.name} className="max-w-full max-h-full object-contain rounded-xl shadow-lg" />;
+                }
+                if (isPdf) {
+                  return <iframe src={previewFile.url} className="w-full h-full rounded-xl border-0 shadow-lg bg-white" title="PDF Preview" />;
+                }
+                if (is3D) {
+                  return <div className="w-full h-full"><Model3DViewer url={previewFile.url} fileName={previewFile.name} /></div>;
+                }
+                return (
+                  <div className="text-center space-y-4">
+                    <div className="w-20 h-20 bg-white rounded-3xl shadow-sm flex items-center justify-center mx-auto">
+                      <FileDigit className="w-10 h-10 text-slate-300" />
+                    </div>
+                    <p className="text-sm font-bold text-slate-500">Không xem trực tiếp được định dạng này. Vui lòng tải về.</p>
+                    <a
+                      href={previewFile.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 bg-brand text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                    >
+                      <Download className="w-4 h-4" />
+                      Tải về để xem
+                    </a>
                   </div>
-                  <p className="text-sm font-bold text-slate-500">Preview not available for this file type.</p>
-                  <a 
-                    href={previewFile.url} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 bg-brand text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download to view
-                  </a>
-                </div>
-              )}
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Text Submission Preview Modal */}
+      {previewText && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-8 animate-fadeIn">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setPreviewText(null)} />
+          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden relative flex flex-col">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Bài làm dạng văn bản</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate max-w-[300px]">{previewText.name}</p>
+              </div>
+              <button
+                onClick={() => setPreviewText(null)}
+                className="p-2 bg-slate-100 text-slate-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 bg-slate-50 p-6 overflow-y-auto">
+              <p className="text-[14px] text-slate-700 leading-relaxed whitespace-pre-wrap">{previewText.content}</p>
             </div>
           </div>
         </div>
