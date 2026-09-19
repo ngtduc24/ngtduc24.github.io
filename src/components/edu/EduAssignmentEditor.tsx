@@ -33,6 +33,7 @@ import {
 import { EduAssignment, EduGradeColumn } from '../../types/edu';
 import { getGradeColumns, saveAssignment, getAssignments } from '../../lib/edu';
 import { useNotifications } from '../NotificationContext';
+import { uploadImageToCloudinary } from '../../lib/upload';
 
 interface EduAssignmentEditorProps {
   classId: string;
@@ -56,8 +57,37 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
   const [gradeColumnId, setGradeColumnId] = useState('');
   const [allowedTypes, setAllowedTypes] = useState<string[]>(['pdf']);
   const [deadline, setDeadline] = useState('');
-  
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   const { addNotification } = useNotifications();
+
+  // Tải ảnh trực tiếp lên thư viện ảnh hệ thống (Cloudinary) rồi chèn vào nội dung,
+  // thay cho việc nhập URL ảnh thủ công qua hộp thoại.
+  const handleInsertImageFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !editor) return;
+    if (!file.type.startsWith('image/')) {
+      addNotification('Vui lòng chọn tệp ảnh.', 'error');
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      const reader = new FileReader();
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error('Không đọc được tệp ảnh.'));
+        reader.readAsDataURL(file);
+      });
+      const url = await uploadImageToCloudinary(dataUrl);
+      editor.chain().focus().setImage({ src: url }).run();
+    } catch (err) {
+      console.error(err);
+      addNotification('Lỗi tải ảnh lên. Vui lòng thử lại.', 'error');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const editor = useEditor({
     extensions: [
@@ -161,10 +191,10 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
             <button onClick={() => editor?.chain().focus().setTextAlign('center').run()} className={`p-2 rounded-lg transition-all ${editor?.isActive({ textAlign: 'center' }) ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><AlignCenter className="w-4 h-4" /></button>
             <button onClick={() => editor?.chain().focus().setTextAlign('right').run()} className={`p-2 rounded-lg transition-all ${editor?.isActive({ textAlign: 'right' }) ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><AlignRight className="w-4 h-4" /></button>
             <div className="w-px h-6 bg-slate-200 mx-1 self-center" />
-            <button onClick={() => {
-              const url = prompt('Nhập URL hình ảnh:');
-              if (url) editor?.chain().focus().setImage({ src: url }).run();
-            }} className="p-2 rounded-lg hover:bg-slate-200 text-slate-500"><ImageIcon className="w-4 h-4" /></button>
+            <label className={`p-2 rounded-lg text-slate-500 cursor-pointer flex items-center ${uploadingImage ? 'opacity-50 pointer-events-none' : 'hover:bg-slate-200'}`} title="Tải ảnh từ máy lên thư viện hệ thống">
+              <input type="file" accept="image/*" className="hidden" onChange={handleInsertImageFile} disabled={uploadingImage} />
+              <ImageIcon className="w-4 h-4" />
+            </label>
             <button onClick={() => {
               const url = prompt('Nhập URL liên kết:');
               if (url) editor?.chain().focus().setLink({ href: url }).run();
