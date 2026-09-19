@@ -22,6 +22,27 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
     description: 'Danh mục toàn bộ tính năng và công cụ trên hệ thống.',
     keywords: 'tính năng, công cụ, danh mục chức năng',
   },
+  ar_module: {
+    id: 'ar_module',
+    slug: 'tao-ar',
+    title: 'Tạo AR | SmartResearch',
+    description: 'Tạo điểm ảnh nhận diện thực tế tăng cường kèm mã QR để quét bằng điện thoại.',
+    keywords: 'AR, thực tế tăng cường, image target, mã QR',
+  },
+  utility_image_resize: {
+    id: 'utility_image_resize',
+    slug: 'phong-to-anh',
+    title: 'Phóng to ảnh | SmartResearch',
+    description: 'Phóng to ảnh theo tỉ lệ và làm rõ chi tiết ở độ phân giải cao hơn.',
+    keywords: 'phóng to ảnh, upscale, tăng độ phân giải',
+  },
+  utility_social_design: {
+    id: 'utility_social_design',
+    slug: 'thiet-ke-anh',
+    title: 'Thiết kế ảnh | SmartResearch',
+    description: 'Tạo nhanh ảnh cho bài báo, tin tức từ các khung mẫu có sẵn.',
+    keywords: 'thiết kế ảnh, ảnh bài báo, khung mẫu',
+  },
   dashboard: {
     id: 'dashboard',
     slug: 'dashboard',

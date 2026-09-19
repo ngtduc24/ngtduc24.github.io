@@ -691,11 +691,11 @@ export default function App() {
       // Mã cũ của mục Tạo AR. Giữ lại để tài khoản nào đang mở sẵn mục này, hoặc có
       // đường dẫn cũ lưu trong trình duyệt, vẫn vào đúng nơi thay vì gặp trang trắng.
       case 'ar_module':
-        return <UtilitiesModule currentUser={currentUser} initialTool="ar" />;
+        return <UtilitiesModule currentUser={currentUser} initialTool="ar" standalone />;
       case 'utility_image_resize':
-        return <UtilitiesModule currentUser={currentUser} initialTool="image_resize" />;
+        return <UtilitiesModule currentUser={currentUser} initialTool="image_resize" standalone />;
       case 'utility_social_design':
-        return <UtilitiesModule currentUser={currentUser} initialTool="social_design" />;
+        return <UtilitiesModule currentUser={currentUser} initialTool="social_design" standalone />;
       case 'public_search':
         return <PublicJournalSearch onLoginClick={() => setCurrentTab('dashboard')} />;
       case 'portfolio_website':

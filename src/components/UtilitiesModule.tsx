@@ -45,11 +45,40 @@ export const UTILITY_TOOLS: UtilityTool[] = [
 interface UtilitiesModuleProps {
   currentUser: UserAccount;
   initialTool?: UtilityToolId;
+  /** Khi bật, chỉ hiển thị đúng một công cụ như một chức năng độc lập, không có thanh chuyển công cụ. */
+  standalone?: boolean;
 }
 
-export default function UtilitiesModule({ currentUser, initialTool = 'ar' }: UtilitiesModuleProps) {
+export default function UtilitiesModule({ currentUser, initialTool = 'ar', standalone = false }: UtilitiesModuleProps) {
   const [activeTool, setActiveTool] = useState<UtilityToolId>(initialTool);
   const active = UTILITY_TOOLS.find(tool => tool.id === activeTool) || UTILITY_TOOLS[0];
+
+  const toolBody = activeTool === 'ar'
+    ? <ARModule currentUser={currentUser} />
+    : activeTool === 'image_resize'
+      ? <ImageResizer />
+      : <SocialDesigner currentUser={currentUser} />;
+
+  // Chế độ độc lập: mỗi công cụ là một chức năng riêng, tiêu đề bám theo giao diện chung của hệ thống.
+  if (standalone) {
+    const HeaderIcon = active.icon;
+    return (
+      <div className="space-y-5 animate-fadeIn">
+        <div className="flex flex-col gap-3 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:flex-row sm:items-center">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+              <HeaderIcon className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="font-display text-xl font-bold text-slate-900">{active.label}</h1>
+              <p className="mt-0.5 text-xs font-medium text-slate-500">{active.description}</p>
+            </div>
+          </div>
+        </div>
+        {toolBody}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5 animate-fadeIn">
@@ -87,7 +116,7 @@ export default function UtilitiesModule({ currentUser, initialTool = 'ar' }: Uti
         <p className="mt-3 text-[11px] leading-relaxed text-slate-500">{active.description}</p>
       </div>
 
-      {activeTool === 'ar' ? <ARModule currentUser={currentUser} /> : activeTool === 'image_resize' ? <ImageResizer /> : <SocialDesigner currentUser={currentUser} />}
+      {toolBody}
     </div>
   );
 }
