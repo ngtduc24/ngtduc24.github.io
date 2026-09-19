@@ -58,6 +58,15 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
     loadAssignment();
   }, [shareLinkId]);
 
+  // Đặt tiêu đề tab trình duyệt theo tên sinh viên sau khi xác thực.
+  useEffect(() => {
+    if (identifiedUser?.fullName) {
+      document.title = `${identifiedUser.fullName} - Nộp bài làm`;
+    } else {
+      document.title = 'Nộp bài làm | Xác thực sinh viên';
+    }
+  }, [identifiedUser]);
+
   const handleSelectAssignment = async (newAssignmentId: string) => {
     if (!identifiedUser || !assignment) return;
     
