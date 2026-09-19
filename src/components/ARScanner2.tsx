@@ -98,9 +98,11 @@ export default function ARScanner2({ target: rawTarget, onClose }: ARScanner2Pro
     const container = containerRef.current;
     if (!ready || !container) return;
 
-    // Màn hình thiết kế chuẩn hóa ảnh target theo chiều cao bằng 1, còn 8th Wall chuẩn hóa
-    // theo chiều rộng bằng 1, tức khung cục bộ có chiều rộng 1 và chiều cao 1/tỉ_lệ. Do đó
-    // để nội dung hiện đúng chỗ đã đặt, ta chia vị trí và tỉ lệ cho tỉ lệ khung hình của ảnh.
+    // Hai điều chỉnh để nội dung hiện đúng chỗ đã đặt trong màn hình thiết kế.
+    // Thứ nhất, màn hình thiết kế chuẩn hóa ảnh theo chiều cao bằng 1 còn 8th Wall theo chiều
+    // rộng bằng 1, nên chia vị trí và tỉ lệ cho tỉ lệ khung hình của ảnh.
+    // Thứ hai, khung cục bộ của 8th Wall xoay 90 độ so với màn hình thiết kế, nên nội dung
+    // được bọc trong một entity xoay 0 0 -90 để bù lại, giúp phải ra phải, trên ra trên.
     const data = targetDataRef.current;
     const aspect =
       data && data.properties && data.properties.originalHeight
@@ -164,7 +166,9 @@ export default function ARScanner2({ target: rawTarget, onClose }: ARScanner2Pro
         <a-light type="ambient" intensity="1.3"></a-light>
         <a-light type="directional" intensity="1.0" position="1 1 1"></a-light>
         <xrextras-named-image-target name="${escapeAttr(targetName)}">
-          ${nodeHtml}
+          <a-entity rotation="0 0 -90">
+            ${nodeHtml}
+          </a-entity>
         </xrextras-named-image-target>
       </a-scene>
     `;
