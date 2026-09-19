@@ -17,7 +17,9 @@ import {
   Edit2,
   Trash2,
   X,
-  CheckCircle2
+  CheckCircle2,
+  ClipboardList,
+  FileCheck2
 } from 'lucide-react';
 import { EduClass, EduSchool } from '../../types/edu';
 import { getClasses, getSchools, deleteSchool, deleteClass, saveSchool, saveClass, getClassUsers, getAssignments, getSubmissions } from '../../lib/edu';
@@ -29,10 +31,12 @@ interface EduSchoolClassListProps {
   onSelectClass: (classId: string) => void;
   onImport?: () => void;
   onOpenBank?: () => void;
+  onOpenGrades?: () => void;
+  onOpenExams?: () => void;
   isAdmin?: boolean;
 }
 
-export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank, isAdmin }: EduSchoolClassListProps) {
+export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank, onOpenGrades, onOpenExams, isAdmin }: EduSchoolClassListProps) {
   const [schools, setSchools] = useState<EduSchool[]>([]);
   const [userNames, setUserNames] = useState<Record<string, string>>({});
   const ownerName = (ownerId?: string) => (ownerId ? userNames[ownerId] || '' : '');
@@ -286,6 +290,26 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
             >
               <BookMarked className="w-4 h-4" />
               <span>Ngân hàng bài tập</span>
+            </button>
+          )}
+
+          {onOpenGrades && (
+            <button
+              onClick={onOpenGrades}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider"
+            >
+              <ClipboardList className="w-4 h-4 text-brand" />
+              <span>Nhập điểm</span>
+            </button>
+          )}
+
+          {onOpenExams && (
+            <button
+              onClick={onOpenExams}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider"
+            >
+              <FileCheck2 className="w-4 h-4 text-brand" />
+              <span>Kiểm tra</span>
             </button>
           )}
         </div>

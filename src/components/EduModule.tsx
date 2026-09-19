@@ -28,6 +28,8 @@ import EduAssignmentEditor from './edu/EduAssignmentEditor';
 import EduAssignmentDetail from './edu/EduAssignmentDetail';
 import EduGrading from './edu/EduGrading';
 import EduAssignmentBank from './edu/EduAssignmentBank';
+import EduGradeEntry from './edu/EduGradeEntry';
+import EduExamBank from './edu/EduExamBank';
 import { EduClass, EduSchool } from '../types/edu';
 import { getClasses, getSchools } from '../lib/edu';
 
@@ -36,7 +38,7 @@ interface EduModuleProps {
   settings: AppSettings;
 }
 
-type EduView = 'list' | 'import' | 'class_detail' | 'assignment_edit' | 'assignment_detail' | 'grading' | 'assignment_bank';
+type EduView = 'list' | 'import' | 'class_detail' | 'assignment_edit' | 'assignment_detail' | 'grading' | 'assignment_bank' | 'grade_entry' | 'exam_bank';
 
 export default function EduModule({ currentUser, settings }: EduModuleProps) {
   const [view, setView] = useState<EduView>('list');
@@ -96,6 +98,10 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
       setView('class_detail');
     } else if (view === 'assignment_bank') {
       setView('list');
+    } else if (view === 'grade_entry') {
+      setView('list');
+    } else if (view === 'exam_bank') {
+      setView('list');
     }
   };
 
@@ -113,6 +119,8 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
                 {view === 'import' ? 'Import dữ liệu' :
                  view === 'grading' ? 'Chấm điểm sinh viên' :
                  view === 'assignment_bank' ? 'Ngân hàng bài tập' :
+                 view === 'grade_entry' ? 'Nhập điểm' :
+                 view === 'exam_bank' ? 'Kiểm tra trắc nghiệm' :
                  'Hệ thống Giáo dục Edu'}
               </h1>
               <p className="text-xs text-slate-500 font-medium">Quản lý trường học, lớp học và kết quả học tập</p>
@@ -136,12 +144,22 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
             onSelectClass={handleClassSelect}
             onImport={() => setView('import')}
             onOpenBank={() => setView('assignment_bank')}
+            onOpenGrades={() => setView('grade_entry')}
+            onOpenExams={() => setView('exam_bank')}
             isAdmin={currentUser.role === 'admin'}
           />
         )}
 
         {view === 'assignment_bank' && (
           <EduAssignmentBank currentUser={currentUser} />
+        )}
+
+        {view === 'grade_entry' && (
+          <EduGradeEntry currentUser={currentUser} />
+        )}
+
+        {view === 'exam_bank' && (
+          <EduExamBank currentUser={currentUser} />
         )}
         
         {view === 'import' && (

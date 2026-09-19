@@ -106,6 +106,15 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     pressTimer.current = window.setTimeout(() => { longPressed.current = true; setActiveMinusId(id); }, 450);
   };
   const cancelPress = () => { if (pressTimer.current) { window.clearTimeout(pressTimer.current); pressTimer.current = null; } };
+  const iconRowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!activeMinusId) return;
+    const onDown = (e: PointerEvent) => {
+      if (iconRowRef.current && !iconRowRef.current.contains(e.target as Node)) setActiveMinusId(null);
+    };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [activeMinusId]);
 
   useEffect(() => {
     if (settings) {
@@ -293,7 +302,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
               </button>
             </div>
           )}
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-4">
+          <div ref={iconRowRef} className="flex flex-wrap justify-center gap-4">
             {filteredIcons.map(m => {
               const Icon = m.icon; const c = COLORS[m.color];
               const draggable = !q;
@@ -317,7 +326,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                     if (!dragId) { setActiveMinusId(null); onSwitchTab(m.id); }
                   }}
                   title={m.label}
-                  className={`group relative flex flex-col items-center gap-2 text-center rounded-2xl p-1 transition-all ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 rounded-2xl' : ''}`}
+                  className={`group relative flex w-[84px] shrink-0 flex-col items-center gap-2 text-center rounded-2xl p-1 transition-all ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 rounded-2xl' : ''}`}
                 >
                   {showMinus && (
                     <button
