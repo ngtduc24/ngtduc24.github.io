@@ -315,45 +315,97 @@ export default function ARScanner({ target: rawTarget, onClose }: ARScannerProps
           }
         });
       }
+
+      // Thành phần làm mượt bám ảnh. MindAR ghi thẳng ma trận vào entity mốc theo từng
+      // khung hình nên tư thế ước lượng bị nhiễu, khiến nội dung rung giật. Thành phần này
+      // đọc ma trận thế giới của entity mốc rồi nội suy dần vị trí, góc xoay và tỉ lệ cho
+      // entity hiển thị, nhờ đó giới hạn mức dịch chuyển mỗi khung hình và vật thể đứng yên.
+      if (!AFRAME.components['smooth-follow']) {
+        AFRAME.registerComponent('smooth-follow', {
+          schema: {
+            src: { type: 'selector' },
+            pos: { default: 0.3 },
+            rot: { default: 0.3 },
+          },
+          init: function () {
+            const T = AFRAME.THREE;
+            this._p = new T.Vector3();
+            this._q = new T.Quaternion();
+            this._s = new T.Vector3();
+            this._started = false;
+            this.el.object3D.visible = false;
+          },
+          tick: function () {
+            const srcEl = this.data.src;
+            if (!srcEl || !srcEl.object3D) return;
+            const src = srcEl.object3D;
+            if (!src.visible) {
+              this.el.object3D.visible = false;
+              this._started = false;
+              return;
+            }
+            src.updateWorldMatrix(true, false);
+            src.matrixWorld.decompose(this._p, this._q, this._s);
+            const o = this.el.object3D;
+            if (!this._started) {
+              o.position.copy(this._p);
+              o.quaternion.copy(this._q);
+              o.scale.copy(this._s);
+              this._started = true;
+            } else {
+              o.position.lerp(this._p, this.data.pos);
+              o.quaternion.slerp(this._q, this.data.rot);
+              o.scale.lerp(this._s, this.data.pos);
+            }
+            o.visible = true;
+          },
+        });
+      }
     }
 
     let contentHtml = '';
 
+    // Nội dung hiển thị được tách khỏi entity mốc. Entity mốc chỉ giữ mindar-image-target
+    // để MindAR bám ảnh, còn nội dung nằm trong entity smooth-follow nội suy theo mốc nên
+    // hết rung. Nút nội dung vẫn mang id ar-content-node để cử chỉ chạm và chỉnh chất liệu
+    // hoạt động như cũ.
+    let assetsHtml = '';
+    let nodeHtml = '';
+
     if (target.content_type === 'video') {
-      contentHtml = `
+      assetsHtml = `
         <a-assets>
           <video id="ar-video" src="${contentUrl}" crossorigin="anonymous" ${target.loop_video !== false ? 'loop="true"' : ''} muted playsinline webkit-playsinline preload="auto"></video>
         </a-assets>
-        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-        <a-entity mindar-image-target="targetIndex: 0">
-          ${target.is_transparent_video 
-            ? `<a-plane id="ar-content-node" src="#ar-video" chromakey-material="color: ${target.chroma_key_color || '#00ff00'}" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationStr}"></a-plane>`
-            : `<a-video id="ar-content-node" src="#ar-video" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationStr}"></a-video>`
-          }
-        </a-entity>
       `;
+      nodeHtml = target.is_transparent_video
+        ? `<a-plane id="ar-content-node" src="#ar-video" chromakey-material="color: ${target.chroma_key_color || '#00ff00'}" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationStr}"></a-plane>`
+        : `<a-video id="ar-content-node" src="#ar-video" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationStr}"></a-video>`;
     } else if (target.content_type === 'image' || target.content_type === 'gif') {
-      contentHtml = `
-        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-        <a-entity mindar-image-target="targetIndex: 0">
-          <a-image id="ar-content-node" src="${contentUrl}" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationStr}" transparent="true"></a-image>
-        </a-entity>
-      `;
+      nodeHtml = `<a-image id="ar-content-node" src="${contentUrl}" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationStr}" transparent="true"></a-image>`;
     } else if (target.content_type === '3d') {
-      contentHtml = `
+      assetsHtml = `
         <a-assets>
           <a-asset-item id="ar-model" src="${contentUrl}"></a-asset-item>
         </a-assets>
+      `;
+      nodeHtml = `<a-gltf-model id="ar-content-node" src="#ar-model" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationStr}" animation-mixer></a-gltf-model>`;
+    }
+
+    if (nodeHtml) {
+      contentHtml = `
+        ${assetsHtml}
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-        <a-entity mindar-image-target="targetIndex: 0">
-          <a-gltf-model id="ar-content-node" src="#ar-model" position="${positionStr}" scale="${scale} ${scale} ${scale}" rotation="${rotationStr}" animation-mixer></a-gltf-model>
+        <a-entity id="ar-anchor" mindar-image-target="targetIndex: 0"></a-entity>
+        <a-entity smooth-follow="src: #ar-anchor; pos: 0.3; rot: 0.3">
+          ${nodeHtml}
         </a-entity>
       `;
     }
 
     // Cấu hình A-Frame chuẩn dấu chấm phẩy ; cho schema renderer để preserveDrawingBuffer hoạt động thực tế
     container.innerHTML = `
-      <a-scene scanner-env mindar-image="imageTargetSrc: ${escapeAttr(mindUrl)}; autoStart: true; filterMinCF: 0.0001; filterBeta: 60; missTolerance: 12; warmupTolerance: 2;" color-space="sRGB" renderer="colorManagement: true; toneMapping: ACESFilmic; preserveDrawingBuffer: true;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      <a-scene scanner-env mindar-image="imageTargetSrc: ${escapeAttr(mindUrl)}; autoStart: true; filterMinCF: 0.0001; filterBeta: 1000; missTolerance: 12; warmupTolerance: 2;" color-space="sRGB" renderer="colorManagement: true; toneMapping: ACESFilmic; preserveDrawingBuffer: true;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         ${lightsHtml}
         ${contentHtml}
       </a-scene>
