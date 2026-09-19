@@ -133,7 +133,7 @@ export async function saveQuestion(q: Partial<QuizQuestion>, options: QuizOption
     subject_id: q.subject_id ?? null,
   };
   if (q.id) payload.id = q.id;
-  else { payload.owner_id = ctx.userId; }
+  else { payload.owner_id = q.owner_id ?? ctx.userId; }
   payload.owner_name = q.owner_name ?? undefined;
 
   const { data, error } = await supabase.from(Q_TABLE).upsert(payload).select('*').single();
@@ -210,7 +210,7 @@ export async function saveQuiz(q: Partial<Quiz>): Promise<Quiz> {
     is_public: q.is_public ?? false,
   };
   if (q.id) payload.id = q.id;
-  else { payload.owner_id = ctx.userId; payload.owner_name = q.owner_name ?? undefined; }
+  else { payload.owner_id = q.owner_id ?? ctx.userId; payload.owner_name = q.owner_name ?? undefined; }
   const { data, error } = await supabase.from(QUIZ_TABLE).upsert(payload).select('*').single();
   if (error) throw error;
   return data as Quiz;

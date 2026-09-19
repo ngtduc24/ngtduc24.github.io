@@ -6,7 +6,7 @@ import {
 import { UserAccount } from '../../types';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
-import { getSubjects, getClasses, getClassUsers } from '../../lib/edu';
+import { getSubjects, getClasses, getClassUsers, setEduAuthContext } from '../../lib/edu';
 import { EduSubject, EduClass } from '../../types/edu';
 import {
   QuizQuestion, QuizOption, Quiz, QuizItem, QuestionType,
@@ -40,6 +40,8 @@ export default function QuizModule({ currentUser }: QuizModuleProps) {
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
   const [bankSelectMode, setBankSelectMode] = useState(false); // mở ngân hàng để chọn câu thêm vào đề
 
+  // Đảm bảo ngữ cảnh người dùng (Firebase uid) luôn có cho các thao tác trắc nghiệm.
+  useEffect(() => { setEduAuthContext(currentUser.id, currentUser.role === 'admin'); }, [currentUser]);
   useEffect(() => { getSubjects().then(setSubjects).catch(() => {}); }, []);
   const loadQuizzes = useCallback(() => {
     setLoading(true);
@@ -52,7 +54,7 @@ export default function QuizModule({ currentUser }: QuizModuleProps) {
   // ---------- Danh sách đề ----------
   const openNewQuiz = async () => {
     try {
-      const q = await saveQuiz({ title: 'Đề mới', subject_id: filterSubject || null, owner_name: currentUser.fullName });
+      const q = await saveQuiz({ title: 'Đề mới', subject_id: filterSubject || null, owner_id: currentUser.id, owner_name: currentUser.fullName });
       setActiveQuiz(q); setView('editor');
     } catch (e: any) { addNotification('Không tạo được đề: ' + e.message, 'error'); }
   };
@@ -330,7 +332,7 @@ function QuestionForm({ currentUser, subjects, question, defaultSubject, onCance
       const saved = await saveQuestion({
         id: question?.id, content, question_type: type, multiple_grading: grading, difficulty,
         subject_id: subjectId || null, tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-        is_public: isPublic, explanation, owner_name: currentUser.fullName,
+        is_public: isPublic, explanation, owner_id: currentUser.id, owner_name: currentUser.fullName,
       }, filled.map((o, i) => ({ content: o.content, is_correct: o.is_correct, order_index: i })));
       addNotification('Đã lưu câu hỏi vào ngân hàng.', 'success');
       onSaved(saved);
