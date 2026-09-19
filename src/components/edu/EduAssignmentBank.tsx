@@ -402,8 +402,8 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
             ) : (
               <div className="space-y-2.5">
                 {items.map(item => (
+                  <React.Fragment key={item.id}>
                   <button
-                    key={item.id}
                     onClick={() => setViewingItem(viewingItem?.id === item.id ? null : item)}
                     className={`w-full flex items-center gap-3 p-4 border rounded-2xl transition-all text-left ${viewingItem?.id === item.id ? 'border-brand bg-brand-light/50' : 'border-slate-200 hover:border-brand hover:bg-brand-light/40'}`}
                   >
@@ -413,13 +413,9 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
                       <p className="text-[11px] text-slate-400">{(item.allowedFileTypes || []).map(t => FORMAT_OPTIONS.find(f => f.id === t)?.label || t).join(', ')}</p>
                     </div>
                   </button>
-                ))}
-              </div>
-            )}
 
-            {/* Chi tiết bài tập hiện ngay trong cột */}
-            {viewingItem && (
-              <div className="border border-brand/30 rounded-2xl overflow-hidden">
+                  {viewingItem?.id === item.id && (
+              <div className="border border-brand/30 rounded-2xl overflow-hidden mt-2.5">
                 <div className="px-5 py-4 bg-brand-light/40 border-b border-brand/20 flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -464,6 +460,10 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
                     <p className="text-sm text-slate-400 italic">Bài tập này chưa có phần yêu cầu và hướng dẫn.</p>
                   )}
                 </div>
+              </div>
+                  )}
+                  </React.Fragment>
+                ))}
               </div>
             )}
           </>
