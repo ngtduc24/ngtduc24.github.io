@@ -143,10 +143,22 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
           delete dataToSave[key as keyof AppSettings];
         }
       });
-      await saveDefaultSettingsToSupabase(dataToSave as AppSettings);
-      setSuccess(true);
+      const res = await saveDefaultSettingsToSupabase(dataToSave as AppSettings);
+      const failed = res?.failedCols || [];
+      if (failed.length > 0) {
+        // Một số cột chưa có trong Supabase nên không lưu được, báo rõ để chạy migration.
+        const names: Record<string, string> = {
+          module_overrides: 'Cài đặt chức năng', loading_gif_url: 'Ảnh tải trang', maintenance_mode: 'Tạm tắt hệ thống',
+          maintenance_variant: 'Kiểu trang tạm tắt', maintenance_date: 'Ngày mở lại', font_heading: 'Font tiêu đề',
+          font_body: 'Font nội dung', assistant_floating: 'Nút nổi trợ lý', assistant_ai: 'Trả lời bằng AI', assistant_knowledge: 'Thư viện kiến thức trợ lý',
+        };
+        const labels = failed.map(c => names[c] || c).join(', ');
+        setError('Chưa lưu được: ' + labels + '. Cơ sở dữ liệu Supabase còn thiếu cột. Hãy chạy file SETTINGS_ADD_COLUMNS.sql trong Supabase rồi lưu lại.');
+      } else {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      }
       onRefreshSettings();
-      setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
       console.error(err);
       setError("Không thể lưu cấu hình hệ thống: " + err.message);
