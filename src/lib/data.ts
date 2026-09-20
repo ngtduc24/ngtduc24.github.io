@@ -121,7 +121,8 @@ export async function getDefaultSettingsFromSupabase(): Promise<AppSettings> {
   }
 }
 
-export async function saveDefaultSettingsToSupabase(settings: AppSettings) {
+export async function saveDefaultSettingsToSupabase(settings: AppSettings): Promise<{ failedCols: string[] }> {
+  const failedCols: string[] = [];
   try {
     if (settings.sidebarOpacity !== undefined) localStorage.setItem('sidebar_opacity', String(settings.sidebarOpacity));
     const dbData = {
@@ -187,11 +188,21 @@ export async function saveDefaultSettingsToSupabase(settings: AppSettings) {
       }
       if (Object.keys(extraCols).length > 1) {
         const { error: extraError } = await supabase.from(SETTINGS_TABLE).upsert(extraCols);
-        if (extraError) console.warn('Chua luu duoc icon/banner dinh luong (thieu cot trong DB?):', extraError.message);
+        if (extraError) {
+          // Lưu gộp lỗi (thường do thiếu cột). Thử lưu lại từng cột để cột nào có thì vẫn vào,
+          // và ghi lại các cột không lưu được để báo cho người dùng chạy migration.
+          console.warn('Luu gop cot bo sung loi, thu tung cot:', extraError.message);
+          for (const [col, val] of Object.entries(extraCols)) {
+            if (col === 'id') continue;
+            const { error: oneErr } = await supabase.from(SETTINGS_TABLE).upsert({ id: settings.id, [col]: val });
+            if (oneErr) failedCols.push(col);
+          }
+        }
       }
     } catch (extraE) {
       console.warn('Bo qua luu bo sung banner:', extraE);
     }
+    return { failedCols };
   } catch (error) {
     handleSupabaseError(error, "Lưu cài đặt hệ thống", SETTINGS_TABLE);
     throw error;
