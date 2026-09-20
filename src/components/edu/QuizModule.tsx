@@ -124,13 +124,13 @@ export default function QuizModule({ currentUser }: QuizModuleProps) {
             {quizzes.map(q => (
               <button key={q.id} onClick={() => { setActiveQuiz(q); setView('detail'); }} className="group flex flex-col rounded-3xl border border-slate-100 bg-white p-5 text-left shadow-sm transition-all hover:border-brand/30 hover:shadow-md">
                 <div className="flex items-start justify-between gap-3">
-                  {/* Chỉ hiện nhãn khi đề đã phát hành hoặc lưu trữ. Đề còn là bản nháp thì không hiện nhãn. */}
-                  {q.status !== 'draft' ? (
+                  {/* Chỉ tạo nhãn khi đề đã phát hành hoặc lưu trữ. Đề còn là bản nháp thì không có nhãn. */}
+                  {q.status !== 'draft' && (
                     <span className={`rounded-lg px-2.5 py-1 text-[10px] font-bold ${q.status === 'published' ? 'bg-brand-light text-brand' : 'bg-slate-100 text-slate-500'}`}>
                       {q.status === 'published' ? 'Đã phát hành' : 'Lưu trữ'}
                     </span>
-                  ) : <span />}
-                  {q.is_public && <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600"><Globe className="h-3 w-3" /> Công khai</span>}
+                  )}
+                  {q.is_public && <span className="ml-auto inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600"><Globe className="h-3 w-3" /> Công khai</span>}
                 </div>
                 <h3 className="mt-3 text-sm font-black text-slate-800 group-hover:text-brand">{q.title}</h3>
                 {q.subject_id && <p className="mt-0.5 text-[11px] font-semibold text-brand">{subjectName(q.subject_id)}</p>}
