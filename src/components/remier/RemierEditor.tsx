@@ -141,6 +141,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   const [safeFrame, setSafeFrame] = useState(false);
   const [zoomMenu, setZoomMenu] = useState(false);
   const [leftPanel, setLeftPanel] = useState<LeftPanel>('media');
+  const [transformMode, setTransformMode] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -612,6 +613,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
       else if (e.shiftKey && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); fitTimeline(); }
       else if (e.key === 'Home') { seekTo(0); }
       else if (e.key === 'End') { seekTo(duration); }
+      else if (e.key === 'Escape') { setTransformMode(false); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -664,7 +666,12 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 
         {/* Khung xem trước */}
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-[#0b0e12] p-4">
+          <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-auto bg-[#0b0e12] p-4"
+            onDoubleClick={() => {
+              const target = selClip?.clip && selClip.clip.kind !== 'audio' ? selClip.clip
+                : (() => { for (const tr of tracksRef.current) { const c = activeClip(tr, playheadRef.current); if (c && c.kind !== 'audio') return c; } return null; })();
+              if (target) { setSelId(target.id); setMultiSel([]); setTransformMode(true); }
+            }}>
             <div className={`relative inline-block leading-none ${previewFit ? 'max-h-full max-w-full' : ''}`}>
               <canvas ref={canvasRef} width={W} height={H}
                 className={`block rounded-lg bg-black shadow-2xl ${previewFit ? 'max-h-full max-w-full' : ''}`}
@@ -675,7 +682,16 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
                   <div className="absolute border border-dashed border-white/30" style={{ inset: '10%' }} />
                 </div>
               )}
+              {transformMode && selClip && selClip.clip.kind !== 'audio' && (
+                <TransformOverlay clip={selClip.clip} W={W} H={H} canvasRef={canvasRef} onChange={(patch) => updateClipProps(selClip.clip.id, patch)} />
+              )}
             </div>
+            {transformMode && (
+              <button onClick={() => setTransformMode(false)} className="absolute right-3 top-3 z-20 rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white shadow-lg hover:bg-brand-hover">Xong khung neo</button>
+            )}
+            {!transformMode && selClip && selClip.clip.kind !== 'audio' && (
+              <span className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] text-slate-300">Nhấn đúp vào khung để chỉnh trực tiếp</span>
+            )}
           </div>
           <div className="flex h-11 shrink-0 items-center gap-3 border-t border-white/10 bg-[#151a21] px-4">
             <button onClick={togglePlay} title={playing ? 'Tạm dừng (Space)' : 'Phát (Space)'} className="grid h-8 w-8 place-items-center rounded-lg bg-white/5 hover:bg-white/10">{playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
@@ -1174,6 +1190,86 @@ function PropsPanel({ clip, onProps, onClip, onDelete, onDuplicate, onSplitAudio
       <div className="grid grid-cols-2 gap-2">
         <Row label="Bắt đầu (giây)">{num(Math.round(clip.start) / 1000, v => onClip({ start: Math.max(0, Math.round(v * 1000)) }), 0.1, 0)}</Row>
         <Row label="Thời lượng (giây)">{num(Math.round(clip.dur) / 1000, v => onClip({ dur: Math.max(0.1, Math.round(v * 1000)) }), 0.1, 0.1)}</Row>
+      </div>
+    </div>
+  );
+}
+
+// ============================ Khung neo trên preview ============================
+// Hiện đường bao có điểm neo để kéo di chuyển và phóng to thu nhỏ media trực tiếp.
+function TransformOverlay({ clip, W, H, canvasRef, onChange }: { clip: Clip; W: number; H: number; canvasRef: React.RefObject<HTMLCanvasElement>; onChange: (p: Partial<ClipProps>) => void; }) {
+  const p = clip.props;
+  const [, force] = useState(0);
+  useEffect(() => { force(x => x + 1); }, []); // vẽ lại sau khi canvas đã có kích thước
+  const cv = canvasRef.current;
+  if (!cv) return null;
+  const rect = cv.getBoundingClientRect();
+  const disp = rect.width / W || 1;
+
+  // Kích thước hộp trong hệ tọa độ logic (trước khi xoay).
+  let bw = W, bh = H;
+  if (clip.kind === 'text') {
+    const ctx = document.createElement('canvas').getContext('2d');
+    if (ctx) {
+      ctx.font = `${p.fontWeight} ${p.fontSize}px Inter, system-ui, sans-serif`;
+      const lines = (p.text || '').split('\n');
+      bw = Math.max(10, ...lines.map(l => ctx.measureText(l).width));
+      bh = lines.length * p.fontSize * 1.2;
+    }
+  } else {
+    const el = getMediaEl(clip) as any;
+    const iw = el?.videoWidth || el?.naturalWidth || W;
+    const ih = el?.videoHeight || el?.naturalHeight || H;
+    const cs = Math.min(W / iw, H / ih);
+    bw = iw * cs; bh = ih * cs;
+  }
+  bw *= p.scale; bh *= p.scale;
+  const cx = W / 2 + (p.x / 100) * W, cy = H / 2 + (p.y / 100) * H;
+  const left = (cx - bw / 2) * disp, top = (cy - bh / 2) * disp, w = bw * disp, h = bh * disp;
+
+  const dragBody = (e: React.PointerEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    const startX = e.clientX, startY = e.clientY, sx = p.x, sy = p.y;
+    const move = (ev: PointerEvent) => {
+      const d = cv.getBoundingClientRect(); const ds = d.width / W || 1;
+      const dxp = ((ev.clientX - startX) / ds) / W * 100;
+      const dyp = ((ev.clientY - startY) / ds) / H * 100;
+      onChange({ x: Math.round((sx + dxp) * 10) / 10, y: Math.round((sy + dyp) * 10) / 10 });
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  };
+  const dragCorner = (e: React.PointerEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    const d0 = cv.getBoundingClientRect();
+    const centerX = d0.left + cx * disp, centerY = d0.top + cy * disp;
+    const startDist = Math.hypot(e.clientX - centerX, e.clientY - centerY) || 1;
+    const sScale = p.scale;
+    const move = (ev: PointerEvent) => {
+      const dist = Math.hypot(ev.clientX - centerX, ev.clientY - centerY);
+      const ns = Math.max(0.05, Math.min(10, sScale * (dist / startDist)));
+      onChange({ scale: Math.round(ns * 100) / 100 });
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  };
+  const corners: { k: string; s: React.CSSProperties }[] = [
+    { k: 'nw', s: { left: 0, top: 0, cursor: 'nwse-resize' } },
+    { k: 'ne', s: { left: '100%', top: 0, cursor: 'nesw-resize' } },
+    { k: 'sw', s: { left: 0, top: '100%', cursor: 'nesw-resize' } },
+    { k: 'se', s: { left: '100%', top: '100%', cursor: 'nwse-resize' } },
+  ];
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-10">
+      <div className="pointer-events-auto absolute cursor-move border-2 border-brand"
+        style={{ left, top, width: Math.max(6, w), height: Math.max(6, h), transform: `rotate(${p.rotation}deg)` }}
+        onPointerDown={dragBody}>
+        {corners.map(c => (
+          <span key={c.k} onPointerDown={dragCorner}
+            className="pointer-events-auto absolute h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-brand bg-white shadow"
+            style={c.s} />
+        ))}
       </div>
     </div>
   );
