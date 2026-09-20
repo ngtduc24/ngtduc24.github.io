@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Plus, Search, LayoutGrid, List as ListIcon, Edit2, Eye, Copy, Send, Trash2, Globe, Lock,
   ArrowLeft, ArrowUp, ArrowDown, Loader2, X, Check, BookOpen, Users, Link2, QrCode, FileText,
-  Upload, RotateCcw, FileSpreadsheet, ChevronRight, GraduationCap
+  Upload, RotateCcw, FileSpreadsheet, ChevronRight, GraduationCap, Image as ImageIconEl
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { UserAccount } from '../../types';
@@ -19,6 +19,7 @@ import {
   copyPublicLesson, getLessonClasses, setLessonClasses, getSectionViews, stripHtml,
 } from '../../lib/elearning';
 import QuizRichText from './QuizRichText';
+import MediaSourcePicker from '../MediaSourcePicker';
 
 interface Props { currentUser: UserAccount; }
 type View = 'list' | 'editor' | 'assign' | 'progress' | 'trash';
@@ -437,7 +438,19 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
           <Field label="Tên"><input value={lesson.title} onChange={e => setLesson({ ...lesson, title: e.target.value })} onBlur={e => patchLesson({ title: e.target.value })} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-brand" /></Field>
           <Field label="Môn học"><select value={lesson.subject_id || ''} onChange={e => patchLesson({ subject_id: e.target.value || null })} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-brand"><option value="">Chọn môn</option>{subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>
           <Field label="Mô tả ngắn"><textarea value={lesson.summary || ''} onChange={e => setLesson({ ...lesson, summary: e.target.value })} onBlur={e => patchLesson({ summary: e.target.value })} rows={2} className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-brand" /></Field>
-          <Field label="Ảnh bìa (URL)"><input value={lesson.cover_url || ''} onChange={e => setLesson({ ...lesson, cover_url: e.target.value })} onBlur={e => patchLesson({ cover_url: e.target.value })} placeholder="https://..." className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-brand" /></Field>
+          <Field label="Ảnh bìa">
+            {lesson.cover_url ? (
+              <div className="relative overflow-hidden rounded-xl border border-slate-200">
+                <img src={lesson.cover_url} alt="Ảnh bìa" className="h-28 w-full object-cover" />
+                <div className="absolute right-2 top-2 flex gap-1">
+                  <MediaSourcePicker onSelect={(url) => patchLesson({ cover_url: url })} accept="image/*" resourceType="image" folder="elearning-covers" category="E-Learning" label="Đổi" className="rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-600 shadow hover:bg-white" />
+                  <button onClick={() => patchLesson({ cover_url: '' })} className="rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold text-rose-500 shadow hover:bg-white">Xóa</button>
+                </div>
+              </div>
+            ) : (
+              <MediaSourcePicker onSelect={(url) => patchLesson({ cover_url: url })} accept="image/*" resourceType="image" folder="elearning-covers" category="E-Learning" label="Tải lên hoặc chọn từ thư viện" icon={ImageIconEl} className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-xs font-semibold text-slate-500 hover:border-brand/40 hover:text-brand" />
+            )}
+          </Field>
           <Field label="Thẻ phân loại (cách nhau dấu phẩy)"><input value={(lesson.tags || []).join(', ')} onChange={e => setLesson({ ...lesson, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} onBlur={e => patchLesson({ tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-brand" /></Field>
           <Field label="Thời lượng học (phút)"><input type="number" min={1} value={lesson.duration_minutes || ''} onChange={e => setLesson({ ...lesson, duration_minutes: e.target.value ? Number(e.target.value) : null })} onBlur={e => patchLesson({ duration_minutes: lesson.duration_minutes })} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-brand" /></Field>
 
