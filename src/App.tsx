@@ -588,7 +588,6 @@ export default function App() {
     if (tabId === 'backup') return false;
     // Mục Tạo AR nay nằm trong Tiện ích. Tài khoản nào đã được cấp quyền ar_module
     // từ trước thì vẫn vào được, không cần quản trị viên cấp lại quyền.
-    if (tabId === 'assistant') return true; // Trợ lý ảo mở cho mọi tài khoản đã đăng nhập
     if (tabId === 'all_features') return true; // Trang tổng hợp tính năng, tự lọc theo quyền của tài khoản
     if (tabId === 'profile') return true; // Trang cá nhân mở cho mọi tài khoản đã đăng nhập
     // Tiện ích đã tách thành 3 công cụ độc lập, mỗi công cụ có quyền riêng.
