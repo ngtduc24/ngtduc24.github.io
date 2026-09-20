@@ -33,6 +33,7 @@ export interface EduGradeColumn {
   name: string;
   order: number;
   isConfirmed: boolean;
+  weight?: number; // tỷ trọng % của cột trong điểm trung bình môn
   createdAt: string;
   updatedAt: string;
 }
