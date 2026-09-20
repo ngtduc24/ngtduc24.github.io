@@ -176,6 +176,16 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
 
   const isUserAdmin = currentUser?.role === 'admin';
   const perms = currentUser?.permissions || [];
+
+  // Mở chức năng. Với phím tắt con của Giáo dục thì đặt sẵn màn hình đích rồi vào module edu.
+  const go = (id: string) => {
+    if (id === 'edu_exam' || id === 'edu_grade') {
+      try { localStorage.setItem('edu_initial_view', id === 'edu_exam' ? 'exam_bank' : 'grade_entry'); } catch {}
+      onSwitchTab('edu');
+      return;
+    }
+    onSwitchTab(id);
+  };
   const can = (id: string) => {
     if (isUserAdmin) return true;
     if (id === 'notifications') return true;
@@ -183,6 +193,9 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     if (id === 'ar_module') return perms.includes('ar_module') || perms.includes('utilities');
     if (id === 'utility_image_resize') return perms.includes('utility_image_resize') || perms.includes('utilities');
     if (id === 'utility_social_design') return perms.includes('utility_social_design') || perms.includes('utilities');
+    // Phím tắt tới chức năng con trong Quản lý Giáo dục.
+    if (id === 'edu_exam') return perms.includes('edu') && !!currentUser?.canGradeEdu;
+    if (id === 'edu_grade') return perms.includes('edu') && !!currentUser?.canGradeImportEdu;
     if (id === 'users' || id === 'permissions') return false;
     return perms.includes(id);
   };
@@ -195,6 +208,8 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { id: 'qualitative_analysis', label: 'Định tính', desc: 'Mã hóa, phân tích dữ liệu phỏng vấn, thảo luận nhóm', icon: ImageIcon, color: 'emerald' },
     { id: 'quantitative_analysis', label: 'Định lượng', desc: 'Phân tích thống kê, trực quan hóa dữ liệu', icon: BarChart3, color: 'blue' },
     { id: 'edu', label: 'Quản lý Giáo dục', desc: 'Quản lý lớp học, sinh viên, chương trình đào tạo', icon: GraduationCap, color: 'purple' },
+    { id: 'edu_exam', label: 'Trắc nghiệm', desc: 'Tạo và chấm đề kiểm tra trắc nghiệm', icon: CheckCircle2, color: 'blue' },
+    { id: 'edu_grade', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường', icon: ClipboardList, color: 'emerald' },
     { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn', icon: BookOpen, color: 'orange' },
     { id: 'ar_module', label: 'Tạo AR', desc: 'Tạo điểm ảnh AR kèm mã QR để quét bằng điện thoại', icon: Scan, color: 'red' },
     { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn', icon: ImageIcon, color: 'blue' },
@@ -370,7 +385,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                   onClick={() => {
                     if (longPressed.current) { longPressed.current = false; return; }
                     if (sortMode) return; // đang sắp xếp thì bấm không mở chức năng
-                    if (!dragId) onSwitchTab(m.id);
+                    if (!dragId) go(m.id);
                   }}
                   title={m.label}
                   className={`group relative flex w-[84px] shrink-0 flex-col items-center gap-2 text-center rounded-2xl p-1 transition-all select-none touch-none ${sortMode ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 rounded-2xl' : ''}`}
@@ -417,7 +432,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
             {filteredCards.map(m => {
               const Icon = m.icon; const c = COLORS[m.color];
               return (
-                <button key={m.id} onClick={() => onSwitchTab(m.id)} className="group text-left bg-white rounded-2xl border border-slate-100 shadow-xs hover:shadow-md hover:border-brand/30 transition-all p-4 flex items-start gap-3">
+                <button key={m.id} onClick={() => go(m.id)} className="group text-left bg-white rounded-2xl border border-slate-100 shadow-xs hover:shadow-md hover:border-brand/30 transition-all p-4 flex items-start gap-3">
                   <span className={`w-10 h-10 rounded-xl ${c.bg} ${c.text} grid place-items-center shrink-0`}><Icon className="w-5 h-5" /></span>
                   <div className="min-w-0 flex-1">
                     <h3 className="text-[13px] font-black text-slate-800 leading-tight group-hover:text-brand transition-colors">{m.label}</h3>
