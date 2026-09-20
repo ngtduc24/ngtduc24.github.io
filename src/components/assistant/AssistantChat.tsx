@@ -3,7 +3,7 @@ import { Send, BookOpen, LayoutGrid, HelpCircle, ArrowRight, Loader2, FileQuesti
 import { UserAccount, AppSettings } from '../../types';
 import { MODULE_REGISTRY, resolveModuleMeta, isModuleHidden } from '../../lib/modules';
 import { getSubjects, getAssignmentBank } from '../../lib/edu';
-import { getMyLessons, getPublicLessons, stripHtml, ELLesson } from '../../lib/elearning';
+import { getMyLessons, getPublicLessons, getSections, stripHtml, ELLesson } from '../../lib/elearning';
 import { getBankQuestions, QuizQuestion } from '../../lib/quiz';
 import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
 
@@ -20,10 +20,34 @@ interface Props {
 // Bỏ dấu tiếng Việt để tìm kiếm không phân biệt dấu.
 const norm = (s = '') => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
 
+// Từ chung ít mang nghĩa, bỏ ra khi tìm câu trả lời để bám vào từ khóa chính (ví dụ vertex).
+const STOPWORDS = new Set(['la', 'gi', 'the', 'nao', 'cua', 'va', 'o', 'dau', 'cach', 'lam', 'khi', 'cho', 'mot', 'cai', 'nhu', 'nay', 'do', 'ra', 'sao', 'ai', 'bao', 'nhieu', 'co', 'khong', 'duoc', 'voi', 'trong', 'tren', 'de', 'thi', 'hay', 'cac', 'nhung', 've', 'ban', 'minh']);
+
+// Tách văn bản thành câu, không dùng lookbehind để chạy được trên Safari cũ.
+const splitSentences = (text: string) => text.split(/(?:[.!?…]+\s+)|[\n\r]+/).map(s => s.trim()).filter(Boolean);
+
+// Trích câu trong nội dung bài giảng có chứa từ khóa chính, để trả lời thẳng câu hỏi.
+function extractAnswer(text: string, keywords: string[]): string | null {
+  const sentences = splitSentences(text);
+  const kws = [...keywords].sort((a, b) => b.length - a.length);
+  for (let i = 0; i < sentences.length; i += 1) {
+    const n = norm(sentences[i]);
+    if (kws.some(w => n.includes(w))) {
+      let out = sentences[i];
+      if (out.length < 60 && sentences[i + 1]) out += '. ' + sentences[i + 1];
+      return out.length > 320 ? out.slice(0, 318).trimEnd() + '…' : out;
+    }
+  }
+  return null;
+}
+
 interface FeatureHit { id: string; label: string; desc: string }
 interface GuideHit { id: string; name: string; whatIs: string; howTo: string[] }
+interface Passage { lessonId: string; lessonTitle: string; text: string }
+interface AnswerHit { snippet: string; lessonId: string; lessonTitle: string }
 interface BotResult {
   intro: string;
+  answers: AnswerHit[];
   knowledge: { title: string; content: string }[];
   guides: GuideHit[];
   faqs: { title: string; body: string; goId?: string }[];
@@ -83,6 +107,7 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
   const [subjects, setSubjects] = useState<EduSubject[]>([]);
   const [lessons, setLessons] = useState<ELLesson[]>([]);
   const [bankItems, setBankItems] = useState<EduAssignmentBankItem[]>([]);
+  const [passages, setPassages] = useState<Passage[]>([]);
   const [dataReady, setDataReady] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -123,6 +148,17 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
           ]);
           setLessons(pub);
           setBankItems((bank as EduAssignmentBankItem[]).filter(b => b.isPublic === true));
+          // Đọc nội dung các phần của bài giảng công khai để trả lời thẳng câu hỏi kiến thức.
+          const limited = pub.slice(0, 40);
+          const secLists = await Promise.all(limited.map(l =>
+            getSections(l.id).then(secs => ({ l, secs })).catch(() => ({ l, secs: [] as any[] }))
+          ));
+          const ps: Passage[] = [];
+          secLists.forEach(({ l, secs }) => secs.forEach((s: any) => {
+            const t = stripHtml(s.content || '');
+            if (t.trim().length > 0) ps.push({ lessonId: l.id, lessonTitle: l.title || 'Bài giảng', text: t });
+          }));
+          setPassages(ps);
         } else {
           const [mine, pub] = await Promise.all([
             getMyLessons({}).catch(() => []),
@@ -173,6 +209,18 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
 
     // ===== Chế độ trang trợ lý kiến thức: chỉ nội dung công khai, không có phần hệ thống =====
     if (knowledgeMode) {
+      // Trả lời thẳng bằng cách trích câu trong nội dung bài giảng có chứa từ khóa chính.
+      const keywords = words.filter(w => w.length >= 2 && !STOPWORDS.has(w));
+      const kw = keywords.length ? keywords : words;
+      const answers: AnswerHit[] = [];
+      const usedLessons = new Set<string>();
+      for (const p of passages) {
+        if (answers.length >= 2) break;
+        if (usedLessons.has(p.lessonId)) continue;
+        const snip = extractAnswer(p.text, kw);
+        if (snip) { answers.push({ snippet: snip, lessonId: p.lessonId, lessonTitle: p.lessonTitle }); usedLessons.add(p.lessonId); }
+      }
+
       let questions: { id: string; text: string }[] = [];
       try {
         const qs = await getBankQuestions({ scope: 'shared', search: text });
@@ -184,11 +232,13 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
         .slice(0, 3)
         .map(b => ({ id: b.id, title: b.title || 'Bài tập', subject: subjectName(b.subjectId), snippet: stripHtml(b.content || '').slice(0, 140) }));
 
-      const total = knowledge.length + lessonHitsAll.length + questions.length + assignments.length;
+      const total = answers.length + knowledge.length + lessonHitsAll.length + questions.length + assignments.length;
       const intro = total === 0
         ? 'Mình chưa tìm thấy nội dung phù hợp trong kho công khai. Bạn thử hỏi theo tên bài giảng, môn học, hoặc một khái niệm trong bài. Lưu ý mình chỉ biết các bài giảng, câu hỏi và bài tập đã được chia sẻ công khai.'
-        : 'Mình tìm được nội dung liên quan trong kho học liệu công khai:';
-      return { intro, knowledge, guides: [], faqs: [], features: [], lessons: lessonHitsAll, questions, assignments };
+        : answers.length > 0
+          ? 'Theo nội dung bài giảng công khai:'
+          : 'Mình tìm được nội dung liên quan trong kho học liệu công khai:';
+      return { intro, answers, knowledge, guides: [], faqs: [], features: [], lessons: lessonHitsAll, questions, assignments };
     }
 
     const matchedFeatures = MODULE_REGISTRY
@@ -244,7 +294,7 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
     } else {
       intro = 'Đây là những gì mình tìm được:';
     }
-    return { intro, knowledge, guides, faqs, features, lessons: lessonHits, questions, assignments: [] };
+    return { intro, answers: [], knowledge, guides, faqs, features, lessons: lessonHits, questions, assignments: [] };
   };
 
   const submit = async (raw?: string) => {
@@ -291,6 +341,13 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
         ) : (
           <div key={i} className="space-y-2">
             <div className="rounded-2xl rounded-tl-sm bg-white px-3 py-2.5 text-[13px] text-slate-700 shadow-sm">{m.result.intro}</div>
+
+            {m.result.answers.map((a, k) => (
+              <div key={`ans${k}`} className="rounded-2xl border border-brand/20 bg-brand-light/40 p-3">
+                <p className="text-[13.5px] leading-snug text-slate-800">{a.snippet}</p>
+                <button onClick={() => openLesson(a.lessonId)} className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:underline">Nguồn: {a.lessonTitle} <ArrowRight className="h-3 w-3" /></button>
+              </div>
+            ))}
 
             {m.result.knowledge.map((kn, k) => (
               <div key={`kn${k}`} className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
