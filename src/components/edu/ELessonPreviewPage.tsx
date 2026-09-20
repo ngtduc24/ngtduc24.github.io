@@ -96,7 +96,7 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
           {cur ? (
             <>
               <h2 className="mb-3 font-display text-lg font-bold text-slate-900">{active + 1}. {cur.title}</h2>
-              <div className="prose prose-sm max-w-none text-slate-700" dangerouslySetInnerHTML={{ __html: cur.content || '<p class="text-slate-400">(Chưa có nội dung)</p>' }} />
+              <div className="prose prose-sm max-w-none break-words text-slate-700 [overflow-wrap:anywhere] [&_a]:break-all" dangerouslySetInnerHTML={{ __html: cur.content || '<p class="text-slate-400">(Chưa có nội dung)</p>' }} />
               {curRes.length > 0 && (
                 <div className="mt-5 border-t border-slate-100 pt-4">
                   <p className="mb-2 text-[10px] font-black uppercase text-slate-400">Tài nguyên</p>

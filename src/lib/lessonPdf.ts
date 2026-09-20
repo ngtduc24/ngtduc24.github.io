@@ -53,7 +53,8 @@ function buildLessonHtml(lesson: ELLesson, sections: ELSection[], resources: ELR
   .summary { background: #f1f5f9; padding: 12px 16px; border-radius: 8px; font-size: 13px; color: #475569; margin-bottom: 20px; }
   .sec { margin-bottom: 26px; page-break-inside: avoid; }
   h2 { font-size: 17px; font-weight: 700; color: #0f172a; margin: 0 0 8px; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0; page-break-after: avoid; }
-  .content { font-size: 14px; }
+  .content { font-size: 14px; overflow-wrap: anywhere; word-break: break-word; }
+  .content a { word-break: break-all; }
   .content img { max-width: 100%; height: auto; border-radius: 6px; }
   .content table { border-collapse: collapse; width: 100%; }
   .content td, .content th { border: 1px solid #cbd5e1; padding: 6px 8px; }
