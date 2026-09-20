@@ -6,6 +6,7 @@ import { getSubjects, getAssignmentBank } from '../../lib/edu';
 import { getMyLessons, getPublicLessons, getSections, stripHtml, ELLesson } from '../../lib/elearning';
 import { getBankQuestions, QuizQuestion } from '../../lib/quiz';
 import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
+import { auth } from '../../lib/firebase';
 
 interface Props {
   currentUser: UserAccount;
@@ -47,6 +48,8 @@ interface Passage { lessonId: string; lessonTitle: string; text: string }
 interface AnswerHit { snippet: string; lessonId: string; lessonTitle: string }
 interface BotResult {
   intro: string;
+  aiAnswer?: string;
+  aiError?: string;
   answers: AnswerHit[];
   knowledge: { title: string; content: string }[];
   guides: GuideHit[];
@@ -109,6 +112,8 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
   const [bankItems, setBankItems] = useState<EduAssignmentBankItem[]>([]);
   const [passages, setPassages] = useState<Passage[]>([]);
   const [dataReady, setDataReady] = useState(false);
+  // Chế độ trả lời bằng AI Gemini, chỉ có ở Trợ lý giáo dục. Cần Edge Function gemini-chat.
+  const [aiMode, setAiMode] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = currentUser?.role === 'admin';
@@ -190,6 +195,22 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
   };
   const openLesson = (id: string) => { window.location.href = `${window.location.origin}${window.location.pathname}?elview=${id}`; };
 
+  // Gọi AI Gemini qua Edge Function trên Supabase, khóa API nằm ở máy chủ, cần đăng nhập.
+  const callGeminiChat = async (question: string, context: string): Promise<string> => {
+    const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL?.trim?.();
+    if (!supabaseUrl) throw new Error('Chưa cấu hình địa chỉ Supabase.');
+    const idToken = await auth.currentUser?.getIdToken().catch(() => null);
+    if (!idToken) throw new Error('Bạn cần đăng nhập để dùng trả lời bằng AI.');
+    const res = await fetch(`${String(supabaseUrl).replace(/\/$/, '')}/functions/v1/gemini-chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ question, context }),
+    });
+    const payload = await res.json().catch(() => null);
+    if (!res.ok || !payload?.answer) throw new Error(payload?.error || 'Gemini không trả lời được.');
+    return payload.answer as string;
+  };
+
   const buildResult = async (text: string): Promise<BotResult> => {
     const q = norm(text);
     const words = q.split(/\s+/).filter(w => w.length >= 2);
@@ -221,6 +242,23 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
         if (snip) { answers.push({ snippet: snip, lessonId: p.lessonId, lessonTitle: p.lessonTitle }); usedLessons.add(p.lessonId); }
       }
 
+      // Nếu bật AI Gemini: gom ngữ cảnh từ học liệu công khai rồi nhờ Gemini trả lời.
+      let aiAnswer: string | undefined;
+      let aiError: string | undefined;
+      if (aiMode) {
+        const ctxParts: string[] = [];
+        knowledge.forEach(k => ctxParts.push(`${k.title}: ${k.content}`));
+        const relevant = passages.filter(p => kw.some(w => norm(p.text).includes(w)));
+        const usePassages = (relevant.length ? relevant : passages).slice(0, 6);
+        usePassages.forEach(p => ctxParts.push(`Bài giảng ${p.lessonTitle}: ${p.text.slice(0, 1000)}`));
+        const context = ctxParts.join('\n\n').slice(0, 15000);
+        try {
+          aiAnswer = await callGeminiChat(text, context);
+        } catch (e: any) {
+          aiError = e?.message || 'Không gọi được AI.';
+        }
+      }
+
       let questions: { id: string; text: string }[] = [];
       try {
         const qs = await getBankQuestions({ scope: 'shared', search: text });
@@ -232,13 +270,15 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
         .slice(0, 3)
         .map(b => ({ id: b.id, title: b.title || 'Bài tập', subject: subjectName(b.subjectId), snippet: stripHtml(b.content || '').slice(0, 140) }));
 
-      const total = answers.length + knowledge.length + lessonHitsAll.length + questions.length + assignments.length;
-      const intro = total === 0
-        ? 'Mình chưa tìm thấy nội dung phù hợp trong kho công khai. Bạn thử hỏi theo tên bài giảng, môn học, hoặc một khái niệm trong bài. Lưu ý mình chỉ biết các bài giảng, câu hỏi và bài tập đã được chia sẻ công khai.'
-        : answers.length > 0
-          ? 'Theo nội dung bài giảng công khai:'
-          : 'Mình tìm được nội dung liên quan trong kho học liệu công khai:';
-      return { intro, answers, knowledge, guides: [], faqs: [], features: [], lessons: lessonHitsAll, questions, assignments };
+      // Khi AI trả lời, ẩn phần trích câu cục bộ để tránh trùng, vẫn giữ nguồn bài giảng bên dưới.
+      const localAnswers = aiAnswer ? [] : answers;
+      const total = (aiAnswer ? 1 : 0) + localAnswers.length + knowledge.length + lessonHitsAll.length + questions.length + assignments.length;
+      let intro: string;
+      if (aiAnswer) intro = 'Trợ lý giáo dục trả lời (AI Gemini dựa trên học liệu công khai):';
+      else if (total === 0) intro = 'Mình chưa tìm thấy nội dung phù hợp trong kho công khai. Bạn thử hỏi theo tên bài giảng, môn học, hoặc một khái niệm trong bài. Lưu ý mình chỉ biết các bài giảng, câu hỏi và bài tập đã được chia sẻ công khai.';
+      else if (localAnswers.length > 0) intro = 'Theo nội dung bài giảng công khai:';
+      else intro = 'Mình tìm được nội dung liên quan trong kho học liệu công khai:';
+      return { intro, aiAnswer, aiError, answers: localAnswers, knowledge, guides: [], faqs: [], features: [], lessons: lessonHitsAll, questions, assignments };
     }
 
     const matchedFeatures = MODULE_REGISTRY
@@ -341,6 +381,16 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
         ) : (
           <div key={i} className="space-y-2">
             <div className="rounded-2xl rounded-tl-sm bg-white px-3 py-2.5 text-[13px] text-slate-700 shadow-sm">{m.result.intro}</div>
+
+            {m.result.aiAnswer && (
+              <div className="rounded-2xl border border-brand/30 bg-brand-light/50 p-3">
+                <p className="mb-1 flex items-center gap-1.5 text-[10px] font-black uppercase text-brand"><Sparkles className="h-3.5 w-3.5" /> AI Gemini</p>
+                <p className="whitespace-pre-line text-[13.5px] leading-snug text-slate-800">{m.result.aiAnswer}</p>
+              </div>
+            )}
+            {m.result.aiError && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-800">Không dùng được AI ({m.result.aiError}). Dưới đây là kết quả tìm trong học liệu.</div>
+            )}
 
             {m.result.answers.map((a, k) => (
               <div key={`ans${k}`} className="rounded-2xl border border-brand/20 bg-brand-light/40 p-3">
@@ -447,8 +497,19 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
           </div>
         ))}
 
-        {loading && <div className="flex items-center gap-2 px-2 text-[12px] text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> Đang tìm...</div>}
+        {loading && <div className="flex items-center gap-2 px-2 text-[12px] text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> {aiMode ? 'AI đang trả lời...' : 'Đang tìm...'}</div>}
       </div>
+
+      {knowledgeMode && (
+        <button
+          type="button"
+          onClick={() => setAiMode(v => !v)}
+          className="flex items-center justify-between gap-2 border-t border-slate-100 bg-white px-3 py-2 text-left"
+        >
+          <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600"><Sparkles className={`h-3.5 w-3.5 ${aiMode ? 'text-brand' : 'text-slate-400'}`} /> Trả lời bằng AI Gemini</span>
+          <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${aiMode ? 'bg-brand' : 'bg-slate-300'}`}><span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${aiMode ? 'left-[18px]' : 'left-0.5'}`} /></span>
+        </button>
+      )}
 
       <div className="flex items-center gap-2 border-t border-slate-100 bg-white p-2.5">
         <input
