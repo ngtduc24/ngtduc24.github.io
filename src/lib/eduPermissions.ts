@@ -9,17 +9,15 @@ const EDU_FLAGS: (keyof UserAccount)[] = [
   'canCreateEdu', 'canEditEdu', 'canDeleteEdu', 'canImportEdu', 'canExportEdu', 'canGradeImportEdu', 'canGradeEdu',
 ];
 
-// Tài khoản chưa được cấu hình bất kỳ quyền con Giáo dục nào (tất cả cờ đều tắt) thì
-// vẫn cho làm đầy đủ như trước, để không làm mất quyền của tài khoản cũ. Khi đã bật
-// ít nhất một quyền con thì mỗi hành động phải đúng quyền tương ứng mới được thực hiện.
 export function eduHasAnyFlag(user: EduUserLike): boolean {
   return !!user && EDU_FLAGS.some(f => !!(user as any)[f]);
 }
 
+// Nguyên tắc chặt: quản trị viên làm được tất cả. Tài khoản khác chỉ làm được đúng
+// thao tác đã được cấp quyền. Không cấp quyền con nào thì chỉ xem, không thao tác.
 export function eduCan(user: EduUserLike, action: EduAction): boolean {
   if (!user) return false;
   if ((user as any).role === 'admin') return true;
-  if (!eduHasAnyFlag(user)) return true;
   switch (action) {
     case 'create': return !!(user as any).canCreateEdu;
     case 'edit': return !!(user as any).canEditEdu;

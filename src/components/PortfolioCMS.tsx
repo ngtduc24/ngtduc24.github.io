@@ -86,10 +86,9 @@ const DIVISION_FLAG: Record<PortfolioDivision, 'canPortfolioContent' | 'canPortf
 
 export default function PortfolioCMS({ currentUser }: PortfolioCMSProps = {}) {
   const isPortfolioAdmin = currentUser?.role === 'admin';
-  // Tài khoản chưa cấu hình quyền con nào (tất cả cờ đều tắt) thì cho xem toàn bộ,
-  // giữ nguyên hành vi cũ. Khi đã bật ít nhất một mục con thì chỉ hiện mục được bật.
-  const anySubFlag = !!currentUser && Object.values(DIVISION_FLAG).some(f => (currentUser as any)[f]);
-  const canDivision = (id: PortfolioDivision) => isPortfolioAdmin || !anySubFlag || !!(currentUser as any)?.[DIVISION_FLAG[id]];
+  // Nguyên tắc chặt: quản trị viên xem tất cả. Tài khoản khác chỉ thấy phân hệ con
+  // đã được cấp quyền. Không cấp mục con nào thì không thấy mục nào.
+  const canDivision = (id: PortfolioDivision) => isPortfolioAdmin || !!(currentUser as any)?.[DIVISION_FLAG[id]];
   const visibleDivisions = DIVISIONS.filter(d => canDivision(d.id));
   const [activeDivision, setActiveDivision] = useState<PortfolioDivision>(visibleDivisions[0]?.id ?? 'content');
 
@@ -99,7 +98,7 @@ export default function PortfolioCMS({ currentUser }: PortfolioCMSProps = {}) {
       setActiveDivision(visibleDivisions[0].id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [anySubFlag, isPortfolioAdmin]);
+  }, [currentUser, isPortfolioAdmin]);
   const [syncing, setSyncing] = useState(false);
   const [overviewStats, setOverviewStats] = useState([
     { label: 'Dự án', value: 0, detail: '0 đã xuất bản', icon: FolderKanban },
