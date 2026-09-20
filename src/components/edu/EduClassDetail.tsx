@@ -8,6 +8,7 @@ import {
   FileText, 
   GraduationCap, 
   MoreVertical,
+  GripVertical,
   ChevronRight,
   ClipboardCheck,
   Search,
@@ -36,6 +37,7 @@ import {
   deleteGradeColumn,
   deleteUser,
   saveUser,
+  saveClassUsers,
   saveGrades,
   deleteAssignment
 } from '../../lib/edu';
@@ -64,6 +66,26 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
   const [activeTab, setActiveTab] = useState<'users' | 'assignments'>('users');
   const [newColumnName, setNewColumnName] = useState('');
   const [newColumnWeight, setNewColumnWeight] = useState('');
+  const [dragUserId, setDragUserId] = useState<string | null>(null);
+  const [overUserId, setOverUserId] = useState<string | null>(null);
+
+  // Kéo thả để sắp xếp lại thứ tự sinh viên, cập nhật STT rồi lưu.
+  const reorderUsers = async (fromId: string, toId: string) => {
+    if (!fromId || fromId === toId) return;
+    const arr = [...users].sort((a, b) => (a.stt || 0) - (b.stt || 0));
+    const from = arr.findIndex(u => u.id === fromId), to = arr.findIndex(u => u.id === toId);
+    if (from < 0 || to < 0) return;
+    const [moved] = arr.splice(from, 1); arr.splice(to, 0, moved);
+    const renum = arr.map((u, i) => ({ ...u, stt: i + 1 }));
+    setUsers(renum);
+    try {
+      await saveClassUsers(renum.map(u => ({ id: u.id, classId, stt: u.stt, fullName: u.fullName, mssv: u.mssv })));
+      addNotification('Đã lưu thứ tự sinh viên.', 'success');
+    } catch (e: any) {
+      addNotification('Lỗi lưu thứ tự: ' + (e.message || e), 'error');
+      loadData();
+    }
+  };
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [editingColumn, setEditingColumn] = useState<EduGradeColumn | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -612,8 +634,18 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {filteredUsers.map(user => (
-                  <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-6 py-4 text-xs font-bold text-slate-400">{user.stt}</td>
+                  <tr key={user.id}
+                    onDragOver={dragUserId ? (e => { e.preventDefault(); if (overUserId !== user.id) setOverUserId(user.id); }) : undefined}
+                    onDrop={dragUserId ? (() => { reorderUsers(dragUserId, user.id); setDragUserId(null); setOverUserId(null); }) : undefined}
+                    className={`hover:bg-slate-50/50 transition-colors group ${overUserId === user.id && dragUserId && dragUserId !== user.id ? 'bg-brand-light/40' : ''} ${dragUserId === user.id ? 'opacity-40' : ''}`}>
+                    <td className="px-6 py-4 text-xs font-bold text-slate-400">
+                      <div className="flex items-center gap-1">
+                        {canEdit && !searchTerm && (
+                          <span draggable onDragStart={() => setDragUserId(user.id)} onDragEnd={() => { setDragUserId(null); setOverUserId(null); }} title="Kéo để sắp xếp thứ tự" className="cursor-grab text-slate-300 hover:text-slate-500 active:cursor-grabbing"><GripVertical className="h-3.5 w-3.5" /></span>
+                        )}
+                        {user.stt}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 text-xs font-bold text-slate-500">{user.mssv}</td>
                     <td className="px-6 py-4 text-xs font-bold text-slate-800">{user.fullName}</td>
                     {gradeColumns.map(col => {
