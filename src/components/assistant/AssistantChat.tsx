@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, BookOpen, LayoutGrid, HelpCircle, ArrowRight, Loader2, FileQuestion } from 'lucide-react';
+import { Send, BookOpen, LayoutGrid, HelpCircle, ArrowRight, Loader2, FileQuestion, Sparkles } from 'lucide-react';
 import { UserAccount, AppSettings } from '../../types';
 import { MODULE_REGISTRY, resolveModuleMeta, isModuleHidden } from '../../lib/modules';
 import { getSubjects } from '../../lib/edu';
@@ -18,14 +18,43 @@ interface Props {
 const norm = (s = '') => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
 
 interface FeatureHit { id: string; label: string; desc: string }
+interface GuideHit { id: string; name: string; whatIs: string; howTo: string[] }
 interface BotResult {
   intro: string;
+  guides: GuideHit[];
   faqs: { title: string; body: string; goId?: string }[];
   features: FeatureHit[];
   lessons: { id: string; title: string; subject: string }[];
   questions: { id: string; text: string }[];
 }
 type Msg = { role: 'user'; text: string } | { role: 'bot'; result: BotResult };
+
+// Giới thiệu từng chức năng: nó là gì và các bước dùng. Trợ lý dùng để trả lời đầy đủ khi
+// người dùng hỏi về một chức năng, thay vì chỉ đưa liên kết.
+const FEATURE_GUIDE: Record<string, { whatIs: string; howTo: string[] }> = {
+  remier: { whatIs: 'Remier là công cụ dựng video nhiều lớp chạy ngay trên trình duyệt, không cần cài phần mềm.', howTo: ['Mở Remier từ trang tổng quan.', 'Thêm ảnh, video, âm thanh vào kho tư liệu rồi kéo xuống dòng thời gian.', 'Cắt ghép, thêm chữ, hiệu ứng, chuyển tiếp cho từng lớp.', 'Bấm Xuất để lưu video ra file.'] },
+  edu: { whatIs: 'Quản lý Giáo dục là nơi quản lý trường, lớp, danh sách sinh viên, bài tập và bảng điểm.', howTo: ['Mở Quản lý Giáo dục.', 'Tạo hoặc chọn lớp rồi nhập danh sách sinh viên.', 'Tạo bài tập, cột điểm, giao bài và chấm điểm.', 'Xem cột Trung bình môn tính theo trọng số từng cột.'] },
+  elearning: { whatIs: 'E-Learning là nơi soạn, lưu trữ và chia sẻ bài giảng theo môn, giao bài giảng cho lớp.', howTo: ['Vào E-Learning rồi bấm Tạo bài giảng mới.', 'Đặt tên và chọn môn, nếu chưa có môn thì bấm dấu cộng thêm nhanh.', 'Soạn nội dung theo từng phần, đính kèm tài nguyên.', 'Công khai lên kho chung hoặc giao cho lớp bằng liên kết.'] },
+  edu_bank: { whatIs: 'Ngân hàng bài tập lưu các bài tập để dùng lại và chia sẻ theo môn.', howTo: ['Mở Ngân hàng bài tập.', 'Tạo bài tập mới hoặc chọn từ kho có sẵn.', 'Gán bài tập vào lớp khi cần giao.'] },
+  edu_exam: { whatIs: 'Trắc nghiệm là nơi soạn câu hỏi, tạo đề, giao đề cho lớp và chấm tự động.', howTo: ['Mở Trắc nghiệm.', 'Soạn câu hỏi trong Ngân hàng câu hỏi.', 'Bấm Tạo đề mới rồi thêm câu hỏi vào đề.', 'Bấm Phát hành đề rồi giao cho lớp.', 'Có thể xuất đề ra PDF để in.'] },
+  edu_grade: { whatIs: 'Nhập điểm giúp nhập điểm vào file của phần mềm trường.', howTo: ['Mở Nhập điểm.', 'Chọn lớp và cột điểm.', 'Nhập điểm rồi xuất file.'] },
+  calculator: { whatIs: 'Tính cỡ mẫu nghiên cứu hỗ trợ tính toán cỡ mẫu theo công thức chuẩn.', howTo: ['Mở Tính cỡ mẫu nghiên cứu.', 'Chọn công thức phù hợp.', 'Nhập các tham số rồi xem kết quả cỡ mẫu.'] },
+  scientific_journals: { whatIs: 'Quản lý điểm báo khoa học để lưu trữ và phân loại điểm báo, bài viết.', howTo: ['Mở Quản lý điểm báo khoa học.', 'Thêm hoặc nhập danh sách tạp chí.', 'Lọc theo ngành, loại và điểm.'] },
+  qualitative_analysis: { whatIs: 'Định tính để mã hóa và phân tích dữ liệu phỏng vấn, thảo luận nhóm.', howTo: ['Mở Định tính.', 'Tạo dự án rồi thêm tài liệu.', 'Mã hóa đoạn văn và xem tổng hợp mã.'] },
+  quantitative_analysis: { whatIs: 'Định lượng để phân tích thống kê và trực quan hóa số liệu.', howTo: ['Mở Định lượng.', 'Nhập hoặc tải dữ liệu lên.', 'Chạy phân tích và xem biểu đồ.'] },
+  tasks: { whatIs: 'Quản lý công việc để tạo, theo dõi và phân công việc cá nhân hoặc nhóm.', howTo: ['Mở Quản lý công việc.', 'Tạo công việc, đặt hạn và người nhận.', 'Cập nhật trạng thái tới khi hoàn thành.'] },
+  ar_module: { whatIs: 'Tạo AR để tạo điểm ảnh nhận diện kèm mã QR quét bằng điện thoại.', howTo: ['Mở Tạo AR.', 'Tải ảnh mục tiêu và nội dung hiển thị.', 'Lấy mã QR để người xem quét.'] },
+  utility_image_resize: { whatIs: 'Phóng to ảnh để tăng độ phân giải và làm rõ chi tiết ảnh.', howTo: ['Mở Phóng to ảnh.', 'Tải ảnh lên và chọn tỉ lệ.', 'Tải ảnh kết quả về.'] },
+  utility_social_design: { whatIs: 'Thiết kế ảnh để tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu.', howTo: ['Mở Thiết kế ảnh.', 'Chọn khung mẫu.', 'Đổi nội dung và ảnh rồi tải về.'] },
+  portfolio_cms: { whatIs: 'Quản trị Portfolio để quản lý hồ sơ cá nhân, dự án và khóa học.', howTo: ['Mở Quản trị Portfolio.', 'Thêm hoặc sửa dự án, khóa học, bài viết.', 'Công khai lên trang portfolio.'] },
+  media_library: { whatIs: 'Thư viện lưu trữ và quản lý hình ảnh, tài liệu dùng chung.', howTo: ['Mở Thư viện.', 'Tải tệp lên theo danh mục.', 'Chọn tệp để dùng lại ở các chức năng khác.'] },
+  notifications_admin: { whatIs: 'Trung tâm thông báo để soạn và phát thông báo tới người dùng.', howTo: ['Mở Trung tâm thông báo.', 'Soạn nội dung và chọn người nhận.', 'Gửi thông báo.'] },
+  notifications: { whatIs: 'Thông báo là hộp thư xem các thông báo hệ thống.', howTo: ['Mở Thông báo để xem tin mới.'] },
+  assistant: { whatIs: 'Trợ lý ảo giúp tìm bài giảng, câu hỏi và hướng dẫn dùng hệ thống.', howTo: ['Gõ câu hỏi hoặc tên chức năng.', 'Bấm kết quả để mở nhanh.'] },
+  users: { whatIs: 'Quản lý người dùng để tạo và chỉnh sửa tài khoản trên hệ thống.', howTo: ['Mở Quản lý người dùng.', 'Thêm hoặc sửa tài khoản và đặt vai trò.'] },
+  permissions: { whatIs: 'Phân quyền người dùng để cấp quyền truy cập từng chức năng.', howTo: ['Mở Phân quyền người dùng.', 'Chọn tài khoản rồi bật tắt quyền từng chức năng.'] },
+  settings: { whatIs: 'Cấu hình hệ thống để chỉnh màu, phông chữ, ảnh, chức năng và chế độ bảo trì.', howTo: ['Mở Cấu hình hệ thống.', 'Chọn tab tương ứng và chỉnh.', 'Bấm Lưu.'] },
+};
 
 // Mẹo hướng dẫn thao tác nhanh cho người dùng mới. Khớp theo từ khóa đã bỏ dấu.
 const FAQS: { keys: string[]; title: string; body: string; goId?: string }[] = [
@@ -113,11 +142,26 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
     const words = q.split(/\s+/).filter(w => w.length >= 2);
     const matchText = (t: string) => words.length === 0 ? false : words.some(w => norm(t).includes(w));
 
-    const features: FeatureHit[] = MODULE_REGISTRY
+    const matchedFeatures = MODULE_REGISTRY
       .filter(m => canFeature(m.id))
       .map(m => resolveModuleMeta(m, settings))
-      .filter(m => matchText(`${m.label} ${m.desc}`))
-      .slice(0, 4)
+      .filter(m => matchText(`${m.label} ${m.desc}`));
+
+    // 2 chức năng khớp nhất được giới thiệu đầy đủ: là gì và cách dùng.
+    const guides: GuideHit[] = matchedFeatures.slice(0, 2).map(m => {
+      const g = FEATURE_GUIDE[m.id];
+      return {
+        id: m.id,
+        name: m.label,
+        whatIs: g?.whatIs || m.desc,
+        howTo: g?.howTo || ['Mở chức năng từ hàng phím tắt ở trang tổng quan hoặc trang Tất cả tính năng.'],
+      };
+    });
+    const guideIds = new Set(guides.map(g => g.id));
+    // Các chức năng khớp còn lại chỉ liệt kê gọn để mở nhanh.
+    const features: FeatureHit[] = matchedFeatures
+      .filter(m => !guideIds.has(m.id))
+      .slice(0, 3)
       .map(m => ({ id: m.id, label: m.label, desc: m.desc }));
 
     const lessonHits = lessons
@@ -138,11 +182,18 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
       } catch { /* bỏ qua */ }
     }
 
-    const total = features.length + lessonHits.length + faqs.length + questions.length;
-    const intro = total === 0
-      ? 'Mình chưa tìm thấy kết quả phù hợp. Bạn thử gõ ngắn gọn hơn, ví dụ tên môn, tên bài giảng, hoặc việc muốn làm như tạo đề, nhập điểm, tải PDF.'
-      : 'Đây là những gì mình tìm được:';
-    return { intro, faqs, features, lessons: lessonHits, questions };
+    const total = guides.length + features.length + lessonHits.length + faqs.length + questions.length;
+    let intro: string;
+    if (total === 0) {
+      intro = 'Mình chưa tìm thấy kết quả phù hợp. Bạn thử gõ ngắn gọn hơn, ví dụ tên môn, tên bài giảng, hoặc việc muốn làm như tạo đề, nhập điểm, tải PDF.';
+    } else if (guides.length > 0) {
+      intro = guides.length === 1
+        ? `Bạn đang hỏi về chức năng ${guides[0].name}. Mình giới thiệu ngắn gọn chức năng này là gì và cách dùng:`
+        : 'Mình giới thiệu các chức năng bạn đang hỏi, kèm cách dùng:';
+    } else {
+      intro = 'Đây là những gì mình tìm được:';
+    }
+    return { intro, guides, faqs, features, lessons: lessonHits, questions };
   };
 
   const submit = async (raw?: string) => {
@@ -184,6 +235,23 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
         ) : (
           <div key={i} className="space-y-2">
             <div className="rounded-2xl rounded-tl-sm bg-white px-3 py-2.5 text-[13px] text-slate-700 shadow-sm">{m.result.intro}</div>
+
+            {m.result.guides.map((g, k) => (
+              <div key={k} className="rounded-2xl border border-brand/20 bg-brand-light/40 p-3">
+                <p className="flex items-center gap-1.5 text-[13px] font-black text-slate-900"><Sparkles className="h-4 w-4 text-brand" /> {g.name}</p>
+                <p className="mt-1 text-[12.5px] leading-snug text-slate-600">{g.whatIs}</p>
+                <p className="mt-2 text-[10px] font-black uppercase text-slate-400">Cách dùng</p>
+                <ol className="mt-1 space-y-1">
+                  {g.howTo.map((step, si) => (
+                    <li key={si} className="flex gap-2 text-[12.5px] text-slate-700">
+                      <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-brand text-[9px] font-bold text-white">{si + 1}</span>
+                      <span className="min-w-0 flex-1">{step}</span>
+                    </li>
+                  ))}
+                </ol>
+                <button onClick={() => go(g.id)} className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-[11px] font-bold text-white hover:bg-brand-hover">Mở {g.name} <ArrowRight className="h-3 w-3" /></button>
+              </div>
+            ))}
 
             {m.result.faqs.length > 0 && (
               <div className="space-y-1.5">
