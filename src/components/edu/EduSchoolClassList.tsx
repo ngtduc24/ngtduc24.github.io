@@ -69,35 +69,33 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
   type ClassStat = { students: number; assignmentTitle?: string; deadline?: string; submitted: number };
   const [classStats, setClassStats] = useState<Record<string, ClassStat>>({});
 
+  // Chạy tuần tự có thử lại 1 lần cho từng lớp để tránh lỗi tạm thời khi gọi nhiều
+  // truy vấn cùng lúc. Khi một lớp lỗi thì giữ nguyên chỉ số cũ, không ghi đè số 0.
+  const statFor = async (id: string): Promise<ClassStat> => {
+    const [users, assignments] = await Promise.all([getClassUsers(id), getAssignments(id)]);
+    const now = Date.now();
+    const withDeadline = assignments.filter(a => a.deadline);
+    const upcoming = withDeadline
+      .filter(a => new Date(a.deadline as string).getTime() >= now)
+      .sort((a, b) => new Date(a.deadline as string).getTime() - new Date(b.deadline as string).getTime());
+    const chosen = upcoming[0]
+      || withDeadline.sort((a, b) => new Date(b.deadline as string).getTime() - new Date(a.deadline as string).getTime())[0]
+      || assignments[0];
+    let submitted = 0;
+    if (chosen) { const subs = await getSubmissions(chosen.id); submitted = new Set(subs.map(s => s.userId || s.mssv)).size; }
+    return { students: users.length, assignmentTitle: chosen?.title, deadline: chosen?.deadline, submitted };
+  };
+
   const loadClassStats = async (cls: { id: string }[]) => {
-    const entries = await Promise.all(cls.map(async (c) => {
-      try {
-        const [users, assignments] = await Promise.all([getClassUsers(c.id), getAssignments(c.id)]);
-        const now = Date.now();
-        const withDeadline = assignments.filter(a => a.deadline);
-        const upcoming = withDeadline
-          .filter(a => new Date(a.deadline as string).getTime() >= now)
-          .sort((a, b) => new Date(a.deadline as string).getTime() - new Date(b.deadline as string).getTime());
-        const chosen = upcoming[0]
-          || withDeadline.sort((a, b) => new Date(b.deadline as string).getTime() - new Date(a.deadline as string).getTime())[0]
-          || assignments[0];
-        let submitted = 0;
-        if (chosen) {
-          const subs = await getSubmissions(chosen.id);
-          submitted = new Set(subs.map(s => s.userId || s.mssv)).size;
-        }
-        const stat: ClassStat = {
-          students: users.length,
-          assignmentTitle: chosen?.title,
-          deadline: chosen?.deadline,
-          submitted,
-        };
-        return [c.id, stat] as const;
-      } catch {
-        return [c.id, { students: 0, submitted: 0 } as ClassStat] as const;
+    for (const c of cls) {
+      let stat: ClassStat | null = null;
+      for (let attempt = 0; attempt < 2 && !stat; attempt++) {
+        try { stat = await statFor(c.id); }
+        catch { if (attempt === 0) await new Promise(r => setTimeout(r, 400)); }
       }
-    }));
-    setClassStats(Object.fromEntries(entries));
+      // Chỉ cập nhật khi lấy được; lỗi thì giữ nguyên chỉ số cũ để không bị mất.
+      if (stat) setClassStats(prev => ({ ...prev, [c.id]: stat as ClassStat }));
+    }
   };
 
   const loadData = async () => {

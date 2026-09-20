@@ -329,7 +329,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
   if (currentGrade && currentGrade.score !== undefined && currentGrade.score !== null) {
     canEdit = false;
     lockReason = 'Bài tập đã được chấm điểm';
-  } else if (isOverdue) {
+  } else if (isOverdue && !assignment.allowLate) {
     canEdit = false;
     lockReason = 'Đã quá hạn nộp bài';
   } else if (submission) {
