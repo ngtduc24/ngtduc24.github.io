@@ -67,8 +67,39 @@ const DIVISIONS: Array<{
   },
 ];
 
-export default function PortfolioCMS() {
-  const [activeDivision, setActiveDivision] = useState<PortfolioDivision>('content');
+interface PortfolioCMSProps {
+  currentUser?: { role?: string;
+    canPortfolioContent?: boolean; canPortfolioProjects?: boolean; canPortfolioCourses?: boolean;
+    canPortfolioResearch?: boolean; canPortfolioNavigation?: boolean; canPortfolioProfile?: boolean;
+  } | null;
+}
+
+// Map mỗi phân hệ Portfolio sang cờ quyền tương ứng.
+const DIVISION_FLAG: Record<PortfolioDivision, 'canPortfolioContent' | 'canPortfolioProjects' | 'canPortfolioCourses' | 'canPortfolioResearch' | 'canPortfolioNavigation' | 'canPortfolioProfile'> = {
+  content: 'canPortfolioContent',
+  projects: 'canPortfolioProjects',
+  courses: 'canPortfolioCourses',
+  research: 'canPortfolioResearch',
+  navigation: 'canPortfolioNavigation',
+  profile: 'canPortfolioProfile',
+};
+
+export default function PortfolioCMS({ currentUser }: PortfolioCMSProps = {}) {
+  const isPortfolioAdmin = currentUser?.role === 'admin';
+  // Tài khoản chưa cấu hình quyền con nào (tất cả cờ đều tắt) thì cho xem toàn bộ,
+  // giữ nguyên hành vi cũ. Khi đã bật ít nhất một mục con thì chỉ hiện mục được bật.
+  const anySubFlag = !!currentUser && Object.values(DIVISION_FLAG).some(f => (currentUser as any)[f]);
+  const canDivision = (id: PortfolioDivision) => isPortfolioAdmin || !anySubFlag || !!(currentUser as any)?.[DIVISION_FLAG[id]];
+  const visibleDivisions = DIVISIONS.filter(d => canDivision(d.id));
+  const [activeDivision, setActiveDivision] = useState<PortfolioDivision>(visibleDivisions[0]?.id ?? 'content');
+
+  // Nếu phân hệ đang mở không còn được phép (khi quyền thay đổi), chuyển về mục đầu tiên được phép.
+  useEffect(() => {
+    if (!canDivision(activeDivision) && visibleDivisions[0]) {
+      setActiveDivision(visibleDivisions[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anySubFlag, isPortfolioAdmin]);
   const [syncing, setSyncing] = useState(false);
   const [overviewStats, setOverviewStats] = useState([
     { label: 'Dự án', value: 0, detail: '0 đã xuất bản', icon: FolderKanban },
@@ -175,7 +206,7 @@ export default function PortfolioCMS() {
           }
         }}
       >
-        {DIVISIONS.map(item => {
+        {visibleDivisions.map(item => {
           const Icon = item.icon;
           const isActive = activeDivision === item.id;
 
@@ -209,12 +240,12 @@ export default function PortfolioCMS() {
           </div>
         )}
 
-        {activeDivision === 'profile' && <BannerAboutCMS />}
-        {activeDivision === 'content' && <PortfolioContentManager />}
-        {activeDivision === 'projects' && <ProjectsCoursesCMS initialSubTab="projects" showSubTabs={false} />}
-        {activeDivision === 'courses' && <ProjectsCoursesCMS initialSubTab="courses" showSubTabs={false} />}
-        {activeDivision === 'research' && <PortfolioResearchCMS />}
-        {activeDivision === 'navigation' && <PortfolioNavigationManager />}
+        {activeDivision === 'profile' && canDivision('profile') && <BannerAboutCMS />}
+        {activeDivision === 'content' && canDivision('content') && <PortfolioContentManager />}
+        {activeDivision === 'projects' && canDivision('projects') && <ProjectsCoursesCMS initialSubTab="projects" showSubTabs={false} />}
+        {activeDivision === 'courses' && canDivision('courses') && <ProjectsCoursesCMS initialSubTab="courses" showSubTabs={false} />}
+        {activeDivision === 'research' && canDivision('research') && <PortfolioResearchCMS />}
+        {activeDivision === 'navigation' && canDivision('navigation') && <PortfolioNavigationManager />}
       </section>
     </div>
   );

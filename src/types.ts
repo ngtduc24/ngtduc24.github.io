@@ -44,6 +44,13 @@ export interface UserAccount {
   canImportEdu?: boolean;
   canExportEdu?: boolean;
   canGradeEdu?: boolean;
+  // Portfolio Permissions (các mục con trong Quản trị Portfolio)
+  canPortfolioContent?: boolean;
+  canPortfolioProjects?: boolean;
+  canPortfolioCourses?: boolean;
+  canPortfolioResearch?: boolean;
+  canPortfolioNavigation?: boolean;
+  canPortfolioProfile?: boolean;
   createdAt: string;
   password?: string;
   avatarUrl?: string;

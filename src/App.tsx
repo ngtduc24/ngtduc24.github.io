@@ -728,7 +728,7 @@ export default function App() {
           }
         }} />;
       case 'portfolio_cms':
-        return <PortfolioCMS />;
+        return <PortfolioCMS currentUser={currentUser} />;
       case 'guide':
         return <GuideSection />;
       default:
