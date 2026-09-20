@@ -582,6 +582,9 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
 
                 {/* Hai nút hành động */}
                 <div className="pt-6 border-t border-slate-100 space-y-3">
+                  {canEdit && submission && (
+                    <p className="rounded-xl bg-amber-50 border border-amber-100 px-3 py-2 text-[11px] font-medium text-amber-700">Bạn có thể tải thêm file để nộp bổ sung. File mới được thêm cùng với file đã nộp trước đó, không thay thế.</p>
+                  )}
                   <div className="flex flex-col sm:flex-row gap-3">
                     {canEdit && (
                       <button
@@ -590,7 +593,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                         className="flex-1 bg-gradient-to-r from-brand to-brand-hover hover:opacity-95 disabled:opacity-50 text-white py-4 rounded-xl text-[14px] font-bold shadow-lg transition-all active:scale-[0.99] uppercase tracking-wide flex items-center justify-center gap-2.5"
                       >
                         <Upload className="w-5 h-5" />
-                        {submitting ? 'Đang xử lý...' : (submission ? 'Cập nhật bài nộp' : 'Xác nhận nộp bài')}
+                        {submitting ? 'Đang xử lý...' : (submission ? 'Nộp bổ sung' : 'Xác nhận nộp bài')}
                       </button>
                     )}
                     <button

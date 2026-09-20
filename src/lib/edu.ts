@@ -473,6 +473,19 @@ export async function deleteSubmission(id: string) {
   if (error) throw error;
 }
 
+// Mở lại cửa sổ chỉnh sửa của bài nộp (giữ nguyên file) để sinh viên nộp bổ sung.
+export async function reopenSubmission(id: string) {
+  const now = new Date().toISOString();
+  const { error } = await supabase.from(SUBMISSIONS_TABLE).update({ first_submitted_at: now, updated_at: now }).eq('id', id);
+  if (error) throw error;
+}
+
+// Gỡ điểm đã chấm của một sinh viên ở một cột điểm (để chấm lại sau khi cho nộp bổ sung).
+export async function deleteGradeForUser(columnId: string, userId: string) {
+  const { error } = await supabase.from(GRADES_TABLE).delete().eq('grade_column_id', columnId).eq('user_id', userId);
+  if (error) throw error;
+}
+
 // Grades
 export async function getGrades(columnId: string) {
   const { data, error } = await supabase.from(GRADES_TABLE).select('*').eq('grade_column_id', columnId);
