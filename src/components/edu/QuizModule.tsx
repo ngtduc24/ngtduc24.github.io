@@ -124,9 +124,12 @@ export default function QuizModule({ currentUser }: QuizModuleProps) {
             {quizzes.map(q => (
               <button key={q.id} onClick={() => { setActiveQuiz(q); setView('detail'); }} className="group flex flex-col rounded-3xl border border-slate-100 bg-white p-5 text-left shadow-sm transition-all hover:border-brand/30 hover:shadow-md">
                 <div className="flex items-start justify-between gap-3">
-                  <span className={`rounded-lg px-2.5 py-1 text-[10px] font-bold ${q.status === 'published' ? 'bg-brand-light text-brand' : q.status === 'archived' ? 'bg-slate-100 text-slate-500' : 'bg-amber-50 text-amber-600'}`}>
-                    {q.status === 'published' ? 'Đã phát hành' : q.status === 'archived' ? 'Lưu trữ' : 'Bản nháp'}
-                  </span>
+                  {/* Chỉ hiện nhãn khi đề đã phát hành hoặc lưu trữ. Đề còn là bản nháp thì không hiện nhãn. */}
+                  {q.status !== 'draft' ? (
+                    <span className={`rounded-lg px-2.5 py-1 text-[10px] font-bold ${q.status === 'published' ? 'bg-brand-light text-brand' : 'bg-slate-100 text-slate-500'}`}>
+                      {q.status === 'published' ? 'Đã phát hành' : 'Lưu trữ'}
+                    </span>
+                  ) : <span />}
                   {q.is_public && <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600"><Globe className="h-3 w-3" /> Công khai</span>}
                 </div>
                 <h3 className="mt-3 text-sm font-black text-slate-800 group-hover:text-brand">{q.title}</h3>
@@ -631,7 +634,8 @@ function QuizDetail({ quiz, subjects, onEdit, onAssign, onDelete, onBack }: {
         <div className="space-y-4">
           <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-2">
-              <span className={`rounded-lg px-2.5 py-1 text-[10px] font-bold ${quiz.status === 'published' ? 'bg-brand-light text-brand' : quiz.status === 'archived' ? 'bg-slate-100 text-slate-500' : 'bg-amber-50 text-amber-600'}`}>{quiz.status === 'published' ? 'Đã phát hành' : quiz.status === 'archived' ? 'Lưu trữ' : 'Bản nháp'}</span>
+              {/* Đề còn là bản nháp thì không hiện nhãn, chỉ hiện khi đã phát hành hoặc lưu trữ. */}
+              {quiz.status !== 'draft' && <span className={`rounded-lg px-2.5 py-1 text-[10px] font-bold ${quiz.status === 'published' ? 'bg-brand-light text-brand' : 'bg-slate-100 text-slate-500'}`}>{quiz.status === 'published' ? 'Đã phát hành' : 'Lưu trữ'}</span>}
               {quiz.is_public && <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600"><Globe className="h-3 w-3" /> Công khai</span>}
             </div>
             <h1 className="mt-2 font-display text-xl font-black text-slate-900">{quiz.title}</h1>
