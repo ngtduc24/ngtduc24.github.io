@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Play, Pause, Scissors, Trash2, Copy, Lock, Unlock, Eye, EyeOff, Type, Download, X, ArrowLeft,
-  Upload, Loader2, Film, Image as ImageIcon, Music, ZoomIn, ZoomOut, Layers, Maximize2, Captions, Volume2, Plus
+  Play, Pause, Scissors, Trash2, Copy, Lock, Unlock, Eye, EyeOff, Type, Download, ArrowLeft,
+  Upload, Loader2, Film, Image as ImageIcon, Music, ZoomIn, ZoomOut, Maximize2, Captions,
+  Volume2, VolumeX, Headphones, Plus, Frame,
 } from 'lucide-react';
 import { UserAccount } from '../../types';
 import { useNotifications } from '../NotificationContext';
@@ -13,9 +14,10 @@ import {
 interface Props { projectId: string; currentUser: UserAccount; onExit: () => void; }
 
 type ClipKind = 'video' | 'image' | 'audio' | 'text';
+type LaneKind = 'video' | 'audio';
 interface ClipProps { x: number; y: number; scale: number; rotation: number; opacity: number; volume: number; text: string; fontSize: number; color: string; fontWeight: number; align: string; }
 interface Clip { id: string; kind: ClipKind; name: string; src?: string; thumb?: string; start: number; dur: number; inPoint: number; srcDur?: number; fadeIn?: number; fadeOut?: number; props: ClipProps; }
-interface Track { id: string; name: string; locked?: boolean; hidden?: boolean; muted?: boolean; clips: Clip[]; }
+interface Track { id: string; name: string; kind: LaneKind; locked?: boolean; hidden?: boolean; muted?: boolean; solo?: boolean; clips: Clip[]; }
 
 const defaultProps = (): ClipProps => ({ x: 0, y: 0, scale: 1, rotation: 0, opacity: 1, volume: 1, text: 'Nội dung chữ', fontSize: 64, color: '#ffffff', fontWeight: 700, align: 'center' });
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -62,6 +64,25 @@ function getMediaEl(clip: Clip): HTMLVideoElement | HTMLImageElement | HTMLAudio
   return el;
 }
 
+// --------- Âm thanh dùng chung cho cả xem trước và xuất video ---------
+// Định tuyến mọi media qua một AudioContext duy nhất để tiếng luôn ra loa,
+// đồng thời khi xuất chỉ cần nối thêm vào MediaStreamDestination.
+let sharedCtx: AudioContext | null = null;
+const srcNodeMap = new WeakMap<HTMLMediaElement, MediaElementAudioSourceNode>();
+function ensureAudioCtx(): AudioContext {
+  if (!sharedCtx) sharedCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  if (sharedCtx.state === 'suspended') sharedCtx.resume().catch(() => {});
+  return sharedCtx;
+}
+function sourceNodeFor(el: HTMLMediaElement): MediaElementAudioSourceNode | null {
+  try {
+    const ctx = ensureAudioCtx();
+    let n = srcNodeMap.get(el);
+    if (!n) { n = ctx.createMediaElementSource(el); n.connect(ctx.destination); srcNodeMap.set(el, n); }
+    return n;
+  } catch { return null; }
+}
+
 export default function RemierEditor({ projectId, currentUser, onExit }: Props) {
   const { addNotification } = useNotifications();
   const [project, setProject] = useState<MvProject | null>(null);
@@ -75,6 +96,12 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [expProgress, setExpProgress] = useState(0);
+
+  // Khung xem trước.
+  const [previewFit, setPreviewFit] = useState(true);
+  const [previewZoom, setPreviewZoom] = useState(1);
+  const [safeFrame, setSafeFrame] = useState(false);
+  const [zoomMenu, setZoomMenu] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -93,7 +120,12 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
       try {
         const p = await getProject(projectId);
         setProject(p); setTitle(p.title);
-        setTracks((p.timeline?.tracks || []).map((t: any) => ({ ...t, clips: t.clips || [] })));
+        // Tương thích dữ liệu cũ chưa có trường kind cho lớp.
+        setTracks((p.timeline?.tracks || []).map((t: any) => ({
+          ...t,
+          kind: (t.kind === 'audio' ? 'audio' : 'video') as LaneKind,
+          clips: t.clips || [],
+        })));
       } catch (e: any) { addNotification('Lỗi mở dự án: ' + (e.message || e), 'error'); }
     })();
   }, [projectId, addNotification]);
@@ -140,8 +172,13 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
       ctx.globalAlpha = alpha; ctx.fillStyle = p.color;
       ctx.font = `${p.fontWeight} ${p.fontSize}px Inter, system-ui, sans-serif`;
       ctx.textAlign = (p.align as CanvasTextAlign) || 'center'; ctx.textBaseline = 'middle';
+      // Viền mỏng cho chữ dễ đọc trên nền sáng.
+      ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(2, p.fontSize / 16); ctx.strokeStyle = 'rgba(0,0,0,0.55)';
       const lines = (p.text || '').split('\n');
-      lines.forEach((ln, i) => ctx.fillText(ln, 0, (i - (lines.length - 1) / 2) * p.fontSize * 1.2));
+      lines.forEach((ln, i) => {
+        const yy = (i - (lines.length - 1) / 2) * p.fontSize * 1.2;
+        ctx.strokeText(ln, 0, yy); ctx.fillText(ln, 0, yy);
+      });
     } else {
       const el = getMediaEl(clip) as HTMLVideoElement | HTMLImageElement | null;
       if (el) {
@@ -187,6 +224,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   // ---------- Phát ----------
   const manageMedia = (t: number, isPlaying: boolean) => {
     const tk = tracksRef.current;
+    const anySolo = tk.some(tr => tr.solo);
     const activeSrcs = new Set<string>();
     tk.forEach(track => {
       const c = activeClip(track, t);
@@ -194,10 +232,12 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
         activeSrcs.add(c.kind + '|' + c.src);
         const el = getMediaEl(c) as HTMLVideoElement | HTMLAudioElement;
         if (el) {
-          el.muted = !!track.muted;
+          const audible = !track.muted && (!anySolo || !!track.solo);
+          el.muted = !audible;
           el.volume = Math.max(0, Math.min(1, c.props.volume * fadeFactor(c, t)));
           const want = (c.inPoint + (t - c.start)) / 1000;
           if (isPlaying) {
+            sourceNodeFor(el); // đảm bảo tiếng đi ra loa qua AudioContext chung
             if (Math.abs(el.currentTime - want) > 0.25) { try { el.currentTime = want; } catch {} }
             if (el.paused) el.play().catch(() => {});
           }
@@ -223,6 +263,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
       setPlaying(false); if (rafRef.current) cancelAnimationFrame(rafRef.current); rafRef.current = null; lastTsRef.current = 0;
       manageMedia(playheadRef.current, false);
     } else {
+      ensureAudioCtx(); // mở khóa âm thanh bằng thao tác người dùng
       if (playheadRef.current >= duration) { playheadRef.current = 0; setPlayhead(0); }
       setPlaying(true); lastTsRef.current = 0; rafRef.current = requestAnimationFrame(loop);
     }
@@ -233,27 +274,42 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   // ---------- Thao tác lớp ----------
   const selClip = (() => { for (const tr of tracks) { const c = tr.clips.find(c => c.id === selId); if (c) return { track: tr, clip: c }; } return null; })();
 
-  const addClipFromAsset = (asset: MvAsset) => {
-    const kind: ClipKind = asset.kind === 'audio' ? 'audio' : asset.kind === 'video' ? 'video' : 'image';
-    const dur = asset.duration_ms && asset.duration_ms > 0 ? asset.duration_ms : (kind === 'image' ? 5000 : 5000);
-    const clip: Clip = { id: uid(), kind, name: asset.title, src: asset.url, thumb: asset.thumb_url || undefined, start: playheadRef.current, dur, inPoint: 0, srcDur: asset.duration_ms || undefined, props: defaultProps() };
+  // Tìm hoặc tạo lớp phù hợp cho loại nội dung. video/hình/chữ vào lớp video,
+  // âm thanh vào lớp tiếng. Nếu chưa có thì tự tạo.
+  const placeClip = (clip: Clip, lane: LaneKind) => {
     setTracks(prev => {
-      const next = prev.length ? [...prev] : [{ id: uid(), name: 'Lớp 1', clips: [] }];
-      // đặt vào track phù hợp (audio xuống track audio cuối, hình lên track đầu); đơn giản: track 0
-      const idx = kind === 'audio' ? next.length - 1 : 0;
+      const next = [...prev];
+      let idx = lane === 'audio' ? next.findIndex(t => t.kind === 'audio' && !t.locked) : next.findIndex(t => t.kind === 'video' && !t.locked);
+      if (idx < 0) {
+        const vCount = next.filter(t => t.kind === 'video').length;
+        const aCount = next.filter(t => t.kind === 'audio').length;
+        const nt: Track = { id: uid(), kind: lane, name: lane === 'audio' ? `Tiếng ${aCount + 1}` : `Video ${vCount + 1}`, clips: [] };
+        if (lane === 'audio') { next.push(nt); idx = next.length - 1; }
+        else { next.unshift(nt); idx = 0; }
+      }
       next[idx] = { ...next[idx], clips: [...next[idx].clips, clip] };
       return next;
     });
+  };
+
+  const addClipFromAsset = (asset: MvAsset) => {
+    const kind: ClipKind = asset.kind === 'audio' ? 'audio' : asset.kind === 'video' ? 'video' : 'image';
+    const dur = asset.duration_ms && asset.duration_ms > 0 ? asset.duration_ms : 5000;
+    const clip: Clip = { id: uid(), kind, name: asset.title, src: asset.url, thumb: asset.thumb_url || undefined, start: playheadRef.current, dur, inPoint: 0, srcDur: asset.duration_ms || undefined, props: defaultProps() };
+    placeClip(clip, kind === 'audio' ? 'audio' : 'video');
     markDirty(); setSelId(clip.id);
   };
 
   const addTextClip = () => {
     const clip: Clip = { id: uid(), kind: 'text', name: 'Văn bản', start: playheadRef.current, dur: 4000, inPoint: 0, props: defaultProps() };
-    setTracks(prev => { const next = prev.length ? [...prev] : [{ id: uid(), name: 'Lớp 1', clips: [] }]; next[0] = { ...next[0], clips: [...next[0].clips, clip] }; return next; });
+    placeClip(clip, 'video');
     markDirty(); setSelId(clip.id);
+    // vẽ lại ngay để thấy chữ xuất hiện
+    setTimeout(() => draw(playheadRef.current), 0);
   };
 
-  const addTrack = () => { setTracks(prev => [{ id: uid(), name: `Lớp ${prev.length + 1}`, clips: [] }, ...prev]); markDirty(); };
+  const addVideoTrack = () => { setTracks(prev => { const n = prev.filter(t => t.kind === 'video').length; return [{ id: uid(), kind: 'video', name: `Video ${n + 1}`, clips: [] }, ...prev]; }); markDirty(); };
+  const addAudioTrack = () => { setTracks(prev => { const n = prev.filter(t => t.kind === 'audio').length; return [...prev, { id: uid(), kind: 'audio', name: `Tiếng ${n + 1}`, clips: [] }]; }); markDirty(); };
 
   const updateClip = (id: string, patch: Partial<Clip>) => {
     setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.map(c => c.id === id ? { ...c, ...patch } : c) }))); markDirty();
@@ -274,14 +330,15 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
     const right: Clip = { ...clip, id: uid(), start: t, dur: clip.start + clip.dur - t, inPoint: clip.inPoint + (t - clip.start) };
     setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.flatMap(c => c.id === clip.id ? [left, right] : [c]) }))); markDirty();
   };
-  const toggleTrack = (id: string, key: 'locked' | 'hidden' | 'muted') => { setTracks(prev => prev.map(tr => tr.id === id ? { ...tr, [key]: !tr[key] } : tr)); markDirty(); };
+  const toggleTrack = (id: string, key: 'locked' | 'hidden' | 'muted' | 'solo') => { setTracks(prev => prev.map(tr => tr.id === id ? { ...tr, [key]: !tr[key] } : tr)); markDirty(); };
+  const deleteTrack = (id: string) => { setTracks(prev => prev.filter(tr => tr.id !== id)); markDirty(); };
 
   // Tách âm thanh khỏi video: tạo lớp tiếng riêng, tắt tiếng lớp video gốc.
   const splitAudioFromVideo = (clip: Clip) => {
     if (clip.kind !== 'video' || !clip.src) return;
     const audioClip: Clip = { id: uid(), kind: 'audio', name: clip.name + ' (tiếng)', src: clip.src, start: clip.start, dur: clip.dur, inPoint: clip.inPoint, srcDur: clip.srcDur, fadeIn: clip.fadeIn, fadeOut: clip.fadeOut, props: { ...defaultProps(), volume: clip.props.volume } };
     updateClipProps(clip.id, { volume: 0 });
-    setTracks(prev => { const next = prev.length ? [...prev] : [{ id: uid(), name: 'Lớp 1', clips: [] }]; const idx = next.length - 1; next[idx] = { ...next[idx], clips: [...next[idx].clips, audioClip] }; return next; });
+    placeClip(audioClip, 'audio');
     markDirty(); setSelId(audioClip.id); addNotification('Đã tách âm thanh thành lớp riêng.', 'success');
   };
 
@@ -289,7 +346,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   const importSubtitles = (cues: { start: number; dur: number; text: string }[]) => {
     if (!cues.length) return;
     const clips: Clip[] = cues.map(c => ({ id: uid(), kind: 'text', name: 'Phụ đề', start: c.start, dur: c.dur, inPoint: 0, props: { ...defaultProps(), text: c.text, fontSize: 46, y: 36 } }));
-    setTracks(prev => [{ id: uid(), name: 'Phụ đề', clips }, ...prev]); markDirty();
+    setTracks(prev => [{ id: uid(), kind: 'video', name: 'Phụ đề', clips }, ...prev]); markDirty();
     addNotification(`Đã nhập ${cues.length} dòng phụ đề.`, 'success');
   };
 
@@ -327,24 +384,28 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   };
   const onTimelinePointerUp = () => { dragRef.current = null; };
 
+  const seekTo = (t: number) => { const v = Math.max(0, t); setPlayhead(v); playheadRef.current = v; };
+
   // ---------- Xuất bản nhẹ (webm) ----------
   const exportVideo = async () => {
     const cv = canvasRef.current; if (!cv || duration <= 0) { addNotification('Chưa có nội dung để xuất.', 'warning'); return; }
     setExporting(true); setExpProgress(0);
+    const connectedNodes: MediaElementAudioSourceNode[] = [];
+    let dest: MediaStreamAudioDestinationNode | null = null;
     try {
       const fps = project?.fps || 30;
       const stream = (cv as any).captureStream(fps) as MediaStream;
-      // Trộn tiếng các lớp qua WebAudio.
-      let audioCtx: AudioContext | null = null;
+      // Trộn tiếng các lớp qua AudioContext chung rồi nối vào luồng ghi.
       try {
-        audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const dest = audioCtx.createMediaStreamDestination();
+        const ctx = ensureAudioCtx();
+        dest = ctx.createMediaStreamDestination();
         const seen = new Set<string>();
         tracksRef.current.forEach(tr => tr.clips.forEach(c => {
           if ((c.kind === 'video' || c.kind === 'audio') && c.src) {
             const key = c.kind + '|' + c.src; if (seen.has(key)) return; seen.add(key);
             const el = getMediaEl(c) as HTMLMediaElement;
-            try { const node = (el as any)._mvNode || audioCtx!.createMediaElementSource(el); (el as any)._mvNode = node; node.connect(dest); node.connect(audioCtx!.destination); } catch {}
+            const node = sourceNodeFor(el);
+            if (node && dest) { try { node.connect(dest); connectedNodes.push(node); } catch {} }
           }
         }));
         dest.stream.getAudioTracks().forEach(tk => stream.addTrack(tk));
@@ -370,7 +431,8 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
       });
       manageMedia(duration, false); rec.stop();
       const blob = await done;
-      if (audioCtx) audioCtx.close().catch(() => {});
+      // Ngắt các nút khỏi luồng ghi nhưng vẫn giữ AudioContext chung để xem trước tiếp.
+      connectedNodes.forEach(n => { try { if (dest) n.disconnect(dest); } catch {} });
       // Tải về máy.
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = `${(title || 'remier').replace(/\s+/g, '_')}.webm`; a.click();
@@ -382,7 +444,10 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
         await addAsset({ kind: 'export', title: `${title} (bản xuất)`, url: upUrl, mime_type: 'video/webm', size_bytes: blob.size, duration_ms: Math.round(duration), owner_name: currentUser.fullName });
       } catch {}
       addNotification('Đã xuất video (bản nhẹ webm) và tải về máy.', 'success');
-    } catch (e: any) { addNotification('Lỗi xuất video: ' + (e.message || e), 'error'); }
+    } catch (e: any) {
+      connectedNodes.forEach(n => { try { if (dest) n.disconnect(dest); } catch {} });
+      addNotification('Lỗi xuất video: ' + (e.message || e), 'error');
+    }
     finally { setExporting(false); setExpProgress(0); }
   };
 
@@ -397,15 +462,21 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
       else if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) { e.preventDefault(); persist(false); }
       else if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D') && selId) { e.preventDefault(); duplicateClip(selId); }
       else if (e.shiftKey && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); fitTimeline(); }
-      else if (e.key === 'Home') { setPlayhead(0); playheadRef.current = 0; }
-      else if (e.key === 'End') { setPlayhead(duration); playheadRef.current = duration; }
+      else if (e.key === 'Home') { seekTo(0); }
+      else if (e.key === 'End') { seekTo(duration); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selId, selClip, playing]);
+  }, [selId, selClip, playing, duration]);
 
   if (!project) return <div className="fixed inset-0 z-[60] grid place-items-center bg-slate-900 text-slate-300"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+
+  const zoomOptions: { label: string; v: number | 'fit' }[] = [
+    { label: 'Vừa khung', v: 'fit' }, { label: '25%', v: 0.25 }, { label: '50%', v: 0.5 },
+    { label: '75%', v: 0.75 }, { label: '100%', v: 1 }, { label: '150%', v: 1.5 }, { label: '200%', v: 2 },
+  ];
+  const applyZoom = (v: number | 'fit') => { if (v === 'fit') { setPreviewFit(true); } else { setPreviewFit(false); setPreviewZoom(v); } setZoomMenu(false); };
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-[#0f1216] text-slate-200" style={{ minWidth: 1280 }}>
@@ -427,12 +498,38 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 
         {/* Khung xem trước */}
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex min-h-0 flex-1 items-center justify-center bg-[#0b0e12] p-4">
-            <canvas ref={canvasRef} width={W} height={H} className="max-h-full max-w-full rounded-lg bg-black shadow-2xl" style={{ aspectRatio: `${W}/${H}` }} />
+          <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-[#0b0e12] p-4">
+            <div className={`relative inline-block leading-none ${previewFit ? 'max-h-full max-w-full' : ''}`}>
+              <canvas ref={canvasRef} width={W} height={H}
+                className={`block rounded-lg bg-black shadow-2xl ${previewFit ? 'max-h-full max-w-full' : ''}`}
+                style={previewFit ? { aspectRatio: `${W}/${H}` } : { width: Math.round(W * previewZoom), height: Math.round(H * previewZoom) }} />
+              {safeFrame && (
+                <div className="pointer-events-none absolute inset-0">
+                  <div className="absolute border border-white/45" style={{ inset: '5%' }} />
+                  <div className="absolute border border-dashed border-white/30" style={{ inset: '10%' }} />
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex h-11 shrink-0 items-center gap-3 border-t border-white/10 bg-[#151a21] px-4">
             <button onClick={togglePlay} className="grid h-8 w-8 place-items-center rounded-lg bg-white/5 hover:bg-white/10">{playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
             <span className="font-mono text-xs text-slate-300">{fmtTime(playhead)} / {fmtTime(duration)}</span>
+            <div className="ml-auto flex items-center gap-1.5">
+              <button onClick={() => setSafeFrame(s => !s)} title="Bật/tắt khung an toàn" className={`grid h-8 w-8 place-items-center rounded-lg ${safeFrame ? 'bg-brand text-white' : 'bg-white/5 hover:bg-white/10'}`}><Frame className="h-4 w-4" /></button>
+              <button onClick={() => applyZoom('fit')} title="Vừa khung xem trước" className={`grid h-8 w-8 place-items-center rounded-lg ${previewFit ? 'bg-brand text-white' : 'bg-white/5 hover:bg-white/10'}`}><Maximize2 className="h-4 w-4" /></button>
+              <div className="relative">
+                <button onClick={() => setZoomMenu(v => !v)} className="flex h-8 items-center gap-1 rounded-lg bg-white/5 px-2 text-xs font-bold hover:bg-white/10">
+                  {previewFit ? 'Vừa khung' : `${Math.round(previewZoom * 100)}%`}
+                </button>
+                {zoomMenu && (
+                  <div className="absolute bottom-10 right-0 z-30 w-32 overflow-hidden rounded-lg border border-white/10 bg-[#1b222b] py-1 shadow-xl">
+                    {zoomOptions.map(o => (
+                      <button key={o.label} onClick={() => applyZoom(o.v)} className="block w-full px-3 py-1.5 text-left text-xs text-slate-200 hover:bg-white/10">{o.label}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -444,22 +541,23 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
       </div>
 
       {/* Dòng thời gian */}
-      <div className="h-[240px] shrink-0 border-t border-white/10 bg-[#12161c]" onPointerMove={onTimelinePointerMove} onPointerUp={onTimelinePointerUp}>
+      <div className="h-[260px] shrink-0 border-t border-white/10 bg-[#12161c]" onPointerMove={onTimelinePointerMove} onPointerUp={onTimelinePointerUp}>
         <div className="flex h-10 items-center gap-1 border-b border-white/10 px-2">
-          <button onClick={addTrack} title="Thêm lớp" className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><Layers className="h-3.5 w-3.5" /></button>
+          <button onClick={addVideoTrack} title="Thêm lớp video" className="flex h-7 items-center gap-1 rounded-md bg-white/5 px-2 text-[11px] font-bold hover:bg-white/10"><Plus className="h-3.5 w-3.5" /><Film className="h-3.5 w-3.5" /> Video</button>
+          <button onClick={addAudioTrack} title="Thêm lớp tiếng" className="flex h-7 items-center gap-1 rounded-md bg-white/5 px-2 text-[11px] font-bold hover:bg-white/10"><Plus className="h-3.5 w-3.5" /><Music className="h-3.5 w-3.5" /> Tiếng</button>
+          <span className="mx-1 h-5 w-px bg-white/10" />
           <button onClick={splitAtPlayhead} title="Cắt tại đầu phát (S)" disabled={!selClip} className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-40"><Scissors className="h-3.5 w-3.5" /></button>
           <button onClick={() => selId && duplicateClip(selId)} title="Nhân đôi (Ctrl+D)" disabled={!selId} className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-40"><Copy className="h-3.5 w-3.5" /></button>
           <button onClick={() => selId && deleteClip(selId)} title="Xóa (Delete)" disabled={!selId} className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-40"><Trash2 className="h-3.5 w-3.5" /></button>
           <button onClick={addTextClip} title="Thêm chữ (T)" className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><Type className="h-3.5 w-3.5" /></button>
           <div className="ml-auto flex items-center gap-1">
-            <button onClick={fitTimeline} title="Thu vừa màn hình (Shift+Z)" className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><Maximize2 className="h-3.5 w-3.5" /></button>
+            <button onClick={fitTimeline} title="Thu vừa dòng thời gian (Shift+Z)" className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><Maximize2 className="h-3.5 w-3.5" /></button>
             <button onClick={() => setPxPerSec(v => Math.max(20, v - 20))} className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><ZoomOut className="h-3.5 w-3.5" /></button>
             <button onClick={() => setPxPerSec(v => Math.min(300, v + 20))} className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><ZoomIn className="h-3.5 w-3.5" /></button>
           </div>
         </div>
         <Timeline tracks={tracks} pxPerSec={pxPerSec} playhead={playhead} duration={duration} selId={selId} scrollRef={timelineScrollRef}
-          onSeek={(t) => { setPlayhead(t); playheadRef.current = t; }}
-          onSelect={setSelId} onClipPointerDown={onClipPointerDown} onToggleTrack={toggleTrack} />
+          onSeek={seekTo} onSelect={setSelId} onClipPointerDown={onClipPointerDown} onToggleTrack={toggleTrack} onDeleteTrack={deleteTrack} />
       </div>
     </div>
   );
@@ -507,7 +605,7 @@ function LibraryPanel({ currentUser, onAddAsset, onAddText, onImportSubtitles }:
         const kind: MvKind = f.type.startsWith('video') ? 'video' : f.type.startsWith('audio') ? 'audio' : 'image';
         const meta = await probe(f, kind);
         const url = await uploadAssetFile(f);
-        await addAsset({ kind, title: f.name, url, thumb_url: kind === 'image' ? url : (meta.thumb && meta.thumb.startsWith('data:') ? undefined : undefined), mime_type: f.type, size_bytes: f.size, duration_ms: meta.duration_ms, width: meta.width, height: meta.height, owner_name: currentUser.fullName });
+        await addAsset({ kind, title: f.name, url, thumb_url: kind === 'image' ? url : (meta.thumb && meta.thumb.startsWith('data:') ? meta.thumb : undefined), mime_type: f.type, size_bytes: f.size, duration_ms: meta.duration_ms, width: meta.width, height: meta.height, owner_name: currentUser.fullName });
       }
       addNotification('Đã tải tư liệu lên.', 'success'); load();
     } catch (e: any) { addNotification('Lỗi tải lên: ' + (e.message || e), 'error'); }
@@ -566,58 +664,79 @@ function LibraryPanel({ currentUser, onAddAsset, onAddText, onImportSubtitles }:
 }
 
 // ============================ Dòng thời gian ============================
-function Timeline({ tracks, pxPerSec, playhead, duration, selId, scrollRef, onSeek, onSelect, onClipPointerDown, onToggleTrack }: {
+function Timeline({ tracks, pxPerSec, playhead, duration, selId, scrollRef, onSeek, onSelect, onClipPointerDown, onToggleTrack, onDeleteTrack }: {
   tracks: Track[]; pxPerSec: number; playhead: number; duration: number; selId: string | null;
   scrollRef?: React.RefObject<HTMLDivElement>;
   onSeek: (t: number) => void; onSelect: (id: string) => void;
   onClipPointerDown: (e: React.PointerEvent, tr: Track, c: Clip, mode: 'move' | 'l' | 'r') => void;
-  onToggleTrack: (id: string, k: 'locked' | 'hidden' | 'muted') => void;
+  onToggleTrack: (id: string, k: 'locked' | 'hidden' | 'muted' | 'solo') => void;
+  onDeleteTrack: (id: string) => void;
 }) {
   const totalMs = Math.max(duration, 10000) + 4000;
   const width = (totalMs / 1000) * pxPerSec;
   const rulerRef = useRef<HTMLDivElement>(null);
-  const seek = (e: React.MouseEvent) => { const rect = (e.currentTarget as HTMLElement).getBoundingClientRect(); const x = e.clientX - rect.left + (e.currentTarget as HTMLElement).scrollLeft; onSeek(Math.max(0, (x / pxPerSec) * 1000)); };
+  const scrubbing = useRef(false);
+  const scrubAt = (clientX: number) => {
+    const el = rulerRef.current; if (!el) return;
+    const rect = el.getBoundingClientRect();
+    onSeek(Math.max(0, ((clientX - rect.left) / pxPerSec) * 1000));
+  };
+  const onRulerDown = (e: React.PointerEvent) => { e.preventDefault(); (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); scrubbing.current = true; scrubAt(e.clientX); };
+  const onRulerMove = (e: React.PointerEvent) => { if (scrubbing.current) scrubAt(e.clientX); };
+  const onRulerUp = (e: React.PointerEvent) => { scrubbing.current = false; try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {} };
+  const rowSeek = (e: React.MouseEvent) => { scrubAt(e.clientX); };
+
   const ticks = []; const stepSec = pxPerSec < 50 ? 5 : pxPerSec < 120 ? 2 : 1;
   for (let s = 0; s * 1000 <= totalMs; s += stepSec) ticks.push(s);
 
   if (tracks.length === 0) {
-    return <div className="grid h-[180px] place-items-center text-center text-xs text-slate-500"><div><Film className="mx-auto mb-2 h-8 w-8 text-slate-600" /><p>Chưa có lớp nào.</p><p className="mt-1 text-slate-600">Chọn tư liệu ở cột trái rồi bấm để thêm vào dòng thời gian.</p></div></div>;
+    return <div className="grid h-[200px] place-items-center text-center text-xs text-slate-500"><div><Film className="mx-auto mb-2 h-8 w-8 text-slate-600" /><p>Chưa có lớp nào.</p><p className="mt-1 text-slate-600">Bấm "+ Video" hoặc "+ Tiếng" ở trên, hoặc chọn tư liệu ở cột trái để thêm.</p></div></div>;
   }
 
   return (
-    <div className="flex h-[190px]">
+    <div className="flex h-[210px]">
       {/* Đầu hàng lớp */}
-      <div className="w-32 shrink-0 border-r border-white/10">
-        <div className="h-6 border-b border-white/10" />
+      <div className="w-40 shrink-0 overflow-y-auto border-r border-white/10">
+        <div className="h-7 border-b border-white/10" />
         {tracks.map(tr => (
-          <div key={tr.id} className="flex h-14 items-center gap-1 border-b border-white/5 px-2">
-            <span className="min-w-0 flex-1 truncate text-[11px] font-bold text-slate-300">{tr.name}</span>
-            <button onClick={() => onToggleTrack(tr.id, 'hidden')} title="Ẩn/hiện" className="text-slate-500 hover:text-slate-200">{tr.hidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}</button>
-            <button onClick={() => onToggleTrack(tr.id, 'locked')} title="Khóa" className="text-slate-500 hover:text-slate-200">{tr.locked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}</button>
+          <div key={tr.id} className={`group flex h-16 flex-col justify-center gap-1 border-b border-white/5 px-2 ${tr.kind === 'audio' ? 'bg-emerald-500/5' : 'bg-blue-500/5'}`}>
+            <div className="flex items-center gap-1">
+              {tr.kind === 'audio' ? <Music className="h-3 w-3 shrink-0 text-emerald-400/70" /> : <Film className="h-3 w-3 shrink-0 text-blue-400/70" />}
+              <span className="min-w-0 flex-1 truncate text-[11px] font-bold text-slate-300">{tr.name}</span>
+              <button onClick={() => onDeleteTrack(tr.id)} title="Xóa lớp" className="text-slate-600 opacity-0 hover:text-rose-400 group-hover:opacity-100"><Trash2 className="h-3 w-3" /></button>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => onToggleTrack(tr.id, 'hidden')} title="Ẩn/hiện hình" className={tr.hidden ? 'text-rose-400' : 'text-slate-500 hover:text-slate-200'}>{tr.hidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}</button>
+              <button onClick={() => onToggleTrack(tr.id, 'solo')} title="Chỉ nghe lớp này (Solo)" className={tr.solo ? 'text-amber-400' : 'text-slate-500 hover:text-slate-200'}><Headphones className="h-3.5 w-3.5" /></button>
+              <button onClick={() => onToggleTrack(tr.id, 'muted')} title="Tắt/mở tiếng" className={tr.muted ? 'text-rose-400' : 'text-slate-500 hover:text-slate-200'}>{tr.muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}</button>
+              <button onClick={() => onToggleTrack(tr.id, 'locked')} title="Khóa lớp" className={tr.locked ? 'text-amber-400' : 'text-slate-500 hover:text-slate-200'}>{tr.locked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}</button>
+            </div>
           </div>
         ))}
       </div>
       {/* Vùng lớp cuộn ngang */}
       <div ref={scrollRef} className="relative min-w-0 flex-1 overflow-x-auto">
         <div style={{ width }}>
-          {/* Thước */}
-          <div ref={rulerRef} onClick={seek} className="relative h-6 cursor-pointer border-b border-white/10 bg-[#0e1319]">
-            {ticks.map(s => <div key={s} className="absolute top-0 h-full border-l border-white/10" style={{ left: s * pxPerSec }}><span className="ml-1 text-[9px] text-slate-500">{s}s</span></div>)}
+          {/* Thước: nhấn giữ và kéo để tua */}
+          <div ref={rulerRef} onPointerDown={onRulerDown} onPointerMove={onRulerMove} onPointerUp={onRulerUp}
+            className="relative h-7 cursor-ew-resize touch-none select-none border-b border-white/10 bg-[#0e1319]">
+            {ticks.map(s => <div key={s} className="pointer-events-none absolute top-0 h-full border-l border-white/10" style={{ left: s * pxPerSec }}><span className="ml-1 text-[9px] text-slate-500">{s}s</span></div>)}
           </div>
           {/* Hàng lớp */}
           {tracks.map(tr => (
-            <div key={tr.id} className="relative h-14 border-b border-white/5" onClick={seek}>
+            <div key={tr.id} className={`relative h-16 border-b border-white/5 ${tr.kind === 'audio' ? 'bg-emerald-500/[0.03]' : ''}`} onClick={rowSeek}>
               {tr.clips.map(c => {
                 const left = (c.start / 1000) * pxPerSec; const w = (c.dur / 1000) * pxPerSec; const sel = selId === c.id;
                 const color = c.kind === 'audio' ? 'bg-emerald-500/25 border-emerald-400/50' : c.kind === 'text' ? 'bg-violet-500/25 border-violet-400/50' : c.kind === 'video' ? 'bg-blue-500/25 border-blue-400/50' : 'bg-amber-500/25 border-amber-400/50';
                 return (
                   <div key={c.id} onClick={e => { e.stopPropagation(); onSelect(c.id); }}
                     onPointerDown={e => onClipPointerDown(e, tr, c, 'move')}
-                    className={`absolute top-1.5 h-11 cursor-grab overflow-hidden rounded-md border ${color} ${sel ? 'ring-2 ring-brand' : ''}`} style={{ left, width: Math.max(8, w) }}>
-                    <div onPointerDown={e => onClipPointerDown(e, tr, c, 'l')} className="absolute left-0 top-0 z-10 h-full w-2 cursor-ew-resize bg-white/10" />
-                    <div onPointerDown={e => onClipPointerDown(e, tr, c, 'r')} className="absolute right-0 top-0 z-10 h-full w-2 cursor-ew-resize bg-white/10" />
+                    className={`absolute top-1.5 h-12 cursor-grab overflow-hidden rounded-md border ${color} ${sel ? 'ring-2 ring-brand' : ''} ${tr.locked ? 'opacity-60' : ''}`} style={{ left, width: Math.max(8, w) }}>
+                    {!tr.locked && <div onPointerDown={e => onClipPointerDown(e, tr, c, 'l')} className="absolute left-0 top-0 z-10 h-full w-2 cursor-ew-resize bg-white/10" />}
+                    {!tr.locked && <div onPointerDown={e => onClipPointerDown(e, tr, c, 'r')} className="absolute right-0 top-0 z-10 h-full w-2 cursor-ew-resize bg-white/10" />}
                     <div className="flex h-full items-center gap-1 px-2">
-                      {c.thumb && c.kind !== 'text' && <img src={c.thumb} alt="" className="h-8 w-10 shrink-0 rounded object-cover" />}
+                      {c.thumb && c.kind !== 'text' && <img src={c.thumb} alt="" className="h-9 w-12 shrink-0 rounded object-cover" />}
+                      {c.kind === 'audio' && <Music className="h-3.5 w-3.5 shrink-0 text-emerald-300" />}
                       <span className="truncate text-[10px] font-semibold text-slate-100">{c.kind === 'text' ? (c.props.text || 'Văn bản') : c.name}</span>
                     </div>
                   </div>
@@ -642,8 +761,12 @@ function PropsPanel({ clip, onProps, onClip, onDelete, onDuplicate, onSplitAudio
   const num = (v: number, on: (n: number) => void, step = 1, min?: number, max?: number) => (
     <input type="number" value={v} step={step} min={min} max={max} onChange={e => on(Number(e.target.value))} className="w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-slate-200 outline-none focus:border-brand" />
   );
-  const slider = (v: number, on: (n: number) => void, min: number, max: number, step = 0.01) => (
-    <input type="range" min={min} max={max} step={step} value={v} onChange={e => on(Number(e.target.value))} className="w-full accent-[var(--color-brand,#22c55e)]" />
+  // Thanh trượt kèm ô nhập số bên cạnh.
+  const sliderNum = (v: number, on: (n: number) => void, min: number, max: number, step: number, digits = 0) => (
+    <div className="flex items-center gap-2">
+      <input type="range" min={min} max={max} step={step} value={v} onChange={e => on(Number(e.target.value))} className="min-w-0 flex-1 accent-[var(--color-brand,#22c55e)]" />
+      <input type="number" value={digits ? Number(v.toFixed(digits)) : Math.round(v)} step={step} min={min} max={max} onChange={e => on(Math.max(min, Math.min(max, Number(e.target.value))))} className="w-16 shrink-0 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-slate-200 outline-none focus:border-brand" />
+    </div>
   );
 
   return (
@@ -663,24 +786,31 @@ function PropsPanel({ clip, onProps, onClip, onDelete, onDuplicate, onSplitAudio
             <Row label="Cỡ chữ">{num(p.fontSize, v => onProps({ fontSize: v }), 1, 8)}</Row>
             <Row label="Độ đậm">{num(p.fontWeight, v => onProps({ fontWeight: v }), 100, 100, 900)}</Row>
           </div>
-          <Row label="Màu chữ"><input type="color" value={p.color} onChange={e => onProps({ color: e.target.value })} className="h-9 w-full rounded-lg border border-white/10 bg-white/5" /></Row>
+          <div className="grid grid-cols-2 gap-2">
+            <Row label="Canh chữ">
+              <select value={p.align} onChange={e => onProps({ align: e.target.value })} className="w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-slate-200 outline-none focus:border-brand">
+                <option value="left">Trái</option><option value="center">Giữa</option><option value="right">Phải</option>
+              </select>
+            </Row>
+            <Row label="Màu chữ"><input type="color" value={p.color} onChange={e => onProps({ color: e.target.value })} className="h-9 w-full rounded-lg border border-white/10 bg-white/5" /></Row>
+          </div>
         </>
       )}
 
       {(clip.kind === 'video' || clip.kind === 'image' || clip.kind === 'text') && (
         <>
           <div className="grid grid-cols-2 gap-2">
-            <Row label="Ngang %">{num(p.x, v => onProps({ x: v }))}</Row>
-            <Row label="Dọc %">{num(p.y, v => onProps({ y: v }))}</Row>
+            <Row label="Vị trí ngang %">{num(p.x, v => onProps({ x: v }))}</Row>
+            <Row label="Vị trí dọc %">{num(p.y, v => onProps({ y: v }))}</Row>
           </div>
-          <Row label={`Tỉ lệ ${p.scale.toFixed(2)}`}>{slider(p.scale, v => onProps({ scale: v }), 0.1, 3)}</Row>
-          <Row label={`Xoay ${p.rotation}°`}>{slider(p.rotation, v => onProps({ rotation: v }), -180, 180, 1)}</Row>
-          <Row label={`Độ mờ đục ${Math.round(p.opacity * 100)}%`}>{slider(p.opacity, v => onProps({ opacity: v }), 0, 1)}</Row>
+          <Row label="Tỉ lệ (scale)">{sliderNum(p.scale, v => onProps({ scale: v }), 0.1, 4, 0.01, 2)}</Row>
+          <Row label="Xoay (độ)">{sliderNum(p.rotation, v => onProps({ rotation: v }), -180, 180, 1)}</Row>
+          <Row label={`Độ mờ đục ${Math.round(p.opacity * 100)}%`}>{sliderNum(p.opacity, v => onProps({ opacity: v }), 0, 1, 0.01, 2)}</Row>
         </>
       )}
 
       {(clip.kind === 'video' || clip.kind === 'audio') && (
-        <Row label={`Âm lượng ${Math.round(p.volume * 100)}%`}>{slider(p.volume, v => onProps({ volume: v }), 0, 1)}</Row>
+        <Row label="Âm lượng">{sliderNum(p.volume, v => onProps({ volume: v }), 0, 1, 0.01, 2)}</Row>
       )}
 
       {clip.kind === 'video' && (
