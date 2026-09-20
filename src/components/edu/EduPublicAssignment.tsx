@@ -14,8 +14,9 @@ import {
   Download,
   LogOut
 } from 'lucide-react';
-import { EduAssignment, EduClass, EduSchool, EduSubmission, EduUser, EduGrade } from '../../types/edu';
-import { getAssignmentByLinkId, getSubmissionByMssv, saveSubmission, getGradesForUser } from '../../lib/edu';
+import { EduAssignment, EduClass, EduSchool, EduSubmission, EduUser, EduGrade, EduExtensionRequest } from '../../types/edu';
+import { getAssignmentByLinkId, getSubmissionByMssv, saveSubmission, getGradesForUser, requestExtension, getExtensionForUser } from '../../lib/edu';
+import { CalendarClock } from 'lucide-react';
 import { uploadImageToCloudinary, uploadMediaToCloudinary } from '../../lib/upload';
 import { useNotifications } from '../NotificationContext';
 
@@ -31,6 +32,8 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
   const [identifiedUser, setIdentifiedUser] = useState<EduUser | null>(null);
   const [submission, setSubmission] = useState<EduSubmission | null>(null);
   const [grades, setGrades] = useState<any[]>([]);
+  const [extension, setExtension] = useState<EduExtensionRequest | null>(null);
+  const [requesting, setRequesting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -85,8 +88,12 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
     setTextContent('');
 
     try {
-      const subData = await getSubmissionByMssv(newAssignmentId, identifiedUser.mssv);
+      const [subData, ext] = await Promise.all([
+        getSubmissionByMssv(newAssignmentId, identifiedUser.mssv),
+        getExtensionForUser(newAssignmentId, identifiedUser.id).catch(() => null),
+      ]);
       setSubmission(subData);
+      setExtension(ext);
       if (subData) {
         setFiles(subData.files || []);
         setTextContent(subData.content || '');
@@ -124,11 +131,12 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
       setClassAssignments(allAssignments);
       
       // Load submission and grades for THIS specific user
-      const [subData, gradesData] = await Promise.all([
+      const [subData, gradesData, ext] = await Promise.all([
         getSubmissionByMssv(assignment.id, user.mssv),
-        getGradesForUser(assignment.classId, user.id)
+        getGradesForUser(assignment.classId, user.id),
+        getExtensionForUser(assignment.id, user.id).catch(() => null)
       ]);
-      
+
       // Reset current state first to prevent flickering/leakage
       setSubmission(null);
       setFiles([]);
@@ -137,6 +145,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
 
       setSubmission(subData);
       setGrades(gradesData);
+      setExtension(ext);
       
       if (subData) {
         setFiles(subData.files || []);
@@ -287,6 +296,21 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
     }
   };
 
+  const handleRequestExtension = async () => {
+    if (!identifiedUser || !assignment) return;
+    setRequesting(true);
+    setNotification(null);
+    try {
+      const ext = await requestExtension({ assignmentId: assignment.id, classId: assignment.classId, userId: identifiedUser.id, mssv: identifiedUser.mssv, studentName: identifiedUser.fullName });
+      setExtension(ext);
+      setNotification({ type: 'success', title: 'Đã gửi', message: 'Đã gửi yêu cầu gia hạn. Vui lòng chờ giảng viên duyệt rồi quay lại nộp bài.' });
+    } catch (e: any) {
+      setNotification({ type: 'danger', title: 'Lỗi', message: 'Không gửi được yêu cầu gia hạn. ' + (e?.message || '') });
+    } finally {
+      setRequesting(false);
+    }
+  };
+
   const Alert = ({ type, message, title, onClose }: { type: 'success' | 'info' | 'warning' | 'danger', message: string, title?: string, onClose: () => void }) => {
     const styles = {
       success: 'bg-[#4dbd74]',
@@ -326,9 +350,15 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
 
   const currentGrade = grades.find(g => g.column.id === assignment.gradeColumnId)?.grade;
 
-  if (currentGrade && currentGrade.score !== undefined && currentGrade.score !== null) {
+  // Sinh viên được gia hạn còn hiệu lực thì mở khóa nộp bài bất kể quá hạn, trừ khi đã chấm điểm.
+  const graded = !!(currentGrade && currentGrade.score !== undefined && currentGrade.score !== null);
+  const extApproved = extension?.status === 'approved' && extension.extendUntil && new Date(extension.extendUntil).getTime() > Date.now();
+
+  if (graded) {
     canEdit = false;
     lockReason = 'Bài tập đã được chấm điểm';
+  } else if (extApproved) {
+    canEdit = true;
   } else if (isOverdue && !assignment.allowLate) {
     canEdit = false;
     lockReason = 'Đã quá hạn nộp bài';
@@ -577,11 +607,37 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                 </div>
                 )}
 
-                {/* Thông báo khóa khi hết hạn hoặc đã chấm điểm */}
+                {/* Được gia hạn còn hiệu lực */}
+                {extApproved && (
+                  <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl flex items-center gap-3 text-emerald-700">
+                    <CalendarClock className="w-5 h-5 shrink-0" />
+                    <p className="text-[13px] font-semibold">Bạn được gia hạn nộp bài tới {new Date(extension!.extendUntil as string).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}.</p>
+                  </div>
+                )}
+
+                {/* Thông báo khóa khi hết hạn hoặc đã chấm điểm, kèm nút xin gia hạn */}
                 {!canEdit && (
-                  <div className="bg-rose-50 border border-rose-100 p-5 rounded-xl flex items-center gap-4 text-rose-600">
-                    <Lock className="w-5 h-5 shrink-0" />
-                    <p className="text-[13px] font-bold uppercase tracking-wide">{lockReason}</p>
+                  <div className="space-y-3">
+                    <div className="bg-rose-50 border border-rose-100 p-5 rounded-xl flex items-center gap-4 text-rose-600">
+                      <Lock className="w-5 h-5 shrink-0" />
+                      <p className="text-[13px] font-bold uppercase tracking-wide">{lockReason}</p>
+                    </div>
+                    {/* Cho xin gia hạn khi bị khóa do quá hạn hoặc hết cửa sổ, không cho khi đã chấm điểm */}
+                    {!graded && (
+                      extension?.status === 'pending' ? (
+                        <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex items-center gap-3 text-amber-700">
+                          <CalendarClock className="w-5 h-5 shrink-0" />
+                          <p className="text-[13px] font-semibold">Đã gửi yêu cầu gia hạn, đang chờ giảng viên duyệt.</p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col sm:flex-row items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                          <p className="flex-1 text-[13px] text-slate-600">{extension?.status === 'rejected' ? 'Yêu cầu gia hạn trước đã bị từ chối. Bạn có thể gửi lại yêu cầu.' : 'Nếu cần thêm thời gian, bạn có thể gửi yêu cầu gia hạn cho giảng viên.'}</p>
+                          <button onClick={handleRequestExtension} disabled={requesting} className="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-[12px] font-bold uppercase tracking-wide text-white hover:bg-brand-hover disabled:opacity-50">
+                            <CalendarClock className="w-4 h-4" /> {requesting ? 'Đang gửi...' : 'Xin gia hạn'}
+                          </button>
+                        </div>
+                      )
+                    )}
                   </div>
                 )}
 

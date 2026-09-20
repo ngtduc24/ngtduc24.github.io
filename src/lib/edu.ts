@@ -22,6 +22,7 @@ export const SUBMISSIONS_TABLE = 'edu_submissions';
 export const GRADES_TABLE = 'edu_grades';
 export const SUBJECTS_TABLE = 'edu_subjects';
 export const ASSIGNMENT_BANK_TABLE = 'edu_assignment_bank';
+export const EXTENSION_TABLE = 'edu_extension_requests';
 
 // Ngữ cảnh người dùng hiện tại cho module Edu. Dùng để tách dữ liệu trường lớp sinh viên
 // theo từng người tạo, và để mặc định gán chủ sở hữu khi tạo mới. Admin thì xem được tất cả.
@@ -485,6 +486,66 @@ export async function reopenSubmission(id: string) {
 // Gỡ điểm đã chấm của một sinh viên ở một cột điểm (để chấm lại sau khi cho nộp bổ sung).
 export async function deleteGradeForUser(columnId: string, userId: string) {
   const { error } = await supabase.from(GRADES_TABLE).delete().eq('grade_column_id', columnId).eq('user_id', userId);
+  if (error) throw error;
+}
+
+// ===== Gia hạn nộp bài =====
+function mapExtension(r: any): import('../types/edu').EduExtensionRequest {
+  return {
+    id: r.id,
+    assignmentId: r.assignment_id,
+    classId: r.class_id,
+    userId: r.user_id,
+    mssv: r.mssv,
+    studentName: r.student_name,
+    status: r.status || 'pending',
+    extendUntil: r.extend_until,
+    createdAt: r.created_at,
+    respondedAt: r.responded_at,
+    respondedBy: r.responded_by,
+  };
+}
+
+// Sinh viên gửi yêu cầu gia hạn. Nếu đang có yêu cầu chờ duyệt thì giữ nguyên, không tạo trùng.
+export async function requestExtension(p: { assignmentId: string; classId: string; userId: string; mssv: string; studentName?: string }) {
+  const { data: existing } = await supabase.from(EXTENSION_TABLE).select('*').eq('assignment_id', p.assignmentId).eq('user_id', p.userId).order('created_at', { ascending: false }).limit(1);
+  const cur = existing?.[0];
+  if (cur && cur.status === 'pending') return mapExtension(cur);
+  const { data, error } = await supabase.from(EXTENSION_TABLE).insert({
+    assignment_id: p.assignmentId,
+    class_id: p.classId,
+    user_id: p.userId,
+    mssv: p.mssv,
+    student_name: p.studentName || null,
+    status: 'pending',
+    created_at: new Date().toISOString(),
+  }).select().single();
+  if (error) throw error;
+  return mapExtension(data);
+}
+
+// Lấy yêu cầu gia hạn mới nhất của một sinh viên ở một bài tập.
+export async function getExtensionForUser(assignmentId: string, userId: string) {
+  const { data, error } = await supabase.from(EXTENSION_TABLE).select('*').eq('assignment_id', assignmentId).eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
+  if (error) throw error;
+  return data && data[0] ? mapExtension(data[0]) : null;
+}
+
+// Lấy các yêu cầu gia hạn đang chờ duyệt của một lớp, cho giáo viên xử lý.
+export async function getPendingExtensions(classId: string) {
+  const { data, error } = await supabase.from(EXTENSION_TABLE).select('*').eq('class_id', classId).eq('status', 'pending').order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data || []).map(mapExtension);
+}
+
+// Giáo viên duyệt hoặc từ chối yêu cầu gia hạn. Khi duyệt thì đặt thời hạn gia hạn tới extendUntil.
+export async function respondExtension(id: string, p: { status: 'approved' | 'rejected'; extendUntil?: string | null; respondedBy?: string }) {
+  const { error } = await supabase.from(EXTENSION_TABLE).update({
+    status: p.status,
+    extend_until: p.extendUntil ?? null,
+    responded_at: new Date().toISOString(),
+    responded_by: p.respondedBy || null,
+  }).eq('id', id);
   if (error) throw error;
 }
 

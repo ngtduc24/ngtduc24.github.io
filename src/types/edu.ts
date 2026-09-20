@@ -88,6 +88,21 @@ export interface EduSubmission {
   firstSubmittedAt: string;
 }
 
+// Yêu cầu gia hạn nộp bài của sinh viên, giáo viên duyệt và chọn thời gian gia hạn.
+export interface EduExtensionRequest {
+  id: string;
+  assignmentId: string;
+  classId: string;
+  userId: string;
+  mssv: string;
+  studentName?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  extendUntil?: string | null;
+  createdAt: string;
+  respondedAt?: string | null;
+  respondedBy?: string | null;
+}
+
 export interface EduSubmissionFile {
   url: string;
   type: string;
