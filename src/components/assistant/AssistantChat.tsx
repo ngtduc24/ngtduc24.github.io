@@ -2,16 +2,19 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, BookOpen, LayoutGrid, HelpCircle, ArrowRight, Loader2, FileQuestion, Sparkles, BookMarked } from 'lucide-react';
 import { UserAccount, AppSettings } from '../../types';
 import { MODULE_REGISTRY, resolveModuleMeta, isModuleHidden } from '../../lib/modules';
-import { getSubjects } from '../../lib/edu';
+import { getSubjects, getAssignmentBank } from '../../lib/edu';
 import { getMyLessons, getPublicLessons, stripHtml, ELLesson } from '../../lib/elearning';
 import { getBankQuestions, QuizQuestion } from '../../lib/quiz';
-import { EduSubject } from '../../types/edu';
+import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
 
 interface Props {
   currentUser: UserAccount;
   settings: AppSettings;
   onSwitchTab: (tab: string) => void;
   onAfterNavigate?: () => void;
+  // 'system' (nút nổi): hỏi đáp và hướng dẫn dùng hệ thống. 'knowledge' (trang riêng): chỉ
+  // hỏi đáp kiến thức bài học từ nội dung công khai, không trả lời về hệ thống hay cách dùng.
+  mode?: 'system' | 'knowledge';
 }
 
 // Bỏ dấu tiếng Việt để tìm kiếm không phân biệt dấu.
@@ -27,6 +30,7 @@ interface BotResult {
   features: FeatureHit[];
   lessons: { id: string; title: string; subject: string }[];
   questions: { id: string; text: string }[];
+  assignments: { id: string; title: string; subject: string; snippet: string }[];
 }
 type Msg = { role: 'user'; text: string } | { role: 'bot'; result: BotResult };
 
@@ -71,12 +75,14 @@ const FAQS: { keys: string[]; title: string; body: string; goId?: string }[] = [
 ];
 
 // Phần lõi hội thoại của trợ lý, dùng chung cho nút nổi và trang Trợ lý.
-export default function AssistantChat({ currentUser, settings, onSwitchTab, onAfterNavigate }: Props) {
+export default function AssistantChat({ currentUser, settings, onSwitchTab, onAfterNavigate, mode = 'system' }: Props) {
+  const knowledgeMode = mode === 'knowledge';
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [subjects, setSubjects] = useState<EduSubject[]>([]);
   const [lessons, setLessons] = useState<ELLesson[]>([]);
+  const [bankItems, setBankItems] = useState<EduAssignmentBankItem[]>([]);
   const [dataReady, setDataReady] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -107,20 +113,31 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
     if (dataReady) return;
     (async () => {
       try {
-        const [subs, mine, pub] = await Promise.all([
-          getSubjects().catch(() => []),
-          getMyLessons({}).catch(() => []),
-          getPublicLessons({}).catch(() => []),
-        ]);
+        const subs = await getSubjects().catch(() => []);
         setSubjects(subs);
-        const map = new Map<string, ELLesson>();
-        [...mine, ...pub].forEach(l => map.set(l.id, l));
-        setLessons(Array.from(map.values()));
+        if (knowledgeMode) {
+          // Trang trợ lý kiến thức chỉ dùng nội dung công khai: bài giảng kho chung và
+          // ngân hàng bài tập được chia sẻ công khai.
+          const [pub, bank] = await Promise.all([
+            getPublicLessons({}).catch(() => []),
+            getAssignmentBank().catch(() => []),
+          ]);
+          setLessons(pub);
+          setBankItems((bank as EduAssignmentBankItem[]).filter(b => b.isPublic === true));
+        } else {
+          const [mine, pub] = await Promise.all([
+            getMyLessons({}).catch(() => []),
+            getPublicLessons({}).catch(() => []),
+          ]);
+          const map = new Map<string, ELLesson>();
+          [...mine, ...pub].forEach(l => map.set(l.id, l));
+          setLessons(Array.from(map.values()));
+        }
       } finally {
         setDataReady(true);
       }
     })();
-  }, [dataReady]);
+  }, [dataReady, knowledgeMode]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -148,6 +165,32 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
       .filter(k => (k.title || k.content) && matchText(`${k.title || ''} ${k.keywords || ''} ${k.content || ''}`))
       .slice(0, 3)
       .map(k => ({ title: k.title || 'Kiến thức', content: k.content || '' }));
+
+    // Bài giảng khớp theo tên, tóm tắt và tên môn (ở chế độ kiến thức chỉ là bài giảng công khai).
+    const lessonHitsAll = lessons
+      .filter(l => matchText(`${l.title || ''} ${l.summary || ''} ${subjectName(l.subject_id)}`))
+      .slice(0, 5)
+      .map(l => ({ id: l.id, title: l.title || 'Bài giảng', subject: subjectName(l.subject_id) }));
+
+    // ===== Chế độ trang trợ lý kiến thức: chỉ nội dung công khai, không có phần hệ thống =====
+    if (knowledgeMode) {
+      let questions: { id: string; text: string }[] = [];
+      try {
+        const qs = await getBankQuestions({ scope: 'shared', search: text });
+        questions = qs.slice(0, 3).map(x => ({ id: x.id, text: stripHtml(x.content).slice(0, 140) }));
+      } catch { /* bỏ qua */ }
+
+      const assignments = bankItems
+        .filter(b => matchText(`${b.title || ''} ${stripHtml(b.content || '')} ${subjectName(b.subjectId)}`))
+        .slice(0, 3)
+        .map(b => ({ id: b.id, title: b.title || 'Bài tập', subject: subjectName(b.subjectId), snippet: stripHtml(b.content || '').slice(0, 140) }));
+
+      const total = knowledge.length + lessonHitsAll.length + questions.length + assignments.length;
+      const intro = total === 0
+        ? 'Mình chưa tìm thấy nội dung phù hợp trong kho công khai. Bạn thử hỏi theo tên bài giảng, môn học, hoặc một khái niệm trong bài. Lưu ý mình chỉ biết các bài giảng, câu hỏi và bài tập đã được chia sẻ công khai.'
+        : 'Mình tìm được nội dung liên quan trong kho học liệu công khai:';
+      return { intro, knowledge, guides: [], faqs: [], features: [], lessons: lessonHitsAll, questions, assignments };
+    }
 
     const matchedFeatures = MODULE_REGISTRY
       .filter(m => canFeature(m.id))
@@ -202,7 +245,7 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
     } else {
       intro = 'Đây là những gì mình tìm được:';
     }
-    return { intro, knowledge, guides, faqs, features, lessons: lessonHits, questions };
+    return { intro, knowledge, guides, faqs, features, lessons: lessonHits, questions, assignments: [] };
   };
 
   const submit = async (raw?: string) => {
@@ -219,7 +262,12 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
     }
   };
 
-  const suggestions = ['Tạo đề trắc nghiệm', 'Nhập điểm ở đâu', 'Tải bài giảng ra PDF', 'Thêm môn học mới'];
+  const suggestions = knowledgeMode
+    ? ['Bài giảng về Blender', 'Vertex là gì', 'Bài tập về dựng hình', 'Câu hỏi ôn tập']
+    : ['Tạo đề trắc nghiệm', 'Nhập điểm ở đâu', 'Tải bài giảng ra PDF', 'Thêm môn học mới'];
+  const greeting = knowledgeMode
+    ? `Xin chào ${currentUser?.fullName?.split(' ').slice(-1)[0] || ''}. Mình giúp hỏi đáp kiến thức bài học dựa trên bài giảng, câu hỏi và bài tập đã được chia sẻ công khai. Bạn muốn tìm hiểu điều gì?`
+    : `Xin chào ${currentUser?.fullName?.split(' ').slice(-1)[0] || ''}. Mình có thể giúp tìm bài giảng, tra câu hỏi và chỉ đường tới các chức năng. Bạn muốn làm gì?`;
 
   return (
     <>
@@ -227,7 +275,7 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
         {msgs.length === 0 && (
           <div className="space-y-3">
             <div className="rounded-2xl rounded-tl-sm bg-white px-3 py-2.5 text-[13px] text-slate-700 shadow-sm">
-              Xin chào {currentUser?.fullName?.split(' ').slice(-1)[0] || ''}. Mình có thể giúp tìm bài giảng, tra câu hỏi và chỉ đường tới các chức năng. Bạn muốn làm gì?
+              {greeting}
             </div>
             <div className="flex flex-wrap gap-1.5">
               {suggestions.map(s => (
@@ -306,7 +354,21 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
                     <p key={qq.id} className="rounded-xl bg-slate-50 px-2.5 py-1.5 text-[12px] text-slate-700 line-clamp-2">{qq.text || '(câu hỏi trống)'}</p>
                   ))}
                 </div>
-                <button onClick={() => go('edu_exam')} className="mt-2 inline-flex items-center gap-1 px-1 text-[11px] font-bold text-brand hover:underline">Mở phần trắc nghiệm <ArrowRight className="h-3 w-3" /></button>
+                {!knowledgeMode && <button onClick={() => go('edu_exam')} className="mt-2 inline-flex items-center gap-1 px-1 text-[11px] font-bold text-brand hover:underline">Mở phần trắc nghiệm <ArrowRight className="h-3 w-3" /></button>}
+              </div>
+            )}
+
+            {m.result.assignments.length > 0 && (
+              <div className="rounded-2xl border border-slate-100 bg-white p-2.5">
+                <p className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-black uppercase text-slate-400"><BookMarked className="h-3.5 w-3.5" /> Bài tập công khai</p>
+                <div className="space-y-1">
+                  {m.result.assignments.map(a => (
+                    <div key={a.id} className="rounded-xl bg-slate-50 px-2.5 py-2">
+                      <p className="text-[12.5px] font-semibold text-slate-800">{a.title}{a.subject ? ` · ${a.subject}` : ''}</p>
+                      {a.snippet && <p className="mt-0.5 text-[11px] text-slate-500 line-clamp-2">{a.snippet}</p>}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

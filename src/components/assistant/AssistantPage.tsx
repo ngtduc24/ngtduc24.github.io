@@ -21,12 +21,12 @@ export default function AssistantPage({ currentUser, settings, onSwitchTab, onBa
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand"><Sparkles className="h-6 w-6" /></span>
         <div className="min-w-0">
           <h1 className="truncate text-xl font-black tracking-tight text-slate-900 sm:text-2xl">Trợ lý ảo</h1>
-          <p className="text-sm font-medium text-slate-500">Hỏi đáp và hướng dẫn dùng hệ thống, tìm nhanh bài giảng, câu hỏi và chức năng.</p>
+          <p className="text-sm font-medium text-slate-500">Hỏi đáp kiến thức bài học dựa trên bài giảng, câu hỏi và bài tập được chia sẻ công khai.</p>
         </div>
       </div>
 
       <div className="mx-auto flex h-[68vh] max-h-[680px] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <AssistantChat currentUser={currentUser} settings={settings} onSwitchTab={onSwitchTab} />
+        <AssistantChat currentUser={currentUser} settings={settings} onSwitchTab={onSwitchTab} mode="knowledge" />
       </div>
     </div>
   );
