@@ -72,7 +72,10 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
   // Chạy tuần tự có thử lại 1 lần cho từng lớp để tránh lỗi tạm thời khi gọi nhiều
   // truy vấn cùng lúc. Khi một lớp lỗi thì giữ nguyên chỉ số cũ, không ghi đè số 0.
   const statFor = async (id: string): Promise<ClassStat> => {
-    const [users, assignments] = await Promise.all([getClassUsers(id), getAssignments(id)]);
+    // Đếm sinh viên trước và hiện ngay ra thẻ, phần bài nộp tải sau cho đỡ chờ.
+    const users = await getClassUsers(id);
+    setClassStats(prev => ({ ...prev, [id]: { students: users.length, submitted: prev[id]?.submitted || 0, assignmentTitle: prev[id]?.assignmentTitle, deadline: prev[id]?.deadline } }));
+    const assignments = await getAssignments(id);
     const now = Date.now();
     const withDeadline = assignments.filter(a => a.deadline);
     const upcoming = withDeadline
@@ -86,16 +89,25 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
     return { students: users.length, assignmentTitle: chosen?.title, deadline: chosen?.deadline, submitted };
   };
 
+  // Tải thống kê từng lớp song song nhưng giới hạn số truy vấn cùng lúc để nhanh mà
+  // không quá tải máy chủ. Mỗi lớp tải xong thì cập nhật ngay thẻ đó, một lớp lỗi
+  // không làm kẹt các lớp còn lại.
   const loadClassStats = async (cls: { id: string }[]) => {
-    for (const c of cls) {
-      let stat: ClassStat | null = null;
-      for (let attempt = 0; attempt < 2 && !stat; attempt++) {
-        try { stat = await statFor(c.id); }
-        catch { if (attempt === 0) await new Promise(r => setTimeout(r, 400)); }
+    const queue = [...cls];
+    const LIMIT = 5;
+    const worker = async () => {
+      while (queue.length) {
+        const c = queue.shift();
+        if (!c) break;
+        let stat: ClassStat | null = null;
+        for (let attempt = 0; attempt < 2 && !stat; attempt++) {
+          try { stat = await statFor(c.id); }
+          catch { if (attempt === 0) await new Promise(r => setTimeout(r, 400)); }
+        }
+        if (stat) setClassStats(prev => ({ ...prev, [c.id]: stat as ClassStat }));
       }
-      // Chỉ cập nhật khi lấy được; lỗi thì giữ nguyên chỉ số cũ để không bị mất.
-      if (stat) setClassStats(prev => ({ ...prev, [c.id]: stat as ClassStat }));
-    }
+    };
+    await Promise.all(Array.from({ length: Math.min(LIMIT, queue.length) }, worker));
   };
 
   const loadData = async () => {
