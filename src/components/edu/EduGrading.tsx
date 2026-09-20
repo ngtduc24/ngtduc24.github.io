@@ -23,7 +23,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { EduUser, EduClass, EduAssignment, EduSubmission, EduGrade, EduGradeColumn } from '../../types/edu';
-import { getClassUsers, getSubmissions, getGrades, saveGrades, saveGradeColumn, deleteSubmission } from '../../lib/edu';
+import { getClassUsers, getSubmissions, getGrades, saveGrades, saveGradeColumn, reopenSubmission, deleteGradeForUser } from '../../lib/edu';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import Model3DViewer from './Model3DViewer';
@@ -91,19 +91,21 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
     }));
   };
 
-  // Cho sinh viên nộp lại: xóa bài đã nộp để mở khóa (dùng khi nộp nhầm file, bị khóa).
-  const handleResetSubmission = async (submissionId: string, fullName: string) => {
+  // Cho sinh viên nộp lại hoặc nộp bổ sung: mở lại cửa sổ nộp (giữ nguyên file cũ) và
+  // gỡ điểm đã chấm (nếu có) để sinh viên nộp thêm rồi chấm lại. Dùng cả khi đã khóa do chấm điểm.
+  const handleResetSubmission = async (submissionId: string, userId: string, fullName: string) => {
     const ok = await confirm({
       title: 'Cho nộp lại',
-      message: `Xóa bài đã nộp của ${fullName} để sinh viên nộp lại? Bài nộp hiện tại sẽ bị gỡ.`,
+      message: `Mở cho ${fullName} nộp lại hoặc nộp bổ sung? File đã nộp vẫn được giữ, điểm đã chấm (nếu có) sẽ được gỡ để chấm lại.`,
       confirmText: 'Cho nộp lại',
       cancelText: 'Hủy',
-      danger: true,
     } as any);
     if (!ok) return;
     try {
-      await deleteSubmission(submissionId);
-      addNotification('Đã mở cho sinh viên nộp lại.', 'success');
+      await reopenSubmission(submissionId);
+      try { await deleteGradeForUser(gradeColumnId, userId); } catch {}
+      setGradingData(prev => ({ ...prev, [userId]: { ...prev[userId], score: '' } }));
+      addNotification('Đã mở cho sinh viên nộp lại hoặc nộp bổ sung.', 'success');
       loadData();
     } catch (e: any) {
       addNotification('Lỗi: ' + (e.message || e), 'error');
@@ -259,8 +261,8 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
                             }).replace(/\//g, '-').replace(',', '')}
                           </span>
                           <button
-                            onClick={() => handleResetSubmission(submission.id, user.fullName)}
-                            title="Xóa bài đã nộp để sinh viên nộp lại"
+                            onClick={() => handleResetSubmission(submission.id, user.id, user.fullName)}
+                            title="Mở cho sinh viên nộp lại hoặc nộp bổ sung, giữ file cũ và gỡ điểm để chấm lại"
                             className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-100"
                           >
                             <RotateCcw className="h-3 w-3" /> Cho nộp lại
