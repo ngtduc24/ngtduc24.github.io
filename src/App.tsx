@@ -35,7 +35,7 @@ import { setEduAuthContext } from './lib/edu';
 import { TaskProvider } from './components/TaskContext';
 import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban, GraduationCap, Film } from 'lucide-react';
 import { supabase } from "./lib/supabase";
-import { saveUser, deleteUser, getUsers, getUserById, mapUserFromDB, seedDefaultUsersIfNeeded, getDefaultSettingsFromSupabase, saveDefaultSettingsToSupabase, testSupabaseConnection, getNotificationsFromSupabase, subscribeToNotificationChanges, USERS_TABLE } from './lib/data';
+import { saveUser, deleteUser, getUsers, getUserById, mapUserFromDB, seedDefaultUsersIfNeeded, getDefaultSettingsFromSupabase, getCachedSettings, saveDefaultSettingsToSupabase, testSupabaseConnection, getNotificationsFromSupabase, subscribeToNotificationChanges, USERS_TABLE } from './lib/data';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, onSnapshot } from 'firebase/firestore';
@@ -281,7 +281,10 @@ export default function App() {
     };
   }, [currentUser]);
   
-  const [settings, setSettings] = useState<AppSettings>({
+  // Nạp cấu hình từ cache trình duyệt ngay từ lần vẽ đầu tiên, để tên chức năng, ảnh, tiêu đề,
+  // font hiện đúng liền, không còn cảnh hiện giá trị mặc định rồi mới nhảy sang giá trị đúng.
+  const cachedSettings = getCachedSettings();
+  const [settings, setSettings] = useState<AppSettings>(cachedSettings || {
     id: "general_config",
     defaultCoverImage: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=600&q=80",
     themeColor: "green-black",
@@ -292,9 +295,8 @@ export default function App() {
     systemDescription: "Hệ thống hỗ trợ tính toán phương pháp nghiên cứu định lượng chuẩn hóa."
   });
 
-  // Cờ đánh dấu đã tải cấu hình thật từ server. Chưa tải xong thì KHÔNG áp màu,
-  // để không ghi đè màu đúng mà script trong head đã áp sẵn từ cache (tránh nháy).
-  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  // Có cache thì coi như đã có cấu hình để áp màu và font ngay, tránh nháy khi F5.
+  const [settingsLoaded, setSettingsLoaded] = useState(!!cachedSettings);
 
   // Load configuration from Supabase
   const loadConfig = async () => {
