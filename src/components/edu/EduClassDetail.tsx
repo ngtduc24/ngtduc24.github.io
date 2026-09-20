@@ -269,6 +269,22 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
     );
   };
 
+  // Gạt khóa cột điểm. Mở khóa để chấm sửa, đóng khóa (chốt) để sinh viên xem điểm.
+  const handleToggleConfirm = (column: EduGradeColumn) => {
+    if (column.isConfirmed) {
+      confirm(
+        'Mở khóa cột điểm',
+        `Mở khóa cột "${column.name}" để chấm hoặc sửa lại? Cột sẽ chuyển về trạng thái chưa chốt.`,
+        async () => {
+          try { await saveGradeColumn({ ...column, isConfirmed: false }); loadData(); addNotification('Đã mở khóa cột điểm.', 'success'); }
+          catch (err) { addNotification('Lỗi: ' + (err as Error).message, 'error'); }
+        }
+      );
+    } else {
+      handleConfirmColumn(column);
+    }
+  };
+
   const handleDeleteAssignment = async (assignmentId: string, gradeColumnId?: string) => {
     confirm(
       "Xóa bài tập",
@@ -609,18 +625,14 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                           </div>
                           )}
                         </div>
-                        {!col.isConfirmed ? (
-                          <button 
-                            onClick={() => handleConfirmColumn(col)}
-                            className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 hover:bg-amber-100 transition-colors"
-                          >
-                            Xác nhận hoàn tất
-                          </button>
-                        ) : (
-                          <span className="text-[9px] font-bold text-brand bg-brand-light px-1.5 py-0.5 rounded border border-brand flex items-center gap-0.5">
-                            <CheckCircle2 className="w-2.5 h-2.5" /> Đã chốt
-                          </span>
-                        )}
+                        <button
+                          onClick={() => handleToggleConfirm(col)}
+                          title={col.isConfirmed ? 'Đã chốt (khóa). Bấm để mở khóa chấm lại' : 'Chưa chốt (mở). Bấm để chốt điểm cho sinh viên xem'}
+                          className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-bold transition-colors ${col.isConfirmed ? 'border-brand bg-brand-light text-brand hover:bg-brand/10' : 'border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100'}`}
+                        >
+                          {col.isConfirmed ? <Lock className="w-2.5 h-2.5" /> : <Unlock className="w-2.5 h-2.5" />}
+                          {col.isConfirmed ? 'Đã chốt' : 'Chưa chốt'}
+                        </button>
                         <span className="text-[9px] font-bold text-slate-400">{(col.weight ?? 0) > 0 ? `Tỷ trọng ${col.weight}%` : 'Chưa đặt tỷ trọng'}</span>
                       </div>
                     </th>
