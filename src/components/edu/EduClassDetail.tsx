@@ -42,6 +42,7 @@ import {
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import EduExport from './EduExport';
+import { eduCan } from '../../lib/eduPermissions';
 
 interface EduClassDetailProps {
   classId: string;
@@ -74,6 +75,13 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
 
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
+
+  const canCreate = eduCan(currentUser, 'create');
+  const canEdit = eduCan(currentUser, 'edit');
+  const canDelete = eduCan(currentUser, 'delete');
+  const canImportEdu = eduCan(currentUser, 'import');
+  const canExportEdu = eduCan(currentUser, 'export');
+  const canGrade = eduCan(currentUser, 'grade');
 
   const loadData = async () => {
     try {
@@ -305,7 +313,8 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
         </div>
 
         <div className="flex items-center gap-2">
-          <button 
+          {canCreate && (
+          <button
             onClick={() => {
               if (gradeColumns.length === 0) {
                 addNotification("Cần thêm ít nhất một cột điểm trước khi tạo bài tập", "warning");
@@ -323,6 +332,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
             <span>Tạo bài tập</span>
             {gradeColumns.length === 0 && <Lock className="w-3 h-3 ml-1" />}
           </button>
+          )}
         </div>
       </div>
 
@@ -357,6 +367,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
             </div>
             
             <div className="flex items-center gap-2">
+              {canGrade && (
               <div className="relative">
                 <button
                   onClick={() => setShowGradeMenu(v => !v)}
@@ -398,8 +409,9 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                   </>
                 )}
               </div>
+              )}
 
-              {clazz && (
+              {clazz && canExportEdu && (
                 <EduExport
                   clazz={clazz as any}
                   users={users}
@@ -408,6 +420,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                 />
               )}
 
+              {(canImportEdu || canCreate) && (
               <button
                 onClick={() => {
                   setEditingUser(null);
@@ -419,8 +432,9 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                 <UserPlus className="w-4 h-4" />
                 <span>Thêm SV thủ công</span>
               </button>
+              )}
 
-              {(isAddingColumn || editingColumn) ? (
+              {!canCreate && !canEdit ? null : (isAddingColumn || editingColumn) ? (
                 <div className="flex items-center gap-2 animate-fadeIn bg-white p-1 rounded-xl shadow-sm border border-brand/20">
                   <input 
                     type="text" 
@@ -506,8 +520,9 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                       <div className="flex flex-col items-center gap-1 relative">
                         <div className="flex items-center gap-1">
                           <span>{col.name}</span>
+                          {(canEdit || canDelete) && (
                           <div className="relative ml-1">
-                            <button 
+                            <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveDropdownId(activeDropdownId === col.id ? null : col.id);
@@ -518,7 +533,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                             </button>
                             {activeDropdownId === col.id && (
                               <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 bg-white border border-slate-100 rounded-xl shadow-2xl p-1 z-20 min-w-[120px] animate-fadeIn font-bold" onClick={e => e.stopPropagation()}>
-                                <button 
+                                {canEdit && <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setEditingColumn(col);
@@ -528,8 +543,8 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                                   className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 transition-colors"
                                 >
                                   <Edit2 className="w-3 h-3 text-brand" /> SỬA CỘT
-                                </button>
-                                <button 
+                                </button>}
+                                {canDelete && <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleDeleteColumn(col.id);
@@ -538,10 +553,11 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                                   className="w-full text-left px-3 py-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2 transition-colors"
                                 >
                                   <Trash2 className="w-3 h-3" /> XÓA CỘT
-                                </button>
+                                </button>}
                               </div>
                             )}
                           </div>
+                          )}
                         </div>
                         {!col.isConfirmed ? (
                           <button 
@@ -579,7 +595,8 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                     })}
                     <td className="px-6 py-4 text-center border-l border-slate-50">
                       <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                        <button 
+                        {canEdit && (
+                        <button
                           onClick={() => {
                             setEditingUser(user);
                             setUserForm({ stt: user.stt.toString(), fullName: user.fullName, mssv: user.mssv });
@@ -589,12 +606,15 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                        <button 
+                        )}
+                        {canDelete && (
+                        <button
                           onClick={() => handleDeleteUser(user.id)}
                           className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -655,27 +675,31 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
-                        <button 
+                        {canGrade && (
+                        <button
                           onClick={() => column && onGrading(assignment.id, column.id)}
                           className="px-3 py-1.5 bg-brand text-white rounded-xl text-[10px] font-black hover:bg-brand-hover transition-all"
                         >
                           CHẤM BÀI
                         </button>
-                        <button 
+                        )}
+                        <button
                           onClick={() => copyShareLink(assignment.shareLinkId)}
                           className="p-2 bg-slate-50 text-slate-400 hover:text-brand hover:bg-brand/10 rounded-xl transition-all"
                           title="Sao chép link nộp bài"
                         >
                           <Copy className="w-3.5 h-3.5" />
                         </button>
-                        <button 
+                        {canEdit && (
+                        <button
                           onClick={() => onEditAssignment(assignment.id)}
                           className="p-2 bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
                           title="Chỉnh sửa bài tập"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                        <a 
+                        )}
+                        <a
                           href={`/tracuu.html?edu=${assignment.shareLinkId}`}
                           target="_blank"
                           rel="noreferrer"
@@ -684,13 +708,15 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                         </a>
-                        <button 
+                        {canDelete && (
+                        <button
                           onClick={() => handleDeleteAssignment(assignment.id, assignment.gradeColumnId)}
                           className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
                           title="Xóa bài tập"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -702,16 +728,16 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
             <div className="py-20 text-center">
               <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
               <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Chưa có bài tập nào được tạo</p>
-              {gradeColumns.length > 0 ? (
-                <button 
+              {gradeColumns.length > 0 && canCreate ? (
+                <button
                   onClick={() => onEditAssignment()}
                   className="mt-4 inline-flex items-center gap-2 text-brand font-bold text-xs hover:underline"
                 >
                   <Plus className="w-4 h-4" /> Tạo bài tập đầu tiên
                 </button>
-              ) : (
+              ) : gradeColumns.length === 0 && canCreate ? (
                 <p className="mt-2 text-[10px] text-amber-600 font-medium">Vui lòng thêm cột điểm trước khi tạo bài tập</p>
-              )}
+              ) : null}
             </div>
           )}
         </div>
