@@ -304,6 +304,44 @@ export function getTabUrl(tabId: string): string {
   return `?tab=${encodeURIComponent(slug)}`;
 }
 
+// ============================ ĐỊNH TUYẾN MÀN HÌNH CON ============================
+// Các tham số phụ mô tả màn hình con bên trong một chức năng: lớp, bài tập, bài giảng,
+// đề trắc nghiệm, cột điểm... Nhờ lưu trên URL nên tải lại trang không nhảy về màn hình
+// chính của chức năng mà giữ đúng nơi đang mở.
+//   sv   : tên màn hình con của chức năng đang mở
+//   cid  : id lớp học
+//   aid  : id bài tập
+//   gcol : id cột điểm đang chấm
+//   lid  : id bài giảng
+//   ltab : kho bài giảng đang xem (của tôi hay chung)
+//   qv   : màn hình con của trắc nghiệm
+//   qid  : id đề trắc nghiệm
+export const SUBROUTE_PARAMS = ['sv', 'cid', 'aid', 'gcol', 'lid', 'ltab', 'qv', 'qid'];
+
+// Đọc các tham số màn hình con hiện có trên URL.
+export function readSubRoute(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  const p = new URLSearchParams(window.location.search);
+  const out: Record<string, string> = {};
+  SUBROUTE_PARAMS.forEach(k => { const v = p.get(k); if (v) out[k] = v; });
+  return out;
+}
+
+// Ghi tham số màn hình con vào URL mà không thêm lịch sử (replaceState), giữ nguyên tab.
+export function writeSubRoute(values: Record<string, string | null | undefined>) {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  Object.entries(values).forEach(([k, v]) => {
+    if (v) url.searchParams.set(k, v); else url.searchParams.delete(k);
+  });
+  window.history.replaceState(window.history.state, '', url.toString());
+}
+
+// Xóa mọi tham số màn hình con khỏi một URL (dùng khi đổi sang chức năng khác).
+export function clearSubRoute(url: URL) {
+  SUBROUTE_PARAMS.forEach(k => url.searchParams.delete(k));
+}
+
 /**
  * Đọc tabId từ URL hiện tại
  */

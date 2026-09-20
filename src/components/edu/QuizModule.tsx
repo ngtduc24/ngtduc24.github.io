@@ -11,11 +11,12 @@ import { EduSubject, EduClass, EduGradeColumn } from '../../types/edu';
 import {
   QuizQuestion, QuizOption, Quiz, QuizItem, QuestionType,
   getBankQuestions, saveQuestion, deleteQuestion, copyQuestionToMine, toggleQuestionPublic,
-  getQuizzes, saveQuiz, deleteQuiz, publishQuiz, getQuizItems, addQuestionsToQuiz,
+  getQuizzes, getQuizById, saveQuiz, deleteQuiz, publishQuiz, getQuizItems, addQuestionsToQuiz,
   removeQuizItem, updateQuizItem, reorderQuizItems, getQuizAssignments, assignQuizToClass, unassignQuizFromClass,
   stripHtml,
 } from '../../lib/quiz';
 import QuizRichText from './QuizRichText';
+import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
 
 interface QuizModuleProps { currentUser: UserAccount; }
 type View = 'list' | 'editor' | 'bank' | 'assign' | 'detail';
@@ -31,7 +32,12 @@ export default function QuizModule({ currentUser }: QuizModuleProps) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
 
-  const [view, setView] = useState<View>('list');
+  // Khôi phục màn hình con của trắc nghiệm và đề đang mở từ URL để tải lại trang không nhảy về danh sách.
+  const quizSub = readSubRoute();
+  const [view, setView] = useState<View>(() => {
+    const valid = ['editor', 'bank', 'assign', 'detail'];
+    return quizSub.qv && valid.includes(quizSub.qv) ? (quizSub.qv as View) : 'list';
+  });
   const [subjects, setSubjects] = useState<EduSubject[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [filterSubject, setFilterSubject] = useState<string>('');
@@ -43,6 +49,26 @@ export default function QuizModule({ currentUser }: QuizModuleProps) {
   // Đảm bảo ngữ cảnh người dùng (Firebase uid) luôn có cho các thao tác trắc nghiệm.
   useEffect(() => { setEduAuthContext(currentUser.id, currentUser.role === 'admin'); }, [currentUser]);
   useEffect(() => { getSubjects().then(setSubjects).catch(() => {}); }, []);
+
+  // Nạp lại đề trắc nghiệm theo id trên URL khi tải lại trang đang ở màn hình chi tiết, sửa hoặc giao đề.
+  useEffect(() => {
+    if (quizSub.qid && !activeQuiz) {
+      getQuizById(quizSub.qid).then(setActiveQuiz).catch(() => setView('list'));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Ghi màn hình con và đề đang mở lên URL.
+  useEffect(() => {
+    const needsQuiz = ['detail', 'editor', 'assign'].includes(view) || (view === 'bank' && bankSelectMode);
+    writeSubRoute({
+      qv: view === 'list' ? null : view,
+      qid: needsQuiz ? (activeQuiz?.id || null) : null,
+    });
+  }, [view, activeQuiz, bankSelectMode]);
+
+  // Rời khỏi màn hình trắc nghiệm thì bỏ các tham số của nó khỏi URL.
+  useEffect(() => () => { writeSubRoute({ qv: null, qid: null }); }, []);
   const loadQuizzes = useCallback(() => {
     setLoading(true);
     getQuizzes(filterSubject || undefined).then(setQuizzes).catch(e => addNotification('Lỗi tải danh sách đề: ' + e.message, 'error')).finally(() => setLoading(false));

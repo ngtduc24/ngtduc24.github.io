@@ -20,6 +20,7 @@ import {
 } from '../../lib/elearning';
 import QuizRichText from './QuizRichText';
 import MediaSourcePicker from '../MediaSourcePicker';
+import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
 
 interface Props { currentUser: UserAccount; onExit?: () => void; }
 type View = 'list' | 'editor' | 'assign' | 'progress' | 'trash';
@@ -32,13 +33,29 @@ const openLessonView = (id: string) => { window.location.href = `${window.locati
 export default function ELearningModule({ currentUser, onExit }: Props) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
-  const [view, setView] = useState<View>('list');
-  const [tab, setTab] = useState<Tab>('mine');
-  const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+  // Khôi phục màn hình con (soạn bài giảng, giao bài, tiến độ, thùng rác) và bài giảng đang mở
+  // từ URL để tải lại trang không nhảy về danh sách.
+  const sub = readSubRoute();
+  const [view, setView] = useState<View>(() => {
+    const valid = ['editor', 'assign', 'progress', 'trash'];
+    return sub.sv && valid.includes(sub.sv) ? (sub.sv as View) : 'list';
+  });
+  const [tab, setTab] = useState<Tab>(sub.ltab === 'public' ? 'public' : 'mine');
+  const [activeLessonId, setActiveLessonId] = useState<string | null>(sub.lid || null);
   const [subjects, setSubjects] = useState<EduSubject[]>([]);
 
   useEffect(() => { setEduAuthContext(currentUser?.id ?? null, currentUser?.role === 'admin'); }, [currentUser]);
   useEffect(() => { getSubjects().then(setSubjects).catch(() => {}); }, []);
+
+  // Ghi màn hình con và bài giảng đang mở lên URL.
+  useEffect(() => {
+    const needsLesson = ['editor', 'assign', 'progress'].includes(view);
+    writeSubRoute({
+      sv: view === 'list' ? null : view,
+      lid: needsLesson ? activeLessonId : null,
+      ltab: view === 'list' && tab === 'public' ? 'public' : null,
+    });
+  }, [view, activeLessonId, tab]);
 
   const openEditor = (id: string) => { setActiveLessonId(id); setView('editor'); };
   const openAssign = (id: string) => { setActiveLessonId(id); setView('assign'); };

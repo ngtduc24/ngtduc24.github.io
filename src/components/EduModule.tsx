@@ -32,6 +32,7 @@ import EduGradeEntry from './edu/EduGradeEntry';
 import QuizModule from './edu/QuizModule';
 import { EduClass, EduSchool } from '../types/edu';
 import { getClasses, getSchools } from '../lib/edu';
+import { readSubRoute, writeSubRoute } from '../lib/seoConfig';
 
 interface EduModuleProps {
   currentUser: UserAccount;
@@ -41,7 +42,11 @@ interface EduModuleProps {
 type EduView = 'list' | 'import' | 'class_detail' | 'assignment_edit' | 'assignment_detail' | 'grading' | 'assignment_bank' | 'grade_entry' | 'exam_bank';
 
 export default function EduModule({ currentUser, settings }: EduModuleProps) {
+  // Đọc màn hình con từ URL để tải lại trang không nhảy về danh sách chính.
+  const sub = readSubRoute();
   const [view, setView] = useState<EduView>(() => {
+    const valid: EduView[] = ['import', 'class_detail', 'assignment_edit', 'assignment_detail', 'grading', 'assignment_bank', 'grade_entry', 'exam_bank'];
+    if (sub.sv && (valid as string[]).includes(sub.sv)) return sub.sv as EduView;
     // Phím tắt từ Dashboard có thể mở thẳng vào Trắc nghiệm hoặc Nhập điểm.
     try {
       const v = localStorage.getItem('edu_initial_view');
@@ -49,11 +54,24 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
     } catch {}
     return 'list';
   });
-  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
-  const [selectedGradeColumnId, setSelectedGradeColumnId] = useState<string | null>(null);
-  
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(sub.cid || null);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(sub.aid || null);
+  const [selectedGradeColumnId, setSelectedGradeColumnId] = useState<string | null>(sub.gcol || null);
+
   const { addNotification } = useNotifications();
+
+  // Đồng bộ màn hình con hiện tại lên URL mỗi khi đổi màn hình hay đổi lớp, bài tập, cột điểm.
+  useEffect(() => {
+    const needsClass = ['class_detail', 'assignment_edit', 'assignment_detail', 'grading'].includes(view);
+    const needsAid = ['assignment_edit', 'assignment_detail', 'grading'].includes(view);
+    const needsGcol = view === 'grading';
+    writeSubRoute({
+      sv: view === 'list' ? null : view,
+      cid: needsClass ? selectedClassId : null,
+      aid: needsAid ? selectedAssignmentId : null,
+      gcol: needsGcol ? selectedGradeColumnId : null,
+    });
+  }, [view, selectedClassId, selectedAssignmentId, selectedGradeColumnId]);
 
   useEffect(() => {
     const handleStartGrading = (e: any) => {
