@@ -37,6 +37,23 @@ export async function testSupabaseConnection() {
   return true;
 }
 
+// Cache toàn bộ cấu hình vào trình duyệt để lần mở sau hiện đúng ngay (tên chức năng, ảnh,
+// tiêu đề, font) thay vì hiện mặc định rồi mới nhảy sang giá trị đúng.
+export const SETTINGS_CACHE_KEY = 'appSettingsCache';
+
+export function getCachedSettings(): AppSettings | null {
+  try {
+    const raw = localStorage.getItem(SETTINGS_CACHE_KEY);
+    return raw ? (JSON.parse(raw) as AppSettings) : null;
+  } catch {
+    return null;
+  }
+}
+
+function cacheSettings(s: AppSettings) {
+  try { localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(s)); } catch { /* bỏ qua khi bị chặn */ }
+}
+
 export async function getDefaultSettingsFromSupabase(): Promise<AppSettings> {
   const defaultSettings: AppSettings = {
     id: 'general_config',
@@ -65,7 +82,7 @@ export async function getDefaultSettingsFromSupabase(): Promise<AppSettings> {
       throw error;
     }
     
-    return {
+    const resolved: AppSettings = {
       ...defaultSettings,
       id: data.id,
       defaultCoverImage: data.default_cover_image || defaultSettings.defaultCoverImage,
@@ -115,9 +132,12 @@ export async function getDefaultSettingsFromSupabase(): Promise<AppSettings> {
       assistantAi: data.assistant_ai ?? true,
       assistantKnowledge: Array.isArray(data.assistant_knowledge) ? data.assistant_knowledge : []
     };
+    cacheSettings(resolved);
+    return resolved;
   } catch (error) {
     console.warn("Failed to fetch settings from Supabase, using local fallback:", error);
-    return defaultSettings;
+    // Ưu tiên cache đã lưu để vẫn hiện đúng cấu hình khi mạng lỗi hoặc egress hết mức.
+    return getCachedSettings() || defaultSettings;
   }
 }
 
