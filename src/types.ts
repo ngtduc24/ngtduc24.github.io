@@ -181,6 +181,9 @@ export interface AppSettings {
   fontBody?: string;
   // Bật tắt nút nổi trợ lý ảo ở góc phải. Mặc định bật. Chỉ admin đổi được.
   assistantFloating?: boolean;
+  // Bật tắt chế độ trả lời bằng AI Gemini cho cả hai trợ lý. Mặc định bật. Chỉ admin hoặc
+  // tài khoản được cấp quyền Cấu hình hệ thống mới đổi được.
+  assistantAi?: boolean;
   // Thư viện kiến thức do admin cung cấp để trợ lý trả lời thêm.
   assistantKnowledge?: AssistantKnowledgeItem[];
 }

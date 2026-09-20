@@ -712,6 +712,27 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
             </div>
           </div>
 
+          {/* Trả lời bằng AI Gemini */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs text-left">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-brand" />
+                  <span>Trả lời bằng AI Gemini</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">Bật thì cả Trợ lý hệ thống và Trợ lý giáo dục trả lời bằng AI Gemini dựa trên ngữ cảnh học liệu và hướng dẫn. Cần đã deploy Edge Function gemini-chat và có khóa Gemini. Chế độ AI có tính phí theo lượt gọi. Tắt thì trợ lý chỉ tra cứu trong dữ liệu, miễn phí. Chỉ admin hoặc tài khoản có quyền Cấu hình hệ thống mới đổi được.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormState(prev => ({ ...prev, assistantAi: prev.assistantAi === false ? true : false }))}
+                className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${formState.assistantAi !== false ? 'bg-brand' : 'bg-slate-300'}`}
+                aria-label="Bật tắt trả lời bằng AI Gemini"
+              >
+                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${formState.assistantAi !== false ? 'left-6' : 'left-1'}`} />
+              </button>
+            </div>
+          </div>
+
           {/* Thư viện kiến thức cho trợ lý */}
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4 text-left">
             <div className="flex items-start justify-between gap-4">
