@@ -23,7 +23,7 @@ const TOP_TABS: { id: LeftPanel; label: string; icon: any; soon?: boolean }[] = 
   { id: 'text', label: 'Văn bản', icon: Type },
   { id: 'caption', label: 'Chú thích', icon: Captions },
   { id: 'sticker', label: 'Nhãn dán', icon: Sticker, soon: true },
-  { id: 'effect', label: 'Hiệu ứng', icon: Sparkles, soon: true },
+  { id: 'effect', label: 'Hiệu ứng', icon: Sparkles },
   { id: 'transition', label: 'Chuyển tiếp', icon: ArrowLeftRight, soon: true },
   { id: 'filter', label: 'Bộ lọc', icon: SlidersHorizontal },
 ];
@@ -36,6 +36,29 @@ interface Clip { id: string; kind: ClipKind; name: string; src?: string; thumb?:
 
 const defaultAdj = (): Adj => ({ brightness: 1, contrast: 1, saturate: 1, sepia: 0, grayscale: 0, blur: 0 });
 const filterStr = (a: Adj) => `brightness(${a.brightness}) contrast(${a.contrast}) saturate(${a.saturate}) sepia(${a.sepia}) grayscale(${a.grayscale}) blur(${a.blur}px)`;
+// Preset hiệu ứng: sinh keyframe chuyển động theo thời lượng clip.
+const EFFECT_PRESETS: { key: string; label: string }[] = [
+  { key: 'zoomin', label: 'Phóng to dần' },
+  { key: 'zoomout', label: 'Thu nhỏ dần' },
+  { key: 'slideleft', label: 'Trôi vào từ trái' },
+  { key: 'slideright', label: 'Trôi vào từ phải' },
+  { key: 'fadein', label: 'Hiện dần' },
+  { key: 'blink', label: 'Nhấp nháy' },
+  { key: 'shake', label: 'Rung' },
+];
+function effectKeyframes(key: string, dur: number): Partial<Record<KfProp, KF[]>> {
+  const D = Math.max(200, Math.round(dur));
+  switch (key) {
+    case 'zoomin': return { scale: [{ t: 0, v: 1 }, { t: D, v: 1.2 }] };
+    case 'zoomout': return { scale: [{ t: 0, v: 1.2 }, { t: D, v: 1 }] };
+    case 'slideleft': return { x: [{ t: 0, v: -60 }, { t: Math.min(600, D), v: 0 }] };
+    case 'slideright': return { x: [{ t: 0, v: 60 }, { t: Math.min(600, D), v: 0 }] };
+    case 'fadein': return { opacity: [{ t: 0, v: 0 }, { t: Math.min(500, D), v: 1 }] };
+    case 'blink': { const ks: KF[] = []; for (let i = 0; i * 400 <= D; i++) ks.push({ t: i * 400, v: i % 2 ? 0.15 : 1 }); return { opacity: ks }; }
+    case 'shake': { const kx: KF[] = [], ky: KF[] = []; for (let t = 0; t <= D; t += 90) { kx.push({ t, v: Math.round((Math.random() * 6 - 3) * 10) / 10 }); ky.push({ t, v: Math.round((Math.random() * 6 - 3) * 10) / 10 }); } return { x: kx, y: ky }; }
+  }
+  return {};
+}
 // Preset bộ lọc màu.
 const FILTER_PRESETS: { key: string; label: string; adj: Adj }[] = [
   { key: 'none', label: 'Gốc', adj: defaultAdj() },
@@ -492,6 +515,15 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   const applyFilterPreset = (id: string, adj: Adj) => {
     setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.map(c => c.id === id ? { ...c, adj: adj.brightness === 1 && adj.contrast === 1 && adj.saturate === 1 && adj.sepia === 0 && adj.grayscale === 0 && adj.blur === 0 ? undefined : { ...adj } } : c) }))); markDirty();
   };
+  // Áp hiệu ứng chuyển động (ghi keyframe theo thời lượng clip).
+  const applyEffect = (id: string, key: string) => {
+    setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.map(c => {
+      if (c.id !== id) return c;
+      const add = effectKeyframes(key, c.dur);
+      return { ...c, kf: { ...(c.kf || {}), ...add } };
+    }) })));
+    markDirty();
+  };
   const deleteClip = (id: string) => { setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.filter(c => c.id !== id) }))); if (selId === id) setSelId(null); setMultiSel(m => m.filter(x => x !== id)); markDirty(); };
   // Xóa mọi clip đang chọn (một hoặc nhiều do quét vùng chọn).
   const deleteSelected = () => {
@@ -757,7 +789,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
             })}
           </div>
           <div className="flex min-h-0 flex-1 overflow-hidden">
-            <LibraryPanel currentUser={currentUser} panel={leftPanel} selClipKind={selClip?.clip.kind || null} onAddAsset={addClipFromAsset} onAddText={addTextClip} onImportSubtitles={importSubtitles} onApplyFilter={(adj) => { if (selClip) applyFilterPreset(selClip.clip.id, adj); }} />
+            <LibraryPanel currentUser={currentUser} panel={leftPanel} selClipKind={selClip?.clip.kind || null} onAddAsset={addClipFromAsset} onAddText={addTextClip} onImportSubtitles={importSubtitles} onApplyFilter={(adj) => { if (selClip) applyFilterPreset(selClip.clip.id, adj); }} onApplyEffect={(key) => { if (selClip) applyEffect(selClip.clip.id, key); }} />
           </div>
         </div>
 
@@ -929,7 +961,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 }
 
 // ============================ Thư viện trái ============================
-function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, onImportSubtitles, onApplyFilter }: { currentUser: UserAccount; panel: LeftPanel; selClipKind: ClipKind | null; onAddAsset: (a: MvAsset) => void; onAddText: () => void; onImportSubtitles: (cues: { start: number; dur: number; text: string }[]) => void; onApplyFilter: (adj: Adj) => void; }) {
+function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, onImportSubtitles, onApplyFilter, onApplyEffect }: { currentUser: UserAccount; panel: LeftPanel; selClipKind: ClipKind | null; onAddAsset: (a: MvAsset) => void; onAddText: () => void; onImportSubtitles: (cues: { start: number; dur: number; text: string }[]) => void; onApplyFilter: (adj: Adj) => void; onApplyEffect: (key: string) => void; }) {
   const { addNotification } = useNotifications();
   const [source, setSource] = useState<'mine' | 'shared'>('mine');
   const subRef = useRef<HTMLInputElement>(null);
@@ -1013,6 +1045,25 @@ function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, 
           ))}
         </div>
         <p className="px-3 pb-3 text-[11px] text-slate-500">Chỉnh sâu hơn (sáng, tương phản, bão hòa, làm mờ) ở bảng thuộc tính bên phải.</p>
+      </div>
+    );
+  }
+  // Tab Hiệu ứng: áp chuyển động cho clip đang chọn.
+  if (panel === 'effect') {
+    const canApply = selClipKind === 'video' || selClipKind === 'image' || selClipKind === 'text';
+    return (
+      <div className="flex w-[280px] shrink-0 flex-col border-r border-white/10 bg-[#151a21]">
+        <div className="px-3 pt-3 pb-1 text-xs font-black uppercase tracking-wide text-slate-400">Hiệu ứng chuyển động</div>
+        {!canApply && <p className="px-3 pb-2 text-[11px] text-amber-400/80">Chọn một clip trên dòng thời gian trước.</p>}
+        <div className="grid grid-cols-2 gap-2 overflow-y-auto p-3">
+          {EFFECT_PRESETS.map(f => (
+            <button key={f.key} disabled={!canApply} onClick={() => onApplyEffect(f.key)}
+              className="flex items-center justify-center rounded-lg border border-white/10 bg-black/30 px-2 py-4 text-center text-[11px] font-bold text-slate-300 transition-colors hover:border-brand hover:text-brand disabled:opacity-40">
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <p className="px-3 pb-3 text-[11px] text-slate-500">Hiệu ứng tạo sẵn key chuyển động. Có thể chỉnh lại từng key ở bảng thuộc tính, hoặc bấm khôi phục để xóa.</p>
       </div>
     );
   }
