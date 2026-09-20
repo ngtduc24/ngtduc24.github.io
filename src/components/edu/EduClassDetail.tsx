@@ -628,10 +628,10 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                         <button
                           onClick={() => handleToggleConfirm(col)}
                           title={col.isConfirmed ? 'Đã chốt (khóa). Bấm để mở khóa chấm lại' : 'Chưa chốt (mở). Bấm để chốt điểm cho sinh viên xem'}
-                          className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-bold transition-colors ${col.isConfirmed ? 'border-brand bg-brand-light text-brand hover:bg-brand/10' : 'border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100'}`}
+                          aria-label={col.isConfirmed ? 'Đã chốt' : 'Chưa chốt'}
+                          className={`grid h-6 w-6 place-items-center rounded-lg border transition-colors ${col.isConfirmed ? 'border-brand bg-brand-light text-brand hover:bg-brand/10' : 'border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100'}`}
                         >
-                          {col.isConfirmed ? <Lock className="w-2.5 h-2.5" /> : <Unlock className="w-2.5 h-2.5" />}
-                          {col.isConfirmed ? 'Đã chốt' : 'Chưa chốt'}
+                          {col.isConfirmed ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
                         </button>
                         <span className="text-[9px] font-bold text-slate-400">{(col.weight ?? 0) > 0 ? `Tỷ trọng ${col.weight}%` : 'Chưa đặt tỷ trọng'}</span>
                       </div>
