@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AlertTriangle, Download, Image as ImageIcon, Loader2, Sparkles, Trash2, Upload, Wand2, X } from 'lucide-react';
+import { AlertTriangle, ChevronsLeftRight, Download, Image as ImageIcon, Loader2, Sparkles, Trash2, Upload, Wand2, X } from 'lucide-react';
 import { auth } from '../../lib/firebase';
 import {
   base64ToBlob,
@@ -71,6 +71,60 @@ const changeExtension = (name: string, extension: string) => {
   const base = name.replace(/\.[^.]+$/, '') || 'anh';
   return `${base}_x${extension === 'jpg' ? '' : ''}.${extension}`.replace('_x.', '.');
 };
+
+// Thanh so sánh trượt ảnh cũ và ảnh mới. Người dùng nhấn giữ rồi kéo thanh dọc qua lại để
+// xem sự khác biệt trước và sau khi làm rõ ảnh.
+function CompareSlider({ beforeUrl, afterUrl }: { beforeUrl?: string; afterUrl: string }) {
+  const [pos, setPos] = useState(50);
+  const ref = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  const move = (clientX: number) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const p = ((clientX - rect.left) / rect.width) * 100;
+    setPos(Math.max(0, Math.min(100, p)));
+  };
+  if (!beforeUrl) return <img src={afterUrl} alt="Ảnh mới" className="block w-full rounded-xl border border-slate-200" />;
+  return (
+    <div
+      ref={ref}
+      className="relative w-full cursor-ew-resize touch-none select-none overflow-hidden rounded-xl border border-slate-200"
+      onPointerDown={event => {
+        dragging.current = true;
+        (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
+        move(event.clientX);
+      }}
+      onPointerMove={event => {
+        if (dragging.current) move(event.clientX);
+      }}
+      onPointerUp={() => {
+        dragging.current = false;
+      }}
+      onPointerCancel={() => {
+        dragging.current = false;
+      }}
+    >
+      <img src={afterUrl} alt="Ảnh mới" draggable={false} className="pointer-events-none block h-auto w-full" />
+      <img
+        src={beforeUrl}
+        alt="Ảnh cũ"
+        draggable={false}
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+        style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
+      />
+      <span className="pointer-events-none absolute left-2 top-2 rounded-md bg-slate-900/60 px-2 py-0.5 text-[10px] font-bold text-white">Ảnh cũ</span>
+      <span className="pointer-events-none absolute right-2 top-2 rounded-md bg-brand/85 px-2 py-0.5 text-[10px] font-bold text-white">Ảnh mới</span>
+      <div className="pointer-events-none absolute bottom-0 top-0 w-0.5 bg-white shadow" style={{ left: `${pos}%`, transform: 'translateX(-50%)' }} />
+      <div
+        className="pointer-events-none absolute top-1/2 grid h-9 w-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white text-slate-700 shadow-lg ring-1 ring-slate-200"
+        style={{ left: `${pos}%` }}
+      >
+        <ChevronsLeftRight className="h-4 w-4" />
+      </div>
+    </div>
+  );
+}
 
 export default function ImageResizer() {
   const [sources, setSources] = useState<SourceImage[]>([]);
@@ -532,28 +586,31 @@ export default function ImageResizer() {
             </button>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {results.map(result => (
-              <div key={result.id} className="flex gap-3 rounded-xl border border-brand-light bg-white p-3">
-                <img src={result.url} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-bold text-slate-700">{result.name}</p>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    {result.width} nhân {result.height}, {formatBytes(result.bytes)}
-                  </p>
-                  <p className="mt-0.5 text-[11px] font-bold text-brand">
-                    {result.usedAi ? 'Có dùng Gemini' : 'Làm nét tại chỗ'}
-                  </p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {results.map(result => {
+              const beforeUrl = sources.find(item => item.id === result.id)?.previewUrl;
+              return (
+                <div key={result.id} className="rounded-xl border border-brand-light bg-white p-3">
+                  <CompareSlider beforeUrl={beforeUrl} afterUrl={result.url} />
+                  <p className="mt-1.5 text-center text-[10px] font-semibold text-slate-400">Nhấn giữ và kéo thanh dọc để so sánh ảnh cũ và ảnh mới</p>
+                  <div className="mt-2 flex items-center gap-2 border-t border-slate-100 pt-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-bold text-slate-700">{result.name}</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">
+                        {result.width} nhân {result.height}, {formatBytes(result.bytes)} · {result.usedAi ? 'Có dùng Gemini' : 'Làm nét tại chỗ'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => downloadOne(result)}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-[11px] font-bold text-white transition hover:bg-brand-hover"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Tải
+                    </button>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => downloadOne(result)}
-                  className="h-7 w-7 shrink-0 rounded-lg bg-brand-light text-brand-hover transition hover:bg-brand"
-                >
-                  <Download className="mx-auto h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
