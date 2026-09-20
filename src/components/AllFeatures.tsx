@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Search, ArrowLeft, ArrowRight, LayoutGrid,
   CalendarDays, BookOpen, LayoutTemplate, Image as ImageIcon, BarChart3,
-  GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone
+  GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone, Shield
 } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
 
@@ -53,7 +53,8 @@ const ALL_FEATURES: FeatureItem[] = [
   { id: 'tasks', label: 'Quản lý công việc', desc: 'Tạo, theo dõi và quản lý công việc cá nhân/nhóm', icon: CalendarDays, color: 'rose', group: 'Quản lý và hệ thống' },
   { id: 'notifications', label: 'Thông báo', desc: 'Xem thông báo, tài liệu và dữ liệu tham khảo', icon: Mail, color: 'amber', group: 'Quản lý và hệ thống' },
   { id: 'notifications_admin', label: 'Trung tâm thông báo', desc: 'Quản lý và phát thông báo tới người dùng', icon: Megaphone, color: 'orange', group: 'Quản lý và hệ thống' },
-  { id: 'users', label: 'Quản lý và phân quyền', desc: 'Quản trị hệ thống, phân quyền người dùng', icon: Users, color: 'indigo', group: 'Quản lý và hệ thống' },
+  { id: 'users', label: 'Quản lý người dùng', desc: 'Tạo, chỉnh sửa tài khoản admin, thành viên, học viên', icon: Users, color: 'indigo', group: 'Quản lý và hệ thống' },
+  { id: 'permissions', label: 'Phân quyền người dùng', desc: 'Cấp quyền truy cập chức năng và quyền thao tác chi tiết', icon: Shield, color: 'teal', group: 'Quản lý và hệ thống' },
   { id: 'settings', label: 'Cấu hình hệ thống', desc: 'Cài đặt và cấu hình hệ thống', icon: Settings, color: 'rose', group: 'Quản lý và hệ thống' },
 ];
 
@@ -70,7 +71,7 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
     if (id === 'ar_module' || id === 'utility_image_resize' || id === 'utility_social_design') {
       return perms.includes('utilities') || perms.includes('ar_module');
     }
-    if (id === 'users') return false;
+    if (id === 'users' || id === 'permissions') return false;
     return perms.includes(id);
   };
 

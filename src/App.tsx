@@ -9,6 +9,7 @@ import SampleSizeCalculator from './components/SampleSizeCalculator';
 import PublicJournalSearch from './components/PublicJournalSearch';
 import GuideSection from './components/GuideSection';
 import UserManagement from './components/UserManagement';
+import PermissionManagement from './components/PermissionManagement';
 import LoginScreen from './components/LoginScreen';
 import ScientificJournals from './components/ScientificJournals';
 import QualitativeAnalysis from './components/QualitativeAnalysis';
@@ -315,7 +316,8 @@ export default function App() {
       portfolio_cms: 'Quản trị Portfolio',
       notifications: 'Thông báo hệ thống',
       notifications_admin: 'Quản trị thông báo',
-      users: 'Quản lý và phân quyền',
+      users: 'Quản lý người dùng',
+      permissions: 'Phân quyền người dùng',
       media_library: 'Thư viện hệ thống',
       settings: 'Cấu hình hệ thống',
       edu: 'Quản lý Giáo dục & Đào tạo',
@@ -557,6 +559,7 @@ export default function App() {
     if (tabId === 'stats') return true; // Trang số liệu mở cho mọi tài khoản đã đăng nhập
     if (tabId === 'portfolio_website') return true;
     if (tabId === 'users') return false; // Only admin can ever see users panel
+    if (tabId === 'permissions') return false; // Only admin can ever see permission panel
     if (tabId === 'settings') return currentUser.permissions.includes('settings');
     if (tabId === 'notifications_admin') return currentUser.permissions.includes('notifications');
     if (tabId === 'backup') return false;
@@ -675,9 +678,17 @@ export default function App() {
             onRefreshSettings={loadConfig}
           />
         );
+      case 'permissions':
+        return (
+          <PermissionManagement
+            currentUser={currentUser}
+            users={users}
+            onSaveUser={handleSaveUser}
+          />
+        );
       case 'notifications_admin':
         return (
-          <AdminNotifications 
+          <AdminNotifications
             currentUser={currentUser} 
             users={users} 
             settings={settings}
@@ -824,7 +835,8 @@ export default function App() {
     });
 
     if (currentUser.role === 'admin') {
-      allowed.push({ id: 'users', label: 'Quản lý & Phân quyền', icon: Users });
+      allowed.push({ id: 'users', label: 'Quản lý người dùng', icon: Users });
+      allowed.push({ id: 'permissions', label: 'Phân quyền người dùng', icon: Shield });
     }
 
     if (currentUser.role === 'admin' || currentUser.permissions.includes('notifications')) {
