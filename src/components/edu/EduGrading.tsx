@@ -143,8 +143,8 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
     }
   };
 
-  // Only show users who submitted and sort them
-  const submittedUsers = users.filter(u => submissions.some(s => s.userId === u.id));
+  // Hiện các em đã nộp bài HOẶC đã có điểm ở cột này (tránh sót em có điểm mà thiếu bài nộp).
+  const submittedUsers = users.filter(u => submissions.some(s => s.userId === u.id) || grades.some(g => (g.userId || (g as any).user_id) === u.id));
   const sortedUsers = [...submittedUsers].sort((a, b) => (a.stt || 0) - (b.stt || 0));
   
   const filteredUsers = sortedUsers.filter(u => 
