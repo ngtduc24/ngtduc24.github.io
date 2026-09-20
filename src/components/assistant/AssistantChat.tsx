@@ -112,8 +112,8 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
   const [bankItems, setBankItems] = useState<EduAssignmentBankItem[]>([]);
   const [passages, setPassages] = useState<Passage[]>([]);
   const [dataReady, setDataReady] = useState(false);
-  // Chế độ trả lời bằng AI Gemini, chỉ có ở Trợ lý giáo dục. Cần Edge Function gemini-chat.
-  const [aiMode, setAiMode] = useState(false);
+  // Chế độ trả lời bằng AI Gemini do admin bật tắt trong Cấu hình hệ thống, mặc định bật.
+  const aiMode = settings.assistantAi !== false;
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = currentUser?.role === 'admin';
@@ -531,14 +531,11 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
         {loading && <div className="flex items-center gap-2 px-2 text-[12px] text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> {aiMode ? 'AI đang trả lời...' : 'Đang tìm...'}</div>}
       </div>
 
-      <button
-        type="button"
-        onClick={() => setAiMode(v => !v)}
-        className="flex items-center justify-between gap-2 border-t border-slate-100 bg-white px-3 py-2 text-left"
-      >
-        <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600"><Sparkles className={`h-3.5 w-3.5 ${aiMode ? 'text-brand' : 'text-slate-400'}`} /> Trả lời bằng AI Gemini</span>
-        <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${aiMode ? 'bg-brand' : 'bg-slate-300'}`}><span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${aiMode ? 'left-[18px]' : 'left-0.5'}`} /></span>
-      </button>
+      {aiMode && (
+        <div className="flex items-center gap-1.5 border-t border-slate-100 bg-white px-3 py-1.5 text-[10px] font-semibold text-slate-400">
+          <Sparkles className="h-3 w-3 text-brand" /> Đang trả lời bằng AI Gemini
+        </div>
+      )}
 
       <div className="flex items-center gap-2 border-t border-slate-100 bg-white p-2.5">
         <input
