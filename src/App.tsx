@@ -26,6 +26,8 @@ import PortfolioCMS from './components/PortfolioCMS';
 import UtilitiesModule from './components/UtilitiesModule';
 import PublicARScanner from './components/PublicARScanner';
 import QuizTake from './components/edu/QuizTake';
+import ELessonView from './components/edu/ELessonView';
+import ELearningModule from './components/edu/ELearningModule';
 import EduModule from './components/EduModule';
 import { setEduAuthContext } from './lib/edu';
 import { TaskProvider } from './components/TaskContext';
@@ -321,6 +323,7 @@ export default function App() {
       media_library: 'Thư viện hệ thống',
       settings: 'Cấu hình hệ thống',
       edu: 'Quản lý Giáo dục & Đào tạo',
+      elearning: 'E-Learning · Bài giảng',
     };
 
     if (entryView === 'admin') {
@@ -704,6 +707,8 @@ export default function App() {
         return <UtilitiesModule currentUser={currentUser} />;
       case 'edu':
         return <EduModule currentUser={currentUser} settings={settings} />;
+      case 'elearning':
+        return <ELearningModule currentUser={currentUser} />;
       // Mã cũ của mục Tạo AR. Giữ lại để tài khoản nào đang mở sẵn mục này, hoặc có
       // đường dẫn cũ lưu trong trình duyệt, vẫn vào đúng nơi thay vì gặp trang trắng.
       case 'ar_module':
@@ -749,6 +754,12 @@ export default function App() {
   const quizSlug = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('quiz') : null;
   if (quizSlug) {
     return <QuizTake slug={quizSlug} />;
+  }
+
+  // Link xem bài giảng E-Learning công khai: sinh viên vào bằng MSSV, không cần đăng nhập.
+  const elessonToken = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('elesson') : null;
+  if (elessonToken) {
+    return <ELessonView token={elessonToken} />;
   }
 
   const isForcePublic = typeof window !== 'undefined' && (
@@ -827,6 +838,7 @@ export default function App() {
       { id: 'qualitative_analysis', label: 'Phân tích định tính', icon: FolderKanban },
       { id: 'quantitative_analysis', label: 'Phân tích số liệu định lượng', icon: Calculator },
       { id: 'edu', label: 'Quản lý Giáo dục', icon: GraduationCap },
+      { id: 'elearning', label: 'E-Learning', icon: BookOpen },
       { id: 'utilities', label: 'Tiện ích', icon: Wrench },
       { id: 'portfolio_cms', label: 'Quản trị Portfolio', icon: Shield },
       { id: 'notifications', icon: Bell, label: 'Thông báo' },

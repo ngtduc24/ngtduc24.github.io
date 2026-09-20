@@ -148,6 +148,13 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
     description: 'Nền tảng quản lý trường học, lớp học, danh sách sinh viên, bài tập và bảng điểm học thuật chuyên nghiệp.',
     keywords: 'quản lý giáo dục, quản lý sinh viên, bảng điểm, bài tập trực tuyến, đào tạo khoa học',
   },
+  elearning: {
+    id: 'elearning',
+    slug: 'e-learning',
+    title: 'E-Learning · Kho Bài giảng & Học liệu | SmartResearch',
+    description: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn học, công khai lên kho chung và giao bài giảng cho lớp.',
+    keywords: 'e-learning, bài giảng, học liệu, kho bài giảng, giao bài giảng',
+  },
   portfolio: {
     id: 'portfolio',
     slug: 'portfolio',

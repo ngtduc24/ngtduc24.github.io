@@ -52,6 +52,9 @@ export interface UserAccount {
   canPortfolioResearch?: boolean;
   canPortfolioNavigation?: boolean;
   canPortfolioProfile?: boolean;
+  // E-Learning Permissions
+  canElearningPublic?: boolean;
+  canElearningAssign?: boolean;
   createdAt: string;
   password?: string;
   avatarUrl?: string;
