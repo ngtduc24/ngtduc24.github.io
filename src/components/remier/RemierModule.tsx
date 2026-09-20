@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Film, Trash2, Loader2, X, Clapperboard, Monitor } from 'lucide-react';
+import { Plus, Film, Trash2, Loader2, X, Clapperboard, Monitor, Upload, Star, Eye, EyeOff, Library, Check } from 'lucide-react';
 import { UserAccount } from '../../types';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
-import { MvProject, getProjects, createProject, softDeleteProject } from '../../lib/remier';
+import { MvProject, MvAsset, MvKind, getProjects, createProject, softDeleteProject, getAllSharedAssets, uploadAssetFile, addAsset, updateAsset, deleteAsset } from '../../lib/remier';
 import RemierEditor from './RemierEditor';
 
 interface Props { currentUser: UserAccount; }
@@ -21,7 +21,9 @@ export default function RemierModule({ currentUser }: Props) {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [view, setView] = useState<'projects' | 'shared'>('projects');
   const [wide, setWide] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1280 : true);
+  const canShared = currentUser.role === 'admin' || !!currentUser.canRemierShared;
 
   useEffect(() => { const onR = () => setWide(window.innerWidth >= 1280); window.addEventListener('resize', onR); return () => window.removeEventListener('resize', onR); }, []);
 
@@ -58,10 +60,19 @@ export default function RemierModule({ currentUser }: Props) {
             <p className="text-xs text-slate-500">Dựng video nhiều lớp ngay trên trình duyệt.</p>
           </div>
         </div>
-        <button onClick={() => setCreating(true)} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Plus className="h-4 w-4" /> Tạo dự án mới</button>
+        <div className="flex items-center gap-2">
+          {canShared && (
+            <div className="inline-flex rounded-xl bg-slate-100 p-1">
+              <button onClick={() => setView('projects')} className={`rounded-lg px-3 py-1.5 text-[11px] font-bold ${view === 'projects' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Dự án</button>
+              <button onClick={() => setView('shared')} className={`rounded-lg px-3 py-1.5 text-[11px] font-bold ${view === 'shared' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Thư viện chung</button>
+            </div>
+          )}
+          {view === 'projects' && <button onClick={() => setCreating(true)} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Plus className="h-4 w-4" /> Tạo dự án mới</button>}
+        </div>
       </div>
 
-      {loading ? <div className="py-20 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" /> Đang tải...</div>
+      {view === 'shared' && canShared ? <SharedManager currentUser={currentUser} /> :
+       loading ?<div className="py-20 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" /> Đang tải...</div>
         : projects.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center">
             <Film className="mx-auto mb-3 h-10 w-10 text-slate-300" />
@@ -120,6 +131,112 @@ function CreateDialog({ onClose, onCreated, ownerName }: { onClose: () => void; 
           <button onClick={submit} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-2.5 text-xs font-bold text-white hover:bg-brand-hover disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Tạo và mở</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ============================ Quản trị thư viện chung ============================
+function SharedManager({ currentUser }: { currentUser: UserAccount }) {
+  const { addNotification } = useNotifications();
+  const { confirm } = useConfirmation();
+  const [assets, setAssets] = useState<MvAsset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [edit, setEdit] = useState<MvAsset | null>(null);
+  const fileRef = React.useRef<HTMLInputElement>(null);
+
+  const load = useCallback(async () => { setLoading(true); try { setAssets(await getAllSharedAssets()); } catch (e: any) { addNotification('Lỗi tải thư viện: ' + (e.message || e), 'error'); } finally { setLoading(false); } }, [addNotification]);
+  useEffect(() => { load(); }, [load]);
+
+  const probe = (file: File, kind: MvKind): Promise<{ duration_ms?: number; width?: number; height?: number }> => new Promise(res => {
+    const url = URL.createObjectURL(file);
+    if (kind === 'image') { const im = new Image(); im.onload = () => res({ width: im.naturalWidth, height: im.naturalHeight }); im.onerror = () => res({}); im.src = url; }
+    else if (kind === 'video') { const v = document.createElement('video'); v.preload = 'metadata'; v.src = url; v.onloadedmetadata = () => res({ duration_ms: Math.round(v.duration * 1000), width: v.videoWidth, height: v.videoHeight }); v.onerror = () => res({}); }
+    else if (kind === 'audio') { const a = document.createElement('audio'); a.preload = 'metadata'; a.src = url; a.onloadedmetadata = () => res({ duration_ms: Math.round(a.duration * 1000) }); a.onerror = () => res({}); }
+    else res({});
+  });
+
+  const onFiles = async (files: FileList | null) => {
+    if (!files || !files.length) return;
+    setUploading(true);
+    try {
+      for (const f of Array.from(files)) {
+        const kind: MvKind = f.type.startsWith('video') ? 'video' : f.type.startsWith('audio') ? 'audio' : 'image';
+        const meta = await probe(f, kind);
+        const url = await uploadAssetFile(f);
+        await addAsset({ scope: 'shared', kind, title: f.name, url, thumb_url: kind === 'image' ? url : undefined, mime_type: f.type, size_bytes: f.size, duration_ms: meta.duration_ms, width: meta.width, height: meta.height, owner_name: currentUser.fullName, license: 'Được phép dùng nội bộ' });
+      }
+      addNotification('Đã tải lên thư viện chung.', 'success'); load();
+    } catch (e: any) { addNotification('Lỗi tải lên: ' + (e.message || e), 'error'); }
+    finally { setUploading(false); }
+  };
+
+  const toggle = async (a: MvAsset, key: 'is_featured' | 'is_hidden') => { try { await updateAsset(a.id, { [key]: !a[key] } as any); load(); } catch (e: any) { addNotification('Lỗi: ' + (e.message || e), 'error'); } };
+  const remove = async (a: MvAsset) => { const ok = await confirm({ title: 'Xóa tư liệu', message: `Xóa "${a.title}" khỏi thư viện chung?`, confirmText: 'Xóa', cancelText: 'Hủy', danger: true } as any); if (!ok) return; try { await deleteAsset(a.id); load(); addNotification('Đã xóa.', 'success'); } catch (e: any) { addNotification('Lỗi: ' + (e.message || e), 'error'); } };
+
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+          <span className="text-[10px] font-black uppercase text-slate-400">Thư viện chung ({assets.length})</span>
+          <button onClick={() => fileRef.current?.click()} disabled={uploading} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-[11px] font-bold text-white hover:bg-brand-hover disabled:opacity-60">{uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Tải lên</button>
+          <input ref={fileRef} type="file" multiple accept="video/*,image/*,audio/*" className="hidden" onChange={e => onFiles(e.target.files)} />
+        </div>
+        {loading ? <div className="py-16 text-center text-sm text-slate-400"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></div>
+          : assets.length === 0 ? <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-sm text-slate-400">Chưa có tư liệu chung. Bấm Tải lên để thêm.</div>
+          : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {assets.map(a => (
+                <div key={a.id} className={`overflow-hidden rounded-2xl border bg-white shadow-sm ${a.is_hidden ? 'border-slate-200 opacity-60' : 'border-slate-100'}`}>
+                  <button onClick={() => setEdit(a)} className="block w-full">
+                    <div className="grid aspect-video place-items-center bg-slate-900">
+                      {a.thumb_url ? <img src={a.thumb_url} alt="" className="h-full w-full object-cover" /> : a.kind === 'audio' ? <Library className="h-6 w-6 text-slate-500" /> : <Film className="h-6 w-6 text-slate-500" />}
+                    </div>
+                  </button>
+                  <div className="p-2">
+                    <p className="truncate text-[11px] font-bold text-slate-800">{a.title}</p>
+                    <div className="mt-1.5 flex items-center gap-1">
+                      <button onClick={() => toggle(a, 'is_featured')} title="Nổi bật" className={`grid h-6 w-6 place-items-center rounded-md ${a.is_featured ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'}`}><Star className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => toggle(a, 'is_hidden')} title="Ẩn/hiện" className={`grid h-6 w-6 place-items-center rounded-md ${a.is_hidden ? 'bg-slate-200 text-slate-500' : 'bg-slate-100 text-slate-400'}`}>{a.is_hidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}</button>
+                      <button onClick={() => remove(a)} title="Xóa" className="ml-auto grid h-6 w-6 place-items-center rounded-md text-slate-400 hover:bg-rose-50 hover:text-rose-500"><Trash2 className="h-3.5 w-3.5" /></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+      </div>
+
+      {/* Ngăn kéo sửa thông tin */}
+      {edit && <SharedEditDrawer asset={edit} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); load(); }} />}
+    </div>
+  );
+}
+
+function SharedEditDrawer({ asset, onClose, onSaved }: { asset: MvAsset; onClose: () => void; onSaved: () => void }) {
+  const { addNotification } = useNotifications();
+  const [title, setTitle] = useState(asset.title);
+  const [desc, setDesc] = useState(asset.description || '');
+  const [tags, setTags] = useState((asset.tags || []).join(', '));
+  const [license, setLicense] = useState(asset.license || '');
+  const [source, setSource] = useState(asset.source || '');
+  const [saving, setSaving] = useState(false);
+  const save = async () => {
+    setSaving(true);
+    try { await updateAsset(asset.id, { title: title.trim() || asset.title, description: desc, tags: tags.split(',').map(t => t.trim()).filter(Boolean), license, source }); addNotification('Đã lưu thông tin.', 'success'); onSaved(); }
+    catch (e: any) { addNotification('Lỗi lưu: ' + (e.message || e), 'error'); setSaving(false); }
+  };
+  const F = ({ label, children }: { label: string; children: React.ReactNode }) => <div className="mb-3"><label className="mb-1 block text-[10px] font-bold uppercase text-slate-500">{label}</label>{children}</div>;
+  const inp = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-brand';
+  return (
+    <div className="h-fit rounded-3xl border border-slate-100 bg-white p-4 shadow-sm lg:sticky lg:top-4">
+      <div className="mb-3 flex items-center justify-between"><span className="text-xs font-black uppercase text-slate-400">Sửa tư liệu</span><button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="h-4 w-4" /></button></div>
+      <F label="Tiêu đề"><input value={title} onChange={e => setTitle(e.target.value)} className={inp} /></F>
+      <F label="Mô tả"><textarea value={desc} onChange={e => setDesc(e.target.value)} rows={2} className={inp + ' resize-none'} /></F>
+      <F label="Thẻ (cách nhau dấu phẩy)"><input value={tags} onChange={e => setTags(e.target.value)} className={inp} /></F>
+      <F label="Giấy phép sử dụng"><input value={license} onChange={e => setLicense(e.target.value)} placeholder="Ví dụ: Được phép dùng nội bộ" className={inp} /></F>
+      <F label="Nguồn gốc"><input value={source} onChange={e => setSource(e.target.value)} className={inp} /></F>
+      <button onClick={save} disabled={saving} className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold text-white hover:bg-brand-hover disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Lưu</button>
     </div>
   );
 }
