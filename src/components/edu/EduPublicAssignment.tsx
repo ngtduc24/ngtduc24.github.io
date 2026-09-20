@@ -333,11 +333,16 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
     canEdit = false;
     lockReason = 'Đã quá hạn nộp bài';
   } else if (submission) {
-    const firstSub = new Date(submission.firstSubmittedAt);
-    const windowEnd = new Date(firstSub.getTime() + 24 * 60 * 60 * 1000);
-    const now = new Date();
-    
-    if (now > windowEnd) {
+    const firstSub = new Date(submission.firstSubmittedAt).getTime();
+    const lastSub = new Date(submission.submittedAt).getTime();
+    // Giáo viên bấm Cho nộp lại sẽ đặt firstSubmittedAt mới hơn lần nộp cuối.
+    const reopened = firstSub > lastSub + 1000;
+    const windowEnd = firstSub + 24 * 60 * 60 * 1000;
+    const allowSupplement = assignment.allowSupplement !== false;
+    if (!allowSupplement && !reopened) {
+      canEdit = false;
+      lockReason = 'Đã nộp bài, giáo viên không cho nộp bổ sung';
+    } else if (Date.now() > windowEnd) {
       canEdit = false;
       lockReason = 'Đã hết thời gian 24h chỉnh sửa sau khi nộp lần đầu';
     }

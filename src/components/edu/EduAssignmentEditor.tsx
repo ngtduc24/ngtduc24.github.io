@@ -62,6 +62,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
   const [allowedTypes, setAllowedTypes] = useState<string[]>(['pdf']);
   const [deadline, setDeadline] = useState('');
   const [allowLate, setAllowLate] = useState(false);
+  const [allowSupplement, setAllowSupplement] = useState(true);
   const [uploadingImage, setUploadingImage] = useState(false);
 
   // Ngân hàng bài tập theo môn
@@ -175,6 +176,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
             setAllowedTypes(assignment.allowedFileTypes || []);
             setDeadline(assignment.deadline ? assignment.deadline.slice(0, 16) : '');
             setAllowLate(!!assignment.allowLate);
+            setAllowSupplement(assignment.allowSupplement !== false);
             editor?.commands.setContent(assignment.content || '');
           }
         } else if (filteredColumns.length > 0) {
@@ -210,6 +212,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
         allowedFileTypes: allowedTypes,
         deadline: deadline ? new Date(deadline).toISOString() : undefined,
         allowLate,
+        allowSupplement,
       });
 
       // Tùy chọn lưu bài này vào ngân hàng để tái dùng cho lớp khác.
@@ -397,6 +400,13 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
                   <span className="block text-[10px] text-slate-400">{allowLate ? 'Sinh viên vẫn nộp được sau khi hết hạn' : 'Hết hạn là khóa, không cho nộp'}</span>
                 </span>
                 <span className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${allowLate ? 'bg-brand' : 'bg-slate-300'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${allowLate ? 'left-[22px]' : 'left-0.5'}`} /></span>
+              </button>
+              <button type="button" onClick={() => setAllowSupplement(v => !v)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left transition-colors hover:border-brand/30">
+                <span className="min-w-0">
+                  <span className="block text-xs font-bold text-slate-700">Cho phép nộp bổ sung</span>
+                  <span className="block text-[10px] text-slate-400">{allowSupplement ? 'Sau khi nộp, sinh viên được nộp thêm file' : 'Nộp một lần, không cho nộp thêm'}</span>
+                </span>
+                <span className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${allowSupplement ? 'bg-brand' : 'bg-slate-300'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${allowSupplement ? 'left-[22px]' : 'left-0.5'}`} /></span>
               </button>
             </div>
 
