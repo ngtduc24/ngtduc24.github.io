@@ -201,11 +201,17 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
     if (!supabaseUrl) throw new Error('Chưa cấu hình địa chỉ Supabase.');
     const idToken = await auth.currentUser?.getIdToken().catch(() => null);
     if (!idToken) throw new Error('Bạn cần đăng nhập để dùng trả lời bằng AI.');
-    const res = await fetch(`${String(supabaseUrl).replace(/\/$/, '')}/functions/v1/gemini-chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-      body: JSON.stringify({ question, context, systemPrompt }),
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${String(supabaseUrl).replace(/\/$/, '')}/functions/v1/gemini-chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ question, context, systemPrompt }),
+      });
+    } catch {
+      // Fetch bị từ chối ở tầng mạng, thường là do Edge Function gemini-chat chưa được deploy.
+      throw new Error('Chưa kết nối được máy chủ AI. Có thể Edge Function gemini-chat chưa được deploy lên Supabase.');
+    }
     const payload = await res.json().catch(() => null);
     if (!res.ok || !payload?.answer) throw new Error(payload?.error || 'Gemini không trả lời được.');
     return payload.answer as string;
