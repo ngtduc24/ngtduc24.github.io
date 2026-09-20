@@ -18,8 +18,9 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
 
   const me = (() => { try { return JSON.parse(localStorage.getItem('logged_in_user') || 'null'); } catch { return null; } })();
   const goBack = () => {
-    if (window.history.length > 1) window.history.back();
-    else window.location.href = `${window.location.origin}${window.location.pathname}?tab=e-learning`;
+    // Luôn quay về trang E-Learning cho chắc, không phụ thuộc lịch sử trình duyệt.
+    try { localStorage.setItem('app_last_active_tab', 'elearning'); } catch {}
+    window.location.href = `${window.location.origin}${window.location.pathname}?tab=e-learning`;
   };
 
   useEffect(() => {
