@@ -14,6 +14,19 @@
             if (c.light) s.setProperty('--color-brand-light', c.light);
           }
         } catch(e){}
+        try {
+          var f = JSON.parse(localStorage.getItem('fontThemeCache') || 'null');
+          if (f && (f.heading || f.body)) {
+            var st = document.documentElement.style;
+            if (f.heading) st.setProperty('--font-display', '"' + f.heading + '", "Space Grotesk", ui-sans-serif, system-ui, sans-serif');
+            if (f.body) st.setProperty('--font-sans', '"' + f.body + '", "Inter", ui-sans-serif, system-ui, sans-serif');
+            [f.headingUrl, f.bodyUrl].forEach(function(u){
+              if (u && !document.querySelector('link[href="' + u + '"]')) {
+                var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = u; document.head.appendChild(l);
+              }
+            });
+          }
+        } catch(e){}
       })();
     </script>
     <title>Andy Nguyễn - Truyền thông đa phương tiện và Thiết kế đồ họa</title>

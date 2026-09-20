@@ -5,13 +5,21 @@
 // trong thẻ head của các file html đọc cache này và áp NGAY trước khi trang vẽ,
 // nhờ vậy khi F5 màu đúng hiện ra liền, không còn nháy màu mặc định rồi mới đổi.
 
+import { FONT_OPTIONS, DEFAULT_HEADING_FONT, DEFAULT_BODY_FONT } from './fonts';
+
 interface ThemeLike {
   themeColor?: string;
   primaryColor?: string;
   secondaryColor?: string;
 }
 
+interface FontLike {
+  fontHeading?: string;
+  fontBody?: string;
+}
+
 export const BRAND_CACHE_KEY = 'brandThemeCache';
+export const FONT_CACHE_KEY = 'fontThemeCache';
 
 const PRESETS: Record<string, { brand: string; hover: string; light: string }> = {
   'green-black': { brand: '#10b981', hover: '#059669', light: '#ecfdf5' },
@@ -45,5 +53,38 @@ export function applyBrandTheme(settings: ThemeLike | null | undefined) {
     localStorage.setItem(BRAND_CACHE_KEY, JSON.stringify({ brand, hover, light }));
   } catch (_e) {
     // localStorage có thể bị chặn ở chế độ riêng tư, bỏ qua không ảnh hưởng.
+  }
+}
+
+// Nạp liên kết tải phông (nếu chưa có) rồi trả về đường dẫn để cache.
+function ensureFontLink(family: string): string | null {
+  const opt = FONT_OPTIONS.find(f => f.family === family);
+  if (!opt) return null;
+  const id = 'dyn-font-' + family.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+  if (typeof document !== 'undefined' && !document.getElementById(id)) {
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = opt.url;
+    document.head.appendChild(link);
+  }
+  return opt.url;
+}
+
+// Áp phông chữ cho tiêu đề (--font-display) và nội dung (--font-sans) theo cấu hình admin.
+export function applyFontTheme(settings: FontLike | null | undefined) {
+  const heading = settings?.fontHeading || DEFAULT_HEADING_FONT;
+  const body = settings?.fontBody || DEFAULT_BODY_FONT;
+  const headingUrl = ensureFontLink(heading);
+  const bodyUrl = ensureFontLink(body);
+
+  const root = document.documentElement.style;
+  root.setProperty('--font-display', `"${heading}", "Space Grotesk", ui-sans-serif, system-ui, sans-serif`);
+  root.setProperty('--font-sans', `"${body}", "Inter", ui-sans-serif, system-ui, sans-serif`);
+
+  try {
+    localStorage.setItem(FONT_CACHE_KEY, JSON.stringify({ heading, body, headingUrl, bodyUrl }));
+  } catch (_e) {
+    // Bỏ qua khi trình duyệt chặn localStorage.
   }
 }

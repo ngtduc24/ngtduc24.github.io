@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { applyBrandTheme } from './lib/applyTheme';
+import { applyBrandTheme, applyFontTheme } from './lib/applyTheme';
 import Sidebar from './components/Sidebar';
 import DashboardOverview from './components/DashboardOverview';
 import AllFeatures from './components/AllFeatures';
@@ -356,6 +356,12 @@ export default function App() {
     if (!settingsLoaded) return;
     applyBrandTheme(settings);
   }, [settingsLoaded, settings.themeColor, settings.primaryColor, settings.secondaryColor]);
+
+  // Áp phông chữ hệ thống sau khi tải cấu hình. Đổi phông trong cấu hình là cập nhật ngay.
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    applyFontTheme(settings);
+  }, [settingsLoaded, settings.fontHeading, settings.fontBody]);
 
   // Initialize and sync with Firebase
   useEffect(() => {

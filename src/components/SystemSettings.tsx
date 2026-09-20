@@ -20,6 +20,8 @@ import { EyeOff, Eye, RotateCcw, Wrench, Power, Boxes, ImagePlay } from "lucide-
 import { AppSettings, ModuleOverride } from "../types";
 import { saveDefaultSettingsToSupabase } from "../lib/data";
 import { MODULE_REGISTRY } from "../lib/modules";
+import { FONT_OPTIONS, DEFAULT_HEADING_FONT, DEFAULT_BODY_FONT } from "../lib/fonts";
+import { Type } from "lucide-react";
 import BackupManager from './BackupManager';
 import MediaSourcePicker from './MediaSourcePicker';
 
@@ -463,6 +465,51 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
               }} className="w-full accent-emerald-500" aria-label="Độ trong suốt sidebar" />
               <div className="mt-1 flex justify-between text-[9px] font-semibold text-slate-400"><span>Trong suốt hơn</span><span>Đậm hơn</span></div>
             </div>
+          </div>
+        </div>
+
+        {/* PHÔNG CHỮ HỆ THỐNG */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4 text-left">
+          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+            <Type className="w-4 h-4 text-brand" />
+            <span>Phông chữ hệ thống</span>
+          </h2>
+          <p className="text-xs text-slate-400">Chọn phông chữ cho tiêu đề và cho nội dung, mô tả. Các phông đều hỗ trợ tiếng Việt.</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-500 uppercase">Phông tiêu đề</label>
+              <select
+                value={formState.fontHeading || DEFAULT_HEADING_FONT}
+                onChange={e => setFormState(prev => ({ ...prev, fontHeading: e.target.value }))}
+                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+              >
+                {FONT_OPTIONS.map(f => <option key={f.family} value={f.family}>{f.label}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-500 uppercase">Phông nội dung, mô tả</label>
+              <select
+                value={formState.fontBody || DEFAULT_BODY_FONT}
+                onChange={e => setFormState(prev => ({ ...prev, fontBody: e.target.value }))}
+                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+              >
+                {FONT_OPTIONS.map(f => <option key={f.family} value={f.family}>{f.label}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Xem trước phông đang chọn. Nạp sẵn liên kết tải để chữ mẫu hiển thị đúng phông. */}
+          <link rel="stylesheet" href={(FONT_OPTIONS.find(f => f.family === (formState.fontHeading || DEFAULT_HEADING_FONT)) || FONT_OPTIONS[0]).url} />
+          <link rel="stylesheet" href={(FONT_OPTIONS.find(f => f.family === (formState.fontBody || DEFAULT_BODY_FONT)) || FONT_OPTIONS[0]).url} />
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+            <p className="text-[10px] font-bold uppercase text-slate-400 mb-2">Xem trước</p>
+            <p className="text-xl font-black text-slate-800" style={{ fontFamily: `"${formState.fontHeading || DEFAULT_HEADING_FONT}", sans-serif` }}>
+              Tiêu đề trang mẫu tiếng Việt
+            </p>
+            <p className="text-sm text-slate-600 mt-1" style={{ fontFamily: `"${formState.fontBody || DEFAULT_BODY_FONT}", sans-serif` }}>
+              Đây là đoạn văn bản mô tả mẫu để xem trước phông chữ nội dung. Chúc bạn một ngày làm việc hiệu quả.
+            </p>
           </div>
         </div>
 

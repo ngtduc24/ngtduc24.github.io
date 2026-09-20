@@ -9,7 +9,7 @@ import { UserAccount } from '../../types';
 import { EduSubject, EduClass } from '../../types/edu';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
-import { getSubjects, getClasses, getClassUsers, setEduAuthContext } from '../../lib/edu';
+import { getSubjects, saveSubject, getClasses, getClassUsers, setEduAuthContext } from '../../lib/edu';
 import {
   ELLesson, ELSection, ELResource,
   getMyLessons, getPublicLessons, getPublicSubjectCounts, getLesson, createLesson, updateLesson,
@@ -251,12 +251,37 @@ function CreateDialog({ subjects, onClose, onCreated, ownerName }: { subjects: E
   const [title, setTitle] = useState('');
   const [subjectId, setSubjectId] = useState('');
   const [saving, setSaving] = useState(false);
+  // Danh sách môn cục bộ để khi tạo nhanh một môn mới ngay trong cửa sổ thì hiện ra liền.
+  const [subs, setSubs] = useState<EduSubject[]>(subjects);
+  const [adding, setAdding] = useState(false);
+  const [newSubjectName, setNewSubjectName] = useState('');
+  const [savingSubject, setSavingSubject] = useState(false);
+
   const submit = async () => {
     if (!title.trim()) { addNotification('Nhập tên bài giảng.', 'warning'); return; }
     setSaving(true);
     try { const l = await createLesson({ title: title.trim(), subject_id: subjectId || null, owner_name: ownerName }); onCreated(l.id); }
     catch (e: any) { addNotification('Lỗi tạo bài giảng: ' + (e.message || e), 'error'); setSaving(false); }
   };
+
+  const addSubject = async () => {
+    const name = newSubjectName.trim();
+    if (!name) return;
+    setSavingSubject(true);
+    try {
+      const saved = await saveSubject({ name });
+      setSubs(prev => [...prev, saved].sort((a, b) => a.name.localeCompare(b.name)));
+      setSubjectId(saved.id);
+      setNewSubjectName('');
+      setAdding(false);
+      addNotification('Đã thêm môn học', 'success');
+    } catch (e: any) {
+      addNotification('Lỗi thêm môn: ' + (e.message || e), 'error');
+    } finally {
+      setSavingSubject(false);
+    }
+  };
+
   return (
     <Modal onClose={onClose} title="Tạo bài giảng mới">
       <div className="space-y-3">
@@ -266,10 +291,21 @@ function CreateDialog({ subjects, onClose, onCreated, ownerName }: { subjects: E
         </div>
         <div>
           <label className="mb-1 block text-[10px] font-bold uppercase text-slate-500">Môn học</label>
-          <select value={subjectId} onChange={e => setSubjectId(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-brand">
-            <option value="">Chọn môn học</option>
-            {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+          {adding ? (
+            <div className="flex items-center gap-2">
+              <input autoFocus value={newSubjectName} onChange={e => setNewSubjectName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addSubject(); if (e.key === 'Escape') { setAdding(false); setNewSubjectName(''); } }} className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-brand" placeholder="Nhập tên môn học mới" />
+              <button onClick={addSubject} disabled={savingSubject || !newSubjectName.trim()} title="Lưu môn học" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand text-white hover:bg-brand-hover disabled:opacity-50">{savingSubject ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}</button>
+              <button onClick={() => { setAdding(false); setNewSubjectName(''); }} title="Hủy" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200"><X className="h-4 w-4" /></button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <select value={subjectId} onChange={e => setSubjectId(e.target.value)} className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-brand">
+                <option value="">Chọn môn học</option>
+                {subs.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              <button onClick={() => setAdding(true)} title="Thêm môn học mới" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-dashed border-slate-300 text-slate-400 hover:border-brand hover:text-brand"><Plus className="h-4 w-4" /></button>
+            </div>
+          )}
         </div>
       </div>
       <div className="mt-5 flex justify-end gap-2">
