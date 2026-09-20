@@ -192,6 +192,13 @@ export async function getQuizById(id: string): Promise<Quiz> {
   return data as Quiz;
 }
 
+// Lấy đầy đủ một câu hỏi kèm phương án theo id (dùng cho màn xem chi tiết câu hỏi).
+export async function getQuestionById(id: string): Promise<QuizQuestion> {
+  const { data, error } = await supabase.from(Q_TABLE).select('*, quiz_bank_options(*)').eq('id', id).single();
+  if (error) throw error;
+  return mapQuestion(data);
+}
+
 export async function saveQuiz(q: Partial<Quiz>): Promise<Quiz> {
   const ctx = getEduCtx();
   const payload: any = {
