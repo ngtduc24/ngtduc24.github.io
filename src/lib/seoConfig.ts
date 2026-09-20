@@ -155,6 +155,13 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
     description: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn học, công khai lên kho chung và giao bài giảng cho lớp.',
     keywords: 'e-learning, bài giảng, học liệu, kho bài giảng, giao bài giảng',
   },
+  remier: {
+    id: 'remier',
+    slug: 'remier-dung-phim',
+    title: 'Remier · Dựng phim trên web | SmartResearch',
+    description: 'Ứng dụng dựng phim nhiều lớp chạy trong trình duyệt, quản lý kho tư liệu và xuất video.',
+    keywords: 'dựng phim, video editor, remier, biên tập video, dòng thời gian',
+  },
   portfolio: {
     id: 'portfolio',
     slug: 'portfolio',
