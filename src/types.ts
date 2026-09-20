@@ -64,6 +64,9 @@ export interface UserAccount {
   coverImagePosition?: string;
   avatarPosition?: string;
   fcmTokens?: string[];
+  // Sắp xếp và ẩn phím tắt trang tổng quan, lưu theo tài khoản để đồng bộ giữa các thiết bị.
+  dashboardIconOrder?: string[];
+  dashboardIconHidden?: string[];
 }
 
 export interface OnlinePresenceUser {

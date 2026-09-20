@@ -10,7 +10,8 @@ import {
   getStatsFromSupabase,
   getJournalsFromSupabase,
   getNotificationsFromSupabase,
-  saveDefaultSettingsToSupabase
+  saveDefaultSettingsToSupabase,
+  saveUser
 } from '../lib/data';
 import { useTasks } from './TaskContext';
 import { UserAccount, AppSettings, ScientificJournal, AppNotification } from '../types';
@@ -79,9 +80,11 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const [notifs, setNotifs] = useState<AppNotification[]>([]);
   const [search, setSearch] = useState('');
 
-  // Thứ tự hàng biểu tượng chức năng do người dùng tự kéo thả sắp xếp, lưu theo tài khoản.
+  // Thứ tự hàng biểu tượng chức năng do người dùng tự kéo thả sắp xếp, lưu theo tài khoản
+  // trên máy chủ (Firestore) để đồng bộ giữa các thiết bị, kèm bộ nhớ cục bộ làm bộ đệm nhanh.
   const ORDER_KEY = `dashboard_icon_order_${currentUser?.id || 'anon'}`;
   const [iconOrder, setIconOrder] = useState<string[]>(() => {
+    if (Array.isArray(currentUser?.dashboardIconOrder)) return currentUser!.dashboardIconOrder as string[];
     try { const raw = localStorage.getItem(ORDER_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
   });
   const [dragId, setDragId] = useState<string | null>(null);
@@ -93,21 +96,35 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const dragIdRef = useRef<string | null>(null);
   const overIdRef = useRef<string | null>(null);
 
-  // Các biểu tượng chức năng ít dùng được người dùng ẩn bớt, lưu theo tài khoản.
+  // Các biểu tượng chức năng ít dùng được người dùng ẩn bớt, lưu theo tài khoản trên máy chủ.
   const HIDDEN_KEY = `dashboard_icon_hidden_${currentUser?.id || 'anon'}`;
   const [hiddenIds, setHiddenIds] = useState<string[]>(() => {
+    if (Array.isArray(currentUser?.dashboardIconHidden)) return currentUser!.dashboardIconHidden as string[];
     try { const raw = localStorage.getItem(HIDDEN_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
   });
+
+  // Lưu thứ tự và danh sách ẩn lên tài khoản (Firestore) để mọi thiết bị dùng chung một
+  // cách sắp xếp. Bộ nhớ cục bộ vẫn được ghi để hiển thị tức thì khi chưa tải xong tài khoản.
+  const saveArrangementToAccount = (order: string[], hidden: string[]) => {
+    if (!currentUser?.id) return;
+    saveUser({ ...currentUser, dashboardIconOrder: order, dashboardIconHidden: hidden }).catch(() => {});
+  };
+
   const persistHidden = (ids: string[]) => {
     setHiddenIds(ids);
     try { localStorage.setItem(HIDDEN_KEY, JSON.stringify(ids)); } catch {}
+    saveArrangementToAccount(iconOrder, ids);
   };
   const hideIcon = (id: string) => { if (!hiddenIds.includes(id)) persistHidden([...hiddenIds, id]); };
   const restoreHidden = () => persistHidden([]);
   // Hiện lại một phím tắt: bỏ khỏi danh sách ẩn và đảm bảo có trong thứ tự.
   const showShortcut = (id: string) => {
-    persistHidden(hiddenIds.filter(x => x !== id));
-    if (!iconOrder.includes(id)) { const next = [...iconOrder, id]; setIconOrder(next); try { localStorage.setItem(ORDER_KEY, JSON.stringify(next)); } catch {} }
+    const nextHidden = hiddenIds.filter(x => x !== id);
+    setHiddenIds(nextHidden);
+    try { localStorage.setItem(HIDDEN_KEY, JSON.stringify(nextHidden)); } catch {}
+    let nextOrder = iconOrder;
+    if (!iconOrder.includes(id)) { nextOrder = [...iconOrder, id]; setIconOrder(nextOrder); try { localStorage.setItem(ORDER_KEY, JSON.stringify(nextOrder)); } catch {} }
+    saveArrangementToAccount(nextOrder, nextHidden);
   };
   const toggleShortcut = (id: string) => { if (hiddenIds.includes(id)) showShortcut(id); else hideIcon(id); };
 
@@ -130,6 +147,23 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     document.addEventListener('pointerdown', onDown);
     return () => document.removeEventListener('pointerdown', onDown);
   }, [sortMode]);
+
+  // Khi tài khoản tải xong (hoặc đổi thiết bị), nhận cách sắp xếp đã lưu trên máy chủ một lần
+  // cho mỗi tài khoản. Sau đó các thao tác cục bộ mới được ưu tiên và tự đẩy lên máy chủ.
+  const hydratedUserRef = useRef<string | null>(null);
+  useEffect(() => {
+    const uid = currentUser?.id;
+    if (!uid || hydratedUserRef.current === uid) return;
+    const serverOrder = currentUser?.dashboardIconOrder;
+    const serverHidden = currentUser?.dashboardIconHidden;
+    // Chỉ nhận khi máy chủ thực sự có dữ liệu (đã tải xong hồ sơ tài khoản).
+    if (Array.isArray(serverOrder) || Array.isArray(serverHidden)) {
+      if (Array.isArray(serverOrder)) { setIconOrder(serverOrder); try { localStorage.setItem(ORDER_KEY, JSON.stringify(serverOrder)); } catch {} }
+      if (Array.isArray(serverHidden)) { setHiddenIds(serverHidden); try { localStorage.setItem(HIDDEN_KEY, JSON.stringify(serverHidden)); } catch {} }
+      hydratedUserRef.current = uid;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id, currentUser?.dashboardIconOrder, currentUser?.dashboardIconHidden]);
 
   useEffect(() => {
     if (settings) {
@@ -254,6 +288,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const persistOrder = (ids: string[]) => {
     setIconOrder(ids);
     try { localStorage.setItem(ORDER_KEY, JSON.stringify(ids)); } catch {}
+    saveArrangementToAccount(ids, hiddenIds);
   };
   // Sắp xếp lại theo id nguồn và id đích (dùng cho kéo thả bằng con trỏ).
   const reorder = (sourceId: string, targetId: string) => {
