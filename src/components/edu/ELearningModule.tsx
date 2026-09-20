@@ -21,7 +21,7 @@ import {
 import QuizRichText from './QuizRichText';
 import MediaSourcePicker from '../MediaSourcePicker';
 
-interface Props { currentUser: UserAccount; }
+interface Props { currentUser: UserAccount; onExit?: () => void; }
 type View = 'list' | 'editor' | 'assign' | 'progress' | 'trash';
 type Tab = 'mine' | 'public';
 
@@ -29,7 +29,7 @@ type Tab = 'mine' | 'public';
 // hiện tại để chạy ổn định trên di động (mở tab mới hay bị trình duyệt chặn).
 const openLessonView = (id: string) => { window.location.href = `${window.location.origin}${window.location.pathname}?elview=${id}`; };
 
-export default function ELearningModule({ currentUser }: Props) {
+export default function ELearningModule({ currentUser, onExit }: Props) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
   const [view, setView] = useState<View>('list');
@@ -55,6 +55,20 @@ export default function ELearningModule({ currentUser }: Props) {
 
   return (
     <div className="space-y-5 animate-fadeIn">
+      {/* Banner đầu trang có nút quay ra, bố cục chữ giống banner Tạo AR */}
+      <div className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+        {onExit && (
+          <button onClick={onExit} title="Quay lại trang chủ" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 transition-colors hover:bg-brand-light hover:text-brand">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        )}
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand"><BookOpen className="h-6 w-6" /></span>
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-black tracking-tight text-slate-900 sm:text-2xl">E-Learning</h1>
+          <p className="text-sm font-medium text-slate-500">Soạn, lưu trữ và chia sẻ bài giảng theo môn cho lớp học.</p>
+        </div>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex rounded-2xl bg-slate-100 p-1">
           <button onClick={() => setTab('mine')} className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${tab === 'mine' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Kho của tôi</button>

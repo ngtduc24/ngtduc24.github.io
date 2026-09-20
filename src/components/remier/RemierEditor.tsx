@@ -17,7 +17,7 @@ type ClipKind = 'video' | 'image' | 'audio' | 'text';
 type LaneKind = 'video' | 'audio';
 interface ClipProps { x: number; y: number; scale: number; rotation: number; opacity: number; volume: number; text: string; fontSize: number; color: string; fontWeight: number; align: string; }
 interface Clip { id: string; kind: ClipKind; name: string; src?: string; thumb?: string; start: number; dur: number; inPoint: number; srcDur?: number; fadeIn?: number; fadeOut?: number; props: ClipProps; }
-interface Track { id: string; name: string; kind: LaneKind; locked?: boolean; hidden?: boolean; muted?: boolean; solo?: boolean; clips: Clip[]; }
+interface Track { id: string; name: string; kind: LaneKind; text?: boolean; locked?: boolean; hidden?: boolean; muted?: boolean; solo?: boolean; clips: Clip[]; }
 
 const defaultProps = (): ClipProps => ({ x: 0, y: 0, scale: 1, rotation: 0, opacity: 1, volume: 1, text: 'Nội dung chữ', fontSize: 64, color: '#ffffff', fontWeight: 700, align: 'center' });
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -48,6 +48,21 @@ function parseSubtitles(raw: string): { start: number; dur: number; text: string
   }
   return out;
 }
+
+// Các định dạng xuất mà trình duyệt hỗ trợ (dò một lần).
+const FORMAT_OPTIONS: { v: string; mime: string; ext: string; label: string }[] = (() => {
+  const o: { v: string; mime: string; ext: string; label: string }[] = [];
+  try {
+    if (typeof MediaRecorder !== 'undefined') {
+      if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1.640028,mp4a.40.2')) o.push({ v: 'mp4', mime: 'video/mp4;codecs=avc1.640028,mp4a.40.2', ext: 'mp4', label: 'mp4 (H.264)' });
+      else if (MediaRecorder.isTypeSupported('video/mp4')) o.push({ v: 'mp4', mime: 'video/mp4', ext: 'mp4', label: 'mp4' });
+      if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) o.push({ v: 'webm-vp9', mime: 'video/webm;codecs=vp9,opus', ext: 'webm', label: 'webm (VP9)' });
+      if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) o.push({ v: 'webm-vp8', mime: 'video/webm;codecs=vp8,opus', ext: 'webm', label: 'webm (VP8)' });
+    }
+  } catch {}
+  if (!o.length) o.push({ v: 'webm', mime: 'video/webm', ext: 'webm', label: 'webm' });
+  return o;
+})();
 
 // Bộ nhớ đệm phần tử media dùng để vẽ và phát.
 const mediaCache = new Map<string, HTMLVideoElement | HTMLImageElement | HTMLAudioElement>();
@@ -96,6 +111,17 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [expProgress, setExpProgress] = useState(0);
+
+  // Hộp thoại xuất video.
+  const [showExport, setShowExport] = useState(false);
+  const [expName, setExpName] = useState('');
+  const [expRes, setExpRes] = useState(1080);
+  const [expFps, setExpFps] = useState(30);
+  const [expBitrate, setExpBitrate] = useState<'low' | 'rec' | 'high'>('high');
+  const [expFormat, setExpFormat] = useState('');
+  const [expAudio, setExpAudio] = useState(true);
+  const [expSubs, setExpSubs] = useState(false);
+  const [expCover, setExpCover] = useState('');
 
   // Khung xem trước.
   const [previewFit, setPreviewFit] = useState(true);
@@ -160,12 +186,14 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
     for (const c of track.clips) if (t >= c.start && t < c.start + c.dur) return c;
     return null;
   };
-  const drawClipVisual = (ctx: CanvasRenderingContext2D, clip: Clip, cv: HTMLCanvasElement, t: number) => {
+  // Vẽ một lớp trong hệ tọa độ logic W×H (không phụ thuộc kích thước canvas thật),
+  // nhờ vậy xuất ở độ phân giải nào chữ và bố cục vẫn đúng tỉ lệ.
+  const drawClipVisual = (ctx: CanvasRenderingContext2D, clip: Clip, LW: number, LH: number, t: number) => {
     const p = clip.props;
     const alpha = p.opacity * fadeFactor(clip, t);
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.translate(cv.width / 2 + (p.x / 100) * cv.width, cv.height / 2 + (p.y / 100) * cv.height);
+    ctx.translate(LW / 2 + (p.x / 100) * LW, LH / 2 + (p.y / 100) * LH);
     ctx.rotate((p.rotation * Math.PI) / 180);
     ctx.scale(p.scale, p.scale);
     if (clip.kind === 'text') {
@@ -182,10 +210,10 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
     } else {
       const el = getMediaEl(clip) as HTMLVideoElement | HTMLImageElement | null;
       if (el) {
-        const iw = (el as any).videoWidth || (el as any).naturalWidth || cv.width;
-        const ih = (el as any).videoHeight || (el as any).naturalHeight || cv.height;
+        const iw = (el as any).videoWidth || (el as any).naturalWidth || LW;
+        const ih = (el as any).videoHeight || (el as any).naturalHeight || LH;
         if (iw && ih) {
-          const scale = Math.min(cv.width / iw, cv.height / ih); // contain
+          const scale = Math.min(LW / iw, LH / ih); // contain
           const dw = iw * scale, dh = ih * scale;
           try { ctx.drawImage(el as CanvasImageSource, -dw / 2, -dh / 2, dw, dh); } catch {}
         }
@@ -193,16 +221,22 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
     }
     ctx.restore();
   };
-  const draw = useCallback((t: number) => {
-    const cv = canvasRef.current; if (!cv) return;
+  // Vẽ toàn bộ khung hình vào một canvas bất kỳ tại thời điểm t.
+  const drawTo = useCallback((cv: HTMLCanvasElement | null, t: number) => {
+    if (!cv) return;
     const ctx = cv.getContext('2d'); if (!ctx) return;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.scale(cv.width / W, cv.height / H);
     const tk = tracksRef.current;
     for (let i = tk.length - 1; i >= 0; i--) {
       const c = activeClip(tk[i], t);
-      if (c && c.kind !== 'audio') drawClipVisual(ctx, c, cv, t);
+      if (c && c.kind !== 'audio') drawClipVisual(ctx, c, W, H, t);
     }
-  }, []);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [W, H]);
+  const draw = useCallback((t: number) => { drawTo(canvasRef.current, t); }, [drawTo]);
 
   // Khi tua (không phát): set currentTime cho video rồi vẽ khi seeked.
   useEffect(() => {
@@ -248,12 +282,17 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
     mediaCache.forEach((el, key) => { if (!activeSrcs.has(key) && (el instanceof HTMLVideoElement || el instanceof HTMLAudioElement)) { if (!el.paused) el.pause(); } });
   };
 
+  // Dừng hẳn mọi media (video + tiếng). Dùng khi bấm dừng hoặc chạy hết.
+  const pauseAllMedia = () => {
+    mediaCache.forEach(el => { if (el instanceof HTMLVideoElement || el instanceof HTMLAudioElement) { try { el.pause(); } catch {} } });
+  };
+
   const loop = useCallback((ts: number) => {
     if (!lastTsRef.current) lastTsRef.current = ts;
     const dt = ts - lastTsRef.current; lastTsRef.current = ts;
     let t = playheadRef.current + dt;
     const dur = tracksRef.current.reduce((mx, tr) => Math.max(mx, tr.clips.reduce((m, c) => Math.max(m, c.start + c.dur), 0)), 0);
-    if (t >= dur) { t = dur; playheadRef.current = t; setPlayhead(t); draw(t); manageMedia(t, false); setPlaying(false); return; }
+    if (t >= dur) { t = dur; playheadRef.current = t; setPlayhead(t); draw(t); pauseAllMedia(); setPlaying(false); return; }
     playheadRef.current = t; setPlayhead(t); manageMedia(t, true); draw(t);
     rafRef.current = requestAnimationFrame(loop);
   }, [draw]);
@@ -261,7 +300,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   const togglePlay = () => {
     if (playing) {
       setPlaying(false); if (rafRef.current) cancelAnimationFrame(rafRef.current); rafRef.current = null; lastTsRef.current = 0;
-      manageMedia(playheadRef.current, false);
+      pauseAllMedia();
     } else {
       ensureAudioCtx(); // mở khóa âm thanh bằng thao tác người dùng
       if (playheadRef.current >= duration) { playheadRef.current = 0; setPlayhead(0); }
@@ -276,17 +315,32 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 
   // Tìm hoặc tạo lớp phù hợp cho loại nội dung. video/hình/chữ vào lớp video,
   // âm thanh vào lớp tiếng. Nếu chưa có thì tự tạo.
-  const placeClip = (clip: Clip, lane: LaneKind) => {
+  // Đặt clip media vào lớp phù hợp (không dùng lớp chữ). Có thể chỉ định lớp đích và vị trí bắt đầu.
+  const placeClipAt = (clip: Clip, lane: LaneKind, trackId?: string, start?: number) => {
     setTracks(prev => {
       const next = [...prev];
-      let idx = lane === 'audio' ? next.findIndex(t => t.kind === 'audio' && !t.locked) : next.findIndex(t => t.kind === 'video' && !t.locked);
+      let idx = -1;
+      if (trackId) { const i = next.findIndex(t => t.id === trackId); if (i >= 0 && !next[i].locked && !next[i].text && (next[i].kind === 'audio') === (lane === 'audio')) idx = i; }
+      if (idx < 0) idx = lane === 'audio' ? next.findIndex(t => t.kind === 'audio' && !t.locked) : next.findIndex(t => t.kind === 'video' && !t.locked && !t.text);
       if (idx < 0) {
-        const vCount = next.filter(t => t.kind === 'video').length;
+        const vCount = next.filter(t => t.kind === 'video' && !t.text).length;
         const aCount = next.filter(t => t.kind === 'audio').length;
         const nt: Track = { id: uid(), kind: lane, name: lane === 'audio' ? `Tiếng ${aCount + 1}` : `Video ${vCount + 1}`, clips: [] };
         if (lane === 'audio') { next.push(nt); idx = next.length - 1; }
         else { next.unshift(nt); idx = 0; }
       }
+      const c = start != null ? { ...clip, start: Math.max(0, Math.round(start)) } : clip;
+      next[idx] = { ...next[idx], clips: [...next[idx].clips, c] };
+      return next;
+    });
+  };
+  const placeClip = (clip: Clip, lane: LaneKind) => placeClipAt(clip, lane);
+  // Lớp chữ luôn nằm trên một track riêng ở trên cùng để không bị video che.
+  const placeTextClip = (clip: Clip) => {
+    setTracks(prev => {
+      const next = [...prev];
+      let idx = next.findIndex(t => t.text && !t.locked);
+      if (idx < 0) { next.unshift({ id: uid(), kind: 'video', text: true, name: 'Chữ', clips: [] }); idx = 0; }
       next[idx] = { ...next[idx], clips: [...next[idx].clips, clip] };
       return next;
     });
@@ -300,12 +354,22 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
     markDirty(); setSelId(clip.id);
   };
 
+  // Kéo thả tư liệu từ kho vào một vị trí trên dòng thời gian.
+  const dropAssetOnTimeline = (asset: MvAsset, trackId: string | null, timeMs: number) => {
+    const kind: ClipKind = asset.kind === 'audio' ? 'audio' : asset.kind === 'video' ? 'video' : 'image';
+    const dur = asset.duration_ms && asset.duration_ms > 0 ? asset.duration_ms : 5000;
+    const clip: Clip = { id: uid(), kind, name: asset.title, src: asset.url, thumb: asset.thumb_url || undefined, start: Math.max(0, Math.round(timeMs)), dur, inPoint: 0, srcDur: asset.duration_ms || undefined, props: defaultProps() };
+    placeClipAt(clip, kind === 'audio' ? 'audio' : 'video', trackId || undefined, clip.start);
+    markDirty(); setSelId(clip.id); setTimeout(() => draw(playheadRef.current), 0);
+  };
+
   const addTextClip = () => {
     const clip: Clip = { id: uid(), kind: 'text', name: 'Văn bản', start: playheadRef.current, dur: 4000, inPoint: 0, props: defaultProps() };
-    placeClip(clip, 'video');
+    placeTextClip(clip);
     markDirty(); setSelId(clip.id);
-    // vẽ lại ngay để thấy chữ xuất hiện
-    setTimeout(() => draw(playheadRef.current), 0);
+    // Đưa đầu phát vào trong khoảng lớp chữ và vẽ lại ngay để thấy chữ.
+    seekTo(clip.start); setTimeout(() => draw(clip.start), 0);
+    requestAnimationFrame(() => draw(clip.start));
   };
 
   const addVideoTrack = () => { setTracks(prev => { const n = prev.filter(t => t.kind === 'video').length; return [{ id: uid(), kind: 'video', name: `Video ${n + 1}`, clips: [] }, ...prev]; }); markDirty(); };
@@ -346,7 +410,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   const importSubtitles = (cues: { start: number; dur: number; text: string }[]) => {
     if (!cues.length) return;
     const clips: Clip[] = cues.map(c => ({ id: uid(), kind: 'text', name: 'Phụ đề', start: c.start, dur: c.dur, inPoint: 0, props: { ...defaultProps(), text: c.text, fontSize: 46, y: 36 } }));
-    setTracks(prev => [{ id: uid(), kind: 'video', name: 'Phụ đề', clips }, ...prev]); markDirty();
+    setTracks(prev => [{ id: uid(), kind: 'video', text: true, name: 'Phụ đề', clips }, ...prev]); markDirty();
     addNotification(`Đã nhập ${cues.length} dòng phụ đề.`, 'success');
   };
 
@@ -386,64 +450,98 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 
   const seekTo = (t: number) => { const v = Math.max(0, t); setPlayhead(v); playheadRef.current = v; };
 
-  // ---------- Xuất bản nhẹ (webm) ----------
-  const exportVideo = async () => {
-    const cv = canvasRef.current; if (!cv || duration <= 0) { addNotification('Chưa có nội dung để xuất.', 'warning'); return; }
+  // ---------- Xuất video ----------
+  // Gom mọi lớp chữ thành nội dung phụ đề SRT.
+  const buildSrt = (): string => {
+    const cues: { start: number; end: number; text: string }[] = [];
+    tracksRef.current.forEach(tr => tr.clips.forEach(c => { if (c.kind === 'text' && (c.props.text || '').trim()) cues.push({ start: c.start, end: c.start + c.dur, text: c.props.text }); }));
+    cues.sort((a, b) => a.start - b.start);
+    const f = (ms: number) => { const s = Math.max(0, ms); const h = Math.floor(s / 3600000); const m = Math.floor((s % 3600000) / 60000); const se = Math.floor((s % 60000) / 1000); const mm = Math.floor(s % 1000); return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(se).padStart(2, '0')},${String(mm).padStart(3, '0')}`; };
+    return cues.map((c, i) => `${i + 1}\n${f(c.start)} --> ${f(c.end)}\n${c.text}\n`).join('\n');
+  };
+
+  const openExportDialog = () => {
+    if (duration <= 0) { addNotification('Chưa có nội dung để xuất.', 'warning'); return; }
+    setExpName(title || 'remier');
+    setExpFps(project?.fps || 30);
+    setExpRes(Math.min(1080, H));
+    setExpFormat(FORMAT_OPTIONS[0].v);
+    setExpAudio(true);
+    setExpSubs(false);
+    try { const cv = canvasRef.current; if (cv) setExpCover(cv.toDataURL('image/jpeg', 0.7)); } catch {}
+    setShowExport(true);
+  };
+
+  const runExport = async () => {
+    if (duration <= 0) return;
+    const fmt = FORMAT_OPTIONS.find(o => o.v === expFormat) || FORMAT_OPTIONS[0];
+    const aspect = W / H;
+    const outH = Math.max(2, Math.round((expRes || H) / 2) * 2);
+    const outW = Math.max(2, Math.round((outH * aspect) / 2) * 2);
+    const fps = expFps || 30;
+    const bpp = expBitrate === 'low' ? 0.07 : expBitrate === 'high' ? 0.22 : 0.13;
+    const bitrate = Math.round(outW * outH * fps * bpp);
+
+    setShowExport(false);
     setExporting(true); setExpProgress(0);
     const connectedNodes: MediaElementAudioSourceNode[] = [];
     let dest: MediaStreamAudioDestinationNode | null = null;
     try {
-      const fps = project?.fps || 30;
-      const stream = (cv as any).captureStream(fps) as MediaStream;
-      // Trộn tiếng các lớp qua AudioContext chung rồi nối vào luồng ghi.
-      try {
-        const ctx = ensureAudioCtx();
-        dest = ctx.createMediaStreamDestination();
-        const seen = new Set<string>();
-        tracksRef.current.forEach(tr => tr.clips.forEach(c => {
-          if ((c.kind === 'video' || c.kind === 'audio') && c.src) {
-            const key = c.kind + '|' + c.src; if (seen.has(key)) return; seen.add(key);
-            const el = getMediaEl(c) as HTMLMediaElement;
-            const node = sourceNodeFor(el);
-            if (node && dest) { try { node.connect(dest); connectedNodes.push(node); } catch {} }
-          }
-        }));
-        dest.stream.getAudioTracks().forEach(tk => stream.addTrack(tk));
-      } catch {}
-      const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm';
-      const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6_000_000 });
+      const off = document.createElement('canvas'); off.width = outW; off.height = outH;
+      const stream = (off as any).captureStream(fps) as MediaStream;
+      if (expAudio) {
+        try {
+          const ctx = ensureAudioCtx();
+          dest = ctx.createMediaStreamDestination();
+          const seen = new Set<string>();
+          tracksRef.current.forEach(tr => tr.clips.forEach(c => {
+            if ((c.kind === 'video' || c.kind === 'audio') && c.src) {
+              const key = c.kind + '|' + c.src; if (seen.has(key)) return; seen.add(key);
+              const el = getMediaEl(c) as HTMLMediaElement;
+              const node = sourceNodeFor(el);
+              if (node && dest) { try { node.connect(dest); connectedNodes.push(node); } catch {} }
+            }
+          }));
+          dest.stream.getAudioTracks().forEach(tk => stream.addTrack(tk));
+        } catch {}
+      }
+      const rec = new MediaRecorder(stream, { mimeType: fmt.mime, videoBitsPerSecond: bitrate });
       const chunks: Blob[] = [];
       rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
-      const done = new Promise<Blob>(res => { rec.onstop = () => res(new Blob(chunks, { type: 'video/webm' })); });
+      const done = new Promise<Blob>(res => { rec.onstop = () => res(new Blob(chunks, { type: fmt.mime })); });
       rec.start(100);
-      // Phát từ đầu theo thời gian thực để thu.
       playheadRef.current = 0; setPlayhead(0);
       await new Promise<void>(resolve => {
         const t0 = performance.now();
         const step = () => {
           const t = performance.now() - t0;
-          playheadRef.current = t; setPlayhead(t); manageMedia(t, true); draw(t);
+          playheadRef.current = t; setPlayhead(t); manageMedia(t, true); drawTo(off, t); draw(t);
           setExpProgress(Math.min(99, Math.round((t / duration) * 100)));
           if (t >= duration) { resolve(); return; }
           requestAnimationFrame(step);
         };
         requestAnimationFrame(step);
       });
-      manageMedia(duration, false); rec.stop();
+      pauseAllMedia(); rec.stop();
       const blob = await done;
-      // Ngắt các nút khỏi luồng ghi nhưng vẫn giữ AudioContext chung để xem trước tiếp.
       connectedNodes.forEach(n => { try { if (dest) n.disconnect(dest); } catch {} });
-      // Tải về máy.
+      const base = (expName || 'remier').replace(/[\\/:*?"<>|]+/g, '_').trim() || 'remier';
+      // Tải video về máy.
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = `${(title || 'remier').replace(/\s+/g, '_')}.webm`; a.click();
+      const a = document.createElement('a'); a.href = url; a.download = `${base}.${fmt.ext}`; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
+      // Xuất kèm phụ đề SRT nếu chọn.
+      if (expSubs) {
+        const srt = buildSrt();
+        if (srt.trim()) { const su = URL.createObjectURL(new Blob([srt], { type: 'text/plain' })); const sa = document.createElement('a'); sa.href = su; sa.download = `${base}.srt`; sa.click(); setTimeout(() => URL.revokeObjectURL(su), 5000); }
+      }
       // Lưu vào kho của tôi (nhóm Bản xuất).
       try {
-        const file = new File([blob], `${(title || 'remier')}.webm`, { type: 'video/webm' });
+        const file = new File([blob], `${base}.${fmt.ext}`, { type: fmt.mime });
         const upUrl = await uploadAssetFile(file);
-        await addAsset({ kind: 'export', title: `${title} (bản xuất)`, url: upUrl, mime_type: 'video/webm', size_bytes: blob.size, duration_ms: Math.round(duration), owner_name: currentUser.fullName });
+        await addAsset({ kind: 'export', title: `${expName} (bản xuất)`, url: upUrl, mime_type: fmt.mime, size_bytes: blob.size, duration_ms: Math.round(duration), width: outW, height: outH, owner_name: currentUser.fullName });
       } catch {}
-      addNotification('Đã xuất video (bản nhẹ webm) và tải về máy.', 'success');
+      addNotification(`Đã xuất ${outW}×${outH} ${fmt.ext} và tải về máy.`, 'success');
     } catch (e: any) {
       connectedNodes.forEach(n => { try { if (dest) n.disconnect(dest); } catch {} });
       addNotification('Lỗi xuất video: ' + (e.message || e), 'error');
@@ -457,8 +555,8 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) return;
       if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
-      else if (e.key === 'Delete' && selId) { deleteClip(selId); }
-      else if ((e.key === 's' || e.key === 'S') && !e.ctrlKey && !e.metaKey && selClip) { splitAtPlayhead(); }
+      else if ((e.key === 'Delete' || e.key === 'Backspace') && selId) { e.preventDefault(); deleteClip(selId); }
+      else if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && selClip) { splitAtPlayhead(); }
       else if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) { e.preventDefault(); persist(false); }
       else if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D') && selId) { e.preventDefault(); duplicateClip(selId); }
       else if (e.shiftKey && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); fitTimeline(); }
@@ -488,7 +586,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
         <span className="ml-2 rounded-md bg-white/5 px-2 py-1 text-[11px] text-slate-400">{W}×{H} · {project.fps}fps</span>
         <div className="ml-auto flex items-center gap-2">
           <button onClick={() => persist(false)} className="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-bold hover:bg-white/10">Lưu</button>
-          <button onClick={exportVideo} disabled={exporting} className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-hover disabled:opacity-60">{exporting ? <><Loader2 className="h-4 w-4 animate-spin" /> {expProgress}%</> : <><Download className="h-4 w-4" /> Xuất video</>}</button>
+          <button onClick={openExportDialog} disabled={exporting} className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-hover disabled:opacity-60">{exporting ? <><Loader2 className="h-4 w-4 animate-spin" /> {expProgress}%</> : <><Download className="h-4 w-4" /> Xuất video</>}</button>
         </div>
       </div>
 
@@ -557,8 +655,94 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
           </div>
         </div>
         <Timeline tracks={tracks} pxPerSec={pxPerSec} playhead={playhead} duration={duration} selId={selId} scrollRef={timelineScrollRef}
-          onSeek={seekTo} onSelect={setSelId} onClipPointerDown={onClipPointerDown} onToggleTrack={toggleTrack} onDeleteTrack={deleteTrack} />
+          onSeek={seekTo} onSelect={setSelId} onClipPointerDown={onClipPointerDown} onToggleTrack={toggleTrack} onDeleteTrack={deleteTrack} onDropAsset={dropAssetOnTimeline} />
       </div>
+
+      {/* Hộp thoại xuất video */}
+      {showExport && (() => {
+        const aspect = W / H;
+        const outH = Math.round((expRes || H));
+        const outW = Math.round(outH * aspect);
+        const bpp = expBitrate === 'low' ? 0.07 : expBitrate === 'high' ? 0.22 : 0.13;
+        const bitrate = outW * outH * (expFps || 30) * bpp;
+        const estMB = Math.max(1, Math.round((bitrate * (duration / 1000)) / 8 / 1024 / 1024));
+        const resChoices = [2160, 1440, 1080, 720, 480].filter(r => r <= Math.max(480, H));
+        if (!resChoices.includes(H)) resChoices.push(H);
+        const uniqRes = Array.from(new Set(resChoices)).sort((a, b) => b - a);
+        const hasText = tracks.some(t => t.clips.some(c => c.kind === 'text'));
+        const sel = 'w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 outline-none focus:border-brand';
+        return (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4" onClick={() => setShowExport(false)}>
+            <div className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-[#1b222b] text-slate-200 shadow-2xl" onClick={e => e.stopPropagation()}>
+              <div className="border-b border-white/10 px-6 py-4"><h2 className="text-base font-bold text-white">Xuất · {expName || 'video'}</h2></div>
+              <div className="flex min-h-0 flex-1 gap-6 overflow-y-auto p-6">
+                {/* Ảnh bìa xem trước */}
+                <div className="w-[300px] shrink-0">
+                  <div className="overflow-hidden rounded-xl border border-white/10 bg-black" style={{ aspectRatio: `${W}/${H}` }}>
+                    {expCover ? <img src={expCover} alt="" className="h-full w-full object-contain" /> : <div className="grid h-full place-items-center text-xs text-slate-500">Không có xem trước</div>}
+                  </div>
+                  <button onClick={() => { try { const cv = canvasRef.current; if (cv) setExpCover(cv.toDataURL('image/jpeg', 0.8)); addNotification('Đã lấy khung hình hiện tại làm ảnh bìa.', 'success'); } catch {} }} className="mt-2 w-full rounded-lg bg-white/5 py-2 text-xs font-bold text-slate-200 hover:bg-white/10">Lấy khung hình hiện tại làm ảnh bìa</button>
+                </div>
+                {/* Tùy chọn */}
+                <div className="min-w-0 flex-1 space-y-4">
+                  <div className="grid grid-cols-[110px_1fr] items-center gap-3">
+                    <label className="text-sm text-slate-400">Tên</label>
+                    <input value={expName} onChange={e => setExpName(e.target.value)} className={sel} />
+                  </div>
+                  <div className="border-t border-white/10 pt-4">
+                    <div className="mb-3 flex items-center gap-2 text-sm font-bold text-white"><Film className="h-4 w-4" /> Video</div>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-[110px_1fr] items-center gap-3">
+                        <label className="text-sm text-slate-400">Độ phân giải</label>
+                        <select value={expRes} onChange={e => setExpRes(Number(e.target.value))} className={sel}>
+                          {uniqRes.map(r => <option key={r} value={r}>{r}P{r === H ? ' (gốc)' : ''}</option>)}
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-[110px_1fr] items-center gap-3">
+                        <label className="text-sm text-slate-400">Tốc độ bit</label>
+                        <select value={expBitrate} onChange={e => setExpBitrate(e.target.value as any)} className={sel}>
+                          <option value="low">Thấp (nhẹ)</option>
+                          <option value="rec">Đề xuất</option>
+                          <option value="high">Cao hơn (nét)</option>
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-[110px_1fr] items-center gap-3">
+                        <label className="text-sm text-slate-400">Định dạng</label>
+                        <select value={expFormat} onChange={e => setExpFormat(e.target.value)} className={sel}>
+                          {FORMAT_OPTIONS.map(o => <option key={o.v} value={o.v}>{o.label}</option>)}
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-[110px_1fr] items-center gap-3">
+                        <label className="text-sm text-slate-400">Tỷ lệ khung hình</label>
+                        <select value={expFps} onChange={e => setExpFps(Number(e.target.value))} className={sel}>
+                          {[24, 25, 30, 50, 60].map(f => <option key={f} value={f}>{f}fps</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-white/10 pt-4">
+                    <div className="flex items-center gap-2 text-sm font-bold text-white"><Volume2 className="h-4 w-4" /> Âm thanh</div>
+                    <button onClick={() => setExpAudio(v => !v)} className={`relative h-6 w-11 rounded-full transition-colors ${expAudio ? 'bg-brand' : 'bg-white/15'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${expAudio ? 'left-[22px]' : 'left-0.5'}`} /></button>
+                  </div>
+                  {hasText && (
+                    <div className="flex items-center justify-between border-t border-white/10 pt-4">
+                      <div className="flex items-center gap-2 text-sm font-bold text-white"><Captions className="h-4 w-4" /> Xuất phụ đề (SRT)</div>
+                      <button onClick={() => setExpSubs(v => !v)} className={`relative h-6 w-11 rounded-full transition-colors ${expSubs ? 'bg-brand' : 'bg-white/15'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${expSubs ? 'left-[22px]' : 'left-0.5'}`} /></button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3 border-t border-white/10 px-6 py-4">
+                <span className="text-xs text-slate-400">Thời lượng {fmtTime(duration)} · {outW}×{outH} · ước tính khoảng {estMB} MB</span>
+                <div className="flex gap-2">
+                  <button onClick={() => setShowExport(false)} className="rounded-lg bg-white/5 px-5 py-2 text-sm font-bold text-slate-200 hover:bg-white/10">Hủy</button>
+                  <button onClick={runExport} className="rounded-lg bg-brand px-6 py-2 text-sm font-bold text-white hover:bg-brand-hover">Xuất</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -643,9 +827,14 @@ function LibraryPanel({ currentUser, onAddAsset, onAddText, onImportSubtitles }:
                 <div className="grid grid-cols-2 gap-2">
                   {assets.map(a => { const Icon = kindIcon(a.kind); return (
                     <div key={a.id} className="group relative overflow-hidden rounded-lg border border-white/10 bg-black/30 hover:border-brand">
-                      <button onClick={() => onAddAsset(a)} title={`Thêm "${a.title}" vào dòng thời gian`} className="block w-full text-left">
+                      <button
+                        onClick={() => onAddAsset(a)}
+                        draggable
+                        onDragStart={e => { try { e.dataTransfer.setData('application/x-remier-asset', JSON.stringify(a)); e.dataTransfer.effectAllowed = 'copy'; } catch {} }}
+                        title={`Bấm để thêm, hoặc kéo thả "${a.title}" vào dòng thời gian`}
+                        className="block w-full cursor-grab text-left active:cursor-grabbing">
                         <div className="grid aspect-video place-items-center bg-black/40">
-                          {a.thumb_url ? <img src={a.thumb_url} alt="" className="h-full w-full object-cover" /> : <Icon className="h-6 w-6 text-slate-500" />}
+                          {a.thumb_url ? <img src={a.thumb_url} alt="" draggable={false} className="h-full w-full object-cover" /> : <Icon className="h-6 w-6 text-slate-500" />}
                         </div>
                         <div className="p-1.5"><p className="truncate text-[10px] font-semibold text-slate-300">{a.title}</p>{a.duration_ms ? <p className="text-[9px] text-slate-500">{fmtTime(a.duration_ms)}</p> : null}</div>
                       </button>
@@ -664,13 +853,14 @@ function LibraryPanel({ currentUser, onAddAsset, onAddText, onImportSubtitles }:
 }
 
 // ============================ Dòng thời gian ============================
-function Timeline({ tracks, pxPerSec, playhead, duration, selId, scrollRef, onSeek, onSelect, onClipPointerDown, onToggleTrack, onDeleteTrack }: {
+function Timeline({ tracks, pxPerSec, playhead, duration, selId, scrollRef, onSeek, onSelect, onClipPointerDown, onToggleTrack, onDeleteTrack, onDropAsset }: {
   tracks: Track[]; pxPerSec: number; playhead: number; duration: number; selId: string | null;
   scrollRef?: React.RefObject<HTMLDivElement>;
   onSeek: (t: number) => void; onSelect: (id: string) => void;
   onClipPointerDown: (e: React.PointerEvent, tr: Track, c: Clip, mode: 'move' | 'l' | 'r') => void;
   onToggleTrack: (id: string, k: 'locked' | 'hidden' | 'muted' | 'solo') => void;
   onDeleteTrack: (id: string) => void;
+  onDropAsset: (asset: MvAsset, trackId: string | null, timeMs: number) => void;
 }) {
   const totalMs = Math.max(duration, 10000) + 4000;
   const width = (totalMs / 1000) * pxPerSec;
@@ -681,6 +871,10 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, scrollRef, onSe
     const rect = el.getBoundingClientRect();
     onSeek(Math.max(0, ((clientX - rect.left) / pxPerSec) * 1000));
   };
+  // Kéo thả tư liệu từ kho.
+  const parseAsset = (e: React.DragEvent): MvAsset | null => { try { const s = e.dataTransfer.getData('application/x-remier-asset'); return s ? JSON.parse(s) : null; } catch { return null; } };
+  const allowDrop = (e: React.DragEvent) => { if (Array.from(e.dataTransfer.types).includes('application/x-remier-asset')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } };
+  const timeFromX = (clientX: number) => { const el = rulerRef.current; if (!el) return 0; const r = el.getBoundingClientRect(); return Math.max(0, ((clientX - r.left) / pxPerSec) * 1000); };
   const onRulerDown = (e: React.PointerEvent) => { e.preventDefault(); (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); scrubbing.current = true; scrubAt(e.clientX); };
   const onRulerMove = (e: React.PointerEvent) => { if (scrubbing.current) scrubAt(e.clientX); };
   const onRulerUp = (e: React.PointerEvent) => { scrubbing.current = false; try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {} };
@@ -690,7 +884,12 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, scrollRef, onSe
   for (let s = 0; s * 1000 <= totalMs; s += stepSec) ticks.push(s);
 
   if (tracks.length === 0) {
-    return <div className="grid h-[200px] place-items-center text-center text-xs text-slate-500"><div><Film className="mx-auto mb-2 h-8 w-8 text-slate-600" /><p>Chưa có lớp nào.</p><p className="mt-1 text-slate-600">Bấm "+ Video" hoặc "+ Tiếng" ở trên, hoặc chọn tư liệu ở cột trái để thêm.</p></div></div>;
+    return (
+      <div className="grid h-[200px] place-items-center text-center text-xs text-slate-500"
+        onDragOver={allowDrop} onDrop={e => { const a = parseAsset(e); if (a) { e.preventDefault(); onDropAsset(a, null, 0); } }}>
+        <div><Film className="mx-auto mb-2 h-8 w-8 text-slate-600" /><p>Chưa có lớp nào.</p><p className="mt-1 text-slate-600">Kéo thả tư liệu từ kho vào đây, hoặc bấm "+ Video" / "+ Tiếng", hoặc bấm tư liệu ở cột trái.</p></div>
+      </div>
+    );
   }
 
   return (
@@ -719,29 +918,38 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, scrollRef, onSe
         <div style={{ width }}>
           {/* Thước: nhấn giữ và kéo để tua */}
           <div ref={rulerRef} onPointerDown={onRulerDown} onPointerMove={onRulerMove} onPointerUp={onRulerUp}
+            onDragOver={allowDrop} onDrop={e => { const a = parseAsset(e); if (a) { e.preventDefault(); onDropAsset(a, null, timeFromX(e.clientX)); } }}
             className="relative h-7 cursor-ew-resize touch-none select-none border-b border-white/10 bg-[#0e1319]">
             {ticks.map(s => <div key={s} className="pointer-events-none absolute top-0 h-full border-l border-white/10" style={{ left: s * pxPerSec }}><span className="ml-1 text-[9px] text-slate-500">{s}s</span></div>)}
           </div>
           {/* Hàng lớp */}
           {tracks.map(tr => (
-            <div key={tr.id} className={`relative h-16 border-b border-white/5 ${tr.kind === 'audio' ? 'bg-emerald-500/[0.03]' : ''}`} onClick={rowSeek}>
+            <div key={tr.id} className={`relative h-16 border-b border-white/5 ${tr.kind === 'audio' ? 'bg-emerald-500/[0.03]' : ''}`} onClick={rowSeek}
+              onDragOver={tr.locked ? undefined : allowDrop} onDrop={e => { if (tr.locked) return; const a = parseAsset(e); if (a) { e.preventDefault(); onDropAsset(a, tr.id, timeFromX(e.clientX)); } }}>
               {tr.clips.map(c => {
                 const left = (c.start / 1000) * pxPerSec; const w = (c.dur / 1000) * pxPerSec; const sel = selId === c.id;
                 const color = c.kind === 'audio' ? 'bg-emerald-500/25 border-emerald-400/50' : c.kind === 'text' ? 'bg-violet-500/25 border-violet-400/50' : c.kind === 'video' ? 'bg-blue-500/25 border-blue-400/50' : 'bg-amber-500/25 border-amber-400/50';
                 return (
-                  <div key={c.id} onClick={e => { e.stopPropagation(); onSelect(c.id); }}
-                    onPointerDown={e => onClipPointerDown(e, tr, c, 'move')}
-                    className={`absolute top-1.5 h-12 cursor-grab overflow-hidden rounded-md border ${color} ${sel ? 'ring-2 ring-brand' : ''} ${tr.locked ? 'opacity-60' : ''}`} style={{ left, width: Math.max(8, w) }}>
+                  <div key={c.id} onClick={e => { e.stopPropagation(); if (!tr.locked) onSelect(c.id); }}
+                    onPointerDown={e => { if (!tr.locked) onClipPointerDown(e, tr, c, 'move'); }}
+                    className={`absolute top-1.5 h-12 overflow-hidden rounded-md border ${color} ${sel ? 'ring-2 ring-brand' : ''} ${tr.locked ? 'opacity-70' : 'cursor-grab'}`} style={{ left, width: Math.max(8, w) }}>
                     {!tr.locked && <div onPointerDown={e => onClipPointerDown(e, tr, c, 'l')} className="absolute left-0 top-0 z-10 h-full w-2 cursor-ew-resize bg-white/10" />}
                     {!tr.locked && <div onPointerDown={e => onClipPointerDown(e, tr, c, 'r')} className="absolute right-0 top-0 z-10 h-full w-2 cursor-ew-resize bg-white/10" />}
                     <div className="flex h-full items-center gap-1 px-2">
-                      {c.thumb && c.kind !== 'text' && <img src={c.thumb} alt="" className="h-9 w-12 shrink-0 rounded object-cover" />}
+                      {c.thumb && c.kind !== 'text' && <img src={c.thumb} alt="" draggable={false} className="h-9 w-12 shrink-0 rounded object-cover" />}
                       {c.kind === 'audio' && <Music className="h-3.5 w-3.5 shrink-0 text-emerald-300" />}
                       <span className="truncate text-[10px] font-semibold text-slate-100">{c.kind === 'text' ? (c.props.text || 'Văn bản') : c.name}</span>
                     </div>
                   </div>
                 );
               })}
+              {/* Lớp bị khóa: phủ vân chéo, chặn mọi thao tác. */}
+              {tr.locked && (
+                <div className="absolute inset-0 z-30 cursor-not-allowed" onClick={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()}
+                  style={{ backgroundImage: 'repeating-linear-gradient(45deg, rgba(148,163,184,0.06) 0 7px, rgba(148,163,184,0.14) 7px 14px)' }}>
+                  <span className="absolute right-2 top-2 flex items-center gap-1 rounded bg-black/55 px-1.5 py-0.5 text-[9px] font-bold text-slate-200"><Lock className="h-3 w-3" /> Đã khóa</span>
+                </div>
+              )}
             </div>
           ))}
           {/* Đầu phát */}

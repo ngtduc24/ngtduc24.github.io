@@ -711,7 +711,7 @@ export default function App() {
       case 'edu':
         return <EduModule currentUser={currentUser} settings={settings} />;
       case 'elearning':
-        return <ELearningModule currentUser={currentUser} />;
+        return <ELearningModule currentUser={currentUser} onExit={() => setCurrentTab('dashboard')} />;
       case 'remier':
         return <RemierModule currentUser={currentUser} />;
       // Mã cũ của mục Tạo AR. Giữ lại để tài khoản nào đang mở sẵn mục này, hoặc có
