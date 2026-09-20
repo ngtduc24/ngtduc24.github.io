@@ -34,12 +34,14 @@ function buildLessonHtml(lesson: ELLesson, sections: ELSection[], resources: ELR
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>${esc(lesson.title || 'Bài giảng')}</title>
 <style>
-  @page { margin: 18mm 16mm; }
+  /* Số trang tự động ở góc dưới bên phải mỗi trang (Safari, Firefox hỗ trợ hộp lề @page). */
+  @page { margin: 20mm 16mm; @bottom-right { content: "Trang " counter(page) " / " counter(pages); font-family: "Be Vietnam Pro", system-ui, sans-serif; font-size: 9pt; color: #64748b; } }
   * { box-sizing: border-box; }
-  body { font-family: "Be Vietnam Pro", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #1f2937; line-height: 1.6; margin: 0 auto; padding: 24px 24px 46px; max-width: 820px; }
-  .page-footer { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; gap: 12px; padding: 6px 24px; font-size: 10px; color: #64748b; border-top: 1px solid #cbd5e1; background: #fff; }
-  .page-footer span { white-space: nowrap; }
-  .page-footer .right { font-weight: 600; }
+  body { font-family: "Be Vietnam Pro", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #1f2937; line-height: 1.6; margin: 0 auto; padding: 34px 24px 40px; max-width: 820px; }
+  /* Tiêu đề chạy góc trên bên trái: tên giáo trình, lặp trên mọi trang. */
+  .page-header { position: fixed; top: 0; left: 0; right: 0; padding: 6px 24px; font-size: 10px; font-weight: 600; color: #64748b; background: #fff; }
+  /* Dòng biên soạn ở góc dưới bên trái. */
+  .page-footer { position: fixed; bottom: 0; left: 0; padding: 6px 24px; font-size: 10px; color: #64748b; background: #fff; }
   h1 { font-size: 24px; font-weight: 800; margin: 0 0 4px; color: #0f172a; }
   .meta { font-size: 12px; color: #64748b; margin-bottom: 16px; }
   .cover { width: 100%; max-height: 320px; object-fit: cover; border-radius: 10px; margin: 12px 0 18px; }
@@ -58,12 +60,13 @@ function buildLessonHtml(lesson: ELLesson, sections: ELSection[], resources: ELR
   a { text-decoration: none; }
 </style></head>
 <body>
+  <div class="page-header">${esc(footerRight)}</div>
   <h1>${esc(lesson.title || 'Bài giảng')}</h1>
   <div class="meta">${esc(author)} · ${sections.length} phần</div>
   ${cover}
   ${summary}
   ${sectionsHtml || '<p class="content empty">Bài giảng chưa có nội dung.</p>'}
-  <div class="page-footer"><span class="left">${esc(footerLeft)}</span><span class="right">${esc(footerRight)}</span></div>
+  <div class="page-footer">${esc(footerLeft)}</div>
 </body></html>`;
 }
 
