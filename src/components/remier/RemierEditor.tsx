@@ -597,7 +597,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
         <span className="text-[11px] text-slate-400">{saving ? 'Đang lưu...' : savedAt ? `Đã lưu ${savedAt}` : 'Tự lưu sau 15 giây'}</span>
         <span className="ml-2 rounded-md bg-white/5 px-2 py-1 text-[11px] text-slate-400">{W}×{H} · {project.fps}fps</span>
         <div className="ml-auto flex items-center gap-2">
-          <button onClick={() => persist(false)} className="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-bold hover:bg-white/10">Lưu</button>
+          <button onClick={() => persist(false)} title="Lưu dự án (Ctrl+S)" className="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-bold hover:bg-white/10">Lưu</button>
           <button onClick={openExportDialog} disabled={exporting} className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-hover disabled:opacity-60">{exporting ? <><Loader2 className="h-4 w-4 animate-spin" /> {expProgress}%</> : <><Download className="h-4 w-4" /> Xuất video</>}</button>
         </div>
       </div>
@@ -608,6 +608,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
           const Icon = tb.icon; const active = leftPanel === tb.id;
           return (
             <button key={tb.id} onClick={() => setLeftPanel(tb.id)}
+              title={tb.soon ? `${tb.label} (sắp có)` : tb.label}
               className={`relative flex h-full min-w-[64px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-3 transition-colors ${active ? 'bg-brand/15 text-brand' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}`}>
               <Icon className="h-5 w-5" />
               <span className="text-[10px] font-bold leading-none">{tb.label}</span>
@@ -637,13 +638,13 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
             </div>
           </div>
           <div className="flex h-11 shrink-0 items-center gap-3 border-t border-white/10 bg-[#151a21] px-4">
-            <button onClick={togglePlay} className="grid h-8 w-8 place-items-center rounded-lg bg-white/5 hover:bg-white/10">{playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
+            <button onClick={togglePlay} title={playing ? 'Tạm dừng (Space)' : 'Phát (Space)'} className="grid h-8 w-8 place-items-center rounded-lg bg-white/5 hover:bg-white/10">{playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
             <span className="font-mono text-xs text-slate-300">{fmtTime(playhead)} / {fmtTime(duration)}</span>
             <div className="ml-auto flex items-center gap-1.5">
               <button onClick={() => setSafeFrame(s => !s)} title="Bật/tắt khung an toàn" className={`grid h-8 w-8 place-items-center rounded-lg ${safeFrame ? 'bg-brand text-white' : 'bg-white/5 hover:bg-white/10'}`}><Frame className="h-4 w-4" /></button>
               <button onClick={() => applyZoom('fit')} title="Vừa khung xem trước" className={`grid h-8 w-8 place-items-center rounded-lg ${previewFit ? 'bg-brand text-white' : 'bg-white/5 hover:bg-white/10'}`}><Maximize2 className="h-4 w-4" /></button>
               <div className="relative">
-                <button onClick={() => setZoomMenu(v => !v)} className="flex h-8 items-center gap-1 rounded-lg bg-white/5 px-2 text-xs font-bold hover:bg-white/10">
+                <button onClick={() => setZoomMenu(v => !v)} title="Mức thu phóng khung xem trước" className="flex h-8 items-center gap-1 rounded-lg bg-white/5 px-2 text-xs font-bold hover:bg-white/10">
                   {previewFit ? 'Vừa khung' : `${Math.round(previewZoom * 100)}%`}
                 </button>
                 {zoomMenu && (
@@ -677,8 +678,8 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
           <button onClick={addTextClip} title="Thêm chữ (T)" className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><Type className="h-3.5 w-3.5" /></button>
           <div className="ml-auto flex items-center gap-1">
             <button onClick={fitTimeline} title="Thu vừa dòng thời gian (Shift+Z)" className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><Maximize2 className="h-3.5 w-3.5" /></button>
-            <button onClick={() => setPxPerSec(v => Math.max(20, v - 20))} className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><ZoomOut className="h-3.5 w-3.5" /></button>
-            <button onClick={() => setPxPerSec(v => Math.min(300, v + 20))} className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><ZoomIn className="h-3.5 w-3.5" /></button>
+            <button onClick={() => setPxPerSec(v => Math.max(20, v - 20))} title="Thu nhỏ dòng thời gian" className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><ZoomOut className="h-3.5 w-3.5" /></button>
+            <button onClick={() => setPxPerSec(v => Math.min(300, v + 20))} title="Phóng to dòng thời gian" className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><ZoomIn className="h-3.5 w-3.5" /></button>
           </div>
         </div>
         <Timeline tracks={tracks} pxPerSec={pxPerSec} playhead={playhead} duration={duration} selId={selId} scrollRef={timelineScrollRef}
