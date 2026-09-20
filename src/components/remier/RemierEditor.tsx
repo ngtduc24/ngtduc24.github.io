@@ -3,6 +3,7 @@ import {
   Play, Pause, Scissors, Trash2, Copy, Lock, Unlock, Eye, EyeOff, Type, Download, ArrowLeft,
   Upload, Loader2, Film, Image as ImageIcon, Music, ZoomIn, ZoomOut, Maximize2, Captions,
   Volume2, VolumeX, Headphones, Plus, Frame, Sticker, Sparkles, ArrowLeftRight, SlidersHorizontal,
+  Diamond, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { UserAccount } from '../../types';
 import { useNotifications } from '../NotificationContext';
@@ -27,7 +28,36 @@ const TOP_TABS: { id: LeftPanel; label: string; icon: any; soon?: boolean }[] = 
   { id: 'filter', label: 'Bộ lọc', icon: SlidersHorizontal, soon: true },
 ];
 interface ClipProps { x: number; y: number; scale: number; rotation: number; opacity: number; volume: number; text: string; fontSize: number; color: string; fontWeight: number; align: string; }
-interface Clip { id: string; kind: ClipKind; name: string; src?: string; thumb?: string; start: number; dur: number; inPoint: number; srcDur?: number; fadeIn?: number; fadeOut?: number; props: ClipProps; }
+type KfProp = 'x' | 'y' | 'scale' | 'rotation' | 'opacity' | 'volume';
+const KF_PROPS: KfProp[] = ['x', 'y', 'scale', 'rotation', 'opacity', 'volume'];
+interface KF { t: number; v: number; } // t: mili giây tính từ đầu clip
+interface Clip { id: string; kind: ClipKind; name: string; src?: string; thumb?: string; start: number; dur: number; inPoint: number; srcDur?: number; fadeIn?: number; fadeOut?: number; props: ClipProps; kf?: Partial<Record<KfProp, KF[]>>; }
+
+// Nội suy tuyến tính giá trị theo danh sách keyframe tại thời điểm cục bộ localT.
+function kfValue(list: KF[] | undefined, localT: number, fallback: number): number {
+  if (!list || !list.length) return fallback;
+  if (localT <= list[0].t) return list[0].v;
+  const last = list[list.length - 1]; if (localT >= last.t) return last.v;
+  for (let i = 0; i < list.length - 1; i++) { const a = list[i], b = list[i + 1]; if (localT >= a.t && localT <= b.t) { const r = (localT - a.t) / ((b.t - a.t) || 1); return a.v + (b.v - a.v) * r; } }
+  return fallback;
+}
+// Giá trị thuộc tính hiệu dụng của clip tại thời điểm T (đã tính keyframe).
+function evalClipProps(clip: Clip, T: number): ClipProps {
+  const p = clip.props; if (!clip.kf) return p;
+  const local = T - clip.start;
+  return {
+    ...p,
+    x: kfValue(clip.kf.x, local, p.x), y: kfValue(clip.kf.y, local, p.y),
+    scale: kfValue(clip.kf.scale, local, p.scale), rotation: kfValue(clip.kf.rotation, local, p.rotation),
+    opacity: kfValue(clip.kf.opacity, local, p.opacity), volume: kfValue(clip.kf.volume, local, p.volume),
+  };
+}
+// Thêm hoặc cập nhật một keyframe tại mốc t (gộp nếu gần trùng ~20ms).
+function upsertKey(list: KF[], t: number, v: number): KF[] {
+  const l = list.slice(); const i = l.findIndex(k => Math.abs(k.t - t) < 20);
+  if (i >= 0) l[i] = { t: l[i].t, v }; else { l.push({ t, v }); l.sort((a, b) => a.t - b.t); }
+  return l;
+}
 interface Track { id: string; name: string; kind: LaneKind; text?: boolean; locked?: boolean; hidden?: boolean; muted?: boolean; solo?: boolean; clips: Clip[]; }
 
 const defaultProps = (): ClipProps => ({ x: 0, y: 0, scale: 1, rotation: 0, opacity: 1, volume: 1, text: 'Nội dung chữ', fontSize: 64, color: '#ffffff', fontWeight: 700, align: 'center' });
@@ -203,7 +233,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   // Vẽ một lớp trong hệ tọa độ logic W×H (không phụ thuộc kích thước canvas thật),
   // nhờ vậy xuất ở độ phân giải nào chữ và bố cục vẫn đúng tỉ lệ.
   const drawClipVisual = (ctx: CanvasRenderingContext2D, clip: Clip, LW: number, LH: number, t: number) => {
-    const p = clip.props;
+    const p = evalClipProps(clip, t);
     const alpha = p.opacity * fadeFactor(clip, t);
     ctx.save();
     ctx.globalAlpha = alpha;
@@ -282,7 +312,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
         if (el) {
           const audible = !track.muted && (!anySolo || !!track.solo);
           el.muted = !audible;
-          el.volume = Math.max(0, Math.min(1, c.props.volume * fadeFactor(c, t)));
+          el.volume = Math.max(0, Math.min(1, evalClipProps(c, t).volume * fadeFactor(c, t)));
           const want = (c.inPoint + (t - c.start)) / 1000;
           if (isPlaying) {
             sourceNodeFor(el); // đảm bảo tiếng đi ra loa qua AudioContext chung
@@ -395,6 +425,43 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   const updateClipProps = (id: string, patch: Partial<ClipProps>) => {
     setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.map(c => c.id === id ? { ...c, props: { ...c.props, ...patch } } : c) }))); markDirty();
   };
+  // Đặt giá trị một thuộc tính có thể tạo key. Nếu thuộc tính đang bật keyframe thì
+  // ghi vào key tại đầu phát, ngược lại đặt giá trị tĩnh.
+  const setPropAt = (clipId: string, prop: KfProp, value: number) => {
+    setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.map(c => {
+      if (c.id !== clipId) return c;
+      if (c.kf && c.kf[prop] && c.kf[prop]!.length) {
+        const local = Math.max(0, Math.round(playheadRef.current - c.start));
+        return { ...c, kf: { ...c.kf, [prop]: upsertKey(c.kf[prop]!, local, value) } };
+      }
+      return { ...c, props: { ...c.props, [prop]: value } };
+    }) })));
+    markDirty();
+  };
+  // Bật hoặc tắt keyframe của một thuộc tính tại đầu phát.
+  const toggleKey = (clipId: string, prop: KfProp) => {
+    setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.map(c => {
+      if (c.id !== clipId) return c;
+      const local = Math.max(0, Math.round(playheadRef.current - c.start));
+      const kf = { ...(c.kf || {}) } as Partial<Record<KfProp, KF[]>>;
+      const list = (kf[prop] || []).slice();
+      const idx = list.findIndex(k => Math.abs(k.t - local) < 25);
+      if (idx >= 0) list.splice(idx, 1);
+      else { const cur = (evalClipProps(c, playheadRef.current) as any)[prop] as number; list.push({ t: local, v: cur }); list.sort((a, b) => a.t - b.t); }
+      if (list.length) kf[prop] = list; else delete kf[prop];
+      return { ...c, kf: Object.keys(kf).length ? kf : undefined };
+    }) })));
+    markDirty();
+  };
+  // Nhảy tới key trước hoặc sau của một thuộc tính (dir -1 hoặc 1).
+  const gotoKey = (clip: Clip, prop: KfProp, dir: number) => {
+    const list = clip.kf?.[prop]; if (!list || !list.length) return;
+    const local = playheadRef.current - clip.start;
+    let target: number | null = null;
+    if (dir < 0) { for (let i = list.length - 1; i >= 0; i--) if (list[i].t < local - 1) { target = list[i].t; break; } }
+    else { for (let i = 0; i < list.length; i++) if (list[i].t > local + 1) { target = list[i].t; break; } }
+    if (target != null) seekTo(clip.start + target);
+  };
   const deleteClip = (id: string) => { setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.filter(c => c.id !== id) }))); if (selId === id) setSelId(null); setMultiSel(m => m.filter(x => x !== id)); markDirty(); };
   // Xóa mọi clip đang chọn (một hoặc nhiều do quét vùng chọn).
   const deleteSelected = () => {
@@ -407,7 +474,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   const onMarquee = (ids: string[]) => { setMultiSel(ids); setSelId(ids.length === 1 ? ids[0] : null); };
   const duplicateClip = (id: string) => {
     const found = selClip; if (!found || found.clip.id !== id) return;
-    const c = found.clip; const copy: Clip = { ...c, id: uid(), start: c.start + c.dur, props: { ...c.props } };
+    const c = found.clip; const copy: Clip = { ...c, id: uid(), start: c.start + c.dur, props: { ...c.props }, kf: c.kf ? JSON.parse(JSON.stringify(c.kf)) : undefined };
     setTracks(prev => prev.map(tr => tr.id === found.track.id ? { ...tr, clips: [...tr.clips, copy] } : tr)); markDirty(); setSelId(copy.id);
   };
   const splitAtPlayhead = () => {
@@ -683,7 +750,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
                 </div>
               )}
               {transformMode && selClip && selClip.clip.kind !== 'audio' && (
-                <TransformOverlay clip={selClip.clip} W={W} H={H} canvasRef={canvasRef} onChange={(patch) => updateClipProps(selClip.clip.id, patch)} />
+                <TransformOverlay clip={selClip.clip} W={W} H={H} canvasRef={canvasRef} onChange={(patch) => { const id = selClip.clip.id; if (patch.x != null) setPropAt(id, 'x', patch.x); if (patch.y != null) setPropAt(id, 'y', patch.y); if (patch.scale != null) setPropAt(id, 'scale', patch.scale); }} />
               )}
             </div>
             {transformMode && (
@@ -717,7 +784,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 
         {/* Bảng thuộc tính phải */}
         <div className="w-[320px] shrink-0 overflow-y-auto border-l border-white/10 bg-[#151a21] p-4">
-          {selClip ? <PropsPanel clip={selClip.clip} onProps={(p) => updateClipProps(selClip.clip.id, p)} onClip={(p) => updateClip(selClip.clip.id, p)} onDelete={() => deleteClip(selClip.clip.id)} onDuplicate={() => duplicateClip(selClip.clip.id)} onSplitAudio={() => splitAudioFromVideo(selClip.clip)} />
+          {selClip ? <PropsPanel clip={selClip.clip} playhead={playhead} onProps={(p) => updateClipProps(selClip.clip.id, p)} onClip={(p) => updateClip(selClip.clip.id, p)} onKf={(prop, v) => setPropAt(selClip.clip.id, prop, v)} onToggleKey={(prop) => toggleKey(selClip.clip.id, prop)} onGotoKey={(prop, dir) => gotoKey(selClip.clip, prop, dir)} onDelete={() => deleteClip(selClip.clip.id)} onDuplicate={() => duplicateClip(selClip.clip.id)} onSplitAudio={() => splitAudioFromVideo(selClip.clip)} />
             : <div className="mt-10 text-center text-xs text-slate-500">Chọn một lớp trên dòng thời gian để chỉnh thuộc tính.</div>}
         </div>
       </div>
@@ -1096,6 +1163,9 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, selIds, scrollR
                       {c.kind === 'audio' && <Music className="h-3.5 w-3.5 shrink-0 text-emerald-300" />}
                       <span className="truncate text-[10px] font-semibold text-slate-100">{c.kind === 'text' ? (c.props.text || 'Văn bản') : c.name}</span>
                     </div>
+                    {c.kf && Array.from(new Set(Object.values(c.kf).flat().map(k => k.t))).map((kt, ki) => (
+                      <span key={ki} className="pointer-events-none absolute bottom-0.5 z-10 h-1.5 w-1.5 -translate-x-1/2 rotate-45 bg-amber-300" style={{ left: (kt / 1000) * pxPerSec }} />
+                    ))}
                   </div>
                 );
               })}
@@ -1121,19 +1191,44 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, selIds, scrollR
 }
 
 // ============================ Bảng thuộc tính ============================
-function PropsPanel({ clip, onProps, onClip, onDelete, onDuplicate, onSplitAudio }: { clip: Clip; onProps: (p: Partial<ClipProps>) => void; onClip: (p: Partial<Clip>) => void; onDelete: () => void; onDuplicate: () => void; onSplitAudio: () => void; }) {
+function PropsPanel({ clip, playhead, onProps, onClip, onKf, onToggleKey, onGotoKey, onDelete, onDuplicate, onSplitAudio }: { clip: Clip; playhead: number; onProps: (p: Partial<ClipProps>) => void; onClip: (p: Partial<Clip>) => void; onKf: (prop: KfProp, v: number) => void; onToggleKey: (prop: KfProp) => void; onGotoKey: (prop: KfProp, dir: number) => void; onDelete: () => void; onDuplicate: () => void; onSplitAudio: () => void; }) {
   const p = clip.props;
+  const ep = evalClipProps(clip, playhead); // giá trị hiệu dụng tại đầu phát (đã tính key)
+  const local = playhead - clip.start;
   const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
     <div className="mb-3"><label className="mb-1 block text-[10px] font-bold uppercase text-slate-500">{label}</label>{children}</div>
   );
   const num = (v: number, on: (n: number) => void, step = 1, min?: number, max?: number) => (
     <input type="number" value={v} step={step} min={min} max={max} onChange={e => on(Number(e.target.value))} className="w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-slate-200 outline-none focus:border-brand" />
   );
-  // Thanh trượt kèm ô nhập số bên cạnh.
   const sliderNum = (v: number, on: (n: number) => void, min: number, max: number, step: number, digits = 0) => (
     <div className="flex items-center gap-2">
       <input type="range" min={min} max={max} step={step} value={v} onChange={e => on(Number(e.target.value))} className="min-w-0 flex-1 accent-[var(--color-brand,#22c55e)]" />
       <input type="number" value={digits ? Number(v.toFixed(digits)) : Math.round(v)} step={step} min={min} max={max} onChange={e => on(Math.max(min, Math.min(max, Number(e.target.value))))} className="w-16 shrink-0 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-slate-200 outline-none focus:border-brand" />
+    </div>
+  );
+  // Trạng thái key của một thuộc tính: chưa có, đang có key nhưng không ở frame này, hoặc có key đúng frame.
+  const keyState = (prop: KfProp): 'none' | 'anim' | 'on' => {
+    const list = clip.kf?.[prop]; if (!list || !list.length) return 'none';
+    return list.some(k => Math.abs(k.t - local) < 25) ? 'on' : 'anim';
+  };
+  const KfCtl = ({ prop }: { prop: KfProp }) => {
+    const st = keyState(prop);
+    return (
+      <span className="flex items-center gap-0.5">
+        <button onClick={() => onGotoKey(prop, -1)} disabled={st === 'none'} title="Key trước" className="text-slate-500 hover:text-slate-200 disabled:opacity-25"><ChevronLeft className="h-3.5 w-3.5" /></button>
+        <button onClick={() => onToggleKey(prop)} title={st === 'on' ? 'Xóa key tại đầu phát' : 'Tạo key tại đầu phát'} className={st === 'on' ? 'text-brand' : st === 'anim' ? 'text-amber-400' : 'text-slate-500 hover:text-slate-200'}><Diamond className="h-3.5 w-3.5" fill={st === 'on' ? 'currentColor' : 'none'} /></button>
+        <button onClick={() => onGotoKey(prop, 1)} disabled={st === 'none'} title="Key sau" className="text-slate-500 hover:text-slate-200 disabled:opacity-25"><ChevronRight className="h-3.5 w-3.5" /></button>
+      </span>
+    );
+  };
+  const KfRow = ({ label, prop, children }: { label: string; prop: KfProp; children: React.ReactNode }) => (
+    <div className="mb-3">
+      <div className="mb-1 flex items-center justify-between">
+        <label className="block text-[10px] font-bold uppercase text-slate-500">{label}</label>
+        <KfCtl prop={prop} />
+      </div>
+      {children}
     </div>
   );
 
@@ -1146,6 +1241,8 @@ function PropsPanel({ clip, onProps, onClip, onDelete, onDuplicate, onSplitAudio
           <button onClick={onDelete} title="Xóa" className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-rose-500/20 hover:text-rose-400"><Trash2 className="h-3.5 w-3.5" /></button>
         </div>
       </div>
+
+      <p className="mb-3 rounded-lg bg-white/5 px-2 py-1.5 text-[10px] leading-snug text-slate-400">Bấm hình kim cương để tạo key cho thông số tại đầu phát. Có từ 2 key trở lên thì giá trị tự chạy mượt theo thời gian.</p>
 
       {clip.kind === 'text' && (
         <>
@@ -1167,16 +1264,16 @@ function PropsPanel({ clip, onProps, onClip, onDelete, onDuplicate, onSplitAudio
 
       {(clip.kind === 'video' || clip.kind === 'image' || clip.kind === 'text') && (
         <>
-          <Row label="Vị trí ngang X %">{sliderNum(p.x, v => onProps({ x: v }), -100, 100, 1)}</Row>
-          <Row label="Vị trí dọc Y %">{sliderNum(p.y, v => onProps({ y: v }), -100, 100, 1)}</Row>
-          <Row label="Tỉ lệ (scale)">{sliderNum(p.scale, v => onProps({ scale: v }), 0.1, 4, 0.01, 2)}</Row>
-          <Row label="Xoay (độ)">{sliderNum(p.rotation, v => onProps({ rotation: v }), -180, 180, 1)}</Row>
-          <Row label={`Độ mờ đục ${Math.round(p.opacity * 100)}%`}>{sliderNum(p.opacity, v => onProps({ opacity: v }), 0, 1, 0.01, 2)}</Row>
+          <KfRow label="Vị trí ngang X %" prop="x">{sliderNum(ep.x, v => onKf('x', v), -100, 100, 1)}</KfRow>
+          <KfRow label="Vị trí dọc Y %" prop="y">{sliderNum(ep.y, v => onKf('y', v), -100, 100, 1)}</KfRow>
+          <KfRow label="Tỉ lệ (scale)" prop="scale">{sliderNum(ep.scale, v => onKf('scale', v), 0.1, 4, 0.01, 2)}</KfRow>
+          <KfRow label="Xoay (độ)" prop="rotation">{sliderNum(ep.rotation, v => onKf('rotation', v), -180, 180, 1)}</KfRow>
+          <KfRow label={`Độ mờ đục ${Math.round(ep.opacity * 100)}%`} prop="opacity">{sliderNum(ep.opacity, v => onKf('opacity', v), 0, 1, 0.01, 2)}</KfRow>
         </>
       )}
 
       {(clip.kind === 'video' || clip.kind === 'audio') && (
-        <Row label="Âm lượng">{sliderNum(p.volume, v => onProps({ volume: v }), 0, 1, 0.01, 2)}</Row>
+        <KfRow label="Âm lượng" prop="volume">{sliderNum(ep.volume, v => onKf('volume', v), 0, 1, 0.01, 2)}</KfRow>
       )}
 
       {clip.kind === 'video' && (
