@@ -196,7 +196,7 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
   const openLesson = (id: string) => { window.location.href = `${window.location.origin}${window.location.pathname}?elview=${id}`; };
 
   // Gọi AI Gemini qua Edge Function trên Supabase, khóa API nằm ở máy chủ, cần đăng nhập.
-  const callGeminiChat = async (question: string, context: string): Promise<string> => {
+  const callGeminiChat = async (question: string, context: string, systemPrompt: string): Promise<string> => {
     const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL?.trim?.();
     if (!supabaseUrl) throw new Error('Chưa cấu hình địa chỉ Supabase.');
     const idToken = await auth.currentUser?.getIdToken().catch(() => null);
@@ -204,12 +204,14 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
     const res = await fetch(`${String(supabaseUrl).replace(/\/$/, '')}/functions/v1/gemini-chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-      body: JSON.stringify({ question, context }),
+      body: JSON.stringify({ question, context, systemPrompt }),
     });
     const payload = await res.json().catch(() => null);
     if (!res.ok || !payload?.answer) throw new Error(payload?.error || 'Gemini không trả lời được.');
     return payload.answer as string;
   };
+  const AI_ROLE_KNOWLEDGE = 'Bạn là Trợ lý giáo dục, giải đáp kiến thức bài học dựa trên nội dung bài giảng trong ngữ cảnh.';
+  const AI_ROLE_SYSTEM = 'Bạn là Trợ lý hệ thống, hướng dẫn người dùng sử dụng phần mềm dựa trên mô tả chức năng và hướng dẫn thao tác trong ngữ cảnh. Có thể trả lời theo các bước.';
 
   const buildResult = async (text: string): Promise<BotResult> => {
     const q = norm(text);
@@ -253,7 +255,7 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
         usePassages.forEach(p => ctxParts.push(`Bài giảng ${p.lessonTitle}: ${p.text.slice(0, 1000)}`));
         const context = ctxParts.join('\n\n').slice(0, 15000);
         try {
-          aiAnswer = await callGeminiChat(text, context);
+          aiAnswer = await callGeminiChat(text, context, AI_ROLE_KNOWLEDGE);
         } catch (e: any) {
           aiError = e?.message || 'Không gọi được AI.';
         }
@@ -321,9 +323,32 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
       } catch { /* bỏ qua */ }
     }
 
-    const total = knowledge.length + guides.length + features.length + lessonHits.length + faqs.length + questions.length;
+    // Nếu bật AI Gemini: gom ngữ cảnh là mô tả chức năng, hướng dẫn thao tác và kiến thức admin
+    // rồi nhờ Gemini trả lời câu hỏi về cách dùng hệ thống.
+    let aiAnswer: string | undefined;
+    let aiError: string | undefined;
+    if (aiMode) {
+      const ctxParts: string[] = [];
+      (settings.assistantKnowledge || []).forEach(k => { if (k.content) ctxParts.push(`${k.title || 'Kiến thức'}: ${k.content}`); });
+      MODULE_REGISTRY.filter(m => canFeature(m.id)).forEach(m => {
+        const meta = resolveModuleMeta(m, settings);
+        const g = FEATURE_GUIDE[m.id];
+        ctxParts.push(`Chức năng ${meta.label}: ${g?.whatIs || meta.desc}${g ? ' Cách dùng: ' + g.howTo.join(' ') : ''}`);
+      });
+      FAQS.forEach(f => ctxParts.push(`${f.title}: ${f.body}`));
+      const context = ctxParts.join('\n\n').slice(0, 15000);
+      try {
+        aiAnswer = await callGeminiChat(text, context, AI_ROLE_SYSTEM);
+      } catch (e: any) {
+        aiError = e?.message || 'Không gọi được AI.';
+      }
+    }
+
+    const total = (aiAnswer ? 1 : 0) + knowledge.length + guides.length + features.length + lessonHits.length + faqs.length + questions.length;
     let intro: string;
-    if (total === 0) {
+    if (aiAnswer) {
+      intro = 'Trợ lý hệ thống trả lời (AI Gemini):';
+    } else if (total === 0) {
       intro = 'Mình chưa tìm thấy kết quả phù hợp. Bạn thử gõ ngắn gọn hơn, ví dụ tên môn, tên bài giảng, hoặc việc muốn làm như tạo đề, nhập điểm, tải PDF.';
     } else if (knowledge.length > 0) {
       intro = 'Mình tìm được thông tin liên quan:';
@@ -334,7 +359,7 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
     } else {
       intro = 'Đây là những gì mình tìm được:';
     }
-    return { intro, answers: [], knowledge, guides, faqs, features, lessons: lessonHits, questions, assignments: [] };
+    return { intro, aiAnswer, aiError, answers: [], knowledge, guides, faqs, features, lessons: lessonHits, questions, assignments: [] };
   };
 
   const submit = async (raw?: string) => {
@@ -500,16 +525,14 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
         {loading && <div className="flex items-center gap-2 px-2 text-[12px] text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> {aiMode ? 'AI đang trả lời...' : 'Đang tìm...'}</div>}
       </div>
 
-      {knowledgeMode && (
-        <button
-          type="button"
-          onClick={() => setAiMode(v => !v)}
-          className="flex items-center justify-between gap-2 border-t border-slate-100 bg-white px-3 py-2 text-left"
-        >
-          <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600"><Sparkles className={`h-3.5 w-3.5 ${aiMode ? 'text-brand' : 'text-slate-400'}`} /> Trả lời bằng AI Gemini</span>
-          <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${aiMode ? 'bg-brand' : 'bg-slate-300'}`}><span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${aiMode ? 'left-[18px]' : 'left-0.5'}`} /></span>
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => setAiMode(v => !v)}
+        className="flex items-center justify-between gap-2 border-t border-slate-100 bg-white px-3 py-2 text-left"
+      >
+        <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600"><Sparkles className={`h-3.5 w-3.5 ${aiMode ? 'text-brand' : 'text-slate-400'}`} /> Trả lời bằng AI Gemini</span>
+        <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${aiMode ? 'bg-brand' : 'bg-slate-300'}`}><span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${aiMode ? 'left-[18px]' : 'left-0.5'}`} /></span>
+      </button>
 
       <div className="flex items-center gap-2 border-t border-slate-100 bg-white p-2.5">
         <input
