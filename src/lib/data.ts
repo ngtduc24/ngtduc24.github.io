@@ -108,7 +108,9 @@ export async function getDefaultSettingsFromSupabase(): Promise<AppSettings> {
       loadingGif: data.loading_gif_url || undefined,
       maintenanceMode: data.maintenance_mode ?? false,
       maintenanceVariant: (data.maintenance_variant as 1 | 2) || 1,
-      maintenanceDate: data.maintenance_date || undefined
+      maintenanceDate: data.maintenance_date || undefined,
+      fontHeading: data.font_heading || undefined,
+      fontBody: data.font_body || undefined
     };
   } catch (error) {
     console.warn("Failed to fetch settings from Supabase, using local fallback:", error);
@@ -166,6 +168,8 @@ export async function saveDefaultSettingsToSupabase(settings: AppSettings) {
       if (settings.maintenanceMode !== undefined) extraCols.maintenance_mode = settings.maintenanceMode;
       if (settings.maintenanceVariant !== undefined) extraCols.maintenance_variant = settings.maintenanceVariant;
       if (settings.maintenanceDate !== undefined) extraCols.maintenance_date = settings.maintenanceDate;
+      if (settings.fontHeading !== undefined) extraCols.font_heading = settings.fontHeading;
+      if (settings.fontBody !== undefined) extraCols.font_body = settings.fontBody;
       // Ảnh nền và vị trí đầu trang dashboard: lưu localStorage để hiển thị ngay, và best-effort lên DB.
       if (settings.dashboardBannerImage !== undefined) {
         extraCols.dashboard_banner_image_url = settings.dashboardBannerImage;

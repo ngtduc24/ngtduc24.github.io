@@ -176,6 +176,9 @@ export interface AppSettings {
   maintenanceVariant?: 1 | 2;
   // Ngày dự kiến mở lại, dùng cho giao diện 2.
   maintenanceDate?: string;
+  // Phông chữ hệ thống. fontHeading cho tiêu đề, fontBody cho nội dung, mô tả.
+  fontHeading?: string;
+  fontBody?: string;
 }
 
 // Tùy chỉnh hiển thị của một chức năng do admin đặt trong màn hình Cài đặt chức năng.
