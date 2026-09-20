@@ -333,7 +333,7 @@ export default function App() {
       edu: 'Quản lý Giáo dục & Đào tạo',
       elearning: 'E-Learning · Bài giảng',
       remier: 'Remier · Dựng phim',
-      assistant: 'Trợ lý ảo',
+      assistant: 'Trợ lý giáo dục',
     };
 
     if (entryView === 'admin') {

@@ -20,7 +20,7 @@ export default function AssistantPage({ currentUser, settings, onSwitchTab, onBa
         </button>
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand"><Sparkles className="h-6 w-6" /></span>
         <div className="min-w-0">
-          <h1 className="truncate text-xl font-black tracking-tight text-slate-900 sm:text-2xl">Trợ lý ảo</h1>
+          <h1 className="truncate text-xl font-black tracking-tight text-slate-900 sm:text-2xl">Trợ lý giáo dục</h1>
           <p className="text-sm font-medium text-slate-500">Hỏi đáp kiến thức bài học dựa trên bài giảng, câu hỏi và bài tập được chia sẻ công khai.</p>
         </div>
       </div>

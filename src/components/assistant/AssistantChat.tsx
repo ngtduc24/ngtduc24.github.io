@@ -55,7 +55,7 @@ const FEATURE_GUIDE: Record<string, { whatIs: string; howTo: string[] }> = {
   media_library: { whatIs: 'Thư viện lưu trữ và quản lý hình ảnh, tài liệu dùng chung.', howTo: ['Mở Thư viện.', 'Tải tệp lên theo danh mục.', 'Chọn tệp để dùng lại ở các chức năng khác.'] },
   notifications_admin: { whatIs: 'Trung tâm thông báo để soạn và phát thông báo tới người dùng.', howTo: ['Mở Trung tâm thông báo.', 'Soạn nội dung và chọn người nhận.', 'Gửi thông báo.'] },
   notifications: { whatIs: 'Thông báo là hộp thư xem các thông báo hệ thống.', howTo: ['Mở Thông báo để xem tin mới.'] },
-  assistant: { whatIs: 'Trợ lý ảo giúp tìm bài giảng, câu hỏi và hướng dẫn dùng hệ thống.', howTo: ['Gõ câu hỏi hoặc tên chức năng.', 'Bấm kết quả để mở nhanh.'] },
+  assistant: { whatIs: 'Trợ lý giáo dục giúp hỏi đáp kiến thức bài học dựa trên bài giảng, câu hỏi và bài tập được chia sẻ công khai.', howTo: ['Mở Trợ lý giáo dục.', 'Gõ câu hỏi về nội dung bài học hoặc tên bài giảng.', 'Bấm kết quả để xem bài giảng liên quan.'] },
   users: { whatIs: 'Quản lý người dùng để tạo và chỉnh sửa tài khoản trên hệ thống.', howTo: ['Mở Quản lý người dùng.', 'Thêm hoặc sửa tài khoản và đặt vai trò.'] },
   permissions: { whatIs: 'Phân quyền người dùng để cấp quyền truy cập từng chức năng.', howTo: ['Mở Phân quyền người dùng.', 'Chọn tài khoản rồi bật tắt quyền từng chức năng.'] },
   settings: { whatIs: 'Cấu hình hệ thống để chỉnh màu, phông chữ, ảnh, chức năng và chế độ bảo trì.', howTo: ['Mở Cấu hình hệ thống.', 'Chọn tab tương ứng và chỉnh.', 'Bấm Lưu.'] },
@@ -266,8 +266,8 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
     ? ['Bài giảng về Blender', 'Vertex là gì', 'Bài tập về dựng hình', 'Câu hỏi ôn tập']
     : ['Tạo đề trắc nghiệm', 'Nhập điểm ở đâu', 'Tải bài giảng ra PDF', 'Thêm môn học mới'];
   const greeting = knowledgeMode
-    ? `Xin chào ${currentUser?.fullName?.split(' ').slice(-1)[0] || ''}. Mình giúp hỏi đáp kiến thức bài học dựa trên bài giảng, câu hỏi và bài tập đã được chia sẻ công khai. Bạn muốn tìm hiểu điều gì?`
-    : `Xin chào ${currentUser?.fullName?.split(' ').slice(-1)[0] || ''}. Mình có thể giúp tìm bài giảng, tra câu hỏi và chỉ đường tới các chức năng. Bạn muốn làm gì?`;
+    ? `Xin chào ${currentUser?.fullName?.split(' ').slice(-1)[0] || ''}. Mình là Trợ lý giáo dục, giúp hỏi đáp kiến thức bài học dựa trên bài giảng, câu hỏi và bài tập đã được chia sẻ công khai. Bạn muốn tìm hiểu điều gì?`
+    : `Xin chào ${currentUser?.fullName?.split(' ').slice(-1)[0] || ''}. Mình là Trợ lý hệ thống, giúp hướng dẫn dùng và chỉ đường tới các chức năng. Bạn muốn làm gì?`;
 
   return (
     <>

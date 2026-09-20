@@ -18,7 +18,7 @@ export default function VirtualAssistant({ currentUser, settings, onSwitchTab }:
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          title="Trợ lý ảo"
+          title="Trợ lý hệ thống"
           className="fixed bottom-5 right-5 z-[90] flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-xl shadow-brand/30 transition-transform hover:scale-105"
         >
           <Sparkles className="h-6 w-6" />
@@ -31,8 +31,8 @@ export default function VirtualAssistant({ currentUser, settings, onSwitchTab }:
             <div className="flex items-center gap-2">
               <span className="grid h-8 w-8 place-items-center rounded-full bg-white/20"><Sparkles className="h-4 w-4" /></span>
               <div>
-                <p className="text-sm font-bold leading-tight">Trợ lý ảo</p>
-                <p className="text-[10px] text-white/80 leading-tight">Tìm bài giảng, câu hỏi và hướng dẫn</p>
+                <p className="text-sm font-bold leading-tight">Trợ lý hệ thống</p>
+                <p className="text-[10px] text-white/80 leading-tight">Hướng dẫn dùng và chỉ đường chức năng</p>
               </div>
             </div>
             <button onClick={() => setOpen(false)} className="grid h-8 w-8 place-items-center rounded-lg hover:bg-white/15"><X className="h-5 w-5" /></button>
