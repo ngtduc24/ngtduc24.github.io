@@ -75,16 +75,6 @@ export default function Sidebar({
       id="sidebar"
       className="relative z-40 flex h-screen w-20 shrink-0 flex-col items-center border-r border-slate-200 bg-white py-4"
     >
-      {/* Logo / avatar tài khoản ở đầu cột */}
-      <button
-        type="button"
-        onClick={() => onOpenProfile && onOpenProfile()}
-        title={currentUser.fullName}
-        className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-2xl border-2 border-brand/20 bg-brand text-sm font-black text-white shadow-lg shadow-brand/20"
-      >
-        {currentUser.avatarUrl ? <img src={currentUser.avatarUrl} alt={currentUser.fullName} className="h-full w-full object-cover" /> : currentUser.fullName?.slice(0, 2).toUpperCase()}
-      </button>
-
       {/* Nhóm chức năng chính, dồn xuống giữa cột */}
       <nav className="flex w-full flex-1 flex-col items-center justify-center gap-1.5 px-2">
         {primaryItems.map(renderItem)}

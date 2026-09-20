@@ -180,12 +180,12 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign }: { subjects: EduS
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {lessons.map(l => (
             <div key={l.id} className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md hover:border-brand/30 transition-all">
-              <div className="h-28 bg-slate-100 bg-cover bg-center" style={l.cover_url ? { backgroundImage: `url(${l.cover_url})` } : undefined}>
+              <div onClick={() => openLessonView(l.id)} title="Bấm để xem bài giảng" className="h-28 cursor-pointer bg-slate-100 bg-cover bg-center" style={l.cover_url ? { backgroundImage: `url(${l.cover_url})` } : undefined}>
                 {!l.cover_url && <div className="flex h-full items-center justify-center text-slate-300"><BookOpen className="h-8 w-8" /></div>}
               </div>
               <div className="flex flex-1 flex-col p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-[13px] font-black text-slate-800 leading-tight line-clamp-2">{l.title}</h3>
+                  <h3 onClick={() => openLessonView(l.id)} className="cursor-pointer text-[13px] font-black text-slate-800 leading-tight line-clamp-2 hover:text-brand">{l.title}</h3>
                   <StatusTag lesson={l} />
                 </div>
                 <p className="mt-1 text-[11px] text-slate-400">{subjName(l.subject_id)}</p>
