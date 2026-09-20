@@ -270,6 +270,7 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<QuizQuestion | null | 'new'>(null);
+  const [viewing, setViewing] = useState<QuizQuestion | null>(null);
   const [showExport, setShowExport] = useState(false);
 
   const load = useCallback(() => {
@@ -283,8 +284,21 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
 
   const remove = (q: QuizQuestion) => {
     confirm('Xóa câu hỏi', 'Xóa câu hỏi này khỏi ngân hàng? Không thể hoàn tác.', async () => {
-      try { await deleteQuestion(q.id); addNotification('Đã xóa câu hỏi.', 'success'); load(); }
+      try { await deleteQuestion(q.id); addNotification('Đã xóa câu hỏi.', 'success'); setEditing(null); load(); }
       catch (e: any) { addNotification('Không xóa được (có thể câu đang nằm trong đề đã phát hành): ' + e.message, 'error'); }
+    });
+  };
+  // Xóa hàng loạt các câu đã tích chọn.
+  const bulkDelete = () => {
+    if (selected.size === 0) return;
+    confirm('Xóa các câu đã chọn', `Xóa ${selected.size} câu hỏi đã chọn khỏi ngân hàng? Không thể hoàn tác.`, async () => {
+      let ok = 0, fail = 0;
+      for (const id of Array.from(selected)) {
+        try { await deleteQuestion(id); ok += 1; } catch { fail += 1; }
+      }
+      addNotification(`Đã xóa ${ok} câu${fail ? `, ${fail} câu không xóa được (có thể đang nằm trong đề đã phát hành)` : ''}.`, fail ? 'warning' : 'success');
+      setSelected(new Set());
+      load();
     });
   };
   const copyToMine = async (q: QuizQuestion) => {
@@ -307,11 +321,24 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
   };
 
   if (editing) {
+    const q = editing === 'new' ? null : editing;
     return <QuestionForm currentUser={currentUser} subjects={subjects}
-      question={editing === 'new' ? null : editing}
+      question={q}
       defaultSubject={subjectId}
       onCancel={() => setEditing(null)}
+      onDelete={q ? () => remove(q) : undefined}
       onSaved={() => { setEditing(null); load(); }} />;
+  }
+
+  if (viewing) {
+    return <QuestionView
+      question={viewing}
+      subjectName={subjectName(viewing.subject_id)}
+      canEdit={tab === 'mine'}
+      onBack={() => setViewing(null)}
+      onEdit={() => { setEditing(viewing); setViewing(null); }}
+      onCopyToMine={tab === 'shared' ? () => copyToMine(viewing) : undefined}
+    />;
   }
 
   return (
@@ -329,6 +356,11 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
           {!selectMode && (
             <button onClick={() => setShowExport(true)} disabled={selected.size === 0} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand disabled:opacity-50" title="Xuất các câu đã chọn ra PDF">
               <FileDown className="h-4 w-4" /> Xuất PDF{selected.size > 0 ? ` (${selected.size})` : ''}
+            </button>
+          )}
+          {!selectMode && tab === 'mine' && selected.size > 0 && (
+            <button onClick={bulkDelete} className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-[11px] font-bold text-rose-500 hover:bg-rose-100" title="Xóa các câu đã chọn">
+              <Trash2 className="h-4 w-4" /> Xóa ({selected.size})
             </button>
           )}
           <button onClick={() => setEditing('new')} className="inline-flex items-center gap-2 rounded-xl bg-slate-800 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white hover:bg-slate-900">
@@ -385,7 +417,8 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
                 <div className="flex items-start gap-3">
                   {/* Ô chọn dùng cho cả thêm câu vào đề và chọn câu để xuất PDF. */}
                   <button onClick={() => toggleSel(q.id)} title="Chọn câu này" className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 ${selected.has(q.id) ? 'border-brand bg-brand text-white' : 'border-slate-300 text-transparent hover:border-brand/50'}`}><Check className="h-3 w-3" /></button>
-                  <div className="min-w-0 flex-1">
+                  {/* Bấm vào nội dung câu để xem chi tiết. Nút sửa và xóa nằm trong màn xem, không để ở thẻ. */}
+                  <button onClick={() => setViewing(q)} className="min-w-0 flex-1 text-left">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{q.question_type === 'single' ? 'Chọn 1' : 'Chọn nhiều'}</span>
                       {q.subject_id && <span className="rounded-md bg-brand-light px-2 py-0.5 text-[10px] font-bold text-brand">{subjectName(q.subject_id)}</span>}
@@ -394,17 +427,12 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
                     </div>
                     <p className="text-[13px] font-semibold text-slate-800 line-clamp-2">{stripHtml(q.content) || '(câu hỏi trống)'}</p>
                     {(q.tags || []).length > 0 && <div className="mt-1.5 flex flex-wrap gap-1">{q.tags.map(t => <span key={t} className="rounded bg-slate-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-400">#{t}</span>)}</div>}
-                  </div>
+                  </button>
                   <div className="flex shrink-0 items-center gap-1.5">
-                    {tab === 'shared' ? (
-                      <button onClick={() => copyToMine(q)} className="rounded-lg bg-brand-light px-3 py-2 text-[11px] font-bold text-brand hover:bg-brand/15">Sao chép về của tôi</button>
-                    ) : (
-                      <>
-                        <button onClick={() => togglePublic(q)} title={q.is_public ? 'Tắt chia sẻ' : 'Chia sẻ công khai'} className={`rounded-lg p-2 ${q.is_public ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}><Share2 className="h-4 w-4" /></button>
-                        <button onClick={() => setEditing(q)} className="rounded-lg bg-slate-100 p-2 text-slate-600 hover:bg-slate-200"><Edit2 className="h-4 w-4" /></button>
-                        <button onClick={() => remove(q)} className="rounded-lg bg-rose-50 p-2 text-rose-500 hover:bg-rose-100"><Trash2 className="h-4 w-4" /></button>
-                      </>
-                    )}
+                    {tab === 'shared'
+                      ? <button onClick={() => copyToMine(q)} className="rounded-lg bg-brand-light px-3 py-2 text-[11px] font-bold text-brand hover:bg-brand/15">Sao chép về của tôi</button>
+                      : <button onClick={() => togglePublic(q)} title={q.is_public ? 'Tắt chia sẻ' : 'Chia sẻ công khai'} className={`rounded-lg p-2 ${q.is_public ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}><Share2 className="h-4 w-4" /></button>
+                    }
                   </div>
                 </div>
               </div>
@@ -419,8 +447,57 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
 // =====================================================================
 // FORM SOẠN CÂU HỎI
 // =====================================================================
-function QuestionForm({ currentUser, subjects, question, defaultSubject, onCancel, onSaved }: {
-  currentUser: UserAccount; subjects: EduSubject[]; question: QuizQuestion | null; defaultSubject?: string; onCancel: () => void; onSaved: (q: QuizQuestion) => void;
+// =====================================================================
+// XEM CHI TIẾT CÂU HỎI (chỉ đọc), có nút Sửa ở góc
+// =====================================================================
+function QuestionView({ question, subjectName, canEdit, onBack, onEdit, onCopyToMine }: {
+  question: QuizQuestion; subjectName: string; canEdit: boolean; onBack: () => void; onEdit: () => void; onCopyToMine?: () => void;
+}) {
+  const opts = [...(question.options || [])].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+  return (
+    <div className="space-y-5 animate-fadeIn">
+      <div className="flex items-center justify-between gap-3">
+        <button onClick={onBack} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><ChevronLeft className="h-4 w-4" /> Danh sách câu hỏi</button>
+        {canEdit
+          ? <button onClick={onEdit} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Edit2 className="h-4 w-4" /> Sửa</button>
+          : onCopyToMine && <button onClick={onCopyToMine} className="inline-flex items-center gap-1.5 rounded-xl bg-brand-light px-4 py-2.5 text-[11px] font-bold text-brand hover:bg-brand/15"><Copy className="h-4 w-4" /> Sao chép về của tôi</button>
+        }
+      </div>
+
+      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{question.question_type === 'single' ? 'Chọn 1 đáp án' : 'Chọn nhiều đáp án'}</span>
+          {subjectName && <span className="rounded-md bg-brand-light px-2 py-0.5 text-[10px] font-bold text-brand">{subjectName}</span>}
+          {question.is_public && <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600"><Globe className="h-3 w-3" /> Công khai</span>}
+        </div>
+
+        <div className="prose prose-sm max-w-none text-slate-800" dangerouslySetInnerHTML={{ __html: question.content || '<p class="text-slate-400">(câu hỏi trống)</p>' }} />
+
+        <div className="mt-4 space-y-2">
+          {opts.map((o, oi) => (
+            <div key={oi} className={`flex items-start gap-2 rounded-xl border px-3 py-2 text-[13px] ${o.is_correct ? 'border-brand/40 bg-brand-light font-semibold text-brand' : 'border-slate-100 text-slate-700'}`}>
+              <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border text-[11px] font-bold ${o.is_correct ? 'border-brand bg-brand text-white' : 'border-slate-300 text-slate-400'}`}>{String.fromCharCode(65 + oi)}</span>
+              <span className="min-w-0 flex-1" dangerouslySetInnerHTML={{ __html: o.content || '' }} />
+              {o.is_correct && <Check className="h-4 w-4 shrink-0 text-brand" />}
+            </div>
+          ))}
+        </div>
+
+        {question.explanation && (
+          <div className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-[12px] text-amber-800">
+            <span className="font-bold">Giải thích: </span>
+            <span dangerouslySetInnerHTML={{ __html: question.explanation }} />
+          </div>
+        )}
+
+        {(question.tags || []).length > 0 && <div className="mt-4 flex flex-wrap gap-1">{question.tags.map(t => <span key={t} className="rounded bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-400">#{t}</span>)}</div>}
+      </div>
+    </div>
+  );
+}
+
+function QuestionForm({ currentUser, subjects, question, defaultSubject, onCancel, onDelete, onSaved }: {
+  currentUser: UserAccount; subjects: EduSubject[]; question: QuizQuestion | null; defaultSubject?: string; onCancel: () => void; onDelete?: () => void; onSaved: (q: QuizQuestion) => void;
 }) {
   const { addNotification } = useNotifications();
   const [content, setContent] = useState(question?.content || '');
@@ -473,7 +550,11 @@ function QuestionForm({ currentUser, subjects, question, defaultSubject, onCance
     <div className="space-y-5 animate-fadeIn">
       <div className="flex items-center justify-between gap-3">
         <button onClick={onCancel} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><ChevronLeft className="h-4 w-4" /> Hủy</button>
-        <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Lưu câu hỏi</button>
+        <div className="flex items-center gap-2">
+          {/* Nút xóa chỉ hiện khi đang sửa một câu đã có, đúng yêu cầu sửa rồi mới hiện nút xóa. */}
+          {onDelete && <button onClick={onDelete} className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-[11px] font-bold text-rose-500 hover:bg-rose-100"><Trash2 className="h-4 w-4" /> Xóa</button>}
+          <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Lưu câu hỏi</button>
+        </div>
       </div>
 
       <div className="space-y-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
