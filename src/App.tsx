@@ -303,9 +303,11 @@ export default function App() {
     try {
       const s = await getDefaultSettingsFromSupabase();
       setSettings(s);
-      setSettingsLoaded(true);
     } catch (e) {
       console.error("Lỗi khi load config hệ thống:", e);
+    } finally {
+      // Luôn kết thúc trạng thái tải để không kẹt ở màn chờ, kể cả khi tải lỗi hoặc egress hết.
+      setSettingsLoaded(true);
     }
   };
 
@@ -821,6 +823,17 @@ export default function App() {
           window.location.href = window.location.origin;
         }} 
       />
+    );
+  }
+
+  // Cách 1 chống nhá lần đầu: khi máy chưa có cache cấu hình, hiện màn chờ nhỏ cho tới khi tải xong
+  // cấu hình rồi mới vẽ giao diện, để không bao giờ thấy tên chức năng, màu, ảnh mặc định trước.
+  if (!settingsLoaded) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 rounded-full border-4 border-slate-200 border-t-brand animate-spin" style={{ borderTopColor: 'var(--color-brand, #10b981)' }} />
+        <p className="text-xs font-semibold text-slate-400">Đang tải cấu hình...</p>
+      </div>
     );
   }
 
