@@ -63,6 +63,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'users' | 'assignments'>('users');
   const [newColumnName, setNewColumnName] = useState('');
+  const [newColumnWeight, setNewColumnWeight] = useState('');
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [editingColumn, setEditingColumn] = useState<EduGradeColumn | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -123,9 +124,11 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
         classId,
         name: newColumnName,
         order: editingColumn ? editingColumn.order : gradeColumns.length,
-        isConfirmed: editingColumn ? editingColumn.isConfirmed : false
+        isConfirmed: editingColumn ? editingColumn.isConfirmed : false,
+        weight: newColumnWeight.trim() === '' ? 0 : Math.max(0, Math.min(100, Number(newColumnWeight) || 0))
       });
       setNewColumnName('');
+      setNewColumnWeight('');
       setIsAddingColumn(false);
       setEditingColumn(null);
       loadData();
@@ -273,10 +276,23 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
   if (loading) return <div className="py-20 text-center text-slate-400">Đang tải...</div>;
   if (!clazz) return <div className="py-20 text-center text-slate-400">Không tìm thấy lớp học</div>;
 
-  const filteredUsers = users.filter(u => 
-    u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredUsers = users.filter(u =>
+    u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.mssv.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Tổng tỷ trọng các cột và điểm trung bình môn theo trọng số của một sinh viên.
+  const totalWeight = gradeColumns.reduce((s, c) => s + (c.weight || 0), 0);
+  const avgOf = (userId: string): number | null => {
+    let sw = 0, sv = 0;
+    for (const col of gradeColumns) {
+      const w = col.weight || 0; if (w <= 0) continue;
+      const g = grades.find(gr => gr.gradeColumnId === col.id && gr.userId === userId);
+      if (!g || g.score === undefined || g.score === null) continue;
+      sw += w; sv += (g.score as number) * w;
+    }
+    return sw > 0 ? Math.round((sv / sw) * 100) / 100 : null;
+  };
 
   return (
     <div className="space-y-6">
@@ -436,8 +452,8 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
 
               {!canCreate && !canEdit ? null : (isAddingColumn || editingColumn) ? (
                 <div className="flex items-center gap-2 animate-fadeIn bg-white p-1 rounded-xl shadow-sm border border-brand/20">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     autoFocus
                     placeholder="Tên cột điểm..."
                     value={newColumnName}
@@ -445,8 +461,19 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                     onKeyDown={e => e.key === 'Enter' && handleAddColumn()}
                     className="px-3 py-1.5 border-none focus:ring-0 text-xs font-semibold w-32"
                   />
+                  <div className="flex items-center gap-1 border-l border-slate-100 pl-2">
+                    <input
+                      type="number" min={0} max={100}
+                      placeholder="Tỷ trọng"
+                      value={newColumnWeight}
+                      onChange={e => setNewColumnWeight(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleAddColumn()}
+                      className="px-2 py-1.5 border-none focus:ring-0 text-xs font-semibold w-20"
+                    />
+                    <span className="text-xs font-bold text-slate-400">%</span>
+                  </div>
                   <button onClick={handleAddColumn} className="p-1.5 bg-brand text-white rounded-lg hover:bg-brand-hover"><CheckCircle2 className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => { setIsAddingColumn(false); setEditingColumn(null); setNewColumnName(''); }} className="p-1.5 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200"><X className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => { setIsAddingColumn(false); setEditingColumn(null); setNewColumnName(''); setNewColumnWeight(''); }} className="p-1.5 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200"><X className="w-3.5 h-3.5" /></button>
                 </div>
               ) : (
                 <button 
@@ -538,6 +565,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                                     e.stopPropagation();
                                     setEditingColumn(col);
                                     setNewColumnName(col.name);
+                                    setNewColumnWeight(col.weight ? String(col.weight) : '');
                                     setActiveDropdownId(null);
                                   }}
                                   className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 transition-colors"
@@ -571,9 +599,14 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                             <CheckCircle2 className="w-2.5 h-2.5" /> Đã chốt
                           </span>
                         )}
+                        <span className="text-[9px] font-bold text-slate-400">{(col.weight ?? 0) > 0 ? `Tỷ trọng ${col.weight}%` : 'Chưa đặt tỷ trọng'}</span>
                       </div>
                     </th>
                   ))}
+                  <th className="px-6 py-4 text-[10px] font-black text-brand uppercase tracking-wider text-center border-l border-slate-100 min-w-[120px] bg-brand-light/30">
+                    Trung bình môn
+                    {totalWeight > 0 && totalWeight !== 100 && <span className="block text-[8px] font-bold text-amber-500 normal-case">Tổng tỷ trọng {totalWeight}%, nên bằng 100%</span>}
+                  </th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider w-20 text-center border-l border-slate-50">Thao tác</th>
                 </tr>
               </thead>
@@ -593,6 +626,9 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                         </td>
                       );
                     })}
+                    <td className="px-6 py-4 text-center border-l border-slate-100 bg-brand-light/20">
+                      {(() => { const a = avgOf(user.id); return <span className={`text-sm font-black ${a != null ? 'text-brand' : 'text-slate-300'}`}>{a != null ? a : '-'}</span>; })()}
+                    </td>
                     <td className="px-6 py-4 text-center border-l border-slate-50">
                       <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                         {canEdit && (

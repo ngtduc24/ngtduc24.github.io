@@ -97,6 +97,7 @@ function mapGradeColumn(gc: any): EduGradeColumn {
     name: gc.name,
     order: gc.order,
     isConfirmed: gc.is_confirmed,
+    weight: gc.weight ?? undefined,
     createdAt: gc.created_at,
     updatedAt: gc.updated_at
   };
@@ -303,7 +304,8 @@ export async function saveGradeColumn(column: Partial<EduGradeColumn>) {
     class_id: column.classId,
     name: column.name,
     order: column.order,
-    is_confirmed: column.isConfirmed
+    is_confirmed: column.isConfirmed,
+    weight: column.weight
   };
   Object.keys(dbData).forEach(key => (dbData as any)[key] === undefined && delete (dbData as any)[key]);
 
