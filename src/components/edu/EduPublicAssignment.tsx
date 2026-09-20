@@ -354,6 +354,12 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
   const graded = !!(currentGrade && currentGrade.score !== undefined && currentGrade.score !== null);
   const extApproved = extension?.status === 'approved' && extension.extendUntil && new Date(extension.extendUntil).getTime() > Date.now();
 
+  // Đối chiếu thời điểm nộp lần đầu với hạn nộp để biết sinh viên nộp đúng hạn hay nộp trễ.
+  const firstSubTime = submission ? new Date(submission.firstSubmittedAt).getTime() : 0;
+  const submittedOnTime = !!submission && (!deadlineDate || firstSubTime <= deadlineDate.getTime());
+  const submittedLate = !!submission && !!deadlineDate && firstSubTime > deadlineDate.getTime();
+  const fmtTime = (t: number) => new Date(t).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
   if (graded) {
     canEdit = false;
     lockReason = 'Bài tập đã được chấm điểm';
@@ -361,7 +367,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
     canEdit = true;
   } else if (isOverdue && !assignment.allowLate) {
     canEdit = false;
-    lockReason = 'Đã quá hạn nộp bài';
+    lockReason = submission ? 'Đã quá hạn, không thể nộp thêm' : 'Hết thời gian nộp bài';
   } else if (submission) {
     const firstSub = new Date(submission.firstSubmittedAt).getTime();
     const lastSub = new Date(submission.submittedAt).getTime();
@@ -605,6 +611,22 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                     </div>
                   )}
                 </div>
+                )}
+
+                {/* Đã nộp bài đúng hạn */}
+                {submittedOnTime && (
+                  <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl flex items-center gap-3 text-emerald-700">
+                    <CheckCircle2 className="w-5 h-5 shrink-0" />
+                    <p className="text-[13px] font-semibold">Đã nộp bài đúng hạn lúc {fmtTime(firstSubTime)}.</p>
+                  </div>
+                )}
+
+                {/* Đã nộp bài nhưng nộp trễ sau hạn */}
+                {submittedLate && (
+                  <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex items-center gap-3 text-amber-700">
+                    <Clock className="w-5 h-5 shrink-0" />
+                    <p className="text-[13px] font-semibold">Đã nộp bài (nộp trễ) lúc {fmtTime(firstSubTime)}.</p>
+                  </div>
                 )}
 
                 {/* Được gia hạn còn hiệu lực */}
