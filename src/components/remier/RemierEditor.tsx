@@ -117,6 +117,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   const [playhead, setPlayhead] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [selId, setSelId] = useState<string | null>(null);
+  const [multiSel, setMultiSel] = useState<string[]>([]);
   const [pxPerSec, setPxPerSec] = useState(80);
   const [savedAt, setSavedAt] = useState('');
   const [saving, setSaving] = useState(false);
@@ -393,7 +394,16 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   const updateClipProps = (id: string, patch: Partial<ClipProps>) => {
     setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.map(c => c.id === id ? { ...c, props: { ...c.props, ...patch } } : c) }))); markDirty();
   };
-  const deleteClip = (id: string) => { setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.filter(c => c.id !== id) }))); if (selId === id) setSelId(null); markDirty(); };
+  const deleteClip = (id: string) => { setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.filter(c => c.id !== id) }))); if (selId === id) setSelId(null); setMultiSel(m => m.filter(x => x !== id)); markDirty(); };
+  // Xóa mọi clip đang chọn (một hoặc nhiều do quét vùng chọn).
+  const deleteSelected = () => {
+    const ids = multiSel.length ? multiSel : (selId ? [selId] : []);
+    if (!ids.length) return;
+    setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.filter(c => !ids.includes(c.id)) })));
+    setSelId(null); setMultiSel([]); markDirty();
+  };
+  const selectClip = (id: string) => { setSelId(id); setMultiSel([]); };
+  const onMarquee = (ids: string[]) => { setMultiSel(ids); setSelId(ids.length === 1 ? ids[0] : null); };
   const duplicateClip = (id: string) => {
     const found = selClip; if (!found || found.clip.id !== id) return;
     const c = found.clip; const copy: Clip = { ...c, id: uid(), start: c.start + c.dur, props: { ...c.props } };
@@ -427,6 +437,19 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   };
 
   const timelineScrollRef = useRef<HTMLDivElement>(null);
+  // Phóng to, thu nhỏ dòng thời gian, giữ nguyên mốc thời gian đang ở dưới con trỏ.
+  const zoomTimelineAt = (factor: number, focusMs?: number) => {
+    setPxPerSec(prev => {
+      const next = Math.max(10, Math.min(400, Math.round(prev * factor)));
+      const el = timelineScrollRef.current;
+      if (el && focusMs != null && next !== prev) {
+        const cursorX = (focusMs / 1000) * prev - el.scrollLeft;
+        const after = (focusMs / 1000) * next;
+        requestAnimationFrame(() => { if (el) el.scrollLeft = Math.max(0, after - cursorX); });
+      }
+      return next;
+    });
+  };
   const fitTimeline = () => {
     const w = timelineScrollRef.current?.clientWidth || (window.innerWidth - 460);
     const dur = Math.max(duration, 5000) / 1000;
@@ -434,29 +457,44 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   };
 
   // ---------- Kéo lớp trên dòng thời gian ----------
-  const dragRef = useRef<{ id: string; mode: 'move' | 'l' | 'r'; startX: number; orig: Clip } | null>(null);
+  const dragRef = useRef<{ ids: string[]; mode: 'move' | 'l' | 'r'; startX: number; origs: Record<string, Clip> } | null>(null);
   const onClipPointerDown = (e: React.PointerEvent, tr: Track, clip: Clip, mode: 'move' | 'l' | 'r') => {
     if (tr.locked) return;
     e.stopPropagation(); (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-    dragRef.current = { id: clip.id, mode, startX: e.clientX, orig: { ...clip } }; setSelId(clip.id);
+    // Nếu clip nằm trong vùng đang chọn nhiều thì kéo cả nhóm, ngược lại chọn riêng clip này.
+    const inGroup = mode === 'move' && multiSel.includes(clip.id) && multiSel.length > 1;
+    const ids = inGroup ? multiSel : [clip.id];
+    const origs: Record<string, Clip> = {};
+    tracksRef.current.forEach(t => t.clips.forEach(c => { if (ids.includes(c.id)) origs[c.id] = { ...c }; }));
+    dragRef.current = { ids, mode, startX: e.clientX, origs };
+    if (inGroup) setSelId(clip.id); else { setSelId(clip.id); setMultiSel([]); }
   };
   const onTimelinePointerMove = (e: React.PointerEvent) => {
     const d = dragRef.current; if (!d) return;
     const deltaMs = ((e.clientX - d.startX) / pxPerSec) * 1000;
+    // Kéo nhóm nhiều clip: dời tất cả cùng một lượng, không cho lùi qua mốc 0.
+    if (d.mode === 'move' && d.ids.length > 1) {
+      let delta = deltaMs;
+      const minStart = Math.min(...d.ids.map(id => d.origs[id].start));
+      if (minStart + delta < 0) delta = -minStart;
+      setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.map(c => d.ids.includes(c.id) ? { ...c, start: Math.max(0, Math.round(d.origs[c.id].start + delta)) } : c) }))); markDirty();
+      return;
+    }
+    const id = d.ids[0]; const orig = d.origs[id]; if (!orig) return;
     let patch: Partial<Clip> = {};
     if (d.mode === 'move') {
-      let ns = Math.max(0, Math.round(d.orig.start + deltaMs));
+      let ns = Math.max(0, Math.round(orig.start + deltaMs));
       // Hít dính: bám đầu phát, mốc 0, và mép các lớp khác trong ngưỡng ~8px.
       const thr = (8 / pxPerSec) * 1000;
       const pts: number[] = [0, playheadRef.current];
-      tracksRef.current.forEach(tr => tr.clips.forEach(c => { if (c.id !== d.id) { pts.push(c.start); pts.push(c.start + c.dur); } }));
-      const ne = ns + d.orig.dur;
-      for (const p of pts) { if (Math.abs(ns - p) < thr) { ns = p; break; } if (Math.abs(ne - p) < thr) { ns = p - d.orig.dur; break; } }
+      tracksRef.current.forEach(tr => tr.clips.forEach(c => { if (c.id !== id) { pts.push(c.start); pts.push(c.start + c.dur); } }));
+      const ne = ns + orig.dur;
+      for (const p of pts) { if (Math.abs(ns - p) < thr) { ns = p; break; } if (Math.abs(ne - p) < thr) { ns = p - orig.dur; break; } }
       patch = { start: Math.max(0, Math.round(ns)) };
     }
-    else if (d.mode === 'l') { const ns = Math.max(0, Math.min(d.orig.start + d.orig.dur - 100, d.orig.start + deltaMs)); patch = { start: Math.round(ns), dur: Math.round(d.orig.dur - (ns - d.orig.start)), inPoint: Math.max(0, Math.round(d.orig.inPoint + (ns - d.orig.start))) }; }
-    else patch = { dur: Math.max(100, Math.round(d.orig.dur + deltaMs)) };
-    updateClip(d.id, patch);
+    else if (d.mode === 'l') { const ns = Math.max(0, Math.min(orig.start + orig.dur - 100, orig.start + deltaMs)); patch = { start: Math.round(ns), dur: Math.round(orig.dur - (ns - orig.start)), inPoint: Math.max(0, Math.round(orig.inPoint + (ns - orig.start))) }; }
+    else patch = { dur: Math.max(100, Math.round(orig.dur + deltaMs)) };
+    updateClip(id, patch);
   };
   const onTimelinePointerUp = () => { dragRef.current = null; };
 
@@ -567,7 +605,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) return;
       if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
-      else if ((e.key === 'Delete' || e.key === 'Backspace') && selId) { e.preventDefault(); deleteClip(selId); }
+      else if ((e.key === 'Delete' || e.key === 'Backspace') && (selId || multiSel.length)) { e.preventDefault(); deleteSelected(); }
       else if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && selClip) { splitAtPlayhead(); }
       else if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) { e.preventDefault(); persist(false); }
       else if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D') && selId) { e.preventDefault(); duplicateClip(selId); }
@@ -578,7 +616,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selId, selClip, playing, duration]);
+  }, [selId, selClip, playing, duration, multiSel]);
 
   if (!project) return <div className="fixed inset-0 z-[60] grid place-items-center bg-slate-900 text-slate-300"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
@@ -602,25 +640,27 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
         </div>
       </div>
 
-      {/* Thanh chức năng dựng phim (theo mẫu) */}
-      <div className="flex h-14 shrink-0 items-center gap-1 overflow-x-auto border-b border-white/10 bg-[#12161c] px-2 scrollbar-none">
-        {TOP_TABS.map(tb => {
-          const Icon = tb.icon; const active = leftPanel === tb.id;
-          return (
-            <button key={tb.id} onClick={() => setLeftPanel(tb.id)}
-              title={tb.soon ? `${tb.label} (sắp có)` : tb.label}
-              className={`relative flex h-full min-w-[64px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-3 transition-colors ${active ? 'bg-brand/15 text-brand' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}`}>
-              <Icon className="h-5 w-5" />
-              <span className="text-[10px] font-bold leading-none">{tb.label}</span>
-              {tb.soon && <span className="absolute right-1 top-1 rounded-full bg-amber-500/20 px-1 text-[7px] font-black text-amber-400">SẮP</span>}
-            </button>
-          );
-        })}
-      </div>
-
       <div className="flex min-h-0 flex-1">
-        {/* Cột thư viện trái đổi nội dung theo tab chức năng */}
-        <LibraryPanel currentUser={currentUser} panel={leftPanel} onAddAsset={addClipFromAsset} onAddText={addTextClip} onImportSubtitles={importSubtitles} />
+        {/* Cột trái: thanh tab chức năng dựng phim nằm ngay trên khu tư liệu (theo mẫu) */}
+        <div className="flex w-[280px] shrink-0 flex-col">
+          <div className="flex h-14 shrink-0 items-center gap-1 overflow-x-auto border-b border-r border-white/10 bg-[#12161c] px-1 scrollbar-none">
+            {TOP_TABS.map(tb => {
+              const Icon = tb.icon; const active = leftPanel === tb.id;
+              return (
+                <button key={tb.id} onClick={() => setLeftPanel(tb.id)}
+                  title={tb.soon ? `${tb.label} (sắp có)` : tb.label}
+                  className={`relative flex h-full min-w-[58px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-2 transition-colors ${active ? 'bg-brand/15 text-brand' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}`}>
+                  <Icon className="h-5 w-5" />
+                  <span className="whitespace-nowrap text-[10px] font-bold leading-none">{tb.label}</span>
+                  {tb.soon && <span className="absolute right-0.5 top-0.5 rounded-full bg-amber-500/20 px-1 text-[7px] font-black text-amber-400">SẮP</span>}
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex min-h-0 flex-1 overflow-hidden">
+            <LibraryPanel currentUser={currentUser} panel={leftPanel} onAddAsset={addClipFromAsset} onAddText={addTextClip} onImportSubtitles={importSubtitles} />
+          </div>
+        </div>
 
         {/* Khung xem trước */}
         <div className="flex min-w-0 flex-1 flex-col">
@@ -674,7 +714,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
           <span className="mx-1 h-5 w-px bg-white/10" />
           <button onClick={splitAtPlayhead} title="Cắt tại đầu phát (S)" disabled={!selClip} className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-40"><Scissors className="h-3.5 w-3.5" /></button>
           <button onClick={() => selId && duplicateClip(selId)} title="Nhân đôi (Ctrl+D)" disabled={!selId} className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-40"><Copy className="h-3.5 w-3.5" /></button>
-          <button onClick={() => selId && deleteClip(selId)} title="Xóa (Delete)" disabled={!selId} className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-40"><Trash2 className="h-3.5 w-3.5" /></button>
+          <button onClick={deleteSelected} title="Xóa (Delete)" disabled={!selId && !multiSel.length} className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-40"><Trash2 className="h-3.5 w-3.5" />{multiSel.length > 1 && <span className="ml-0.5 text-[9px] font-black">{multiSel.length}</span>}</button>
           <button onClick={addTextClip} title="Thêm chữ (T)" className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><Type className="h-3.5 w-3.5" /></button>
           <div className="ml-auto flex items-center gap-1">
             <button onClick={fitTimeline} title="Thu vừa dòng thời gian (Shift+Z)" className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><Maximize2 className="h-3.5 w-3.5" /></button>
@@ -682,8 +722,8 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
             <button onClick={() => setPxPerSec(v => Math.min(300, v + 20))} title="Phóng to dòng thời gian" className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><ZoomIn className="h-3.5 w-3.5" /></button>
           </div>
         </div>
-        <Timeline tracks={tracks} pxPerSec={pxPerSec} playhead={playhead} duration={duration} selId={selId} scrollRef={timelineScrollRef}
-          onSeek={seekTo} onSelect={setSelId} onClipPointerDown={onClipPointerDown} onToggleTrack={toggleTrack} onDeleteTrack={deleteTrack} onDropAsset={dropAssetOnTimeline} />
+        <Timeline tracks={tracks} pxPerSec={pxPerSec} playhead={playhead} duration={duration} selId={selId} selIds={multiSel} scrollRef={timelineScrollRef}
+          onSeek={seekTo} onSelect={selectClip} onMarquee={onMarquee} onZoom={zoomTimelineAt} onClipPointerDown={onClipPointerDown} onToggleTrack={toggleTrack} onDeleteTrack={deleteTrack} onDropAsset={dropAssetOnTimeline} />
       </div>
 
       {/* Hộp thoại xuất video */}
@@ -898,10 +938,11 @@ function LibraryPanel({ currentUser, panel, onAddAsset, onAddText, onImportSubti
 }
 
 // ============================ Dòng thời gian ============================
-function Timeline({ tracks, pxPerSec, playhead, duration, selId, scrollRef, onSeek, onSelect, onClipPointerDown, onToggleTrack, onDeleteTrack, onDropAsset }: {
-  tracks: Track[]; pxPerSec: number; playhead: number; duration: number; selId: string | null;
+function Timeline({ tracks, pxPerSec, playhead, duration, selId, selIds, scrollRef, onSeek, onSelect, onMarquee, onZoom, onClipPointerDown, onToggleTrack, onDeleteTrack, onDropAsset }: {
+  tracks: Track[]; pxPerSec: number; playhead: number; duration: number; selId: string | null; selIds: string[];
   scrollRef?: React.RefObject<HTMLDivElement>;
   onSeek: (t: number) => void; onSelect: (id: string) => void;
+  onMarquee: (ids: string[]) => void; onZoom: (factor: number, focusMs?: number) => void;
   onClipPointerDown: (e: React.PointerEvent, tr: Track, c: Clip, mode: 'move' | 'l' | 'r') => void;
   onToggleTrack: (id: string, k: 'locked' | 'hidden' | 'muted' | 'solo') => void;
   onDeleteTrack: (id: string) => void;
@@ -910,7 +951,60 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, scrollRef, onSe
   const totalMs = Math.max(duration, 10000) + 4000;
   const width = (totalMs / 1000) * pxPerSec;
   const rulerRef = useRef<HTMLDivElement>(null);
+  const headersRef = useRef<HTMLDivElement>(null);
   const scrubbing = useRef(false);
+  const ROW_H = 64, RULER_H = 28;
+  // Lăn chuột cuộn ngang, Alt cộng lăn để phóng to thu nhỏ timeline. Dùng listener
+  // không thụ động để preventDefault được.
+  useEffect(() => {
+    const el = scrollRef?.current; if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (e.altKey) { e.preventDefault(); const r = rulerRef.current?.getBoundingClientRect(); const focus = r ? Math.max(0, ((e.clientX - r.left) / pxPerSec) * 1000) : undefined; onZoom(e.deltaY < 0 ? 1.12 : 0.89, focus); }
+      else { e.preventDefault(); el.scrollLeft += (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY); }
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [scrollRef, pxPerSec, onZoom]);
+  // Đồng bộ cuộn dọc giữa cột đầu lớp và vùng clip.
+  const syncFromRight = () => { if (headersRef.current && scrollRef?.current) headersRef.current.scrollTop = scrollRef.current.scrollTop; };
+  const syncFromLeft = () => { if (headersRef.current && scrollRef?.current) scrollRef.current.scrollTop = headersRef.current.scrollTop; };
+  // Kéo giữa (chuột giữa) để di chuyển khung nhìn timeline.
+  const panRef = useRef<{ x: number; y: number; sl: number; st: number } | null>(null);
+  const onContainerPointerDown = (e: React.PointerEvent) => {
+    if (e.button === 1) { e.preventDefault(); const el = e.currentTarget as HTMLElement; el.setPointerCapture(e.pointerId); panRef.current = { x: e.clientX, y: e.clientY, sl: el.scrollLeft, st: el.scrollTop }; }
+  };
+  const onContainerPointerMove = (e: React.PointerEvent) => { if (panRef.current) { const el = e.currentTarget as HTMLElement; el.scrollLeft = panRef.current.sl - (e.clientX - panRef.current.x); el.scrollTop = panRef.current.st - (e.clientY - panRef.current.y); } };
+  const onContainerPointerUp = (e: React.PointerEvent) => { if (panRef.current) { panRef.current = null; try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {} } };
+  // Quét tạo vùng chọn nhiều clip (kéo chuột trái trên vùng trống).
+  const marqueeRef = useRef<{ x0: number; y0: number } | null>(null);
+  const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const onMarqueeDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    const host = contentRef.current; if (!host) return;
+    try { host.setPointerCapture(e.pointerId); } catch {}
+    const r = host.getBoundingClientRect();
+    marqueeRef.current = { x0: e.clientX - r.left, y0: e.clientY - r.top };
+    setMarquee({ x: marqueeRef.current.x0, y: marqueeRef.current.y0, w: 0, h: 0 });
+  };
+  const onMarqueeMove = (e: React.PointerEvent) => {
+    if (!marqueeRef.current) return;
+    const host = contentRef.current; if (!host) return;
+    const r = host.getBoundingClientRect();
+    const x1 = e.clientX - r.left, y1 = e.clientY - r.top;
+    const x = Math.min(marqueeRef.current.x0, x1), y = Math.min(marqueeRef.current.y0, y1);
+    const w = Math.abs(x1 - marqueeRef.current.x0), h = Math.abs(y1 - marqueeRef.current.y0);
+    setMarquee({ x, y, w, h });
+    // Xác định clip giao với hình chữ nhật chọn.
+    const ids: string[] = [];
+    tracks.forEach((tr, ti) => {
+      const rowTop = RULER_H + ti * ROW_H, rowBot = rowTop + ROW_H;
+      if (rowBot < y || rowTop > y + h) return;
+      tr.clips.forEach(c => { const cl = (c.start / 1000) * pxPerSec, cr = cl + (c.dur / 1000) * pxPerSec; if (cr >= x && cl <= x + w) ids.push(c.id); });
+    });
+    onMarquee(ids);
+  };
+  const onMarqueeUp = () => { marqueeRef.current = null; setMarquee(null); };
   const scrubAt = (clientX: number) => {
     const el = rulerRef.current; if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -940,8 +1034,8 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, scrollRef, onSe
   return (
     <div className="flex h-[210px]">
       {/* Đầu hàng lớp */}
-      <div className="w-40 shrink-0 overflow-y-auto border-r border-white/10">
-        <div className="h-7 border-b border-white/10" />
+      <div ref={headersRef} onScroll={syncFromLeft} className="w-40 shrink-0 overflow-y-auto border-r border-white/10">
+        <div className="sticky top-0 z-20 h-7 border-b border-white/10 bg-[#12161c]" />
         {tracks.map(tr => (
           <div key={tr.id} className={`group flex h-16 flex-col justify-center gap-1 border-b border-white/5 px-2 ${tr.kind === 'audio' ? 'bg-emerald-500/5' : 'bg-blue-500/5'}`}>
             <div className="flex items-center gap-1">
@@ -958,13 +1052,14 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, scrollRef, onSe
           </div>
         ))}
       </div>
-      {/* Vùng lớp cuộn ngang */}
-      <div ref={scrollRef} className="relative min-w-0 flex-1 overflow-x-auto">
-        <div style={{ width }}>
-          {/* Thước: nhấn giữ và kéo để tua */}
-          <div ref={rulerRef} onPointerDown={onRulerDown} onPointerMove={onRulerMove} onPointerUp={onRulerUp}
+      {/* Vùng lớp: cuộn ngang và dọc, kéo giữa để pan, quét chọn nhiều clip */}
+      <div ref={scrollRef} onScroll={syncFromRight} onPointerDown={onContainerPointerDown} onPointerMove={onContainerPointerMove} onPointerUp={onContainerPointerUp}
+        className="relative min-w-0 flex-1 overflow-auto">
+        <div ref={contentRef} className="relative" style={{ width }} onPointerDown={onMarqueeDown} onPointerMove={onMarqueeMove} onPointerUp={onMarqueeUp}>
+          {/* Thước: cố định ở trên khi cuộn dọc, nhấn giữ và kéo để tua */}
+          <div ref={rulerRef} onPointerDown={e => { e.stopPropagation(); onRulerDown(e); }} onPointerMove={onRulerMove} onPointerUp={onRulerUp}
             onDragOver={allowDrop} onDrop={e => { const a = parseAsset(e); if (a) { e.preventDefault(); onDropAsset(a, null, timeFromX(e.clientX)); } }}
-            className="relative h-7 cursor-ew-resize touch-none select-none border-b border-white/10 bg-[#0e1319]">
+            className="sticky top-0 z-30 h-7 cursor-ew-resize touch-none select-none border-b border-white/10 bg-[#0e1319]">
             {ticks.map(s => <div key={s} className="pointer-events-none absolute top-0 h-full border-l border-white/10" style={{ left: s * pxPerSec }}><span className="ml-1 text-[9px] text-slate-500">{s}s</span></div>)}
           </div>
           {/* Hàng lớp */}
@@ -972,7 +1067,7 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, scrollRef, onSe
             <div key={tr.id} className={`relative h-16 border-b border-white/5 ${tr.kind === 'audio' ? 'bg-emerald-500/[0.03]' : ''}`} onClick={rowSeek}
               onDragOver={tr.locked ? undefined : allowDrop} onDrop={e => { if (tr.locked) return; const a = parseAsset(e); if (a) { e.preventDefault(); onDropAsset(a, tr.id, timeFromX(e.clientX)); } }}>
               {tr.clips.map(c => {
-                const left = (c.start / 1000) * pxPerSec; const w = (c.dur / 1000) * pxPerSec; const sel = selId === c.id;
+                const left = (c.start / 1000) * pxPerSec; const w = (c.dur / 1000) * pxPerSec; const sel = selId === c.id || selIds.includes(c.id);
                 const color = c.kind === 'audio' ? 'bg-emerald-500/25 border-emerald-400/50' : c.kind === 'text' ? 'bg-violet-500/25 border-violet-400/50' : c.kind === 'video' ? 'bg-blue-500/25 border-blue-400/50' : 'bg-amber-500/25 border-amber-400/50';
                 return (
                   <div key={c.id} onClick={e => { e.stopPropagation(); if (!tr.locked) onSelect(c.id); }}
@@ -997,8 +1092,12 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, scrollRef, onSe
               )}
             </div>
           ))}
-          {/* Đầu phát */}
-          <div className="pointer-events-none absolute top-0 z-20 h-full w-[2px] bg-rose-500" style={{ left: (playhead / 1000) * pxPerSec }}><div className="absolute -left-1.5 top-0 h-3 w-3 rounded-sm bg-rose-500" /></div>
+          {/* Đầu phát (con trỏ đỏ) luôn nổi trên cùng, thấy cả khi cuộn dọc */}
+          <div className="pointer-events-none absolute top-0 z-40 h-full w-[2px] bg-rose-500" style={{ left: (playhead / 1000) * pxPerSec }}><div className="absolute -left-1.5 top-0 h-3 w-3 rounded-sm bg-rose-500" /></div>
+          {/* Khung quét chọn nhiều clip */}
+          {marquee && marquee.w > 2 && marquee.h > 2 && (
+            <div className="pointer-events-none absolute z-40 rounded border border-brand bg-brand/15" style={{ left: marquee.x, top: marquee.y, width: marquee.w, height: marquee.h }} />
+          )}
         </div>
       </div>
     </div>
@@ -1052,10 +1151,8 @@ function PropsPanel({ clip, onProps, onClip, onDelete, onDuplicate, onSplitAudio
 
       {(clip.kind === 'video' || clip.kind === 'image' || clip.kind === 'text') && (
         <>
-          <div className="grid grid-cols-2 gap-2">
-            <Row label="Vị trí ngang %">{num(p.x, v => onProps({ x: v }))}</Row>
-            <Row label="Vị trí dọc %">{num(p.y, v => onProps({ y: v }))}</Row>
-          </div>
+          <Row label="Vị trí ngang X %">{sliderNum(p.x, v => onProps({ x: v }), -100, 100, 1)}</Row>
+          <Row label="Vị trí dọc Y %">{sliderNum(p.y, v => onProps({ y: v }), -100, 100, 1)}</Row>
           <Row label="Tỉ lệ (scale)">{sliderNum(p.scale, v => onProps({ scale: v }), 0.1, 4, 0.01, 2)}</Row>
           <Row label="Xoay (độ)">{sliderNum(p.rotation, v => onProps({ rotation: v }), -180, 180, 1)}</Row>
           <Row label={`Độ mờ đục ${Math.round(p.opacity * 100)}%`}>{sliderNum(p.opacity, v => onProps({ opacity: v }), 0, 1, 0.01, 2)}</Row>
