@@ -86,6 +86,9 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   });
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
+  // Chỉ vào chế độ sắp xếp (kéo thả + hiện nút ẩn) sau khi nhấn giữ. Bình thường
+  // rê chuột vẫn là con trỏ thường và bấm là mở chức năng.
+  const [sortMode, setSortMode] = useState(false);
 
   // Các biểu tượng chức năng ít dùng được người dùng ẩn bớt, lưu theo tài khoản.
   const HIDDEN_KEY = `dashboard_icon_hidden_${currentUser?.id || 'anon'}`;
@@ -105,18 +108,19 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const longPressed = useRef(false);
   const startPress = (id: string) => {
     if (pressTimer.current) window.clearTimeout(pressTimer.current);
-    pressTimer.current = window.setTimeout(() => { longPressed.current = true; setActiveMinusId(id); }, 450);
+    pressTimer.current = window.setTimeout(() => { longPressed.current = true; setSortMode(true); setActiveMinusId(id); }, 450);
   };
   const cancelPress = () => { if (pressTimer.current) { window.clearTimeout(pressTimer.current); pressTimer.current = null; } };
   const iconRowRef = useRef<HTMLDivElement>(null);
+  // Bấm ra ngoài hàng biểu tượng thì thoát chế độ sắp xếp.
   useEffect(() => {
-    if (!activeMinusId) return;
+    if (!sortMode) return;
     const onDown = (e: PointerEvent) => {
-      if (iconRowRef.current && !iconRowRef.current.contains(e.target as Node)) setActiveMinusId(null);
+      if (iconRowRef.current && !iconRowRef.current.contains(e.target as Node)) { setSortMode(false); setActiveMinusId(null); }
     };
     document.addEventListener('pointerdown', onDown);
     return () => document.removeEventListener('pointerdown', onDown);
-  }, [activeMinusId]);
+  }, [sortMode]);
 
   useEffect(() => {
     if (settings) {
@@ -311,28 +315,30 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
           <div ref={iconRowRef} className="flex flex-wrap justify-center gap-4">
             {filteredIcons.map(m => {
               const Icon = m.icon; const c = COLORS[m.color];
-              const draggable = !q;
+              // Chỉ cho kéo thả khi đang ở chế độ sắp xếp và không tìm kiếm.
+              const draggable = !q && sortMode;
               const isDragging = dragId === m.id;
               const isOver = overId === m.id && dragId !== m.id;
-              const showMinus = !q && activeMinusId === m.id;
+              const showMinus = !q && sortMode;
               return (
                 <div
                   key={m.id}
                   draggable={draggable}
-                  onDragStart={() => { if (draggable) { cancelPress(); setActiveMinusId(null); setDragId(m.id); } }}
+                  onDragStart={() => { if (draggable) { cancelPress(); setDragId(m.id); } }}
                   onDragOver={(e) => { if (draggable && dragId) { e.preventDefault(); setOverId(m.id); } }}
                   onDragLeave={() => { if (overId === m.id) setOverId(null); }}
                   onDrop={(e) => { if (draggable) { e.preventDefault(); handleDropOn(m.id); } }}
                   onDragEnd={() => { setDragId(null); setOverId(null); }}
-                  onPointerDown={() => { if (draggable) startPress(m.id); }}
+                  onPointerDown={() => { if (!q) startPress(m.id); }}
                   onPointerUp={cancelPress}
                   onPointerLeave={cancelPress}
                   onClick={() => {
                     if (longPressed.current) { longPressed.current = false; return; }
-                    if (!dragId) { setActiveMinusId(null); onSwitchTab(m.id); }
+                    if (sortMode) return; // đang sắp xếp thì bấm không mở chức năng
+                    if (!dragId) onSwitchTab(m.id);
                   }}
                   title={m.label}
-                  className={`group relative flex w-[84px] shrink-0 flex-col items-center gap-2 text-center rounded-2xl p-1 transition-all ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 rounded-2xl' : ''}`}
+                  className={`group relative flex w-[84px] shrink-0 flex-col items-center gap-2 text-center rounded-2xl p-1 transition-all ${sortMode ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 rounded-2xl' : ''}`}
                 >
                   {showMinus && (
                     <button
