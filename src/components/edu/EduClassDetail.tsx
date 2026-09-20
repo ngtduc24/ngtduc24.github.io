@@ -66,6 +66,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
   const [editingColumn, setEditingColumn] = useState<EduGradeColumn | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+  const [showGradeMenu, setShowGradeMenu] = useState(false);
   
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [editingUser, setEditingUser] = useState<EduUser | null>(null);
@@ -356,16 +357,58 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
             </div>
             
             <div className="flex items-center gap-2">
+              <div className="relative">
+                <button
+                  onClick={() => setShowGradeMenu(v => !v)}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-brand text-white hover:bg-brand-hover rounded-xl text-xs font-bold transition-all shadow-sm"
+                >
+                  <ClipboardCheck className="w-4 h-4" />
+                  <span>Chấm bài</span>
+                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showGradeMenu ? 'rotate-90' : ''}`} />
+                </button>
+                {showGradeMenu && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowGradeMenu(false)} />
+                    <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl border border-slate-100 shadow-xl z-20 p-2 animate-fadeIn max-h-80 overflow-y-auto">
+                      <p className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-wider">Chọn bài tập cần chấm</p>
+                      {assignments.length === 0 ? (
+                        <p className="px-3 py-4 text-xs text-slate-400 text-center">Chưa có bài tập nào. Tạo bài tập trước khi chấm.</p>
+                      ) : (
+                        assignments.map(a => {
+                          const col = gradeColumns.find(c => c.id === (a as any).grade_column_id || c.id === a.gradeColumnId);
+                          const subCount = submissions.filter(s => s.assignmentId === a.id).length;
+                          return (
+                            <button
+                              key={a.id}
+                              disabled={!col}
+                              onClick={() => { if (col) { setShowGradeMenu(false); onGrading(a.id, col.id); } }}
+                              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${col ? 'hover:bg-brand-light' : 'opacity-50 cursor-not-allowed'}`}
+                            >
+                              <span className="w-8 h-8 shrink-0 grid place-items-center rounded-lg bg-brand/10 text-brand"><FileText className="w-4 h-4" /></span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-xs font-bold text-slate-800">{a.title}</span>
+                                <span className="block truncate text-[10px] text-slate-400">{col ? `Cột: ${col.name}` : 'Chưa gán cột điểm'} · {subCount} SV đã nộp</span>
+                              </span>
+                              {col && <ArrowRight className="w-4 h-4 text-slate-300 shrink-0" />}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+
               {clazz && (
-                <EduExport 
-                  clazz={clazz as any} 
-                  users={users} 
-                  gradeColumns={gradeColumns} 
-                  grades={grades} 
+                <EduExport
+                  clazz={clazz as any}
+                  users={users}
+                  gradeColumns={gradeColumns}
+                  grades={grades}
                 />
               )}
 
-              <button 
+              <button
                 onClick={() => {
                   setEditingUser(null);
                   setUserForm({ stt: (users.length + 1).toString(), fullName: '', mssv: '' });
