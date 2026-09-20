@@ -467,6 +467,12 @@ export async function saveSubmission(submission: Partial<EduSubmission>) {
   return mapSubmission(data);
 }
 
+// Xóa bài nộp của sinh viên để cho phép nộp lại (khi nộp nhầm file, bị khóa).
+export async function deleteSubmission(id: string) {
+  const { error } = await supabase.from(SUBMISSIONS_TABLE).delete().eq('id', id);
+  if (error) throw error;
+}
+
 // Grades
 export async function getGrades(columnId: string) {
   const { data, error } = await supabase.from(GRADES_TABLE).select('*').eq('grade_column_id', columnId);

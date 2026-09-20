@@ -19,10 +19,11 @@ import {
   Link2,
   Type,
   X,
-  Maximize2
+  Maximize2,
+  RotateCcw
 } from 'lucide-react';
 import { EduUser, EduClass, EduAssignment, EduSubmission, EduGrade, EduGradeColumn } from '../../types/edu';
-import { getClassUsers, getSubmissions, getGrades, saveGrades, saveGradeColumn } from '../../lib/edu';
+import { getClassUsers, getSubmissions, getGrades, saveGrades, saveGradeColumn, deleteSubmission } from '../../lib/edu';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import Model3DViewer from './Model3DViewer';
@@ -88,6 +89,25 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
       ...prev,
       [userId]: { ...prev[userId], score }
     }));
+  };
+
+  // Cho sinh viên nộp lại: xóa bài đã nộp để mở khóa (dùng khi nộp nhầm file, bị khóa).
+  const handleResetSubmission = async (submissionId: string, fullName: string) => {
+    const ok = await confirm({
+      title: 'Cho nộp lại',
+      message: `Xóa bài đã nộp của ${fullName} để sinh viên nộp lại? Bài nộp hiện tại sẽ bị gỡ.`,
+      confirmText: 'Cho nộp lại',
+      cancelText: 'Hủy',
+      danger: true,
+    } as any);
+    if (!ok) return;
+    try {
+      await deleteSubmission(submissionId);
+      addNotification('Đã mở cho sinh viên nộp lại.', 'success');
+      loadData();
+    } catch (e: any) {
+      addNotification('Lỗi: ' + (e.message || e), 'error');
+    }
   };
 
   const handleNoteChange = (userId: string, note: string) => {
@@ -238,6 +258,13 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
                               second: '2-digit'
                             }).replace(/\//g, '-').replace(',', '')}
                           </span>
+                          <button
+                            onClick={() => handleResetSubmission(submission.id, user.fullName)}
+                            title="Xóa bài đã nộp để sinh viên nộp lại"
+                            className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-100"
+                          >
+                            <RotateCcw className="h-3 w-3" /> Cho nộp lại
+                          </button>
                         </div>
                       ) : (
                         <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No Submission</span>
