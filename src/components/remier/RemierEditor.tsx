@@ -24,7 +24,7 @@ const TOP_TABS: { id: LeftPanel; label: string; icon: any; soon?: boolean }[] = 
   { id: 'caption', label: 'Chú thích', icon: Captions },
   { id: 'sticker', label: 'Nhãn dán', icon: Sticker, soon: true },
   { id: 'effect', label: 'Hiệu ứng', icon: Sparkles },
-  { id: 'transition', label: 'Chuyển tiếp', icon: ArrowLeftRight, soon: true },
+  { id: 'transition', label: 'Chuyển tiếp', icon: ArrowLeftRight },
   { id: 'filter', label: 'Bộ lọc', icon: SlidersHorizontal },
 ];
 interface ClipProps { x: number; y: number; scale: number; rotation: number; opacity: number; volume: number; text: string; fontSize: number; color: string; fontWeight: number; align: string; }
@@ -32,7 +32,14 @@ type KfProp = 'x' | 'y' | 'scale' | 'rotation' | 'opacity' | 'volume';
 const KF_PROPS: KfProp[] = ['x', 'y', 'scale', 'rotation', 'opacity', 'volume'];
 interface KF { t: number; v: number; } // t: mili giây tính từ đầu clip
 interface Adj { brightness: number; contrast: number; saturate: number; sepia: number; grayscale: number; blur: number; }
-interface Clip { id: string; kind: ClipKind; name: string; src?: string; thumb?: string; start: number; dur: number; inPoint: number; srcDur?: number; fadeIn?: number; fadeOut?: number; props: ClipProps; kf?: Partial<Record<KfProp, KF[]>>; adj?: Adj; }
+type TransType = 'fade' | 'slide' | 'wipe';
+interface Trans { type: TransType; dur: number; } // chuyển tiếp vào đầu clip từ clip liền trước cùng lớp
+interface Clip { id: string; kind: ClipKind; name: string; src?: string; thumb?: string; start: number; dur: number; inPoint: number; srcDur?: number; fadeIn?: number; fadeOut?: number; props: ClipProps; kf?: Partial<Record<KfProp, KF[]>>; adj?: Adj; trans?: Trans; }
+const TRANSITIONS: { type: TransType; label: string }[] = [
+  { type: 'fade', label: 'Hòa tan' },
+  { type: 'slide', label: 'Trượt' },
+  { type: 'wipe', label: 'Quét' },
+];
 
 const defaultAdj = (): Adj => ({ brightness: 1, contrast: 1, saturate: 1, sepia: 0, grayscale: 0, blur: 0 });
 const filterStr = (a: Adj) => `brightness(${a.brightness}) contrast(${a.contrast}) saturate(${a.saturate}) sepia(${a.sepia}) grayscale(${a.grayscale}) blur(${a.blur}px)`;
@@ -268,12 +275,12 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   };
   // Vẽ một lớp trong hệ tọa độ logic W×H (không phụ thuộc kích thước canvas thật),
   // nhờ vậy xuất ở độ phân giải nào chữ và bố cục vẫn đúng tỉ lệ.
-  const drawClipVisual = (ctx: CanvasRenderingContext2D, clip: Clip, LW: number, LH: number, t: number) => {
+  const drawClipVisual = (ctx: CanvasRenderingContext2D, clip: Clip, LW: number, LH: number, t: number, opts?: { alphaMul?: number; dx?: number }) => {
     const p = evalClipProps(clip, t);
-    const alpha = p.opacity * fadeFactor(clip, t);
+    const alpha = p.opacity * fadeFactor(clip, t) * (opts?.alphaMul ?? 1);
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.translate(LW / 2 + (p.x / 100) * LW, LH / 2 + (p.y / 100) * LH);
+    ctx.translate(LW / 2 + (p.x / 100) * LW + (opts?.dx ?? 0), LH / 2 + (p.y / 100) * LH);
     ctx.rotate((p.rotation * Math.PI) / 180);
     ctx.scale(p.scale, p.scale);
     if (clip.kind === 'text') {
@@ -312,7 +319,21 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
     const tk = tracksRef.current;
     for (let i = tk.length - 1; i >= 0; i--) {
       const c = activeClip(tk[i], t);
-      if (c && c.kind !== 'audio') drawClipVisual(ctx, c, W, H, t);
+      if (!c || c.kind === 'audio') continue;
+      // Chuyển tiếp vào đầu clip: hòa với clip liền trước cùng lớp.
+      const into = t - c.start;
+      if (c.trans && c.trans.dur > 0 && into < c.trans.dur) {
+        const prog = Math.max(0, Math.min(1, into / c.trans.dur));
+        const P = tk[i].clips.find(x => x.id !== c.id && x.kind !== 'audio' && Math.abs((x.start + x.dur) - c.start) < 40);
+        if (P) {
+          const pt = P.start + P.dur - 1;
+          if (c.trans.type === 'fade') { drawClipVisual(ctx, P, W, H, pt, { alphaMul: 1 - prog }); drawClipVisual(ctx, c, W, H, t, { alphaMul: prog }); }
+          else if (c.trans.type === 'slide') { drawClipVisual(ctx, P, W, H, pt, { dx: -prog * W }); drawClipVisual(ctx, c, W, H, t, { dx: (1 - prog) * W }); }
+          else { drawClipVisual(ctx, P, W, H, pt); ctx.save(); ctx.beginPath(); ctx.rect(0, 0, prog * W, H); ctx.clip(); drawClipVisual(ctx, c, W, H, t); ctx.restore(); }
+          continue;
+        }
+      }
+      drawClipVisual(ctx, c, W, H, t);
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -515,6 +536,21 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   const applyFilterPreset = (id: string, adj: Adj) => {
     setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.map(c => c.id === id ? { ...c, adj: adj.brightness === 1 && adj.contrast === 1 && adj.saturate === 1 && adj.sepia === 0 && adj.grayscale === 0 && adj.blur === 0 ? undefined : { ...adj } } : c) }))); markDirty();
   };
+  // Áp chuyển tiếp vào đầu clip. Cần có clip liền trước cùng lớp.
+  const applyTransition = (id: string, type: TransType) => {
+    let ok = false;
+    setTracks(prev => prev.map(tr => {
+      const c = tr.clips.find(x => x.id === id); if (!c) return tr;
+      const hasPrev = tr.clips.some(x => x.id !== id && x.kind !== 'audio' && Math.abs((x.start + x.dur) - c.start) < 40);
+      if (!hasPrev) return tr;
+      ok = true;
+      return { ...tr, clips: tr.clips.map(x => x.id === id ? { ...x, trans: { type, dur: x.trans?.dur || 500 } } : x) };
+    }));
+    markDirty();
+    if (!ok) addNotification('Cần có một clip nằm ngay trước clip này trên cùng lớp để đặt chuyển tiếp.', 'warning');
+  };
+  const setTransDur = (id: string, dur: number) => { setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.map(c => c.id === id && c.trans ? { ...c, trans: { ...c.trans, dur: Math.max(100, Math.round(dur)) } } : c) }))); markDirty(); };
+  const clearTransition = (id: string) => { setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.map(c => c.id === id ? { ...c, trans: undefined } : c) }))); markDirty(); };
   // Áp hiệu ứng chuyển động (ghi keyframe theo thời lượng clip).
   const applyEffect = (id: string, key: string) => {
     setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.map(c => {
@@ -789,7 +825,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
             })}
           </div>
           <div className="flex min-h-0 flex-1 overflow-hidden">
-            <LibraryPanel currentUser={currentUser} panel={leftPanel} selClipKind={selClip?.clip.kind || null} onAddAsset={addClipFromAsset} onAddText={addTextClip} onImportSubtitles={importSubtitles} onApplyFilter={(adj) => { if (selClip) applyFilterPreset(selClip.clip.id, adj); }} onApplyEffect={(key) => { if (selClip) applyEffect(selClip.clip.id, key); }} />
+            <LibraryPanel currentUser={currentUser} panel={leftPanel} selClipKind={selClip?.clip.kind || null} onAddAsset={addClipFromAsset} onAddText={addTextClip} onImportSubtitles={importSubtitles} onApplyFilter={(adj) => { if (selClip) applyFilterPreset(selClip.clip.id, adj); }} onApplyEffect={(key) => { if (selClip) applyEffect(selClip.clip.id, key); }} onApplyTransition={(type) => { if (selClip) applyTransition(selClip.clip.id, type); }} />
           </div>
         </div>
 
@@ -846,7 +882,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 
         {/* Bảng thuộc tính phải */}
         <div className="w-[320px] shrink-0 overflow-y-auto border-l border-white/10 bg-[#151a21] p-4">
-          {selClip ? <PropsPanel clip={selClip.clip} playhead={playhead} W={W} H={H} onProps={(p) => updateClipProps(selClip.clip.id, p)} onClip={(p) => updateClip(selClip.clip.id, p)} onKf={(prop, v) => setPropAt(selClip.clip.id, prop, v)} onToggleKey={(prop) => toggleKey(selClip.clip.id, prop)} onGotoKey={(prop, dir) => gotoKey(selClip.clip, prop, dir)} onReset={() => resetTransform(selClip.clip.id)} onAdj={(patch) => updateClipAdj(selClip.clip.id, patch)} onApplyFilter={(adj) => applyFilterPreset(selClip.clip.id, adj)} onDelete={() => deleteClip(selClip.clip.id)} onDuplicate={() => duplicateClip(selClip.clip.id)} onSplitAudio={() => splitAudioFromVideo(selClip.clip)} />
+          {selClip ? <PropsPanel clip={selClip.clip} playhead={playhead} W={W} H={H} onProps={(p) => updateClipProps(selClip.clip.id, p)} onClip={(p) => updateClip(selClip.clip.id, p)} onKf={(prop, v) => setPropAt(selClip.clip.id, prop, v)} onToggleKey={(prop) => toggleKey(selClip.clip.id, prop)} onGotoKey={(prop, dir) => gotoKey(selClip.clip, prop, dir)} onReset={() => resetTransform(selClip.clip.id)} onAdj={(patch) => updateClipAdj(selClip.clip.id, patch)} onApplyFilter={(adj) => applyFilterPreset(selClip.clip.id, adj)} onSetTransDur={(d) => setTransDur(selClip.clip.id, d)} onClearTransition={() => clearTransition(selClip.clip.id)} onDelete={() => deleteClip(selClip.clip.id)} onDuplicate={() => duplicateClip(selClip.clip.id)} onSplitAudio={() => splitAudioFromVideo(selClip.clip)} />
             : <div className="mt-10 text-center text-xs text-slate-500">Chọn một lớp trên dòng thời gian để chỉnh thuộc tính.</div>}
         </div>
       </div>
@@ -961,7 +997,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 }
 
 // ============================ Thư viện trái ============================
-function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, onImportSubtitles, onApplyFilter, onApplyEffect }: { currentUser: UserAccount; panel: LeftPanel; selClipKind: ClipKind | null; onAddAsset: (a: MvAsset) => void; onAddText: () => void; onImportSubtitles: (cues: { start: number; dur: number; text: string }[]) => void; onApplyFilter: (adj: Adj) => void; onApplyEffect: (key: string) => void; }) {
+function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, onImportSubtitles, onApplyFilter, onApplyEffect, onApplyTransition }: { currentUser: UserAccount; panel: LeftPanel; selClipKind: ClipKind | null; onAddAsset: (a: MvAsset) => void; onAddText: () => void; onImportSubtitles: (cues: { start: number; dur: number; text: string }[]) => void; onApplyFilter: (adj: Adj) => void; onApplyEffect: (key: string) => void; onApplyTransition: (type: TransType) => void; }) {
   const { addNotification } = useNotifications();
   const [source, setSource] = useState<'mine' | 'shared'>('mine');
   const subRef = useRef<HTMLInputElement>(null);
@@ -1045,6 +1081,25 @@ function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, 
           ))}
         </div>
         <p className="px-3 pb-3 text-[11px] text-slate-500">Chỉnh sâu hơn (sáng, tương phản, bão hòa, làm mờ) ở bảng thuộc tính bên phải.</p>
+      </div>
+    );
+  }
+  // Tab Chuyển tiếp: áp hiệu ứng nối vào đầu clip đang chọn.
+  if (panel === 'transition') {
+    const canApply = selClipKind === 'video' || selClipKind === 'image' || selClipKind === 'text';
+    return (
+      <div className="flex w-[280px] shrink-0 flex-col border-r border-white/10 bg-[#151a21]">
+        <div className="px-3 pt-3 pb-1 text-xs font-black uppercase tracking-wide text-slate-400">Chuyển tiếp</div>
+        {!canApply && <p className="px-3 pb-2 text-[11px] text-amber-400/80">Chọn clip (có clip liền trước cùng lớp) rồi bấm kiểu chuyển tiếp.</p>}
+        <div className="grid grid-cols-2 gap-2 overflow-y-auto p-3">
+          {TRANSITIONS.map(f => (
+            <button key={f.type} disabled={!canApply} onClick={() => onApplyTransition(f.type)}
+              className="flex items-center justify-center rounded-lg border border-white/10 bg-black/30 px-2 py-4 text-center text-[11px] font-bold text-slate-300 transition-colors hover:border-brand hover:text-brand disabled:opacity-40">
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <p className="px-3 pb-3 text-[11px] text-slate-500">Chuyển tiếp đặt vào chỗ nối giữa clip này và clip ngay trước nó. Chỉnh thời lượng ở bảng thuộc tính.</p>
       </div>
     );
   }
@@ -1267,6 +1322,7 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, selIds, scrollR
                     {c.kf && Array.from(new Set(Object.values(c.kf).flat().map(k => k.t))).map((kt, ki) => (
                       <span key={ki} className="pointer-events-none absolute bottom-0.5 z-10 h-1.5 w-1.5 -translate-x-1/2 rotate-45 bg-amber-300" style={{ left: (kt / 1000) * pxPerSec }} />
                     ))}
+                    {c.trans && <span className="pointer-events-none absolute left-0 top-0 z-10 flex h-full items-center rounded-l-md bg-brand/70 px-0.5 text-white"><ArrowLeftRight className="h-3 w-3" /></span>}
                   </div>
                 );
               })}
@@ -1292,7 +1348,7 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, selIds, scrollR
 }
 
 // ============================ Bảng thuộc tính ============================
-function PropsPanel({ clip, playhead, W, H, onProps, onClip, onKf, onToggleKey, onGotoKey, onReset, onAdj, onApplyFilter, onDelete, onDuplicate, onSplitAudio }: { clip: Clip; playhead: number; W: number; H: number; onProps: (p: Partial<ClipProps>) => void; onClip: (p: Partial<Clip>) => void; onKf: (prop: KfProp, v: number) => void; onToggleKey: (prop: KfProp) => void; onGotoKey: (prop: KfProp, dir: number) => void; onReset: () => void; onAdj: (patch: Partial<Adj>) => void; onApplyFilter: (adj: Adj) => void; onDelete: () => void; onDuplicate: () => void; onSplitAudio: () => void; }) {
+function PropsPanel({ clip, playhead, W, H, onProps, onClip, onKf, onToggleKey, onGotoKey, onReset, onAdj, onApplyFilter, onSetTransDur, onClearTransition, onDelete, onDuplicate, onSplitAudio }: { clip: Clip; playhead: number; W: number; H: number; onProps: (p: Partial<ClipProps>) => void; onClip: (p: Partial<Clip>) => void; onKf: (prop: KfProp, v: number) => void; onToggleKey: (prop: KfProp) => void; onGotoKey: (prop: KfProp, dir: number) => void; onReset: () => void; onAdj: (patch: Partial<Adj>) => void; onApplyFilter: (adj: Adj) => void; onSetTransDur: (d: number) => void; onClearTransition: () => void; onDelete: () => void; onDuplicate: () => void; onSplitAudio: () => void; }) {
   const p = clip.props;
   const ep = evalClipProps(clip, playhead); // giá trị hiệu dụng tại đầu phát (đã tính key)
   const local = playhead - clip.start;
@@ -1422,6 +1478,16 @@ function PropsPanel({ clip, playhead, W, H, onProps, onClip, onKf, onToggleKey, 
 
       {clip.kind === 'video' && (
         <button onClick={onSplitAudio} className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10"><Volume2 className="h-4 w-4" /> Tách âm thanh khỏi video</button>
+      )}
+
+      {clip.trans && (
+        <div className="mb-2 rounded-xl border border-white/5 bg-white/[0.02] p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[11px] font-black uppercase text-slate-300">Chuyển tiếp · {TRANSITIONS.find(t => t.type === clip.trans!.type)?.label}</span>
+            <button onClick={onClearTransition} className="text-[10px] font-bold text-rose-400 hover:underline">Bỏ</button>
+          </div>
+          <Row label={`Thời lượng ${(clip.trans.dur / 1000).toFixed(1)}s`}>{sliderNum(clip.trans.dur / 1000, v => onSetTransDur(v * 1000), 0.1, 3, 0.1, 1)}</Row>
+        </div>
       )}
 
       <div className="grid grid-cols-2 gap-2">
