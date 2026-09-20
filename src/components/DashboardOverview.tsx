@@ -4,7 +4,7 @@ import {
   Calculator, Settings, Users, BookOpen, Search, X, Database, Sparkles,
   CalendarDays, BarChart3, GraduationCap, Wrench, FolderKanban, Mail,
   Library, Image as ImageIcon, LayoutGrid, ArrowRight, Bell, ChevronDown,
-  Home, FileText, CheckCircle2, ClipboardList, Scan, LayoutTemplate, Megaphone, Minus, Eye, Shield
+  Home, FileText, CheckCircle2, ClipboardList, Scan, LayoutTemplate, Megaphone, Minus, Eye, Shield, Plus
 } from 'lucide-react';
 import {
   getStatsFromSupabase,
@@ -89,6 +89,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   // Chỉ vào chế độ sắp xếp (kéo thả + hiện nút ẩn) sau khi nhấn giữ. Bình thường
   // rê chuột vẫn là con trỏ thường và bấm là mở chức năng.
   const [sortMode, setSortMode] = useState(false);
+  const [showAddPicker, setShowAddPicker] = useState(false);
   const dragIdRef = useRef<string | null>(null);
   const overIdRef = useRef<string | null>(null);
 
@@ -103,6 +104,12 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   };
   const hideIcon = (id: string) => { if (!hiddenIds.includes(id)) persistHidden([...hiddenIds, id]); };
   const restoreHidden = () => persistHidden([]);
+  // Hiện lại một phím tắt: bỏ khỏi danh sách ẩn và đảm bảo có trong thứ tự.
+  const showShortcut = (id: string) => {
+    persistHidden(hiddenIds.filter(x => x !== id));
+    if (!iconOrder.includes(id)) { const next = [...iconOrder, id]; setIconOrder(next); try { localStorage.setItem(ORDER_KEY, JSON.stringify(next)); } catch {} }
+  };
+  const toggleShortcut = (id: string) => { if (hiddenIds.includes(id)) showShortcut(id); else hideIcon(id); };
 
   // Nút dấu trừ chỉ hiện khi nhấn giữ vào biểu tượng.
   const [activeMinusId, setActiveMinusId] = useState<string | null>(null);
@@ -410,7 +417,50 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                 </div>
               );
             })}
+            {/* Ô vuông dấu + chỉ hiện khi đang ở chế độ sắp xếp, bấm để thêm phím tắt. */}
+            {!q && sortMode && (
+              <button onClick={() => setShowAddPicker(true)} title="Thêm phím tắt" className="flex w-[84px] shrink-0 flex-col items-center gap-2 rounded-2xl p-1">
+                <span className="grid h-14 w-14 place-items-center rounded-2xl border-2 border-dashed border-slate-300 text-slate-400 transition-colors hover:border-brand hover:text-brand">
+                  <Plus className="h-7 w-7" />
+                </span>
+                <span className="text-[11px] font-bold text-slate-400 leading-tight">Thêm</span>
+              </button>
+            )}
           </div>
+          </div>
+        </div>
+      )}
+
+      {/* Popup chọn chức năng để thêm vào phím tắt đầu trang */}
+      {showAddPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" onClick={() => setShowAddPicker(false)}>
+          <div className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-100 p-5">
+              <div>
+                <h3 className="font-display text-base font-bold text-slate-900">Thêm phím tắt đầu trang</h3>
+                <p className="text-[11px] text-slate-400">Chọn chức năng muốn hiện ở hàng phím tắt.</p>
+              </div>
+              <button onClick={() => setShowAddPicker(false)} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="flex-1 space-y-1 overflow-y-auto p-3">
+              {baseIcons.map(m => {
+                const Icon = m.icon; const c = COLORS[m.color]; const shown = !hiddenIds.includes(m.id);
+                return (
+                  <button key={m.id} onClick={() => toggleShortcut(m.id)} className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition-colors ${shown ? 'border-brand/30 bg-brand-light' : 'border-slate-100 hover:bg-slate-50'}`}>
+                    <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${c.bg} ${c.text}`}><Icon className="h-4.5 w-4.5" /></span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13px] font-bold text-slate-800">{m.label}</span>
+                      <span className="block truncate text-[10px] text-slate-400">{m.desc}</span>
+                    </span>
+                    <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${shown ? 'bg-brand text-white' : 'border border-slate-300 text-transparent'}`}>{shown ? <CheckCircle2 className="h-4 w-4" /> : <Plus className="h-3.5 w-3.5 text-slate-400" />}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center justify-between gap-2 border-t border-slate-100 p-4">
+              {hiddenIds.length > 0 ? <button onClick={restoreHidden} className="text-[11px] font-bold text-brand hover:underline">Hiện lại tất cả</button> : <span />}
+              <button onClick={() => setShowAddPicker(false)} className="rounded-xl bg-brand px-5 py-2.5 text-xs font-bold text-white hover:bg-brand-hover">Xong</button>
+            </div>
           </div>
         </div>
       )}
