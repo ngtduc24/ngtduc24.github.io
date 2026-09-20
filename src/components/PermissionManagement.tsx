@@ -31,6 +31,7 @@ const MODULES: ModuleDef[] = [
   { id: 'quantitative_analysis', label: 'Phân tích định lượng', flags: [['canCreateQuantitative', 'Tạo'], ['canEditQuantitative', 'Sửa'], ['canDeleteQuantitative', 'Xóa'], ['canImportQuantitative', 'Nhập'], ['canExportQuantitative', 'Xuất'], ['canManageQuantitativeSettings', 'Cấu hình']] },
   { id: 'edu', label: 'Quản lý Giáo dục', desc: 'Trường, lớp, sinh viên, bài tập, bảng điểm', flags: [['canCreateEdu', 'Tạo lớp/trường'], ['canEditEdu', 'Sửa'], ['canDeleteEdu', 'Xóa'], ['canImportEdu', 'Nhập lớp/SV'], ['canExportEdu', 'Xuất bảng điểm'], ['canGradeImportEdu', 'Nhập điểm'], ['canGradeEdu', 'Chấm điểm']] },
   { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn', flags: [['canElearningPublic', 'Công khai kho chung'], ['canElearningAssign', 'Giao cho lớp']] },
+  { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp trên trình duyệt', flags: [['canRemierShared', 'Quản lý thư viện chung']] },
   { id: 'ar_module', label: 'Tạo AR', desc: 'Tạo điểm ảnh AR kèm mã QR để quét bằng điện thoại' },
   { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn' },
   { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn' },

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Search, ArrowLeft, ArrowRight, LayoutGrid,
   CalendarDays, BookOpen, LayoutTemplate, Image as ImageIcon, BarChart3,
-  GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone, Shield, CheckCircle2, ClipboardList
+  GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone, Shield, CheckCircle2, ClipboardList, Clapperboard
 } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
 
@@ -47,6 +47,7 @@ const ALL_FEATURES: FeatureItem[] = [
   { id: 'edu_exam', label: 'Trắc nghiệm', desc: 'Tạo và chấm đề kiểm tra trắc nghiệm', icon: CheckCircle2, color: 'blue', group: 'Giảng dạy và nội dung' },
   { id: 'edu_grade', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường', icon: ClipboardList, color: 'emerald', group: 'Giảng dạy và nội dung' },
   { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ, chia sẻ và giao bài giảng theo môn', icon: BookOpen, color: 'orange', group: 'Giảng dạy và nội dung' },
+  { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp ngay trên trình duyệt', icon: Clapperboard, color: 'rose', group: 'Công cụ thiết kế' },
   { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Lưu trữ và quản lý hồ sơ cá nhân, dự án', icon: FolderKanban, color: 'teal', group: 'Giảng dạy và nội dung' },
   { id: 'media_library', label: 'Thư viện', desc: 'Tài liệu, mẫu biểu, dữ liệu tham khảo', icon: Library, color: 'violet', group: 'Giảng dạy và nội dung' },
 

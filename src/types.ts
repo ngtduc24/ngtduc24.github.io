@@ -55,6 +55,8 @@ export interface UserAccount {
   // E-Learning Permissions
   canElearningPublic?: boolean;
   canElearningAssign?: boolean;
+  // Remier (dựng phim)
+  canRemierShared?: boolean;
   createdAt: string;
   password?: string;
   avatarUrl?: string;

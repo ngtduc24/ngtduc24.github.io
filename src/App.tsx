@@ -29,10 +29,11 @@ import QuizTake from './components/edu/QuizTake';
 import ELessonView from './components/edu/ELessonView';
 import ELessonPreviewPage from './components/edu/ELessonPreviewPage';
 import ELearningModule from './components/edu/ELearningModule';
+import RemierModule from './components/remier/RemierModule';
 import EduModule from './components/EduModule';
 import { setEduAuthContext } from './lib/edu';
 import { TaskProvider } from './components/TaskContext';
-import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban, GraduationCap } from 'lucide-react';
+import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban, GraduationCap, Film } from 'lucide-react';
 import { supabase } from "./lib/supabase";
 import { saveUser, deleteUser, getUsers, getUserById, mapUserFromDB, seedDefaultUsersIfNeeded, getDefaultSettingsFromSupabase, saveDefaultSettingsToSupabase, testSupabaseConnection, getNotificationsFromSupabase, subscribeToNotificationChanges, USERS_TABLE } from './lib/data';
 import { auth, db } from './lib/firebase';
@@ -325,6 +326,7 @@ export default function App() {
       settings: 'Cấu hình hệ thống',
       edu: 'Quản lý Giáo dục & Đào tạo',
       elearning: 'E-Learning · Bài giảng',
+      remier: 'Remier · Dựng phim',
     };
 
     if (entryView === 'admin') {
@@ -710,6 +712,8 @@ export default function App() {
         return <EduModule currentUser={currentUser} settings={settings} />;
       case 'elearning':
         return <ELearningModule currentUser={currentUser} />;
+      case 'remier':
+        return <RemierModule currentUser={currentUser} />;
       // Mã cũ của mục Tạo AR. Giữ lại để tài khoản nào đang mở sẵn mục này, hoặc có
       // đường dẫn cũ lưu trong trình duyệt, vẫn vào đúng nơi thay vì gặp trang trắng.
       case 'ar_module':
@@ -846,6 +850,7 @@ export default function App() {
       { id: 'quantitative_analysis', label: 'Phân tích số liệu định lượng', icon: Calculator },
       { id: 'edu', label: 'Quản lý Giáo dục', icon: GraduationCap },
       { id: 'elearning', label: 'E-Learning', icon: BookOpen },
+      { id: 'remier', label: 'Remier · Dựng phim', icon: Film },
       { id: 'utilities', label: 'Tiện ích', icon: Wrench },
       { id: 'portfolio_cms', label: 'Quản trị Portfolio', icon: Shield },
       { id: 'notifications', icon: Bell, label: 'Thông báo' },
