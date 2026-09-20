@@ -22,7 +22,7 @@ const TOP_TABS: { id: LeftPanel; label: string; icon: any; soon?: boolean }[] = 
   { id: 'audio', label: 'Âm thanh', icon: Music },
   { id: 'text', label: 'Văn bản', icon: Type },
   { id: 'caption', label: 'Chú thích', icon: Captions },
-  { id: 'sticker', label: 'Nhãn dán', icon: Sticker, soon: true },
+  { id: 'sticker', label: 'Nhãn dán', icon: Sticker },
   { id: 'effect', label: 'Hiệu ứng', icon: Sparkles },
   { id: 'transition', label: 'Chuyển tiếp', icon: ArrowLeftRight },
   { id: 'filter', label: 'Bộ lọc', icon: SlidersHorizontal },
@@ -43,6 +43,9 @@ const TRANSITIONS: { type: TransType; label: string }[] = [
 
 const defaultAdj = (): Adj => ({ brightness: 1, contrast: 1, saturate: 1, sepia: 0, grayscale: 0, blur: 0 });
 const filterStr = (a: Adj) => `brightness(${a.brightness}) contrast(${a.contrast}) saturate(${a.saturate}) sepia(${a.sepia}) grayscale(${a.grayscale}) blur(${a.blur}px)`;
+// Bộ nhãn dán biểu tượng có sẵn (về sau admin có thể thay bằng hình ở cài đặt).
+const STICKERS: string[] = ['⭐', '❤️', '🎉', '👍', '🔥', '✅', '❗', '➡️', '⬅️', '💬', '📌', '🏆', '🎓', '📚', '💡', '😀', '😍', '👏', '🎯', '✨'];
+
 // Preset hiệu ứng: sinh keyframe chuyển động theo thời lượng clip.
 const EFFECT_PRESETS: { key: string; label: string }[] = [
   { key: 'zoomin', label: 'Phóng to dần' },
@@ -94,6 +97,19 @@ function evalClipProps(clip: Clip, T: number): ClipProps {
     scale: kfValue(clip.kf.scale, local, p.scale), rotation: kfValue(clip.kf.rotation, local, p.rotation),
     opacity: kfValue(clip.kf.opacity, local, p.opacity), volume: kfValue(clip.kf.volume, local, p.volume),
   };
+}
+// Tìm vị trí bắt đầu không chồng lấn clip khác trên cùng lớp (đẩy sang phải nếu đè).
+function freeStart(clips: Clip[], start: number, dur: number, excludeId?: string): number {
+  let s = Math.max(0, Math.round(start)); let changed = true; let guard = 0;
+  while (changed && guard++ < 300) {
+    changed = false;
+    for (const c of clips) {
+      if (c.id === excludeId) continue;
+      const cs = c.start, ce = c.start + c.dur;
+      if (s < ce && s + dur > cs) { s = ce; changed = true; }
+    }
+  }
+  return Math.round(s);
 }
 // Thêm hoặc cập nhật một keyframe tại mốc t (gộp nếu gần trùng ~20ms).
 function upsertKey(list: KF[], t: number, v: number): KF[] {
@@ -431,8 +447,9 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
         if (lane === 'audio') { next.push(nt); idx = next.length - 1; }
         else { next.unshift(nt); idx = 0; }
       }
-      const c = start != null ? { ...clip, start: Math.max(0, Math.round(start)) } : clip;
-      next[idx] = { ...next[idx], clips: [...next[idx].clips, c] };
+      const desired = start != null ? start : clip.start;
+      const s = freeStart(next[idx].clips, desired, clip.dur);
+      next[idx] = { ...next[idx], clips: [...next[idx].clips, { ...clip, start: s }] };
       return next;
     });
   };
@@ -443,7 +460,8 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
       const next = [...prev];
       let idx = next.findIndex(t => t.text && !t.locked);
       if (idx < 0) { next.unshift({ id: uid(), kind: 'video', text: true, name: 'Chữ', clips: [] }); idx = 0; }
-      next[idx] = { ...next[idx], clips: [...next[idx].clips, clip] };
+      const s = freeStart(next[idx].clips, clip.start, clip.dur);
+      next[idx] = { ...next[idx], clips: [...next[idx].clips, { ...clip, start: s }] };
       return next;
     });
   };
@@ -463,6 +481,13 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
     const clip: Clip = { id: uid(), kind, name: asset.title, src: asset.url, thumb: asset.thumb_url || undefined, start: Math.max(0, Math.round(timeMs)), dur, inPoint: 0, srcDur: asset.duration_ms || undefined, props: defaultProps() };
     placeClipAt(clip, kind === 'audio' ? 'audio' : 'video', trackId || undefined, clip.start);
     markDirty(); setSelId(clip.id); setTimeout(() => draw(playheadRef.current), 0);
+  };
+
+  const addSticker = (emoji: string) => {
+    const clip: Clip = { id: uid(), kind: 'text', name: 'Nhãn dán', start: playheadRef.current, dur: 4000, inPoint: 0, props: { ...defaultProps(), text: emoji, fontSize: 160 } };
+    placeTextClip(clip);
+    markDirty(); setSelId(clip.id); setMultiSel([]);
+    seekTo(clip.start); setTimeout(() => draw(clip.start), 0);
   };
 
   const addTextClip = () => {
@@ -825,7 +850,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
             })}
           </div>
           <div className="flex min-h-0 flex-1 overflow-hidden">
-            <LibraryPanel currentUser={currentUser} panel={leftPanel} selClipKind={selClip?.clip.kind || null} onAddAsset={addClipFromAsset} onAddText={addTextClip} onImportSubtitles={importSubtitles} onApplyFilter={(adj) => { if (selClip) applyFilterPreset(selClip.clip.id, adj); }} onApplyEffect={(key) => { if (selClip) applyEffect(selClip.clip.id, key); }} onApplyTransition={(type) => { if (selClip) applyTransition(selClip.clip.id, type); }} />
+            <LibraryPanel currentUser={currentUser} panel={leftPanel} selClipKind={selClip?.clip.kind || null} onAddAsset={addClipFromAsset} onAddText={addTextClip} onImportSubtitles={importSubtitles} onApplyFilter={(adj) => { if (selClip) applyFilterPreset(selClip.clip.id, adj); }} onApplyEffect={(key) => { if (selClip) applyEffect(selClip.clip.id, key); }} onApplyTransition={(type) => { if (selClip) applyTransition(selClip.clip.id, type); }} onAddSticker={addSticker} />
           </div>
         </div>
 
@@ -997,7 +1022,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 }
 
 // ============================ Thư viện trái ============================
-function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, onImportSubtitles, onApplyFilter, onApplyEffect, onApplyTransition }: { currentUser: UserAccount; panel: LeftPanel; selClipKind: ClipKind | null; onAddAsset: (a: MvAsset) => void; onAddText: () => void; onImportSubtitles: (cues: { start: number; dur: number; text: string }[]) => void; onApplyFilter: (adj: Adj) => void; onApplyEffect: (key: string) => void; onApplyTransition: (type: TransType) => void; }) {
+function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, onImportSubtitles, onApplyFilter, onApplyEffect, onApplyTransition, onAddSticker }: { currentUser: UserAccount; panel: LeftPanel; selClipKind: ClipKind | null; onAddAsset: (a: MvAsset) => void; onAddText: () => void; onImportSubtitles: (cues: { start: number; dur: number; text: string }[]) => void; onApplyFilter: (adj: Adj) => void; onApplyEffect: (key: string) => void; onApplyTransition: (type: TransType) => void; onAddSticker: (emoji: string) => void; }) {
   const { addNotification } = useNotifications();
   const [source, setSource] = useState<'mine' | 'shared'>('mine');
   const subRef = useRef<HTMLInputElement>(null);
@@ -1081,6 +1106,20 @@ function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, 
           ))}
         </div>
         <p className="px-3 pb-3 text-[11px] text-slate-500">Chỉnh sâu hơn (sáng, tương phản, bão hòa, làm mờ) ở bảng thuộc tính bên phải.</p>
+      </div>
+    );
+  }
+  // Tab Nhãn dán: chèn biểu tượng có sẵn vào khung hình.
+  if (panel === 'sticker') {
+    return (
+      <div className="flex w-[280px] shrink-0 flex-col border-r border-white/10 bg-[#151a21]">
+        <div className="px-3 pt-3 pb-1 text-xs font-black uppercase tracking-wide text-slate-400">Nhãn dán</div>
+        <div className="grid grid-cols-5 gap-2 overflow-y-auto p-3">
+          {STICKERS.map((s, i) => (
+            <button key={i} onClick={() => onAddSticker(s)} title="Chèn nhãn dán" className="grid aspect-square place-items-center rounded-lg border border-white/10 bg-black/30 text-2xl transition-colors hover:border-brand">{s}</button>
+          ))}
+        </div>
+        <p className="px-3 pb-3 text-[11px] text-slate-500">Bấm để chèn nhãn dán vào đầu phát. Kéo trên khung xem trước hoặc chỉnh ở bảng thuộc tính để đặt vị trí, cỡ, xoay.</p>
       </div>
     );
   }
@@ -1198,8 +1237,11 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, selIds, scrollR
   useEffect(() => {
     const el = scrollRef?.current; if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      if (e.altKey) { e.preventDefault(); const r = rulerRef.current?.getBoundingClientRect(); const focus = r ? Math.max(0, ((e.clientX - r.left) / pxPerSec) * 1000) : undefined; onZoom(e.deltaY < 0 ? 1.12 : 0.89, focus); }
-      else { e.preventDefault(); el.scrollLeft += (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY); }
+      if (e.altKey) { e.preventDefault(); const r = rulerRef.current?.getBoundingClientRect(); const focus = r ? Math.max(0, ((e.clientX - r.left) / pxPerSec) * 1000) : undefined; onZoom(e.deltaY < 0 ? 1.12 : 0.89, focus); return; }
+      const canV = el.scrollHeight > el.clientHeight + 1;
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) { e.preventDefault(); el.scrollLeft += e.deltaX; } // vuốt ngang cuộn ngang
+      else if (canV) { e.preventDefault(); el.scrollTop += e.deltaY; } // vuốt dọc cuộn dọc khi có nhiều lớp
+      else { e.preventDefault(); el.scrollLeft += e.deltaY; } // ít lớp thì lăn dọc cuộn ngang cho tiện
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
@@ -1207,13 +1249,21 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, selIds, scrollR
   // Đồng bộ cuộn dọc giữa cột đầu lớp và vùng clip.
   const syncFromRight = () => { if (headersRef.current && scrollRef?.current) headersRef.current.scrollTop = scrollRef.current.scrollTop; };
   const syncFromLeft = () => { if (headersRef.current && scrollRef?.current) scrollRef.current.scrollTop = headersRef.current.scrollTop; };
-  // Kéo giữa (chuột giữa) để di chuyển khung nhìn timeline.
-  const panRef = useRef<{ x: number; y: number; sl: number; st: number } | null>(null);
-  const onContainerPointerDown = (e: React.PointerEvent) => {
-    if (e.button === 1) { e.preventDefault(); const el = e.currentTarget as HTMLElement; el.setPointerCapture(e.pointerId); panRef.current = { x: e.clientX, y: e.clientY, sl: el.scrollLeft, st: el.scrollTop }; }
-  };
-  const onContainerPointerMove = (e: React.PointerEvent) => { if (panRef.current) { const el = e.currentTarget as HTMLElement; el.scrollLeft = panRef.current.sl - (e.clientX - panRef.current.x); el.scrollTop = panRef.current.st - (e.clientY - panRef.current.y); } };
-  const onContainerPointerUp = (e: React.PointerEvent) => { if (panRef.current) { panRef.current = null; try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {} } };
+  // Kéo giữa (chuột giữa) để di chuyển khung nhìn timeline. Dùng mouse event native
+  // và preventDefault ngay ở mousedown để chặn tính năng tự cuộn của chuột giữa.
+  useEffect(() => {
+    const el = scrollRef?.current; if (!el) return;
+    let pan: { x: number; y: number; sl: number; st: number } | null = null;
+    const down = (e: MouseEvent) => { if (e.button !== 1) return; e.preventDefault(); pan = { x: e.clientX, y: e.clientY, sl: el.scrollLeft, st: el.scrollTop }; };
+    const move = (e: MouseEvent) => { if (!pan) return; e.preventDefault(); el.scrollLeft = pan.sl - (e.clientX - pan.x); el.scrollTop = pan.st - (e.clientY - pan.y); };
+    const up = () => { pan = null; };
+    const aux = (e: MouseEvent) => { if (e.button === 1) e.preventDefault(); };
+    el.addEventListener('mousedown', down);
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+    el.addEventListener('auxclick', aux);
+    return () => { el.removeEventListener('mousedown', down); window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); el.removeEventListener('auxclick', aux); };
+  }, [scrollRef]);
   // Quét tạo vùng chọn nhiều clip (kéo chuột trái trên vùng trống).
   const marqueeRef = useRef<{ x0: number; y0: number } | null>(null);
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -1292,7 +1342,7 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, selIds, scrollR
         ))}
       </div>
       {/* Vùng lớp: cuộn ngang và dọc, kéo giữa để pan, quét chọn nhiều clip */}
-      <div ref={scrollRef} onScroll={syncFromRight} onPointerDown={onContainerPointerDown} onPointerMove={onContainerPointerMove} onPointerUp={onContainerPointerUp}
+      <div ref={scrollRef} onScroll={syncFromRight}
         className="relative min-w-0 flex-1 overflow-auto">
         <div ref={contentRef} className="relative" style={{ width }} onPointerDown={onMarqueeDown} onPointerMove={onMarqueeMove} onPointerUp={onMarqueeUp}>
           {/* Thước: cố định ở trên khi cuộn dọc, nhấn giữ và kéo để tua */}
