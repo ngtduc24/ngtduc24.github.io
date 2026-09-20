@@ -59,6 +59,8 @@ export interface UserAccount {
   password?: string;
   avatarUrl?: string;
   coverImage?: string;
+  coverImagePosition?: string;
+  avatarPosition?: string;
   fcmTokens?: string[];
 }
 
