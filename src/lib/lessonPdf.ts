@@ -8,7 +8,11 @@ function esc(s: string): string {
   return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function buildLessonHtml(lesson: ELLesson, sections: ELSection[], resources: ELResource[]): string {
+// Chân trang mặc định cho PDF bài giảng, hiện ở cuối mọi trang khi in.
+const FOOTER_LEFT = 'Biên soạn: Nguyễn Trọng Đức';
+const FOOTER_RIGHT = 'Giáo Trình Tạo Hình Blender';
+
+function buildLessonHtml(lesson: ELLesson, sections: ELSection[], resources: ELResource[], footerLeft: string, footerRight: string): string {
   const author = lesson.author_label || lesson.owner_name || 'Ẩn danh';
   const sectionsHtml = sections.map((s, i) => {
     const res = resources.filter(r => r.section_id === s.id);
@@ -32,7 +36,10 @@ function buildLessonHtml(lesson: ELLesson, sections: ELSection[], resources: ELR
 <style>
   @page { margin: 18mm 16mm; }
   * { box-sizing: border-box; }
-  body { font-family: "Be Vietnam Pro", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #1f2937; line-height: 1.6; margin: 0; padding: 24px; max-width: 820px; margin: 0 auto; }
+  body { font-family: "Be Vietnam Pro", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #1f2937; line-height: 1.6; margin: 0 auto; padding: 24px 24px 46px; max-width: 820px; }
+  .page-footer { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; gap: 12px; padding: 6px 24px; font-size: 10px; color: #64748b; border-top: 1px solid #cbd5e1; background: #fff; }
+  .page-footer span { white-space: nowrap; }
+  .page-footer .right { font-weight: 600; }
   h1 { font-size: 24px; font-weight: 800; margin: 0 0 4px; color: #0f172a; }
   .meta { font-size: 12px; color: #64748b; margin-bottom: 16px; }
   .cover { width: 100%; max-height: 320px; object-fit: cover; border-radius: 10px; margin: 12px 0 18px; }
@@ -56,11 +63,12 @@ function buildLessonHtml(lesson: ELLesson, sections: ELSection[], resources: ELR
   ${cover}
   ${summary}
   ${sectionsHtml || '<p class="content empty">Bài giảng chưa có nội dung.</p>'}
+  <div class="page-footer"><span class="left">${esc(footerLeft)}</span><span class="right">${esc(footerRight)}</span></div>
 </body></html>`;
 }
 
-export function exportLessonToPdf(lesson: ELLesson, sections: ELSection[], resources: ELResource[]): void {
-  const html = buildLessonHtml(lesson, sections, resources);
+export function exportLessonToPdf(lesson: ELLesson, sections: ELSection[], resources: ELResource[], footer?: { left?: string; right?: string }): void {
+  const html = buildLessonHtml(lesson, sections, resources, footer?.left ?? FOOTER_LEFT, footer?.right ?? FOOTER_RIGHT);
 
   // Dùng iframe ẩn để in, chạy ổn định trên di động hơn là mở cửa sổ mới (hay bị chặn popup).
   const iframe = document.createElement('iframe');
