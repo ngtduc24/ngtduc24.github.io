@@ -114,6 +114,7 @@ function mapAssignment(a: any): EduAssignment {
     content: a.content,
     allowedFileTypes: a.allowed_file_types || [],
     deadline: a.deadline,
+    allowLate: a.allow_late ?? false,
     createdAt: a.created_at,
     updatedAt: a.updated_at,
     shareLinkId: a.share_link_id
@@ -348,7 +349,8 @@ export async function saveAssignment(assignment: Partial<EduAssignment>) {
     title: assignment.title,
     content: assignment.content,
     allowed_file_types: assignment.allowedFileTypes,
-    deadline: assignment.deadline
+    deadline: assignment.deadline,
+    allow_late: assignment.allowLate
   };
   Object.keys(dbData).forEach(key => (dbData as any)[key] === undefined && delete (dbData as any)[key]);
 
