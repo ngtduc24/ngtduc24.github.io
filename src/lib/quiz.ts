@@ -92,8 +92,8 @@ export async function getBankQuestions(opts?: { subjectId?: string; scope?: 'min
   let query = supabase.from(Q_TABLE).select('*, quiz_bank_options(*)').order('created_at', { ascending: false });
 
   if (opts?.scope === 'shared') {
+    // Ngân hàng dùng chung hiện mọi câu đã bật công khai, kể cả câu của chính người dùng.
     query = query.eq('is_public', true);
-    if (ctx.userId) query = query.neq('owner_id', ctx.userId);
   } else {
     if (!ctx.isAdmin && ctx.userId) query = query.eq('owner_id', ctx.userId);
   }

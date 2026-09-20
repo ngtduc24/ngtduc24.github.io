@@ -429,7 +429,7 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
                     {(q.tags || []).length > 0 && <div className="mt-1.5 flex flex-wrap gap-1">{q.tags.map(t => <span key={t} className="rounded bg-slate-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-400">#{t}</span>)}</div>}
                   </button>
                   <div className="flex shrink-0 items-center gap-1.5">
-                    {tab === 'shared'
+                    {tab === 'shared' && q.owner_id !== currentUser.id
                       ? <button onClick={() => copyToMine(q)} className="rounded-lg bg-brand-light px-3 py-2 text-[11px] font-bold text-brand hover:bg-brand/15">Sao chép về của tôi</button>
                       : <button onClick={() => togglePublic(q)} title={q.is_public ? 'Tắt chia sẻ' : 'Chia sẻ công khai'} className={`rounded-lg p-2 ${q.is_public ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}><Share2 className="h-4 w-4" /></button>
                     }
