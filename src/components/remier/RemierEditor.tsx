@@ -231,6 +231,16 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   const [zoomMenu, setZoomMenu] = useState(false);
   const [leftPanel, setLeftPanel] = useState<LeftPanel>('media');
   const [transformMode, setTransformMode] = useState(false);
+  // Kích thước các vùng làm việc, kéo lằn phân chia để đổi.
+  const [leftW, setLeftW] = useState(280);
+  const [rightW, setRightW] = useState(320);
+  const [tlH, setTlH] = useState(260);
+  const startPaneDrag = (apply: (dx: number, dy: number) => void) => (e: React.PointerEvent) => {
+    e.preventDefault(); const sx = e.clientX, sy = e.clientY;
+    const move = (ev: PointerEvent) => apply(ev.clientX - sx, ev.clientY - sy);
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  };
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -834,7 +844,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 
       <div className="flex min-h-0 flex-1">
         {/* Cột trái: thanh tab chức năng dựng phim nằm ngay trên khu tư liệu (theo mẫu) */}
-        <div className="flex w-[280px] shrink-0 flex-col">
+        <div className="flex shrink-0 flex-col" style={{ width: leftW }}>
           <div className="flex h-14 shrink-0 items-center gap-1 overflow-x-auto border-b border-r border-white/10 bg-[#12161c] px-1 scrollbar-none">
             {TOP_TABS.map(tb => {
               const Icon = tb.icon; const active = leftPanel === tb.id;
@@ -853,6 +863,9 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
             <LibraryPanel currentUser={currentUser} panel={leftPanel} selClipKind={selClip?.clip.kind || null} onAddAsset={addClipFromAsset} onAddText={addTextClip} onImportSubtitles={importSubtitles} onApplyFilter={(adj) => { if (selClip) applyFilterPreset(selClip.clip.id, adj); }} onApplyEffect={(key) => { if (selClip) applyEffect(selClip.clip.id, key); }} onApplyTransition={(type) => { if (selClip) applyTransition(selClip.clip.id, type); }} onAddSticker={addSticker} />
           </div>
         </div>
+
+        {/* Lằn kéo đổi rộng cột trái */}
+        <div onPointerDown={startPaneDrag((dx) => setLeftW(Math.max(200, Math.min(560, leftW + dx))))} title="Kéo để đổi độ rộng" className="w-1 shrink-0 cursor-col-resize bg-white/5 hover:bg-brand/50" />
 
         {/* Khung xem trước */}
         <div className="flex min-w-0 flex-1 flex-col">
@@ -905,15 +918,21 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
           </div>
         </div>
 
+        {/* Lằn kéo đổi rộng bảng thuộc tính */}
+        <div onPointerDown={startPaneDrag((dx) => setRightW(Math.max(240, Math.min(560, rightW - dx))))} title="Kéo để đổi độ rộng" className="w-1 shrink-0 cursor-col-resize bg-white/5 hover:bg-brand/50" />
+
         {/* Bảng thuộc tính phải */}
-        <div className="w-[320px] shrink-0 overflow-y-auto border-l border-white/10 bg-[#151a21] p-4">
+        <div className="shrink-0 overflow-y-auto border-l border-white/10 bg-[#151a21] p-4" style={{ width: rightW }}>
           {selClip ? <PropsPanel clip={selClip.clip} playhead={playhead} W={W} H={H} onProps={(p) => updateClipProps(selClip.clip.id, p)} onClip={(p) => updateClip(selClip.clip.id, p)} onKf={(prop, v) => setPropAt(selClip.clip.id, prop, v)} onToggleKey={(prop) => toggleKey(selClip.clip.id, prop)} onGotoKey={(prop, dir) => gotoKey(selClip.clip, prop, dir)} onReset={() => resetTransform(selClip.clip.id)} onAdj={(patch) => updateClipAdj(selClip.clip.id, patch)} onApplyFilter={(adj) => applyFilterPreset(selClip.clip.id, adj)} onSetTransDur={(d) => setTransDur(selClip.clip.id, d)} onClearTransition={() => clearTransition(selClip.clip.id)} onDelete={() => deleteClip(selClip.clip.id)} onDuplicate={() => duplicateClip(selClip.clip.id)} onSplitAudio={() => splitAudioFromVideo(selClip.clip)} />
             : <div className="mt-10 text-center text-xs text-slate-500">Chọn một lớp trên dòng thời gian để chỉnh thuộc tính.</div>}
         </div>
       </div>
 
+      {/* Lằn kéo đổi cao dòng thời gian */}
+      <div onPointerDown={startPaneDrag((_dx, dy) => setTlH(Math.max(160, Math.min(560, tlH - dy))))} title="Kéo để đổi chiều cao" className="h-1 shrink-0 cursor-row-resize bg-white/5 hover:bg-brand/50" />
+
       {/* Dòng thời gian */}
-      <div className="h-[260px] shrink-0 border-t border-white/10 bg-[#12161c]" onPointerMove={onTimelinePointerMove} onPointerUp={onTimelinePointerUp}>
+      <div className="flex shrink-0 flex-col border-t border-white/10 bg-[#12161c]" style={{ height: tlH }} onPointerMove={onTimelinePointerMove} onPointerUp={onTimelinePointerUp}>
         <div className="flex h-10 items-center gap-1 border-b border-white/10 px-2">
           <button onClick={addVideoTrack} title="Thêm lớp video" className="flex h-7 items-center gap-1 rounded-md bg-white/5 px-2 text-[11px] font-bold hover:bg-white/10"><Plus className="h-3.5 w-3.5" /><Film className="h-3.5 w-3.5" /> Video</button>
           <button onClick={addAudioTrack} title="Thêm lớp tiếng" className="flex h-7 items-center gap-1 rounded-md bg-white/5 px-2 text-[11px] font-bold hover:bg-white/10"><Plus className="h-3.5 w-3.5" /><Music className="h-3.5 w-3.5" /> Tiếng</button>
@@ -1078,7 +1097,7 @@ function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, 
   // Tab Văn bản và Chú thích.
   if (panel === 'text' || panel === 'caption') {
     return (
-      <div className="flex w-[280px] shrink-0 flex-col border-r border-white/10 bg-[#151a21]">
+      <div className="flex h-full w-full flex-col border-r border-white/10 bg-[#151a21]">
         <div className="px-3 pt-3 pb-1 text-xs font-black uppercase tracking-wide text-slate-400">{panel === 'text' ? 'Văn bản' : 'Chú thích, phụ đề'}</div>
         <div className="space-y-2 p-3">
           {panel === 'text' && <button onClick={onAddText} className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 px-3 py-4 text-xs font-bold text-slate-300 hover:border-brand hover:text-brand"><Type className="h-4 w-4" /> Thêm lớp văn bản</button>}
@@ -1093,7 +1112,7 @@ function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, 
   if (panel === 'filter') {
     const canApply = selClipKind === 'video' || selClipKind === 'image';
     return (
-      <div className="flex w-[280px] shrink-0 flex-col border-r border-white/10 bg-[#151a21]">
+      <div className="flex h-full w-full flex-col border-r border-white/10 bg-[#151a21]">
         <div className="px-3 pt-3 pb-1 text-xs font-black uppercase tracking-wide text-slate-400">Bộ lọc màu</div>
         {!canApply && <p className="px-3 pb-2 text-[11px] text-amber-400/80">Chọn một clip video hoặc ảnh trên dòng thời gian trước.</p>}
         <div className="grid grid-cols-2 gap-2 overflow-y-auto p-3">
@@ -1112,7 +1131,7 @@ function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, 
   // Tab Nhãn dán: chèn biểu tượng có sẵn vào khung hình.
   if (panel === 'sticker') {
     return (
-      <div className="flex w-[280px] shrink-0 flex-col border-r border-white/10 bg-[#151a21]">
+      <div className="flex h-full w-full flex-col border-r border-white/10 bg-[#151a21]">
         <div className="px-3 pt-3 pb-1 text-xs font-black uppercase tracking-wide text-slate-400">Nhãn dán</div>
         <div className="grid grid-cols-5 gap-2 overflow-y-auto p-3">
           {STICKERS.map((s, i) => (
@@ -1127,7 +1146,7 @@ function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, 
   if (panel === 'transition') {
     const canApply = selClipKind === 'video' || selClipKind === 'image' || selClipKind === 'text';
     return (
-      <div className="flex w-[280px] shrink-0 flex-col border-r border-white/10 bg-[#151a21]">
+      <div className="flex h-full w-full flex-col border-r border-white/10 bg-[#151a21]">
         <div className="px-3 pt-3 pb-1 text-xs font-black uppercase tracking-wide text-slate-400">Chuyển tiếp</div>
         {!canApply && <p className="px-3 pb-2 text-[11px] text-amber-400/80">Chọn clip (có clip liền trước cùng lớp) rồi bấm kiểu chuyển tiếp.</p>}
         <div className="grid grid-cols-2 gap-2 overflow-y-auto p-3">
@@ -1146,7 +1165,7 @@ function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, 
   if (panel === 'effect') {
     const canApply = selClipKind === 'video' || selClipKind === 'image' || selClipKind === 'text';
     return (
-      <div className="flex w-[280px] shrink-0 flex-col border-r border-white/10 bg-[#151a21]">
+      <div className="flex h-full w-full flex-col border-r border-white/10 bg-[#151a21]">
         <div className="px-3 pt-3 pb-1 text-xs font-black uppercase tracking-wide text-slate-400">Hiệu ứng chuyển động</div>
         {!canApply && <p className="px-3 pb-2 text-[11px] text-amber-400/80">Chọn một clip trên dòng thời gian trước.</p>}
         <div className="grid grid-cols-2 gap-2 overflow-y-auto p-3">
@@ -1164,7 +1183,7 @@ function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, 
   // Các tab chưa có chức năng.
   if (!isLibrary) {
     return (
-      <div className="flex w-[280px] shrink-0 flex-col items-center justify-center gap-3 border-r border-white/10 bg-[#151a21] p-6 text-center">
+      <div className="flex h-full w-full flex-col items-center justify-center gap-3 border-r border-white/10 bg-[#151a21] p-6 text-center">
         <span className="grid h-14 w-14 place-items-center rounded-2xl bg-white/5 text-slate-500"><Sparkles className="h-7 w-7" /></span>
         <p className="text-sm font-bold text-slate-300">{soonLabel}</p>
         <p className="text-[11px] text-slate-500">Tính năng đang phát triển, sẽ có trong bản cập nhật tới.</p>
@@ -1173,7 +1192,7 @@ function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, 
   }
   // Tab Tệp phương tiện và Âm thanh.
   return (
-    <div className="flex w-[280px] shrink-0 flex-col border-r border-white/10 bg-[#151a21]">
+    <div className="flex h-full w-full flex-col border-r border-white/10 bg-[#151a21]">
       <div className="flex gap-1 p-2">
         {(['mine', 'shared'] as const).map(s => (
           <button key={s} onClick={() => setSource(s)} className={`flex-1 rounded-lg px-2 py-1.5 text-[11px] font-bold ${source === s ? 'bg-brand text-white' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}>{s === 'mine' ? 'Kho của tôi' : 'Thư viện chung'}</button>
@@ -1313,7 +1332,7 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, selIds, scrollR
 
   if (tracks.length === 0) {
     return (
-      <div className="grid h-[200px] place-items-center text-center text-xs text-slate-500"
+      <div className="grid min-h-0 flex-1 place-items-center text-center text-xs text-slate-500"
         onDragOver={allowDrop} onDrop={e => { const a = parseAsset(e); if (a) { e.preventDefault(); onDropAsset(a, null, 0); } }}>
         <div><Film className="mx-auto mb-2 h-8 w-8 text-slate-600" /><p>Chưa có lớp nào.</p><p className="mt-1 text-slate-600">Kéo thả tư liệu từ kho vào đây, hoặc bấm "+ Video" / "+ Tiếng", hoặc bấm tư liệu ở cột trái.</p></div>
       </div>
@@ -1321,7 +1340,7 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, selIds, scrollR
   }
 
   return (
-    <div className="flex h-[210px]">
+    <div className="flex min-h-0 flex-1">
       {/* Đầu hàng lớp */}
       <div ref={headersRef} onScroll={syncFromLeft} className="w-40 shrink-0 overflow-y-auto border-r border-white/10">
         <div className="sticky top-0 z-20 h-7 border-b border-white/10 bg-[#12161c]" />
