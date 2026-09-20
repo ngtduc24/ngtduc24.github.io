@@ -446,11 +446,11 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
         <div className="relative z-10 space-y-1.5 flex-1 text-left">
           <div className="flex items-center gap-2">
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-white/80">{settings?.userBannerLabel || "Phân quyền Bảo mật"}</span>
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight font-display text-slate-50">{settings?.userBannerTitle || "Quản lý Thành viên & Phân quyền"}</h1>
+              <span className="text-[10px] uppercase font-bold tracking-wider text-white/80">{settings?.userBannerLabel || "Tài khoản hệ thống"}</span>
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight font-display text-slate-50">{settings?.userBannerTitle || "Quản lý người dùng"}</h1>
             </div>
           </div>
-          <p className="text-xs text-white/90 max-w-2xl leading-relaxed">{settings?.userBannerDescription || "Tạo tài khoản, quản lý vai trò Admin/User và kích hoạt/vô hiệu hóa các chức năng cụ thể cho từng thành viên."}</p>
+          <p className="text-xs text-white/90 max-w-2xl leading-relaxed">{settings?.userBannerDescription || "Tạo tài khoản và quản lý vai trò Admin, User, Học viên cho từng thành viên. Việc phân quyền chức năng nằm ở module Phân quyền riêng."}</p>
         </div>
 
         <button
@@ -618,31 +618,17 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
                 </label>
               </div>
 
-              {/* Show permission selection only for regular User */}
               {newRole === 'user' ? (
-                <div className="space-y-2 border-t border-slate-200/60 pt-3 animate-fadeIn">
-                  <span className="text-xs font-bold text-slate-600 block mb-1">Cấp các quyền truy cập ban đầu:</span>
-                  <div className="flex flex-wrap gap-4">
-                    {availablePermissions.map(p => (
-                      <label key={p.id} className="flex items-center gap-2 text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          checked={newPermissions.includes(p.id)}
-                          onChange={() => handlePermissionCheckbox(p.id)}
-                          className="w-4 h-4 accent-brand rounded"
-                        />
-                        <span>{p.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+                <p className="text-[11px] text-slate-500 font-medium border-t border-slate-200/60 pt-3 animate-fadeIn">
+                  Sau khi tạo, vào module Phân quyền để cấp quyền truy cập chức năng cho tài khoản này.
+                </p>
               ) : newRole === 'member' ? (
                 <p className="text-[11px] text-brand-hover font-medium border-t border-slate-200/60 pt-3 animate-fadeIn">
                   Member chỉ được xem Portfolio, tham gia và học các khóa học online; không được truy cập trang quản trị.
                 </p>
               ) : (
                 <p className="text-[11px] text-brand font-medium italic border-t border-slate-200/60 pt-3 animate-fadeIn">
-                  * Ghi chú: Tài khoản có quyền Admin sẽ mặc định được cấp phép truy cập tất cả mọi chức năng, bao gồm cả quyền Quản trị phân quyền thành viên.
+                  * Ghi chú: Tài khoản có quyền Admin sẽ mặc định được cấp phép truy cập tất cả mọi chức năng.
                 </p>
               )}
             </div>
@@ -688,7 +674,6 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
                 <th className="py-3 px-4">Thành viên / Username</th>
                 <th className="py-3 px-4">Thông tin liên hệ</th>
                 <th className="py-3 px-4">Quyền vai trò</th>
-                <th className="py-3 px-4">Chức năng được phép sử dụng (Permissions)</th>
                 <th className="py-3 px-4 text-right">Thao tác</th>
               </tr>
             </thead>
@@ -746,42 +731,6 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
                         <Shield className="w-3 h-3" />
                         <span>{isAdmin ? 'ADMIN' : isMember ? 'MEMBER' : 'USER'}</span>
                       </button>
-                    </td>
-
-                    {/* Permissions list */}
-                    <td className="py-3 px-4">
-                      {isAdmin ? (
-                        <span className="text-[10px] text-brand font-bold bg-brand-light px-2 py-1 rounded-md">
-                          Toàn quyền hệ thống (Full Access)
-                        </span>
-                      ) : isMember ? (
-                        <span className="text-[10px] text-brand font-bold bg-brand-light px-2 py-1 rounded-md">
-                          Chỉ xem và học khóa học online
-                        </span>
-                      ) : (
-                        <div className="flex flex-wrap gap-1.5 max-w-sm">
-                          {availablePermissions.map(p => {
-                            const isGranted = normalizePermissions(user.permissions).includes(p.id);
-                            return (
-                              <button
-                                key={p.id}
-                                onClick={() => handleTogglePermission(user, p.id)}
-                                className={`text-[9px] font-semibold px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
-                                  isGranted 
-                                    ? 'bg-brand-light text-brand border-brand/20 hover:bg-brand-light/80' 
-                                    : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100/60'
-                                }`}
-                                title="Bấm để kích hoạt hoặc hủy kích hoạt quyền này"
-                              >
-                                {isGranted ? '✓ ' : '✗ '}
-                                {p.label}
-                              </button>
-                            );
-                          })}
-                          
-                          {/* Task Specific Permissions */}
-                        </div>
-                      )}
                     </td>
 
                     {/* Action buttons */}
@@ -876,41 +825,7 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
               </div>
 
                       {editRole === 'user' && (
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase block">Quyền hạn truy cập</label>
-                  <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    {availablePermissions.map(p => {
-                      const isChecked = editPermissions.includes(p.id);
-                      return (
-                        <label key={p.id} className="flex items-center gap-2 cursor-pointer text-[11px] font-semibold text-slate-600">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => {
-                              if (isChecked) {
-                                setEditPermissions(editPermissions.filter(id => id !== p.id));
-                              } else {
-                                setEditPermissions([...editPermissions, p.id]);
-                              }
-                            }}
-                            className="rounded text-brand focus:ring-brand/20 cursor-pointer"
-                          />
-                          <span>{p.label}</span>
-                        </label>
-                      );
-                    })}
-                    <label className="flex items-center gap-2 cursor-pointer text-[11px] font-semibold text-slate-600">
-                      <input
-                        type="checkbox"
-                        checked={editCanManageSettings}
-                        onChange={(e) => setEditCanManageSettings(e.target.checked)}
-                        className="rounded text-brand focus:ring-brand/20 cursor-pointer"
-                      />
-                      <span>Quản lý cài đặt</span>
-                    </label>
-                    
-                  </div>
-                </div>
+                <p className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-[11px] font-medium text-slate-500">Việc cấp quyền truy cập từng chức năng cho tài khoản này thực hiện ở module Phân quyền riêng.</p>
                       )}
               {editRole === 'member' && <p className="rounded-xl bg-brand-light p-3 text-[11px] font-semibold text-brand-hover">Member chỉ được xem Portfolio, ghi danh và học các khóa học online.</p>}
 
