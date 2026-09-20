@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Play, Pause, Scissors, Trash2, Copy, Lock, Unlock, Eye, EyeOff, Type, Download, ArrowLeft,
   Upload, Loader2, Film, Image as ImageIcon, Music, ZoomIn, ZoomOut, Maximize2, Captions,
-  Volume2, VolumeX, Headphones, Plus, Frame,
+  Volume2, VolumeX, Headphones, Plus, Frame, Sticker, Sparkles, ArrowLeftRight, SlidersHorizontal,
 } from 'lucide-react';
 import { UserAccount } from '../../types';
 import { useNotifications } from '../NotificationContext';
@@ -15,6 +15,17 @@ interface Props { projectId: string; currentUser: UserAccount; onExit: () => voi
 
 type ClipKind = 'video' | 'image' | 'audio' | 'text';
 type LaneKind = 'video' | 'audio';
+type LeftPanel = 'media' | 'audio' | 'text' | 'caption' | 'sticker' | 'effect' | 'transition' | 'filter';
+const TOP_TABS: { id: LeftPanel; label: string; icon: any; soon?: boolean }[] = [
+  { id: 'media', label: 'Tệp phương tiện', icon: Film },
+  { id: 'audio', label: 'Âm thanh', icon: Music },
+  { id: 'text', label: 'Văn bản', icon: Type },
+  { id: 'caption', label: 'Chú thích', icon: Captions },
+  { id: 'sticker', label: 'Nhãn dán', icon: Sticker, soon: true },
+  { id: 'effect', label: 'Hiệu ứng', icon: Sparkles, soon: true },
+  { id: 'transition', label: 'Chuyển tiếp', icon: ArrowLeftRight, soon: true },
+  { id: 'filter', label: 'Bộ lọc', icon: SlidersHorizontal, soon: true },
+];
 interface ClipProps { x: number; y: number; scale: number; rotation: number; opacity: number; volume: number; text: string; fontSize: number; color: string; fontWeight: number; align: string; }
 interface Clip { id: string; kind: ClipKind; name: string; src?: string; thumb?: string; start: number; dur: number; inPoint: number; srcDur?: number; fadeIn?: number; fadeOut?: number; props: ClipProps; }
 interface Track { id: string; name: string; kind: LaneKind; text?: boolean; locked?: boolean; hidden?: boolean; muted?: boolean; solo?: boolean; clips: Clip[]; }
@@ -128,6 +139,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   const [previewZoom, setPreviewZoom] = useState(1);
   const [safeFrame, setSafeFrame] = useState(false);
   const [zoomMenu, setZoomMenu] = useState(false);
+  const [leftPanel, setLeftPanel] = useState<LeftPanel>('media');
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -590,9 +602,24 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
         </div>
       </div>
 
+      {/* Thanh chức năng dựng phim (theo mẫu) */}
+      <div className="flex h-14 shrink-0 items-center gap-1 overflow-x-auto border-b border-white/10 bg-[#12161c] px-2 scrollbar-none">
+        {TOP_TABS.map(tb => {
+          const Icon = tb.icon; const active = leftPanel === tb.id;
+          return (
+            <button key={tb.id} onClick={() => setLeftPanel(tb.id)}
+              className={`relative flex h-full min-w-[64px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-3 transition-colors ${active ? 'bg-brand/15 text-brand' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}`}>
+              <Icon className="h-5 w-5" />
+              <span className="text-[10px] font-bold leading-none">{tb.label}</span>
+              {tb.soon && <span className="absolute right-1 top-1 rounded-full bg-amber-500/20 px-1 text-[7px] font-black text-amber-400">SẮP</span>}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="flex min-h-0 flex-1">
-        {/* Cột thư viện trái */}
-        <LibraryPanel currentUser={currentUser} onAddAsset={addClipFromAsset} onAddText={addTextClip} onImportSubtitles={importSubtitles} />
+        {/* Cột thư viện trái đổi nội dung theo tab chức năng */}
+        <LibraryPanel currentUser={currentUser} panel={leftPanel} onAddAsset={addClipFromAsset} onAddText={addTextClip} onImportSubtitles={importSubtitles} />
 
         {/* Khung xem trước */}
         <div className="flex min-w-0 flex-1 flex-col">
@@ -748,23 +775,24 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 }
 
 // ============================ Thư viện trái ============================
-function LibraryPanel({ currentUser, onAddAsset, onAddText, onImportSubtitles }: { currentUser: UserAccount; onAddAsset: (a: MvAsset) => void; onAddText: () => void; onImportSubtitles: (cues: { start: number; dur: number; text: string }[]) => void; }) {
+function LibraryPanel({ currentUser, panel, onAddAsset, onAddText, onImportSubtitles }: { currentUser: UserAccount; panel: LeftPanel; onAddAsset: (a: MvAsset) => void; onAddText: () => void; onImportSubtitles: (cues: { start: number; dur: number; text: string }[]) => void; }) {
   const { addNotification } = useNotifications();
-  const [tab, setTab] = useState<'mine' | 'shared' | 'text'>('mine');
+  const [source, setSource] = useState<'mine' | 'shared'>('mine');
   const subRef = useRef<HTMLInputElement>(null);
   const onSubFile = async (f: File | null) => { if (!f) return; try { const txt = await f.text(); const cues = parseSubtitles(txt); if (!cues.length) { addNotification('Không đọc được dòng phụ đề nào.', 'warning'); return; } onImportSubtitles(cues); } catch (e: any) { addNotification('Lỗi đọc phụ đề: ' + (e.message || e), 'error'); } };
   const [assets, setAssets] = useState<MvAsset[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const isLibrary = panel === 'media' || panel === 'audio';
 
   const load = useCallback(async () => {
-    if (tab === 'text') return;
+    if (!isLibrary) return;
     setLoading(true);
-    try { setAssets(tab === 'mine' ? await getMyAssets() : await getSharedAssets()); }
+    try { setAssets(source === 'mine' ? await getMyAssets() : await getSharedAssets()); }
     catch (e: any) { addNotification('Lỗi tải tư liệu: ' + (e.message || e), 'error'); }
     finally { setLoading(false); }
-  }, [tab, addNotification]);
+  }, [isLibrary, source, addNotification]);
   useEffect(() => { load(); }, [load]);
 
   // Đọc thông tin media để lưu thời lượng, kích thước.
@@ -797,35 +825,53 @@ function LibraryPanel({ currentUser, onAddAsset, onAddText, onImportSubtitles }:
   };
 
   const kindIcon = (k: MvKind) => k === 'video' ? Film : k === 'audio' ? Music : k === 'export' ? Download : ImageIcon;
+  const shown = panel === 'audio' ? assets.filter(a => a.kind === 'audio' || a.kind === 'export') : assets;
+  const soonLabel = TOP_TABS.find(t => t.id === panel)?.label || '';
 
-  return (
-    <div className="flex w-[280px] shrink-0 flex-col border-r border-white/10 bg-[#151a21]">
-      <div className="flex gap-1 p-2">
-        {(['mine', 'shared', 'text'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)} className={`flex-1 rounded-lg px-2 py-1.5 text-[11px] font-bold ${tab === t ? 'bg-brand text-white' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}>{t === 'mine' ? 'Kho của tôi' : t === 'shared' ? 'Thư viện chung' : 'Văn bản'}</button>
-        ))}
-      </div>
-      {tab === 'text' ? (
+  // Tab Văn bản và Chú thích.
+  if (panel === 'text' || panel === 'caption') {
+    return (
+      <div className="flex w-[280px] shrink-0 flex-col border-r border-white/10 bg-[#151a21]">
+        <div className="px-3 pt-3 pb-1 text-xs font-black uppercase tracking-wide text-slate-400">{panel === 'text' ? 'Văn bản' : 'Chú thích, phụ đề'}</div>
         <div className="space-y-2 p-3">
-          <button onClick={onAddText} className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 px-3 py-4 text-xs font-bold text-slate-300 hover:border-brand hover:text-brand"><Type className="h-4 w-4" /> Thêm lớp văn bản</button>
+          {panel === 'text' && <button onClick={onAddText} className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 px-3 py-4 text-xs font-bold text-slate-300 hover:border-brand hover:text-brand"><Type className="h-4 w-4" /> Thêm lớp văn bản</button>}
           <button onClick={() => subRef.current?.click()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/5 px-3 py-2.5 text-xs font-bold text-slate-300 hover:bg-white/10"><Captions className="h-4 w-4" /> Nhập phụ đề (SRT/VTT)</button>
           <input ref={subRef} type="file" accept=".srt,.vtt,text/vtt" className="hidden" onChange={e => onSubFile(e.target.files?.[0] || null)} />
           <p className="text-[11px] text-slate-500">Nhập file phụ đề sẽ tạo một hàng lớp chữ theo đúng mốc thời gian. Chọn lớp để sửa nội dung, phông, màu ở bảng bên phải.</p>
         </div>
-      ) : (
-        <>
-          {tab === 'mine' && (
-            <div className="px-3 pb-2">
-              <button onClick={() => fileRef.current?.click()} disabled={uploading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-3 py-2 text-xs font-bold text-white hover:bg-brand-hover disabled:opacity-60">{uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Tải tư liệu lên</button>
-              <input ref={fileRef} type="file" multiple accept="video/*,image/*,audio/*" className="hidden" onChange={e => onFiles(e.target.files)} />
-            </div>
-          )}
-          <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-            {loading ? <div className="py-10 text-center text-xs text-slate-500"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></div>
-              : assets.length === 0 ? <p className="py-10 text-center text-xs text-slate-500">Chưa có tư liệu.</p>
-              : (
-                <div className="grid grid-cols-2 gap-2">
-                  {assets.map(a => { const Icon = kindIcon(a.kind); return (
+      </div>
+    );
+  }
+  // Các tab chưa có chức năng.
+  if (!isLibrary) {
+    return (
+      <div className="flex w-[280px] shrink-0 flex-col items-center justify-center gap-3 border-r border-white/10 bg-[#151a21] p-6 text-center">
+        <span className="grid h-14 w-14 place-items-center rounded-2xl bg-white/5 text-slate-500"><Sparkles className="h-7 w-7" /></span>
+        <p className="text-sm font-bold text-slate-300">{soonLabel}</p>
+        <p className="text-[11px] text-slate-500">Tính năng đang phát triển, sẽ có trong bản cập nhật tới.</p>
+      </div>
+    );
+  }
+  // Tab Tệp phương tiện và Âm thanh.
+  return (
+    <div className="flex w-[280px] shrink-0 flex-col border-r border-white/10 bg-[#151a21]">
+      <div className="flex gap-1 p-2">
+        {(['mine', 'shared'] as const).map(s => (
+          <button key={s} onClick={() => setSource(s)} className={`flex-1 rounded-lg px-2 py-1.5 text-[11px] font-bold ${source === s ? 'bg-brand text-white' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}>{s === 'mine' ? 'Kho của tôi' : 'Thư viện chung'}</button>
+        ))}
+      </div>
+      {source === 'mine' && (
+        <div className="px-3 pb-2">
+          <button onClick={() => fileRef.current?.click()} disabled={uploading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-3 py-2 text-xs font-bold text-white hover:bg-brand-hover disabled:opacity-60">{uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} {panel === 'audio' ? 'Tải âm thanh lên' : 'Tải tư liệu lên'}</button>
+          <input ref={fileRef} type="file" multiple accept={panel === 'audio' ? 'audio/*' : 'video/*,image/*,audio/*'} className="hidden" onChange={e => onFiles(e.target.files)} />
+        </div>
+      )}
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+        {loading ? <div className="py-10 text-center text-xs text-slate-500"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></div>
+          : shown.length === 0 ? <p className="py-10 text-center text-xs text-slate-500">{panel === 'audio' ? 'Chưa có âm thanh.' : 'Chưa có tư liệu.'}</p>
+          : (
+            <div className="grid grid-cols-2 gap-2">
+              {shown.map(a => { const Icon = kindIcon(a.kind); return (
                     <div key={a.id} className="group relative overflow-hidden rounded-lg border border-white/10 bg-black/30 hover:border-brand">
                       <button
                         onClick={() => onAddAsset(a)}
@@ -838,7 +884,7 @@ function LibraryPanel({ currentUser, onAddAsset, onAddText, onImportSubtitles }:
                         </div>
                         <div className="p-1.5"><p className="truncate text-[10px] font-semibold text-slate-300">{a.title}</p>{a.duration_ms ? <p className="text-[9px] text-slate-500">{fmtTime(a.duration_ms)}</p> : null}</div>
                       </button>
-                      {tab === 'shared' && (
+                      {source === 'shared' && (
                         <button onClick={async () => { try { await saveSharedToMine(a, currentUser.fullName); addNotification('Đã lưu vào kho của tôi.', 'success'); } catch (e: any) { addNotification('Lỗi: ' + (e.message || e), 'error'); } }} title="Lưu vào kho của tôi" className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-md bg-black/60 text-white opacity-0 transition-opacity hover:bg-brand group-hover:opacity-100"><Plus className="h-3.5 w-3.5" /></button>
                       )}
                     </div>
@@ -846,8 +892,6 @@ function LibraryPanel({ currentUser, onAddAsset, onAddText, onImportSubtitles }:
                 </div>
               )}
           </div>
-        </>
-      )}
     </div>
   );
 }
