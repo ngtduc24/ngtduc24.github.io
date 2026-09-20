@@ -4,7 +4,7 @@ import {
   Calculator, Settings, Users, BookOpen, Search, X, Database, Sparkles,
   CalendarDays, BarChart3, GraduationCap, Wrench, FolderKanban, Mail,
   Library, Image as ImageIcon, LayoutGrid, ArrowRight, Bell, ChevronDown,
-  Home, FileText, CheckCircle2, ClipboardList, Scan, LayoutTemplate, Megaphone, Minus, Eye
+  Home, FileText, CheckCircle2, ClipboardList, Scan, LayoutTemplate, Megaphone, Minus, Eye, Shield
 } from 'lucide-react';
 import {
   getStatsFromSupabase,
@@ -176,7 +176,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     if (id === 'utilities' || id === 'ar_module' || id === 'utility_image_resize' || id === 'utility_social_design') {
       return perms.includes('utilities') || perms.includes('ar_module');
     }
-    if (id === 'users') return false;
+    if (id === 'users' || id === 'permissions') return false;
     return perms.includes(id);
   };
 
@@ -193,7 +193,8 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn', icon: LayoutTemplate, color: 'violet' },
     { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Lưu trữ và quản lý hồ sơ cá nhân, dự án', icon: FolderKanban, color: 'teal' },
     { id: 'notifications', label: 'Thông báo', desc: 'Tài liệu, mẫu biểu, dữ liệu tham khảo', icon: Mail, color: 'amber' },
-    { id: 'users', label: 'Quản lý & Phân quyền', desc: 'Quản trị hệ thống, phân quyền người dùng', icon: Users, color: 'indigo' },
+    { id: 'users', label: 'Quản lý người dùng', desc: 'Tạo, chỉnh sửa tài khoản trên hệ thống', icon: Users, color: 'indigo' },
+    { id: 'permissions', label: 'Phân quyền người dùng', desc: 'Cấp quyền truy cập chức năng chi tiết', icon: Shield, color: 'teal' },
     { id: 'settings', label: 'Cấu hình hệ thống', desc: 'Quản trị hệ thống, phân quyền người dùng', icon: Settings, color: 'rose' },
     { id: 'media_library', label: 'Thư viện', desc: 'Tài liệu, mẫu biểu, dữ liệu tham khảo', icon: Library, color: 'violet' },
   ];
@@ -207,7 +208,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     return ia - ib;
   });
   // Thẻ nổi bật theo ảnh mẫu, không gồm Quản lý & Phân quyền và Thư viện.
-  const cardModules = iconModules.filter(m => m.id !== 'users' && m.id !== 'media_library');
+  const cardModules = iconModules.filter(m => m.id !== 'users' && m.id !== 'permissions' && m.id !== 'media_library');
   const q = search.trim().toLowerCase();
   const visibleIcons = iconModules.filter(m => !hiddenIds.includes(m.id));
   const filteredIcons = q ? iconModules.filter(m => m.label.toLowerCase().includes(q)) : visibleIcons;

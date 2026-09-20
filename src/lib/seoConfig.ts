@@ -108,10 +108,17 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
   },
   users: {
     id: 'users',
-    slug: 'users',
-    title: 'Quản lý Tài khoản & Phân quyền Người dùng | SmartResearch',
-    description: 'Quản lý danh sách thành viên, phân quyền truy cập chức năng và cấu hình tài khoản hệ thống an toàn.',
-    keywords: 'quản lý người dùng, phân quyền, tài khoản thành viên, user management',
+    slug: 'quan-ly-nguoi-dung',
+    title: 'Quản lý Tài khoản Người dùng | SmartResearch',
+    description: 'Quản lý danh sách thành viên, tạo và chỉnh sửa tài khoản admin, thành viên và học viên trên hệ thống.',
+    keywords: 'quản lý người dùng, tài khoản thành viên, user management, quản trị tài khoản',
+  },
+  permissions: {
+    id: 'permissions',
+    slug: 'phan-quyen',
+    title: 'Phân quyền Truy cập Chức năng | SmartResearch',
+    description: 'Cấp và thu hồi quyền truy cập từng chức năng cùng các quyền thao tác chi tiết cho từng tài khoản.',
+    keywords: 'phân quyền, quyền truy cập, permission, quản trị quyền chức năng',
   },
   notifications_admin: {
     id: 'notifications_admin',
