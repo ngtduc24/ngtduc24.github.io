@@ -38,6 +38,12 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
 
+  // Khi chuyển sang phần nội dung khác (bấm Phần tiếp theo, Phần trước hoặc chọn ở mục lục),
+  // tự động cuộn màn hình lên đầu trang cho dễ đọc từ đầu.
+  useEffect(() => {
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { window.scrollTo(0, 0); }
+  }, [active]);
+
   const doCopy = async () => {
     if (!me) { window.location.href = window.location.origin + window.location.pathname; return; }
     setCopying(true);
