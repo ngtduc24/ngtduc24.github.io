@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, BookOpen, FileText, Eye, CheckCircle2, ArrowLeft, Copy, ExternalLink, ShieldAlert } from 'lucide-react';
+import { Loader2, BookOpen, FileText, CheckCircle2, ArrowLeft, Copy, ExternalLink, ShieldAlert } from 'lucide-react';
 import { ELLesson, ELSection, ELResource, getLesson, getSections, getResources, copyPublicLesson } from '../../lib/elearning';
 
 interface Props { lessonId: string; }
@@ -17,6 +17,10 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
   const [copied, setCopied] = useState(false);
 
   const me = (() => { try { return JSON.parse(localStorage.getItem('logged_in_user') || 'null'); } catch { return null; } })();
+  const goBack = () => {
+    if (window.history.length > 1) window.history.back();
+    else window.location.href = `${window.location.origin}${window.location.pathname}?tab=e-learning`;
+  };
 
   useEffect(() => {
     (async () => {
@@ -48,7 +52,7 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
         <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-rose-50 text-rose-500"><ShieldAlert className="h-6 w-6" /></div>
         <h1 className="font-display text-lg font-bold text-slate-900">Không xem được bài giảng</h1>
         <p className="mt-1 text-xs text-slate-500">Bài giảng không tồn tại hoặc chưa được công khai.</p>
-        <a href={window.location.origin + window.location.pathname} className="mt-4 inline-block rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200">Về trang chủ</a>
+        <button onClick={goBack} className="mt-4 inline-block rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200">Quay lại</button>
       </div>
     </div>
   );
@@ -62,7 +66,7 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
       <div className="border-b border-slate-100 bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4">
           <div className="flex items-center gap-3">
-            <a href={window.location.origin + window.location.pathname} className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200"><ArrowLeft className="h-4 w-4" /></a>
+            <button onClick={goBack} className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200"><ArrowLeft className="h-4 w-4" /></button>
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-brand/10 text-brand"><BookOpen className="h-5 w-5" /></div>
             <div>
               <h1 className="font-display text-base font-bold text-slate-900">{lesson.title}</h1>
