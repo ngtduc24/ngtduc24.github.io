@@ -45,6 +45,7 @@ import { onMessage } from 'firebase/messaging';
 import { updateDocumentSEO, getTabFromUrl, getSeoMeta, clearSubRoute } from './lib/seoConfig';
 import { isModuleHidden } from './lib/modules';
 import MaintenanceScreen from './components/MaintenanceScreen';
+import VirtualAssistant from './components/assistant/VirtualAssistant';
 import { trackUserPresence, untrackUserPresence } from './lib/presence';
 
 // Khóa lưu khu vực đang mở (portfolio công khai hay trang quản trị) để tải lại trang không bị nhảy ra ngoài.
@@ -944,12 +945,17 @@ export default function App() {
       </div>
 
       {showProfileModal && currentUser && (
-        <ProfileModal 
-          user={currentUser} 
-          onSaveProfile={handleSaveProfile} 
-          onClose={() => setShowProfileModal(false)} 
+        <ProfileModal
+          user={currentUser}
+          onSaveProfile={handleSaveProfile}
+          onClose={() => setShowProfileModal(false)}
           isReadOnly={profileModalReadOnly}
         />
+      )}
+
+      {/* Trợ lý ảo tra cứu bài giảng, câu hỏi và hướng dẫn dùng hệ thống. */}
+      {currentUser && currentUser.role !== 'member' && (
+        <VirtualAssistant currentUser={currentUser} settings={settings} onSwitchTab={setCurrentTab} />
       )}
 
     </div>
