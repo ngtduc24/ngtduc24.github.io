@@ -240,7 +240,6 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     if (id === 'edu_bank') return perms.includes('edu') && !!currentUser?.canCreateEdu;
     if (id === 'edu_exam') return perms.includes('edu') && !!currentUser?.canGradeEdu;
     if (id === 'edu_grade') return perms.includes('edu') && !!currentUser?.canGradeImportEdu;
-    if (id === 'assistant') return true;
     if (id === 'users' || id === 'permissions') return false;
     return perms.includes(id);
   };

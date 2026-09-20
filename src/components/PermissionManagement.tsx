@@ -38,6 +38,7 @@ const MODULES: ModuleDef[] = [
   { id: 'media_library', label: 'Thư viện tài nguyên' },
   { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Nội dung, dự án, khóa học, nghiên cứu, menu, hồ sơ', flags: [['canPortfolioContent', 'Thêm bài viết'], ['canPortfolioProjects', 'Dự án'], ['canPortfolioCourses', 'Khóa học'], ['canPortfolioResearch', 'Nghiên cứu'], ['canPortfolioNavigation', 'Menu chính'], ['canPortfolioProfile', 'Hồ sơ']] },
   { id: 'notifications', label: 'Trung tâm thông báo', desc: 'Quản lý và phát thông báo tới người dùng' },
+  { id: 'assistant', label: 'Trợ lý giáo dục', desc: 'Hỏi đáp kiến thức bài học từ bài giảng, câu hỏi và bài tập được chia sẻ công khai' },
   { id: 'settings', label: 'Cấu hình hệ thống', settings: true },
 ];
 

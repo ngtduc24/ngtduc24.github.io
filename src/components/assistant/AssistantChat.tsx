@@ -91,7 +91,6 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
   const canEdu = isAdmin || perms.includes('edu');
 
   const canFeature = (id: string): boolean => {
-    if (id === 'assistant') return true;
     if (isModuleHidden(id, settings)) return false;
     if (isAdmin) return true;
     if (id === 'notifications') return true;
