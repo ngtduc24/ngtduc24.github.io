@@ -41,7 +41,14 @@ interface EduModuleProps {
 type EduView = 'list' | 'import' | 'class_detail' | 'assignment_edit' | 'assignment_detail' | 'grading' | 'assignment_bank' | 'grade_entry' | 'exam_bank';
 
 export default function EduModule({ currentUser, settings }: EduModuleProps) {
-  const [view, setView] = useState<EduView>('list');
+  const [view, setView] = useState<EduView>(() => {
+    // Phím tắt từ Dashboard có thể mở thẳng vào Trắc nghiệm hoặc Nhập điểm.
+    try {
+      const v = localStorage.getItem('edu_initial_view');
+      if (v === 'exam_bank' || v === 'grade_entry') { localStorage.removeItem('edu_initial_view'); return v as EduView; }
+    } catch {}
+    return 'list';
+  });
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
   const [selectedGradeColumnId, setSelectedGradeColumnId] = useState<string | null>(null);
