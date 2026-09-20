@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, BookOpen, FileText, CheckCircle2, ArrowLeft, Copy, ExternalLink, ShieldAlert } from 'lucide-react';
+import { Loader2, BookOpen, FileText, CheckCircle2, ArrowLeft, Copy, ExternalLink, ShieldAlert, FileDown } from 'lucide-react';
 import { ELLesson, ELSection, ELResource, getLesson, getSections, getResources, copyPublicLesson } from '../../lib/elearning';
+import { exportLessonToPdf } from '../../lib/lessonPdf';
 
 interface Props { lessonId: string; }
 
@@ -80,7 +81,12 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
               <p className="text-[11px] text-slate-400">{lesson.author_label || lesson.owner_name || 'Ẩn danh'} · {sections.length} phần{lesson.is_public ? '' : ' · Bản nháp'}</p>
             </div>
           </div>
-          {canCopy && <button onClick={doCopy} disabled={copying || copied} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-[11px] font-bold text-white hover:bg-brand-hover disabled:opacity-60">{copying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : copied ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} {copied ? 'Đã sao chép' : 'Sao chép về kho của tôi'}</button>}
+          <div className="flex items-center gap-2">
+            <button onClick={() => exportLessonToPdf(lesson, sections, resources)} title="Tải toàn bộ bài giảng ra PDF" className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand">
+              <FileDown className="h-3.5 w-3.5" /> Tải PDF
+            </button>
+            {canCopy && <button onClick={doCopy} disabled={copying || copied} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-[11px] font-bold text-white hover:bg-brand-hover disabled:opacity-60">{copying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : copied ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} {copied ? 'Đã sao chép' : 'Sao chép về kho của tôi'}</button>}
+          </div>
         </div>
       </div>
 
