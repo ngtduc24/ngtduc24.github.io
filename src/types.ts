@@ -44,6 +44,7 @@ export interface UserAccount {
   canImportEdu?: boolean;
   canExportEdu?: boolean;
   canGradeEdu?: boolean;
+  canGradeImportEdu?: boolean; // Nhập điểm từ file .fg
   // Portfolio Permissions (các mục con trong Quản trị Portfolio)
   canPortfolioContent?: boolean;
   canPortfolioProjects?: boolean;
