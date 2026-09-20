@@ -31,15 +31,18 @@ const JWKS = createRemoteJWKSet(
 const MAX_QUESTION = 2000;
 const MAX_CONTEXT = 16000;
 
-// Câu lệnh hệ thống ràng buộc Gemini chỉ trả lời dựa trên nội dung bài giảng được cung cấp,
-// không bịa. Nếu ngữ cảnh không có thông tin thì nói rõ là chưa có trong học liệu.
-const SYSTEM_PROMPT = [
-  "Bạn là Trợ lý giáo dục của một hệ thống học liệu.",
-  "Chỉ trả lời dựa trên phần NGỮ CẢNH là nội dung bài giảng được cung cấp bên dưới.",
+// Câu lệnh hệ thống mặc định, ràng buộc Gemini chỉ trả lời dựa trên NGỮ CẢNH được cung cấp,
+// không bịa. Dùng chung cho cả Trợ lý giáo dục (ngữ cảnh là nội dung bài giảng) và Trợ lý hệ
+// thống (ngữ cảnh là mô tả chức năng và hướng dẫn thao tác). Client có thể gửi kèm systemPrompt
+// riêng để nói rõ vai trò, nhưng ràng buộc không bịa vẫn được ghép thêm ở dưới.
+const DEFAULT_SYSTEM_PROMPT = "Bạn là trợ lý của một hệ thống phần mềm giáo dục.";
+const GROUNDING = [
+  "Chỉ trả lời dựa trên phần NGỮ CẢNH được cung cấp bên dưới.",
   "Tuyệt đối không bịa thêm thông tin không có trong ngữ cảnh.",
-  "Nếu ngữ cảnh không đủ để trả lời, hãy nói rõ rằng nội dung này chưa có trong học liệu công khai và gợi ý người dùng xem bài giảng liên quan.",
+  "Nếu ngữ cảnh không đủ, hãy nói rõ là chưa có thông tin này và gợi ý người dùng xem mục liên quan.",
   "Trả lời bằng tiếng Việt, ngắn gọn, rõ ràng, đúng trọng tâm câu hỏi.",
 ].join(" ");
+const MAX_SYSTEM_PROMPT = 600;
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -74,6 +77,10 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => null);
   const question = typeof body?.question === "string" ? body.question.trim().slice(0, MAX_QUESTION) : "";
   const context = typeof body?.context === "string" ? body.context.slice(0, MAX_CONTEXT) : "";
+  const rolePrompt = typeof body?.systemPrompt === "string" && body.systemPrompt.trim()
+    ? body.systemPrompt.trim().slice(0, MAX_SYSTEM_PROMPT)
+    : DEFAULT_SYSTEM_PROMPT;
+  const systemPrompt = `${rolePrompt} ${GROUNDING}`;
   if (!question) return json({ error: "Thiếu câu hỏi." }, 400);
 
   const userText = [
@@ -94,7 +101,7 @@ Deno.serve(async (req) => {
           "x-goog-api-key": apiKey,
         },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          system_instruction: { parts: [{ text: systemPrompt }] },
           contents: [{ role: "user", parts: [{ text: userText }] }],
           generationConfig: { temperature: 0.2, maxOutputTokens: 800 },
         }),
