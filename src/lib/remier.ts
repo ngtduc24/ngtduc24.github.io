@@ -129,6 +129,12 @@ export async function getSharedAssets(kind?: MvKind): Promise<MvAsset[]> {
   const { data, error } = await q; if (error) throw error; return (data || []).map(mapAsset);
 }
 
+// Quản trị: lấy tất cả tư liệu thư viện chung, gồm cả mục đang ẩn.
+export async function getAllSharedAssets(): Promise<MvAsset[]> {
+  const { data, error } = await supabase.from(A_TABLE).select('*').eq('scope', 'shared').is('deleted_at', null).order('is_featured', { ascending: false }).order('created_at', { ascending: false });
+  if (error) throw error; return (data || []).map(mapAsset);
+}
+
 function mapAsset(r: any): MvAsset { return { ...r, tags: r.tags || [] }; }
 
 export async function addAsset(a: Partial<MvAsset> & { kind: MvKind; title: string; url: string }): Promise<MvAsset> {

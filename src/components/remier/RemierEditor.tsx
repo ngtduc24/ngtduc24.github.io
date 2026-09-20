@@ -1,28 +1,51 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Play, Pause, Scissors, Trash2, Copy, Lock, Unlock, Eye, EyeOff, Type, Download, X, ArrowLeft,
-  Upload, Loader2, Film, Image as ImageIcon, Music, ZoomIn, ZoomOut, Plus, Check, ChevronRight, Layers
+  Upload, Loader2, Film, Image as ImageIcon, Music, ZoomIn, ZoomOut, Layers, Maximize2, Captions, Volume2, Plus
 } from 'lucide-react';
 import { UserAccount } from '../../types';
 import { useNotifications } from '../NotificationContext';
 import {
   MvProject, MvAsset, MvKind, getProject, updateProject, getMyAssets, getSharedAssets,
-  uploadAssetFile, addAsset,
+  uploadAssetFile, addAsset, saveSharedToMine,
 } from '../../lib/remier';
 
 interface Props { projectId: string; currentUser: UserAccount; onExit: () => void; }
 
 type ClipKind = 'video' | 'image' | 'audio' | 'text';
 interface ClipProps { x: number; y: number; scale: number; rotation: number; opacity: number; volume: number; text: string; fontSize: number; color: string; fontWeight: number; align: string; }
-interface Clip { id: string; kind: ClipKind; name: string; src?: string; thumb?: string; start: number; dur: number; inPoint: number; srcDur?: number; props: ClipProps; }
+interface Clip { id: string; kind: ClipKind; name: string; src?: string; thumb?: string; start: number; dur: number; inPoint: number; srcDur?: number; fadeIn?: number; fadeOut?: number; props: ClipProps; }
 interface Track { id: string; name: string; locked?: boolean; hidden?: boolean; muted?: boolean; clips: Clip[]; }
 
 const defaultProps = (): ClipProps => ({ x: 0, y: 0, scale: 1, rotation: 0, opacity: 1, volume: 1, text: 'Nội dung chữ', fontSize: 64, color: '#ffffff', fontWeight: 700, align: 'center' });
 const uid = () => Math.random().toString(36).slice(2, 10);
+// Hệ số mờ dần theo vị trí thời gian trong lớp (0..1).
+const fadeFactor = (clip: Clip, t: number) => {
+  const into = t - clip.start; const left = clip.start + clip.dur - t;
+  let f = 1;
+  if (clip.fadeIn && into < clip.fadeIn) f = Math.max(0, into / clip.fadeIn);
+  if (clip.fadeOut && left < clip.fadeOut) f = Math.min(f, Math.max(0, left / clip.fadeOut));
+  return f;
+};
 const fmtTime = (ms: number) => {
   const s = Math.max(0, ms) / 1000; const m = Math.floor(s / 60); const sec = Math.floor(s % 60); const f = Math.floor((s % 1) * 30);
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}:${String(f).padStart(2, '0')}`;
 };
+
+// Phân tích phụ đề SRT hoặc VTT thành danh sách cue {start,dur,text} theo ms.
+function parseSubtitles(raw: string): { start: number; dur: number; text: string }[] {
+  const toMs = (s: string) => { const m = s.trim().replace(',', '.').match(/(\d+):(\d+):(\d+(?:\.\d+)?)/); if (!m) return 0; return (parseInt(m[1]) * 3600 + parseInt(m[2]) * 60 + parseFloat(m[3])) * 1000; };
+  const out: { start: number; dur: number; text: string }[] = [];
+  const blocks = raw.replace(/\r/g, '').replace(/^WEBVTT.*\n/, '').split(/\n\n+/);
+  for (const b of blocks) {
+    const lines = b.split('\n').filter(Boolean); if (!lines.length) continue;
+    const tl = lines.find(l => l.includes('-->')); if (!tl) continue;
+    const [a, z] = tl.split('-->'); const start = toMs(a); const end = toMs(z);
+    const text = lines.slice(lines.indexOf(tl) + 1).join('\n').trim();
+    if (text && end > start) out.push({ start, dur: end - start, text });
+  }
+  return out;
+}
 
 // Bộ nhớ đệm phần tử media dùng để vẽ và phát.
 const mediaCache = new Map<string, HTMLVideoElement | HTMLImageElement | HTMLAudioElement>();
@@ -105,15 +128,16 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
     for (const c of track.clips) if (t >= c.start && t < c.start + c.dur) return c;
     return null;
   };
-  const drawClipVisual = (ctx: CanvasRenderingContext2D, clip: Clip, cv: HTMLCanvasElement) => {
+  const drawClipVisual = (ctx: CanvasRenderingContext2D, clip: Clip, cv: HTMLCanvasElement, t: number) => {
     const p = clip.props;
+    const alpha = p.opacity * fadeFactor(clip, t);
     ctx.save();
-    ctx.globalAlpha = p.opacity;
+    ctx.globalAlpha = alpha;
     ctx.translate(cv.width / 2 + (p.x / 100) * cv.width, cv.height / 2 + (p.y / 100) * cv.height);
     ctx.rotate((p.rotation * Math.PI) / 180);
     ctx.scale(p.scale, p.scale);
     if (clip.kind === 'text') {
-      ctx.globalAlpha = p.opacity; ctx.fillStyle = p.color;
+      ctx.globalAlpha = alpha; ctx.fillStyle = p.color;
       ctx.font = `${p.fontWeight} ${p.fontSize}px Inter, system-ui, sans-serif`;
       ctx.textAlign = (p.align as CanvasTextAlign) || 'center'; ctx.textBaseline = 'middle';
       const lines = (p.text || '').split('\n');
@@ -139,7 +163,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
     const tk = tracksRef.current;
     for (let i = tk.length - 1; i >= 0; i--) {
       const c = activeClip(tk[i], t);
-      if (c && c.kind !== 'audio') drawClipVisual(ctx, c, cv);
+      if (c && c.kind !== 'audio') drawClipVisual(ctx, c, cv, t);
     }
   }, []);
 
@@ -170,8 +194,8 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
         activeSrcs.add(c.kind + '|' + c.src);
         const el = getMediaEl(c) as HTMLVideoElement | HTMLAudioElement;
         if (el) {
-          el.muted = !!track.muted || c.kind === 'audio' && false; // giữ tiếng
-          el.volume = Math.max(0, Math.min(1, c.props.volume));
+          el.muted = !!track.muted;
+          el.volume = Math.max(0, Math.min(1, c.props.volume * fadeFactor(c, t)));
           const want = (c.inPoint + (t - c.start)) / 1000;
           if (isPlaying) {
             if (Math.abs(el.currentTime - want) > 0.25) { try { el.currentTime = want; } catch {} }
@@ -252,6 +276,30 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
   };
   const toggleTrack = (id: string, key: 'locked' | 'hidden' | 'muted') => { setTracks(prev => prev.map(tr => tr.id === id ? { ...tr, [key]: !tr[key] } : tr)); markDirty(); };
 
+  // Tách âm thanh khỏi video: tạo lớp tiếng riêng, tắt tiếng lớp video gốc.
+  const splitAudioFromVideo = (clip: Clip) => {
+    if (clip.kind !== 'video' || !clip.src) return;
+    const audioClip: Clip = { id: uid(), kind: 'audio', name: clip.name + ' (tiếng)', src: clip.src, start: clip.start, dur: clip.dur, inPoint: clip.inPoint, srcDur: clip.srcDur, fadeIn: clip.fadeIn, fadeOut: clip.fadeOut, props: { ...defaultProps(), volume: clip.props.volume } };
+    updateClipProps(clip.id, { volume: 0 });
+    setTracks(prev => { const next = prev.length ? [...prev] : [{ id: uid(), name: 'Lớp 1', clips: [] }]; const idx = next.length - 1; next[idx] = { ...next[idx], clips: [...next[idx].clips, audioClip] }; return next; });
+    markDirty(); setSelId(audioClip.id); addNotification('Đã tách âm thanh thành lớp riêng.', 'success');
+  };
+
+  // Nhập phụ đề srt/vtt thành các lớp chữ trên 1 hàng riêng.
+  const importSubtitles = (cues: { start: number; dur: number; text: string }[]) => {
+    if (!cues.length) return;
+    const clips: Clip[] = cues.map(c => ({ id: uid(), kind: 'text', name: 'Phụ đề', start: c.start, dur: c.dur, inPoint: 0, props: { ...defaultProps(), text: c.text, fontSize: 46, y: 36 } }));
+    setTracks(prev => [{ id: uid(), name: 'Phụ đề', clips }, ...prev]); markDirty();
+    addNotification(`Đã nhập ${cues.length} dòng phụ đề.`, 'success');
+  };
+
+  const timelineScrollRef = useRef<HTMLDivElement>(null);
+  const fitTimeline = () => {
+    const w = timelineScrollRef.current?.clientWidth || (window.innerWidth - 460);
+    const dur = Math.max(duration, 5000) / 1000;
+    setPxPerSec(Math.max(20, Math.min(300, Math.floor((w - 20) / dur))));
+  };
+
   // ---------- Kéo lớp trên dòng thời gian ----------
   const dragRef = useRef<{ id: string; mode: 'move' | 'l' | 'r'; startX: number; orig: Clip } | null>(null);
   const onClipPointerDown = (e: React.PointerEvent, tr: Track, clip: Clip, mode: 'move' | 'l' | 'r') => {
@@ -263,7 +311,16 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
     const d = dragRef.current; if (!d) return;
     const deltaMs = ((e.clientX - d.startX) / pxPerSec) * 1000;
     let patch: Partial<Clip> = {};
-    if (d.mode === 'move') patch = { start: Math.max(0, Math.round(d.orig.start + deltaMs)) };
+    if (d.mode === 'move') {
+      let ns = Math.max(0, Math.round(d.orig.start + deltaMs));
+      // Hít dính: bám đầu phát, mốc 0, và mép các lớp khác trong ngưỡng ~8px.
+      const thr = (8 / pxPerSec) * 1000;
+      const pts: number[] = [0, playheadRef.current];
+      tracksRef.current.forEach(tr => tr.clips.forEach(c => { if (c.id !== d.id) { pts.push(c.start); pts.push(c.start + c.dur); } }));
+      const ne = ns + d.orig.dur;
+      for (const p of pts) { if (Math.abs(ns - p) < thr) { ns = p; break; } if (Math.abs(ne - p) < thr) { ns = p - d.orig.dur; break; } }
+      patch = { start: Math.max(0, Math.round(ns)) };
+    }
     else if (d.mode === 'l') { const ns = Math.max(0, Math.min(d.orig.start + d.orig.dur - 100, d.orig.start + deltaMs)); patch = { start: Math.round(ns), dur: Math.round(d.orig.dur - (ns - d.orig.start)), inPoint: Math.max(0, Math.round(d.orig.inPoint + (ns - d.orig.start))) }; }
     else patch = { dur: Math.max(100, Math.round(d.orig.dur + deltaMs)) };
     updateClip(d.id, patch);
@@ -339,6 +396,9 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
       else if ((e.key === 's' || e.key === 'S') && !e.ctrlKey && !e.metaKey && selClip) { splitAtPlayhead(); }
       else if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) { e.preventDefault(); persist(false); }
       else if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D') && selId) { e.preventDefault(); duplicateClip(selId); }
+      else if (e.shiftKey && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); fitTimeline(); }
+      else if (e.key === 'Home') { setPlayhead(0); playheadRef.current = 0; }
+      else if (e.key === 'End') { setPlayhead(duration); playheadRef.current = duration; }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -363,7 +423,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 
       <div className="flex min-h-0 flex-1">
         {/* Cột thư viện trái */}
-        <LibraryPanel currentUser={currentUser} onAddAsset={addClipFromAsset} onAddText={addTextClip} />
+        <LibraryPanel currentUser={currentUser} onAddAsset={addClipFromAsset} onAddText={addTextClip} onImportSubtitles={importSubtitles} />
 
         {/* Khung xem trước */}
         <div className="flex min-w-0 flex-1 flex-col">
@@ -378,7 +438,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 
         {/* Bảng thuộc tính phải */}
         <div className="w-[320px] shrink-0 overflow-y-auto border-l border-white/10 bg-[#151a21] p-4">
-          {selClip ? <PropsPanel clip={selClip.clip} onProps={(p) => updateClipProps(selClip.clip.id, p)} onClip={(p) => updateClip(selClip.clip.id, p)} onDelete={() => deleteClip(selClip.clip.id)} onDuplicate={() => duplicateClip(selClip.clip.id)} />
+          {selClip ? <PropsPanel clip={selClip.clip} onProps={(p) => updateClipProps(selClip.clip.id, p)} onClip={(p) => updateClip(selClip.clip.id, p)} onDelete={() => deleteClip(selClip.clip.id)} onDuplicate={() => duplicateClip(selClip.clip.id)} onSplitAudio={() => splitAudioFromVideo(selClip.clip)} />
             : <div className="mt-10 text-center text-xs text-slate-500">Chọn một lớp trên dòng thời gian để chỉnh thuộc tính.</div>}
         </div>
       </div>
@@ -392,11 +452,12 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
           <button onClick={() => selId && deleteClip(selId)} title="Xóa (Delete)" disabled={!selId} className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-40"><Trash2 className="h-3.5 w-3.5" /></button>
           <button onClick={addTextClip} title="Thêm chữ (T)" className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><Type className="h-3.5 w-3.5" /></button>
           <div className="ml-auto flex items-center gap-1">
+            <button onClick={fitTimeline} title="Thu vừa màn hình (Shift+Z)" className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><Maximize2 className="h-3.5 w-3.5" /></button>
             <button onClick={() => setPxPerSec(v => Math.max(20, v - 20))} className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><ZoomOut className="h-3.5 w-3.5" /></button>
             <button onClick={() => setPxPerSec(v => Math.min(300, v + 20))} className="grid h-7 w-7 place-items-center rounded-md bg-white/5 hover:bg-white/10"><ZoomIn className="h-3.5 w-3.5" /></button>
           </div>
         </div>
-        <Timeline tracks={tracks} pxPerSec={pxPerSec} playhead={playhead} duration={duration} selId={selId}
+        <Timeline tracks={tracks} pxPerSec={pxPerSec} playhead={playhead} duration={duration} selId={selId} scrollRef={timelineScrollRef}
           onSeek={(t) => { setPlayhead(t); playheadRef.current = t; }}
           onSelect={setSelId} onClipPointerDown={onClipPointerDown} onToggleTrack={toggleTrack} />
       </div>
@@ -405,9 +466,11 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 }
 
 // ============================ Thư viện trái ============================
-function LibraryPanel({ currentUser, onAddAsset, onAddText }: { currentUser: UserAccount; onAddAsset: (a: MvAsset) => void; onAddText: () => void; }) {
+function LibraryPanel({ currentUser, onAddAsset, onAddText, onImportSubtitles }: { currentUser: UserAccount; onAddAsset: (a: MvAsset) => void; onAddText: () => void; onImportSubtitles: (cues: { start: number; dur: number; text: string }[]) => void; }) {
   const { addNotification } = useNotifications();
   const [tab, setTab] = useState<'mine' | 'shared' | 'text'>('mine');
+  const subRef = useRef<HTMLInputElement>(null);
+  const onSubFile = async (f: File | null) => { if (!f) return; try { const txt = await f.text(); const cues = parseSubtitles(txt); if (!cues.length) { addNotification('Không đọc được dòng phụ đề nào.', 'warning'); return; } onImportSubtitles(cues); } catch (e: any) { addNotification('Lỗi đọc phụ đề: ' + (e.message || e), 'error'); } };
   const [assets, setAssets] = useState<MvAsset[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -461,9 +524,11 @@ function LibraryPanel({ currentUser, onAddAsset, onAddText }: { currentUser: Use
         ))}
       </div>
       {tab === 'text' ? (
-        <div className="p-3">
+        <div className="space-y-2 p-3">
           <button onClick={onAddText} className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 px-3 py-4 text-xs font-bold text-slate-300 hover:border-brand hover:text-brand"><Type className="h-4 w-4" /> Thêm lớp văn bản</button>
-          <p className="mt-2 text-[11px] text-slate-500">Kéo vào dòng thời gian bằng cách bấm nút trên. Chọn lớp để sửa nội dung, phông, màu ở bảng bên phải.</p>
+          <button onClick={() => subRef.current?.click()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/5 px-3 py-2.5 text-xs font-bold text-slate-300 hover:bg-white/10"><Captions className="h-4 w-4" /> Nhập phụ đề (SRT/VTT)</button>
+          <input ref={subRef} type="file" accept=".srt,.vtt,text/vtt" className="hidden" onChange={e => onSubFile(e.target.files?.[0] || null)} />
+          <p className="text-[11px] text-slate-500">Nhập file phụ đề sẽ tạo một hàng lớp chữ theo đúng mốc thời gian. Chọn lớp để sửa nội dung, phông, màu ở bảng bên phải.</p>
         </div>
       ) : (
         <>
@@ -479,12 +544,17 @@ function LibraryPanel({ currentUser, onAddAsset, onAddText }: { currentUser: Use
               : (
                 <div className="grid grid-cols-2 gap-2">
                   {assets.map(a => { const Icon = kindIcon(a.kind); return (
-                    <button key={a.id} onClick={() => onAddAsset(a)} title={`Thêm "${a.title}" vào dòng thời gian`} className="group overflow-hidden rounded-lg border border-white/10 bg-black/30 text-left hover:border-brand">
-                      <div className="grid aspect-video place-items-center bg-black/40">
-                        {a.thumb_url ? <img src={a.thumb_url} alt="" className="h-full w-full object-cover" /> : <Icon className="h-6 w-6 text-slate-500" />}
-                      </div>
-                      <div className="p-1.5"><p className="truncate text-[10px] font-semibold text-slate-300">{a.title}</p>{a.duration_ms ? <p className="text-[9px] text-slate-500">{fmtTime(a.duration_ms)}</p> : null}</div>
-                    </button>
+                    <div key={a.id} className="group relative overflow-hidden rounded-lg border border-white/10 bg-black/30 hover:border-brand">
+                      <button onClick={() => onAddAsset(a)} title={`Thêm "${a.title}" vào dòng thời gian`} className="block w-full text-left">
+                        <div className="grid aspect-video place-items-center bg-black/40">
+                          {a.thumb_url ? <img src={a.thumb_url} alt="" className="h-full w-full object-cover" /> : <Icon className="h-6 w-6 text-slate-500" />}
+                        </div>
+                        <div className="p-1.5"><p className="truncate text-[10px] font-semibold text-slate-300">{a.title}</p>{a.duration_ms ? <p className="text-[9px] text-slate-500">{fmtTime(a.duration_ms)}</p> : null}</div>
+                      </button>
+                      {tab === 'shared' && (
+                        <button onClick={async () => { try { await saveSharedToMine(a, currentUser.fullName); addNotification('Đã lưu vào kho của tôi.', 'success'); } catch (e: any) { addNotification('Lỗi: ' + (e.message || e), 'error'); } }} title="Lưu vào kho của tôi" className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-md bg-black/60 text-white opacity-0 transition-opacity hover:bg-brand group-hover:opacity-100"><Plus className="h-3.5 w-3.5" /></button>
+                      )}
+                    </div>
                   ); })}
                 </div>
               )}
@@ -496,8 +566,9 @@ function LibraryPanel({ currentUser, onAddAsset, onAddText }: { currentUser: Use
 }
 
 // ============================ Dòng thời gian ============================
-function Timeline({ tracks, pxPerSec, playhead, duration, selId, onSeek, onSelect, onClipPointerDown, onToggleTrack }: {
+function Timeline({ tracks, pxPerSec, playhead, duration, selId, scrollRef, onSeek, onSelect, onClipPointerDown, onToggleTrack }: {
   tracks: Track[]; pxPerSec: number; playhead: number; duration: number; selId: string | null;
+  scrollRef?: React.RefObject<HTMLDivElement>;
   onSeek: (t: number) => void; onSelect: (id: string) => void;
   onClipPointerDown: (e: React.PointerEvent, tr: Track, c: Clip, mode: 'move' | 'l' | 'r') => void;
   onToggleTrack: (id: string, k: 'locked' | 'hidden' | 'muted') => void;
@@ -527,7 +598,7 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, onSeek, onSelec
         ))}
       </div>
       {/* Vùng lớp cuộn ngang */}
-      <div className="relative min-w-0 flex-1 overflow-x-auto">
+      <div ref={scrollRef} className="relative min-w-0 flex-1 overflow-x-auto">
         <div style={{ width }}>
           {/* Thước */}
           <div ref={rulerRef} onClick={seek} className="relative h-6 cursor-pointer border-b border-white/10 bg-[#0e1319]">
@@ -563,7 +634,7 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, onSeek, onSelec
 }
 
 // ============================ Bảng thuộc tính ============================
-function PropsPanel({ clip, onProps, onClip, onDelete, onDuplicate }: { clip: Clip; onProps: (p: Partial<ClipProps>) => void; onClip: (p: Partial<Clip>) => void; onDelete: () => void; onDuplicate: () => void; }) {
+function PropsPanel({ clip, onProps, onClip, onDelete, onDuplicate, onSplitAudio }: { clip: Clip; onProps: (p: Partial<ClipProps>) => void; onClip: (p: Partial<Clip>) => void; onDelete: () => void; onDuplicate: () => void; onSplitAudio: () => void; }) {
   const p = clip.props;
   const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
     <div className="mb-3"><label className="mb-1 block text-[10px] font-bold uppercase text-slate-500">{label}</label>{children}</div>
@@ -612,6 +683,14 @@ function PropsPanel({ clip, onProps, onClip, onDelete, onDuplicate }: { clip: Cl
         <Row label={`Âm lượng ${Math.round(p.volume * 100)}%`}>{slider(p.volume, v => onProps({ volume: v }), 0, 1)}</Row>
       )}
 
+      {clip.kind === 'video' && (
+        <button onClick={onSplitAudio} className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10"><Volume2 className="h-4 w-4" /> Tách âm thanh khỏi video</button>
+      )}
+
+      <div className="grid grid-cols-2 gap-2">
+        <Row label="Mờ dần vào (giây)">{num(Math.round(clip.fadeIn || 0) / 1000, v => onClip({ fadeIn: Math.max(0, Math.round(v * 1000)) }), 0.1, 0)}</Row>
+        <Row label="Mờ dần ra (giây)">{num(Math.round(clip.fadeOut || 0) / 1000, v => onClip({ fadeOut: Math.max(0, Math.round(v * 1000)) }), 0.1, 0)}</Row>
+      </div>
       <div className="grid grid-cols-2 gap-2">
         <Row label="Bắt đầu (giây)">{num(Math.round(clip.start) / 1000, v => onClip({ start: Math.max(0, Math.round(v * 1000)) }), 0.1, 0)}</Row>
         <Row label="Thời lượng (giây)">{num(Math.round(clip.dur) / 1000, v => onClip({ dur: Math.max(0.1, Math.round(v * 1000)) }), 0.1, 0.1)}</Row>
