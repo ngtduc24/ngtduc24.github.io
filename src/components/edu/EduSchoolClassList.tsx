@@ -284,9 +284,9 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
           {onOpenBank && canCreate && (
             <button
               onClick={onOpenBank}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-brand text-brand text-[11px] font-bold hover:bg-brand-light transition-all uppercase tracking-wider"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider"
             >
-              <BookMarked className="w-4 h-4" />
+              <BookMarked className="w-4 h-4 text-brand" />
               <span>Ngân hàng bài tập</span>
             </button>
           )}
