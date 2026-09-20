@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Users, 
   BookOpen, 
@@ -68,6 +68,29 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
   const [newColumnWeight, setNewColumnWeight] = useState('');
   const [dragUserId, setDragUserId] = useState<string | null>(null);
   const [overUserId, setOverUserId] = useState<string | null>(null);
+  // Sửa nhanh tên và tỷ trọng cột ngay tại tiêu đề khi nhấn đúp.
+  const [inlineEditColId, setInlineEditColId] = useState<string | null>(null);
+  const [inlineName, setInlineName] = useState('');
+  const [inlineWeight, setInlineWeight] = useState('');
+  const inlineEditRef = useRef<HTMLDivElement>(null);
+  const startInlineEdit = (col: EduGradeColumn) => { setInlineEditColId(col.id); setInlineName(col.name); setInlineWeight(col.weight ? String(col.weight) : ''); };
+  const saveInlineEdit = async () => {
+    const col = gradeColumns.find(c => c.id === inlineEditColId); if (!col) { setInlineEditColId(null); return; }
+    const name = inlineName.trim() || col.name;
+    const weight = inlineWeight.trim() === '' ? 0 : Math.max(0, Math.min(100, Number(inlineWeight) || 0));
+    setInlineEditColId(null);
+    if (name === col.name && weight === (col.weight || 0)) return; // không đổi thì thôi
+    try { await saveGradeColumn({ ...col, name, weight }); loadData(); }
+    catch (err) { addNotification('Lỗi lưu cột: ' + (err as Error).message, 'error'); }
+  };
+  // Bấm ra ngoài khung sửa thì tự lưu và đóng.
+  useEffect(() => {
+    if (!inlineEditColId) return;
+    const onDown = (e: PointerEvent) => { if (inlineEditRef.current && !inlineEditRef.current.contains(e.target as Node)) saveInlineEdit(); };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inlineEditColId, inlineName, inlineWeight]);
 
   // Kéo thả để sắp xếp lại thứ tự sinh viên, cập nhật STT rồi lưu.
   const reorderUsers = async (fromId: string, toId: string) => {
@@ -581,60 +604,46 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                   <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider w-32">MSSV</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider">Họ và Tên</th>
                   {gradeColumns.map(col => (
-                    <th key={col.id} className="px-6 py-4 text-[10px] font-black text-slate-800 uppercase tracking-wider text-center border-l border-slate-50 group min-w-[120px]">
-                      <div className="flex flex-col items-center gap-1 relative">
-                        <div className="flex items-center gap-1">
-                          <span>{col.name}</span>
-                          {(canEdit || canDelete) && (
-                          <div className="relative ml-1">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveDropdownId(activeDropdownId === col.id ? null : col.id);
-                              }}
-                              className={`p-1 rounded-lg transition-all ${activeDropdownId === col.id ? 'bg-slate-100 text-slate-900' : 'text-slate-300 hover:text-slate-600 hover:bg-slate-50'}`}
-                            >
-                              <MoreVertical className="w-3 h-3" />
-                            </button>
-                            {activeDropdownId === col.id && (
-                              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 bg-white border border-slate-100 rounded-xl shadow-2xl p-1 z-20 min-w-[120px] animate-fadeIn font-bold" onClick={e => e.stopPropagation()}>
-                                {canEdit && <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingColumn(col);
-                                    setNewColumnName(col.name);
-                                    setNewColumnWeight(col.weight ? String(col.weight) : '');
-                                    setActiveDropdownId(null);
-                                  }}
-                                  className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 transition-colors"
-                                >
-                                  <Edit2 className="w-3 h-3 text-brand" /> SỬA CỘT
-                                </button>}
-                                {canDelete && <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteColumn(col.id);
-                                    setActiveDropdownId(null);
-                                  }}
-                                  className="w-full text-left px-3 py-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2 transition-colors"
-                                >
-                                  <Trash2 className="w-3 h-3" /> XÓA CỘT
-                                </button>}
-                              </div>
-                            )}
-                          </div>
+                    <th key={col.id} className="relative px-6 py-4 text-[10px] font-black text-slate-800 uppercase tracking-wider text-center border-l border-slate-50 group min-w-[130px]">
+                      {/* Nút xóa cột nằm góc trên phải để tên cột được căn giữa */}
+                      {canDelete && inlineEditColId !== col.id && (
+                        <div className="absolute right-1 top-1">
+                          <button onClick={(e) => { e.stopPropagation(); setActiveDropdownId(activeDropdownId === col.id ? null : col.id); }}
+                            className={`p-1 rounded-lg transition-all ${activeDropdownId === col.id ? 'bg-slate-100 text-slate-900' : 'text-slate-300 hover:text-slate-600 hover:bg-slate-50'}`}>
+                            <MoreVertical className="w-3 h-3" />
+                          </button>
+                          {activeDropdownId === col.id && (
+                            <div className="absolute right-0 top-full mt-1 bg-white border border-slate-100 rounded-xl shadow-2xl p-1 z-20 min-w-[120px] animate-fadeIn font-bold" onClick={e => e.stopPropagation()}>
+                              <button onClick={(e) => { e.stopPropagation(); handleDeleteColumn(col.id); setActiveDropdownId(null); }}
+                                className="w-full text-left px-3 py-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2 transition-colors">
+                                <Trash2 className="w-3 h-3" /> XÓA CỘT
+                              </button>
+                            </div>
                           )}
                         </div>
-                        <button
-                          onClick={() => handleToggleConfirm(col)}
-                          title={col.isConfirmed ? 'Đã chốt (khóa). Bấm để mở khóa chấm lại' : 'Chưa chốt (mở). Bấm để chốt điểm cho sinh viên xem'}
-                          aria-label={col.isConfirmed ? 'Đã chốt' : 'Chưa chốt'}
-                          className={`grid h-6 w-6 place-items-center rounded-lg border transition-colors ${col.isConfirmed ? 'border-brand bg-brand-light text-brand hover:bg-brand/10' : 'border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100'}`}
-                        >
-                          {col.isConfirmed ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
-                        </button>
-                        <span className="text-[9px] font-bold text-slate-400">{(col.weight ?? 0) > 0 ? `Tỷ trọng ${col.weight}%` : 'Chưa đặt tỷ trọng'}</span>
-                      </div>
+                      )}
+                      {inlineEditColId === col.id ? (
+                        <div ref={inlineEditRef} className="mx-auto flex w-[120px] flex-col items-stretch gap-1.5" onClick={e => e.stopPropagation()}>
+                          <input autoFocus value={inlineName} onChange={e => setInlineName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveInlineEdit(); }} placeholder="Tên cột" className="rounded-lg border border-brand/40 px-2 py-1 text-[11px] font-bold normal-case text-slate-800 outline-none" />
+                          <div className="flex items-center gap-1">
+                            <input type="number" min={0} max={100} value={inlineWeight} onChange={e => setInlineWeight(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveInlineEdit(); }} placeholder="Tỷ trọng" className="w-full rounded-lg border border-brand/40 px-2 py-1 text-[11px] font-bold normal-case text-slate-800 outline-none" />
+                            <span className="text-[11px] font-bold text-slate-400">%</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-1.5">
+                          <span onDoubleClick={() => canEdit && startInlineEdit(col)} title={canEdit ? 'Nhấn đúp để sửa tên và tỷ trọng' : undefined} className={`max-w-[120px] truncate ${canEdit ? 'cursor-pointer hover:text-brand' : ''}`}>{col.name}</span>
+                          <button
+                            onClick={() => handleToggleConfirm(col)}
+                            title={col.isConfirmed ? 'Đã chốt (khóa). Bấm để mở khóa chấm lại' : 'Chưa chốt (mở). Bấm để chốt điểm cho sinh viên xem'}
+                            aria-label={col.isConfirmed ? 'Đã chốt' : 'Chưa chốt'}
+                            className={`grid h-6 w-6 place-items-center rounded-lg border transition-colors ${col.isConfirmed ? 'border-brand bg-brand-light text-brand hover:bg-brand/10' : 'border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100'}`}
+                          >
+                            {col.isConfirmed ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
+                          </button>
+                          <span className="text-[9px] font-bold text-slate-400 normal-case">{(col.weight ?? 0) > 0 ? `Tỷ trọng ${col.weight}%` : 'Chưa đặt tỷ trọng'}</span>
+                        </div>
+                      )}
                     </th>
                   ))}
                   <th className="px-6 py-4 text-[10px] font-black text-brand uppercase tracking-wider text-center border-l border-slate-100 min-w-[120px] bg-brand-light/30">
