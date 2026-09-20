@@ -39,18 +39,18 @@ interface EduModuleProps {
   settings: AppSettings;
 }
 
-type EduView = 'list' | 'import' | 'class_detail' | 'assignment_edit' | 'assignment_detail' | 'grading' | 'assignment_bank' | 'grade_entry' | 'exam_bank';
+type EduView = 'list' | 'import' | 'class_detail' | 'assignment_edit' | 'assignment_detail' | 'grading' | 'assignment_bank' | 'grade_entry' | 'exam_bank' | 'question_bank';
 
 export default function EduModule({ currentUser, settings }: EduModuleProps) {
   // Đọc màn hình con từ URL để tải lại trang không nhảy về danh sách chính.
   const sub = readSubRoute();
   const [view, setView] = useState<EduView>(() => {
-    const valid: EduView[] = ['import', 'class_detail', 'assignment_edit', 'assignment_detail', 'grading', 'assignment_bank', 'grade_entry', 'exam_bank'];
+    const valid: EduView[] = ['import', 'class_detail', 'assignment_edit', 'assignment_detail', 'grading', 'assignment_bank', 'grade_entry', 'exam_bank', 'question_bank'];
     if (sub.sv && (valid as string[]).includes(sub.sv)) return sub.sv as EduView;
-    // Phím tắt từ Dashboard có thể mở thẳng vào Trắc nghiệm hoặc Nhập điểm.
+    // Phím tắt từ Dashboard có thể mở thẳng vào Trắc nghiệm, Nhập điểm hoặc Ngân hàng câu hỏi.
     try {
       const v = localStorage.getItem('edu_initial_view');
-      if (v === 'exam_bank' || v === 'grade_entry' || v === 'assignment_bank') { localStorage.removeItem('edu_initial_view'); return v as EduView; }
+      if (v === 'exam_bank' || v === 'grade_entry' || v === 'assignment_bank' || v === 'question_bank') { localStorage.removeItem('edu_initial_view'); return v as EduView; }
     } catch {}
     return 'list';
   });
@@ -127,6 +127,8 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
       setView('list');
     } else if (view === 'exam_bank') {
       setView('list');
+    } else if (view === 'question_bank') {
+      setView('list');
     }
   };
 
@@ -146,6 +148,7 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
                  view === 'assignment_bank' ? 'Ngân hàng bài tập' :
                  view === 'grade_entry' ? 'Nhập điểm' :
                  view === 'exam_bank' ? 'Kiểm tra trắc nghiệm' :
+                 view === 'question_bank' ? 'Ngân hàng câu hỏi' :
                  'Hệ thống Giáo dục Edu'}
               </h1>
               <p className="text-xs text-slate-500 font-medium">Quản lý trường học, lớp học và kết quả học tập</p>
@@ -186,6 +189,10 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
 
         {view === 'exam_bank' && (
           <QuizModule currentUser={currentUser} />
+        )}
+
+        {view === 'question_bank' && (
+          <QuizModule currentUser={currentUser} standaloneBank />
         )}
         
         {view === 'import' && (

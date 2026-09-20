@@ -221,8 +221,8 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
 
   // Mở chức năng. Với phím tắt con của Giáo dục thì đặt sẵn màn hình đích rồi vào module edu.
   const go = (id: string) => {
-    if (id === 'edu_bank' || id === 'edu_exam' || id === 'edu_grade') {
-      const map: Record<string, string> = { edu_bank: 'assignment_bank', edu_exam: 'exam_bank', edu_grade: 'grade_entry' };
+    if (id === 'edu_bank' || id === 'edu_exam' || id === 'edu_grade' || id === 'edu_question_bank') {
+      const map: Record<string, string> = { edu_bank: 'assignment_bank', edu_exam: 'exam_bank', edu_grade: 'grade_entry', edu_question_bank: 'question_bank' };
       try { localStorage.setItem('edu_initial_view', map[id]); } catch {}
       onSwitchTab('edu');
       return;
@@ -239,6 +239,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     // Phím tắt tới chức năng con trong Quản lý Giáo dục.
     if (id === 'edu_bank') return perms.includes('edu') && !!currentUser?.canCreateEdu;
     if (id === 'edu_exam') return perms.includes('edu') && !!currentUser?.canGradeEdu;
+    if (id === 'edu_question_bank') return perms.includes('edu') && !!currentUser?.canGradeEdu;
     if (id === 'edu_grade') return perms.includes('edu') && !!currentUser?.canGradeImportEdu;
     if (id === 'users' || id === 'permissions') return false;
     return perms.includes(id);
@@ -254,6 +255,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { id: 'edu', label: 'Quản lý Giáo dục', desc: 'Quản lý lớp học, sinh viên, chương trình đào tạo', icon: GraduationCap, color: 'purple' },
     { id: 'edu_bank', label: 'Ngân hàng bài tập', desc: 'Kho bài tập dùng lại và chia sẻ theo môn', icon: Library, color: 'amber' },
     { id: 'edu_exam', label: 'Trắc nghiệm', desc: 'Tạo và chấm đề kiểm tra trắc nghiệm', icon: CheckCircle2, color: 'blue' },
+    { id: 'edu_question_bank', label: 'Ngân hàng câu hỏi', desc: 'Kho câu hỏi trắc nghiệm dùng lại và chia sẻ theo môn', icon: Library, color: 'teal' },
     { id: 'edu_grade', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường', icon: ClipboardList, color: 'emerald' },
     { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn', icon: BookOpen, color: 'orange' },
     { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp trên trình duyệt', icon: Clapperboard, color: 'rose' },

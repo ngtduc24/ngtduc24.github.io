@@ -20,7 +20,7 @@ import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
 import { exportExamToPdf, ExamHeader } from '../../lib/quizPdf';
 import { FileDown } from 'lucide-react';
 
-interface QuizModuleProps { currentUser: UserAccount; }
+interface QuizModuleProps { currentUser: UserAccount; standaloneBank?: boolean; }
 type View = 'list' | 'editor' | 'bank' | 'assign' | 'detail';
 
 const emptyOptions = (): QuizOption[] => [
@@ -30,13 +30,15 @@ const emptyOptions = (): QuizOption[] => [
   { content: '', is_correct: false, order_index: 3 },
 ];
 
-export default function QuizModule({ currentUser }: QuizModuleProps) {
+export default function QuizModule({ currentUser, standaloneBank }: QuizModuleProps) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
 
   // Khôi phục màn hình con của trắc nghiệm và đề đang mở từ URL để tải lại trang không nhảy về danh sách.
   const quizSub = readSubRoute();
   const [view, setView] = useState<View>(() => {
+    // Mở như phím tắt Ngân hàng câu hỏi riêng thì vào thẳng màn ngân hàng, không qua danh sách đề.
+    if (standaloneBank) return 'bank';
     const valid = ['editor', 'bank', 'assign', 'detail'];
     return quizSub.qv && valid.includes(quizSub.qv) ? (quizSub.qv as View) : 'list';
   });
@@ -151,6 +153,7 @@ export default function QuizModule({ currentUser }: QuizModuleProps) {
 
   if (view === 'bank') {
     return <QuestionBank currentUser={currentUser} subjects={subjects} selectMode={bankSelectMode} targetQuiz={bankSelectMode ? activeQuiz : null}
+      standalone={!!standaloneBank && !bankSelectMode}
       onBack={() => setView(bankSelectMode ? 'editor' : 'list')}
       onAddedToQuiz={() => setView('editor')} />;
   }
@@ -257,8 +260,8 @@ function ExamExportDialog({ count, defaults, onClose, onConfirm }: {
 // =====================================================================
 // NGÂN HÀNG CÂU HỎI
 // =====================================================================
-function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, onAddedToQuiz }: {
-  currentUser: UserAccount; subjects: EduSubject[]; selectMode: boolean; targetQuiz: Quiz | null; onBack: () => void; onAddedToQuiz: () => void;
+function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, onAddedToQuiz, standalone }: {
+  currentUser: UserAccount; subjects: EduSubject[]; selectMode: boolean; targetQuiz: Quiz | null; onBack: () => void; onAddedToQuiz: () => void; standalone?: boolean;
 }) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
@@ -344,9 +347,11 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
   return (
     <div className="space-y-5 animate-fadeIn">
       <div className="flex items-center justify-between gap-3">
+        {standalone ? <span /> : (
         <button onClick={onBack} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200">
           <ChevronLeft className="h-4 w-4" /> {selectMode ? 'Về trình soạn đề' : 'Danh sách đề'}
         </button>
+        )}
         <div className="flex flex-wrap gap-2">
           {selectMode && (
             <button onClick={addSelectedToQuiz} disabled={selected.size === 0} className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover disabled:opacity-50">
