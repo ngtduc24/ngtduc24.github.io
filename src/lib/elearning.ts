@@ -246,7 +246,6 @@ export async function getVersions(lessonId: string): Promise<any[]> {
 // --------------------------- Kho bài giảng chung ---------------------------
 
 export async function getPublicLessons(opts?: { subjectId?: string; sort?: 'new' | 'views' | 'copies'; search?: string }): Promise<ELLesson[]> {
-  const c = ctx();
   let query = supabase.from(L_TABLE).select('*')
     .is('deleted_at', null).eq('is_public', true).eq('status', 'published');
   if (opts?.subjectId) query = query.eq('subject_id', opts.subjectId);
@@ -255,8 +254,6 @@ export async function getPublicLessons(opts?: { subjectId?: string; sort?: 'new'
   const { data, error } = await query;
   if (error) throw error;
   let list = (data || []).map(mapLesson);
-  // Ẩn bài của chính mình khỏi kho chung (đã có ở kho của tôi).
-  if (c.userId) list = list.filter(l => l.owner_id !== c.userId);
   const s = opts?.search?.trim().toLowerCase();
   if (s) list = list.filter(l => l.title.toLowerCase().includes(s));
   return list;
