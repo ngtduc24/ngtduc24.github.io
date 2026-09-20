@@ -697,9 +697,9 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
               <div>
                 <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-brand" />
-                  <span>Nút nổi trợ lý ảo</span>
+                  <span>Nút nổi Trợ lý hệ thống</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">Bật tắt nút trợ lý nổi ở góc phải màn hình cho toàn hệ thống. Người dùng thường không đổi được. Chức năng Trợ lý ảo trong danh sách vẫn dùng bình thường dù tắt nút nổi.</p>
+                <p className="text-xs text-slate-400 mt-1">Bật tắt nút Trợ lý hệ thống nổi ở góc phải màn hình cho toàn hệ thống. Người dùng thường không đổi được. Chức năng Trợ lý giáo dục trong danh sách vẫn dùng bình thường dù tắt nút nổi này.</p>
               </div>
               <button
                 type="button"
@@ -720,7 +720,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
                   <BookMarked className="w-4 h-4 text-brand" />
                   <span>Thư viện kiến thức</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">Thêm các mục kiến thức để trợ lý trả lời thêm. Mỗi mục có tiêu đề, từ khóa gợi ý và nội dung. Khi người dùng hỏi trúng từ khóa hoặc tiêu đề, trợ lý sẽ đưa nội dung này vào câu trả lời.</p>
+                <p className="text-xs text-slate-400 mt-1">Thêm các mục kiến thức để Trợ lý giáo dục trả lời thêm. Mỗi mục có tiêu đề, từ khóa gợi ý và nội dung. Khi người dùng hỏi trúng từ khóa hoặc tiêu đề, trợ lý sẽ đưa nội dung này vào câu trả lời.</p>
               </div>
               <button type="button" onClick={addKnowledge} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold text-white hover:bg-brand-hover"><Plus className="w-4 h-4" /> Thêm mục</button>
             </div>

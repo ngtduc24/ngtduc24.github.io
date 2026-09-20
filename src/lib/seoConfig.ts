@@ -164,10 +164,10 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
   },
   assistant: {
     id: 'assistant',
-    slug: 'tro-ly-ao',
-    title: 'Trợ lý ảo | SmartResearch',
-    description: 'Hỏi đáp và hướng dẫn dùng hệ thống, tìm nhanh bài giảng, câu hỏi và chức năng.',
-    keywords: 'trợ lý ảo, hướng dẫn, hỏi đáp, tìm bài giảng',
+    slug: 'tro-ly-giao-duc',
+    title: 'Trợ lý giáo dục | SmartResearch',
+    description: 'Hỏi đáp kiến thức bài học dựa trên bài giảng, câu hỏi và bài tập được chia sẻ công khai.',
+    keywords: 'trợ lý giáo dục, hỏi đáp kiến thức, bài giảng, ôn tập',
   },
   portfolio: {
     id: 'portfolio',
