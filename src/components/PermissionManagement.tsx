@@ -39,12 +39,12 @@ const MODULES: ModuleDef[] = [
   { id: 'settings', label: 'Cấu hình hệ thống', settings: true },
 ];
 
-// Chuyển quyền cũ sang cấu trúc mới một lần khi mở tài khoản để phân quyền.
-// Mục Tiện ích gộp trước đây (utilities, hoặc ar_module dùng như quyền gộp) được
-// mở rộng thành 3 quyền độc lập cho 3 công cụ, để bật/tắt riêng từng công cụ.
+// Chuyển quyền gộp cũ 'utilities' thành 3 quyền độc lập một lần khi mở tài khoản.
+// Chỉ 'utilities' mới là quyền gộp cũ. 'ar_module' nay là quyền riêng của công cụ
+// Tạo AR, KHÔNG mở rộng, để 3 công cụ bật/tắt hoàn toàn độc lập nhau khi tải lại.
 const migrate = (perms?: string[]): string[] => {
   const set = new Set(perms || []);
-  if (set.has('utilities') || set.has('ar_module')) {
+  if (set.has('utilities')) {
     set.delete('utilities');
     set.add('ar_module');
     set.add('utility_image_resize');
