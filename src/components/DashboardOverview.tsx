@@ -186,8 +186,9 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
 
   // Mở chức năng. Với phím tắt con của Giáo dục thì đặt sẵn màn hình đích rồi vào module edu.
   const go = (id: string) => {
-    if (id === 'edu_exam' || id === 'edu_grade') {
-      try { localStorage.setItem('edu_initial_view', id === 'edu_exam' ? 'exam_bank' : 'grade_entry'); } catch {}
+    if (id === 'edu_bank' || id === 'edu_exam' || id === 'edu_grade') {
+      const map: Record<string, string> = { edu_bank: 'assignment_bank', edu_exam: 'exam_bank', edu_grade: 'grade_entry' };
+      try { localStorage.setItem('edu_initial_view', map[id]); } catch {}
       onSwitchTab('edu');
       return;
     }
@@ -201,6 +202,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     if (id === 'utility_image_resize') return perms.includes('utility_image_resize') || perms.includes('utilities');
     if (id === 'utility_social_design') return perms.includes('utility_social_design') || perms.includes('utilities');
     // Phím tắt tới chức năng con trong Quản lý Giáo dục.
+    if (id === 'edu_bank') return perms.includes('edu') && !!currentUser?.canCreateEdu;
     if (id === 'edu_exam') return perms.includes('edu') && !!currentUser?.canGradeEdu;
     if (id === 'edu_grade') return perms.includes('edu') && !!currentUser?.canGradeImportEdu;
     if (id === 'users' || id === 'permissions') return false;
@@ -215,6 +217,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { id: 'qualitative_analysis', label: 'Định tính', desc: 'Mã hóa, phân tích dữ liệu phỏng vấn, thảo luận nhóm', icon: ImageIcon, color: 'emerald' },
     { id: 'quantitative_analysis', label: 'Định lượng', desc: 'Phân tích thống kê, trực quan hóa dữ liệu', icon: BarChart3, color: 'blue' },
     { id: 'edu', label: 'Quản lý Giáo dục', desc: 'Quản lý lớp học, sinh viên, chương trình đào tạo', icon: GraduationCap, color: 'purple' },
+    { id: 'edu_bank', label: 'Ngân hàng bài tập', desc: 'Kho bài tập dùng lại và chia sẻ theo môn', icon: Library, color: 'amber' },
     { id: 'edu_exam', label: 'Trắc nghiệm', desc: 'Tạo và chấm đề kiểm tra trắc nghiệm', icon: CheckCircle2, color: 'blue' },
     { id: 'edu_grade', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường', icon: ClipboardList, color: 'emerald' },
     { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn', icon: BookOpen, color: 'orange' },
@@ -395,7 +398,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                     if (!dragId) go(m.id);
                   }}
                   title={m.label}
-                  className={`group relative flex w-[84px] shrink-0 flex-col items-center gap-2 text-center rounded-2xl p-1 transition-all select-none touch-none ${sortMode ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 rounded-2xl' : ''}`}
+                  className={`group relative flex w-[84px] shrink-0 flex-col items-center gap-2 text-center rounded-2xl p-1 transition-all select-none ${sortMode ? 'cursor-grab active:cursor-grabbing touch-none' : 'cursor-pointer'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 rounded-2xl' : ''}`}
                 >
                   {showMinus && (
                     <button

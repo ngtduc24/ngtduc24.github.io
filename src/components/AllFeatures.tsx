@@ -43,6 +43,7 @@ const ALL_FEATURES: FeatureItem[] = [
   { id: 'scientific_journals', label: 'Quản lý điểm báo khoa học', desc: 'Lưu trữ và phân loại điểm báo, bài viết', icon: BookOpen, color: 'orange', group: 'Nghiên cứu và phân tích' },
 
   { id: 'edu', label: 'Quản lý Giáo dục', desc: 'Quản lý lớp học, sinh viên, chương trình đào tạo', icon: GraduationCap, color: 'purple', group: 'Giảng dạy và nội dung' },
+  { id: 'edu_bank', label: 'Ngân hàng bài tập', desc: 'Kho bài tập dùng lại và chia sẻ theo môn', icon: Library, color: 'amber', group: 'Giảng dạy và nội dung' },
   { id: 'edu_exam', label: 'Trắc nghiệm', desc: 'Tạo và chấm đề kiểm tra trắc nghiệm', icon: CheckCircle2, color: 'blue', group: 'Giảng dạy và nội dung' },
   { id: 'edu_grade', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường', icon: ClipboardList, color: 'emerald', group: 'Giảng dạy và nội dung' },
   { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ, chia sẻ và giao bài giảng theo môn', icon: BookOpen, color: 'orange', group: 'Giảng dạy và nội dung' },
@@ -74,6 +75,7 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
     if (id === 'ar_module') return perms.includes('ar_module') || perms.includes('utilities');
     if (id === 'utility_image_resize') return perms.includes('utility_image_resize') || perms.includes('utilities');
     if (id === 'utility_social_design') return perms.includes('utility_social_design') || perms.includes('utilities');
+    if (id === 'edu_bank') return perms.includes('edu') && !!currentUser?.canCreateEdu;
     if (id === 'edu_exam') return perms.includes('edu') && !!currentUser?.canGradeEdu;
     if (id === 'edu_grade') return perms.includes('edu') && !!currentUser?.canGradeImportEdu;
     if (id === 'users' || id === 'permissions') return false;
@@ -160,8 +162,9 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
                     <button
                       key={m.id}
                       onClick={() => {
-                        if (m.id === 'edu_exam' || m.id === 'edu_grade') {
-                          try { localStorage.setItem('edu_initial_view', m.id === 'edu_exam' ? 'exam_bank' : 'grade_entry'); } catch {}
+                        if (m.id === 'edu_bank' || m.id === 'edu_exam' || m.id === 'edu_grade') {
+                          const map: Record<string, string> = { edu_bank: 'assignment_bank', edu_exam: 'exam_bank', edu_grade: 'grade_entry' };
+                          try { localStorage.setItem('edu_initial_view', map[m.id]); } catch {}
                           onSwitchTab('edu');
                         } else onSwitchTab(m.id);
                       }}

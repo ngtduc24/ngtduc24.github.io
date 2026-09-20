@@ -45,7 +45,7 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
     // Phím tắt từ Dashboard có thể mở thẳng vào Trắc nghiệm hoặc Nhập điểm.
     try {
       const v = localStorage.getItem('edu_initial_view');
-      if (v === 'exam_bank' || v === 'grade_entry') { localStorage.removeItem('edu_initial_view'); return v as EduView; }
+      if (v === 'exam_bank' || v === 'grade_entry' || v === 'assignment_bank') { localStorage.removeItem('edu_initial_view'); return v as EduView; }
     } catch {}
     return 'list';
   });
