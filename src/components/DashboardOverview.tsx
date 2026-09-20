@@ -213,7 +213,8 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const q = search.trim().toLowerCase();
   const visibleIcons = iconModules.filter(m => !hiddenIds.includes(m.id));
   const filteredIcons = q ? iconModules.filter(m => m.label.toLowerCase().includes(q)) : visibleIcons;
-  const filteredCards = q ? cardModules.filter(m => m.label.toLowerCase().includes(q)) : cardModules;
+  // Trang chủ chỉ hiển thị tối đa 10 thẻ nổi bật, phần còn lại xem ở trang Tất cả tính năng.
+  const filteredCards = q ? cardModules.filter(m => m.label.toLowerCase().includes(q)) : cardModules.slice(0, 10);
 
   const persistOrder = (ids: string[]) => {
     setIconOrder(ids);
