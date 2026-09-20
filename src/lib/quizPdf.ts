@@ -68,8 +68,11 @@ function buildExamHtml(header: ExamHeader, questions: QuizQuestion[]): string {
   .hdr .small { font-style: italic; font-size: 11pt; }
   .hdr .time { margin-top: 2px; }
   .hdr .note { font-style: italic; font-size: 11pt; }
-  .student { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0; font-size: 12.5pt; }
-  .student .code { border: 1px solid #000; padding: 2px 10px; font-weight: bold; white-space: nowrap; }
+  .student { display: flex; align-items: center; gap: 14px; margin: 8px 0; font-size: 11pt; white-space: nowrap; }
+  .student .fld { display: inline-flex; align-items: baseline; gap: 4px; }
+  .student .ln { display: inline-block; border-bottom: 1px dotted #000; height: 1em; }
+  .ln-name { width: 150px; } .ln-id { width: 88px; } .ln-class { width: 72px; }
+  .student .code { margin-left: auto; border: 1px solid #000; padding: 2px 10px; font-weight: bold; white-space: nowrap; }
   .rule { border: none; border-top: 1px solid #000; margin: 6px 0 10px; }
   .part { font-weight: bold; margin: 4px 0 10px; }
   .q { margin-bottom: 12px; page-break-inside: avoid; }
@@ -99,7 +102,9 @@ function buildExamHtml(header: ExamHeader, questions: QuizQuestion[]): string {
   </tr></table>
 
   <div class="student">
-    <span>Họ và tên học sinh: ................................................ Số báo danh: ..................</span>
+    <span class="fld">Họ và tên: <span class="ln ln-name"></span></span>
+    <span class="fld">MSSV: <span class="ln ln-id"></span></span>
+    <span class="fld">Lớp: <span class="ln ln-class"></span></span>
     ${codeBox}
   </div>
   <hr class="rule" />
