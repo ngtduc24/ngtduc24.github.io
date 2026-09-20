@@ -181,6 +181,16 @@ export interface AppSettings {
   fontBody?: string;
   // Bật tắt nút nổi trợ lý ảo ở góc phải. Mặc định bật. Chỉ admin đổi được.
   assistantFloating?: boolean;
+  // Thư viện kiến thức do admin cung cấp để trợ lý trả lời thêm.
+  assistantKnowledge?: AssistantKnowledgeItem[];
+}
+
+// Một mục kiến thức trong thư viện của trợ lý. keywords là các từ khóa gợi ý, cách nhau bởi dấu phẩy.
+export interface AssistantKnowledgeItem {
+  id: string;
+  title: string;
+  keywords?: string;
+  content: string;
 }
 
 // Tùy chỉnh hiển thị của một chức năng do admin đặt trong màn hình Cài đặt chức năng.
