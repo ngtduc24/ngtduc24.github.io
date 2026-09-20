@@ -3,7 +3,7 @@ import {
   Play, Pause, Scissors, Trash2, Copy, Lock, Unlock, Eye, EyeOff, Type, Download, ArrowLeft,
   Upload, Loader2, Film, Image as ImageIcon, Music, ZoomIn, ZoomOut, Maximize2, Captions,
   Volume2, VolumeX, Headphones, Plus, Frame, Sticker, Sparkles, ArrowLeftRight, SlidersHorizontal,
-  Diamond, ChevronLeft, ChevronRight,
+  Diamond, ChevronLeft, ChevronRight, RotateCcw,
 } from 'lucide-react';
 import { UserAccount } from '../../types';
 import { useNotifications } from '../NotificationContext';
@@ -453,6 +453,16 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
     }) })));
     markDirty();
   };
+  // Khôi phục biến đổi về mặc định (xóa key và giá trị tĩnh của x, y, scale, rotation).
+  const resetTransform = (clipId: string) => {
+    setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.map(c => {
+      if (c.id !== clipId) return c;
+      const kf = { ...(c.kf || {}) } as Partial<Record<KfProp, KF[]>>;
+      delete kf.x; delete kf.y; delete kf.scale; delete kf.rotation;
+      return { ...c, props: { ...c.props, x: 0, y: 0, scale: 1, rotation: 0 }, kf: Object.keys(kf).length ? kf : undefined };
+    }) })));
+    markDirty();
+  };
   // Nhảy tới key trước hoặc sau của một thuộc tính (dir -1 hoặc 1).
   const gotoKey = (clip: Clip, prop: KfProp, dir: number) => {
     const list = clip.kf?.[prop]; if (!list || !list.length) return;
@@ -784,7 +794,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 
         {/* Bảng thuộc tính phải */}
         <div className="w-[320px] shrink-0 overflow-y-auto border-l border-white/10 bg-[#151a21] p-4">
-          {selClip ? <PropsPanel clip={selClip.clip} playhead={playhead} onProps={(p) => updateClipProps(selClip.clip.id, p)} onClip={(p) => updateClip(selClip.clip.id, p)} onKf={(prop, v) => setPropAt(selClip.clip.id, prop, v)} onToggleKey={(prop) => toggleKey(selClip.clip.id, prop)} onGotoKey={(prop, dir) => gotoKey(selClip.clip, prop, dir)} onDelete={() => deleteClip(selClip.clip.id)} onDuplicate={() => duplicateClip(selClip.clip.id)} onSplitAudio={() => splitAudioFromVideo(selClip.clip)} />
+          {selClip ? <PropsPanel clip={selClip.clip} playhead={playhead} W={W} H={H} onProps={(p) => updateClipProps(selClip.clip.id, p)} onClip={(p) => updateClip(selClip.clip.id, p)} onKf={(prop, v) => setPropAt(selClip.clip.id, prop, v)} onToggleKey={(prop) => toggleKey(selClip.clip.id, prop)} onGotoKey={(prop, dir) => gotoKey(selClip.clip, prop, dir)} onReset={() => resetTransform(selClip.clip.id)} onDelete={() => deleteClip(selClip.clip.id)} onDuplicate={() => duplicateClip(selClip.clip.id)} onSplitAudio={() => splitAudioFromVideo(selClip.clip)} />
             : <div className="mt-10 text-center text-xs text-slate-500">Chọn một lớp trên dòng thời gian để chỉnh thuộc tính.</div>}
         </div>
       </div>
@@ -1191,10 +1201,20 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, selIds, scrollR
 }
 
 // ============================ Bảng thuộc tính ============================
-function PropsPanel({ clip, playhead, onProps, onClip, onKf, onToggleKey, onGotoKey, onDelete, onDuplicate, onSplitAudio }: { clip: Clip; playhead: number; onProps: (p: Partial<ClipProps>) => void; onClip: (p: Partial<Clip>) => void; onKf: (prop: KfProp, v: number) => void; onToggleKey: (prop: KfProp) => void; onGotoKey: (prop: KfProp, dir: number) => void; onDelete: () => void; onDuplicate: () => void; onSplitAudio: () => void; }) {
+function PropsPanel({ clip, playhead, W, H, onProps, onClip, onKf, onToggleKey, onGotoKey, onReset, onDelete, onDuplicate, onSplitAudio }: { clip: Clip; playhead: number; W: number; H: number; onProps: (p: Partial<ClipProps>) => void; onClip: (p: Partial<Clip>) => void; onKf: (prop: KfProp, v: number) => void; onToggleKey: (prop: KfProp) => void; onGotoKey: (prop: KfProp, dir: number) => void; onReset: () => void; onDelete: () => void; onDuplicate: () => void; onSplitAudio: () => void; }) {
   const p = clip.props;
   const ep = evalClipProps(clip, playhead); // giá trị hiệu dụng tại đầu phát (đã tính key)
   const local = playhead - clip.start;
+  // Kích thước hộp media theo % khung, để căn lề đúng mép.
+  const boxPct = () => {
+    let bw = W, bh = H;
+    if (clip.kind === 'text') { const ctx = document.createElement('canvas').getContext('2d'); if (ctx) { ctx.font = `${p.fontWeight} ${p.fontSize}px Inter, system-ui, sans-serif`; const lines = (p.text || '').split('\n'); bw = Math.max(10, ...lines.map(l => ctx.measureText(l).width)); bh = lines.length * p.fontSize * 1.2; } }
+    else { const el = getMediaEl(clip) as any; const iw = el?.videoWidth || el?.naturalWidth || W; const ih = el?.videoHeight || el?.naturalHeight || H; const cs = Math.min(W / iw, H / ih); bw = iw * cs; bh = ih * cs; }
+    bw *= ep.scale; bh *= ep.scale;
+    return { wpct: (bw / W) * 100, hpct: (bh / H) * 100 };
+  };
+  const alignX = (pos: 'l' | 'c' | 'r') => { const { wpct } = boxPct(); onKf('x', pos === 'l' ? +(wpct / 2 - 50).toFixed(1) : pos === 'r' ? +(50 - wpct / 2).toFixed(1) : 0); };
+  const alignY = (pos: 't' | 'm' | 'b') => { const { hpct } = boxPct(); onKf('y', pos === 't' ? +(hpct / 2 - 50).toFixed(1) : pos === 'b' ? +(50 - hpct / 2).toFixed(1) : 0); };
   const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
     <div className="mb-3"><label className="mb-1 block text-[10px] font-bold uppercase text-slate-500">{label}</label>{children}</div>
   );
@@ -1263,13 +1283,30 @@ function PropsPanel({ clip, playhead, onProps, onClip, onKf, onToggleKey, onGoto
       )}
 
       {(clip.kind === 'video' || clip.kind === 'image' || clip.kind === 'text') && (
-        <>
+        <div className="mb-2 rounded-xl border border-white/5 bg-white/[0.02] p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[11px] font-black uppercase tracking-wide text-slate-300">Biến đổi</span>
+            <button onClick={onReset} title="Khôi phục biến đổi" className="grid h-6 w-6 place-items-center rounded-md text-slate-400 hover:bg-white/10 hover:text-slate-200"><RotateCcw className="h-3.5 w-3.5" /></button>
+          </div>
+          <KfRow label="Tỉ lệ (scale)" prop="scale">{sliderNum(ep.scale, v => onKf('scale', v), 0.1, 4, 0.01, 2)}</KfRow>
           <KfRow label="Vị trí ngang X %" prop="x">{sliderNum(ep.x, v => onKf('x', v), -100, 100, 1)}</KfRow>
           <KfRow label="Vị trí dọc Y %" prop="y">{sliderNum(ep.y, v => onKf('y', v), -100, 100, 1)}</KfRow>
-          <KfRow label="Tỉ lệ (scale)" prop="scale">{sliderNum(ep.scale, v => onKf('scale', v), 0.1, 4, 0.01, 2)}</KfRow>
           <KfRow label="Xoay (độ)" prop="rotation">{sliderNum(ep.rotation, v => onKf('rotation', v), -180, 180, 1)}</KfRow>
-          <KfRow label={`Độ mờ đục ${Math.round(ep.opacity * 100)}%`} prop="opacity">{sliderNum(ep.opacity, v => onKf('opacity', v), 0, 1, 0.01, 2)}</KfRow>
-        </>
+          {/* Căn lề nhanh */}
+          <div className="mb-1 mt-2 text-[10px] font-bold uppercase text-slate-500">Căn lề</div>
+          <div className="flex flex-wrap gap-1">
+            <button onClick={() => alignX('l')} title="Căn trái" className="rounded-md bg-white/5 px-2 py-1 text-[10px] font-bold text-slate-300 hover:bg-white/10">Trái</button>
+            <button onClick={() => alignX('c')} title="Căn giữa ngang" className="rounded-md bg-white/5 px-2 py-1 text-[10px] font-bold text-slate-300 hover:bg-white/10">Giữa ngang</button>
+            <button onClick={() => alignX('r')} title="Căn phải" className="rounded-md bg-white/5 px-2 py-1 text-[10px] font-bold text-slate-300 hover:bg-white/10">Phải</button>
+            <button onClick={() => alignY('t')} title="Căn trên" className="rounded-md bg-white/5 px-2 py-1 text-[10px] font-bold text-slate-300 hover:bg-white/10">Trên</button>
+            <button onClick={() => alignY('m')} title="Căn giữa dọc" className="rounded-md bg-white/5 px-2 py-1 text-[10px] font-bold text-slate-300 hover:bg-white/10">Giữa dọc</button>
+            <button onClick={() => alignY('b')} title="Căn dưới" className="rounded-md bg-white/5 px-2 py-1 text-[10px] font-bold text-slate-300 hover:bg-white/10">Dưới</button>
+          </div>
+        </div>
+      )}
+
+      {(clip.kind === 'video' || clip.kind === 'image' || clip.kind === 'text') && (
+        <KfRow label={`Độ mờ đục ${Math.round(ep.opacity * 100)}%`} prop="opacity">{sliderNum(ep.opacity, v => onKf('opacity', v), 0, 1, 0.01, 2)}</KfRow>
       )}
 
       {(clip.kind === 'video' || clip.kind === 'audio') && (
