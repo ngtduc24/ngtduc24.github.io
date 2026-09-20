@@ -68,9 +68,9 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
     if (isUserAdmin) return true;
     if (id === 'notifications') return true;
     if (id === 'notifications_admin') return perms.includes('notifications');
-    if (id === 'ar_module' || id === 'utility_image_resize' || id === 'utility_social_design') {
-      return perms.includes('utilities') || perms.includes('ar_module');
-    }
+    if (id === 'ar_module') return perms.includes('ar_module') || perms.includes('utilities');
+    if (id === 'utility_image_resize') return perms.includes('utility_image_resize') || perms.includes('utilities');
+    if (id === 'utility_social_design') return perms.includes('utility_social_design') || perms.includes('utilities');
     if (id === 'users' || id === 'permissions') return false;
     return perms.includes(id);
   };
