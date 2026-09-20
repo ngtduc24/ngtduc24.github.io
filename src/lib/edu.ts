@@ -342,24 +342,37 @@ export async function getAssignmentByLinkId(linkId: string) {
 }
 
 export async function saveAssignment(assignment: Partial<EduAssignment>) {
-  const dbData = {
+  // Các cột cơ bản luôn có trong bảng. Các cột phụ bên dưới chỉ có sau khi chạy migration.
+  const baseData: any = {
     id: assignment.id,
     class_id: assignment.classId,
     grade_column_id: assignment.gradeColumnId,
-    subject_id: assignment.subjectId,
-    bank_id: assignment.bankId,
     title: assignment.title,
     content: assignment.content,
     allowed_file_types: assignment.allowedFileTypes,
-    deadline: assignment.deadline,
+    deadline: assignment.deadline
+  };
+  // Cột phụ, có thể chưa tồn tại nếu Supabase chưa chạy migration EDU_ADD_COLUMNS / EDU_ASSIGNMENT_BANK.
+  const extraCols: any = {
+    subject_id: assignment.subjectId,
+    bank_id: assignment.bankId,
     allow_late: assignment.allowLate,
     allow_supplement: assignment.allowSupplement
   };
-  Object.keys(dbData).forEach(key => (dbData as any)[key] === undefined && delete (dbData as any)[key]);
+  Object.keys(baseData).forEach(key => baseData[key] === undefined && delete baseData[key]);
+  Object.keys(extraCols).forEach(key => extraCols[key] === undefined && delete extraCols[key]);
 
-  const { data, error } = await supabase.from(ASSIGNMENTS_TABLE).upsert(dbData).select().single();
-  if (error) throw error;
-  return mapAssignment(data);
+  // Thử lưu đầy đủ trước. Nếu Supabase báo thiếu cột thì lưu lại chỉ với cột cơ bản để không chặn người dùng.
+  let res = await supabase.from(ASSIGNMENTS_TABLE).upsert({ ...baseData, ...extraCols }).select().single();
+  if (res.error) {
+    const msg = (res.error.message || '') + ' ' + ((res.error as any).details || '');
+    const missingCol = /column|schema cache|could not find/i.test(msg);
+    if (missingCol) {
+      res = await supabase.from(ASSIGNMENTS_TABLE).upsert(baseData).select().single();
+    }
+  }
+  if (res.error) throw res.error;
+  return mapAssignment(res.data);
 }
 
 export async function deleteAssignment(id: string) {
@@ -526,15 +539,17 @@ export async function requestExtension(p: { assignmentId: string; classId: strin
 
 // Lấy yêu cầu gia hạn mới nhất của một sinh viên ở một bài tập.
 export async function getExtensionForUser(assignmentId: string, userId: string) {
+  // Trả null nếu bảng chưa tạo, tránh chặn màn hình nộp bài của sinh viên.
   const { data, error } = await supabase.from(EXTENSION_TABLE).select('*').eq('assignment_id', assignmentId).eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
-  if (error) throw error;
+  if (error) { console.warn('getExtensionForUser:', error.message); return null; }
   return data && data[0] ? mapExtension(data[0]) : null;
 }
 
 // Lấy các yêu cầu gia hạn đang chờ duyệt của một lớp, cho giáo viên xử lý.
 export async function getPendingExtensions(classId: string) {
+  // Bảng gia hạn có thể chưa được tạo. Nếu lỗi thì trả mảng rỗng để không chặn màn hình lớp học.
   const { data, error } = await supabase.from(EXTENSION_TABLE).select('*').eq('class_id', classId).eq('status', 'pending').order('created_at', { ascending: true });
-  if (error) throw error;
+  if (error) { console.warn('getPendingExtensions:', error.message); return []; }
   return (data || []).map(mapExtension);
 }
 

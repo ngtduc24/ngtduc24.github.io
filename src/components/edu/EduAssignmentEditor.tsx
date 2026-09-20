@@ -234,7 +234,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
       onSuccess();
     } catch (err) {
       console.error(err);
-      addNotification("Lỗi khi lưu bài tập", "error");
+      addNotification("Lỗi khi lưu bài tập: " + ((err as Error).message || 'không rõ nguyên nhân'), "error");
     } finally {
       setLoading(false);
     }
