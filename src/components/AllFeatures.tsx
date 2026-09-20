@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Search, ArrowLeft, ArrowRight, LayoutGrid,
   CalendarDays, BookOpen, LayoutTemplate, Image as ImageIcon, BarChart3,
-  GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone, Shield
+  GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone, Shield, CheckCircle2, ClipboardList
 } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
 
@@ -43,6 +43,8 @@ const ALL_FEATURES: FeatureItem[] = [
   { id: 'scientific_journals', label: 'Quản lý điểm báo khoa học', desc: 'Lưu trữ và phân loại điểm báo, bài viết', icon: BookOpen, color: 'orange', group: 'Nghiên cứu và phân tích' },
 
   { id: 'edu', label: 'Quản lý Giáo dục', desc: 'Quản lý lớp học, sinh viên, chương trình đào tạo', icon: GraduationCap, color: 'purple', group: 'Giảng dạy và nội dung' },
+  { id: 'edu_exam', label: 'Trắc nghiệm', desc: 'Tạo và chấm đề kiểm tra trắc nghiệm', icon: CheckCircle2, color: 'blue', group: 'Giảng dạy và nội dung' },
+  { id: 'edu_grade', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường', icon: ClipboardList, color: 'emerald', group: 'Giảng dạy và nội dung' },
   { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ, chia sẻ và giao bài giảng theo môn', icon: BookOpen, color: 'orange', group: 'Giảng dạy và nội dung' },
   { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Lưu trữ và quản lý hồ sơ cá nhân, dự án', icon: FolderKanban, color: 'teal', group: 'Giảng dạy và nội dung' },
   { id: 'media_library', label: 'Thư viện', desc: 'Tài liệu, mẫu biểu, dữ liệu tham khảo', icon: Library, color: 'violet', group: 'Giảng dạy và nội dung' },
@@ -72,6 +74,8 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
     if (id === 'ar_module') return perms.includes('ar_module') || perms.includes('utilities');
     if (id === 'utility_image_resize') return perms.includes('utility_image_resize') || perms.includes('utilities');
     if (id === 'utility_social_design') return perms.includes('utility_social_design') || perms.includes('utilities');
+    if (id === 'edu_exam') return perms.includes('edu') && !!currentUser?.canGradeEdu;
+    if (id === 'edu_grade') return perms.includes('edu') && !!currentUser?.canGradeImportEdu;
     if (id === 'users' || id === 'permissions') return false;
     return perms.includes(id);
   };
@@ -155,7 +159,12 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
                   return (
                     <button
                       key={m.id}
-                      onClick={() => onSwitchTab(m.id)}
+                      onClick={() => {
+                        if (m.id === 'edu_exam' || m.id === 'edu_grade') {
+                          try { localStorage.setItem('edu_initial_view', m.id === 'edu_exam' ? 'exam_bank' : 'grade_entry'); } catch {}
+                          onSwitchTab('edu');
+                        } else onSwitchTab(m.id);
+                      }}
                       className="group text-left bg-white rounded-2xl border border-slate-100 shadow-xs hover:shadow-md hover:border-brand/30 transition-all p-4 flex items-start gap-3"
                     >
                       <span className={`w-11 h-11 rounded-xl ${c.bg} ${c.text} grid place-items-center shrink-0`}><Icon className="w-5 h-5" /></span>
