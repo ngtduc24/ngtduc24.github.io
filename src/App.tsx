@@ -27,6 +27,7 @@ import UtilitiesModule from './components/UtilitiesModule';
 import PublicARScanner from './components/PublicARScanner';
 import QuizTake from './components/edu/QuizTake';
 import ELessonView from './components/edu/ELessonView';
+import ELessonPreviewPage from './components/edu/ELessonPreviewPage';
 import ELearningModule from './components/edu/ELearningModule';
 import EduModule from './components/EduModule';
 import { setEduAuthContext } from './lib/edu';
@@ -760,6 +761,12 @@ export default function App() {
   const elessonToken = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('elesson') : null;
   if (elessonToken) {
     return <ELessonView token={elessonToken} />;
+  }
+
+  // Trang xem bài giảng ở chế độ riêng, có link riêng: dùng để xem/chia sẻ bài công khai.
+  const elviewId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('elview') : null;
+  if (elviewId) {
+    return <ELessonPreviewPage lessonId={elviewId} />;
   }
 
   const isForcePublic = typeof window !== 'undefined' && (

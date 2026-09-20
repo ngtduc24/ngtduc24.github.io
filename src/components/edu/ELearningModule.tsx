@@ -25,6 +25,9 @@ interface Props { currentUser: UserAccount; }
 type View = 'list' | 'editor' | 'assign' | 'progress' | 'trash';
 type Tab = 'mine' | 'public';
 
+// Mở trang xem bài giảng ở chế độ riêng (link riêng), trong tab mới.
+const openLessonView = (id: string) => window.open(`${window.location.origin}${window.location.pathname}?elview=${id}`, '_blank');
+
 export default function ELearningModule({ currentUser }: Props) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
@@ -81,7 +84,6 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign }: { subjects: EduS
   const [search, setSearch] = useState('');
   const [mode, setMode] = useState<'grid' | 'table'>('grid');
   const [creating, setCreating] = useState(false);
-  const [preview, setPreview] = useState<ELLesson | null>(null);
   const isAdmin = currentUser.role === 'admin';
   const mayPublic = isAdmin || !!currentUser.canElearningPublic;
   const mayAssign = isAdmin || !!currentUser.canElearningAssign;
@@ -175,7 +177,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign }: { subjects: EduS
                 <p className="mt-1 text-[10px] text-slate-400">{l.sectionCount ?? 0} phần · cập nhật {fmtDate(l.updated_at)}</p>
                 <div className="mt-3 flex flex-wrap gap-1 border-t border-slate-50 pt-3">
                   <IconBtn title="Sửa" onClick={() => onEdit(l.id)}><Edit2 className="w-3.5 h-3.5" /></IconBtn>
-                  <IconBtn title="Xem trước" onClick={() => setPreview(l)}><Eye className="w-3.5 h-3.5" /></IconBtn>
+                  <IconBtn title="Xem trước" onClick={() => openLessonView(l.id)}><Eye className="w-3.5 h-3.5" /></IconBtn>
                   {mayPublic && <IconBtn title={l.is_public ? 'Tắt công khai' : 'Công khai'} onClick={() => togglePublic(l)}>{l.is_public ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}</IconBtn>}
                   <IconBtn title="Nhân bản" onClick={() => duplicate(l)}><Copy className="w-3.5 h-3.5" /></IconBtn>
                   {mayAssign && <IconBtn title="Giao cho lớp" onClick={() => onAssign(l.id)}><Send className="w-3.5 h-3.5" /></IconBtn>}
@@ -210,7 +212,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign }: { subjects: EduS
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <IconBtn title="Sửa" onClick={() => onEdit(l.id)}><Edit2 className="w-3.5 h-3.5" /></IconBtn>
-                      <IconBtn title="Xem trước" onClick={() => setPreview(l)}><Eye className="w-3.5 h-3.5" /></IconBtn>
+                      <IconBtn title="Xem trước" onClick={() => openLessonView(l.id)}><Eye className="w-3.5 h-3.5" /></IconBtn>
                       {mayPublic && <IconBtn title={l.is_public ? 'Tắt công khai' : 'Công khai'} onClick={() => togglePublic(l)}>{l.is_public ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}</IconBtn>}
                       {mayAssign && <IconBtn title="Giao cho lớp" onClick={() => onAssign(l.id)}><Send className="w-3.5 h-3.5" /></IconBtn>}
                       <IconBtn title="Sao chép liên kết" onClick={() => copyLink(l)}><Link2 className="w-3.5 h-3.5" /></IconBtn>
@@ -225,7 +227,6 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign }: { subjects: EduS
       )}
 
       {creating && <CreateDialog subjects={subjects} onClose={() => setCreating(false)} onCreated={(id) => { setCreating(false); onEdit(id); }} ownerName={currentUser.fullName} />}
-      {preview && <LessonPreview lesson={preview} subjName={subjName(preview.subject_id)} onClose={() => setPreview(null)} />}
     </div>
   );
 }
@@ -485,7 +486,6 @@ function PublicLibrary({ subjects, currentUser, onCopied }: { subjects: EduSubje
   const [lessons, setLessons] = useState<ELLesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [copyingId, setCopyingId] = useState('');
-  const [preview, setPreview] = useState<ELLesson | null>(null);
 
   useEffect(() => { getPublicSubjectCounts().then(setCounts).catch(() => {}); }, []);
   const load = useCallback(async () => {
@@ -533,76 +533,20 @@ function PublicLibrary({ subjects, currentUser, onCopied }: { subjects: EduSubje
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {lessons.map(l => (
               <div key={l.id} className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md hover:border-brand/30 transition-all">
-                <button onClick={() => setPreview(l)} className="block text-left h-28 bg-slate-100 bg-cover bg-center" style={l.cover_url ? { backgroundImage: `url(${l.cover_url})` } : undefined}>
+                <button onClick={() => openLessonView(l.id)} className="block text-left h-28 bg-slate-100 bg-cover bg-center" style={l.cover_url ? { backgroundImage: `url(${l.cover_url})` } : undefined}>
                   {!l.cover_url && <div className="flex h-full items-center justify-center text-slate-300"><BookOpen className="h-8 w-8" /></div>}
                 </button>
                 <div className="flex flex-1 flex-col p-4">
-                  <button onClick={() => setPreview(l)} className="text-left"><h3 className="text-[13px] font-black text-slate-800 leading-tight line-clamp-2 group-hover:text-brand">{l.title}</h3></button>
+                  <button onClick={() => openLessonView(l.id)} className="text-left"><h3 className="text-[13px] font-black text-slate-800 leading-tight line-clamp-2 group-hover:text-brand">{l.title}</h3></button>
                   <p className="mt-1 text-[11px] text-slate-400">{subjName(l.subject_id)} · {l.author_label || l.owner_name || 'Ẩn danh'}</p>
                   <p className="mt-1 text-[10px] text-slate-400">{l.view_count} lượt xem · {l.copy_count} lượt sao chép</p>
                   <div className="mt-3 flex gap-1.5 border-t border-slate-50 pt-3">
-                    <button onClick={() => setPreview(l)} className="flex-1 rounded-lg bg-slate-100 px-2 py-1.5 text-center text-[10px] font-bold text-slate-600 hover:bg-slate-200">Xem</button>
+                    <button onClick={() => openLessonView(l.id)} className="flex-1 rounded-lg bg-slate-100 px-2 py-1.5 text-center text-[10px] font-bold text-slate-600 hover:bg-slate-200">Xem</button>
                     {l.allow_copy && <button onClick={() => copy(l)} disabled={copyingId === l.id} className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-brand px-2 py-1.5 text-[10px] font-bold text-white hover:bg-brand-hover disabled:opacity-50">{copyingId === l.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Copy className="h-3 w-3" />} Sao chép</button>}
                   </div>
                 </div>
               </div>
             ))}
-          </div>
-        )}
-      </div>
-      {preview && <LessonPreview lesson={preview} subjName={subjName(preview.subject_id)} onClose={() => setPreview(null)} onCopy={preview.allow_copy ? () => { const l = preview; setPreview(null); copy(l); } : undefined} />}
-    </div>
-  );
-}
-
-// Xem trước nội dung bài giảng (chỉ đọc), dùng cho kho chung và nút Xem trước.
-function LessonPreview({ lesson, subjName, onClose, onCopy }: { lesson: ELLesson; subjName?: string; onClose: () => void; onCopy?: () => void; }) {
-  const [sections, setSections] = useState<ELSection[]>([]);
-  const [resources, setResources] = useState<ELResource[]>([]);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    (async () => {
-      try { const [s, r] = await Promise.all([getSections(lesson.id), getResources(lesson.id)]); setSections(s); setResources(r); }
-      finally { setLoading(false); }
-    })();
-  }, [lesson.id]);
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" onClick={onClose}>
-      <div className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="flex items-start justify-between gap-3 border-b border-slate-100 p-5">
-          <div>
-            <h3 className="font-display text-lg font-bold text-slate-900">{lesson.title}</h3>
-            <p className="mt-0.5 text-[11px] text-slate-400">{subjName} · {lesson.author_label || lesson.owner_name || 'Ẩn danh'} · {sections.length} phần</p>
-            {lesson.summary && <p className="mt-2 text-xs text-slate-500">{lesson.summary}</p>}
-          </div>
-          <button onClick={onClose} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button>
-        </div>
-        <div className="flex-1 space-y-5 overflow-y-auto p-5">
-          {loading ? <div className="py-12 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" /> Đang tải nội dung...</div>
-            : sections.length === 0 ? <p className="py-12 text-center text-sm text-slate-400">Bài giảng chưa có nội dung.</p>
-            : sections.map((s, i) => {
-              const res = resources.filter(r => r.section_id === s.id);
-              return (
-                <div key={s.id} className="border-b border-slate-50 pb-4 last:border-0">
-                  <h4 className="mb-2 font-display text-base font-bold text-slate-800">{i + 1}. {s.title || 'Không tên'}</h4>
-                  <div className="prose prose-sm max-w-none text-slate-700" dangerouslySetInnerHTML={{ __html: s.content || '<p class="text-slate-400">(Chưa có nội dung)</p>' }} />
-                  {res.length > 0 && (
-                    <div className="mt-3 space-y-1.5">
-                      {res.map(r => (
-                        <a key={r.id} href={r.url || '#'} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl border border-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-brand/30 hover:text-brand">
-                          <FileText className="h-4 w-4 text-brand" /> <span className="min-w-0 flex-1 truncate">{r.title || 'Tài nguyên'}</span> <Eye className="h-3.5 w-3.5 text-slate-400" />
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-        </div>
-        {onCopy && (
-          <div className="flex justify-end gap-2 border-t border-slate-100 p-4">
-            <button onClick={onClose} className="rounded-xl bg-slate-100 px-5 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-200">Đóng</button>
-            <button onClick={onCopy} className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-2.5 text-xs font-bold text-white hover:bg-brand-hover"><Copy className="h-4 w-4" /> Sao chép về kho của tôi</button>
           </div>
         )}
       </div>
