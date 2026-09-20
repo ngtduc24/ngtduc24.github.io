@@ -25,8 +25,9 @@ interface Props { currentUser: UserAccount; }
 type View = 'list' | 'editor' | 'assign' | 'progress' | 'trash';
 type Tab = 'mine' | 'public';
 
-// Mở trang xem bài giảng ở chế độ riêng (link riêng), trong tab mới.
-const openLessonView = (id: string) => window.open(`${window.location.origin}${window.location.pathname}?elview=${id}`, '_blank');
+// Mở trang xem bài giảng ở chế độ riêng (link riêng). Điều hướng ngay trong tab
+// hiện tại để chạy ổn định trên di động (mở tab mới hay bị trình duyệt chặn).
+const openLessonView = (id: string) => { window.location.href = `${window.location.origin}${window.location.pathname}?elview=${id}`; };
 
 export default function ELearningModule({ currentUser }: Props) {
   const { addNotification } = useNotifications();
