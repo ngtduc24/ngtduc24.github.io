@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, BookOpen, LayoutGrid, HelpCircle, ArrowRight, Loader2, FileQuestion, Sparkles } from 'lucide-react';
+import { Send, BookOpen, LayoutGrid, HelpCircle, ArrowRight, Loader2, FileQuestion, Sparkles, BookMarked } from 'lucide-react';
 import { UserAccount, AppSettings } from '../../types';
 import { MODULE_REGISTRY, resolveModuleMeta, isModuleHidden } from '../../lib/modules';
 import { getSubjects } from '../../lib/edu';
@@ -21,6 +21,7 @@ interface FeatureHit { id: string; label: string; desc: string }
 interface GuideHit { id: string; name: string; whatIs: string; howTo: string[] }
 interface BotResult {
   intro: string;
+  knowledge: { title: string; content: string }[];
   guides: GuideHit[];
   faqs: { title: string; body: string; goId?: string }[];
   features: FeatureHit[];
@@ -142,6 +143,12 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
     const words = q.split(/\s+/).filter(w => w.length >= 2);
     const matchText = (t: string) => words.length === 0 ? false : words.some(w => norm(t).includes(w));
 
+    // Thư viện kiến thức do admin cung cấp trong Cấu hình hệ thống.
+    const knowledge = (settings.assistantKnowledge || [])
+      .filter(k => (k.title || k.content) && matchText(`${k.title || ''} ${k.keywords || ''} ${k.content || ''}`))
+      .slice(0, 3)
+      .map(k => ({ title: k.title || 'Kiến thức', content: k.content || '' }));
+
     const matchedFeatures = MODULE_REGISTRY
       .filter(m => canFeature(m.id))
       .map(m => resolveModuleMeta(m, settings))
@@ -182,10 +189,12 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
       } catch { /* bỏ qua */ }
     }
 
-    const total = guides.length + features.length + lessonHits.length + faqs.length + questions.length;
+    const total = knowledge.length + guides.length + features.length + lessonHits.length + faqs.length + questions.length;
     let intro: string;
     if (total === 0) {
       intro = 'Mình chưa tìm thấy kết quả phù hợp. Bạn thử gõ ngắn gọn hơn, ví dụ tên môn, tên bài giảng, hoặc việc muốn làm như tạo đề, nhập điểm, tải PDF.';
+    } else if (knowledge.length > 0) {
+      intro = 'Mình tìm được thông tin liên quan:';
     } else if (guides.length > 0) {
       intro = guides.length === 1
         ? `Bạn đang hỏi về chức năng ${guides[0].name}. Mình giới thiệu ngắn gọn chức năng này là gì và cách dùng:`
@@ -193,7 +202,7 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
     } else {
       intro = 'Đây là những gì mình tìm được:';
     }
-    return { intro, guides, faqs, features, lessons: lessonHits, questions };
+    return { intro, knowledge, guides, faqs, features, lessons: lessonHits, questions };
   };
 
   const submit = async (raw?: string) => {
@@ -235,6 +244,13 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
         ) : (
           <div key={i} className="space-y-2">
             <div className="rounded-2xl rounded-tl-sm bg-white px-3 py-2.5 text-[13px] text-slate-700 shadow-sm">{m.result.intro}</div>
+
+            {m.result.knowledge.map((kn, k) => (
+              <div key={`kn${k}`} className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+                <p className="flex items-center gap-1.5 text-[13px] font-bold text-slate-900"><BookMarked className="h-4 w-4 text-brand" /> {kn.title}</p>
+                <p className="mt-1 whitespace-pre-line text-[12.5px] leading-snug text-slate-600">{kn.content}</p>
+              </div>
+            ))}
 
             {m.result.guides.map((g, k) => (
               <div key={k} className="rounded-2xl border border-brand/20 bg-brand-light/40 p-3">

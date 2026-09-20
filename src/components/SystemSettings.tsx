@@ -16,8 +16,8 @@ import {
   X,
   Database
 } from "lucide-react";
-import { EyeOff, Eye, RotateCcw, Wrench, Power, Boxes, ImagePlay, Sparkles } from "lucide-react";
-import { AppSettings, ModuleOverride } from "../types";
+import { EyeOff, Eye, RotateCcw, Wrench, Power, Boxes, ImagePlay, Sparkles, Plus, Trash2, BookMarked } from "lucide-react";
+import { AppSettings, ModuleOverride, AssistantKnowledgeItem } from "../types";
 import { saveDefaultSettingsToSupabase } from "../lib/data";
 import { MODULE_REGISTRY } from "../lib/modules";
 import { FONT_OPTIONS, DEFAULT_HEADING_FONT, DEFAULT_BODY_FONT } from "../lib/fonts";
@@ -36,7 +36,13 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'general' | 'functions' | 'maintenance' | 'backup'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'functions' | 'assistant' | 'maintenance' | 'backup'>('general');
+
+  // Thư viện kiến thức của trợ lý.
+  const knowledge: AssistantKnowledgeItem[] = formState.assistantKnowledge || [];
+  const addKnowledge = () => setFormState(prev => ({ ...prev, assistantKnowledge: [...(prev.assistantKnowledge || []), { id: `k_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, title: '', keywords: '', content: '' }] }));
+  const updateKnowledge = (id: string, patch: Partial<AssistantKnowledgeItem>) => setFormState(prev => ({ ...prev, assistantKnowledge: (prev.assistantKnowledge || []).map(k => k.id === id ? { ...k, ...patch } : k) }));
+  const removeKnowledge = (id: string) => setFormState(prev => ({ ...prev, assistantKnowledge: (prev.assistantKnowledge || []).filter(k => k.id !== id) }));
 
   // Cập nhật tùy chỉnh của một chức năng (tên, mô tả, ảnh icon, ẩn hiện) trong bộ nhớ form.
   const updateOverride = (id: string, patch: Partial<ModuleOverride>) => {
@@ -220,6 +226,18 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
         >
           <Boxes className="w-4 h-4" />
           <span>Cài đặt chức năng</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('assistant')}
+          className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 cursor-pointer ${
+            activeTab === 'assistant'
+              ? 'border-brand text-brand bg-brand/5 rounded-t-2xl font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>Trợ lý</span>
         </button>
         <button
           type="button"
@@ -671,6 +689,63 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
 
           {saveBar}
         </form>
+      ) : activeTab === 'assistant' ? (
+        <form onSubmit={handleFormSubmit} className="space-y-6">
+          {/* Nút nổi trợ lý ảo */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs text-left">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-brand" />
+                  <span>Nút nổi trợ lý ảo</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">Bật tắt nút trợ lý nổi ở góc phải màn hình cho toàn hệ thống. Người dùng thường không đổi được. Chức năng Trợ lý ảo trong danh sách vẫn dùng bình thường dù tắt nút nổi.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormState(prev => ({ ...prev, assistantFloating: prev.assistantFloating === false ? true : false }))}
+                className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${formState.assistantFloating !== false ? 'bg-brand' : 'bg-slate-300'}`}
+                aria-label="Bật tắt nút nổi trợ lý ảo"
+              >
+                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${formState.assistantFloating !== false ? 'left-6' : 'left-1'}`} />
+              </button>
+            </div>
+          </div>
+
+          {/* Thư viện kiến thức cho trợ lý */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4 text-left">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <BookMarked className="w-4 h-4 text-brand" />
+                  <span>Thư viện kiến thức</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">Thêm các mục kiến thức để trợ lý trả lời thêm. Mỗi mục có tiêu đề, từ khóa gợi ý và nội dung. Khi người dùng hỏi trúng từ khóa hoặc tiêu đề, trợ lý sẽ đưa nội dung này vào câu trả lời.</p>
+              </div>
+              <button type="button" onClick={addKnowledge} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold text-white hover:bg-brand-hover"><Plus className="w-4 h-4" /> Thêm mục</button>
+            </div>
+
+            {knowledge.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-slate-200 px-4 py-6 text-center text-xs text-slate-400">Chưa có mục kiến thức nào. Bấm Thêm mục để bắt đầu.</p>
+            ) : (
+              <div className="space-y-3">
+                {knowledge.map((k, i) => (
+                  <div key={k.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-black uppercase text-slate-400">Mục {i + 1}</span>
+                      <button type="button" onClick={() => removeKnowledge(k.id)} className="grid h-8 w-8 place-items-center rounded-lg bg-white text-rose-500 hover:bg-rose-50" title="Xóa mục"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                    <input value={k.title} onChange={e => updateKnowledge(k.id, { title: e.target.value })} placeholder="Tiêu đề, ví dụ: Quy định nộp bài muộn" className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 outline-none focus:border-brand" />
+                    <input value={k.keywords || ''} onChange={e => updateKnowledge(k.id, { keywords: e.target.value })} placeholder="Từ khóa gợi ý, cách nhau bởi dấu phẩy, ví dụ: nộp muộn, trễ hạn, quá hạn" className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] text-slate-600 outline-none focus:border-brand" />
+                    <textarea value={k.content} onChange={e => updateKnowledge(k.id, { content: e.target.value })} rows={3} placeholder="Nội dung trả lời cho mục kiến thức này" className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[13px] text-slate-700 outline-none focus:border-brand resize-none" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {saveBar}
+        </form>
       ) : activeTab === 'maintenance' ? (
         <form onSubmit={handleFormSubmit} className="space-y-6">
           {/* Ảnh GIF khi tải trang */}
@@ -690,27 +765,6 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
                   <button type="button" onClick={() => setFormState(prev => ({ ...prev, loadingGif: '' }))} className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-brand"><RotateCcw className="w-3 h-3" /> Dùng vòng xoay mặc định</button>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* Nút nổi trợ lý ảo */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs text-left">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-brand" />
-                  <span>Nút nổi trợ lý ảo</span>
-                </h2>
-                <p className="text-xs text-slate-400 mt-1">Bật tắt nút trợ lý nổi ở góc phải màn hình cho toàn hệ thống. Người dùng thường không đổi được. Chức năng Trợ lý ảo trong danh sách vẫn dùng bình thường dù tắt nút nổi.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setFormState(prev => ({ ...prev, assistantFloating: prev.assistantFloating === false ? true : false }))}
-                className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${formState.assistantFloating !== false ? 'bg-brand' : 'bg-slate-300'}`}
-                aria-label="Bật tắt nút nổi trợ lý ảo"
-              >
-                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${formState.assistantFloating !== false ? 'left-6' : 'left-1'}`} />
-              </button>
             </div>
           </div>
 
