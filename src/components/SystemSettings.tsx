@@ -1,5 +1,5 @@
 import { uploadImageToCloudinary } from '../lib/upload';
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   Palette, 
   AppWindow, 
@@ -61,9 +61,58 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
     });
   };
 
+  // Tự động lưu, không cần bấm nút. isProgrammatic đánh dấu lần đặt formState do tải cấu hình
+  // (không phải người dùng sửa) để không tự lưu lại. skipNextSync bỏ qua lần đồng bộ ngay sau khi
+  // ta vừa tự lưu, tránh ghi đè nội dung người dùng đang gõ.
+  const isProgrammatic = useRef(true);
+  const skipNextSync = useRef(false);
+  const saveTimer = useRef<any>(null);
+
   useEffect(() => {
+    if (skipNextSync.current) { skipNextSync.current = false; return; }
+    isProgrammatic.current = true;
     setFormState({ ...settings });
   }, [settings]);
+
+  // Debounce: gộp các thay đổi liên tiếp rồi lưu sau khi ngừng thao tác một chút.
+  useEffect(() => {
+    if (!isAdmin) return;
+    if (isProgrammatic.current) { isProgrammatic.current = false; return; }
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    setError(null);
+    setSaving(true);
+    setSuccess(false);
+    saveTimer.current = setTimeout(async () => {
+      try {
+        const dataToSave = { ...formState };
+        Object.keys(dataToSave).forEach(key => {
+          if (dataToSave[key as keyof AppSettings] === undefined) delete dataToSave[key as keyof AppSettings];
+        });
+        const res = await saveDefaultSettingsToSupabase(dataToSave as AppSettings);
+        const failed = res?.failedCols || [];
+        if (failed.length > 0) {
+          const names: Record<string, string> = {
+            module_overrides: 'Cài đặt chức năng', loading_gif_url: 'Ảnh tải trang', maintenance_mode: 'Tạm tắt hệ thống',
+            maintenance_variant: 'Kiểu trang tạm tắt', maintenance_date: 'Ngày mở lại', font_heading: 'Font tiêu đề',
+            font_body: 'Font nội dung', assistant_floating: 'Nút nổi trợ lý', assistant_ai: 'Trả lời bằng AI', assistant_knowledge: 'Thư viện kiến thức trợ lý',
+          };
+          setError('Chưa lưu được: ' + failed.map(c => names[c] || c).join(', ') + '. Supabase còn thiếu cột, hãy chạy SETTINGS_ADD_COLUMNS.sql.');
+        } else {
+          setSuccess(true);
+          setTimeout(() => setSuccess(false), 2000);
+          skipNextSync.current = true;
+          onRefreshSettings();
+        }
+      } catch (err: any) {
+        console.error(err);
+        setError('Không thể lưu cấu hình: ' + (err?.message || err));
+      } finally {
+        setSaving(false);
+      }
+    }, 800);
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formState, isAdmin]);
 
   const colorThemes = [
     {
@@ -125,73 +174,35 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
     reader.readAsDataURL(file);
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  // Không còn nút lưu, mọi thay đổi tự động lưu qua effect debounce. Ngăn form submit khi bấm Enter.
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAdmin) {
-      setError("Chỉ quản trị viên mới có quyền cập nhật cấu hình hệ thống.");
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-    setSuccess(false);
-
-    try {
-      const dataToSave = { ...formState };
-      Object.keys(dataToSave).forEach(key => {
-        if (dataToSave[key as keyof AppSettings] === undefined) {
-          delete dataToSave[key as keyof AppSettings];
-        }
-      });
-      const res = await saveDefaultSettingsToSupabase(dataToSave as AppSettings);
-      const failed = res?.failedCols || [];
-      if (failed.length > 0) {
-        // Một số cột chưa có trong Supabase nên không lưu được, báo rõ để chạy migration.
-        const names: Record<string, string> = {
-          module_overrides: 'Cài đặt chức năng', loading_gif_url: 'Ảnh tải trang', maintenance_mode: 'Tạm tắt hệ thống',
-          maintenance_variant: 'Kiểu trang tạm tắt', maintenance_date: 'Ngày mở lại', font_heading: 'Font tiêu đề',
-          font_body: 'Font nội dung', assistant_floating: 'Nút nổi trợ lý', assistant_ai: 'Trả lời bằng AI', assistant_knowledge: 'Thư viện kiến thức trợ lý',
-        };
-        const labels = failed.map(c => names[c] || c).join(', ');
-        setError('Chưa lưu được: ' + labels + '. Cơ sở dữ liệu Supabase còn thiếu cột. Hãy chạy file SETTINGS_ADD_COLUMNS.sql trong Supabase rồi lưu lại.');
-      } else {
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000);
-      }
-      onRefreshSettings();
-    } catch (err: any) {
-      console.error(err);
-      setError("Không thể lưu cấu hình hệ thống: " + err.message);
-    } finally {
-      setSaving(false);
-    }
   };
 
+  // Không còn nút lưu. Mọi thay đổi tự động lưu. Thanh này chỉ hiện trạng thái đang lưu, đã lưu hoặc lỗi.
   const saveBar = (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex-1 text-left">
-        {error && (
-          <div className="text-xs text-rose-600 bg-rose-50 border border-rose-100 px-4 py-2.5 rounded-xl flex items-center gap-2">
-            <Info className="w-4 h-4 text-rose-500 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-        {success && (
-          <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 px-4 py-2.5 rounded-xl flex items-center gap-2 animate-fadeIn">
-            <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-            <span>Đã lưu thành công! Đang tải lại cấu hình hệ thống...</span>
-          </div>
-        )}
-      </div>
-      <button
-        type="submit"
-        disabled={saving || !isAdmin}
-        className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-white shadow-md ${
-          saving || !isAdmin ? "bg-slate-400 cursor-not-allowed" : "bg-brand hover:bg-brand-hover shadow-brand/20 hover:scale-102"
-        }`}
-      >
-        {saving ? (<><Loader2 className="w-4 h-4 animate-spin" /><span>Đang lưu...</span></>) : (<><Save className="w-4 h-4" /><span>Lưu tất cả thay đổi</span></>)}
-      </button>
+    <div className="flex items-center gap-3 text-left">
+      {error ? (
+        <div className="text-xs text-rose-600 bg-rose-50 border border-rose-100 px-4 py-2.5 rounded-xl flex items-center gap-2">
+          <Info className="w-4 h-4 text-rose-500 shrink-0" />
+          <span>{error}</span>
+        </div>
+      ) : saving ? (
+        <div className="text-xs text-slate-500 bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-xl flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+          <span>Đang lưu...</span>
+        </div>
+      ) : success ? (
+        <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 px-4 py-2.5 rounded-xl flex items-center gap-2 animate-fadeIn">
+          <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+          <span>Đã lưu tự động</span>
+        </div>
+      ) : (
+        <div className="text-xs text-slate-400 px-1 flex items-center gap-2">
+          <Check className="w-3.5 h-3.5 shrink-0" />
+          <span>Thay đổi tự động lưu, không cần bấm nút</span>
+        </div>
+      )}
     </div>
   );
 
