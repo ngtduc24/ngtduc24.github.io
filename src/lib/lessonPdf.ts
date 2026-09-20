@@ -28,20 +28,25 @@ function buildLessonHtml(lesson: ELLesson, sections: ELSection[], resources: ELR
 
   const cover = lesson.cover_url ? `<img class="cover" src="${esc(lesson.cover_url)}" alt="" />` : '';
   const summary = lesson.summary ? `<p class="summary">${esc(lesson.summary)}</p>` : '';
+  // Chuỗi cho thuộc tính content của CSS: phải thoát dấu ngoặc kép và dấu gạch chéo.
+  const cssEsc = (s: string) => (s || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 
   return `<!doctype html>
 <html lang="vi"><head><meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>${esc(lesson.title || 'Bài giảng')}</title>
 <style>
-  /* Số trang tự động ở góc dưới bên phải mỗi trang (Safari, Firefox hỗ trợ hộp lề @page). */
-  @page { margin: 20mm 16mm; @bottom-right { content: "Trang " counter(page) " / " counter(pages); font-family: "Be Vietnam Pro", system-ui, sans-serif; font-size: 9pt; color: #64748b; } }
+  /* Đầu trang, chân trang và số trang dùng hộp lề @page để in ra được trên mọi trang,
+     kể cả Safari trên iPhone (vị trí position:fixed không in lặp được trên Safari iOS).
+     Góc trên trái: tên giáo trình. Góc dưới trái: biên soạn. Góc dưới phải: số trang. */
+  @page {
+    margin: 20mm 16mm;
+    @top-left { content: "${cssEsc(footerRight)}"; font-family: "Be Vietnam Pro", system-ui, sans-serif; font-size: 9pt; font-weight: 600; color: #64748b; }
+    @bottom-left { content: "${cssEsc(footerLeft)}"; font-family: "Be Vietnam Pro", system-ui, sans-serif; font-size: 9pt; color: #64748b; }
+    @bottom-right { content: "Trang " counter(page) " / " counter(pages); font-family: "Be Vietnam Pro", system-ui, sans-serif; font-size: 9pt; color: #64748b; }
+  }
   * { box-sizing: border-box; }
-  body { font-family: "Be Vietnam Pro", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #1f2937; line-height: 1.6; margin: 0 auto; padding: 34px 24px 40px; max-width: 820px; }
-  /* Tiêu đề chạy góc trên bên trái: tên giáo trình, lặp trên mọi trang. */
-  .page-header { position: fixed; top: 0; left: 0; right: 0; padding: 6px 24px; font-size: 10px; font-weight: 600; color: #64748b; background: #fff; }
-  /* Dòng biên soạn ở góc dưới bên trái. */
-  .page-footer { position: fixed; bottom: 0; left: 0; padding: 6px 24px; font-size: 10px; color: #64748b; background: #fff; }
+  body { font-family: "Be Vietnam Pro", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #1f2937; line-height: 1.6; margin: 0 auto; padding: 24px; max-width: 820px; }
   h1 { font-size: 24px; font-weight: 800; margin: 0 0 4px; color: #0f172a; }
   .meta { font-size: 12px; color: #64748b; margin-bottom: 16px; }
   .cover { width: 100%; max-height: 320px; object-fit: cover; border-radius: 10px; margin: 12px 0 18px; }
@@ -60,13 +65,11 @@ function buildLessonHtml(lesson: ELLesson, sections: ELSection[], resources: ELR
   a { text-decoration: none; }
 </style></head>
 <body>
-  <div class="page-header">${esc(footerRight)}</div>
   <h1>${esc(lesson.title || 'Bài giảng')}</h1>
   <div class="meta">${esc(author)} · ${sections.length} phần</div>
   ${cover}
   ${summary}
   ${sectionsHtml || '<p class="content empty">Bài giảng chưa có nội dung.</p>'}
-  <div class="page-footer">${esc(footerLeft)}</div>
 </body></html>`;
 }
 
