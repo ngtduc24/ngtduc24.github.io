@@ -23,7 +23,9 @@ import {
   ArrowLeft,
   X,
   UserPlus,
-  FileSpreadsheet
+  FileSpreadsheet,
+  CalendarClock,
+  Check
 } from 'lucide-react';
 import { EduUser, EduClass, EduSchool, EduGradeColumn, EduAssignment, EduGrade } from '../../types/edu';
 import { 
@@ -39,8 +41,11 @@ import {
   saveUser,
   saveClassUsers,
   saveGrades,
-  deleteAssignment
+  deleteAssignment,
+  getPendingExtensions,
+  respondExtension
 } from '../../lib/edu';
+import { EduExtensionRequest } from '../../types/edu';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import EduExport from './EduExport';
@@ -62,6 +67,9 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
   const [assignments, setAssignments] = useState<EduAssignment[]>([]);
   const [grades, setGrades] = useState<EduGrade[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
+  const [extRequests, setExtRequests] = useState<EduExtensionRequest[]>([]);
+  // Số lượng và đơn vị thời gian gia hạn cho từng yêu cầu, do người duyệt chọn.
+  const [extDuration, setExtDuration] = useState<Record<string, { amount: string; unit: 'hour' | 'day' }>>({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'users' | 'assignments'>('users');
   const [newColumnName, setNewColumnName] = useState('');
@@ -131,13 +139,14 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
 
   const loadData = async () => {
     try {
-      const [classData, usersData, columnsData, assignmentsData, gradesData, submissionsData] = await Promise.all([
+      const [classData, usersData, columnsData, assignmentsData, gradesData, submissionsData, extData] = await Promise.all([
         getClassById(classId),
         getClassUsers(classId),
         getGradeColumns(classId),
         getAssignments(classId),
         getAllClassGrades(classId),
-        getAllClassSubmissions(classId)
+        getAllClassSubmissions(classId),
+        getPendingExtensions(classId)
       ]);
       setClazz(classData);
       setUsers(usersData);
@@ -145,6 +154,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
       setAssignments(assignmentsData);
       setGrades(gradesData);
       setSubmissions(submissionsData);
+      setExtRequests(extData);
     } catch (err) {
       console.error(err);
       addNotification("Lỗi khi tải thông tin lớp học", "error");
@@ -328,6 +338,38 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
     );
   };
 
+  // Người duyệt đồng ý gia hạn, tính mốc thời gian mới theo số lượng và đơn vị đã chọn.
+  const handleApproveExtension = async (req: EduExtensionRequest) => {
+    const d = extDuration[req.id] || { amount: '3', unit: 'day' as const };
+    const amount = Math.max(1, Number(d.amount) || 0);
+    if (amount <= 0) { addNotification('Vui lòng nhập thời gian gia hạn hợp lệ', 'warning'); return; }
+    const ms = d.unit === 'hour' ? amount * 3600 * 1000 : amount * 24 * 3600 * 1000;
+    const extendUntil = new Date(Date.now() + ms).toISOString();
+    try {
+      await respondExtension(req.id, { status: 'approved', extendUntil, respondedBy: currentUser?.fullName || currentUser?.email || 'Giảng viên' });
+      addNotification(`Đã duyệt gia hạn cho ${req.studentName || req.mssv} tới ${new Date(extendUntil).toLocaleString('vi-VN')}`, 'success');
+      loadData();
+    } catch (err) {
+      addNotification('Lỗi khi duyệt gia hạn: ' + (err as Error).message, 'error');
+    }
+  };
+
+  const handleRejectExtension = async (req: EduExtensionRequest) => {
+    confirm(
+      'Từ chối gia hạn',
+      `Từ chối yêu cầu gia hạn của ${req.studentName || req.mssv}?`,
+      async () => {
+        try {
+          await respondExtension(req.id, { status: 'rejected', respondedBy: currentUser?.fullName || currentUser?.email || 'Giảng viên' });
+          addNotification('Đã từ chối yêu cầu gia hạn', 'success');
+          loadData();
+        } catch (err) {
+          addNotification('Lỗi khi từ chối gia hạn: ' + (err as Error).message, 'error');
+        }
+      }
+    );
+  };
+
   const copyShareLink = (shareLinkId: string) => {
     const link = `${window.location.origin}/tracuu.html?edu=${shareLinkId}`;
     navigator.clipboard.writeText(link);
@@ -428,6 +470,59 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
           Quản lý Bài tập
         </button>
       </div>
+
+      {/* Yêu cầu gia hạn nộp bài đang chờ duyệt, chỉ người có quyền chấm mới thấy và xử lý. */}
+      {canGrade && extRequests.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 space-y-3 animate-fadeIn">
+          <div className="flex items-center gap-2 text-amber-700 font-black text-xs uppercase tracking-wider">
+            <CalendarClock className="w-4 h-4" />
+            <span>Yêu cầu gia hạn nộp bài ({extRequests.length})</span>
+          </div>
+          <div className="space-y-2">
+            {extRequests.map(req => {
+              const asg = assignments.find(a => a.id === req.assignmentId);
+              const dur = extDuration[req.id] || { amount: '3', unit: 'day' as const };
+              return (
+                <div key={req.id} className="bg-white rounded-2xl border border-amber-100 p-4 flex flex-col lg:flex-row lg:items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-black text-slate-800 truncate">{req.studentName || req.mssv} <span className="font-bold text-slate-400">({req.mssv})</span></p>
+                    <p className="text-[11px] font-semibold text-slate-500 truncate">Bài tập {asg?.title || 'không xác định'}</p>
+                    <p className="text-[10px] font-medium text-slate-400">Gửi lúc {new Date(req.createdAt).toLocaleString('vi-VN')}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <input
+                      type="number" min={1}
+                      value={dur.amount}
+                      onChange={e => setExtDuration(s => ({ ...s, [req.id]: { ...dur, amount: e.target.value } }))}
+                      className="w-16 px-2 py-1.5 bg-white border border-amber-200 rounded-lg text-xs font-bold text-center focus:outline-none focus:border-amber-400"
+                    />
+                    <select
+                      value={dur.unit}
+                      onChange={e => setExtDuration(s => ({ ...s, [req.id]: { ...dur, unit: e.target.value as 'hour' | 'day' } }))}
+                      className="px-2 py-1.5 bg-white border border-amber-200 rounded-lg text-xs font-bold focus:outline-none focus:border-amber-400"
+                    >
+                      <option value="hour">giờ</option>
+                      <option value="day">ngày</option>
+                    </select>
+                    <button
+                      onClick={() => handleApproveExtension(req)}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-brand text-white rounded-lg text-[10px] font-black hover:bg-brand-hover transition-all"
+                    >
+                      <Check className="w-3.5 h-3.5" /> DUYỆT
+                    </button>
+                    <button
+                      onClick={() => handleRejectExtension(req)}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 text-slate-500 rounded-lg text-[10px] font-black hover:bg-rose-50 hover:text-rose-500 hover:border-rose-200 transition-all"
+                    >
+                      <X className="w-3.5 h-3.5" /> TỪ CHỐI
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {activeTab === 'users' && (
         <div className="space-y-4">
