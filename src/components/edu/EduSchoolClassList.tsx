@@ -26,6 +26,7 @@ import { getClasses, getSchools, deleteSchool, deleteClass, saveSchool, saveClas
 import { getUsers } from '../../lib/data';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
+import { eduCan } from '../../lib/eduPermissions';
 
 interface EduSchoolClassListProps {
   onSelectClass: (classId: string) => void;
@@ -34,9 +35,16 @@ interface EduSchoolClassListProps {
   onOpenGrades?: () => void;
   onOpenExams?: () => void;
   isAdmin?: boolean;
+  currentUser?: any;
 }
 
-export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank, onOpenGrades, onOpenExams, isAdmin }: EduSchoolClassListProps) {
+export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank, onOpenGrades, onOpenExams, isAdmin, currentUser }: EduSchoolClassListProps) {
+  const canCreate = eduCan(currentUser, 'create');
+  const canEdit = eduCan(currentUser, 'edit');
+  const canDelete = eduCan(currentUser, 'delete');
+  const canImportEdu = eduCan(currentUser, 'import');
+  const canGradeImport = eduCan(currentUser, 'gradeImport');
+  const canGrade = eduCan(currentUser, 'grade');
   const [schools, setSchools] = useState<EduSchool[]>([]);
   const [userNames, setUserNames] = useState<Record<string, string>>({});
   const ownerName = (ownerId?: string) => (ownerId ? userNames[ownerId] || '' : '');
@@ -262,18 +270,20 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
             />
           </div>
           
-          <button 
-            onClick={() => {
-              setIsCreatingSchool(true);
-              setNewForm({ name: '', description: '' });
-            }}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider"
-          >
-            <Plus className="w-4 h-4 text-brand" />
-            <span>Thêm trường</span>
-          </button>
+          {canCreate && (
+            <button
+              onClick={() => {
+                setIsCreatingSchool(true);
+                setNewForm({ name: '', description: '' });
+              }}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider"
+            >
+              <Plus className="w-4 h-4 text-brand" />
+              <span>Thêm trường</span>
+            </button>
+          )}
 
-          {onOpenBank && (
+          {onOpenBank && canCreate && (
             <button
               onClick={onOpenBank}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-brand text-brand text-[11px] font-bold hover:bg-brand-light transition-all uppercase tracking-wider"
@@ -283,7 +293,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
             </button>
           )}
 
-          {onOpenGrades && (
+          {onOpenGrades && canGradeImport && (
             <button
               onClick={onOpenGrades}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider"
@@ -293,7 +303,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
             </button>
           )}
 
-          {onOpenExams && (
+          {onOpenExams && canGrade && (
             <button
               onClick={onOpenExams}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider"
@@ -303,7 +313,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
             </button>
           )}
 
-          {onImport && (
+          {onImport && canImportEdu && (
             <button
               onClick={onImport}
               className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white px-6 py-3 rounded-2xl text-[11px] font-bold transition-all shadow-lg shadow-brand/20 uppercase tracking-wider"
@@ -364,8 +374,9 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                     <span className="text-[10px] font-bold text-brand bg-brand-light border border-brand/20 px-2 py-0.5 rounded-full normal-case">Tạo bởi {ownerName(school.ownerId)}</span>
                   )}
 
+                  {(canEdit || canDelete) && (
                   <div className="relative">
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveDropdownId(activeDropdownId === `school-${school.id}` ? null : `school-${school.id}`);
@@ -376,15 +387,17 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                     </button>
                     {activeDropdownId === `school-${school.id}` && (
                       <div className="absolute left-0 top-full mt-1 bg-white border border-slate-100 rounded-xl shadow-xl p-1 z-20 min-w-[150px]">
-                        <button onClick={() => { setEditingSchool(school); setEditForm({ name: school.name, description: school.description || '' }); }} className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Edit2 className="w-3.5 h-3.5" /> Sửa</button>
-                        <button onClick={() => handleDeleteSchool(school)} className="w-full text-left px-3 py-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Trash2 className="w-3.5 h-3.5" /> Xóa</button>
+                        {canEdit && <button onClick={() => { setEditingSchool(school); setEditForm({ name: school.name, description: school.description || '' }); }} className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Edit2 className="w-3.5 h-3.5" /> Sửa</button>}
+                        {canDelete && <button onClick={() => handleDeleteSchool(school)} className="w-full text-left px-3 py-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Trash2 className="w-3.5 h-3.5" /> Xóa</button>}
                       </div>
                     )}
                   </div>
+                  )}
                 </div>
-                
+
                 <div className="flex items-center gap-3">
-                  <button 
+                  {canCreate && (
+                  <button
                     onClick={() => {
                       setIsCreatingClassForSchool(school.id);
                       setNewForm({ name: '', description: '' });
@@ -394,6 +407,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                     <Plus className="w-3.5 h-3.5" />
                     <span>Thêm lớp</span>
                   </button>
+                  )}
                   <span className="text-[10px] font-bold text-slate-400 px-3 py-1 bg-slate-50 rounded-lg border border-slate-100 uppercase">{school.classes.length} Lớp học</span>
                 </div>
               </div>
@@ -407,6 +421,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                   >
                     <div className="p-6 flex-1">
                       <div className="flex justify-end items-start mb-2">
+                        {(canEdit || canDelete) && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -416,10 +431,11 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                         >
                           <MoreVertical className="w-4 h-4" />
                         </button>
-                        {activeDropdownId === clazz.id && (
+                        )}
+                        {activeDropdownId === clazz.id && (canEdit || canDelete) && (
                           <div className="absolute right-4 top-9 bg-white border border-slate-100 rounded-xl shadow-xl p-1 z-30 min-w-[140px]" onClick={e => e.stopPropagation()}>
-                            <button onClick={() => { setEditingClass(clazz); setEditForm({ name: clazz.name, description: clazz.description || '' }); }} className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Edit2 className="w-3.5 h-3.5" /> Sửa</button>
-                            <button onClick={() => handleDeleteClass(clazz)} className="w-full text-left px-3 py-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Trash2 className="w-3.5 h-3.5" /> Xóa</button>
+                            {canEdit && <button onClick={() => { setEditingClass(clazz); setEditForm({ name: clazz.name, description: clazz.description || '' }); }} className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Edit2 className="w-3.5 h-3.5" /> Sửa</button>}
+                            {canDelete && <button onClick={() => handleDeleteClass(clazz)} className="w-full text-left px-3 py-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Trash2 className="w-3.5 h-3.5" /> Xóa</button>}
                           </div>
                         )}
                       </div>

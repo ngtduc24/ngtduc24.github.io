@@ -147,6 +147,7 @@ export default function EduModule({ currentUser, settings }: EduModuleProps) {
             onOpenGrades={() => setView('grade_entry')}
             onOpenExams={() => setView('exam_bank')}
             isAdmin={currentUser.role === 'admin'}
+            currentUser={currentUser}
           />
         )}
 
