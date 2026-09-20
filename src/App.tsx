@@ -46,6 +46,7 @@ import { updateDocumentSEO, getTabFromUrl, getSeoMeta, clearSubRoute } from './l
 import { isModuleHidden } from './lib/modules';
 import MaintenanceScreen from './components/MaintenanceScreen';
 import VirtualAssistant from './components/assistant/VirtualAssistant';
+import AssistantPage from './components/assistant/AssistantPage';
 import { trackUserPresence, untrackUserPresence } from './lib/presence';
 
 // Khóa lưu khu vực đang mở (portfolio công khai hay trang quản trị) để tải lại trang không bị nhảy ra ngoài.
@@ -332,6 +333,7 @@ export default function App() {
       edu: 'Quản lý Giáo dục & Đào tạo',
       elearning: 'E-Learning · Bài giảng',
       remier: 'Remier · Dựng phim',
+      assistant: 'Trợ lý ảo',
     };
 
     if (entryView === 'admin') {
@@ -586,6 +588,7 @@ export default function App() {
     if (tabId === 'backup') return false;
     // Mục Tạo AR nay nằm trong Tiện ích. Tài khoản nào đã được cấp quyền ar_module
     // từ trước thì vẫn vào được, không cần quản trị viên cấp lại quyền.
+    if (tabId === 'assistant') return true; // Trợ lý ảo mở cho mọi tài khoản đã đăng nhập
     if (tabId === 'all_features') return true; // Trang tổng hợp tính năng, tự lọc theo quyền của tài khoản
     if (tabId === 'profile') return true; // Trang cá nhân mở cho mọi tài khoản đã đăng nhập
     // Tiện ích đã tách thành 3 công cụ độc lập, mỗi công cụ có quyền riêng.
@@ -639,6 +642,8 @@ export default function App() {
         return <DashboardOverview onSwitchTab={(tab) => setCurrentTab(tab)} settings={settings} users={users} currentUser={currentUser} onRefreshSettings={loadConfig} />;
       case 'all_features':
         return <AllFeatures currentUser={currentUser} settings={settings} onSwitchTab={(tab) => setCurrentTab(tab)} onBack={() => setCurrentTab('dashboard')} />;
+      case 'assistant':
+        return <AssistantPage currentUser={currentUser} settings={settings} onSwitchTab={(tab) => setCurrentTab(tab)} onBack={() => setCurrentTab('dashboard')} />;
       case 'profile':
         return <ProfilePage user={currentUser} onSaveProfile={handleSaveProfile} onBack={() => setCurrentTab('dashboard')} />;
       case 'stats':
@@ -953,8 +958,8 @@ export default function App() {
         />
       )}
 
-      {/* Trợ lý ảo tra cứu bài giảng, câu hỏi và hướng dẫn dùng hệ thống. */}
-      {currentUser && currentUser.role !== 'member' && (
+      {/* Nút nổi trợ lý ảo. Admin bật tắt trong Cấu hình hệ thống; mặc định bật. */}
+      {currentUser && currentUser.role !== 'member' && settings.assistantFloating !== false && (
         <VirtualAssistant currentUser={currentUser} settings={settings} onSwitchTab={setCurrentTab} />
       )}
 
