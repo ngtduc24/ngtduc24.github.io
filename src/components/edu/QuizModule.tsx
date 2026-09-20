@@ -17,6 +17,8 @@ import {
 } from '../../lib/quiz';
 import QuizRichText from './QuizRichText';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
+import { exportExamToPdf, ExamHeader } from '../../lib/quizPdf';
+import { FileDown } from 'lucide-react';
 
 interface QuizModuleProps { currentUser: UserAccount; }
 type View = 'list' | 'editor' | 'bank' | 'assign' | 'detail';
@@ -176,6 +178,83 @@ export default function QuizModule({ currentUser }: QuizModuleProps) {
 }
 
 // =====================================================================
+// HỘP THOẠI XUẤT ĐỀ PDF
+// =====================================================================
+const EXPORT_HEADER_KEY = 'quiz_export_header';
+function ExamExportDialog({ count, defaults, onClose, onConfirm }: {
+  count: number;
+  defaults: Partial<ExamHeader>;
+  onClose: () => void;
+  onConfirm: (h: ExamHeader) => void;
+}) {
+  // Lấy lại các thông tin trường, đơn vị đã nhập lần trước để đỡ gõ lại.
+  const saved: Partial<ExamHeader> = (() => {
+    try { return JSON.parse(localStorage.getItem(EXPORT_HEADER_KEY) || '{}'); } catch { return {}; }
+  })();
+  const [h, setH] = useState<ExamHeader>({
+    orgTop: saved.orgTop || '',
+    school: saved.school || '',
+    examTitle: defaults.examTitle || '',
+    subject: defaults.subject || saved.subject || '',
+    duration: defaults.duration || saved.duration || '',
+    code: defaults.code || '',
+    pages: '',
+    official: saved.official ?? true,
+    showAnswers: false,
+  });
+  const set = (p: Partial<ExamHeader>) => setH(prev => ({ ...prev, ...p }));
+  const inp = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-brand focus:bg-white';
+  const lbl = 'mb-1 block text-[10px] font-bold uppercase text-slate-500';
+
+  const submit = () => {
+    // Nhớ lại các trường dùng chung cho lần sau.
+    try { localStorage.setItem(EXPORT_HEADER_KEY, JSON.stringify({ orgTop: h.orgTop, school: h.school, subject: h.subject, duration: h.duration, official: h.official })); } catch {}
+    onConfirm(h);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/50 p-4" onClick={onClose}>
+      <div className="flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-slate-100 p-5">
+          <div>
+            <h3 className="font-display text-base font-bold text-slate-900">Xuất đề ra PDF</h3>
+            <p className="text-[11px] text-slate-400">Điền thông tin đầu trang đề. Đề gồm {count} câu.</p>
+          </div>
+          <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button>
+        </div>
+
+        <div className="flex-1 space-y-3 overflow-y-auto p-5">
+          <div><label className={lbl}>Đơn vị chủ quản (dòng trên cùng)</label><input value={h.orgTop} onChange={e => set({ orgTop: e.target.value })} className={inp} placeholder="Ví dụ: SỞ GD&ĐT BÌNH DƯƠNG" /></div>
+          <div><label className={lbl}>Trường / Khoa</label><input value={h.school} onChange={e => set({ school: e.target.value })} className={inp} placeholder="Ví dụ: TRƯỜNG THPT PHƯỚC VĨNH" /></div>
+          <div><label className={lbl}>Tên bài kiểm tra</label><input value={h.examTitle} onChange={e => set({ examTitle: e.target.value })} className={inp} placeholder="Ví dụ: KIỂM TRA HỌC KỲ I NĂM HỌC 2024 - 2025" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className={lbl}>Môn</label><input value={h.subject} onChange={e => set({ subject: e.target.value })} className={inp} placeholder="Ví dụ: MÔN TOÁN – Khối 10" /></div>
+            <div><label className={lbl}>Mã đề</label><input value={h.code} onChange={e => set({ code: e.target.value })} className={inp} placeholder="Ví dụ: 392" /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className={lbl}>Thời gian làm bài</label><input value={h.duration} onChange={e => set({ duration: e.target.value })} className={inp} placeholder="Ví dụ: 90 phút" /></div>
+            <div><label className={lbl}>Số trang (tùy chọn)</label><input value={h.pages} onChange={e => set({ pages: e.target.value })} className={inp} placeholder="Ví dụ: 03" /></div>
+          </div>
+          <button type="button" onClick={() => set({ official: !h.official })} className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-left">
+            <span className="text-[13px] font-bold text-slate-800">Hiện dòng (ĐỀ CHÍNH THỨC)</span>
+            <span className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${h.official ? 'bg-brand' : 'bg-slate-300'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${h.official ? 'left-[22px]' : 'left-0.5'}`} /></span>
+          </button>
+          <button type="button" onClick={() => set({ showAnswers: !h.showAnswers })} className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-left">
+            <span><span className="block text-[13px] font-bold text-slate-800">In kèm bảng đáp án cuối đề</span><span className="block text-[11px] text-slate-400">Bản dành cho giáo viên, không đưa cho sinh viên</span></span>
+            <span className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${h.showAnswers ? 'bg-brand' : 'bg-slate-300'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${h.showAnswers ? 'left-[22px]' : 'left-0.5'}`} /></span>
+          </button>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-slate-100 p-4">
+          <button onClick={onClose} className="rounded-xl bg-slate-100 px-5 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-200">Hủy</button>
+          <button onClick={submit} disabled={count === 0} className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-2.5 text-xs font-bold text-white hover:bg-brand-hover disabled:opacity-50"><FileDown className="h-4 w-4" /> Xuất PDF</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
 // NGÂN HÀNG CÂU HỎI
 // =====================================================================
 function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, onAddedToQuiz }: {
@@ -191,6 +270,7 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<QuizQuestion | null | 'new'>(null);
+  const [showExport, setShowExport] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -240,10 +320,15 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
         <button onClick={onBack} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200">
           <ChevronLeft className="h-4 w-4" /> {selectMode ? 'Về trình soạn đề' : 'Danh sách đề'}
         </button>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {selectMode && (
             <button onClick={addSelectedToQuiz} disabled={selected.size === 0} className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover disabled:opacity-50">
               <Plus className="h-4 w-4" /> Thêm {selected.size} câu vào đề
+            </button>
+          )}
+          {!selectMode && (
+            <button onClick={() => setShowExport(true)} disabled={selected.size === 0} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand disabled:opacity-50" title="Xuất các câu đã chọn ra PDF">
+              <FileDown className="h-4 w-4" /> Xuất PDF{selected.size > 0 ? ` (${selected.size})` : ''}
             </button>
           )}
           <button onClick={() => setEditing('new')} className="inline-flex items-center gap-2 rounded-xl bg-slate-800 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white hover:bg-slate-900">
@@ -251,6 +336,18 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
           </button>
         </div>
       </div>
+
+      {showExport && (
+        <ExamExportDialog
+          count={selected.size}
+          defaults={{ subject: subjectId ? `MÔN ${subjectName(subjectId).toUpperCase()}` : '' }}
+          onClose={() => setShowExport(false)}
+          onConfirm={(header) => { setShowExport(false); exportExamToPdf(header, items.filter(q => selected.has(q.id))); }}
+        />
+      )}
+      {!selectMode && selected.size > 0 && (
+        <p className="text-[11px] font-semibold text-brand">Đã chọn {selected.size} câu. Bấm Xuất PDF để tạo đề in.</p>
+      )}
 
       {/* Bộ lọc */}
       <div className="flex flex-wrap items-center gap-2">
@@ -284,11 +381,10 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
           {items.map(q => {
             const correctCount = (q.options || []).filter(o => o.is_correct).length;
             return (
-              <div key={q.id} className={`rounded-2xl border bg-white p-4 shadow-sm transition-colors ${selectMode && selected.has(q.id) ? 'border-brand ring-1 ring-brand' : 'border-slate-100'}`}>
+              <div key={q.id} className={`rounded-2xl border bg-white p-4 shadow-sm transition-colors ${selected.has(q.id) ? 'border-brand ring-1 ring-brand' : 'border-slate-100'}`}>
                 <div className="flex items-start gap-3">
-                  {selectMode && (
-                    <button onClick={() => toggleSel(q.id)} className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 ${selected.has(q.id) ? 'border-brand bg-brand text-white' : 'border-slate-300 text-transparent'}`}><Check className="h-3 w-3" /></button>
-                  )}
+                  {/* Ô chọn dùng cho cả thêm câu vào đề và chọn câu để xuất PDF. */}
+                  <button onClick={() => toggleSel(q.id)} title="Chọn câu này" className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 ${selected.has(q.id) ? 'border-brand bg-brand text-white' : 'border-slate-300 text-transparent hover:border-brand/50'}`}><Check className="h-3 w-3" /></button>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{q.question_type === 'single' ? 'Chọn 1' : 'Chọn nhiều'}</span>
@@ -605,11 +701,13 @@ function QuizDetail({ quiz, subjects, onEdit, onAssign, onDelete, onBack }: {
   const { addNotification } = useNotifications();
   const [items, setItems] = useState<QuizItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showExport, setShowExport] = useState(false);
   useEffect(() => {
     getQuizItems(quiz.id).then(setItems).catch(e => addNotification('Lỗi tải câu hỏi: ' + e.message, 'error')).finally(() => setLoading(false));
   }, [quiz.id, addNotification]);
 
   const subjectName = subjects.find(s => s.id === quiz.subject_id)?.name || '';
+  const exportQuestions = items.map(it => it.question).filter(Boolean) as QuizQuestion[];
   const totalPoints = items.reduce((s, it) => s + Number(it.points || 0), 0);
   const gradingLabel: any = { highest: 'Điểm cao nhất', first: 'Lần đầu', last: 'Lần cuối', average: 'Trung bình' };
   const visLabel: any = { hidden: 'Không hiển thị', score_only: 'Chỉ hiển thị điểm', score_and_answers: 'Điểm kèm đáp án' };
@@ -623,11 +721,21 @@ function QuizDetail({ quiz, subjects, onEdit, onAssign, onDelete, onBack }: {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button onClick={onBack} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><ChevronLeft className="h-4 w-4" /> Danh sách đề</button>
         <div className="flex flex-wrap items-center gap-2">
+          <button onClick={() => setShowExport(true)} disabled={exportQuestions.length === 0} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand disabled:opacity-50" title="Xuất đề ra PDF để in"><FileDown className="h-4 w-4" /> Xuất PDF</button>
           <button onClick={onEdit} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Edit2 className="h-4 w-4" /> Sửa</button>
           <button onClick={onAssign} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><Send className="h-4 w-4" /> Giao lớp</button>
           <button onClick={onDelete} className="inline-flex items-center justify-center rounded-xl bg-rose-50 px-3 py-2.5 text-rose-500 hover:bg-rose-100" title="Xóa"><Trash2 className="h-4 w-4" /></button>
         </div>
       </div>
+
+      {showExport && (
+        <ExamExportDialog
+          count={exportQuestions.length}
+          defaults={{ examTitle: quiz.title, subject: subjectName ? `MÔN ${subjectName.toUpperCase()}` : '', duration: `${quiz.duration_minutes} phút` }}
+          onClose={() => setShowExport(false)}
+          onConfirm={(header) => { setShowExport(false); exportExamToPdf(header, exportQuestions); }}
+        />
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
         {/* Thông tin + câu hỏi */}
