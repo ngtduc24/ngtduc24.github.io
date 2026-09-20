@@ -5,6 +5,7 @@ import {
   GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone, Shield, CheckCircle2, ClipboardList, Clapperboard
 } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
+import { isModuleHidden, resolveModuleMeta } from '../lib/modules';
 
 interface AllFeaturesProps {
   currentUser: UserAccount;
@@ -83,7 +84,10 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
     return perms.includes(id);
   };
 
-  const visible = ALL_FEATURES.filter(f => can(f.id));
+  const visible = ALL_FEATURES
+    .filter(f => can(f.id))
+    .filter(f => !isModuleHidden(f.id, settings))
+    .map(f => resolveModuleMeta(f, settings));
   const groups = ['Tất cả', ...Array.from(new Set(visible.map(f => f.group)))];
   const q = search.trim().toLowerCase();
   const filtered = visible.filter(f =>
@@ -171,7 +175,7 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
                       }}
                       className="group text-left bg-white rounded-2xl border border-slate-100 shadow-xs hover:shadow-md hover:border-brand/30 transition-all p-4 flex items-start gap-3"
                     >
-                      <span className={`w-11 h-11 rounded-xl ${c.bg} ${c.text} grid place-items-center shrink-0`}><Icon className="w-5 h-5" /></span>
+                      <span className={`w-11 h-11 rounded-xl ${c.bg} ${c.text} grid place-items-center shrink-0 overflow-hidden`}>{(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="w-full h-full object-cover" /> : <Icon className="w-5 h-5" />}</span>
                       <div className="min-w-0 flex-1">
                         <h3 className="text-[13px] font-black text-slate-800 leading-tight group-hover:text-brand transition-colors">{m.label}</h3>
                         <p className="text-[11px] text-slate-400 font-medium leading-snug mt-1 line-clamp-2">{m.desc}</p>

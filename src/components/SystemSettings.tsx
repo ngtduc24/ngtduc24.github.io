@@ -16,8 +16,10 @@ import {
   X,
   Database
 } from "lucide-react";
-import { AppSettings } from "../types";
+import { EyeOff, Eye, RotateCcw, Wrench, Power, Boxes, ImagePlay } from "lucide-react";
+import { AppSettings, ModuleOverride } from "../types";
 import { saveDefaultSettingsToSupabase } from "../lib/data";
+import { MODULE_REGISTRY } from "../lib/modules";
 import BackupManager from './BackupManager';
 import MediaSourcePicker from './MediaSourcePicker';
 
@@ -32,7 +34,24 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'general' | 'backup'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'functions' | 'maintenance' | 'backup'>('general');
+
+  // Cập nhật tùy chỉnh của một chức năng (tên, mô tả, ảnh icon, ẩn hiện) trong bộ nhớ form.
+  const updateOverride = (id: string, patch: Partial<ModuleOverride>) => {
+    setFormState(prev => {
+      const overrides = { ...(prev.moduleOverrides || {}) };
+      overrides[id] = { ...(overrides[id] || {}), ...patch };
+      return { ...prev, moduleOverrides: overrides };
+    });
+  };
+  // Trả icon về ảnh mặc định của hệ thống bằng cách xóa ảnh tùy chỉnh của chức năng đó.
+  const resetOverrideIcon = (id: string) => {
+    setFormState(prev => {
+      const overrides = { ...(prev.moduleOverrides || {}) };
+      if (overrides[id]) { const { icon, ...rest } = overrides[id]; overrides[id] = rest; }
+      return { ...prev, moduleOverrides: overrides };
+    });
+  };
 
   useEffect(() => {
     setFormState({ ...settings });
@@ -128,6 +147,34 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
     }
   };
 
+  const saveBar = (
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex-1 text-left">
+        {error && (
+          <div className="text-xs text-rose-600 bg-rose-50 border border-rose-100 px-4 py-2.5 rounded-xl flex items-center gap-2">
+            <Info className="w-4 h-4 text-rose-500 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+        {success && (
+          <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 px-4 py-2.5 rounded-xl flex items-center gap-2 animate-fadeIn">
+            <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+            <span>Đã lưu thành công! Đang tải lại cấu hình hệ thống...</span>
+          </div>
+        )}
+      </div>
+      <button
+        type="submit"
+        disabled={saving || !isAdmin}
+        className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-white shadow-md ${
+          saving || !isAdmin ? "bg-slate-400 cursor-not-allowed" : "bg-brand hover:bg-brand-hover shadow-brand/20 hover:scale-102"
+        }`}
+      >
+        {saving ? (<><Loader2 className="w-4 h-4 animate-spin" /><span>Đang lưu...</span></>) : (<><Save className="w-4 h-4" /><span>Lưu tất cả thay đổi</span></>)}
+      </button>
+    </div>
+  );
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto" id="system-settings-panel">
       {/* Page Header */}
@@ -159,6 +206,30 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
         >
           <Settings className="w-4 h-4" />
           <span>Cấu hình chung & Giao diện</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('functions')}
+          className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 cursor-pointer ${
+            activeTab === 'functions'
+              ? 'border-brand text-brand bg-brand/5 rounded-t-2xl font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Boxes className="w-4 h-4" />
+          <span>Cài đặt chức năng</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('maintenance')}
+          className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 cursor-pointer ${
+            activeTab === 'maintenance'
+              ? 'border-brand text-brand bg-brand/5 rounded-t-2xl font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Wrench className="w-4 h-4" />
+          <span>Bảo trì & Tải trang</span>
         </button>
         <button
           type="button"
@@ -484,6 +555,155 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
           </button>
         </div>
       </form>
+      ) : activeTab === 'functions' ? (
+        <form onSubmit={handleFormSubmit} className="space-y-6">
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-2 text-left">
+            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+              <Boxes className="w-4 h-4 text-brand" />
+              <span>Cài đặt chức năng hệ thống</span>
+            </h2>
+            <p className="text-xs text-slate-400">
+              Đổi ảnh icon, tên và mô tả của từng chức năng. Gạt tắt để ẩn một chức năng, khi ẩn thì mọi tài khoản đều không thấy và không truy cập được kể cả khi mở bằng đường dẫn trực tiếp.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {MODULE_REGISTRY.map(mod => {
+              const ov = formState.moduleOverrides?.[mod.id] || {};
+              const hidden = !!ov.hidden;
+              const DefaultIcon = mod.icon;
+              return (
+                <div key={mod.id} className={`bg-white rounded-2xl border p-4 flex flex-col md:flex-row md:items-center gap-4 transition-all ${hidden ? 'border-slate-200 opacity-70' : 'border-slate-100'}`}>
+                  {/* Bên trái: ảnh icon hiện tại và nút chọn ảnh */}
+                  <div className="flex items-center gap-3 md:w-64 shrink-0">
+                    <div className="w-14 h-14 rounded-2xl bg-brand/10 text-brand grid place-items-center overflow-hidden shrink-0 border border-brand/10">
+                      {ov.icon ? <img src={ov.icon} alt="" className="w-full h-full object-cover" /> : <DefaultIcon className="w-7 h-7" />}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <MediaSourcePicker onSelect={url => updateOverride(mod.id, { icon: url })} accept="image/*" resourceType="image" folder="system/module-icons" category="Ảnh icon chức năng" label="Tải/chọn ảnh" className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-[10px] font-bold text-white hover:bg-brand-hover" />
+                      {ov.icon && (
+                        <button type="button" onClick={() => resetOverrideIcon(mod.id)} className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-brand">
+                          <RotateCcw className="w-3 h-3" /> Dùng ảnh mặc định
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bên phải: tên, mô tả và công tắc ẩn hiện */}
+                  <div className="flex-1 space-y-2">
+                    <input
+                      type="text"
+                      value={ov.label ?? ''}
+                      onChange={e => updateOverride(mod.id, { label: e.target.value })}
+                      placeholder={mod.label}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+                    />
+                    <textarea
+                      rows={2}
+                      value={ov.desc ?? ''}
+                      onChange={e => updateOverride(mod.id, { desc: e.target.value })}
+                      placeholder={mod.desc}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 md:flex-col md:items-end shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => updateOverride(mod.id, { hidden: !hidden })}
+                      title={hidden ? 'Đang ẩn, bấm để hiện lại' : 'Đang hiện, bấm để ẩn'}
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-bold transition-colors ${hidden ? 'bg-rose-50 text-rose-500 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}
+                    >
+                      {hidden ? <><EyeOff className="w-3.5 h-3.5" /> Đang ẩn</> : <><Eye className="w-3.5 h-3.5" /> Đang hiện</>}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {saveBar}
+        </form>
+      ) : activeTab === 'maintenance' ? (
+        <form onSubmit={handleFormSubmit} className="space-y-6">
+          {/* Ảnh GIF khi tải trang */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4 text-left">
+            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+              <ImagePlay className="w-4 h-4 text-brand" />
+              <span>Ảnh động khi tải trang</span>
+            </h2>
+            <p className="text-xs text-slate-400">Ảnh hiển thị khi trang đang tải lâu. Để trống thì dùng vòng xoay mặc định của hệ thống.</p>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl border border-slate-200 bg-slate-50 grid place-items-center overflow-hidden shrink-0">
+                {formState.loadingGif ? <img src={formState.loadingGif} alt="Loading" className="w-full h-full object-contain" /> : <Loader2 className="w-6 h-6 text-brand animate-spin" />}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <MediaSourcePicker onSelect={url => setFormState(prev => ({ ...prev, loadingGif: url }))} accept="image/*" resourceType="image" folder="system/loading" category="Ảnh tải trang" label="Tải/chọn ảnh GIF" className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-[11px] font-bold text-white hover:bg-brand-hover" />
+                {formState.loadingGif && (
+                  <button type="button" onClick={() => setFormState(prev => ({ ...prev, loadingGif: '' }))} className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-brand"><RotateCcw className="w-3 h-3" /> Dùng vòng xoay mặc định</button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Tạm tắt hệ thống */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4 text-left">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <Power className="w-4 h-4 text-brand" />
+                  <span>Tạm tắt hệ thống</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">Khi bật, người dùng và khách sẽ thấy trang thông báo. Quản trị viên đăng nhập vẫn dùng bình thường để tắt lại chế độ này.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormState(prev => ({ ...prev, maintenanceMode: !prev.maintenanceMode }))}
+                className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${formState.maintenanceMode ? 'bg-rose-500' : 'bg-slate-300'}`}
+                aria-label="Bật tắt chế độ tạm tắt hệ thống"
+              >
+                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${formState.maintenanceMode ? 'left-6' : 'left-1'}`} />
+              </button>
+            </div>
+
+            {formState.maintenanceMode && (
+              <div className="space-y-4 pt-3 border-t border-slate-100">
+                <p className="text-[11px] font-bold text-slate-500 uppercase">Chọn giao diện trang tạm tắt</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormState(prev => ({ ...prev, maintenanceVariant: 1 }))}
+                    className={`text-left rounded-2xl border-2 p-4 transition-all ${(formState.maintenanceVariant || 1) === 1 ? 'border-brand bg-brand/5' : 'border-slate-100 hover:border-slate-200'}`}
+                  >
+                    <p className="text-xs font-black text-slate-800">Giao diện 1</p>
+                    <p className="text-[11px] text-slate-500 mt-1">Hệ thống tạm thời đóng</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormState(prev => ({ ...prev, maintenanceVariant: 2 }))}
+                    className={`text-left rounded-2xl border-2 p-4 transition-all ${formState.maintenanceVariant === 2 ? 'border-brand bg-brand/5' : 'border-slate-100 hover:border-slate-200'}`}
+                  >
+                    <p className="text-xs font-black text-slate-800">Giao diện 2</p>
+                    <p className="text-[11px] text-slate-500 mt-1">Hệ thống đang nâng cấp, truy cập lại vào ngày…</p>
+                  </button>
+                </div>
+                {formState.maintenanceVariant === 2 && (
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase">Ngày dự kiến mở lại</label>
+                    <input
+                      type="date"
+                      value={formState.maintenanceDate || ''}
+                      onChange={e => setFormState(prev => ({ ...prev, maintenanceDate: e.target.value }))}
+                      className="w-full sm:w-64 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {saveBar}
+        </form>
       ) : (
         <BackupManager />
       )}

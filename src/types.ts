@@ -166,6 +166,24 @@ export interface AppSettings {
   quantBannerDescription?: string;
   quantBannerLabel?: string;
   quantBannerImage?: string;
+  // Tùy chỉnh từng chức năng hệ thống: đổi tên, mô tả, ảnh icon và ẩn hiện.
+  moduleOverrides?: Record<string, ModuleOverride>;
+  // Ảnh động hiển thị khi trang đang tải lâu. Rỗng thì dùng vòng xoay mặc định.
+  loadingGif?: string;
+  // Tạm tắt toàn hệ thống. Bật thì người dùng thường thấy trang thông báo tạm đóng.
+  maintenanceMode?: boolean;
+  // Giao diện trang tạm tắt: 1 là hệ thống tạm đóng, 2 là đang nâng cấp kèm ngày mở lại.
+  maintenanceVariant?: 1 | 2;
+  // Ngày dự kiến mở lại, dùng cho giao diện 2.
+  maintenanceDate?: string;
+}
+
+// Tùy chỉnh hiển thị của một chức năng do admin đặt trong màn hình Cài đặt chức năng.
+export interface ModuleOverride {
+  label?: string;
+  desc?: string;
+  icon?: string; // URL ảnh thay cho biểu tượng mặc định
+  hidden?: boolean;
 }
 
 export interface TaskCompletionReport {
