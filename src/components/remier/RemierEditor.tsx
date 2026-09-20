@@ -25,13 +25,26 @@ const TOP_TABS: { id: LeftPanel; label: string; icon: any; soon?: boolean }[] = 
   { id: 'sticker', label: 'Nhãn dán', icon: Sticker, soon: true },
   { id: 'effect', label: 'Hiệu ứng', icon: Sparkles, soon: true },
   { id: 'transition', label: 'Chuyển tiếp', icon: ArrowLeftRight, soon: true },
-  { id: 'filter', label: 'Bộ lọc', icon: SlidersHorizontal, soon: true },
+  { id: 'filter', label: 'Bộ lọc', icon: SlidersHorizontal },
 ];
 interface ClipProps { x: number; y: number; scale: number; rotation: number; opacity: number; volume: number; text: string; fontSize: number; color: string; fontWeight: number; align: string; }
 type KfProp = 'x' | 'y' | 'scale' | 'rotation' | 'opacity' | 'volume';
 const KF_PROPS: KfProp[] = ['x', 'y', 'scale', 'rotation', 'opacity', 'volume'];
 interface KF { t: number; v: number; } // t: mili giây tính từ đầu clip
-interface Clip { id: string; kind: ClipKind; name: string; src?: string; thumb?: string; start: number; dur: number; inPoint: number; srcDur?: number; fadeIn?: number; fadeOut?: number; props: ClipProps; kf?: Partial<Record<KfProp, KF[]>>; }
+interface Adj { brightness: number; contrast: number; saturate: number; sepia: number; grayscale: number; blur: number; }
+interface Clip { id: string; kind: ClipKind; name: string; src?: string; thumb?: string; start: number; dur: number; inPoint: number; srcDur?: number; fadeIn?: number; fadeOut?: number; props: ClipProps; kf?: Partial<Record<KfProp, KF[]>>; adj?: Adj; }
+
+const defaultAdj = (): Adj => ({ brightness: 1, contrast: 1, saturate: 1, sepia: 0, grayscale: 0, blur: 0 });
+const filterStr = (a: Adj) => `brightness(${a.brightness}) contrast(${a.contrast}) saturate(${a.saturate}) sepia(${a.sepia}) grayscale(${a.grayscale}) blur(${a.blur}px)`;
+// Preset bộ lọc màu.
+const FILTER_PRESETS: { key: string; label: string; adj: Adj }[] = [
+  { key: 'none', label: 'Gốc', adj: defaultAdj() },
+  { key: 'warm', label: 'Ấm', adj: { brightness: 1.05, contrast: 1.05, saturate: 1.2, sepia: 0.25, grayscale: 0, blur: 0 } },
+  { key: 'cool', label: 'Lạnh', adj: { brightness: 1.0, contrast: 1.1, saturate: 1.15, sepia: 0, grayscale: 0, blur: 0 } },
+  { key: 'vivid', label: 'Rực rỡ', adj: { brightness: 1.05, contrast: 1.15, saturate: 1.6, sepia: 0, grayscale: 0, blur: 0 } },
+  { key: 'bw', label: 'Đen trắng', adj: { brightness: 1.02, contrast: 1.1, saturate: 1, sepia: 0, grayscale: 1, blur: 0 } },
+  { key: 'classic', label: 'Cổ điển', adj: { brightness: 1.02, contrast: 0.95, saturate: 0.9, sepia: 0.5, grayscale: 0, blur: 0 } },
+];
 
 // Nội suy tuyến tính giá trị theo danh sách keyframe tại thời điểm cục bộ localT.
 function kfValue(list: KF[] | undefined, localT: number, fallback: number): number {
@@ -259,6 +272,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
         if (iw && ih) {
           const scale = Math.min(LW / iw, LH / ih); // contain
           const dw = iw * scale, dh = ih * scale;
+          if (clip.adj) { try { ctx.filter = filterStr(clip.adj); } catch {} }
           try { ctx.drawImage(el as CanvasImageSource, -dw / 2, -dh / 2, dw, dh); } catch {}
         }
       }
@@ -471,6 +485,12 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
     if (dir < 0) { for (let i = list.length - 1; i >= 0; i--) if (list[i].t < local - 1) { target = list[i].t; break; } }
     else { for (let i = 0; i < list.length; i++) if (list[i].t > local + 1) { target = list[i].t; break; } }
     if (target != null) seekTo(clip.start + target);
+  };
+  const updateClipAdj = (id: string, patch: Partial<Adj>) => {
+    setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.map(c => c.id === id ? { ...c, adj: { ...(c.adj || defaultAdj()), ...patch } } : c) }))); markDirty();
+  };
+  const applyFilterPreset = (id: string, adj: Adj) => {
+    setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.map(c => c.id === id ? { ...c, adj: adj.brightness === 1 && adj.contrast === 1 && adj.saturate === 1 && adj.sepia === 0 && adj.grayscale === 0 && adj.blur === 0 ? undefined : { ...adj } } : c) }))); markDirty();
   };
   const deleteClip = (id: string) => { setTracks(prev => prev.map(tr => ({ ...tr, clips: tr.clips.filter(c => c.id !== id) }))); if (selId === id) setSelId(null); setMultiSel(m => m.filter(x => x !== id)); markDirty(); };
   // Xóa mọi clip đang chọn (một hoặc nhiều do quét vùng chọn).
@@ -737,7 +757,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
             })}
           </div>
           <div className="flex min-h-0 flex-1 overflow-hidden">
-            <LibraryPanel currentUser={currentUser} panel={leftPanel} onAddAsset={addClipFromAsset} onAddText={addTextClip} onImportSubtitles={importSubtitles} />
+            <LibraryPanel currentUser={currentUser} panel={leftPanel} selClipKind={selClip?.clip.kind || null} onAddAsset={addClipFromAsset} onAddText={addTextClip} onImportSubtitles={importSubtitles} onApplyFilter={(adj) => { if (selClip) applyFilterPreset(selClip.clip.id, adj); }} />
           </div>
         </div>
 
@@ -794,7 +814,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 
         {/* Bảng thuộc tính phải */}
         <div className="w-[320px] shrink-0 overflow-y-auto border-l border-white/10 bg-[#151a21] p-4">
-          {selClip ? <PropsPanel clip={selClip.clip} playhead={playhead} W={W} H={H} onProps={(p) => updateClipProps(selClip.clip.id, p)} onClip={(p) => updateClip(selClip.clip.id, p)} onKf={(prop, v) => setPropAt(selClip.clip.id, prop, v)} onToggleKey={(prop) => toggleKey(selClip.clip.id, prop)} onGotoKey={(prop, dir) => gotoKey(selClip.clip, prop, dir)} onReset={() => resetTransform(selClip.clip.id)} onDelete={() => deleteClip(selClip.clip.id)} onDuplicate={() => duplicateClip(selClip.clip.id)} onSplitAudio={() => splitAudioFromVideo(selClip.clip)} />
+          {selClip ? <PropsPanel clip={selClip.clip} playhead={playhead} W={W} H={H} onProps={(p) => updateClipProps(selClip.clip.id, p)} onClip={(p) => updateClip(selClip.clip.id, p)} onKf={(prop, v) => setPropAt(selClip.clip.id, prop, v)} onToggleKey={(prop) => toggleKey(selClip.clip.id, prop)} onGotoKey={(prop, dir) => gotoKey(selClip.clip, prop, dir)} onReset={() => resetTransform(selClip.clip.id)} onAdj={(patch) => updateClipAdj(selClip.clip.id, patch)} onApplyFilter={(adj) => applyFilterPreset(selClip.clip.id, adj)} onDelete={() => deleteClip(selClip.clip.id)} onDuplicate={() => duplicateClip(selClip.clip.id)} onSplitAudio={() => splitAudioFromVideo(selClip.clip)} />
             : <div className="mt-10 text-center text-xs text-slate-500">Chọn một lớp trên dòng thời gian để chỉnh thuộc tính.</div>}
         </div>
       </div>
@@ -909,7 +929,7 @@ export default function RemierEditor({ projectId, currentUser, onExit }: Props) 
 }
 
 // ============================ Thư viện trái ============================
-function LibraryPanel({ currentUser, panel, onAddAsset, onAddText, onImportSubtitles }: { currentUser: UserAccount; panel: LeftPanel; onAddAsset: (a: MvAsset) => void; onAddText: () => void; onImportSubtitles: (cues: { start: number; dur: number; text: string }[]) => void; }) {
+function LibraryPanel({ currentUser, panel, selClipKind, onAddAsset, onAddText, onImportSubtitles, onApplyFilter }: { currentUser: UserAccount; panel: LeftPanel; selClipKind: ClipKind | null; onAddAsset: (a: MvAsset) => void; onAddText: () => void; onImportSubtitles: (cues: { start: number; dur: number; text: string }[]) => void; onApplyFilter: (adj: Adj) => void; }) {
   const { addNotification } = useNotifications();
   const [source, setSource] = useState<'mine' | 'shared'>('mine');
   const subRef = useRef<HTMLInputElement>(null);
@@ -973,6 +993,26 @@ function LibraryPanel({ currentUser, panel, onAddAsset, onAddText, onImportSubti
           <input ref={subRef} type="file" accept=".srt,.vtt,text/vtt" className="hidden" onChange={e => onSubFile(e.target.files?.[0] || null)} />
           <p className="text-[11px] text-slate-500">Nhập file phụ đề sẽ tạo một hàng lớp chữ theo đúng mốc thời gian. Chọn lớp để sửa nội dung, phông, màu ở bảng bên phải.</p>
         </div>
+      </div>
+    );
+  }
+  // Tab Bộ lọc: chọn preset áp lên clip đang chọn.
+  if (panel === 'filter') {
+    const canApply = selClipKind === 'video' || selClipKind === 'image';
+    return (
+      <div className="flex w-[280px] shrink-0 flex-col border-r border-white/10 bg-[#151a21]">
+        <div className="px-3 pt-3 pb-1 text-xs font-black uppercase tracking-wide text-slate-400">Bộ lọc màu</div>
+        {!canApply && <p className="px-3 pb-2 text-[11px] text-amber-400/80">Chọn một clip video hoặc ảnh trên dòng thời gian trước.</p>}
+        <div className="grid grid-cols-2 gap-2 overflow-y-auto p-3">
+          {FILTER_PRESETS.map(f => (
+            <button key={f.key} disabled={!canApply} onClick={() => onApplyFilter(f.adj)}
+              className="overflow-hidden rounded-lg border border-white/10 bg-black/30 text-left transition-colors hover:border-brand disabled:opacity-40">
+              <div className="aspect-video bg-gradient-to-br from-slate-400 to-slate-700" style={{ filter: filterStr(f.adj) }} />
+              <p className="truncate p-1.5 text-[10px] font-bold text-slate-300">{f.label}</p>
+            </button>
+          ))}
+        </div>
+        <p className="px-3 pb-3 text-[11px] text-slate-500">Chỉnh sâu hơn (sáng, tương phản, bão hòa, làm mờ) ở bảng thuộc tính bên phải.</p>
       </div>
     );
   }
@@ -1201,7 +1241,7 @@ function Timeline({ tracks, pxPerSec, playhead, duration, selId, selIds, scrollR
 }
 
 // ============================ Bảng thuộc tính ============================
-function PropsPanel({ clip, playhead, W, H, onProps, onClip, onKf, onToggleKey, onGotoKey, onReset, onDelete, onDuplicate, onSplitAudio }: { clip: Clip; playhead: number; W: number; H: number; onProps: (p: Partial<ClipProps>) => void; onClip: (p: Partial<Clip>) => void; onKf: (prop: KfProp, v: number) => void; onToggleKey: (prop: KfProp) => void; onGotoKey: (prop: KfProp, dir: number) => void; onReset: () => void; onDelete: () => void; onDuplicate: () => void; onSplitAudio: () => void; }) {
+function PropsPanel({ clip, playhead, W, H, onProps, onClip, onKf, onToggleKey, onGotoKey, onReset, onAdj, onApplyFilter, onDelete, onDuplicate, onSplitAudio }: { clip: Clip; playhead: number; W: number; H: number; onProps: (p: Partial<ClipProps>) => void; onClip: (p: Partial<Clip>) => void; onKf: (prop: KfProp, v: number) => void; onToggleKey: (prop: KfProp) => void; onGotoKey: (prop: KfProp, dir: number) => void; onReset: () => void; onAdj: (patch: Partial<Adj>) => void; onApplyFilter: (adj: Adj) => void; onDelete: () => void; onDuplicate: () => void; onSplitAudio: () => void; }) {
   const p = clip.props;
   const ep = evalClipProps(clip, playhead); // giá trị hiệu dụng tại đầu phát (đã tính key)
   const local = playhead - clip.start;
@@ -1312,6 +1352,22 @@ function PropsPanel({ clip, playhead, W, H, onProps, onClip, onKf, onToggleKey, 
       {(clip.kind === 'video' || clip.kind === 'audio') && (
         <KfRow label="Âm lượng" prop="volume">{sliderNum(ep.volume, v => onKf('volume', v), 0, 1, 0.01, 2)}</KfRow>
       )}
+
+      {(clip.kind === 'video' || clip.kind === 'image') && (() => {
+        const a = clip.adj || defaultAdj();
+        return (
+          <div className="mb-2 rounded-xl border border-white/5 bg-white/[0.02] p-3">
+            <div className="mb-2 text-[11px] font-black uppercase tracking-wide text-slate-300">Bộ lọc màu</div>
+            <div className="mb-2 flex flex-wrap gap-1">
+              {FILTER_PRESETS.map(f => <button key={f.key} onClick={() => onApplyFilter(f.adj)} className="rounded-md bg-white/5 px-2 py-1 text-[10px] font-bold text-slate-300 hover:bg-white/10">{f.label}</button>)}
+            </div>
+            <Row label={`Sáng ${a.brightness.toFixed(2)}`}>{sliderNum(a.brightness, v => onAdj({ brightness: v }), 0, 2, 0.01, 2)}</Row>
+            <Row label={`Tương phản ${a.contrast.toFixed(2)}`}>{sliderNum(a.contrast, v => onAdj({ contrast: v }), 0, 2, 0.01, 2)}</Row>
+            <Row label={`Bão hòa ${a.saturate.toFixed(2)}`}>{sliderNum(a.saturate, v => onAdj({ saturate: v }), 0, 2, 0.01, 2)}</Row>
+            <Row label={`Làm mờ ${a.blur}px`}>{sliderNum(a.blur, v => onAdj({ blur: v }), 0, 20, 0.5, 1)}</Row>
+          </div>
+        );
+      })()}
 
       {clip.kind === 'video' && (
         <button onClick={onSplitAudio} className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10"><Volume2 className="h-4 w-4" /> Tách âm thanh khỏi video</button>
