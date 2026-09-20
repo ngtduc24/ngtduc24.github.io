@@ -89,6 +89,8 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   // Chỉ vào chế độ sắp xếp (kéo thả + hiện nút ẩn) sau khi nhấn giữ. Bình thường
   // rê chuột vẫn là con trỏ thường và bấm là mở chức năng.
   const [sortMode, setSortMode] = useState(false);
+  const dragIdRef = useRef<string | null>(null);
+  const overIdRef = useRef<string | null>(null);
 
   // Các biểu tượng chức năng ít dùng được người dùng ẩn bớt, lưu theo tài khoản.
   const HIDDEN_KEY = `dashboard_icon_hidden_${currentUser?.id || 'anon'}`;
@@ -108,7 +110,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const longPressed = useRef(false);
   const startPress = (id: string) => {
     if (pressTimer.current) window.clearTimeout(pressTimer.current);
-    pressTimer.current = window.setTimeout(() => { longPressed.current = true; setSortMode(true); setActiveMinusId(id); }, 450);
+    pressTimer.current = window.setTimeout(() => { longPressed.current = true; setSortMode(true); setActiveMinusId(id); beginDrag(id); }, 450);
   };
   const cancelPress = () => { if (pressTimer.current) { window.clearTimeout(pressTimer.current); pressTimer.current = null; } };
   const iconRowRef = useRef<HTMLDivElement>(null);
@@ -224,15 +226,46 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     setIconOrder(ids);
     try { localStorage.setItem(ORDER_KEY, JSON.stringify(ids)); } catch {}
   };
-  const handleDropOn = (targetId: string) => {
-    if (!dragId || dragId === targetId) { setDragId(null); setOverId(null); return; }
+  // Sắp xếp lại theo id nguồn và id đích (dùng cho kéo thả bằng con trỏ).
+  const reorder = (sourceId: string, targetId: string) => {
+    if (!sourceId || sourceId === targetId) return;
     const ids = iconModules.map(m => m.id);
-    const from = ids.indexOf(dragId); const to = ids.indexOf(targetId);
-    if (from === -1 || to === -1) { setDragId(null); setOverId(null); return; }
+    const from = ids.indexOf(sourceId); const to = ids.indexOf(targetId);
+    if (from === -1 || to === -1) return;
     ids.splice(to, 0, ids.splice(from, 1)[0]);
     persistOrder(ids);
-    setDragId(null); setOverId(null);
   };
+
+  // Bắt đầu kéo một biểu tượng và theo dõi con trỏ tới khi thả.
+  const beginDrag = (id: string) => {
+    setDragId(id); dragIdRef.current = id;
+  };
+  useEffect(() => {
+    if (!dragId) return;
+    const onMove = (e: PointerEvent) => {
+      const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+      const iconEl = el?.closest('[data-icon-id]') as HTMLElement | null;
+      const id = iconEl?.getAttribute('data-icon-id') || null;
+      const next = id && id !== dragIdRef.current ? id : null;
+      overIdRef.current = next; setOverId(next);
+    };
+    const onUp = () => {
+      if (dragIdRef.current && overIdRef.current && dragIdRef.current !== overIdRef.current) {
+        reorder(dragIdRef.current, overIdRef.current);
+      }
+      dragIdRef.current = null; overIdRef.current = null;
+      setDragId(null); setOverId(null);
+    };
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
+    return () => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dragId]);
 
   const visibleTasks = tasks.filter(t => !t.isDeleted && isTaskRelevantToUser(t, currentUser));
   const runningTasks = visibleTasks.filter(t => t.status !== 'Completed' && t.status !== 'Cancelled');
@@ -278,7 +311,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
           </button>
         )}
 
-        <div className="relative z-10 px-6 py-12 md:px-10 flex flex-col items-center text-center gap-4">
+        <div className="relative z-10 px-6 pt-6 pb-8 md:px-10 flex flex-col items-center text-center gap-3">
           <div className="w-full max-w-2xl space-y-4">
             <h1 className="text-3xl md:text-4xl font-black tracking-tight font-display text-brand">
               Chào mừng trở lại, {currentUser?.fullName}
@@ -318,21 +351,19 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
           <div className="flex w-max mx-auto gap-4 px-1 pb-1">
             {filteredIcons.map(m => {
               const Icon = m.icon; const c = COLORS[m.color];
-              // Chỉ cho kéo thả khi đang ở chế độ sắp xếp và không tìm kiếm.
-              const draggable = !q && sortMode;
               const isDragging = dragId === m.id;
               const isOver = overId === m.id && dragId !== m.id;
               const showMinus = !q && sortMode;
               return (
                 <div
                   key={m.id}
-                  draggable={draggable}
-                  onDragStart={() => { if (draggable) { cancelPress(); setDragId(m.id); } }}
-                  onDragOver={(e) => { if (draggable && dragId) { e.preventDefault(); setOverId(m.id); } }}
-                  onDragLeave={() => { if (overId === m.id) setOverId(null); }}
-                  onDrop={(e) => { if (draggable) { e.preventDefault(); handleDropOn(m.id); } }}
-                  onDragEnd={() => { setDragId(null); setOverId(null); }}
-                  onPointerDown={() => { if (!q) startPress(m.id); }}
+                  data-icon-id={m.id}
+                  draggable={false}
+                  onPointerDown={(e) => {
+                    if (q) return;
+                    if (sortMode) { e.preventDefault(); beginDrag(m.id); }
+                    else startPress(m.id);
+                  }}
                   onPointerUp={cancelPress}
                   onPointerLeave={cancelPress}
                   onClick={() => {
@@ -341,7 +372,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                     if (!dragId) onSwitchTab(m.id);
                   }}
                   title={m.label}
-                  className={`group relative flex w-[84px] shrink-0 flex-col items-center gap-2 text-center rounded-2xl p-1 transition-all ${sortMode ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 rounded-2xl' : ''}`}
+                  className={`group relative flex w-[84px] shrink-0 flex-col items-center gap-2 text-center rounded-2xl p-1 transition-all select-none touch-none ${sortMode ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 rounded-2xl' : ''}`}
                 >
                   {showMinus && (
                     <button
