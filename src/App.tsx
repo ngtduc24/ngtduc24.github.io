@@ -42,7 +42,7 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { requestFCMToken, getMessagingInstance } from './lib/firebase';
 import { AppSettings, UserAccount } from './types';
 import { onMessage } from 'firebase/messaging';
-import { updateDocumentSEO, getTabFromUrl, getSeoMeta } from './lib/seoConfig';
+import { updateDocumentSEO, getTabFromUrl, getSeoMeta, clearSubRoute } from './lib/seoConfig';
 import { isModuleHidden } from './lib/modules';
 import MaintenanceScreen from './components/MaintenanceScreen';
 import { trackUserPresence, untrackUserPresence } from './lib/presence';
@@ -139,6 +139,8 @@ export default function App() {
       if (url.searchParams.get('tab') !== meta.slug) {
         url.searchParams.set('tab', meta.slug);
         url.searchParams.delete('portfolio');
+        // Đổi sang chức năng khác thì bỏ các tham số màn hình con của chức năng cũ.
+        clearSubRoute(url);
         window.history.pushState({ tab: currentTab }, '', url.toString());
       }
     }
