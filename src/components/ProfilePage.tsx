@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { UserCircle, ShieldCheck, Bell as BellIcon, Camera, Check, X, Loader2, ArrowLeft } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { UserCircle, ShieldCheck, Bell as BellIcon, Camera, Check, X, Loader2, ArrowLeft, Move } from 'lucide-react';
 import { UserAccount } from '../types';
 import { auth } from '../lib/firebase';
 import { updatePassword } from 'firebase/auth';
@@ -19,6 +19,11 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
   const [email, setEmail] = useState(user.email || '');
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl || '');
   const [coverUrl, setCoverUrl] = useState(user.coverImage || '');
+  const [coverPos, setCoverPos] = useState(user.coverImagePosition || '50% 50%');
+  const [avatarPos, setAvatarPos] = useState(user.avatarPosition || '50% 50%');
+  const [adjustCover, setAdjustCover] = useState(false);
+  const [adjustAvatar, setAdjustAvatar] = useState(false);
+  const dragRef = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const [editing, setEditing] = useState<'name' | 'email' | null>(null);
   const [draftName, setDraftName] = useState(fullName);
   const [draftEmail, setDraftEmail] = useState(email);
@@ -35,7 +40,7 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
 
   const persist = async (patch: Partial<UserAccount>) => {
     setSaving(true);
-    const updated: UserAccount = { ...user, fullName, email, avatarUrl, coverImage: coverUrl, ...patch };
+    const updated: UserAccount = { ...user, fullName, email, avatarUrl, coverImage: coverUrl, coverImagePosition: coverPos, avatarPosition: avatarPos, ...patch };
     if (updated.password) delete updated.password;
     try {
       await onSaveProfile(updated);
@@ -78,6 +83,23 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
     const ok = await persist({ coverImage: '' });
     if (ok) flash('Đã xóa ảnh bìa.');
   };
+
+  // Kéo để chọn vùng ảnh vừa khung. clamp giữ trong khoảng 0-100%.
+  const clamp = (n: number) => Math.max(0, Math.min(100, n));
+  const startDrag = (e: React.PointerEvent, pos: string) => {
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    const m = pos.match(/(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%/);
+    dragRef.current = { x: e.clientX, y: e.clientY, px: m ? parseFloat(m[1]) : 50, py: m ? parseFloat(m[2]) : 50 };
+  };
+  const moveDrag = (e: React.PointerEvent, setPos: (s: string) => void) => {
+    if (!dragRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const dx = ((e.clientX - dragRef.current.x) / rect.width) * 100;
+    const dy = ((e.clientY - dragRef.current.y) / rect.height) * 100;
+    setPos(`${clamp(dragRef.current.px - dx)}% ${clamp(dragRef.current.py - dy)}%`);
+  };
+  const endCoverDrag = async () => { if (!dragRef.current) return; dragRef.current = null; await persist({ coverImagePosition: coverPos }); };
+  const endAvatarDrag = async () => { if (!dragRef.current) return; dragRef.current = null; await persist({ avatarPosition: avatarPos }); };
 
   const savePassword = async () => {
     if (password.trim().length < 6) { flash('Mật khẩu mới phải có ít nhất 6 ký tự.', false); return; }
@@ -137,15 +159,25 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
           {/* Ảnh bìa cá nhân với ảnh đại diện đặt chồng lên */}
           <div className="relative overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
             <div
-              className="h-40 w-full sm:h-48"
+              className={`h-40 w-full sm:h-48 ${adjustCover ? 'cursor-move ring-2 ring-brand ring-inset touch-none' : ''}`}
               style={coverUrl
-                ? { backgroundImage: `url(${coverUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                ? { backgroundImage: `url(${coverUrl})`, backgroundSize: 'cover', backgroundPosition: coverPos }
                 : { background: 'linear-gradient(120deg, var(--color-brand-light, #e0e7ff) 0%, #f5f3ff 50%, var(--color-brand-light, #e0f2fe) 100%)' }}
+              onPointerDown={adjustCover && coverUrl ? (e) => startDrag(e, coverPos) : undefined}
+              onPointerMove={adjustCover && coverUrl ? (e) => moveDrag(e, setCoverPos) : undefined}
+              onPointerUp={adjustCover && coverUrl ? endCoverDrag : undefined}
             />
+            {adjustCover && (
+              <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full bg-slate-900/70 px-3 py-1 text-[11px] font-bold text-white">Kéo ảnh để chọn vùng vừa khung</div>
+            )}
             <div className="absolute right-3 top-3 flex items-center gap-2">
               {coverUrl && (
+                <button onClick={() => { if (adjustCover) { setAdjustCover(false); } else setAdjustCover(true); }} className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold shadow-sm backdrop-blur ${adjustCover ? 'bg-brand text-white' : 'bg-white/85 text-slate-700 hover:text-brand'}`}>{adjustCover ? <><Check className="h-3.5 w-3.5" /> Xong</> : <><Move className="h-3.5 w-3.5" /> Chỉnh vị trí</>}</button>
+              )}
+              {coverUrl && !adjustCover && (
                 <button onClick={removeCover} disabled={saving} className="rounded-xl bg-white/85 px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm backdrop-blur hover:text-rose-600 disabled:opacity-50">Xóa ảnh bìa</button>
               )}
+              {!adjustCover && (
               <MediaSourcePicker
                 onSelect={changeCover}
                 accept="image/*"
@@ -156,11 +188,12 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
                 icon={Camera}
                 className="flex items-center gap-2 rounded-xl bg-white/85 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm backdrop-blur hover:text-brand"
               />
+              )}
             </div>
             <div className="flex items-end gap-4 px-6 pb-5">
               <div className="-mt-10 shrink-0">
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt={fullName} className="h-20 w-20 rounded-2xl border-4 border-white object-cover shadow-md" />
+                  <img src={avatarUrl} alt={fullName} style={{ objectPosition: avatarPos }} className="h-20 w-20 rounded-2xl border-4 border-white object-cover shadow-md" />
                 ) : (
                   <div className="grid h-20 w-20 place-items-center rounded-2xl border-4 border-white bg-slate-700 text-2xl font-black text-white shadow-md">{fullName?.slice(0, 1).toUpperCase()}</div>
                 )}
@@ -191,16 +224,28 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
                 <div className="flex flex-wrap items-center justify-between gap-4 p-6">
                   <div className="flex items-center gap-4">
                     {avatarUrl ? (
-                      <img src={avatarUrl} alt={fullName} className="h-16 w-16 rounded-full object-cover" />
+                      <div className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-full ${adjustAvatar ? 'cursor-move ring-2 ring-brand touch-none' : ''}`}
+                        onPointerDown={adjustAvatar ? (e) => startDrag(e, avatarPos) : undefined}
+                        onPointerMove={adjustAvatar ? (e) => moveDrag(e, setAvatarPos) : undefined}
+                        onPointerUp={adjustAvatar ? endAvatarDrag : undefined}>
+                        <img src={avatarUrl} alt={fullName} style={{ objectPosition: avatarPos }} className="h-full w-full object-cover" />
+                      </div>
                     ) : (
                       <div className="grid h-16 w-16 place-items-center rounded-full bg-slate-700 text-xl font-black text-white">{fullName?.slice(0, 1).toUpperCase()}</div>
                     )}
-                    <span className="text-sm font-bold text-slate-800">Ảnh hồ sơ</span>
+                    <div>
+                      <span className="block text-sm font-bold text-slate-800">Ảnh hồ sơ</span>
+                      {adjustAvatar && <span className="block text-[11px] font-semibold text-brand">Kéo trong khung tròn để chọn vùng</span>}
+                    </div>
                   </div>
                   <div className="flex items-center gap-3">
                     {avatarUrl && (
+                      <button onClick={() => setAdjustAvatar(v => !v)} className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold ${adjustAvatar ? 'bg-brand text-white' : 'border border-slate-200 bg-white text-slate-700 hover:border-brand hover:text-brand'}`}>{adjustAvatar ? <><Check className="h-4 w-4" /> Xong</> : <><Move className="h-4 w-4" /> Chỉnh vị trí</>}</button>
+                    )}
+                    {avatarUrl && !adjustAvatar && (
                       <button onClick={removeAvatar} disabled={saving} className="text-sm font-semibold text-slate-500 hover:text-rose-600 disabled:opacity-50">Xóa ảnh</button>
                     )}
+                    {!adjustAvatar && (
                     <MediaSourcePicker
                       onSelect={changeAvatar}
                       accept="image/*"
@@ -211,6 +256,7 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
                       icon={Camera}
                       className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:border-brand hover:text-brand"
                     />
+                    )}
                   </div>
                 </div>
 
