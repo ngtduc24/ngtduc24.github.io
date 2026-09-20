@@ -567,9 +567,13 @@ export default function App() {
     // từ trước thì vẫn vào được, không cần quản trị viên cấp lại quyền.
     if (tabId === 'all_features') return true; // Trang tổng hợp tính năng, tự lọc theo quyền của tài khoản
     if (tabId === 'profile') return true; // Trang cá nhân mở cho mọi tài khoản đã đăng nhập
-    if (tabId === 'utilities' || tabId === 'ar_module' || tabId === 'utility_image_resize' || tabId === 'utility_social_design') {
-      return currentUser.permissions.includes('utilities') || currentUser.permissions.includes('ar_module');
-    }
+    // Tiện ích đã tách thành 3 công cụ độc lập, mỗi công cụ có quyền riêng.
+    // Quyền gộp 'utilities' cũ vẫn cho vào cả 3 để tài khoản cũ không mất quyền.
+    const p = currentUser.permissions;
+    if (tabId === 'utilities') return p.includes('utilities') || p.includes('ar_module') || p.includes('utility_image_resize') || p.includes('utility_social_design');
+    if (tabId === 'ar_module') return p.includes('ar_module') || p.includes('utilities');
+    if (tabId === 'utility_image_resize') return p.includes('utility_image_resize') || p.includes('utilities');
+    if (tabId === 'utility_social_design') return p.includes('utility_social_design') || p.includes('utilities');
     return currentUser.permissions.includes(tabId);
   };
 
