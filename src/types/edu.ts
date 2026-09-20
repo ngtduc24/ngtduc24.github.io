@@ -70,6 +70,7 @@ export interface EduAssignment {
   allowedFileTypes: string[];
   deadline?: string;
   allowLate?: boolean; // cho phép nộp bài sau khi hết hạn
+  allowSupplement?: boolean; // cho phép nộp bổ sung sau khi đã nộp
   createdAt: string;
   updatedAt: string;
   shareLinkId: string;
