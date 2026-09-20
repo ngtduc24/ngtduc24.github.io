@@ -312,7 +312,10 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
               </button>
             </div>
           )}
-          <div ref={iconRowRef} className="flex flex-wrap justify-center gap-4">
+          {/* Luôn giữ 1 hàng phím tắt trên mọi thiết bị. Vừa màn thì canh giữa,
+              hẹp hơn thì cuộn ngang, không xuống nhiều hàng. */}
+          <div ref={iconRowRef} className="overflow-x-auto scrollbar-none">
+          <div className="flex w-max mx-auto gap-4 px-1 pb-1">
             {filteredIcons.map(m => {
               const Icon = m.icon; const c = COLORS[m.color];
               // Chỉ cho kéo thả khi đang ở chế độ sắp xếp và không tìm kiếm.
@@ -360,6 +363,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                 </div>
               );
             })}
+          </div>
           </div>
         </div>
       )}
