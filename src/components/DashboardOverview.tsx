@@ -14,6 +14,7 @@ import {
   saveUser
 } from '../lib/data';
 import { useTasks } from './TaskContext';
+import { isModuleHidden, resolveModuleMeta } from '../lib/modules';
 import { UserAccount, AppSettings, ScientificJournal, AppNotification } from '../types';
 import { isTaskRelevantToUser } from '../lib/tasks';
 import { useNotifications } from './NotificationContext';
@@ -266,7 +267,11 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { id: 'settings', label: 'Cấu hình hệ thống', desc: 'Quản trị hệ thống, phân quyền người dùng', icon: Settings, color: 'rose' },
     { id: 'media_library', label: 'Thư viện', desc: 'Tài liệu, mẫu biểu, dữ liệu tham khảo', icon: Library, color: 'violet' },
   ];
-  const baseIcons = allModules.filter(m => can(m.id));
+  // Lọc theo quyền, bỏ chức năng bị admin ẩn, rồi áp tên, mô tả và ảnh icon do admin tùy chỉnh.
+  const baseIcons = allModules
+    .filter(m => can(m.id))
+    .filter(m => !isModuleHidden(m.id, settings))
+    .map(m => resolveModuleMeta(m, settings));
   // Sắp xếp lại theo thứ tự người dùng đã kéo thả, mục chưa có trong thứ tự thì giữ nguyên phía sau.
   const iconModules = [...baseIcons].sort((a, b) => {
     const ia = iconOrder.indexOf(a.id); const ib = iconOrder.indexOf(b.id);
@@ -444,8 +449,8 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                       <Minus className="h-3 w-3" strokeWidth={3} />
                     </button>
                   )}
-                  <span className={`w-14 h-14 rounded-2xl ${c.bg} ${c.text} grid place-items-center shadow-sm group-hover:scale-105 transition-transform pointer-events-none`}>
-                    <Icon className="w-7 h-7" />
+                  <span className={`w-14 h-14 rounded-2xl ${c.bg} ${c.text} grid place-items-center shadow-sm group-hover:scale-105 transition-transform pointer-events-none overflow-hidden`}>
+                    {(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="w-full h-full object-cover" /> : <Icon className="w-7 h-7" />}
                   </span>
                   <span className="text-[11px] font-bold text-slate-600 leading-tight line-clamp-2 group-hover:text-brand pointer-events-none">{m.label}</span>
                 </div>
@@ -481,7 +486,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                 const Icon = m.icon; const c = COLORS[m.color]; const shown = !hiddenIds.includes(m.id);
                 return (
                   <button key={m.id} onClick={() => toggleShortcut(m.id)} className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition-colors ${shown ? 'border-brand/30 bg-brand-light' : 'border-slate-100 hover:bg-slate-50'}`}>
-                    <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${c.bg} ${c.text}`}><Icon className="h-4.5 w-4.5" /></span>
+                    <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl overflow-hidden ${c.bg} ${c.text}`}>{(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="h-full w-full object-cover" /> : <Icon className="h-4.5 w-4.5" />}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[13px] font-bold text-slate-800">{m.label}</span>
                       <span className="block truncate text-[10px] text-slate-400">{m.desc}</span>
@@ -517,7 +522,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
               const Icon = m.icon; const c = COLORS[m.color];
               return (
                 <button key={m.id} onClick={() => go(m.id)} className="group text-left bg-white rounded-2xl border border-slate-100 shadow-xs hover:shadow-md hover:border-brand/30 transition-all p-4 flex items-start gap-3">
-                  <span className={`w-10 h-10 rounded-xl ${c.bg} ${c.text} grid place-items-center shrink-0`}><Icon className="w-5 h-5" /></span>
+                  <span className={`w-10 h-10 rounded-xl ${c.bg} ${c.text} grid place-items-center shrink-0 overflow-hidden`}>{(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="w-full h-full object-cover" /> : <Icon className="w-5 h-5" />}</span>
                   <div className="min-w-0 flex-1">
                     <h3 className="text-[13px] font-black text-slate-800 leading-tight group-hover:text-brand transition-colors">{m.label}</h3>
                     <p className="text-[10.5px] text-slate-400 font-medium leading-snug mt-1 line-clamp-2">{m.desc}</p>

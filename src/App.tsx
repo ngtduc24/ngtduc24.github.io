@@ -43,6 +43,8 @@ import { requestFCMToken, getMessagingInstance } from './lib/firebase';
 import { AppSettings, UserAccount } from './types';
 import { onMessage } from 'firebase/messaging';
 import { updateDocumentSEO, getTabFromUrl, getSeoMeta } from './lib/seoConfig';
+import { isModuleHidden } from './lib/modules';
+import MaintenanceScreen from './components/MaintenanceScreen';
 import { trackUserPresence, untrackUserPresence } from './lib/presence';
 
 // Khóa lưu khu vực đang mở (portfolio công khai hay trang quản trị) để tải lại trang không bị nhảy ra ngoài.
@@ -558,6 +560,10 @@ export default function App() {
   // Helper check to verify if currentUser has permission to view a tab
   const hasPermission = (tabId: string) => {
     if (!currentUser) return false;
+    // Chức năng bị admin gạt ẩn thì chặn truy cập với mọi tài khoản, kể cả admin và kể cả
+    // khi mở bằng đường dẫn trực tiếp. Riêng trang Cấu hình hệ thống luôn mở để admin còn
+    // vào lại được mà bật hiện chức năng khác.
+    if (tabId !== 'settings' && isModuleHidden(tabId, settings)) return false;
     if (currentUser.role === 'admin') return true;
     if (currentUser.role === 'member') return tabId === 'portfolio_website';
 
@@ -747,6 +753,21 @@ export default function App() {
   };
 
 
+  // Chế độ tạm tắt hệ thống: khi admin bật, mọi khách và người dùng thường đều thấy trang
+  // thông báo tạm đóng hoặc đang nâng cấp. Admin đăng nhập vẫn dùng bình thường để tắt lại.
+  // Vẫn cho vào màn hình đăng nhập để admin có lối vào bật tắt chế độ này.
+  const inMaintenance = settingsLoaded && !!settings.maintenanceMode && currentUser?.role !== 'admin';
+  if (inMaintenance && entryView !== 'login') {
+    return (
+      <MaintenanceScreen
+        variant={settings.maintenanceVariant || 1}
+        date={settings.maintenanceDate}
+        title={settings.webAppTitle}
+        onAdminLogin={() => setEntryView('login')}
+      />
+    );
+  }
+
   // Link AR công khai phải hiển thị ngay, không chờ bước khởi tạo phân quyền,
   // nếu không thì Supabase hoặc Firestore chậm sẽ làm màn hình quét đứng vĩnh viễn.
   const isPublicARRoute = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('ar');
@@ -832,7 +853,11 @@ export default function App() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center p-8">
-          <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          {settings.loadingGif ? (
+            <img src={settings.loadingGif} alt="Đang tải" className="w-20 h-20 object-contain mx-auto mb-3" />
+          ) : (
+            <div className="w-10 h-10 border-3 border-brand border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          )}
           <p className="text-xs font-semibold text-slate-500">Đang đồng bộ quyền truy cập...</p>
         </div>
       </div>
