@@ -1,7 +1,7 @@
 import {
   CalendarDays, BookOpen, LayoutGrid, Image as ImageIcon, BarChart3,
   GraduationCap, Library, CheckCircle2, ClipboardList, Clapperboard,
-  Scan, LayoutTemplate, FolderKanban, Mail, Megaphone, Users, Shield, Settings
+  Scan, LayoutTemplate, FolderKanban, Mail, Megaphone, Users, Shield, Settings, Sparkles
 } from 'lucide-react';
 import { AppSettings, ModuleOverride } from '../types';
 
@@ -33,6 +33,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn', icon: ImageIcon, color: 'blue', group: 'Công cụ thiết kế' },
   { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn', icon: LayoutTemplate, color: 'violet', group: 'Công cụ thiết kế' },
   { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Lưu trữ và quản lý hồ sơ cá nhân, dự án', icon: FolderKanban, color: 'teal', group: 'Giảng dạy và nội dung' },
+  { id: 'assistant', label: 'Trợ lý ảo', desc: 'Hỏi đáp và hướng dẫn dùng hệ thống, tìm bài giảng và câu hỏi', icon: Sparkles, color: 'violet', group: 'Quản lý và hệ thống' },
   { id: 'notifications', label: 'Thông báo', desc: 'Xem thông báo, tài liệu và dữ liệu tham khảo', icon: Mail, color: 'amber', group: 'Quản lý và hệ thống' },
   { id: 'notifications_admin', label: 'Trung tâm thông báo', desc: 'Quản lý và phát thông báo tới người dùng', icon: Megaphone, color: 'orange', group: 'Quản lý và hệ thống' },
   { id: 'media_library', label: 'Thư viện', desc: 'Tài liệu, mẫu biểu, dữ liệu tham khảo', icon: Library, color: 'violet', group: 'Giảng dạy và nội dung' },

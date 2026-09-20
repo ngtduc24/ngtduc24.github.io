@@ -162,6 +162,13 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
     description: 'Ứng dụng dựng phim nhiều lớp chạy trong trình duyệt, quản lý kho tư liệu và xuất video.',
     keywords: 'dựng phim, video editor, remier, biên tập video, dòng thời gian',
   },
+  assistant: {
+    id: 'assistant',
+    slug: 'tro-ly-ao',
+    title: 'Trợ lý ảo | SmartResearch',
+    description: 'Hỏi đáp và hướng dẫn dùng hệ thống, tìm nhanh bài giảng, câu hỏi và chức năng.',
+    keywords: 'trợ lý ảo, hướng dẫn, hỏi đáp, tìm bài giảng',
+  },
   portfolio: {
     id: 'portfolio',
     slug: 'portfolio',

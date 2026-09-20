@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Search, ArrowLeft, ArrowRight, LayoutGrid,
   CalendarDays, BookOpen, LayoutTemplate, Image as ImageIcon, BarChart3,
-  GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone, Shield, CheckCircle2, ClipboardList, Clapperboard
+  GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone, Shield, CheckCircle2, ClipboardList, Clapperboard, Sparkles
 } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
 import { isModuleHidden, resolveModuleMeta } from '../lib/modules';
@@ -57,6 +57,7 @@ const ALL_FEATURES: FeatureItem[] = [
   { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn', icon: LayoutTemplate, color: 'violet', group: 'Công cụ thiết kế' },
 
   { id: 'tasks', label: 'Quản lý công việc', desc: 'Tạo, theo dõi và quản lý công việc cá nhân/nhóm', icon: CalendarDays, color: 'rose', group: 'Quản lý và hệ thống' },
+  { id: 'assistant', label: 'Trợ lý ảo', desc: 'Hỏi đáp và hướng dẫn dùng hệ thống, tìm bài giảng và câu hỏi', icon: Sparkles, color: 'violet', group: 'Quản lý và hệ thống' },
   { id: 'notifications', label: 'Thông báo', desc: 'Xem thông báo, tài liệu và dữ liệu tham khảo', icon: Mail, color: 'amber', group: 'Quản lý và hệ thống' },
   { id: 'notifications_admin', label: 'Trung tâm thông báo', desc: 'Quản lý và phát thông báo tới người dùng', icon: Megaphone, color: 'orange', group: 'Quản lý và hệ thống' },
   { id: 'users', label: 'Quản lý người dùng', desc: 'Tạo, chỉnh sửa tài khoản admin, thành viên, học viên', icon: Users, color: 'indigo', group: 'Quản lý và hệ thống' },
@@ -80,6 +81,7 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
     if (id === 'edu_bank') return perms.includes('edu') && !!currentUser?.canCreateEdu;
     if (id === 'edu_exam') return perms.includes('edu') && !!currentUser?.canGradeEdu;
     if (id === 'edu_grade') return perms.includes('edu') && !!currentUser?.canGradeImportEdu;
+    if (id === 'assistant') return true;
     if (id === 'users' || id === 'permissions') return false;
     return perms.includes(id);
   };

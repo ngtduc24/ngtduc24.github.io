@@ -179,6 +179,8 @@ export interface AppSettings {
   // Phông chữ hệ thống. fontHeading cho tiêu đề, fontBody cho nội dung, mô tả.
   fontHeading?: string;
   fontBody?: string;
+  // Bật tắt nút nổi trợ lý ảo ở góc phải. Mặc định bật. Chỉ admin đổi được.
+  assistantFloating?: boolean;
 }
 
 // Tùy chỉnh hiển thị của một chức năng do admin đặt trong màn hình Cài đặt chức năng.

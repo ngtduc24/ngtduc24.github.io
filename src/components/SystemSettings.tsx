@@ -16,7 +16,7 @@ import {
   X,
   Database
 } from "lucide-react";
-import { EyeOff, Eye, RotateCcw, Wrench, Power, Boxes, ImagePlay } from "lucide-react";
+import { EyeOff, Eye, RotateCcw, Wrench, Power, Boxes, ImagePlay, Sparkles } from "lucide-react";
 import { AppSettings, ModuleOverride } from "../types";
 import { saveDefaultSettingsToSupabase } from "../lib/data";
 import { MODULE_REGISTRY } from "../lib/modules";
@@ -690,6 +690,27 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
                   <button type="button" onClick={() => setFormState(prev => ({ ...prev, loadingGif: '' }))} className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-brand"><RotateCcw className="w-3 h-3" /> Dùng vòng xoay mặc định</button>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Nút nổi trợ lý ảo */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs text-left">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-brand" />
+                  <span>Nút nổi trợ lý ảo</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">Bật tắt nút trợ lý nổi ở góc phải màn hình cho toàn hệ thống. Người dùng thường không đổi được. Chức năng Trợ lý ảo trong danh sách vẫn dùng bình thường dù tắt nút nổi.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormState(prev => ({ ...prev, assistantFloating: prev.assistantFloating === false ? true : false }))}
+                className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${formState.assistantFloating !== false ? 'bg-brand' : 'bg-slate-300'}`}
+                aria-label="Bật tắt nút nổi trợ lý ảo"
+              >
+                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${formState.assistantFloating !== false ? 'left-6' : 'left-1'}`} />
+              </button>
             </div>
           </div>
 
