@@ -25,7 +25,7 @@ interface ModuleDef {
 const MODULES: ModuleDef[] = [
   { id: 'dashboard', label: 'Trang chủ / Tổng quan', desc: 'Truy cập trang tổng quan Dashboard' },
   { id: 'tasks', label: 'Quản lý công việc', flags: [['canCreateTask', 'Tạo'], ['canRunPauseTask', 'Chạy/Dừng'], ['canCompleteTask', 'Hoàn thành'], ['canDeleteTask', 'Xóa'], ['canAssignTask', 'Giao'], ['canReceiveTask', 'Nhận']] },
-  { id: 'scientific_journals', label: 'Điểm báo khoa học', flags: [['canCreateJournal', 'Tạo'], ['canEditJournal', 'Sửa'], ['canDeleteJournal', 'Xóa'], ['canImportJournal', 'Nhập'], ['canManageJournalCats', 'Chuyên mục'], ['canManageJournalSettings', 'Cấu hình']] },
+  { id: 'scientific_journals', label: 'Điểm báo khoa học', desc: 'Danh sách, thêm, nhập, công cụ AI, ngành loại, thùng rác, cài đặt', flags: [['canCreateJournal', 'Thêm thủ công'], ['canEditJournal', 'Sửa'], ['canDeleteJournal', 'Xóa & Thùng rác'], ['canImportJournal', 'Nhập Excel & Công cụ AI'], ['canManageJournalCats', 'Quản lý Ngành/Loại'], ['canManageJournalSettings', 'Cài đặt']] },
   { id: 'calculator', label: 'Tính cỡ mẫu nghiên cứu' },
   { id: 'qualitative_analysis', label: 'Phân tích định tính', flags: [['canCreateQualitative', 'Tạo'], ['canEditQualitative', 'Sửa'], ['canDeleteQualitative', 'Xóa'], ['canImportQualitative', 'Nhập'], ['canExportQualitative', 'Xuất'], ['canManageQualitativeSettings', 'Cấu hình']] },
   { id: 'quantitative_analysis', label: 'Phân tích định lượng', flags: [['canCreateQuantitative', 'Tạo'], ['canEditQuantitative', 'Sửa'], ['canDeleteQuantitative', 'Xóa'], ['canImportQuantitative', 'Nhập'], ['canExportQuantitative', 'Xuất'], ['canManageQuantitativeSettings', 'Cấu hình']] },
@@ -34,7 +34,7 @@ const MODULES: ModuleDef[] = [
   { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn' },
   { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn' },
   { id: 'media_library', label: 'Thư viện tài nguyên' },
-  { id: 'portfolio_cms', label: 'Quản trị Portfolio' },
+  { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Nội dung, dự án, khóa học, nghiên cứu, menu, hồ sơ', flags: [['canPortfolioContent', 'Thêm bài viết'], ['canPortfolioProjects', 'Dự án'], ['canPortfolioCourses', 'Khóa học'], ['canPortfolioResearch', 'Nghiên cứu'], ['canPortfolioNavigation', 'Menu chính'], ['canPortfolioProfile', 'Hồ sơ']] },
   { id: 'notifications', label: 'Trung tâm thông báo', desc: 'Quản lý và phát thông báo tới người dùng' },
   { id: 'settings', label: 'Cấu hình hệ thống', settings: true },
 ];
