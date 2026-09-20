@@ -11,7 +11,7 @@ import { EduSubject, EduClass, EduGradeColumn } from '../../types/edu';
 import {
   QuizQuestion, QuizOption, Quiz, QuizItem, QuestionType,
   getBankQuestions, saveQuestion, deleteQuestion, copyQuestionToMine, toggleQuestionPublic,
-  getQuizzes, getQuizById, saveQuiz, deleteQuiz, publishQuiz, getQuizItems, addQuestionsToQuiz,
+  getQuizzes, getQuizById, getQuestionById, saveQuiz, deleteQuiz, publishQuiz, getQuizItems, addQuestionsToQuiz,
   removeQuizItem, updateQuizItem, reorderQuizItems, getQuizAssignments, assignQuizToClass, unassignQuizFromClass,
   stripHtml,
 } from '../../lib/quiz';
@@ -453,7 +453,12 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
 function QuestionView({ question, subjectName, canEdit, onBack, onEdit, onCopyToMine }: {
   question: QuizQuestion; subjectName: string; canEdit: boolean; onBack: () => void; onEdit: () => void; onCopyToMine?: () => void;
 }) {
-  const opts = [...(question.options || [])].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+  // Luôn nạp lại câu hỏi đầy đủ kèm phương án theo id để chắc chắn xem được đáp án.
+  const [full, setFull] = useState<QuizQuestion>(question);
+  useEffect(() => {
+    getQuestionById(question.id).then(setFull).catch(() => {});
+  }, [question.id]);
+  const opts = [...(full.options || [])].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
   return (
     <div className="space-y-5 animate-fadeIn">
       <div className="flex items-center justify-between gap-3">
@@ -466,15 +471,19 @@ function QuestionView({ question, subjectName, canEdit, onBack, onEdit, onCopyTo
 
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{question.question_type === 'single' ? 'Chọn 1 đáp án' : 'Chọn nhiều đáp án'}</span>
+          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{full.question_type === 'single' ? 'Chọn 1 đáp án' : 'Chọn nhiều đáp án'}</span>
           {subjectName && <span className="rounded-md bg-brand-light px-2 py-0.5 text-[10px] font-bold text-brand">{subjectName}</span>}
-          {question.is_public && <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600"><Globe className="h-3 w-3" /> Công khai</span>}
+          {full.is_public && <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600"><Globe className="h-3 w-3" /> Công khai</span>}
         </div>
 
-        <div className="prose prose-sm max-w-none text-slate-800" dangerouslySetInnerHTML={{ __html: question.content || '<p class="text-slate-400">(câu hỏi trống)</p>' }} />
+        <div className="prose prose-sm max-w-none text-slate-800" dangerouslySetInnerHTML={{ __html: full.content || '<p class="text-slate-400">(câu hỏi trống)</p>' }} />
 
+        {/* Danh sách phương án, đáp án đúng được tô đậm màu thương hiệu kèm dấu tích. */}
         <div className="mt-4 space-y-2">
-          {opts.map((o, oi) => (
+          <p className="text-[10px] font-black uppercase text-slate-400">Đáp án</p>
+          {opts.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-slate-200 px-3 py-3 text-[12px] text-slate-400">Câu hỏi này chưa có phương án trả lời. Bấm Sửa để bổ sung.</p>
+          ) : opts.map((o, oi) => (
             <div key={oi} className={`flex items-start gap-2 rounded-xl border px-3 py-2 text-[13px] ${o.is_correct ? 'border-brand/40 bg-brand-light font-semibold text-brand' : 'border-slate-100 text-slate-700'}`}>
               <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border text-[11px] font-bold ${o.is_correct ? 'border-brand bg-brand text-white' : 'border-slate-300 text-slate-400'}`}>{String.fromCharCode(65 + oi)}</span>
               <span className="min-w-0 flex-1" dangerouslySetInnerHTML={{ __html: o.content || '' }} />
@@ -483,14 +492,14 @@ function QuestionView({ question, subjectName, canEdit, onBack, onEdit, onCopyTo
           ))}
         </div>
 
-        {question.explanation && (
+        {full.explanation && (
           <div className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-[12px] text-amber-800">
             <span className="font-bold">Giải thích: </span>
-            <span dangerouslySetInnerHTML={{ __html: question.explanation }} />
+            <span dangerouslySetInnerHTML={{ __html: full.explanation }} />
           </div>
         )}
 
-        {(question.tags || []).length > 0 && <div className="mt-4 flex flex-wrap gap-1">{question.tags.map(t => <span key={t} className="rounded bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-400">#{t}</span>)}</div>}
+        {(full.tags || []).length > 0 && <div className="mt-4 flex flex-wrap gap-1">{full.tags.map(t => <span key={t} className="rounded bg-slate-50 px-2 py-0.5 text-[10px] font-bold text-slate-400">#{t}</span>)}</div>}
       </div>
     </div>
   );
