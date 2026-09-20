@@ -246,6 +246,8 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const q = search.trim().toLowerCase();
   const visibleIcons = iconModules.filter(m => !hiddenIds.includes(m.id));
   const filteredIcons = q ? iconModules.filter(m => m.label.toLowerCase().includes(q)) : visibleIcons;
+  // Hàng phím tắt đầu trang chỉ hiện tối đa 12 nút. Khi tìm kiếm thì hiện đủ kết quả khớp.
+  const rowIcons = q ? filteredIcons : filteredIcons.slice(0, 12);
   // Trang chủ chỉ hiển thị tối đa 10 thẻ nổi bật, phần còn lại xem ở trang Tất cả tính năng.
   const filteredCards = q ? cardModules.filter(m => m.label.toLowerCase().includes(q)) : cardModules.slice(0, 10);
 
@@ -363,20 +365,13 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
       </div>
 
       {/* ===== Hàng biểu tượng chức năng (kéo thả để sắp xếp, ẩn bớt mục ít dùng) ===== */}
-      {(filteredIcons.length > 0 || hiddenIds.length > 0) && (
+      {rowIcons.length > 0 && (
         <div>
-          {!q && hiddenIds.length > 0 && (
-            <div className="mb-3 flex justify-end">
-              <button onClick={restoreHidden} className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 hover:bg-brand-light text-slate-600 hover:text-brand px-3 py-1 text-[11px] font-bold transition-colors">
-                <Eye className="w-3.5 h-3.5" /> Hiện lại {hiddenIds.length} mục đã ẩn
-              </button>
-            </div>
-          )}
           {/* Luôn giữ 1 hàng phím tắt trên mọi thiết bị. Vừa màn thì canh giữa,
               hẹp hơn thì cuộn ngang, không xuống nhiều hàng. */}
           <div ref={iconRowRef} className="overflow-x-auto scrollbar-none">
           <div className="flex w-max mx-auto gap-4 px-1 pb-1">
-            {filteredIcons.map(m => {
+            {rowIcons.map(m => {
               const Icon = m.icon; const c = COLORS[m.color];
               const isDragging = dragId === m.id;
               const isOver = overId === m.id && dragId !== m.id;
