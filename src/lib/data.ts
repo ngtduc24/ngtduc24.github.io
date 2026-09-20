@@ -283,6 +283,8 @@ export async function saveUser(user: UserAccount) {
       can_portfolio_research: user.canPortfolioResearch,
       can_portfolio_navigation: user.canPortfolioNavigation,
       can_portfolio_profile: user.canPortfolioProfile,
+      can_elearning_public: user.canElearningPublic,
+      can_elearning_assign: user.canElearningAssign,
       created_at: user.createdAt || new Date().toISOString(),
     };
     const removeUndefined = (obj: any): any => {
@@ -363,6 +365,8 @@ export function mapUserFromDB(u: any): UserAccount {
     canPortfolioResearch: u.can_portfolio_research,
     canPortfolioNavigation: u.can_portfolio_navigation,
     canPortfolioProfile: u.can_portfolio_profile,
+    canElearningPublic: u.can_elearning_public,
+    canElearningAssign: u.can_elearning_assign,
     createdAt: u.created_at,
   } as UserAccount;
 }
