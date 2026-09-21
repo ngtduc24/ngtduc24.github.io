@@ -4,7 +4,7 @@ import {
   Calculator, Settings, Users, BookOpen, Search, X, Database, Sparkles,
   CalendarDays, BarChart3, GraduationCap, Wrench, FolderKanban, Mail,
   Library, Image as ImageIcon, LayoutGrid, ArrowRight, Bell, ChevronDown,
-  Home, FileText, CheckCircle2, ClipboardList, Scan, LayoutTemplate, Megaphone, Minus, Eye, Shield, Plus, Clapperboard
+  Home, FileText, CheckCircle2, ClipboardList, Scan, LayoutTemplate, Megaphone, Minus, Eye, Shield, Plus, Clapperboard, FileArchive
 } from 'lucide-react';
 import {
   getStatsFromSupabase,
@@ -235,6 +235,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     if (id === 'utilities') return perms.includes('utilities') || perms.includes('ar_module') || perms.includes('utility_image_resize') || perms.includes('utility_social_design');
     if (id === 'ar_module') return perms.includes('ar_module') || perms.includes('utilities');
     if (id === 'utility_image_resize') return perms.includes('utility_image_resize') || perms.includes('utilities');
+    if (id === 'utility_file_compress') return perms.includes('utility_file_compress') || perms.includes('utilities');
     if (id === 'utility_social_design') return perms.includes('utility_social_design') || perms.includes('utilities');
     // Phím tắt tới chức năng con trong Quản lý Giáo dục.
     if (id === 'edu_bank') return perms.includes('edu') && !!currentUser?.canCreateEdu;
@@ -261,6 +262,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp trên trình duyệt', icon: Clapperboard, color: 'rose' },
     { id: 'ar_module', label: 'Tạo AR', desc: 'Tạo điểm ảnh AR kèm mã QR để quét bằng điện thoại', icon: Scan, color: 'red' },
     { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn', icon: ImageIcon, color: 'blue' },
+    { id: 'utility_file_compress', label: 'Giảm dung lượng file', desc: 'Nén PDF, JPG, PNG mà vẫn giữ chất lượng tốt', icon: FileArchive, color: 'emerald' },
     { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn', icon: LayoutTemplate, color: 'violet' },
     { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Lưu trữ và quản lý hồ sơ cá nhân, dự án', icon: FolderKanban, color: 'teal' },
     { id: 'assistant', label: 'Trợ lý giáo dục', desc: 'Hỏi đáp kiến thức bài học từ nội dung công khai', icon: Sparkles, color: 'violet' },

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Search, ArrowLeft, ArrowRight, LayoutGrid,
   CalendarDays, BookOpen, LayoutTemplate, Image as ImageIcon, BarChart3,
-  GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone, Shield, CheckCircle2, ClipboardList, Clapperboard, Sparkles
+  GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone, Shield, CheckCircle2, ClipboardList, Clapperboard, Sparkles, FileArchive
 } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
 import { isModuleHidden, resolveModuleMeta } from '../lib/modules';
@@ -55,6 +55,7 @@ const ALL_FEATURES: FeatureItem[] = [
 
   { id: 'ar_module', label: 'Tạo AR', desc: 'Tạo điểm ảnh AR kèm mã QR để quét bằng điện thoại', icon: Scan, color: 'red', group: 'Công cụ thiết kế' },
   { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn', icon: ImageIcon, color: 'blue', group: 'Công cụ thiết kế' },
+  { id: 'utility_file_compress', label: 'Giảm dung lượng file', desc: 'Nén PDF, JPG, PNG ngay trên trình duyệt mà vẫn giữ chất lượng tốt', icon: FileArchive, color: 'emerald', group: 'Công cụ thiết kế' },
   { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn', icon: LayoutTemplate, color: 'violet', group: 'Công cụ thiết kế' },
 
   { id: 'tasks', label: 'Quản lý công việc', desc: 'Tạo, theo dõi và quản lý công việc cá nhân/nhóm', icon: CalendarDays, color: 'rose', group: 'Quản lý và hệ thống' },
@@ -78,6 +79,7 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
     if (id === 'notifications_admin') return perms.includes('notifications');
     if (id === 'ar_module') return perms.includes('ar_module') || perms.includes('utilities');
     if (id === 'utility_image_resize') return perms.includes('utility_image_resize') || perms.includes('utilities');
+    if (id === 'utility_file_compress') return perms.includes('utility_file_compress') || perms.includes('utilities');
     if (id === 'utility_social_design') return perms.includes('utility_social_design') || perms.includes('utilities');
     if (id === 'edu_bank') return perms.includes('edu') && !!currentUser?.canCreateEdu;
     if (id === 'edu_exam') return perms.includes('edu') && !!currentUser?.canGradeEdu;

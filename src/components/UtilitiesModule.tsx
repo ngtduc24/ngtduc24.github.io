@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Image as ImageIcon, Scan, Wrench, LayoutTemplate } from 'lucide-react';
+import { Image as ImageIcon, Scan, Wrench, LayoutTemplate, FileArchive } from 'lucide-react';
 import ARModule from './ARModule';
 import SocialDesigner from './SocialDesigner/SocialDesigner';
 import ImageResizer from './utilities/ImageResizer';
+import FileCompressor from './utilities/FileCompressor';
 import { UserAccount } from '../types';
 
 /**
@@ -12,7 +13,7 @@ import { UserAccount } from '../types';
  * công cụ mới thì thanh điều hướng không bị dài ra thêm.
  */
 
-export type UtilityToolId = 'ar' | 'image_resize' | 'social_design';
+export type UtilityToolId = 'ar' | 'image_resize' | 'social_design' | 'file_compress';
 
 interface UtilityTool {
   id: UtilityToolId;
@@ -39,6 +40,12 @@ export const UTILITY_TOOLS: UtilityTool[] = [
     label: 'Thiết kế ảnh',
     description: 'Tạo nhanh ảnh mạng xã hội cho bài báo, tin tức từ các khung mẫu có sẵn với tính năng tự động canh chỉnh.',
     icon: LayoutTemplate
+  },
+  {
+    id: 'file_compress',
+    label: 'Giảm dung lượng file',
+    description: 'Nén file PDF, JPG, PNG ngay trên trình duyệt để giảm dung lượng mà vẫn giữ chất lượng ở mức tốt nhất.',
+    icon: FileArchive
   }
 ];
 
@@ -57,7 +64,9 @@ export default function UtilitiesModule({ currentUser, initialTool = 'ar', stand
     ? <ARModule currentUser={currentUser} />
     : activeTool === 'image_resize'
       ? <ImageResizer />
-      : <SocialDesigner currentUser={currentUser} />;
+      : activeTool === 'file_compress'
+        ? <FileCompressor />
+        : <SocialDesigner currentUser={currentUser} />;
 
   // Chế độ độc lập: mỗi công cụ là một chức năng riêng, tiêu đề bám theo giao diện chung của hệ thống.
   if (standalone) {
