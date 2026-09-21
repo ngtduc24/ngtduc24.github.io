@@ -694,10 +694,11 @@ export default function App() {
         );
       case 'settings':
         return (
-          <SystemSettings 
-            settings={settings} 
-            onRefreshSettings={loadConfig} 
-            isAdmin={currentUser.role === 'admin' || currentUser.permissions.includes('settings')} 
+          <SystemSettings
+            settings={settings}
+            onRefreshSettings={loadConfig}
+            isAdmin={currentUser.role === 'admin' || currentUser.permissions.includes('settings')}
+            currentUser={currentUser}
           />
         );
       case 'users':
@@ -926,9 +927,6 @@ export default function App() {
       allowed.push({ id: 'notifications_admin', label: 'Chức năng thông báo', icon: Bell });
     }
 
-    if (currentUser.role === 'admin' || currentUser.permissions.includes('media_library')) {
-      allowed.push({ id: 'media_library', label: 'Thư viện', icon: Image });
-    }
 
     if (currentUser.role === 'admin' || currentUser.permissions.includes('settings')) {
       allowed.push({ id: 'settings', label: 'Cấu hình hệ thống', icon: Settings });

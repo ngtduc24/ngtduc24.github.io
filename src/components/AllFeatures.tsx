@@ -51,7 +51,6 @@ const ALL_FEATURES: FeatureItem[] = [
   { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ, chia sẻ và giao bài giảng theo môn', icon: BookOpen, color: 'orange', group: 'Giảng dạy và nội dung' },
   { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp ngay trên trình duyệt', icon: Clapperboard, color: 'rose', group: 'Công cụ thiết kế' },
   { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Lưu trữ và quản lý hồ sơ cá nhân, dự án', icon: FolderKanban, color: 'teal', group: 'Giảng dạy và nội dung' },
-  { id: 'media_library', label: 'Thư viện', desc: 'Tài liệu, mẫu biểu, dữ liệu tham khảo', icon: Library, color: 'violet', group: 'Giảng dạy và nội dung' },
 
   { id: 'ar_module', label: 'Tạo AR', desc: 'Tạo điểm ảnh AR kèm mã QR để quét bằng điện thoại', icon: Scan, color: 'red', group: 'Công cụ thiết kế' },
   { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn', icon: ImageIcon, color: 'blue', group: 'Công cụ thiết kế' },
