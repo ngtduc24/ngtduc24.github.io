@@ -34,6 +34,9 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
   const [grades, setGrades] = useState<any[]>([]);
   const [extension, setExtension] = useState<EduExtensionRequest | null>(null);
   const [requesting, setRequesting] = useState(false);
+  // Đồng hồ đếm ngược thời gian còn lại tới hạn nộp, cập nhật mỗi 30 giây.
+  const [nowTs, setNowTs] = useState(Date.now());
+  useEffect(() => { const t = setInterval(() => setNowTs(Date.now()), 30000); return () => clearInterval(t); }, []);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -455,11 +458,32 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
             {/* Lời chào ngắn */}
             <div className="px-1">
               <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Chào mừng, {identifiedUser.fullName}</h1>
-              <p className="text-[13px] text-slate-500 mt-0.5">
-                Mã sinh viên {identifiedUser.mssv}
-                {deadlineDate && ` • Hạn nộp ${deadlineDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}`}
-              </p>
+              <p className="text-[13px] text-slate-500 mt-0.5">Mã sinh viên {identifiedUser.mssv}</p>
             </div>
+
+            {/* Thời gian hết hạn nộp bài, có đếm ngược thời gian còn lại */}
+            {deadlineDate && (() => {
+              const extActive = !!(extApproved && extension?.extendUntil);
+              const effMs = extActive ? new Date(extension!.extendUntil as string).getTime() : deadlineDate.getTime();
+              const diff = effMs - nowTs;
+              const over = diff <= 0;
+              const days = Math.floor(diff / 86400000);
+              const hours = Math.floor((diff % 86400000) / 3600000);
+              const mins = Math.floor((diff % 3600000) / 60000);
+              const remain = days > 0 ? `${days} ngày ${hours} giờ` : hours > 0 ? `${hours} giờ ${mins} phút` : `${Math.max(mins, 0)} phút`;
+              const urgent = !over && diff < 24 * 3600 * 1000;
+              const tone = over ? 'bg-rose-50 border-rose-100 text-rose-600' : urgent ? 'bg-amber-50 border-amber-100 text-amber-700' : 'bg-brand-light border-brand/10 text-brand';
+              const effDate = new Date(effMs).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+              return (
+                <div className={`flex items-center gap-3 rounded-2xl border p-4 ${tone}`}>
+                  <Clock className="w-5 h-5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-bold">{over ? 'Đã hết thời gian nộp bài' : `Còn ${remain} là hết hạn nộp bài`}</p>
+                    <p className="text-[11px] font-medium opacity-90">{extActive ? 'Hạn được gia hạn tới' : 'Hạn nộp'} {effDate}</p>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Kết quả học tập */}
             {grades.length > 0 && (

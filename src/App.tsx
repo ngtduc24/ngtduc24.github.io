@@ -583,7 +583,7 @@ export default function App() {
     if (currentUser.role === 'member') return tabId === 'portfolio_website';
 
     if (tabId === 'notifications') return true; // All registered users have notifications inbox access
-    if (tabId === 'stats') return true; // Trang số liệu mở cho mọi tài khoản đã đăng nhập
+    if (tabId === 'stats') return false; // Trang số liệu chỉ dành cho quản trị viên (admin đã return true ở trên)
     if (tabId === 'portfolio_website') return true;
     if (tabId === 'users') return false; // Only admin can ever see users panel
     if (tabId === 'permissions') return false; // Only admin can ever see permission panel
