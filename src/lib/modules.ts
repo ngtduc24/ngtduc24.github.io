@@ -1,7 +1,7 @@
 import {
   CalendarDays, BookOpen, LayoutGrid, Image as ImageIcon, BarChart3,
   GraduationCap, Library, CheckCircle2, ClipboardList, Clapperboard,
-  Scan, LayoutTemplate, FolderKanban, Mail, Megaphone, Users, Shield, Settings, Sparkles
+  Scan, LayoutTemplate, FolderKanban, Mail, Megaphone, Users, Shield, Settings, Sparkles, FileArchive
 } from 'lucide-react';
 import { AppSettings, ModuleOverride } from '../types';
 
@@ -32,6 +32,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp trên trình duyệt', icon: Clapperboard, color: 'rose', group: 'Công cụ thiết kế' },
   { id: 'ar_module', label: 'Tạo AR', desc: 'Tạo điểm ảnh AR kèm mã QR để quét bằng điện thoại', icon: Scan, color: 'red', group: 'Công cụ thiết kế' },
   { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn', icon: ImageIcon, color: 'blue', group: 'Công cụ thiết kế' },
+  { id: 'utility_file_compress', label: 'Giảm dung lượng file', desc: 'Nén PDF, JPG, PNG ngay trên trình duyệt mà vẫn giữ chất lượng tốt', icon: FileArchive, color: 'emerald', group: 'Công cụ thiết kế' },
   { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn', icon: LayoutTemplate, color: 'violet', group: 'Công cụ thiết kế' },
   { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Lưu trữ và quản lý hồ sơ cá nhân, dự án', icon: FolderKanban, color: 'teal', group: 'Giảng dạy và nội dung' },
   { id: 'assistant', label: 'Trợ lý giáo dục', desc: 'Hỏi đáp kiến thức bài học từ bài giảng, câu hỏi và bài tập được chia sẻ công khai', icon: Sparkles, color: 'violet', group: 'Quản lý và hệ thống' },

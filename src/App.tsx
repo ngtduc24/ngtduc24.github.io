@@ -743,6 +743,8 @@ export default function App() {
         return <UtilitiesModule currentUser={currentUser} initialTool="ar" standalone />;
       case 'utility_image_resize':
         return <UtilitiesModule currentUser={currentUser} initialTool="image_resize" standalone />;
+      case 'utility_file_compress':
+        return <UtilitiesModule currentUser={currentUser} initialTool="file_compress" standalone />;
       case 'utility_social_design':
         return <UtilitiesModule currentUser={currentUser} initialTool="social_design" standalone />;
       case 'public_search':

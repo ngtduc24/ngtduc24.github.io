@@ -34,6 +34,7 @@ const MODULES: ModuleDef[] = [
   { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp trên trình duyệt', flags: [['canRemierShared', 'Quản lý thư viện chung']] },
   { id: 'ar_module', label: 'Tạo AR', desc: 'Tạo điểm ảnh AR kèm mã QR để quét bằng điện thoại' },
   { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn' },
+  { id: 'utility_file_compress', label: 'Giảm dung lượng file', desc: 'Nén PDF, JPG, PNG ngay trên trình duyệt mà vẫn giữ chất lượng tốt' },
   { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn' },
   { id: 'media_library', label: 'Thư viện tài nguyên' },
   { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Nội dung, dự án, khóa học, nghiên cứu, menu, hồ sơ', flags: [['canPortfolioContent', 'Thêm bài viết'], ['canPortfolioProjects', 'Dự án'], ['canPortfolioCourses', 'Khóa học'], ['canPortfolioResearch', 'Nghiên cứu'], ['canPortfolioNavigation', 'Menu chính'], ['canPortfolioProfile', 'Hồ sơ']] },
