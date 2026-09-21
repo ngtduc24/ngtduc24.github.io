@@ -340,6 +340,58 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dragId]);
 
+  // Kéo sắp xếp thẻ Tính năng nổi bật. Nhấn giữ để vào chế độ sắp xếp rồi kéo thả, dùng chung
+  // thứ tự với hàng phím tắt ở trên nên sắp xếp một nơi thì đồng bộ cả hai.
+  const [cardSortMode, setCardSortMode] = useState(false);
+  const [cardDragId, setCardDragId] = useState<string | null>(null);
+  const [cardOverId, setCardOverId] = useState<string | null>(null);
+  const cardDragRef = useRef<string | null>(null);
+  const cardOverRef = useRef<string | null>(null);
+  const cardsRef = useRef<HTMLDivElement>(null);
+  const cardPressTimer = useRef<number | null>(null);
+  const cardLongPressed = useRef(false);
+  const beginCardDrag = (id: string) => { setCardDragId(id); cardDragRef.current = id; };
+  const startCardPress = (id: string) => {
+    if (cardPressTimer.current) window.clearTimeout(cardPressTimer.current);
+    cardPressTimer.current = window.setTimeout(() => { cardLongPressed.current = true; setCardSortMode(true); beginCardDrag(id); }, 400);
+  };
+  const cancelCardPress = () => { if (cardPressTimer.current) { window.clearTimeout(cardPressTimer.current); cardPressTimer.current = null; } };
+
+  useEffect(() => {
+    if (!cardDragId) return;
+    const onMove = (e: PointerEvent) => {
+      const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+      const cardEl = el?.closest('[data-card-id]') as HTMLElement | null;
+      const id = cardEl?.getAttribute('data-card-id') || null;
+      const next = id && id !== cardDragRef.current ? id : null;
+      cardOverRef.current = next; setCardOverId(next);
+    };
+    const onUp = () => {
+      if (cardDragRef.current && cardOverRef.current && cardDragRef.current !== cardOverRef.current) {
+        reorder(cardDragRef.current, cardOverRef.current);
+      }
+      cardDragRef.current = null; cardOverRef.current = null;
+      setCardDragId(null); setCardOverId(null);
+    };
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
+    return () => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardDragId]);
+
+  // Bấm ra ngoài khu vực thẻ thì thoát chế độ sắp xếp thẻ.
+  useEffect(() => {
+    if (!cardSortMode) return;
+    const onDown = (e: PointerEvent) => { if (cardsRef.current && !cardsRef.current.contains(e.target as Node)) setCardSortMode(false); };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [cardSortMode]);
+
   const visibleTasks = tasks.filter(t => !t.isDeleted && isTaskRelevantToUser(t, currentUser));
   const runningTasks = visibleTasks.filter(t => t.status !== 'Completed' && t.status !== 'Cancelled');
   const completedCount = (isUserAdmin ? tasks.filter(t => !t.isDeleted) : visibleTasks).filter(t => t.status === 'Completed').length;
@@ -519,19 +571,33 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                 <p className="text-[11px] text-slate-400 font-medium">Truy cập nhanh các chức năng thường dùng</p>
               </div>
             </div>
-            <button onClick={() => onSwitchTab('all_features')} className="text-xs font-bold text-brand hover:underline">Xem tất cả</button>
+            <div className="flex items-center gap-3">
+              {cardSortMode && <button onClick={() => setCardSortMode(false)} className="rounded-lg bg-brand px-3 py-1.5 text-[11px] font-bold text-white hover:bg-brand-hover">Xong</button>}
+              <button onClick={() => onSwitchTab('all_features')} className="text-xs font-bold text-brand hover:underline">Xem tất cả</button>
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          {cardSortMode && <p className="text-[11px] font-semibold text-brand">Đang sắp xếp. Kéo thả thẻ để đổi vị trí, bấm Xong khi hoàn tất.</p>}
+          <div ref={cardsRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {filteredCards.map(m => {
               const Icon = m.icon; const c = COLORS[m.color];
+              const isDragging = cardDragId === m.id;
+              const isOver = cardOverId === m.id && cardDragId !== m.id;
               return (
-                <button key={m.id} onClick={() => go(m.id)} className="group text-left bg-white rounded-2xl border border-slate-100 shadow-xs hover:shadow-md hover:border-brand/30 transition-all p-4 flex items-start gap-3">
-                  <span className={`w-10 h-10 rounded-xl ${c.bg} ${c.text} grid place-items-center shrink-0 overflow-hidden`}>{(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="w-full h-full object-cover" /> : <Icon className="w-5 h-5" />}</span>
-                  <div className="min-w-0 flex-1">
+                <button
+                  key={m.id}
+                  data-card-id={m.id}
+                  onPointerDown={(e) => { if (q) return; if (cardSortMode) { e.preventDefault(); beginCardDrag(m.id); } else startCardPress(m.id); }}
+                  onPointerUp={cancelCardPress}
+                  onPointerLeave={cancelCardPress}
+                  onClick={() => { if (cardLongPressed.current) { cardLongPressed.current = false; return; } if (cardSortMode || cardDragId) return; go(m.id); }}
+                  className={`group text-left bg-white rounded-2xl border shadow-xs transition-all p-4 flex items-start gap-3 select-none ${cardSortMode ? 'cursor-grab active:cursor-grabbing touch-none' : 'cursor-pointer hover:shadow-md hover:border-brand/30'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 border-brand/30' : 'border-slate-100'}`}
+                >
+                  <span className={`w-10 h-10 rounded-xl ${c.bg} ${c.text} grid place-items-center shrink-0 overflow-hidden pointer-events-none`}>{(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="w-full h-full object-cover" /> : <Icon className="w-5 h-5" />}</span>
+                  <div className="min-w-0 flex-1 pointer-events-none">
                     <h3 className="text-[13px] font-black text-slate-800 leading-tight group-hover:text-brand transition-colors">{m.label}</h3>
                     <p className="text-[10.5px] text-slate-400 font-medium leading-snug mt-1 line-clamp-2">{m.desc}</p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-brand group-hover:translate-x-0.5 transition-all shrink-0" />
+                  <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-brand group-hover:translate-x-0.5 transition-all shrink-0 pointer-events-none" />
                 </button>
               );
             })}
