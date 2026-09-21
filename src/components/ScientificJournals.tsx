@@ -1563,29 +1563,23 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
-      {/* Top Banner Dashboard */}
+      {/* Tiêu đề chức năng, giao diện trắng gọn đồng bộ với E-Learning */}
       {isBannerVisible && (
-        <div className="bg-brand rounded-3xl p-8 text-white relative overflow-hidden shadow-lg animate-fadeIn" style={{ ...(settings?.journalBannerImage ? { backgroundImage: `url(${settings.journalBannerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}) }}>
-        {settings?.journalBannerImage && <div className="absolute inset-0 bg-black/40" />}
-          {isAdmin && (
-            <button onClick={() => setShowBannerSettings(true)} className="absolute top-4 right-4 z-20 p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-colors cursor-pointer">
-              <Settings className="w-5 h-5" />
-            </button>
-          )}
-          {/* Banner Settings Removed */}
-
-          <div className="flex flex-col items-start gap-4">
-            {/* Badge */}
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-[10px] font-bold tracking-wider uppercase backdrop-blur-xs relative z-10">
-              <span>{settings?.journalBannerLabel || "ĐIỂM BÁO KHOA HỌC"}</span>
+        <div className="flex flex-col gap-3 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+              <BookOpen className="h-6 w-6" />
             </div>
-
-            {/* Title & Description */}
-            <div className="space-y-1 relative z-10">
-              <h1 className="text-3xl font-extrabold tracking-tight">{settings?.journalBannerTitle || "Quản lý điểm báo khoa học"}</h1>
-              <p className="text-xs text-white/90 opacity-90 max-w-lg">{settings?.journalBannerDescription || "Quản lý, tra cứu và cập nhật các tạp chí khoa học được tính điểm."}</p>
+            <div>
+              <h1 className="font-display text-xl font-bold text-slate-900">{settings?.journalBannerTitle || "Quản lý điểm báo khoa học"}</h1>
+              <p className="mt-0.5 text-xs font-medium text-slate-500">{settings?.journalBannerDescription || "Quản lý, tra cứu và cập nhật các tạp chí khoa học được tính điểm."}</p>
             </div>
           </div>
+          {isAdmin && (
+            <button onClick={() => setShowBannerSettings(true)} title="Cài đặt tiêu đề" className="self-start rounded-xl border border-slate-200 bg-white p-2 text-slate-400 transition hover:border-brand/30 hover:text-brand sm:self-auto">
+              <Settings className="w-4 h-4" />
+            </button>
+          )}
         </div>
       )}
 
@@ -1654,33 +1648,6 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
           <div className="text-xs font-semibold">{alertMessage.text}</div>
         </div>
       )}
-
-      {/* Quick Statistics Panels */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-xs flex items-center justify-between">
-          <div className="space-y-1 text-left">
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Tổng số tạp chí</span>
-            <span className="text-2.5xl font-extrabold text-slate-900 leading-none block">{approvedJournals.length}</span>
-            <span className="text-[11px] text-slate-500 font-medium block">Tạp chí khoa học đã được duyệt</span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-brand/10 text-brand flex items-center justify-center">
-            <BookOpen className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-xs flex items-center justify-between">
-          <div className="space-y-1 text-left">
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Ngành/Lĩnh vực</span>
-            <span className="text-2.5xl font-extrabold text-slate-900 leading-none block">
-              {fieldsList.length}
-            </span>
-            <span className="text-[11px] text-slate-500 font-medium block">Số lượng chuyên ngành đa dạng</span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-brand-light text-brand flex items-center justify-center">
-            <Microscope className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
 
       {/* Sub-Tabs Navigation */}
       <div ref={tabContainerRef} className="flex border-b border-slate-200 overflow-x-auto scrollbar-none gap-2 bg-slate-50 p-1.5 rounded-2xl">
