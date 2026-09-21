@@ -227,17 +227,24 @@ export default function ARScanner2({ target: rawTarget, onClose }: ARScanner2Pro
     // Mô hình 3D: canh tâm hộp bao về gốc và thu phóng về cỡ 1 nếu quá to hoặc quá nhỏ,
     // làm đúng như màn thiết kế để vị trí và kích thước trùng nhau.
     const modelEl = container.querySelector('#ar-model-el') as any;
+    let modelNormalized = false;
     const onModelLoaded = () => {
+      if (modelNormalized) return;
       try {
         const T = (window as any).AFRAME?.THREE;
         const obj = modelEl?.getObject3D?.('mesh');
         if (!T || !obj) return;
-        obj.updateWorldMatrix(true, true);
-        const inv = new T.Matrix4().copy(obj.matrixWorld).invert();
+        // Tính hộp bao trong không gian cục bộ của mô hình, không phụ thuộc tỉ lệ cha.
+        // Tương thích cả three.js cũ (getInverse) lẫn mới (invert) vì A-Frame của 8th Wall
+        // có thể dùng bản cũ, nếu gọi sai hàm sẽ ném lỗi và bỏ qua chuẩn hóa.
+        if (obj.updateWorldMatrix) obj.updateWorldMatrix(true, true); else obj.updateMatrixWorld(true);
+        const inv = new T.Matrix4();
+        if (typeof inv.invert === 'function') inv.copy(obj.matrixWorld).invert();
+        else inv.getInverse(obj.matrixWorld);
         const box = new T.Box3();
         obj.traverse((child: any) => {
           if (child.isMesh && child.geometry) {
-            child.geometry.computeBoundingBox();
+            if (!child.geometry.boundingBox) child.geometry.computeBoundingBox();
             const b = child.geometry.boundingBox.clone().applyMatrix4(child.matrixWorld).applyMatrix4(inv);
             box.union(b);
           }
@@ -248,11 +255,16 @@ export default function ARScanner2({ target: rawTarget, onClose }: ARScanner2Pro
         const size = box.getSize(new T.Vector3());
         const maxDim = Math.max(size.x, size.y, size.z);
         if (maxDim > 3 || maxDim < 0.1) obj.scale.multiplyScalar(1.0 / (maxDim || 1));
+        modelNormalized = true;
       } catch (err) {
         console.warn('Không chuẩn hóa được mô hình 3D:', err);
       }
     };
-    if (modelEl) modelEl.addEventListener('model-loaded', onModelLoaded);
+    if (modelEl) {
+      modelEl.addEventListener('model-loaded', onModelLoaded);
+      // Phòng khi mô hình đã tải xong trước lúc gắn sự kiện.
+      if (modelEl.getObject3D?.('mesh')) onModelLoaded();
+    }
 
     // Ảnh nội dung: sau khi tải texture thì đặt chiều cao theo tỉ lệ thật với bề rộng 1.2.
     const imgEl = container.querySelector('#ar-image-el') as any;
