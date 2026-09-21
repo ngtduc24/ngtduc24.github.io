@@ -56,6 +56,24 @@ export async function loadMindARCompiler(): Promise<any> {
   return Compiler;
 }
 
+// Lớp Controller là lõi nhận diện và bám ảnh của MindAR, không phụ thuộc three.js hay A-Frame.
+// Trình quét tự dựng scene bằng three.js của hệ thống rồi nhận ma trận vị trí target từ Controller,
+// nhờ vậy dùng chung code nạp mô hình, chất liệu, ánh sáng với studio thiết kế nên khớp tuyệt đối.
+export async function loadMindARController(): Promise<any> {
+  const existing = (window as any).MINDAR?.IMAGE?.Controller;
+  if (existing) return existing;
+  let mod: any = null;
+  try {
+    mod = await import(/* @vite-ignore */ COMPILER_URL);
+  } catch (err) {
+    console.error('Lỗi nạp module MindAR:', err);
+    throw new Error('Không tải được thư viện nhận diện MindAR. Kiểm tra kết nối mạng hoặc CDN.');
+  }
+  const Controller = mod?.Controller || (window as any).MINDAR?.IMAGE?.Controller;
+  if (!Controller) throw new Error('Bộ nhận diện MindAR không khả dụng sau khi tải.');
+  return Controller;
+}
+
 export async function loadAFrameRuntime(needsAnimationMixer = false): Promise<void> {
   await loadScript(AFRAME_URL, 'Không tải được thư viện A-Frame. Kiểm tra kết nối mạng hoặc CDN.');
   await loadScript(MINDAR_AFRAME_URL, 'Không tải được thư viện MindAR. Kiểm tra kết nối mạng hoặc CDN.');
