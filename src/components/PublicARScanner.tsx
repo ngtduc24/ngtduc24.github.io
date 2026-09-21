@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { ARTarget, AppSettings } from '../types';
 import { getDefaultSettingsFromSupabase } from '../lib/data';
 import { unpackARTarget } from '../lib/arHelpers';
-import ARScanner2 from './ARScanner2';
+import ARScannerMind from './ARScannerMind';
 import { Loader2 } from 'lucide-react';
 import { setCustomPageSEO } from '../lib/seoConfig';
 
@@ -97,7 +97,7 @@ export default function PublicARScanner() {
           <img src={settings.webAppIcon} alt="Logo" className="h-8 object-contain" />
         </div>
       )}
-      <ARScanner2 target={stableTarget} onClose={handleClose} />
+      <ARScannerMind target={stableTarget} onClose={handleClose} />
     </div>
   );
 }
