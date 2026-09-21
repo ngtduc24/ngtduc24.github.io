@@ -190,7 +190,6 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
     { id: 'quantitative_analysis', label: 'Phân tích định lượng' },
     { id: 'edu', label: 'Quản lý Giáo dục & Đào tạo' },
     { id: 'utilities', label: 'Tiện ích (Tạo AR, chỉnh kích thước ảnh)' },
-    { id: 'media_library', label: 'Thư viện' },
     { id: 'portfolio_cms', label: 'Quản trị Portfolio' },
     { id: 'settings', label: 'Cấu hình hệ thống' },
     { id: 'notifications', label: 'Thông báo' },

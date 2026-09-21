@@ -24,19 +24,22 @@ import { FONT_OPTIONS, DEFAULT_HEADING_FONT, DEFAULT_BODY_FONT } from "../lib/fo
 import { Type } from "lucide-react";
 import BackupManager from './BackupManager';
 import MediaSourcePicker from './MediaSourcePicker';
+import MediaLibrary from './MediaLibrary';
+import { Images } from 'lucide-react';
 
 interface SystemSettingsProps {
   settings: AppSettings;
   onRefreshSettings: () => void;
   isAdmin: boolean;
+  currentUser?: any;
 }
 
-export default function SystemSettings({ settings, onRefreshSettings, isAdmin }: SystemSettingsProps) {
+export default function SystemSettings({ settings, onRefreshSettings, isAdmin, currentUser }: SystemSettingsProps) {
   const [formState, setFormState] = useState<AppSettings>({ ...settings });
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'general' | 'functions' | 'assistant' | 'maintenance' | 'backup'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'functions' | 'assistant' | 'maintenance' | 'backup' | 'media'>('general');
 
   // Thư viện kiến thức của trợ lý.
   const knowledge: AssistantKnowledgeItem[] = formState.assistantKnowledge || [];
@@ -285,6 +288,18 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
         >
           <Database className="w-4 h-4" />
           <span>Sao lưu & Phục hồi dữ liệu</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('media')}
+          className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 cursor-pointer ${
+            activeTab === 'media'
+              ? 'border-brand text-brand bg-brand/5 rounded-t-2xl font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Images className="w-4 h-4" />
+          <span>Quản lý tư liệu</span>
         </button>
       </div>
 
@@ -870,8 +885,19 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin }:
 
           {saveBar}
         </form>
-      ) : (
+      ) : activeTab === 'backup' ? (
         <BackupManager />
+      ) : (
+        <div className="space-y-4">
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs text-left">
+            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+              <Images className="w-4 h-4 text-brand" />
+              <span>Quản lý tư liệu</span>
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">Nơi quản trị viên quản lý toàn bộ hình ảnh và tư liệu đã tải lên hệ thống. Đây là khu vực quản lý dữ liệu, không phải chức năng dành cho người dùng thường.</p>
+          </div>
+          <MediaLibrary currentUser={currentUser} />
+        </div>
       )}
     </div>
   );

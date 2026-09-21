@@ -38,7 +38,6 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { id: 'assistant', label: 'Trợ lý giáo dục', desc: 'Hỏi đáp kiến thức bài học từ bài giảng, câu hỏi và bài tập được chia sẻ công khai', icon: Sparkles, color: 'violet', group: 'Quản lý và hệ thống' },
   { id: 'notifications', label: 'Thông báo', desc: 'Xem thông báo, tài liệu và dữ liệu tham khảo', icon: Mail, color: 'amber', group: 'Quản lý và hệ thống' },
   { id: 'notifications_admin', label: 'Trung tâm thông báo', desc: 'Quản lý và phát thông báo tới người dùng', icon: Megaphone, color: 'orange', group: 'Quản lý và hệ thống' },
-  { id: 'media_library', label: 'Thư viện', desc: 'Tài liệu, mẫu biểu, dữ liệu tham khảo', icon: Library, color: 'violet', group: 'Giảng dạy và nội dung' },
   { id: 'users', label: 'Quản lý người dùng', desc: 'Tạo, chỉnh sửa tài khoản trên hệ thống', icon: Users, color: 'indigo', group: 'Quản lý và hệ thống' },
   { id: 'permissions', label: 'Phân quyền người dùng', desc: 'Cấp quyền truy cập chức năng chi tiết', icon: Shield, color: 'teal', group: 'Quản lý và hệ thống' },
   { id: 'settings', label: 'Cấu hình hệ thống', desc: 'Quản trị hệ thống, phân quyền người dùng', icon: Settings, color: 'rose', group: 'Quản lý và hệ thống' },

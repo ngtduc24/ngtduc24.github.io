@@ -270,7 +270,6 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { id: 'users', label: 'Quản lý người dùng', desc: 'Tạo, chỉnh sửa tài khoản trên hệ thống', icon: Users, color: 'indigo' },
     { id: 'permissions', label: 'Phân quyền người dùng', desc: 'Cấp quyền truy cập chức năng chi tiết', icon: Shield, color: 'teal' },
     { id: 'settings', label: 'Cấu hình hệ thống', desc: 'Quản trị hệ thống, phân quyền người dùng', icon: Settings, color: 'rose' },
-    { id: 'media_library', label: 'Thư viện', desc: 'Tài liệu, mẫu biểu, dữ liệu tham khảo', icon: Library, color: 'violet' },
   ];
   // Lọc theo quyền, bỏ chức năng bị admin ẩn, rồi áp tên, mô tả và ảnh icon do admin tùy chỉnh.
   const baseIcons = allModules
