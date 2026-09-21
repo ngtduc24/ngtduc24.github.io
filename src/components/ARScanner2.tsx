@@ -103,8 +103,11 @@ export default function ARScanner2({ target: rawTarget, onClose }: ARScanner2Pro
     // về gốc và tự thu phóng về cỡ 1 nếu quá to hoặc quá nhỏ. Trang quét làm y hệt.
     // Đơn vị của 8th Wall không đoán mà đo thật từ sự kiện xrimagefound: bề rộng ảnh trong
     // khung cục bộ bằng scaledWidth chia scale, rồi quy đổi hệ số = bề rộng cục bộ / 1.6.
-    // Khung cục bộ của 8th Wall xoay 90 độ so với màn thiết kế nên nội dung được bọc trong
-    // một entity xoay 0 0 -90 để bù lại.
+    // Theo ví dụ chính thức của 8th Wall (examples/aframe/flyer), một tấm phẳng đặt thẳng vào
+    // image target với rotation 0 0 0 đã nằm khớp ảnh, tức khung cục bộ của 8th Wall trùng hệ
+    // với màn thiết kế (ảnh dựng đứng trong mặt XY, pháp tuyến +Z, +Y là hướng lên). Vì vậy
+    // KHÔNG bọc xoay gì thêm. Lớp xoay 0 0 -90 trước đây làm nội dung xoay 90 độ trong mặt ảnh,
+    // khiến phải hóa xuống và vị trí lệch so với thiết kế.
     const EDITOR_TARGET_WIDTH = 1.6;
     const eScale = target.scale || 1;
     const eX = target.position_x || 0;
@@ -168,16 +171,31 @@ export default function ARScanner2({ target: rawTarget, onClose }: ARScanner2Pro
         <a-light type="ambient" intensity="1.3"></a-light>
         <a-light type="directional" intensity="1.0" position="1 1 1"></a-light>
         <xrextras-named-image-target name="${escapeAttr(targetName)}">
-          <a-entity rotation="0 0 -90">
-            ${nodeHtml}
-          </a-entity>
+          ${nodeHtml}
         </xrextras-named-image-target>
       </a-scene>
     `;
 
     const sceneEl = container.querySelector('a-scene') as any;
+
+    // Ảnh chụp nét hơn: mặc định của 8th Wall giới hạn cạnh dài 1280px và nén JPEG 75 nên ảnh
+    // bị mờ. Nâng cạnh dài lên 2560px và chất lượng 95. Gọi trước khi engine chạy và gọi lại
+    // khi realityready để chắc chắn có hiệu lực.
+    const configureScreenshot = () => {
+      try {
+        const XR8 = (window as any).XR8;
+        if (XR8?.CanvasScreenshot?.configure) {
+          XR8.CanvasScreenshot.configure({ maxDimension: 2560, jpgCompression: 95 });
+        }
+      } catch (e) {
+        console.warn('Không cấu hình được chất lượng ảnh chụp:', e);
+      }
+    };
+    configureScreenshot();
+
     // Cấu hình lại khi engine thực sự sẵn sàng, phòng khi xrweb ghi đè cấu hình mặc định.
     const onRealityReady = () => {
+      configureScreenshot();
       try {
         const XR8 = (window as any).XR8;
         if (XR8 && targetDataRef.current) {
