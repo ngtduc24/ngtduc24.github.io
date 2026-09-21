@@ -364,6 +364,39 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
         </div>
       )}
 
+      {/* Form thêm lớp học mới cho một trường. Trước đây nút Thêm lớp không mở được form nào. */}
+      {isCreatingClassForSchool && (
+        <div className="bg-white border border-slate-200 p-6 rounded-3xl animate-fadeIn space-y-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Thêm lớp học mới{(() => { const s = schools.find(sc => sc.id === isCreatingClassForSchool); return s ? ` cho ${s.name}` : ''; })()}</h3>
+            <button onClick={() => setIsCreatingClassForSchool(null)} className="p-2 text-slate-400 hover:text-rose-500 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              type="text"
+              autoFocus
+              placeholder="Tên lớp học..."
+              value={newForm.name}
+              onChange={e => setNewForm({ ...newForm, name: e.target.value })}
+              onKeyDown={e => { if (e.key === 'Enter') handleCreateClass(isCreatingClassForSchool); }}
+              className="w-full bg-slate-50 border border-slate-200 focus:border-brand focus:ring-0 rounded-xl px-4 py-3 text-sm font-medium"
+            />
+            <input
+              type="text"
+              placeholder="Mô tả..."
+              value={newForm.description}
+              onChange={e => setNewForm({ ...newForm, description: e.target.value })}
+              onKeyDown={e => { if (e.key === 'Enter') handleCreateClass(isCreatingClassForSchool); }}
+              className="w-full bg-slate-50 border border-slate-200 focus:border-brand focus:ring-0 rounded-xl px-4 py-3 text-sm font-medium"
+            />
+          </div>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setIsCreatingClassForSchool(null)} className="px-6 py-2 text-slate-500 text-[11px] font-bold uppercase tracking-wider">Hủy</button>
+            <button onClick={() => handleCreateClass(isCreatingClassForSchool)} className="px-8 py-2 bg-brand text-white rounded-xl text-[11px] font-bold uppercase tracking-wider">Xác nhận</button>
+          </div>
+        </div>
+      )}
+
       {groupedBySchool.length === 0 ? (
         <div className="bg-white rounded-3xl p-20 text-center border border-slate-100">
           <GraduationCap className="w-16 h-16 text-slate-200 mx-auto mb-4" />
