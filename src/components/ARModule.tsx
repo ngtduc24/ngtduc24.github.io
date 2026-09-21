@@ -634,25 +634,22 @@ export default function ARModule({ currentUser }: { currentUser?: UserAccount | 
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-br from-brand to-brand rounded-2xl p-6 text-white shadow-lg">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <QrCode className="w-6 h-6 opacity-90" />
-              <h1 className="text-xl font-black tracking-tight">Quản lý AR Targets</h1>
-            </div>
-            <p className="text-sm text-brand/20">Chỉ hiển thị AR do tài khoản của bạn tạo. Click vào thẻ để xem QR code và chia sẻ link.</p>
-          </div>
-          <div className="shrink-0 flex items-center gap-2"><button type="button" onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 bg-white text-brand hover:bg-white/90 text-xs font-bold px-3 py-2 rounded-xl transition shadow-sm"><Plus className="w-4 h-4" />Tạo AR Target Mới</button><button onClick={fetchTargets} disabled={loading} className="shrink-0 flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-3 py-2 rounded-xl transition disabled:opacity-50">
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Tìm kiếm AR target..." className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand" />
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button onClick={fetchTargets} disabled={loading} className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50">
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Làm mới
-          </button></div>
+          </button>
+          <button type="button" onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-brand-hover">
+            <Plus className="w-4 h-4" /> Tạo AR Target mới
+          </button>
         </div>
       </div>
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-        <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Tìm kiếm AR target..." className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand/60" />
-      </div>
+      <p className="-mt-3 text-xs text-slate-400">Chỉ hiển thị AR do tài khoản của bạn tạo. Bấm vào thẻ để xem mã QR và chia sẻ link.</p>
       {error && (
         <div className="flex items-start gap-3 bg-rose-50 border border-rose-200 rounded-xl p-4 text-sm text-rose-700">
           <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
