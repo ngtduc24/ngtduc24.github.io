@@ -210,9 +210,15 @@ export async function deleteSchool(id: string) {
 export async function getClasses(schoolId?: string) {
   let query = supabase.from(CLASSES_TABLE).select('*, edu_schools(name)').order('name');
   if (schoolId) query = query.eq('school_id', schoolId);
-  // Mỗi người chỉ thấy lớp của mình, admin thấy tất cả.
+  // Người dùng thường thấy lớp do mình tạo, VÀ mọi lớp nằm trong trường do mình tạo
+  // (chủ trường thấy hết lớp trong trường mình dù lớp do người khác hay admin thêm vào). Admin thấy tất cả.
   const ctx = getCtx();
-  if (!ctx.isAdmin && ctx.userId) query = query.eq('owner_id', ctx.userId);
+  if (!ctx.isAdmin && ctx.userId) {
+    const { data: mySchools } = await supabase.from(SCHOOLS_TABLE).select('id').eq('owner_id', ctx.userId);
+    const ids = (mySchools || []).map((s: any) => s.id);
+    if (ids.length) query = query.or(`owner_id.eq.${ctx.userId},school_id.in.(${ids.join(',')})`);
+    else query = query.eq('owner_id', ctx.userId);
+  }
   const { data, error } = await query;
   if (error) throw error;
   return (data || []).map(c => ({

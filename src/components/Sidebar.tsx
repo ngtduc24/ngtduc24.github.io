@@ -41,6 +41,7 @@ export default function Sidebar({
     { id: 'settings', label: 'Cài đặt', icon: Settings },
   ].filter(item => {
     if (item.id === 'settings') return currentUser.role === 'admin' || currentUser.permissions.includes('settings');
+    if (item.id === 'stats') return currentUser.role === 'admin'; // Thống kê chỉ dành cho quản trị viên
     return true;
   });
 
