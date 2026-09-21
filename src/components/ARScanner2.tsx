@@ -98,28 +98,26 @@ export default function ARScanner2({ target: rawTarget, onClose }: ARScanner2Pro
     const container = containerRef.current;
     if (!ready || !container) return;
 
-    // Hai điều chỉnh để nội dung hiện đúng chỗ đã đặt trong màn hình thiết kế.
-    // Thứ nhất, màn hình thiết kế chuẩn hóa ảnh theo chiều cao bằng 1 còn 8th Wall theo chiều
-    // rộng bằng 1, nên chia vị trí và tỉ lệ cho tỉ lệ khung hình của ảnh.
-    // Thứ hai, khung cục bộ của 8th Wall xoay 90 độ so với màn hình thiết kế, nên nội dung
-    // được bọc trong một entity xoay 0 0 -90 để bù lại, giúp phải ra phải, trên ra trên.
-    const data = targetDataRef.current;
-    const aspect =
-      data && data.properties && data.properties.originalHeight
-        ? data.properties.originalWidth / data.properties.originalHeight
-        : 1;
-    const k = aspect || 1;
-
-    const scale = (target.scale || 1) / k;
+    // Khớp với màn hình thiết kế (ARStudioWorkspace). Ở đó tấm ảnh target rộng 1.6 đơn vị,
+    // ảnh nội dung rộng 1.2 theo tỉ lệ thật, video 1.2 x 0.8, mô hình 3D được canh tâm hộp bao
+    // về gốc và tự thu phóng về cỡ 1 nếu quá to hoặc quá nhỏ. Trang quét làm y hệt.
+    // Đơn vị của 8th Wall không đoán mà đo thật từ sự kiện xrimagefound: bề rộng ảnh trong
+    // khung cục bộ bằng scaledWidth chia scale, rồi quy đổi hệ số = bề rộng cục bộ / 1.6.
+    // Khung cục bộ của 8th Wall xoay 90 độ so với màn thiết kế nên nội dung được bọc trong
+    // một entity xoay 0 0 -90 để bù lại.
+    const EDITOR_TARGET_WIDTH = 1.6;
+    const eScale = target.scale || 1;
+    const eX = target.position_x || 0;
+    const eY = target.position_y || 0;
+    const eZ = target.position_z || 0;
     const rotX = typeof target.rotation_x === 'number' ? target.rotation_x : (target.rotation || 0);
     const rotY = target.rotation_y || 0;
     const rotZ = target.rotation_z || 0;
     const rotationStr = `${rotX} ${rotY} ${rotZ}`;
-    const posX = (target.position_x || 0) / k;
-    const posY = (target.position_y || 0) / k;
-    const posZ = (target.position_z || 0) / k;
-    const positionStr = `${posX} ${posY} ${posZ}`;
-    const scaleStr = `${scale} ${scale} ${scale}`;
+    // Hệ số tạm trước khi đo được từ sự kiện nhận diện, giả định bề rộng cục bộ bằng 1.
+    const factor0 = 1 / EDITOR_TARGET_WIDTH;
+    const positionStr = `${eX * factor0} ${eY * factor0} ${eZ * factor0}`;
+    const scaleStr = `${eScale * factor0} ${eScale * factor0} ${eScale * factor0}`;
     const contentUrl = escapeAttr(target.content_url);
 
     // Cử chỉ tương tác gắn trực tiếp lên nội dung, dùng thành phần của xrextras.
@@ -139,17 +137,21 @@ export default function ARScanner2({ target: rawTarget, onClose }: ARScanner2Pro
           <video id="ar-video" src="${contentUrl}" crossorigin="anonymous" autoplay muted playsinline webkit-playsinline ${target.loop_video !== false ? 'loop="true"' : ''} preload="auto"></video>
         </a-assets>
       `;
-      nodeHtml = `<a-video src="#ar-video" position="${positionStr}" scale="${scaleStr}" rotation="${rotationStr}" class="cantap" ${gestureAttrs}></a-video>`;
+      // Video trong màn thiết kế là tấm 1.2 x 0.8.
+      nodeHtml = `<a-video src="#ar-video" width="1.2" height="0.8" class="cantap" ${gestureAttrs}></a-video>`;
     } else if (target.content_type === 'image' || target.content_type === 'gif') {
-      nodeHtml = `<a-image src="${contentUrl}" position="${positionStr}" scale="${scaleStr}" rotation="${rotationStr}" transparent="true" class="cantap" ${gestureAttrs}></a-image>`;
+      // Ảnh trong màn thiết kế rộng 1.2, chiều cao theo tỉ lệ thật, cập nhật khi tải xong texture.
+      nodeHtml = `<a-image id="ar-image-el" src="${contentUrl}" width="1.2" height="1.2" transparent="true" class="cantap" ${gestureAttrs}></a-image>`;
     } else if (target.content_type === '3d') {
       assetsHtml = `
         <a-assets>
           <a-asset-item id="ar-model" src="${contentUrl}"></a-asset-item>
         </a-assets>
       `;
-      nodeHtml = `<a-gltf-model src="#ar-model" position="${positionStr}" scale="${scaleStr}" rotation="${rotationStr}" class="cantap" ${gestureAttrs}></a-gltf-model>`;
+      nodeHtml = `<a-gltf-model id="ar-model-el" src="#ar-model" class="cantap" ${gestureAttrs}></a-gltf-model>`;
     }
+    // Vị trí, tỉ lệ, xoay của người dùng đặt lên entity bọc ngoài, giống contentGroup ở màn thiết kế.
+    nodeHtml = `<a-entity id="ar-content" position="${positionStr}" scale="${scaleStr}" rotation="${rotationStr}">${nodeHtml}</a-entity>`;
 
     container.innerHTML = `
       <a-scene
@@ -187,10 +189,68 @@ export default function ARScanner2({ target: rawTarget, onClose }: ARScanner2Pro
     };
     if (sceneEl) sceneEl.addEventListener('realityready', onRealityReady);
 
+    // Đo đơn vị thật của 8th Wall khi nhận diện được ảnh, rồi áp lại vị trí và tỉ lệ cho khớp thiết kế.
+    const contentEl = container.querySelector('#ar-content') as any;
+    const applyFactor = (f: number) => {
+      if (!contentEl) return;
+      contentEl.setAttribute('position', `${eX * f} ${eY * f} ${eZ * f}`);
+      contentEl.setAttribute('scale', `${eScale * f} ${eScale * f} ${eScale * f}`);
+    };
+    const onImageFound = (e: any) => {
+      const d = e?.detail || {};
+      if (d.name && d.name !== targetName) return;
+      if (d.scaledWidth && d.scale) {
+        const localWidth = d.scaledWidth / d.scale;
+        applyFactor(localWidth / EDITOR_TARGET_WIDTH);
+      }
+    };
+    if (sceneEl) sceneEl.addEventListener('xrimagefound', onImageFound);
+
+    // Mô hình 3D: canh tâm hộp bao về gốc và thu phóng về cỡ 1 nếu quá to hoặc quá nhỏ,
+    // làm đúng như màn thiết kế để vị trí và kích thước trùng nhau.
+    const modelEl = container.querySelector('#ar-model-el') as any;
+    const onModelLoaded = () => {
+      try {
+        const T = (window as any).AFRAME?.THREE;
+        const obj = modelEl?.getObject3D?.('mesh');
+        if (!T || !obj) return;
+        obj.updateWorldMatrix(true, true);
+        const inv = new T.Matrix4().copy(obj.matrixWorld).invert();
+        const box = new T.Box3();
+        obj.traverse((child: any) => {
+          if (child.isMesh && child.geometry) {
+            child.geometry.computeBoundingBox();
+            const b = child.geometry.boundingBox.clone().applyMatrix4(child.matrixWorld).applyMatrix4(inv);
+            box.union(b);
+          }
+        });
+        if (box.isEmpty()) return;
+        const center = box.getCenter(new T.Vector3());
+        obj.position.sub(center);
+        const size = box.getSize(new T.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        if (maxDim > 3 || maxDim < 0.1) obj.scale.multiplyScalar(1.0 / (maxDim || 1));
+      } catch (err) {
+        console.warn('Không chuẩn hóa được mô hình 3D:', err);
+      }
+    };
+    if (modelEl) modelEl.addEventListener('model-loaded', onModelLoaded);
+
+    // Ảnh nội dung: sau khi tải texture thì đặt chiều cao theo tỉ lệ thật với bề rộng 1.2.
+    const imgEl = container.querySelector('#ar-image-el') as any;
+    const onTextureLoaded = (e: any) => {
+      const img = e?.detail?.texture?.image;
+      if (img && img.width && img.height && imgEl) imgEl.setAttribute('height', String(1.2 * img.height / img.width));
+    };
+    if (imgEl) imgEl.addEventListener('materialtextureloaded', onTextureLoaded);
+
     const preexistingVideos = new Set(Array.from(document.querySelectorAll('video')));
 
     return () => {
       if (sceneEl) sceneEl.removeEventListener('realityready', onRealityReady);
+      if (sceneEl) sceneEl.removeEventListener('xrimagefound', onImageFound);
+      if (modelEl) modelEl.removeEventListener('model-loaded', onModelLoaded);
+      if (imgEl) imgEl.removeEventListener('materialtextureloaded', onTextureLoaded);
       // Dừng camera và dọn scene khi thoát.
       try {
         const XR8 = (window as any).XR8;
