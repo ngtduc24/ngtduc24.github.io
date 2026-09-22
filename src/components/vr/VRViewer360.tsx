@@ -102,14 +102,8 @@ export default function VRViewer360({ src, title, initialMode = 'drag', autoRota
     ro.observe(container);
 
     // Cảm biến hướng thiết bị -> quaternion (thuật toán DeviceOrientationControls của three).
-    const zee = new THREE.Vector3(0, 0, 1);
     const euler = new THREE.Euler();
-    const q0 = new THREE.Quaternion();
     const q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
-    const screenAngle = () => {
-      const a = (screen.orientation && typeof screen.orientation.angle === 'number') ? screen.orientation.angle : (window as any).orientation || 0;
-      return (a * Math.PI) / 180;
-    };
     const onOrient = (e: DeviceOrientationEvent) => {
       if (e.alpha == null || e.beta == null || e.gamma == null) return;
       s.orient = { alpha: (e.alpha * Math.PI) / 180, beta: (e.beta * Math.PI) / 180, gamma: (e.gamma * Math.PI) / 180 };
@@ -120,7 +114,7 @@ export default function VRViewer360({ src, title, initialMode = 'drag', autoRota
     if (xr && xr.isSessionSupported) xr.isSessionSupported('immersive-vr').then((ok: boolean) => active && setXrSupported(!!ok)).catch(() => {});
 
     const tmpQ = new THREE.Quaternion();
-    const yawQ = new THREE.Quaternion();
+    const fwd = new THREE.Vector3();
     const up = new THREE.Vector3(0, 1, 0);
     const render = () => {
       const m = s.mode;
@@ -130,10 +124,15 @@ export default function VRViewer360({ src, title, initialMode = 'drag', autoRota
         euler.set(o.beta, o.alpha, -o.gamma, 'YXZ');
         tmpQ.setFromEuler(euler);
         tmpQ.multiply(q1);
-        tmpQ.multiply(q0.setFromAxisAngle(zee, -screenAngle()));
-        // Cho phép kéo tay để chỉnh thêm hướng ngang khi đang dùng cảm biến.
-        yawQ.setFromAxisAngle(up, s.gyroYawOffset);
-        camera.quaternion.copy(yawQ.multiply(tmpQ));
+        // Chỉ lấy hướng nhìn từ cảm biến rồi dựng lại camera với trục đứng của thế giới, nhờ vậy
+        // không phụ thuộc góc xoay màn hình (iPad, chế độ desktop của Safari không báo góc này)
+        // và ảnh không bao giờ bị nghiêng hay lật khi cầm máy ngang.
+        fwd.set(0, 0, -1).applyQuaternion(tmpQ);
+        fwd.applyAxisAngle(up, s.gyroYawOffset);
+        fwd.y = Math.max(-0.995, Math.min(0.995, fwd.y));
+        fwd.normalize();
+        camera.up.copy(up);
+        camera.lookAt(fwd);
       } else if (!renderer.xr.isPresenting) {
         if (s.autoRotate && m === 'drag' && Math.abs(s.velLon) < 0.01) s.lon += 0.03;
         s.lon += s.velLon; s.lat += s.velLat;

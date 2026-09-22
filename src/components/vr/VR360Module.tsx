@@ -468,6 +468,13 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
                                 <input type="number" min={-90} max={90} value={pitches[r] ?? 0} onChange={e => setPitches(ps => ps.map((v, k) => k === r ? Number(e.target.value) || 0 : v))} className="w-16 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-bold text-slate-700 outline-none focus:border-brand" />
                                 <span className="text-[10px] text-slate-400">° ngẩng</span>
                               </div>
+                              {/* Chọn nhanh loại ảnh của hàng để không phải nhớ số độ. */}
+                              <div className="mt-1 flex gap-1">
+                                {[{ l: 'Trần', v: 55 }, { l: 'Ngang', v: 0 }, { l: 'Sàn', v: -55 }].map(pr => {
+                                  const on = (pitches[r] ?? 0) === pr.v;
+                                  return <button key={pr.l} type="button" onClick={() => setPitches(ps => ps.map((v, k) => k === r ? pr.v : v))} className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${on ? 'bg-brand text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>{pr.l}</button>;
+                                })}
+                              </div>
                             </div>
                           </th>
                           {Array.from({ length: cols }).map((_, c) => {
@@ -532,7 +539,8 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
                     </tbody>
                   </table>
                 </div>
-                <p className="text-[10px] text-slate-400">Mỗi hàng là 1 góc ngẩng máy (sửa số độ ngay tại hàng), mỗi cột là 1 hướng quay tính từ hướng trước mặt. Ảnh trần và sàn nên đặt ở hàng ngẩng lên và cúi xuống.</p>
+                <p className="text-[10px] text-slate-400">Mỗi hàng là 1 góc ngẩng máy, bấm Trần, Ngang, Sàn ở đầu hàng cho đúng với ảnh trong hàng đó. Mỗi cột là 1 hướng quay tính từ hướng trước mặt.</p>
+                {new Set(pitches.slice(0, rows)).size < rows && <p className="text-[11px] font-bold text-rose-500">Có 2 hàng cùng góc ngẩng, ảnh sẽ chồng lên nhau. Hãy đặt mỗi hàng 1 góc khác nhau.</p>}
                 {/* Ảnh mờ bám theo con trỏ khi đang kéo */}
                 {gridDragId !== null && gridFiles[gridDragId] && (
                   <div ref={ghostRef} className="pointer-events-none fixed left-0 top-0 z-[80] h-16 w-24 overflow-hidden rounded-lg border-2 border-brand shadow-2xl opacity-90 will-change-transform">
