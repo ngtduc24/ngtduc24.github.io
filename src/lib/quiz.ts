@@ -186,6 +186,59 @@ export async function getQuizzes(subjectId?: string): Promise<Quiz[]> {
   return (data || []) as Quiz[];
 }
 
+// Kho đề dùng chung: mọi đề đã bật công khai, kể cả đề của chính mình, để người khác chọn về dùng lại.
+export async function getSharedQuizzes(subjectId?: string): Promise<Quiz[]> {
+  let query = supabase.from(QUIZ_TABLE).select('*').eq('is_public', true).order('created_at', { ascending: false });
+  if (subjectId) query = query.eq('subject_id', subjectId);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []) as Quiz[];
+}
+
+export async function toggleQuizPublic(id: string, isPublic: boolean): Promise<Quiz> {
+  const { data, error } = await supabase.from(QUIZ_TABLE).update({ is_public: isPublic }).eq('id', id).select('*').single();
+  if (error) throw error;
+  return data as Quiz;
+}
+
+// Sao chép một đề trong kho chung về tài khoản hiện tại. Toàn bộ câu hỏi của đề được chép
+// vào ngân hàng riêng của người nhận (giữ điểm từng câu và thứ tự), nên đề sao chép không còn
+// phụ thuộc vào việc chủ đề gốc sửa hay xóa câu sau này. Đề mới ở trạng thái nháp, không công khai.
+export async function copyQuizToMine(source: Quiz, ownerId: string, ownerName?: string): Promise<Quiz> {
+  const items = await getQuizItems(source.id);
+  const quiz = await saveQuiz({
+    title: source.title,
+    description: source.description,
+    subject_id: source.subject_id,
+    status: 'draft',
+    shuffle_questions: source.shuffle_questions,
+    shuffle_options: source.shuffle_options,
+    random_pick_count: source.random_pick_count,
+    duration_minutes: source.duration_minutes,
+    max_attempts: source.max_attempts,
+    grading_method: source.grading_method,
+    scale_to_10: source.scale_to_10,
+    result_visibility: source.result_visibility,
+    proctor_fullscreen: source.proctor_fullscreen,
+    proctor_warning_threshold: source.proctor_warning_threshold,
+    is_public: false,
+    owner_id: ownerId,
+    owner_name: ownerName,
+  });
+  const rows: { quiz_id: string; question_id: string; order_index: number; points: number }[] = [];
+  for (let i = 0; i < items.length; i += 1) {
+    const it = items[i];
+    if (!it.question) continue;
+    const copied = await copyQuestionToMine(it.question, ownerName);
+    rows.push({ quiz_id: quiz.id, question_id: copied.id, order_index: it.order_index ?? i, points: it.points ?? 1 });
+  }
+  if (rows.length) {
+    const { error } = await supabase.from(ITEM_TABLE).insert(rows);
+    if (error) throw error;
+  }
+  return quiz;
+}
+
 export async function getQuizById(id: string): Promise<Quiz> {
   const { data, error } = await supabase.from(QUIZ_TABLE).select('*').eq('id', id).single();
   if (error) throw error;
