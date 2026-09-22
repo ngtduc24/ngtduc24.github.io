@@ -16,7 +16,8 @@ import {
   X,
   Database
 } from "lucide-react";
-import { EyeOff, Eye, RotateCcw, Wrench, Power, Boxes, ImagePlay, Sparkles, Plus, Trash2, BookMarked, FlaskConical } from "lucide-react";
+import { EyeOff, Eye, RotateCcw, Wrench, Power, Boxes, ImagePlay, Sparkles, Plus, Trash2, BookMarked, FlaskConical, Link2, Copy } from "lucide-react";
+import { getTabUrl } from "../lib/seoConfig";
 import { AppSettings, ModuleOverride, AssistantKnowledgeItem } from "../types";
 import { saveDefaultSettingsToSupabase } from "../lib/data";
 import { MODULE_REGISTRY } from "../lib/modules";
@@ -708,6 +709,18 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
                       placeholder={mod.desc}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-none"
                     />
+                    {/* Link truy cập riêng của chức năng, dùng để gửi cho người dùng hoặc gắn vào menu. */}
+                    {(() => {
+                      const link = `${window.location.origin}${window.location.pathname}${getTabUrl(mod.id)}`;
+                      return (
+                        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5">
+                          <Link2 className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                          <input readOnly value={link} onFocus={e => e.currentTarget.select()} className="min-w-0 flex-1 bg-transparent text-[11px] font-semibold text-slate-600 outline-none" />
+                          <button type="button" onClick={() => { navigator.clipboard?.writeText(link).catch(() => {}); }} title="Chép link" className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600 hover:bg-slate-200"><Copy className="w-3 h-3" /> Chép</button>
+                          <a href={link} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-brand hover:underline">Mở</a>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="flex items-center gap-2 md:flex-col md:items-end shrink-0">

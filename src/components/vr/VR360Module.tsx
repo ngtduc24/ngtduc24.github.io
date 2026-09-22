@@ -207,30 +207,37 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
   const [pitches, setPitches] = useState<number[]>(defaultRowPitches(3));
   const [yawOffset, setYawOffset] = useState(0);
   const [gridFiles, setGridFiles] = useState<{ file: File; url: string }[]>([]);
-  // Nhấn giữ ảnh để vào chế độ sắp xếp, kéo thả để đổi chỗ 2 ô trong lưới.
-  const [gridSort, setGridSort] = useState(false);
+  // Kéo thả trực tiếp để đổi chỗ 2 ô trong lưới, không cần nhấn giữ. Ảnh mờ bám theo con trỏ
+  // được cập nhật thẳng vào DOM (không qua state) để không giật.
   const [gridDragId, setGridDragId] = useState<number | null>(null);
   const [gridOverId, setGridOverId] = useState<number | null>(null);
   const gridDragRef = useRef<number | null>(null);
   const gridOverRef = useRef<number | null>(null);
-  const gridPressTimer = useRef<number | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const beginGridDrag = (i: number) => { setGridDragId(i); gridDragRef.current = i; };
-  const startGridPress = (i: number) => {
-    if (gridPressTimer.current) window.clearTimeout(gridPressTimer.current);
-    gridPressTimer.current = window.setTimeout(() => { setGridSort(true); beginGridDrag(i); }, 400);
-  };
-  const cancelGridPress = () => { if (gridPressTimer.current) { window.clearTimeout(gridPressTimer.current); gridPressTimer.current = null; } };
+  const ghostRef = useRef<HTMLDivElement>(null);
+  const pressRef = useRef<{ i: number; x: number; y: number } | null>(null);
+  const startGridPress = (i: number, e: React.PointerEvent) => { pressRef.current = { i, x: e.clientX, y: e.clientY }; };
   useEffect(() => {
-    if (gridDragId === null) return;
+    const moveGhost = (x: number, y: number) => { const g = ghostRef.current; if (g) g.style.transform = `translate(${x + 12}px, ${y + 12}px)`; };
     const onMove = (e: PointerEvent) => {
+      // Chưa kéo: chỉ bắt đầu khi con trỏ dịch quá 6px để bấm nút trên ảnh vẫn hoạt động.
+      if (gridDragRef.current === null) {
+        const p = pressRef.current;
+        if (!p) return;
+        if (Math.hypot(e.clientX - p.x, e.clientY - p.y) < 6) return;
+        gridDragRef.current = p.i; setGridDragId(p.i); pressRef.current = null;
+        moveGhost(e.clientX, e.clientY);
+        return;
+      }
+      moveGhost(e.clientX, e.clientY);
       const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
       const slot = el?.closest('[data-slot]') as HTMLElement | null;
       const id = slot ? Number(slot.getAttribute('data-slot')) : null;
       const next = id !== null && !Number.isNaN(id) && id !== gridDragRef.current ? id : null;
-      gridOverRef.current = next; setGridOverId(next);
+      if (next !== gridOverRef.current) { gridOverRef.current = next; setGridOverId(next); }
     };
     const onUp = () => {
+      pressRef.current = null;
       const from = gridDragRef.current, to = gridOverRef.current;
       if (from !== null && to !== null && from !== to) {
         setGridFiles(prev => {
@@ -240,8 +247,7 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
           return n;
         });
       }
-      gridDragRef.current = null; gridOverRef.current = null;
-      setGridDragId(null); setGridOverId(null);
+      if (gridDragRef.current !== null) { gridDragRef.current = null; gridOverRef.current = null; setGridDragId(null); setGridOverId(null); }
     };
     document.addEventListener('pointermove', onMove);
     document.addEventListener('pointerup', onUp);
@@ -251,13 +257,7 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
       document.removeEventListener('pointerup', onUp);
       document.removeEventListener('pointercancel', onUp);
     };
-  }, [gridDragId]);
-  useEffect(() => {
-    if (!gridSort) return;
-    const onDown = (e: PointerEvent) => { if (gridRef.current && !gridRef.current.contains(e.target as Node)) setGridSort(false); };
-    document.addEventListener('pointerdown', onDown);
-    return () => document.removeEventListener('pointerdown', onDown);
-  }, [gridSort]);
+  }, []);
   // Diễn giải góc cho người dùng dễ xếp ảnh đúng chỗ.
   const pitchLabel = (p: number) => p > 15 ? `Ngẩng lên ${p}° (trần)` : p < -15 ? `Cúi xuống ${Math.abs(p)}° (sàn)` : `Ngang tầm mắt ${p}°`;
   const yawLabel = (y: number) => {
@@ -432,12 +432,9 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
               {/* Bảng xếp ảnh theo lưới: hàng là góc ngẩng, cột là hướng quay. Nhấn giữ ảnh rồi kéo thả để đổi chỗ. */}
               <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3 space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-[11px] font-semibold text-slate-500">
-                    {gridSort ? 'Đang sắp xếp: kéo ảnh thả vào ô muốn đặt (đổi chỗ 2 ảnh). Bấm Xong khi hoàn tất.' : 'Nhấn giữ 1 ảnh khoảng nửa giây để bật chế độ sắp xếp, rồi kéo thả vào đúng hàng và cột.'}
-                  </p>
+                  <p className="text-[11px] font-semibold text-slate-500">Kéo ảnh thả vào ô muốn đặt để đổi chỗ, xếp đúng hàng (góc ngẩng) và cột (hướng quay).</p>
                   <div className="flex items-center gap-2">
-                    {gridSort && <button onClick={() => setGridSort(false)} className="rounded-lg bg-brand px-3 py-1.5 text-[11px] font-bold text-white hover:bg-brand-hover">Xong</button>}
-                    {gridFiles.length > 0 && <button onClick={() => { setGridFiles([]); setGridSort(false); }} className="text-[11px] font-bold text-rose-500 hover:underline">Xóa hết ảnh</button>}
+                    {gridFiles.length > 0 && <button onClick={() => setGridFiles([])} className="text-[11px] font-bold text-rose-500 hover:underline">Xóa hết ảnh</button>}
                   </div>
                 </div>
                 <div ref={gridRef} className="overflow-x-auto pb-1">
@@ -482,22 +479,18 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
                               <td key={c} className="p-0 align-top">
                                 <div
                                   data-slot={i}
-                                  onPointerDown={(e) => { if (!g) return; if (gridSort) { e.preventDefault(); beginGridDrag(i); } else startGridPress(i); }}
-                                  onPointerUp={cancelGridPress}
-                                  onPointerLeave={cancelGridPress}
-                                  className={`group relative h-20 w-28 overflow-hidden rounded-xl border-2 bg-slate-100 select-none ${g ? (gridSort ? 'cursor-grab active:cursor-grabbing touch-none' : 'cursor-pointer') : 'border-dashed'} ${over ? 'border-brand ring-2 ring-brand/40' : g ? 'border-slate-200' : 'border-slate-300'} ${dragging ? 'opacity-40' : ''}`}
+                                  onPointerDown={(e) => { if (!g) return; startGridPress(i, e); }}
+                                  className={`group relative h-20 w-28 overflow-hidden rounded-xl border-2 bg-slate-100 select-none ${g ? 'cursor-grab active:cursor-grabbing touch-none' : 'border-dashed'} ${over ? 'border-brand ring-2 ring-brand/40 scale-105' : g ? 'border-slate-200' : 'border-slate-300'} ${dragging ? 'opacity-30' : ''}`}
                                 >
                                   {g ? (
                                     <>
                                       <img src={g.url} alt="" className="pointer-events-none h-full w-full object-cover" draggable={false} />
                                       <span className="pointer-events-none absolute left-1 top-1 rounded bg-black/60 px-1 text-[9px] font-bold text-white">{i + 1}</span>
-                                      {!gridSort && (
-                                        <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/50 px-1 py-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-                                          <button onPointerDown={e => e.stopPropagation()} onClick={() => moveGrid(i, -1)} className="text-white"><ChevronLeft className="h-3.5 w-3.5" /></button>
-                                          <button onPointerDown={e => e.stopPropagation()} onClick={() => removeGrid(i)} className="text-rose-300"><X className="h-3.5 w-3.5" /></button>
-                                          <button onPointerDown={e => e.stopPropagation()} onClick={() => moveGrid(i, 1)} className="text-white"><ChevronRight className="h-3.5 w-3.5" /></button>
-                                        </div>
-                                      )}
+                                      <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/50 px-1 py-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                                        <button onPointerDown={e => e.stopPropagation()} onClick={() => moveGrid(i, -1)} className="text-white"><ChevronLeft className="h-3.5 w-3.5" /></button>
+                                        <button onPointerDown={e => e.stopPropagation()} onClick={() => removeGrid(i)} className="text-rose-300"><X className="h-3.5 w-3.5" /></button>
+                                        <button onPointerDown={e => e.stopPropagation()} onClick={() => moveGrid(i, 1)} className="text-white"><ChevronRight className="h-3.5 w-3.5" /></button>
+                                      </div>
                                     </>
                                   ) : (
                                     <span className="pointer-events-none absolute inset-0 grid place-items-center text-[10px] font-semibold text-slate-400">Trống</span>
@@ -524,14 +517,12 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
                               <td key={g.url} className="p-0 align-top">
                                 <div
                                   data-slot={i}
-                                  onPointerDown={(e) => { if (gridSort) { e.preventDefault(); beginGridDrag(i); } else startGridPress(i); }}
-                                  onPointerUp={cancelGridPress}
-                                  onPointerLeave={cancelGridPress}
-                                  className={`group relative h-20 w-28 overflow-hidden rounded-xl border-2 bg-amber-50 select-none ${gridSort ? 'cursor-grab touch-none' : 'cursor-pointer'} ${over ? 'border-brand ring-2 ring-brand/40' : 'border-amber-200'} ${dragging ? 'opacity-40' : ''}`}
+                                  onPointerDown={(e) => startGridPress(i, e)}
+                                  className={`group relative h-20 w-28 overflow-hidden rounded-xl border-2 bg-amber-50 select-none cursor-grab active:cursor-grabbing touch-none ${over ? 'border-brand ring-2 ring-brand/40 scale-105' : 'border-amber-200'} ${dragging ? 'opacity-30' : ''}`}
                                 >
                                   <img src={g.url} alt="" className="pointer-events-none h-full w-full object-cover opacity-70" draggable={false} />
                                   <span className="pointer-events-none absolute left-1 top-1 rounded bg-black/60 px-1 text-[9px] font-bold text-white">{i + 1}</span>
-                                  {!gridSort && <button onPointerDown={e => e.stopPropagation()} onClick={() => removeGrid(i)} className="absolute right-1 top-1 rounded bg-black/60 p-0.5 text-rose-300"><X className="h-3.5 w-3.5" /></button>}
+                                  <button onPointerDown={e => e.stopPropagation()} onClick={() => removeGrid(i)} className="absolute right-1 top-1 rounded bg-black/60 p-0.5 text-rose-300"><X className="h-3.5 w-3.5" /></button>
                                 </div>
                               </td>
                             );
@@ -542,6 +533,12 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
                   </table>
                 </div>
                 <p className="text-[10px] text-slate-400">Mỗi hàng là 1 góc ngẩng máy (sửa số độ ngay tại hàng), mỗi cột là 1 hướng quay tính từ hướng trước mặt. Ảnh trần và sàn nên đặt ở hàng ngẩng lên và cúi xuống.</p>
+                {/* Ảnh mờ bám theo con trỏ khi đang kéo */}
+                {gridDragId !== null && gridFiles[gridDragId] && (
+                  <div ref={ghostRef} className="pointer-events-none fixed left-0 top-0 z-[80] h-16 w-24 overflow-hidden rounded-lg border-2 border-brand shadow-2xl opacity-90 will-change-transform">
+                    <img src={gridFiles[gridDragId].url} alt="" className="h-full w-full object-cover" draggable={false} />
+                  </div>
+                )}
               </div>
             </>
           )}

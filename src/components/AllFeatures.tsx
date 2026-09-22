@@ -171,13 +171,7 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
                   return (
                     <button
                       key={m.id}
-                      onClick={() => {
-                        if (m.id === 'edu_bank' || m.id === 'edu_exam' || m.id === 'edu_grade' || m.id === 'edu_question_bank') {
-                          const map: Record<string, string> = { edu_bank: 'assignment_bank', edu_exam: 'exam_bank', edu_grade: 'grade_entry', edu_question_bank: 'question_bank' };
-                          try { localStorage.setItem('edu_initial_view', map[m.id]); } catch {}
-                          onSwitchTab('edu');
-                        } else onSwitchTab(m.id);
-                      }}
+                      onClick={() => onSwitchTab(m.id)}
                       className="group relative text-left bg-white rounded-2xl border border-slate-100 shadow-xs hover:shadow-md hover:border-brand/30 transition-all p-4 flex items-start gap-3"
                     >
                       {(m as any).beta && <span className="absolute top-2 right-2 rounded-full bg-amber-500 px-1.5 py-[2px] text-[8px] font-black uppercase tracking-wider text-white shadow">Thử nghiệm</span>}
