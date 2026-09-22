@@ -25,6 +25,8 @@ import PortfolioWebsite from './components/PortfolioWebsite';
 import PortfolioCMS from './components/PortfolioCMS';
 import UtilitiesModule from './components/UtilitiesModule';
 import PublicARScanner from './components/PublicARScanner';
+import PublicVRViewer from './components/PublicVRViewer';
+import VR360Module from './components/vr/VR360Module';
 import QuizTake from './components/edu/QuizTake';
 import ELessonView from './components/edu/ELessonView';
 import ELessonPreviewPage from './components/edu/ELessonPreviewPage';
@@ -327,6 +329,7 @@ export default function App() {
       quantitative_analysis: 'Phân tích số liệu định lượng',
       utilities: 'Tiện ích',
       ar_module: 'Tiện ích',
+      vr360: 'VR 360',
       portfolio_cms: 'Quản trị Portfolio',
       notifications: 'Thông báo hệ thống',
       notifications_admin: 'Quản trị thông báo',
@@ -746,6 +749,8 @@ export default function App() {
         return <UtilitiesModule currentUser={currentUser} initialTool="image_resize" standalone />;
       case 'utility_file_compress':
         return <UtilitiesModule currentUser={currentUser} initialTool="file_compress" standalone />;
+      case 'vr360':
+        return <VR360Module currentUser={currentUser} />;
       case 'utility_social_design':
         return <UtilitiesModule currentUser={currentUser} initialTool="social_design" standalone />;
       case 'public_search':
@@ -794,6 +799,11 @@ export default function App() {
 
   if (isPublicARRoute) {
     return <PublicARScanner />;
+  }
+
+  // Link xem VR 360 công khai, không cần đăng nhập.
+  if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('vr')) {
+    return <PublicVRViewer />;
   }
 
   // Link làm bài trắc nghiệm công khai: sinh viên vào bằng MSSV, không cần đăng nhập.
