@@ -291,3 +291,14 @@ export function defaultRowPitches(rows: number): number[] {
   const step = 150 / (rows - 1);
   return Array.from({ length: rows }, (_, i) => Math.round(75 - i * step));
 }
+
+// Nạp ảnh từ URL (Cloudinary hoặc object URL). Ảnh từ máy chủ khác cần crossOrigin để canvas đọc được điểm ảnh.
+export function loadImageFromUrl(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    if (!url.startsWith('blob:') && !url.startsWith('data:')) img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Không đọc được ảnh. Ảnh có thể bị chặn CORS hoặc đường dẫn hỏng.'));
+    img.src = url;
+  });
+}

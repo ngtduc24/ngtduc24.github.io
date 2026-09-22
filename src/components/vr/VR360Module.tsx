@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Globe, Plus, RefreshCw, Search, Loader2, Trash2, Link2, QrCode, Eye, Download, ArrowLeft, Box, Grid3x3, Image as ImageIcon,
-  Upload, X, Check, Copy, ExternalLink, Pencil, Save, ChevronLeft, ChevronRight, Sparkles, EyeOff
+  Upload, X, Check, Copy, ExternalLink, Pencil, Save, Sparkles, EyeOff, Images
 } from 'lucide-react';
+import MediaSourcePicker from '../MediaSourcePicker';
 import { UserAccount } from '../../types';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import VRViewer360 from './VRViewer360';
 import {
   VRTour, VRSourceType, getMyTours, saveTour, deleteTour, uploadPanorama, buildTourLink,
-  loadImageFromFile, imageToData, cubemapToEquirect, gridToEquirect, equirectToCanvas, canvasToBlob, defaultRowPitches, GridImage
+  loadImageFromUrl, imageToData, cubemapToEquirect, gridToEquirect, equirectToCanvas, canvasToBlob, defaultRowPitches, GridImage
 } from '../../lib/vr360';
 
 interface Props { currentUser: UserAccount; }
@@ -183,8 +184,48 @@ function LinkDialog({ tour, onClose }: { tour: VRTour; onClose: () => void }) {
 }
 
 // ---------------------------------------------------------------------
-// Tạo không gian 360 mới: chọn kiểu ảnh đầu vào, tải ảnh, ghép, xem thử, lưu
+// Tạo không gian 360 mới: chọn kiểu ảnh đầu vào, chọn ảnh vào từng ô, ghép, xem thử, lưu
 // ---------------------------------------------------------------------
+type CubeKey = 'front' | 'back' | 'left' | 'right' | 'top' | 'bottom';
+
+// Ô ảnh dùng chung cho lưới, 6 mặt khối và ảnh 360 có sẵn: ô trống thì cả ô là nút chọn ảnh
+// (thư viện hoặc tải lên), có ảnh thì hiện nút Đổi và Xóa. Đặt ngoài VRCreate để không bị
+// dựng lại mỗi lần cha render, nhờ vậy hộp thoại chọn ảnh không tự đóng.
+interface CellProps {
+  url?: string; onPick: (u: string) => void; onPickMany?: (u: string[]) => void; onClear: () => void;
+  badge?: string; size: string; folder: string; dragKeyOf?: string;
+  dragKey?: string | null; overKey?: string | null; pressRef?: React.MutableRefObject<{ k: string; x: number; y: number } | null>;
+}
+const pickerFull = 'absolute inset-0 flex flex-col items-center justify-center gap-1 text-[11px] font-bold text-slate-400 hover:text-brand';
+const pickerSmall = 'inline-flex items-center gap-1 rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-bold text-slate-700 hover:bg-white';
+function Cell({ url, onPick, onPickMany, onClear, badge, size, folder, dragKeyOf, dragKey, overKey, pressRef }: CellProps) {
+  const dragging = !!dragKeyOf && dragKey === dragKeyOf;
+  const over = !!dragKeyOf && overKey === dragKeyOf && !!dragKey;
+  return (
+    <div
+      data-slot={dragKeyOf}
+      onPointerDown={(e) => { if (!url || !dragKeyOf || !pressRef) return; pressRef.current = { k: dragKeyOf, x: e.clientX, y: e.clientY }; }}
+      className={`group relative ${size} overflow-hidden rounded-xl border-2 bg-slate-100 select-none ${url ? (dragKeyOf ? 'cursor-grab active:cursor-grabbing touch-none border-slate-200' : 'border-slate-200') : 'border-dashed border-slate-300'} ${over ? 'border-brand ring-2 ring-brand/40 scale-105' : ''} ${dragging ? 'opacity-30' : ''}`}
+    >
+      {url ? (
+        <>
+          <img src={url} alt="" className="pointer-events-none h-full w-full object-cover" draggable={false} />
+          {badge && <span className="pointer-events-none absolute left-1 top-1 rounded bg-black/60 px-1 text-[9px] font-bold text-white">{badge}</span>}
+          <div onPointerDown={e => e.stopPropagation()} className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-black/50 px-1 py-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <MediaSourcePicker onSelect={onPick} accept="image/*" resourceType="image" folder={folder} category="VR 360 nguồn" label="Đổi" className={pickerSmall} icon={Images} />
+            <button type="button" onClick={onClear} className="rounded-md bg-rose-500/90 px-1.5 py-0.5 text-[10px] font-bold text-white hover:bg-rose-500"><X className="h-3 w-3" /></button>
+          </div>
+        </>
+      ) : (
+        <>
+          <MediaSourcePicker onSelect={onPick} onSelectMultiple={onPickMany} multiple={!!onPickMany} accept="image/*" resourceType="image" folder={folder} category="VR 360 nguồn" label="Chọn ảnh" className={pickerFull} icon={Plus} />
+          {badge && <span className="pointer-events-none absolute left-1 top-1 rounded bg-slate-200 px-1 text-[9px] font-bold text-slate-500">{badge}</span>}
+        </>
+      )}
+    </div>
+  );
+}
+
 function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; onBack: () => void; onSaved: (t: VRTour) => void }) {
   const { addNotification } = useNotifications();
   const [source, setSource] = useState<VRSourceType | null>(null);
@@ -197,98 +238,77 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
   const [result, setResult] = useState<{ canvas: HTMLCanvasElement; url: string } | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Cubemap
-  const [cubeFiles, setCubeFiles] = useState<Partial<Record<'front' | 'back' | 'left' | 'right' | 'top' | 'bottom', File>>>({});
-  const [cubePreviews, setCubePreviews] = useState<Partial<Record<string, string>>>({});
-  // Lưới
+  // Ảnh của từng ô đều là URL (ảnh trong thư viện hoặc vừa tải lên Cloudinary qua bộ chọn dùng chung).
+  const [cubeUrls, setCubeUrls] = useState<Partial<Record<CubeKey, string>>>({});
   const [rows, setRows] = useState(3);
   const [cols, setCols] = useState(8);
   const [hfov, setHfov] = useState(66);
   const [pitches, setPitches] = useState<number[]>(defaultRowPitches(3));
   const [yawOffset, setYawOffset] = useState(0);
-  const [gridFiles, setGridFiles] = useState<{ file: File; url: string }[]>([]);
-  // Kéo thả trực tiếp để đổi chỗ 2 ô trong lưới, không cần nhấn giữ. Ảnh mờ bám theo con trỏ
-  // được cập nhật thẳng vào DOM (không qua state) để không giật.
-  const [gridDragId, setGridDragId] = useState<number | null>(null);
-  const [gridOverId, setGridOverId] = useState<number | null>(null);
-  const gridDragRef = useRef<number | null>(null);
-  const gridOverRef = useRef<number | null>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
+  const [slots, setSlots] = useState<Record<string, string>>({}); // khóa "hàng-cột" -> url
+  const [equiUrl, setEquiUrl] = useState<string | null>(null);
+
+  const prevUrlRef = useRef<string | null>(null);
+  useEffect(() => () => { if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current); }, []);
+
+  const setRowsSafe = (n: number) => { const r = Math.max(1, Math.min(5, n || 1)); setRows(r); setPitches(defaultRowPitches(r)); };
+  const key = (r: number, c: number) => `${r}-${c}`;
+  const filledCount = Array.from({ length: rows * cols }).filter((_, i) => !!slots[key(Math.floor(i / cols), i % cols)]).length;
+
+  // Đặt 1 ảnh vào ô, hoặc điền lần lượt nhiều ảnh bắt đầu từ ô đó theo thứ tự trái sang phải, trên xuống dưới.
+  const fillFrom = (r: number, c: number, urls: string[]) => {
+    setSlots(prev => {
+      const next = { ...prev };
+      let i = r * cols + c;
+      for (const u of urls) { if (i >= rows * cols) break; next[key(Math.floor(i / cols), i % cols)] = u; i += 1; }
+      return next;
+    });
+  };
+  const clearSlot = (r: number, c: number) => setSlots(prev => { const n = { ...prev }; delete n[key(r, c)]; return n; });
+
+  // Kéo thả trực tiếp để đổi chỗ 2 ô. Ảnh mờ bám theo con trỏ cập nhật thẳng DOM nên không giật.
+  const [dragKey, setDragKey] = useState<string | null>(null);
+  const [overKey, setOverKey] = useState<string | null>(null);
+  const dragRef = useRef<string | null>(null);
+  const overRef = useRef<string | null>(null);
   const ghostRef = useRef<HTMLDivElement>(null);
-  const pressRef = useRef<{ i: number; x: number; y: number } | null>(null);
-  const startGridPress = (i: number, e: React.PointerEvent) => { pressRef.current = { i, x: e.clientX, y: e.clientY }; };
+  const pressRef = useRef<{ k: string; x: number; y: number } | null>(null);
   useEffect(() => {
     const moveGhost = (x: number, y: number) => { const g = ghostRef.current; if (g) g.style.transform = `translate(${x + 12}px, ${y + 12}px)`; };
     const onMove = (e: PointerEvent) => {
-      // Chưa kéo: chỉ bắt đầu khi con trỏ dịch quá 6px để bấm nút trên ảnh vẫn hoạt động.
-      if (gridDragRef.current === null) {
+      if (dragRef.current === null) {
         const p = pressRef.current;
-        if (!p) return;
-        if (Math.hypot(e.clientX - p.x, e.clientY - p.y) < 6) return;
-        gridDragRef.current = p.i; setGridDragId(p.i); pressRef.current = null;
-        moveGhost(e.clientX, e.clientY);
+        if (!p || Math.hypot(e.clientX - p.x, e.clientY - p.y) < 6) return;
+        dragRef.current = p.k; setDragKey(p.k); pressRef.current = null; moveGhost(e.clientX, e.clientY);
         return;
       }
       moveGhost(e.clientX, e.clientY);
       const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
       const slot = el?.closest('[data-slot]') as HTMLElement | null;
-      const id = slot ? Number(slot.getAttribute('data-slot')) : null;
-      const next = id !== null && !Number.isNaN(id) && id !== gridDragRef.current ? id : null;
-      if (next !== gridOverRef.current) { gridOverRef.current = next; setGridOverId(next); }
+      const k = slot?.getAttribute('data-slot') || null;
+      const next = k && k !== dragRef.current ? k : null;
+      if (next !== overRef.current) { overRef.current = next; setOverKey(next); }
     };
     const onUp = () => {
       pressRef.current = null;
-      const from = gridDragRef.current, to = gridOverRef.current;
-      if (from !== null && to !== null && from !== to) {
-        setGridFiles(prev => {
-          const n = [...prev];
-          if (to < n.length) { [n[from], n[to]] = [n[to], n[from]]; }
-          else { const [it] = n.splice(from, 1); n.push(it); }
-          return n;
-        });
+      const from = dragRef.current, to = overRef.current;
+      if (from && to && from !== to) {
+        setSlots(prev => { const n = { ...prev }; const a = n[from], b = n[to]; if (b) n[from] = b; else delete n[from]; if (a) n[to] = a; else delete n[to]; return n; });
       }
-      if (gridDragRef.current !== null) { gridDragRef.current = null; gridOverRef.current = null; setGridDragId(null); setGridOverId(null); }
+      if (dragRef.current !== null) { dragRef.current = null; overRef.current = null; setDragKey(null); setOverKey(null); }
     };
     document.addEventListener('pointermove', onMove);
     document.addEventListener('pointerup', onUp);
     document.addEventListener('pointercancel', onUp);
-    return () => {
-      document.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerup', onUp);
-      document.removeEventListener('pointercancel', onUp);
-    };
+    return () => { document.removeEventListener('pointermove', onMove); document.removeEventListener('pointerup', onUp); document.removeEventListener('pointercancel', onUp); };
   }, []);
-  // Diễn giải góc cho người dùng dễ xếp ảnh đúng chỗ.
+
   const pitchLabel = (p: number) => p > 15 ? `Ngẩng lên ${p}° (trần)` : p < -15 ? `Cúi xuống ${Math.abs(p)}° (sàn)` : `Ngang tầm mắt ${p}°`;
   const yawLabel = (y: number) => {
     const r = Math.round(y);
     const name = r === 0 ? 'Trước' : r === 90 ? 'Phải' : r === 180 ? 'Sau' : r === 270 ? 'Trái' : r < 90 ? 'Trước phải' : r < 180 ? 'Sau phải' : r < 270 ? 'Sau trái' : 'Trước trái';
     return `${r}° ${name}`;
   };
-  // Equirect
-  const [equiFile, setEquiFile] = useState<File | null>(null);
-  const [equiPreview, setEquiPreview] = useState<string | null>(null);
-
-  const prevUrlRef = useRef<string | null>(null);
-  useEffect(() => () => { if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current); }, []);
-
-  const setRowsSafe = (n: number) => { const r = Math.max(1, Math.min(5, n || 1)); setRows(r); setPitches(defaultRowPitches(r)); };
-
-  const pickCube = (key: string, f: File | undefined) => {
-    if (!f) return;
-    setCubeFiles(s => ({ ...s, [key]: f }));
-    setCubePreviews(s => ({ ...s, [key]: URL.createObjectURL(f) }));
-  };
-  const addGridFiles = (list: FileList | null) => {
-    if (!list) return;
-    const arr = Array.from(list).filter(f => f.type.startsWith('image/'));
-    arr.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-    setGridFiles(prev => [...prev, ...arr.map(f => ({ file: f, url: URL.createObjectURL(f) }))]);
-  };
-  const moveGrid = (i: number, dir: -1 | 1) => {
-    setGridFiles(prev => { const j = i + dir; if (j < 0 || j >= prev.length) return prev; const n = [...prev]; [n[i], n[j]] = [n[j], n[i]]; return n; });
-  };
-  const removeGrid = (i: number) => setGridFiles(prev => prev.filter((_, k) => k !== i));
 
   const finish = (canvas: HTMLCanvasElement) => {
     canvas.toBlob(b => {
@@ -304,33 +324,34 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
     setProcessing(true); setProgress(0); setResult(null);
     try {
       if (source === 'cubemap') {
-        const missing = CUBE_SLOTS.filter(s => !cubeFiles[s.key]).map(s => s.label);
+        const missing = CUBE_SLOTS.filter(s => !cubeUrls[s.key]).map(s => s.label);
         if (missing.length) throw new Error('Thiếu ảnh mặt ' + missing.join(', '));
         setProgressText('Đang đọc 6 mặt ảnh...');
         const faces: any = {};
-        for (const s of CUBE_SLOTS) faces[s.key] = imageToData(await loadImageFromFile(cubeFiles[s.key]!), 2048);
+        for (const s of CUBE_SLOTS) faces[s.key] = imageToData(await loadImageFromUrl(cubeUrls[s.key]!), 2048);
         setProgressText('Đang ghép thành ảnh 360...');
-        const canvas = await cubemapToEquirect(faces, outWidth, setProgress);
-        finish(canvas);
+        finish(await cubemapToEquirect(faces, outWidth, setProgress));
       } else if (source === 'grid') {
-        if (gridFiles.length === 0) throw new Error('Chưa có ảnh nào');
         const need = rows * cols;
-        if (gridFiles.length !== need) throw new Error(`Lưới ${rows} hàng × ${cols} cột cần đúng ${need} ảnh, hiện có ${gridFiles.length}`);
+        const missing: string[] = [];
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (!slots[key(r, c)]) missing.push(`H${r + 1}C${c + 1}`);
+        if (missing.length === need) throw new Error('Chưa có ảnh nào trong lưới');
+        if (missing.length) throw new Error(`Còn ${missing.length} ô trống: ${missing.slice(0, 8).join(', ')}${missing.length > 8 ? '...' : ''}`);
+        if (new Set(pitches.slice(0, rows)).size < rows) throw new Error('Có 2 hàng cùng góc ngẩng, hãy đặt mỗi hàng 1 góc khác nhau');
         setProgressText('Đang đọc ảnh...');
         const imgs: GridImage[] = [];
-        for (let i = 0; i < gridFiles.length; i++) {
-          const r = Math.floor(i / cols), c = i % cols;
-          const data = imageToData(await loadImageFromFile(gridFiles[i].file), 1600);
+        let done = 0;
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+          const data = imageToData(await loadImageFromUrl(slots[key(r, c)]), 1600);
           imgs.push({ data, yawDeg: yawOffset + c * (360 / cols), pitchDeg: pitches[r] ?? 0 });
-          setProgress(Math.round((i / gridFiles.length) * 100));
+          done += 1; setProgress(Math.round((done / need) * 100));
         }
         setProgressText('Đang chiếu và trộn ảnh lên mặt cầu...');
-        const canvas = await gridToEquirect(imgs, { hfovDeg: hfov, outWidth }, setProgress);
-        finish(canvas);
+        finish(await gridToEquirect(imgs, { hfovDeg: hfov, outWidth }, setProgress));
       } else if (source === 'equirect') {
-        if (!equiFile) throw new Error('Chưa chọn ảnh 360');
+        if (!equiUrl) throw new Error('Chưa chọn ảnh 360');
         setProgressText('Đang chuẩn hóa ảnh...');
-        const img = await loadImageFromFile(equiFile);
+        const img = await loadImageFromUrl(equiUrl);
         const ratio = img.naturalWidth / img.naturalHeight;
         if (Math.abs(ratio - 2) > 0.15) addNotification(`Ảnh có tỉ lệ ${ratio.toFixed(2)}:1, ảnh 360 chuẩn là 2:1 nên có thể bị kéo giãn.`, 'warning');
         finish(equirectToCanvas(img, 6144));
@@ -396,54 +417,45 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
         </div>
       </div>
 
-      {/* Bước 2: tải ảnh theo kiểu đã chọn */}
+      {/* Bước 2: chọn ảnh vào từng ô */}
       {source && (
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm space-y-4">
-          <h2 className="text-sm font-black text-slate-800">2. Tải ảnh lên</h2>
+          <h2 className="text-sm font-black text-slate-800">2. Chọn ảnh vào từng ô</h2>
+          <p className="text-[11px] text-slate-500">Bấm vào ô để chọn ảnh từ thư viện có sẵn hoặc tải ảnh mới lên. Chọn nhiều ảnh cùng lúc thì hệ thống điền lần lượt từ ô đó sang phải rồi xuống hàng dưới.</p>
 
           {source === 'cubemap' && (
-            <>
-              <p className="text-[11px] text-slate-500">Mỗi mặt là ảnh vuông góc nhìn 90°. Nếu xuất từ Blender, 3ds Max, Unity, chọn đúng hướng tương ứng. Nếu chụp bằng điện thoại, đứng cố định và chụp thẳng 6 hướng.</p>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                {CUBE_SLOTS.map(s => (
-                  <label key={s.key} className="group relative flex aspect-square cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 hover:border-brand">
-                    {cubePreviews[s.key] ? <img src={cubePreviews[s.key]} alt="" className="absolute inset-0 h-full w-full object-cover" /> : <Upload className="h-6 w-6 text-slate-300 group-hover:text-brand" />}
-                    <span className={`relative z-10 mt-auto mb-2 rounded-lg px-2 py-1 text-[11px] font-bold ${cubePreviews[s.key] ? 'bg-black/60 text-white' : 'text-slate-600'}`}>{s.label}</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={e => pickCube(s.key, e.target.files?.[0])} />
-                  </label>
-                ))}
-              </div>
-            </>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {CUBE_SLOTS.map(s => (
+                <div key={s.key} className="space-y-1">
+                  <p className="text-center text-[11px] font-bold text-slate-600">{s.label}</p>
+                  <Cell url={cubeUrls[s.key]} size="aspect-square w-full" folder={`vr360/${currentUser.id}/cube`}
+                    onPick={u => setCubeUrls(p => ({ ...p, [s.key]: u }))}
+                    onPickMany={us => setCubeUrls(p => { const n = { ...p }; const order = CUBE_SLOTS.map(x => x.key); let i = order.indexOf(s.key); for (const u of us) { if (i >= order.length) break; n[order[i]] = u; i += 1; } return n; })}
+                    onClear={() => setCubeUrls(p => { const n = { ...p }; delete n[s.key]; return n; })} />
+                </div>
+              ))}
+            </div>
           )}
 
           {source === 'grid' && (
             <>
-              <p className="text-[11px] text-slate-500">Chụp đứng yên 1 chỗ, xoay đều theo từng hàng: hàng trên ngẩng máy lên, hàng giữa ngang, hàng dưới cúi xuống. Sắp ảnh theo thứ tự từ hàng trên xuống, mỗi hàng từ trái sang phải theo chiều xoay. Kết quả tốt khi các ảnh chồng lấn nhau khoảng 30%.</p>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div><label className={lbl}>Số hàng</label><input type="number" min={1} max={5} value={rows} onChange={e => setRowsSafe(Number(e.target.value))} className={inp} /></div>
                 <div><label className={lbl}>Số ảnh mỗi hàng (cột)</label><input type="number" min={3} max={36} value={cols} onChange={e => setCols(Math.max(3, Math.min(36, Number(e.target.value) || 3)))} className={inp} /></div>
                 <div><label className={lbl}>Góc nhìn ngang ống kính (°)</label><input type="number" min={30} max={120} value={hfov} onChange={e => setHfov(Math.max(30, Math.min(120, Number(e.target.value) || 66)))} className={inp} /><p className="mt-1 text-[10px] text-slate-400">Điện thoại thường 60 đến 70°, ống góc rộng 90 đến 110°</p></div>
                 <div><label className={lbl}>Lệch hướng ban đầu (°)</label><input type="number" value={yawOffset} onChange={e => setYawOffset(Number(e.target.value) || 0)} className={inp} /></div>
               </div>
-              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm font-bold text-slate-500 hover:border-brand hover:text-brand">
-                <Upload className="h-5 w-5" /> Chọn nhiều ảnh (cần {rows * cols} ảnh, đang có {gridFiles.length})
-                <input type="file" accept="image/*" multiple className="hidden" onChange={e => { addGridFiles(e.target.files); e.target.value = ''; }} />
-              </label>
-              {/* Bảng xếp ảnh theo lưới: hàng là góc ngẩng, cột là hướng quay. Nhấn giữ ảnh rồi kéo thả để đổi chỗ. */}
+
               <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3 space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-[11px] font-semibold text-slate-500">Kéo ảnh thả vào ô muốn đặt để đổi chỗ, xếp đúng hàng (góc ngẩng) và cột (hướng quay).</p>
-                  <div className="flex items-center gap-2">
-                    {gridFiles.length > 0 && <button onClick={() => setGridFiles([])} className="text-[11px] font-bold text-rose-500 hover:underline">Xóa hết ảnh</button>}
-                  </div>
+                  <p className="text-[11px] font-semibold text-slate-500">Đã có {filledCount}/{rows * cols} ảnh. Kéo ảnh thả sang ô khác để đổi chỗ.</p>
+                  {filledCount > 0 && <button onClick={() => setSlots({})} className="text-[11px] font-bold text-rose-500 hover:underline">Xóa hết ảnh</button>}
                 </div>
-                <div ref={gridRef} className="overflow-x-auto pb-1">
+                <div className="overflow-x-auto pb-1">
                   <table className="border-separate border-spacing-1">
                     <thead>
                       <tr>
-                        <th className="sticky left-0 z-10 bg-slate-50/95 px-1 text-left align-bottom">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Hàng ↓ · Hướng →</span>
-                        </th>
+                        <th className="sticky left-0 z-10 bg-slate-50/95 px-1 text-left align-bottom"><span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Hàng ↓ · Hướng →</span></th>
                         {Array.from({ length: cols }).map((_, c) => {
                           const yaw = ((yawOffset + c * (360 / cols)) % 360 + 360) % 360;
                           return (
@@ -468,7 +480,6 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
                                 <input type="number" min={-90} max={90} value={pitches[r] ?? 0} onChange={e => setPitches(ps => ps.map((v, k) => k === r ? Number(e.target.value) || 0 : v))} className="w-16 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-bold text-slate-700 outline-none focus:border-brand" />
                                 <span className="text-[10px] text-slate-400">° ngẩng</span>
                               </div>
-                              {/* Chọn nhanh loại ảnh của hàng để không phải nhớ số độ. */}
                               <div className="mt-1 flex gap-1">
                                 {[{ l: 'Trần', v: 55 }, { l: 'Ngang', v: 0 }, { l: 'Sàn', v: -55 }].map(pr => {
                                   const on = (pitches[r] ?? 0) === pr.v;
@@ -477,74 +488,22 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
                               </div>
                             </div>
                           </th>
-                          {Array.from({ length: cols }).map((_, c) => {
-                            const i = r * cols + c;
-                            const g = gridFiles[i];
-                            const dragging = gridDragId === i;
-                            const over = gridOverId === i && gridDragId !== null && gridDragId !== i;
-                            return (
-                              <td key={c} className="p-0 align-top">
-                                <div
-                                  data-slot={i}
-                                  onPointerDown={(e) => { if (!g) return; startGridPress(i, e); }}
-                                  className={`group relative h-20 w-28 overflow-hidden rounded-xl border-2 bg-slate-100 select-none ${g ? 'cursor-grab active:cursor-grabbing touch-none' : 'border-dashed'} ${over ? 'border-brand ring-2 ring-brand/40 scale-105' : g ? 'border-slate-200' : 'border-slate-300'} ${dragging ? 'opacity-30' : ''}`}
-                                >
-                                  {g ? (
-                                    <>
-                                      <img src={g.url} alt="" className="pointer-events-none h-full w-full object-cover" draggable={false} />
-                                      <span className="pointer-events-none absolute left-1 top-1 rounded bg-black/60 px-1 text-[9px] font-bold text-white">{i + 1}</span>
-                                      <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/50 px-1 py-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-                                        <button onPointerDown={e => e.stopPropagation()} onClick={() => moveGrid(i, -1)} className="text-white"><ChevronLeft className="h-3.5 w-3.5" /></button>
-                                        <button onPointerDown={e => e.stopPropagation()} onClick={() => removeGrid(i)} className="text-rose-300"><X className="h-3.5 w-3.5" /></button>
-                                        <button onPointerDown={e => e.stopPropagation()} onClick={() => moveGrid(i, 1)} className="text-white"><ChevronRight className="h-3.5 w-3.5" /></button>
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <span className="pointer-events-none absolute inset-0 grid place-items-center text-[10px] font-semibold text-slate-400">Trống</span>
-                                  )}
-                                </div>
-                              </td>
-                            );
-                          })}
+                          {Array.from({ length: cols }).map((_, c) => (
+                            <td key={c} className="p-0 align-top">
+                              <Cell url={slots[key(r, c)]} size="h-20 w-28" badge={`${r * cols + c + 1}`} folder={`vr360/${currentUser.id}/grid`} dragKeyOf={key(r, c)} dragKey={dragKey} overKey={overKey} pressRef={pressRef}
+                                onPick={u => fillFrom(r, c, [u])} onPickMany={us => fillFrom(r, c, us)} onClear={() => clearSlot(r, c)} />
+                            </td>
+                          ))}
                         </tr>
                       ))}
-                      {gridFiles.length > rows * cols && (
-                        <tr>
-                          <th className="sticky left-0 z-10 bg-slate-50/95 px-1 text-left align-middle">
-                            <div className="w-40 rounded-lg bg-amber-50 px-2 py-1.5">
-                              <p className="text-[11px] font-black text-amber-700">Ảnh thừa ({gridFiles.length - rows * cols})</p>
-                              <p className="text-[10px] font-semibold text-amber-600">Không được ghép. Kéo vào lưới hoặc xóa bớt.</p>
-                            </div>
-                          </th>
-                          {gridFiles.slice(rows * cols).map((g, k) => {
-                            const i = rows * cols + k;
-                            const dragging = gridDragId === i;
-                            const over = gridOverId === i && gridDragId !== null && gridDragId !== i;
-                            return (
-                              <td key={g.url} className="p-0 align-top">
-                                <div
-                                  data-slot={i}
-                                  onPointerDown={(e) => startGridPress(i, e)}
-                                  className={`group relative h-20 w-28 overflow-hidden rounded-xl border-2 bg-amber-50 select-none cursor-grab active:cursor-grabbing touch-none ${over ? 'border-brand ring-2 ring-brand/40 scale-105' : 'border-amber-200'} ${dragging ? 'opacity-30' : ''}`}
-                                >
-                                  <img src={g.url} alt="" className="pointer-events-none h-full w-full object-cover opacity-70" draggable={false} />
-                                  <span className="pointer-events-none absolute left-1 top-1 rounded bg-black/60 px-1 text-[9px] font-bold text-white">{i + 1}</span>
-                                  <button onPointerDown={e => e.stopPropagation()} onClick={() => removeGrid(i)} className="absolute right-1 top-1 rounded bg-black/60 p-0.5 text-rose-300"><X className="h-3.5 w-3.5" /></button>
-                                </div>
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      )}
                     </tbody>
                   </table>
                 </div>
                 <p className="text-[10px] text-slate-400">Mỗi hàng là 1 góc ngẩng máy, bấm Trần, Ngang, Sàn ở đầu hàng cho đúng với ảnh trong hàng đó. Mỗi cột là 1 hướng quay tính từ hướng trước mặt.</p>
                 {new Set(pitches.slice(0, rows)).size < rows && <p className="text-[11px] font-bold text-rose-500">Có 2 hàng cùng góc ngẩng, ảnh sẽ chồng lên nhau. Hãy đặt mỗi hàng 1 góc khác nhau.</p>}
-                {/* Ảnh mờ bám theo con trỏ khi đang kéo */}
-                {gridDragId !== null && gridFiles[gridDragId] && (
+                {dragKey && slots[dragKey] && (
                   <div ref={ghostRef} className="pointer-events-none fixed left-0 top-0 z-[80] h-16 w-24 overflow-hidden rounded-lg border-2 border-brand shadow-2xl opacity-90 will-change-transform">
-                    <img src={gridFiles[gridDragId].url} alt="" className="h-full w-full object-cover" draggable={false} />
+                    <img src={slots[dragKey]} alt="" className="h-full w-full object-cover" draggable={false} />
                   </div>
                 )}
               </div>
@@ -552,10 +511,10 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
           )}
 
           {source === 'equirect' && (
-            <label className="relative flex min-h-[160px] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 hover:border-brand">
-              {equiPreview ? <img src={equiPreview} alt="" className="max-h-72 w-full object-contain" /> : <span className="inline-flex items-center gap-2 text-sm font-bold text-slate-500"><Upload className="h-5 w-5" /> Chọn ảnh 360 (tỉ lệ 2:1)</span>}
-              <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { setEquiFile(f); setEquiPreview(URL.createObjectURL(f)); } }} />
-            </label>
+            <div className="max-w-xl">
+              <Cell url={equiUrl || undefined} size="aspect-[2/1] w-full" folder={`vr360/${currentUser.id}/equirect`} onPick={setEquiUrl} onClear={() => setEquiUrl(null)} />
+              <p className="mt-1 text-[10px] text-slate-400">Ảnh 360 tỉ lệ 2:1 (equirectangular).</p>
+            </div>
           )}
 
           <div className="flex flex-wrap items-end gap-3 border-t border-slate-100 pt-4">
