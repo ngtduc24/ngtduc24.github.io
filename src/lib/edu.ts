@@ -335,6 +335,12 @@ export async function getAssignments(classId: string) {
   return (data || []).map(mapAssignment);
 }
 
+export async function getAssignmentById(id: string) {
+  const { data, error } = await supabase.from(ASSIGNMENTS_TABLE).select('*').eq('id', id).single();
+  if (error) throw error;
+  return mapAssignment(data);
+}
+
 export async function getAssignmentByLinkId(linkId: string) {
   const { data, error } = await supabase.from(ASSIGNMENTS_TABLE).select('*, edu_classes(*, edu_schools(*))').eq('share_link_id', linkId).single();
   if (error) throw error;
@@ -549,6 +555,13 @@ export async function getExtensionForUser(assignmentId: string, userId: string) 
   const { data, error } = await supabase.from(EXTENSION_TABLE).select('*').eq('assignment_id', assignmentId).eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
   if (error) { console.warn('getExtensionForUser:', error.message); return null; }
   return data && data[0] ? mapExtension(data[0]) : null;
+}
+
+// Lấy các gia hạn đã duyệt của một bài tập, để màn chấm bài biết hạn riêng của từng sinh viên.
+export async function getApprovedExtensions(assignmentId: string) {
+  const { data, error } = await supabase.from(EXTENSION_TABLE).select('*').eq('assignment_id', assignmentId).eq('status', 'approved').order('responded_at', { ascending: false });
+  if (error) { console.warn('getApprovedExtensions:', error.message); return []; }
+  return (data || []).map(mapExtension);
 }
 
 // Lấy các yêu cầu gia hạn đang chờ duyệt của một lớp, cho giáo viên xử lý.
