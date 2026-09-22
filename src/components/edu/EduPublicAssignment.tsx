@@ -486,11 +486,41 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
             })()}
 
             {/* Kết quả học tập */}
-            {grades.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {grades.length > 0 && (() => {
+              // Điểm trung bình môn tính theo tỷ trọng, cùng công thức với bảng điểm của giảng viên:
+              // chỉ gộp các cột đã có điểm và có tỷ trọng lớn hơn 0, chia cho tổng tỷ trọng của các cột đó.
+              let sw = 0, sv = 0, counted = 0;
+              for (const item of grades) {
+                const w = item.column?.weight || 0;
+                const score = item.grade?.score;
+                if (w <= 0 || score === undefined || score === null) continue;
+                sw += w; sv += Number(score) * w; counted += 1;
+              }
+              const avg = sw > 0 ? Math.round((sv / sw) * 100) / 100 : null;
+              const hasWeights = grades.some(item => (item.column?.weight || 0) > 0);
+              return (
+                <div className="space-y-4">
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Điểm trung bình môn</p>
+                      <p className="text-[12px] text-slate-500 mt-1">
+                        {avg != null
+                          ? `Tính theo tỷ trọng của ${counted} cột điểm đã chấm (tổng tỷ trọng ${sw}%)`
+                          : hasWeights ? 'Chưa có cột điểm nào đủ điều kiện để tính' : 'Giảng viên chưa đặt tỷ trọng cho các cột điểm'}
+                      </p>
+                    </div>
+                    <div className="flex items-end gap-1.5 shrink-0">
+                      <p className={`text-4xl font-black leading-none ${avg != null ? 'text-brand' : 'text-slate-300'}`}>{avg != null ? avg : '-'}</p>
+                      <p className="text-[13px] font-bold text-slate-300 mb-0.5">/ 10</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {grades.map((item, idx) => (
                   <div key={idx} className={`p-6 rounded-2xl shadow-sm transition-all border ${idx === 0 ? 'bg-brand text-white border-transparent' : 'bg-white border-slate-200'}`}>
-                    <p className={`text-[11px] font-bold uppercase tracking-widest ${idx === 0 ? 'text-white/70' : 'text-slate-400'}`}>{item.column.name}</p>
+                    <p className={`text-[11px] font-bold uppercase tracking-widest ${idx === 0 ? 'text-white/70' : 'text-slate-400'}`}>
+                      {item.column.name}
+                      {(item.column?.weight || 0) > 0 && <span className={`ml-2 normal-case tracking-normal font-semibold ${idx === 0 ? 'text-white/60' : 'text-slate-400'}`}>Tỷ trọng {item.column.weight}%</span>}
+                    </p>
                     <div className="flex items-end gap-2 mt-3">
                       <p className="text-4xl font-bold leading-none">{item.grade?.score !== undefined ? item.grade.score : '-'}</p>
                       <p className={`text-[13px] font-bold mb-1 ${idx === 0 ? 'text-white/50' : 'text-slate-300'}`}>/ 10</p>
@@ -503,8 +533,10 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                     )}
                   </div>
                 ))}
-              </div>
-            )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {notification && (
               <Alert
