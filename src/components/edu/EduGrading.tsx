@@ -22,8 +22,8 @@ import {
   Maximize2,
   RotateCcw
 } from 'lucide-react';
-import { EduUser, EduClass, EduAssignment, EduSubmission, EduGrade, EduGradeColumn } from '../../types/edu';
-import { getClassUsers, getSubmissions, getGrades, saveGrades, saveGradeColumn, reopenSubmission, deleteGradeForUser } from '../../lib/edu';
+import { EduUser, EduClass, EduAssignment, EduSubmission, EduGrade, EduGradeColumn, EduExtensionRequest } from '../../types/edu';
+import { getClassUsers, getSubmissions, getGrades, saveGrades, saveGradeColumn, reopenSubmission, deleteGradeForUser, getAssignmentById, getApprovedExtensions } from '../../lib/edu';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import Model3DViewer from './Model3DViewer';
@@ -39,6 +39,8 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
   const [users, setUsers] = useState<EduUser[]>([]);
   const [submissions, setSubmissions] = useState<EduSubmission[]>([]);
   const [grades, setGrades] = useState<EduGrade[]>([]);
+  const [assignment, setAssignment] = useState<EduAssignment | null>(null);
+  const [extensions, setExtensions] = useState<EduExtensionRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [gradingData, setGradingData] = useState<Record<string, { score: string; note: string }>>({});
   const [activeSubmission, setActiveSubmission] = useState<EduSubmission | null>(null);
@@ -50,16 +52,36 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
 
+  // Xác định bài nộp trễ: so thời điểm nộp lần đầu với hạn nộp, hoặc hạn được gia hạn riêng nếu có.
+  const lateInfo = (submission: EduSubmission) => {
+    if (!assignment?.deadline) return null;
+    const ext = extensions.find(e => e.userId === submission.userId && e.extendUntil);
+    const effective = ext?.extendUntil ? new Date(ext.extendUntil) : new Date(assignment.deadline);
+    const at = new Date(submission.firstSubmittedAt || submission.submittedAt);
+    if (isNaN(at.getTime()) || isNaN(effective.getTime())) return null;
+    const diff = at.getTime() - effective.getTime();
+    if (diff <= 0) return { late: false as const, extended: !!ext };
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    const text = days > 0 ? `${days} ngày ${hours} giờ` : hours > 0 ? `${hours} giờ ${mins} phút` : `${Math.max(mins, 1)} phút`;
+    return { late: true as const, extended: !!ext, text, at };
+  };
+
   const loadData = useCallback(async () => {
     try {
-      const [usersData, submissionsData, gradesData] = await Promise.all([
+      const [usersData, submissionsData, gradesData, asgData, extData] = await Promise.all([
         getClassUsers(classId),
         getSubmissions(assignmentId),
-        getGrades(gradeColumnId)
+        getGrades(gradeColumnId),
+        getAssignmentById(assignmentId).catch(() => null),
+        getApprovedExtensions(assignmentId)
       ]);
       setUsers(usersData);
       setSubmissions(submissionsData);
       setGrades(gradesData);
+      setAssignment(asgData);
+      setExtensions(extData);
 
       // Initialize grading data
       const initialGrading: Record<string, { score: string; note: string }> = {};
@@ -190,6 +212,16 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
             NUMBER OF SUBMISSIONS: <span className="text-brand">{submissions.length}/{users.length}</span>
           </h2>
           <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-widest">Management of scores and student assignments</p>
+          {assignment?.deadline && (() => {
+            const lateCount = submissions.filter(s => lateInfo(s)?.late).length;
+            return (
+              <p className="text-[11px] font-semibold text-slate-500 mt-1">
+                Hạn nộp {new Date(assignment.deadline).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                {assignment.allowLate ? ', cho phép nộp trễ' : ''}
+                {lateCount > 0 && <span className="ml-2 rounded-lg bg-amber-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-600">{lateCount} bài nộp trễ</span>}
+              </p>
+            );
+          })()}
         </div>
         
         <div className="flex items-center gap-3">
@@ -247,9 +279,26 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
                     <td className="px-6 py-8 text-center">
                       {isSubmitted ? (
                         <div className="inline-flex flex-col items-center gap-1.5">
-                          <span className="px-3 py-1 bg-brand-light text-[#16a34a] text-[10px] font-black rounded-lg border border-[#dcfce7] uppercase tracking-widest">
-                            Submited
-                          </span>
+                          {(() => {
+                            const li = lateInfo(submission);
+                            if (li?.late) {
+                              return (
+                                <>
+                                  <span className="px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black rounded-lg border border-amber-200 uppercase tracking-widest" title={`Hạn nộp${li.extended ? ' (đã gia hạn riêng)' : ''} đã qua trước khi nộp`}>
+                                    Nộp trễ {li.text}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-amber-600">
+                                    Nộp trễ lúc {li.at.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                  </span>
+                                </>
+                              );
+                            }
+                            return (
+                              <span className="px-3 py-1 bg-brand-light text-[#16a34a] text-[10px] font-black rounded-lg border border-[#dcfce7] uppercase tracking-widest">
+                                {li ? (li.extended ? 'Đúng hạn gia hạn' : 'Đúng hạn') : 'Submited'}
+                              </span>
+                            );
+                          })()}
                           <span className="text-[11px] font-black text-slate-900">
                             {new Date(submission.submittedAt).toLocaleString('en-GB', {
                               year: 'numeric',
