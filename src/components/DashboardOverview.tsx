@@ -104,11 +104,26 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     try { const raw = localStorage.getItem(HIDDEN_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
   });
 
+  // Thẻ Tính năng nổi bật do người dùng tự chọn và sắp xếp, lưu theo tài khoản. null nghĩa là
+  // chưa tùy chỉnh, khi đó lấy 10 chức năng đầu theo thứ tự phím tắt.
+  const FEATURED_KEY = `dashboard_featured_${currentUser?.id || 'anon'}`;
+  const [featuredIds, setFeaturedIds] = useState<string[] | null>(() => {
+    if (Array.isArray(currentUser?.dashboardFeatured)) return currentUser!.dashboardFeatured as string[];
+    try { const raw = localStorage.getItem(FEATURED_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
+  });
+  const [showCardPicker, setShowCardPicker] = useState(false);
+
   // Lưu thứ tự và danh sách ẩn lên tài khoản (Firestore) để mọi thiết bị dùng chung một
   // cách sắp xếp. Bộ nhớ cục bộ vẫn được ghi để hiển thị tức thì khi chưa tải xong tài khoản.
-  const saveArrangementToAccount = (order: string[], hidden: string[]) => {
+  const saveArrangementToAccount = (order: string[], hidden: string[], featured?: string[] | null) => {
     if (!currentUser?.id) return;
-    saveUser({ ...currentUser, dashboardIconOrder: order, dashboardIconHidden: hidden }).catch(() => {});
+    const f = featured === undefined ? featuredIds : featured;
+    saveUser({ ...currentUser, dashboardIconOrder: order, dashboardIconHidden: hidden, dashboardFeatured: f || undefined }).catch(() => {});
+  };
+  const persistFeatured = (ids: string[]) => {
+    setFeaturedIds(ids);
+    try { localStorage.setItem(FEATURED_KEY, JSON.stringify(ids)); } catch {}
+    saveArrangementToAccount(iconOrder, hiddenIds, ids);
   };
 
   const persistHidden = (ids: string[]) => {
@@ -157,14 +172,16 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     if (!uid || hydratedUserRef.current === uid) return;
     const serverOrder = currentUser?.dashboardIconOrder;
     const serverHidden = currentUser?.dashboardIconHidden;
+    const serverFeatured = currentUser?.dashboardFeatured;
     // Chỉ nhận khi máy chủ thực sự có dữ liệu (đã tải xong hồ sơ tài khoản).
-    if (Array.isArray(serverOrder) || Array.isArray(serverHidden)) {
+    if (Array.isArray(serverOrder) || Array.isArray(serverHidden) || Array.isArray(serverFeatured)) {
       if (Array.isArray(serverOrder)) { setIconOrder(serverOrder); try { localStorage.setItem(ORDER_KEY, JSON.stringify(serverOrder)); } catch {} }
       if (Array.isArray(serverHidden)) { setHiddenIds(serverHidden); try { localStorage.setItem(HIDDEN_KEY, JSON.stringify(serverHidden)); } catch {} }
+      if (Array.isArray(serverFeatured)) { setFeaturedIds(serverFeatured); try { localStorage.setItem(FEATURED_KEY, JSON.stringify(serverFeatured)); } catch {} }
       hydratedUserRef.current = uid;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.id, currentUser?.dashboardIconOrder, currentUser?.dashboardIconHidden]);
+  }, [currentUser?.id, currentUser?.dashboardIconOrder, currentUser?.dashboardIconHidden, currentUser?.dashboardFeatured]);
 
   useEffect(() => {
     if (settings) {
@@ -291,8 +308,23 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const filteredIcons = q ? iconModules.filter(m => m.label.toLowerCase().includes(q)) : visibleIcons;
   // Hàng phím tắt đầu trang chỉ hiện tối đa 12 nút. Khi tìm kiếm thì hiện đủ kết quả khớp.
   const rowIcons = q ? filteredIcons : filteredIcons.slice(0, 12);
-  // Trang chủ chỉ hiển thị tối đa 10 thẻ nổi bật, phần còn lại xem ở trang Tất cả tính năng.
-  const filteredCards = q ? cardModules.filter(m => m.label.toLowerCase().includes(q)) : cardModules.slice(0, 10);
+  // Thẻ nổi bật: người dùng tự chọn (featuredIds), chưa chọn thì lấy 10 chức năng đầu.
+  const defaultFeatured = cardModules.slice(0, 10).map(m => m.id);
+  const currentFeatured = featuredIds ?? defaultFeatured;
+  const featuredCards = currentFeatured.map(id => cardModules.find(m => m.id === id)).filter(Boolean) as typeof cardModules;
+  const filteredCards = q ? cardModules.filter(m => m.label.toLowerCase().includes(q)) : featuredCards;
+  const addFeatured = (id: string) => { if (!currentFeatured.includes(id)) persistFeatured([...currentFeatured, id]); };
+  const removeFeatured = (id: string) => persistFeatured(currentFeatured.filter(x => x !== id));
+  const toggleFeatured = (id: string) => { if (currentFeatured.includes(id)) removeFeatured(id); else addFeatured(id); };
+  // Đổi vị trí 2 thẻ nổi bật, chỉ ảnh hưởng danh sách thẻ, không đụng hàng phím tắt.
+  const reorderFeatured = (sourceId: string, targetId: string) => {
+    if (!sourceId || sourceId === targetId) return;
+    const ids = [...currentFeatured];
+    const from = ids.indexOf(sourceId); const to = ids.indexOf(targetId);
+    if (from === -1 || to === -1) return;
+    ids.splice(to, 0, ids.splice(from, 1)[0]);
+    persistFeatured(ids);
+  };
 
   const persistOrder = (ids: string[]) => {
     setIconOrder(ids);
@@ -340,8 +372,8 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dragId]);
 
-  // Kéo sắp xếp thẻ Tính năng nổi bật. Nhấn giữ để vào chế độ sắp xếp rồi kéo thả, dùng chung
-  // thứ tự với hàng phím tắt ở trên nên sắp xếp một nơi thì đồng bộ cả hai.
+  // Kéo sắp xếp thẻ Tính năng nổi bật. Nhấn giữ để vào chế độ chỉnh sửa rồi kéo thả, bỏ bớt
+  // thẻ bằng nút trừ hoặc thêm thẻ bằng ô dấu cộng ở cuối.
   const [cardSortMode, setCardSortMode] = useState(false);
   const [cardDragId, setCardDragId] = useState<string | null>(null);
   const [cardOverId, setCardOverId] = useState<string | null>(null);
@@ -368,7 +400,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     };
     const onUp = () => {
       if (cardDragRef.current && cardOverRef.current && cardDragRef.current !== cardOverRef.current) {
-        reorder(cardDragRef.current, cardOverRef.current);
+        reorderFeatured(cardDragRef.current, cardOverRef.current);
       }
       cardDragRef.current = null; cardOverRef.current = null;
       setCardDragId(null); setCardOverId(null);
@@ -387,10 +419,13 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   // Bấm ra ngoài khu vực thẻ thì thoát chế độ sắp xếp thẻ.
   useEffect(() => {
     if (!cardSortMode) return;
-    const onDown = (e: PointerEvent) => { if (cardsRef.current && !cardsRef.current.contains(e.target as Node)) setCardSortMode(false); };
+    const onDown = (e: PointerEvent) => {
+      if (showCardPicker) return; // đang mở bảng chọn thì giữ chế độ chỉnh sửa
+      if (cardsRef.current && !cardsRef.current.contains(e.target as Node)) setCardSortMode(false);
+    };
     document.addEventListener('pointerdown', onDown);
     return () => document.removeEventListener('pointerdown', onDown);
-  }, [cardSortMode]);
+  }, [cardSortMode, showCardPicker]);
 
   const visibleTasks = tasks.filter(t => !t.isDeleted && isTaskRelevantToUser(t, currentUser));
   const runningTasks = visibleTasks.filter(t => t.status !== 'Completed' && t.status !== 'Cancelled');
@@ -505,8 +540,11 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                       <Minus className="h-3 w-3" strokeWidth={3} />
                     </button>
                   )}
-                  <span className={`w-14 h-14 rounded-2xl ${c.bg} ${c.text} grid place-items-center shadow-sm group-hover:scale-105 transition-transform pointer-events-none overflow-hidden`}>
-                    {(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="w-full h-full object-cover" /> : <Icon className="w-7 h-7" />}
+                  <span className="relative pointer-events-none">
+                    <span className={`w-14 h-14 rounded-2xl ${c.bg} ${c.text} grid place-items-center shadow-sm group-hover:scale-105 transition-transform overflow-hidden`}>
+                      {(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="w-full h-full object-cover" /> : <Icon className="w-7 h-7" />}
+                    </span>
+                    {(m as any).beta && !showMinus && <span className="absolute -top-1.5 -right-2 rounded-full bg-amber-500 px-1.5 py-[2px] text-[8px] font-black uppercase tracking-wider text-white shadow">Thử nghiệm</span>}
                   </span>
                   <span className="text-[11px] font-bold text-slate-600 leading-tight line-clamp-2 group-hover:text-brand pointer-events-none">{m.label}</span>
                 </div>
@@ -561,7 +599,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
       )}
 
       {/* ===== Tính năng nổi bật ===== */}
-      {filteredCards.length > 0 && (
+      {(filteredCards.length > 0 || (!q && (cardSortMode || featuredCards.length === 0))) && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -576,7 +614,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
               <button onClick={() => onSwitchTab('all_features')} className="text-xs font-bold text-brand hover:underline">Xem tất cả</button>
             </div>
           </div>
-          {cardSortMode && <p className="text-[11px] font-semibold text-brand">Đang sắp xếp. Kéo thả thẻ để đổi vị trí, bấm Xong khi hoàn tất.</p>}
+          {cardSortMode && <p className="text-[11px] font-semibold text-brand">Đang chỉnh sửa. Kéo thả để đổi vị trí, bấm dấu trừ để bỏ thẻ, bấm ô dấu cộng để thêm chức năng khác, bấm Xong khi hoàn tất.</p>}
           <div ref={cardsRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {filteredCards.map(m => {
               const Icon = m.icon; const c = COLORS[m.color];
@@ -590,17 +628,76 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                   onPointerUp={cancelCardPress}
                   onPointerLeave={cancelCardPress}
                   onClick={() => { if (cardLongPressed.current) { cardLongPressed.current = false; return; } if (cardSortMode || cardDragId) return; go(m.id); }}
-                  className={`group text-left bg-white rounded-2xl border shadow-xs transition-all p-4 flex items-start gap-3 select-none ${cardSortMode ? 'cursor-grab active:cursor-grabbing touch-none' : 'cursor-pointer hover:shadow-md hover:border-brand/30'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 border-brand/30' : 'border-slate-100'}`}
+                  className={`group relative text-left bg-white rounded-2xl border shadow-xs transition-all p-4 flex items-start gap-3 select-none ${cardSortMode ? 'cursor-grab active:cursor-grabbing touch-none' : 'cursor-pointer hover:shadow-md hover:border-brand/30'} ${isDragging ? 'opacity-40' : ''} ${isOver ? 'ring-2 ring-brand ring-offset-2 border-brand/30' : 'border-slate-100'}`}
                 >
+                  {(m as any).beta && <span className="absolute top-2 right-2 rounded-full bg-amber-500 px-1.5 py-[2px] text-[8px] font-black uppercase tracking-wider text-white shadow pointer-events-none">Thử nghiệm</span>}
+                  {cardSortMode && !q && (
+                    <span
+                      role="button"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.stopPropagation(); removeFeatured(m.id); }}
+                      title={`Bỏ "${m.label}" khỏi Tính năng nổi bật`}
+                      className="absolute -top-2 -left-2 z-10 grid h-6 w-6 place-items-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-md hover:text-rose-500 cursor-pointer"
+                    >
+                      <Minus className="h-3.5 w-3.5" strokeWidth={3} />
+                    </span>
+                  )}
                   <span className={`w-10 h-10 rounded-xl ${c.bg} ${c.text} grid place-items-center shrink-0 overflow-hidden pointer-events-none`}>{(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="w-full h-full object-cover" /> : <Icon className="w-5 h-5" />}</span>
                   <div className="min-w-0 flex-1 pointer-events-none">
-                    <h3 className="text-[13px] font-black text-slate-800 leading-tight group-hover:text-brand transition-colors">{m.label}</h3>
+                    <h3 className="text-[13px] font-black text-slate-800 leading-tight group-hover:text-brand transition-colors pr-6">{m.label}</h3>
                     <p className="text-[10.5px] text-slate-400 font-medium leading-snug mt-1 line-clamp-2">{m.desc}</p>
                   </div>
                   <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-brand group-hover:translate-x-0.5 transition-all shrink-0 pointer-events-none" />
                 </button>
               );
             })}
+            {/* Ô dấu cộng ở cuối, hiện khi đang chỉnh sửa hoặc khi chưa có thẻ nào, bấm để chọn chức năng thêm vào. */}
+            {!q && (cardSortMode || featuredCards.length === 0) && (
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => setShowCardPicker(true)}
+                title="Thêm chức năng vào Tính năng nổi bật"
+                className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-white/60 p-4 text-slate-400 transition-colors hover:border-brand hover:text-brand min-h-[76px]"
+              >
+                <Plus className="h-6 w-6" />
+                <span className="text-[12px] font-bold">Thêm chức năng</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Popup chọn chức năng thêm vào Tính năng nổi bật */}
+      {showCardPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" onClick={() => setShowCardPicker(false)}>
+          <div className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" onClick={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-100 p-5">
+              <div>
+                <h3 className="font-display text-base font-bold text-slate-900">Thêm vào Tính năng nổi bật</h3>
+                <p className="text-[11px] text-slate-400">Chọn chức năng muốn hiện ở khu vực thẻ nổi bật.</p>
+              </div>
+              <button onClick={() => setShowCardPicker(false)} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="flex-1 space-y-1 overflow-y-auto p-3">
+              {cardModules.map(m => {
+                const Icon = m.icon; const c = COLORS[m.color]; const shown = currentFeatured.includes(m.id);
+                return (
+                  <button key={m.id} onClick={() => toggleFeatured(m.id)} className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition-colors ${shown ? 'border-brand/30 bg-brand-light' : 'border-slate-100 hover:bg-slate-50'}`}>
+                    <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl overflow-hidden ${c.bg} ${c.text}`}>{(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="h-full w-full object-cover" /> : <Icon className="h-4.5 w-4.5" />}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13px] font-bold text-slate-800">{m.label}{(m as any).beta && <span className="ml-1.5 rounded-full bg-amber-500 px-1.5 py-[1px] text-[8px] font-black uppercase tracking-wider text-white align-middle">Thử nghiệm</span>}</span>
+                      <span className="block truncate text-[10px] text-slate-400">{m.desc}</span>
+                    </span>
+                    <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${shown ? 'bg-brand text-white' : 'border border-slate-300 text-transparent'}`}>{shown ? <CheckCircle2 className="h-4 w-4" /> : <Plus className="h-3.5 w-3.5 text-slate-400" />}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center justify-between gap-2 border-t border-slate-100 p-4">
+              {featuredIds ? <button onClick={() => persistFeatured(defaultFeatured)} className="text-[11px] font-bold text-brand hover:underline">Về mặc định</button> : <span />}
+              <button onClick={() => setShowCardPicker(false)} className="rounded-xl bg-brand px-5 py-2.5 text-xs font-bold text-white hover:bg-brand-hover">Xong</button>
+            </div>
           </div>
         </div>
       )}

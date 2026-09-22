@@ -343,6 +343,7 @@ export async function saveUser(user: UserAccount) {
       avatar_position: user.avatarPosition,
       dashboard_icon_order: user.dashboardIconOrder,
       dashboard_icon_hidden: user.dashboardIconHidden,
+      dashboard_featured: user.dashboardFeatured,
       created_at: user.createdAt || new Date().toISOString(),
     };
     const removeUndefined = (obj: any): any => {
@@ -432,6 +433,7 @@ export function mapUserFromDB(u: any): UserAccount {
     avatarPosition: u.avatar_position,
     dashboardIconOrder: u.dashboard_icon_order,
     dashboardIconHidden: u.dashboard_icon_hidden,
+    dashboardFeatured: u.dashboard_featured,
     createdAt: u.created_at,
   } as UserAccount;
 }

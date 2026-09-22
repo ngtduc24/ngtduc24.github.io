@@ -58,7 +58,7 @@ export function isModuleHidden(id: string, settings?: AppSettings): boolean {
 export function resolveModuleMeta<T extends { id: string; label: string; desc: string }>(
   base: T,
   settings?: AppSettings
-): T & { iconUrl?: string; hidden: boolean } {
+): T & { iconUrl?: string; hidden: boolean; beta: boolean } {
   const ov = getModuleOverride(base.id, settings);
   return {
     ...base,
@@ -66,5 +66,6 @@ export function resolveModuleMeta<T extends { id: string; label: string; desc: s
     desc: ov?.desc?.trim() || base.desc,
     iconUrl: ov?.icon || undefined,
     hidden: !!ov?.hidden,
+    beta: !!ov?.beta,
   };
 }

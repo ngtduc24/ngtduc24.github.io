@@ -16,7 +16,7 @@ import {
   X,
   Database
 } from "lucide-react";
-import { EyeOff, Eye, RotateCcw, Wrench, Power, Boxes, ImagePlay, Sparkles, Plus, Trash2, BookMarked } from "lucide-react";
+import { EyeOff, Eye, RotateCcw, Wrench, Power, Boxes, ImagePlay, Sparkles, Plus, Trash2, BookMarked, FlaskConical } from "lucide-react";
 import { AppSettings, ModuleOverride, AssistantKnowledgeItem } from "../types";
 import { saveDefaultSettingsToSupabase } from "../lib/data";
 import { MODULE_REGISTRY } from "../lib/modules";
@@ -666,7 +666,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
               <span>Cài đặt chức năng hệ thống</span>
             </h2>
             <p className="text-xs text-slate-400">
-              Đổi ảnh icon, tên và mô tả của từng chức năng. Gạt tắt để ẩn một chức năng, khi ẩn thì mọi tài khoản đều không thấy và không truy cập được kể cả khi mở bằng đường dẫn trực tiếp.
+              Đổi ảnh icon, tên và mô tả của từng chức năng. Gạt tắt để ẩn một chức năng, khi ẩn thì mọi tài khoản đều không thấy và không truy cập được kể cả khi mở bằng đường dẫn trực tiếp. Bật nhãn thử nghiệm để hiện nhãn nhỏ ở góc nút chức năng, báo cho người dùng biết chức năng đang trong giai đoạn thử nghiệm.
             </p>
           </div>
 
@@ -718,6 +718,14 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
                       className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-bold transition-colors ${hidden ? 'bg-rose-50 text-rose-500 hover:bg-rose-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}
                     >
                       {hidden ? <><EyeOff className="w-3.5 h-3.5" /> Đang ẩn</> : <><Eye className="w-3.5 h-3.5" /> Đang hiện</>}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateOverride(mod.id, { beta: !ov.beta })}
+                      title={ov.beta ? 'Đang gắn nhãn Thử nghiệm, bấm để bỏ' : 'Gắn nhãn Thử nghiệm ở góc nút chức năng'}
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-bold transition-colors ${ov.beta ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                    >
+                      <FlaskConical className="w-3.5 h-3.5" /> {ov.beta ? 'Nhãn thử nghiệm: bật' : 'Nhãn thử nghiệm: tắt'}
                     </button>
                   </div>
                 </div>
