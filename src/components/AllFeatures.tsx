@@ -177,8 +177,9 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
                           onSwitchTab('edu');
                         } else onSwitchTab(m.id);
                       }}
-                      className="group text-left bg-white rounded-2xl border border-slate-100 shadow-xs hover:shadow-md hover:border-brand/30 transition-all p-4 flex items-start gap-3"
+                      className="group relative text-left bg-white rounded-2xl border border-slate-100 shadow-xs hover:shadow-md hover:border-brand/30 transition-all p-4 flex items-start gap-3"
                     >
+                      {(m as any).beta && <span className="absolute top-2 right-2 rounded-full bg-amber-500 px-1.5 py-[2px] text-[8px] font-black uppercase tracking-wider text-white shadow">Thử nghiệm</span>}
                       <span className={`w-11 h-11 rounded-xl ${c.bg} ${c.text} grid place-items-center shrink-0 overflow-hidden`}>{(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="w-full h-full object-cover" /> : <Icon className="w-5 h-5" />}</span>
                       <div className="min-w-0 flex-1">
                         <h3 className="text-[13px] font-black text-slate-800 leading-tight group-hover:text-brand transition-colors">{m.label}</h3>

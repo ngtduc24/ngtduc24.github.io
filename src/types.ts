@@ -67,6 +67,7 @@ export interface UserAccount {
   // Sắp xếp và ẩn phím tắt trang tổng quan, lưu theo tài khoản để đồng bộ giữa các thiết bị.
   dashboardIconOrder?: string[];
   dashboardIconHidden?: string[];
+  dashboardFeatured?: string[]; // thẻ Tính năng nổi bật người dùng tự chọn
 }
 
 export interface OnlinePresenceUser {
@@ -202,6 +203,7 @@ export interface ModuleOverride {
   desc?: string;
   icon?: string; // URL ảnh thay cho biểu tượng mặc định
   hidden?: boolean;
+  beta?: boolean; // gắn nhãn Thử nghiệm ở góc nút chức năng
 }
 
 export interface TaskCompletionReport {
