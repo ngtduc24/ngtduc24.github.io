@@ -330,6 +330,12 @@ export default function App() {
       utilities: 'Tiện ích',
       ar_module: 'Tiện ích',
       vr360: 'VR 360',
+      utility_file_compress: 'Giảm dung lượng file',
+      edu_bank: 'Ngân hàng bài tập',
+      edu_exam: 'Kiểm tra trắc nghiệm',
+      edu_question_bank: 'Ngân hàng câu hỏi',
+      edu_grade: 'Nhập điểm',
+      stats: 'Thống kê',
       portfolio_cms: 'Quản trị Portfolio',
       notifications: 'Thông báo hệ thống',
       notifications_admin: 'Quản trị thông báo',
@@ -600,6 +606,10 @@ export default function App() {
     // Tiện ích đã tách thành 3 công cụ độc lập, mỗi công cụ có quyền riêng.
     // Quyền gộp 'utilities' cũ vẫn cho vào cả 3 để tài khoản cũ không mất quyền.
     const p = currentUser.permissions;
+    // Chức năng con của Giáo dục: cần quyền edu kèm cờ tương ứng, giống bảng điều khiển.
+    if (tabId === 'edu_bank') return p.includes('edu') && !!currentUser.canCreateEdu;
+    if (tabId === 'edu_exam' || tabId === 'edu_question_bank') return p.includes('edu') && !!currentUser.canGradeEdu;
+    if (tabId === 'edu_grade') return p.includes('edu') && !!currentUser.canGradeImportEdu;
     if (tabId === 'utilities') return p.includes('utilities') || p.includes('ar_module') || p.includes('utility_image_resize') || p.includes('utility_social_design');
     if (tabId === 'ar_module') return p.includes('ar_module') || p.includes('utilities');
     if (tabId === 'utility_image_resize') return p.includes('utility_image_resize') || p.includes('utilities');
@@ -737,6 +747,15 @@ export default function App() {
         return <UtilitiesModule currentUser={currentUser} />;
       case 'edu':
         return <EduModule currentUser={currentUser} settings={settings} />;
+      // Các chức năng con của Giáo dục có link riêng, mở thẳng vào màn hình tương ứng.
+      case 'edu_bank':
+        return <EduModule key="edu_bank" currentUser={currentUser} settings={settings} initialView="assignment_bank" />;
+      case 'edu_exam':
+        return <EduModule key="edu_exam" currentUser={currentUser} settings={settings} initialView="exam_bank" />;
+      case 'edu_question_bank':
+        return <EduModule key="edu_question_bank" currentUser={currentUser} settings={settings} initialView="question_bank" />;
+      case 'edu_grade':
+        return <EduModule key="edu_grade" currentUser={currentUser} settings={settings} initialView="grade_entry" />;
       case 'elearning':
         return <ELearningModule currentUser={currentUser} onExit={() => setCurrentTab('dashboard')} />;
       case 'remier':

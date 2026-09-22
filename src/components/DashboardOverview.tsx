@@ -237,15 +237,8 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const perms = currentUser?.permissions || [];
 
   // Mở chức năng. Với phím tắt con của Giáo dục thì đặt sẵn màn hình đích rồi vào module edu.
-  const go = (id: string) => {
-    if (id === 'edu_bank' || id === 'edu_exam' || id === 'edu_grade' || id === 'edu_question_bank') {
-      const map: Record<string, string> = { edu_bank: 'assignment_bank', edu_exam: 'exam_bank', edu_grade: 'grade_entry', edu_question_bank: 'question_bank' };
-      try { localStorage.setItem('edu_initial_view', map[id]); } catch {}
-      onSwitchTab('edu');
-      return;
-    }
-    onSwitchTab(id);
-  };
+  // Mỗi chức năng là một tab có link riêng (?tab=slug), kể cả các chức năng con của Giáo dục.
+  const go = (id: string) => onSwitchTab(id);
   const can = (id: string) => {
     if (isUserAdmin) return true;
     if (id === 'notifications') return true;

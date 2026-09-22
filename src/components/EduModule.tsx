@@ -37,16 +37,18 @@ import { readSubRoute, writeSubRoute } from '../lib/seoConfig';
 interface EduModuleProps {
   currentUser: UserAccount;
   settings: AppSettings;
+  initialView?: EduView; // mở thẳng một màn hình con khi vào bằng link riêng (ngân hàng bài tập, trắc nghiệm...)
 }
 
 type EduView = 'list' | 'import' | 'class_detail' | 'assignment_edit' | 'assignment_detail' | 'grading' | 'assignment_bank' | 'grade_entry' | 'exam_bank' | 'question_bank';
 
-export default function EduModule({ currentUser, settings }: EduModuleProps) {
+export default function EduModule({ currentUser, settings, initialView }: EduModuleProps) {
   // Đọc màn hình con từ URL để tải lại trang không nhảy về danh sách chính.
   const sub = readSubRoute();
   const [view, setView] = useState<EduView>(() => {
     const valid: EduView[] = ['import', 'class_detail', 'assignment_edit', 'assignment_detail', 'grading', 'assignment_bank', 'grade_entry', 'exam_bank', 'question_bank'];
     if (sub.sv && (valid as string[]).includes(sub.sv)) return sub.sv as EduView;
+    if (initialView) return initialView;
     // Phím tắt từ Dashboard có thể mở thẳng vào Trắc nghiệm, Nhập điểm hoặc Ngân hàng câu hỏi.
     try {
       const v = localStorage.getItem('edu_initial_view');
