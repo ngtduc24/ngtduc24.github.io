@@ -207,6 +207,64 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
   const [pitches, setPitches] = useState<number[]>(defaultRowPitches(3));
   const [yawOffset, setYawOffset] = useState(0);
   const [gridFiles, setGridFiles] = useState<{ file: File; url: string }[]>([]);
+  // Nhấn giữ ảnh để vào chế độ sắp xếp, kéo thả để đổi chỗ 2 ô trong lưới.
+  const [gridSort, setGridSort] = useState(false);
+  const [gridDragId, setGridDragId] = useState<number | null>(null);
+  const [gridOverId, setGridOverId] = useState<number | null>(null);
+  const gridDragRef = useRef<number | null>(null);
+  const gridOverRef = useRef<number | null>(null);
+  const gridPressTimer = useRef<number | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const beginGridDrag = (i: number) => { setGridDragId(i); gridDragRef.current = i; };
+  const startGridPress = (i: number) => {
+    if (gridPressTimer.current) window.clearTimeout(gridPressTimer.current);
+    gridPressTimer.current = window.setTimeout(() => { setGridSort(true); beginGridDrag(i); }, 400);
+  };
+  const cancelGridPress = () => { if (gridPressTimer.current) { window.clearTimeout(gridPressTimer.current); gridPressTimer.current = null; } };
+  useEffect(() => {
+    if (gridDragId === null) return;
+    const onMove = (e: PointerEvent) => {
+      const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+      const slot = el?.closest('[data-slot]') as HTMLElement | null;
+      const id = slot ? Number(slot.getAttribute('data-slot')) : null;
+      const next = id !== null && !Number.isNaN(id) && id !== gridDragRef.current ? id : null;
+      gridOverRef.current = next; setGridOverId(next);
+    };
+    const onUp = () => {
+      const from = gridDragRef.current, to = gridOverRef.current;
+      if (from !== null && to !== null && from !== to) {
+        setGridFiles(prev => {
+          const n = [...prev];
+          if (to < n.length) { [n[from], n[to]] = [n[to], n[from]]; }
+          else { const [it] = n.splice(from, 1); n.push(it); }
+          return n;
+        });
+      }
+      gridDragRef.current = null; gridOverRef.current = null;
+      setGridDragId(null); setGridOverId(null);
+    };
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
+    return () => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+    };
+  }, [gridDragId]);
+  useEffect(() => {
+    if (!gridSort) return;
+    const onDown = (e: PointerEvent) => { if (gridRef.current && !gridRef.current.contains(e.target as Node)) setGridSort(false); };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [gridSort]);
+  // Diễn giải góc cho người dùng dễ xếp ảnh đúng chỗ.
+  const pitchLabel = (p: number) => p > 15 ? `Ngẩng lên ${p}° (trần)` : p < -15 ? `Cúi xuống ${Math.abs(p)}° (sàn)` : `Ngang tầm mắt ${p}°`;
+  const yawLabel = (y: number) => {
+    const r = Math.round(y);
+    const name = r === 0 ? 'Trước' : r === 90 ? 'Phải' : r === 180 ? 'Sau' : r === 270 ? 'Trái' : r < 90 ? 'Trước phải' : r < 180 ? 'Sau phải' : r < 270 ? 'Sau trái' : 'Trước trái';
+    return `${r}° ${name}`;
+  };
   // Equirect
   const [equiFile, setEquiFile] = useState<File | null>(null);
   const [equiPreview, setEquiPreview] = useState<string | null>(null);
@@ -367,39 +425,124 @@ function VRCreate({ currentUser, onBack, onSaved }: { currentUser: UserAccount; 
                 <div><label className={lbl}>Góc nhìn ngang ống kính (°)</label><input type="number" min={30} max={120} value={hfov} onChange={e => setHfov(Math.max(30, Math.min(120, Number(e.target.value) || 66)))} className={inp} /><p className="mt-1 text-[10px] text-slate-400">Điện thoại thường 60 đến 70°, ống góc rộng 90 đến 110°</p></div>
                 <div><label className={lbl}>Lệch hướng ban đầu (°)</label><input type="number" value={yawOffset} onChange={e => setYawOffset(Number(e.target.value) || 0)} className={inp} /></div>
               </div>
-              <div className="flex flex-wrap gap-3">
-                {pitches.map((p, i) => (
-                  <div key={i} className="w-36"><label className={lbl}>Góc ngẩng hàng {i + 1} (°)</label><input type="number" min={-90} max={90} value={p} onChange={e => setPitches(ps => ps.map((v, k) => k === i ? Number(e.target.value) || 0 : v))} className={inp} /></div>
-                ))}
-              </div>
               <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm font-bold text-slate-500 hover:border-brand hover:text-brand">
                 <Upload className="h-5 w-5" /> Chọn nhiều ảnh (cần {rows * cols} ảnh, đang có {gridFiles.length})
                 <input type="file" accept="image/*" multiple className="hidden" onChange={e => { addGridFiles(e.target.files); e.target.value = ''; }} />
               </label>
-              {gridFiles.length > 0 && (
-                <div className="space-y-2">
-                  {Array.from({ length: Math.ceil(gridFiles.length / cols) }).map((_, r) => (
-                    <div key={r} className="flex items-center gap-2 overflow-x-auto pb-1">
-                      <span className="w-14 shrink-0 text-[10px] font-bold text-slate-400">Hàng {r + 1}</span>
-                      {gridFiles.slice(r * cols, r * cols + cols).map((g, k) => {
-                        const i = r * cols + k;
-                        return (
-                          <div key={g.url} className="group relative h-20 w-28 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                            <img src={g.url} alt="" className="h-full w-full object-cover" />
-                            <span className="absolute left-1 top-1 rounded bg-black/60 px-1 text-[9px] font-bold text-white">{i + 1}</span>
-                            <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/50 px-1 py-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-                              <button onClick={() => moveGrid(i, -1)} className="text-white"><ChevronLeft className="h-3.5 w-3.5" /></button>
-                              <button onClick={() => removeGrid(i)} className="text-rose-300"><X className="h-3.5 w-3.5" /></button>
-                              <button onClick={() => moveGrid(i, 1)} className="text-white"><ChevronRight className="h-3.5 w-3.5" /></button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
-                  <button onClick={() => setGridFiles([])} className="text-[11px] font-bold text-rose-500 hover:underline">Xóa hết ảnh</button>
+              {/* Bảng xếp ảnh theo lưới: hàng là góc ngẩng, cột là hướng quay. Nhấn giữ ảnh rồi kéo thả để đổi chỗ. */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3 space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[11px] font-semibold text-slate-500">
+                    {gridSort ? 'Đang sắp xếp: kéo ảnh thả vào ô muốn đặt (đổi chỗ 2 ảnh). Bấm Xong khi hoàn tất.' : 'Nhấn giữ 1 ảnh khoảng nửa giây để bật chế độ sắp xếp, rồi kéo thả vào đúng hàng và cột.'}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {gridSort && <button onClick={() => setGridSort(false)} className="rounded-lg bg-brand px-3 py-1.5 text-[11px] font-bold text-white hover:bg-brand-hover">Xong</button>}
+                    {gridFiles.length > 0 && <button onClick={() => { setGridFiles([]); setGridSort(false); }} className="text-[11px] font-bold text-rose-500 hover:underline">Xóa hết ảnh</button>}
+                  </div>
                 </div>
-              )}
+                <div ref={gridRef} className="overflow-x-auto pb-1">
+                  <table className="border-separate border-spacing-1">
+                    <thead>
+                      <tr>
+                        <th className="sticky left-0 z-10 bg-slate-50/95 px-1 text-left align-bottom">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Hàng ↓ · Hướng →</span>
+                        </th>
+                        {Array.from({ length: cols }).map((_, c) => {
+                          const yaw = ((yawOffset + c * (360 / cols)) % 360 + 360) % 360;
+                          return (
+                            <th key={c} className="px-1 align-bottom">
+                              <div className="w-28 rounded-lg bg-white px-1.5 py-1 text-center">
+                                <p className="text-[11px] font-black text-slate-700">Cột {c + 1}</p>
+                                <p className="text-[10px] font-semibold text-brand">{yawLabel(yaw)}</p>
+                              </div>
+                            </th>
+                          );
+                        })}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: rows }).map((_, r) => (
+                        <tr key={r}>
+                          <th className="sticky left-0 z-10 bg-slate-50/95 px-1 text-left align-middle">
+                            <div className="w-40 rounded-lg bg-white px-2 py-1.5">
+                              <p className="text-[11px] font-black text-slate-700">Hàng {r + 1}</p>
+                              <p className="text-[10px] font-semibold text-brand">{pitchLabel(pitches[r] ?? 0)}</p>
+                              <div className="mt-1 flex items-center gap-1">
+                                <input type="number" min={-90} max={90} value={pitches[r] ?? 0} onChange={e => setPitches(ps => ps.map((v, k) => k === r ? Number(e.target.value) || 0 : v))} className="w-16 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-bold text-slate-700 outline-none focus:border-brand" />
+                                <span className="text-[10px] text-slate-400">° ngẩng</span>
+                              </div>
+                            </div>
+                          </th>
+                          {Array.from({ length: cols }).map((_, c) => {
+                            const i = r * cols + c;
+                            const g = gridFiles[i];
+                            const dragging = gridDragId === i;
+                            const over = gridOverId === i && gridDragId !== null && gridDragId !== i;
+                            return (
+                              <td key={c} className="p-0 align-top">
+                                <div
+                                  data-slot={i}
+                                  onPointerDown={(e) => { if (!g) return; if (gridSort) { e.preventDefault(); beginGridDrag(i); } else startGridPress(i); }}
+                                  onPointerUp={cancelGridPress}
+                                  onPointerLeave={cancelGridPress}
+                                  className={`group relative h-20 w-28 overflow-hidden rounded-xl border-2 bg-slate-100 select-none ${g ? (gridSort ? 'cursor-grab active:cursor-grabbing touch-none' : 'cursor-pointer') : 'border-dashed'} ${over ? 'border-brand ring-2 ring-brand/40' : g ? 'border-slate-200' : 'border-slate-300'} ${dragging ? 'opacity-40' : ''}`}
+                                >
+                                  {g ? (
+                                    <>
+                                      <img src={g.url} alt="" className="pointer-events-none h-full w-full object-cover" draggable={false} />
+                                      <span className="pointer-events-none absolute left-1 top-1 rounded bg-black/60 px-1 text-[9px] font-bold text-white">{i + 1}</span>
+                                      {!gridSort && (
+                                        <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/50 px-1 py-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                                          <button onPointerDown={e => e.stopPropagation()} onClick={() => moveGrid(i, -1)} className="text-white"><ChevronLeft className="h-3.5 w-3.5" /></button>
+                                          <button onPointerDown={e => e.stopPropagation()} onClick={() => removeGrid(i)} className="text-rose-300"><X className="h-3.5 w-3.5" /></button>
+                                          <button onPointerDown={e => e.stopPropagation()} onClick={() => moveGrid(i, 1)} className="text-white"><ChevronRight className="h-3.5 w-3.5" /></button>
+                                        </div>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <span className="pointer-events-none absolute inset-0 grid place-items-center text-[10px] font-semibold text-slate-400">Trống</span>
+                                  )}
+                                </div>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                      {gridFiles.length > rows * cols && (
+                        <tr>
+                          <th className="sticky left-0 z-10 bg-slate-50/95 px-1 text-left align-middle">
+                            <div className="w-40 rounded-lg bg-amber-50 px-2 py-1.5">
+                              <p className="text-[11px] font-black text-amber-700">Ảnh thừa ({gridFiles.length - rows * cols})</p>
+                              <p className="text-[10px] font-semibold text-amber-600">Không được ghép. Kéo vào lưới hoặc xóa bớt.</p>
+                            </div>
+                          </th>
+                          {gridFiles.slice(rows * cols).map((g, k) => {
+                            const i = rows * cols + k;
+                            const dragging = gridDragId === i;
+                            const over = gridOverId === i && gridDragId !== null && gridDragId !== i;
+                            return (
+                              <td key={g.url} className="p-0 align-top">
+                                <div
+                                  data-slot={i}
+                                  onPointerDown={(e) => { if (gridSort) { e.preventDefault(); beginGridDrag(i); } else startGridPress(i); }}
+                                  onPointerUp={cancelGridPress}
+                                  onPointerLeave={cancelGridPress}
+                                  className={`group relative h-20 w-28 overflow-hidden rounded-xl border-2 bg-amber-50 select-none ${gridSort ? 'cursor-grab touch-none' : 'cursor-pointer'} ${over ? 'border-brand ring-2 ring-brand/40' : 'border-amber-200'} ${dragging ? 'opacity-40' : ''}`}
+                                >
+                                  <img src={g.url} alt="" className="pointer-events-none h-full w-full object-cover opacity-70" draggable={false} />
+                                  <span className="pointer-events-none absolute left-1 top-1 rounded bg-black/60 px-1 text-[9px] font-bold text-white">{i + 1}</span>
+                                  {!gridSort && <button onPointerDown={e => e.stopPropagation()} onClick={() => removeGrid(i)} className="absolute right-1 top-1 rounded bg-black/60 p-0.5 text-rose-300"><X className="h-3.5 w-3.5" /></button>}
+                                </div>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-[10px] text-slate-400">Mỗi hàng là 1 góc ngẩng máy (sửa số độ ngay tại hàng), mỗi cột là 1 hướng quay tính từ hướng trước mặt. Ảnh trần và sàn nên đặt ở hàng ngẩng lên và cúi xuống.</p>
+              </div>
             </>
           )}
 
