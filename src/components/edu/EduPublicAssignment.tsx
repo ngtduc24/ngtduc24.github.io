@@ -36,7 +36,8 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
   const [requesting, setRequesting] = useState(false);
   // Đồng hồ đếm ngược thời gian còn lại tới hạn nộp, cập nhật mỗi 30 giây.
   const [nowTs, setNowTs] = useState(Date.now());
-  useEffect(() => { const t = setInterval(() => setNowTs(Date.now()), 30000); return () => clearInterval(t); }, []);
+  // Cập nhật mỗi giây để đếm ngược chính xác khi hạn nộp hoặc gia hạn chỉ còn vài phút.
+  useEffect(() => { const t = setInterval(() => setNowTs(Date.now()), 1000); return () => clearInterval(t); }, []);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -470,7 +471,8 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
               const days = Math.floor(diff / 86400000);
               const hours = Math.floor((diff % 86400000) / 3600000);
               const mins = Math.floor((diff % 3600000) / 60000);
-              const remain = days > 0 ? `${days} ngày ${hours} giờ` : hours > 0 ? `${hours} giờ ${mins} phút` : `${Math.max(mins, 0)} phút`;
+              const secs = Math.max(0, Math.floor((diff % 60000) / 1000));
+              const remain = days > 0 ? `${days} ngày ${hours} giờ` : hours > 0 ? `${hours} giờ ${mins} phút` : mins > 0 ? `${mins} phút ${secs} giây` : `${secs} giây`;
               const urgent = !over && diff < 24 * 3600 * 1000;
               const tone = over ? 'bg-rose-50 border-rose-100 text-rose-600' : urgent ? 'bg-amber-50 border-amber-100 text-amber-700' : 'bg-brand-light border-brand/10 text-brand';
               const effDate = new Date(effMs).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
