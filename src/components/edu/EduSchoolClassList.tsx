@@ -397,6 +397,45 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
         </div>
       )}
 
+      {/* Form sửa trường hoặc lớp. Trước đây nút Sửa chỉ đặt state mà không có form nào hiện ra. */}
+      {(editingSchool || editingClass) && (() => {
+        const isSchool = !!editingSchool;
+        const close = () => { setEditingSchool(null); setEditingClass(null); };
+        const save = () => (isSchool ? handleSaveSchool() : handleSaveClass());
+        const title = isSchool ? `Sửa trường ${editingSchool?.name || ''}` : `Sửa lớp ${editingClass?.name || ''}`;
+        return (
+          <div className="bg-white border border-slate-200 p-6 rounded-3xl animate-fadeIn space-y-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider truncate pr-4">{title}</h3>
+              <button onClick={close} className="p-2 text-slate-400 hover:text-rose-500 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                autoFocus
+                placeholder={isSchool ? 'Tên trường học...' : 'Tên lớp học...'}
+                value={editForm.name}
+                onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                onKeyDown={e => { if (e.key === 'Enter') save(); }}
+                className="w-full bg-slate-50 border border-slate-200 focus:border-brand focus:ring-0 rounded-xl px-4 py-3 text-sm font-medium"
+              />
+              <input
+                type="text"
+                placeholder="Mô tả..."
+                value={editForm.description}
+                onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                onKeyDown={e => { if (e.key === 'Enter') save(); }}
+                className="w-full bg-slate-50 border border-slate-200 focus:border-brand focus:ring-0 rounded-xl px-4 py-3 text-sm font-medium"
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={close} className="px-6 py-2 text-slate-500 text-[11px] font-bold uppercase tracking-wider">Hủy</button>
+              <button onClick={save} disabled={!editForm.name.trim()} className="px-8 py-2 bg-brand text-white rounded-xl text-[11px] font-bold uppercase tracking-wider disabled:opacity-50">Lưu thay đổi</button>
+            </div>
+          </div>
+        );
+      })()}
+
       {groupedBySchool.length === 0 ? (
         <div className="bg-white rounded-3xl p-20 text-center border border-slate-100">
           <GraduationCap className="w-16 h-16 text-slate-200 mx-auto mb-4" />

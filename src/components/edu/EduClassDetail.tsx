@@ -60,6 +60,10 @@ interface EduClassDetailProps {
   onBack?: () => void;
 }
 
+// Đơn vị thời gian gia hạn nộp bài và số mili giây tương ứng.
+type ExtUnit = 'second' | 'minute' | 'hour' | 'day';
+const EXT_UNIT_MS: Record<ExtUnit, number> = { second: 1000, minute: 60 * 1000, hour: 3600 * 1000, day: 24 * 3600 * 1000 };
+
 export default function EduClassDetail({ classId, currentUser, onEditAssignment, onViewAssignment, onGrading, onBack }: EduClassDetailProps) {
   const [clazz, setClazz] = useState<(EduClass & { edu_schools: EduSchool }) | null>(null);
   const [users, setUsers] = useState<EduUser[]>([]);
@@ -69,7 +73,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [extRequests, setExtRequests] = useState<EduExtensionRequest[]>([]);
   // Số lượng và đơn vị thời gian gia hạn cho từng yêu cầu, do người duyệt chọn.
-  const [extDuration, setExtDuration] = useState<Record<string, { amount: string; unit: 'hour' | 'day' }>>({});
+  const [extDuration, setExtDuration] = useState<Record<string, { amount: string; unit: ExtUnit }>>({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'users' | 'assignments'>('users');
   const [newColumnName, setNewColumnName] = useState('');
@@ -343,7 +347,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
     const d = extDuration[req.id] || { amount: '3', unit: 'day' as const };
     const amount = Math.max(1, Number(d.amount) || 0);
     if (amount <= 0) { addNotification('Vui lòng nhập thời gian gia hạn hợp lệ', 'warning'); return; }
-    const ms = d.unit === 'hour' ? amount * 3600 * 1000 : amount * 24 * 3600 * 1000;
+    const ms = amount * EXT_UNIT_MS[d.unit];
     const extendUntil = new Date(Date.now() + ms).toISOString();
     try {
       await respondExtension(req.id, { status: 'approved', extendUntil, respondedBy: currentUser?.fullName || currentUser?.email || 'Giảng viên' });
@@ -498,9 +502,11 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                     />
                     <select
                       value={dur.unit}
-                      onChange={e => setExtDuration(s => ({ ...s, [req.id]: { ...dur, unit: e.target.value as 'hour' | 'day' } }))}
+                      onChange={e => setExtDuration(s => ({ ...s, [req.id]: { ...dur, unit: e.target.value as ExtUnit } }))}
                       className="px-2 py-1.5 bg-white border border-amber-200 rounded-lg text-xs font-bold focus:outline-none focus:border-amber-400"
                     >
+                      <option value="second">giây</option>
+                      <option value="minute">phút</option>
                       <option value="hour">giờ</option>
                       <option value="day">ngày</option>
                     </select>
