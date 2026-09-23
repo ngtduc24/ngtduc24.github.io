@@ -97,6 +97,11 @@ export default function ARScannerMind({ target: rawTarget, onClose }: ARScannerM
         });
         await video.play().catch(() => {});
         if (!active) return;
+        // Bộ nạp khung hình của MindAR vẽ video theo thuộc tính width/height của thẻ video
+        // (không phải videoWidth). Không đặt 2 thuộc tính này thì khung hình rỗng và không
+        // bao giờ nhận diện được target.
+        video.setAttribute('width', String(video.videoWidth));
+        video.setAttribute('height', String(video.videoHeight));
 
         // 2. Tệp nhận diện .mind: ưu tiên tệp đã biên dịch lúc tạo target, không có thì biên dịch tại chỗ.
         setStatusText('Đang tải dữ liệu nhận diện ảnh.');
