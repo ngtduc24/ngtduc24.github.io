@@ -124,11 +124,12 @@ export default function ARScannerMind({ target: rawTarget, onClose }: ARScannerM
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera();
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        // Giới hạn độ phân giải vẽ để GPU còn sức cho bộ nhận diện chạy song song, tránh rớt khung hình.
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = 1.0;
-        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.enabled = !!(target.scene_lights || []).some((l: any) => l.castShadow);
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.domElement.style.position = 'absolute';
         renderer.domElement.style.top = '0';
@@ -291,25 +292,31 @@ export default function ARScannerMind({ target: rawTarget, onClose }: ARScannerM
         };
         onResize = resize;
 
+        // Chống chớp: bộ nhận diện thỉnh thoảng mất dấu vài khung hình (tay rung, mờ chuyển động,
+        // điện thoại yếu). Thay vì ẩn ngay, giữ nguyên vị trí cuối trong một khoảng ngắn, chỉ ẩn
+        // khi mất dấu lâu. Đồng thời nới missTolerance của MindAR và hạ warmupTolerance để hiện nhanh.
+        const HOLD_MS = 900;
+        let lastSeenAt = 0;
+        const tmpM = new THREE.Matrix4();
         controller = new Controller({
           inputWidth: video.videoWidth,
           inputHeight: video.videoHeight,
           maxTrack: 1,
-          filterMinCF: 0.0001,
+          warmupTolerance: 2,
+          missTolerance: 15,
+          filterMinCF: 0.001,
           filterBeta: 1000,
           onUpdate: (data: any) => {
             if (data.type !== 'updateMatrix') return;
             const { worldMatrix } = data;
             if (worldMatrix) {
-              const m = new THREE.Matrix4();
-              m.fromArray(worldMatrix as number[]);
-              m.multiply(postMatrix);
-              anchor.matrix.copy(m);
+              tmpM.fromArray(worldMatrix as number[]);
+              tmpM.multiply(postMatrix);
+              anchor.matrix.copy(tmpM);
+              lastSeenAt = performance.now();
               if (!anchor.visible) { anchor.visible = true; setFound(true); }
-            } else if (anchor.visible) {
-              anchor.visible = false;
-              setFound(false);
             }
+            // worldMatrix null: không ẩn ngay, vòng lặp vẽ sẽ ẩn khi quá HOLD_MS không thấy lại.
           },
         });
 
@@ -333,6 +340,7 @@ export default function ARScannerMind({ target: rawTarget, onClose }: ARScannerM
 
         const loop = () => {
           if (!active || !renderer) return;
+          if (anchor.visible && performance.now() - lastSeenAt > HOLD_MS) { anchor.visible = false; setFound(false); }
           // Áp cử chỉ người dùng lên nhóm nội dung, giữ nguyên số liệu gốc của studio làm nền.
           const s = rt.current;
           if (s.contentGroup) {
