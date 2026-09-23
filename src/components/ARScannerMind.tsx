@@ -328,8 +328,18 @@ export default function ARScannerMind({ target: rawTarget, onClose }: ARScannerM
           };
         };
         // Vị trí tính theo đơn vị điểm ảnh target (hàng trăm), tốc độ lớn nên beta nhỏ.
-        const posFilter = makeOneEuro(3, 1.2, 0.002);
-        const rotFilter = makeOneEuro(4, 1.2, 0.3);
+        // minCutoff thấp để máy đứng yên thì lọc rất mạnh, beta đủ lớn để khi thật sự di chuyển
+        // (khoảng 1 bề rộng target mỗi giây, hay xoay 1 rad mỗi giây) cắt tần tăng lên gần 10 Hz.
+        const posFilter = makeOneEuro(3, 0.4, 0.01);
+        const rotFilter = makeOneEuro(4, 0.4, 15);
+        // Vùng chết theo cách của AR.js (smoothTolerance): sai lệch nhỏ hơn ngưỡng thì coi là đứng
+        // yên, giữ nguyên tư thế đang hiện, chỉ đổi khi vượt ngưỡng. Nhờ vậy vật thể đứng im thật sự.
+        const goalPos = new THREE.Vector3(), goalQuat = new THREE.Quaternion();
+        const shownPos = new THREE.Vector3(), shownQuat = new THREE.Quaternion();
+        let goalInit = false;
+        let tolPos = 0; // đặt theo bề rộng target sau khi biết cỡ
+        const tolAngle = THREE.MathUtils.degToRad(0.8);
+        let lastRenderAt = 0;
         const targetPos = new THREE.Vector3(), targetQuat = new THREE.Quaternion(), targetScl = new THREE.Vector3(1, 1, 1);
         const smoothPos = new THREE.Vector3(), smoothQuat = new THREE.Quaternion();
         let lastQuat: THREE.Quaternion | null = null;
@@ -371,7 +381,17 @@ export default function ARScannerMind({ target: rawTarget, onClose }: ARScannerM
             const q = rotFilter.filter(now, [targetQuat.x, targetQuat.y, targetQuat.z, targetQuat.w]);
             smoothPos.set(p[0], p[1], p[2]);
             smoothQuat.set(q[0], q[1], q[2], q[3]).normalize();
-            anchor.matrix.compose(smoothPos, smoothQuat, new THREE.Vector3(fixedScale, fixedScale, fixedScale));
+            if (!goalInit || !anchor.visible) {
+              goalPos.copy(smoothPos); goalQuat.copy(smoothQuat);
+              shownPos.copy(smoothPos); shownQuat.copy(smoothQuat);
+              goalInit = true;
+              anchor.matrix.compose(shownPos, shownQuat, new THREE.Vector3(fixedScale, fixedScale, fixedScale));
+            } else {
+              const dPos = smoothPos.distanceTo(goalPos);
+              const dAng = goalQuat.angleTo(smoothQuat);
+              // Chỉ cập nhật đích khi lệch vượt ngưỡng, còn lại giữ nguyên để không rung rinh.
+              if (dPos > tolPos || dAng > tolAngle) { goalPos.copy(smoothPos); goalQuat.copy(smoothQuat); }
+            }
             lastSeenAt = now;
             if (!anchor.visible) { anchor.visible = true; setFound(true); }
           },
@@ -383,6 +403,7 @@ export default function ARScannerMind({ target: rawTarget, onClose }: ARScannerM
         // Ma trận hậu xử lý như MindARThree: đưa tâm ảnh về gốc và bề rộng ảnh bằng 1 đơn vị.
         const [markerWidth, markerHeight] = dimensions[0];
         snapDist = markerWidth * 0.5;
+        tolPos = markerWidth * 0.012;
         fixedScale = markerWidth;
         postMatrix = new THREE.Matrix4().compose(
           new THREE.Vector3(markerWidth / 2, markerWidth / 2 + (markerHeight - markerWidth) / 2, 0),
@@ -402,7 +423,17 @@ export default function ARScannerMind({ target: rawTarget, onClose }: ARScannerM
           if (!active || !renderer) return;
           // Cấp khung hình mới nhất (thu nhỏ) cho bộ nhận diện.
           if (video.readyState >= 2) trackCtx.drawImage(video, 0, 0, trackW, trackH);
-          if (anchor.visible && performance.now() - lastSeenAt > HOLD_MS) { anchor.visible = false; setFound(false); }
+          const nowR = performance.now();
+          const dtR = lastRenderAt ? Math.min(0.1, (nowR - lastRenderAt) / 1000) : 0.016;
+          lastRenderAt = nowR;
+          if (anchor.visible && nowR - lastSeenAt > HOLD_MS) { anchor.visible = false; setFound(false); }
+          if (anchor.visible && goalInit) {
+            // Nội suy theo thời gian giữa các lần bộ nhận diện cập nhật để chuyển động không bị nấc.
+            const a = 1 - Math.exp(-dtR / 0.07);
+            shownPos.lerp(goalPos, a);
+            shownQuat.slerp(goalQuat, a);
+            anchor.matrix.compose(shownPos, shownQuat, new THREE.Vector3(fixedScale, fixedScale, fixedScale));
+          }
           // Áp cử chỉ người dùng lên nhóm nội dung, giữ nguyên số liệu gốc của studio làm nền.
           const s = rt.current;
           if (s.contentGroup) {
