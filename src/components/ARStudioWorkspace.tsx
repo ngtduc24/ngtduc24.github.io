@@ -14,6 +14,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { supabase } from '../lib/supabase';
 import { uploadARAssetToSupabase } from '../lib/upload';
 import { compileImageToMindBlob } from '../lib/mindar';
+import { buildLuminanceImage } from '../lib/xr8os';
 import { UserAccount, ARTarget, SceneObjectItem, PBRMaterialConfig, SceneLightItem } from '../types';
 import { unpackARTarget, packARTargetPayload } from '../lib/arHelpers';
 import MobileARPreviewModal from './MobileARPreviewModal';
@@ -1020,11 +1021,24 @@ export default function ARStudioWorkspace({
       let content_url = initialTarget?.content_url || '';
       let thumbnail_url = initialTarget?.thumbnail_url || target_image_url;
       let mind_file_url = initialTarget?.mind_file_url || null;
+      let xr8_target = target?.xr8_target || null;
 
       // 1. Upload Target File if newly selected
       if (targetFile) {
         setProgressText('Đang tải ảnh Target lên máy chủ...');
         target_image_url = await uploadARAssetToSupabase(targetFile);
+
+        // Dữ liệu image target cho 8th Wall Engine: ảnh xám vùng cắt 3:4 kèm số liệu vùng cắt.
+        try {
+          setProgressText('Đang tạo dữ liệu nhận diện 8th Wall...');
+          const lum = await buildLuminanceImage(targetFile, 'center');
+          const lumFile = new File([lum.blob], `${Date.now()}-luminance.jpg`, { type: 'image/jpeg' });
+          const luminance_url = await uploadARAssetToSupabase(lumFile);
+          xr8_target = { luminance_url, crop: lum.crop, align: 'center' };
+        } catch (xrErr) {
+          console.warn('Không tạo được dữ liệu 8th Wall, trình quét sẽ tự tạo lúc mở:', xrErr);
+          xr8_target = null;
+        }
 
         // Compile .mind file
         try {
@@ -1100,6 +1114,7 @@ export default function ARStudioWorkspace({
         show_close_button: showCloseButton,
         show_gesture_hint: showGestureHint,
         show_target_name: showTargetName,
+        xr8_target,
         active,
         owner_id: currentUser?.id ?? null,
       });

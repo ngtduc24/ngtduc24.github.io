@@ -337,6 +337,8 @@ export interface ARTarget {
   // Multi-Object & Material PBR Configuration
   scene_objects?: SceneObjectItem[];
   scene_lights?: SceneLightItem[];
+  // Dữ liệu image target cho 8th Wall Engine mã nguồn mở: ảnh xám vùng cắt 3:4 và số liệu vùng cắt.
+  xr8_target?: { luminance_url: string; crop: { top: number; left: number; width: number; height: number; isRotated: boolean; originalWidth: number; originalHeight: number }; align?: string } | null;
   material_config?: PBRMaterialConfig;
 
   active: boolean;

@@ -1,0 +1,59 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Kiểm thử 8th Wall Engine</title>
+<style>body{margin:0;background:#000;color:#0f0;font:12px monospace} #c{width:640px;height:480px;display:block} #log{white-space:pre-wrap;padding:8px}</style>
+</head><body>
+<canvas id="c"></canvas>
+<video id="src" src="cam.webm" muted loop playsinline style="width:1px;height:1px;position:absolute;opacity:0"></video>
+<div id="log"></div>
+<script src="./xr8os.js"></script>
+<script>
+// Trang kiểm thử nội bộ: thay camera bằng video quay ảnh target (captureStream) để chạy được trên máy tính.
+const log = (...a) => { document.getElementById('log').textContent += a.join(' ') + '\n'; console.log('[xr8test]', ...a); };
+window.events = []; window.frames = 0;
+const srcVideo = document.getElementById('src');
+const origGUM = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+navigator.mediaDevices.getUserMedia = async (c) => {
+  await srcVideo.play();
+  const s = srcVideo.captureStream ? srcVideo.captureStream() : srcVideo.mozCaptureStream();
+  log('gUM thay bằng captureStream', JSON.stringify(c && c.video));
+  return s;
+};
+window.runTest = async () => {
+  const XR8 = await new Promise(r => window.XR8 ? r(window.XR8) : window.addEventListener('xrloaded', () => r(window.XR8)));
+  log('XR8', XR8.version ? XR8.version() : '');
+  const lum = await XR8OS.buildLuminanceImage('target.jpg', 'center');
+  const url = URL.createObjectURL(lum.blob);
+  const data = XR8OS.buildTargetData('t1', url, lum.crop);
+  log('crop', JSON.stringify(lum.crop));
+  XR8.XrController.configure({ disableWorldTracking: true, imageTargetData: [data], imageTargets: [data.name] });
+  XR8.addCameraPipelineModules([
+    XR8.GlTextureRenderer.pipelineModule(),
+    XR8.XrController.pipelineModule(),
+    { name: 'probe',
+      onStart: (a) => log('onStart', a.canvasWidth, a.canvasHeight, 'webgl2', a.GLctx instanceof WebGL2RenderingContext),
+      onUpdate: ({processCpuResult}) => { window.frames++; },
+      onException: (e) => log('EXC', e && e.message || e),
+      onCameraStatusChange: (d) => log('camera', d.status, d.reason ? String(d.reason) : ''),
+      listeners: [
+        { event: 'reality.imagescanning', process: (e) => log('imagescanning', JSON.stringify(e.detail.imageTargets.map(t=>({n:t.name, g:t.geometry})))) },
+        { event: 'reality.imagefound', process: (e) => { window.events.push(['found', e.detail]); log('FOUND', JSON.stringify(e.detail)); } },
+        { event: 'reality.imageupdated', process: (e) => { window.events.push(['upd', e.detail]); } },
+        { event: 'reality.imagelost', process: (e) => { window.events.push(['lost']); log('LOST'); } },
+      ] }
+  ]);
+  XR8.run({ canvas: document.getElementById('c'), webgl2: true, allowedDevices: XR8.XrConfig.device().ANY, cameraConfig: { direction: XR8.XrConfig.camera().BACK } });
+  await new Promise(r => setTimeout(r, 15000));
+  const upd = window.events.filter(e => e[0] === 'upd').map(e => e[1]);
+  const n = upd.length;
+  const mean = ['x','y','z'].map(k => upd.reduce((a,d)=>a+d.position[k],0)/Math.max(1,n));
+  const sd = ['x','y','z'].map((k,i) => Math.sqrt(upd.reduce((a,d)=>a+(d.position[k]-mean[i])**2,0)/Math.max(1,n)));
+  const out = { frames: window.frames, found: window.events.filter(e=>e[0]==='found').length, updates: n, lost: window.events.filter(e=>e[0]==='lost').length, mean, sd, sample: upd[0] };
+  log('RESULT', JSON.stringify(out));
+  window.result = out;
+  return out;
+};
+document.body.addEventListener('click', () => { if (!window.started) { window.started = true; runTest(); } }, { once: false });
+log('Bấm vào trang để bắt đầu.');
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@8thwall/engine@0.1.0/dist/xr.js" async crossorigin="anonymous" data-preload-chunks="slam"></script>
+</body></html>

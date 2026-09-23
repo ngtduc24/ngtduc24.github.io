@@ -3,6 +3,7 @@ import { QrCode, RefreshCw, Search, AlertCircle, X, Link2, ExternalLink, Downloa
 import { supabase } from '../lib/supabase';
 import { uploadARAssetToSupabase } from '../lib/upload';
 import { compileImageToMind, TargetQuality } from '../lib/mindar';
+import { buildLuminanceImage } from '../lib/xr8os';
 import { UserAccount, ARTarget } from '../types';
 import ARStudioWorkspace from './ARStudioWorkspace';
 import { unpackARTarget, packARTargetPayload } from '../lib/arHelpers';
@@ -218,12 +219,22 @@ function ARCreateView({ currentUser, onCancel, onCreated }: { currentUser?: User
         console.warn('Không biên dịch được tệp .mind lúc tạo target:', compileError);
       }
 
+      // Dữ liệu image target cho 8th Wall Engine mã nguồn mở (ảnh xám vùng cắt 3:4).
+      let xr8_target: any = null;
+      try {
+        setProgressText('Đang tạo dữ liệu nhận diện 8th Wall...');
+        const lum = await buildLuminanceImage(targetFile, 'center');
+        const luminance_url = await uploadARAssetToSupabase(new File([lum.blob], `${Date.now()}-luminance.jpg`, { type: 'image/jpeg' }));
+        xr8_target = { luminance_url, crop: lum.crop, align: 'center' };
+      } catch (xrErr) { console.warn('Không tạo được dữ liệu 8th Wall:', xrErr); }
+
       setProgressText('Đang lưu vào cơ sở dữ liệu...');
       const payload = packARTargetPayload({
         name: name.trim(),
         rawTextDescription: description.trim(),
         target_image_url,
         mind_file_url,
+        xr8_target,
         thumbnail_url,
         content_type: contentType,
         content_url,
@@ -454,6 +465,7 @@ function AREditModal({ target, onClose, onSaved }: { target: ARTarget; onClose: 
         loop_video: loopVideo,
         button_label: buttonLabel,
         button_url: buttonUrl,
+        xr8_target: target.xr8_target ?? null,
         active,
       });
       const { error } = await supabase.from('ar_targets').update(payload).eq('id', target.id);
