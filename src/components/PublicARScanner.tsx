@@ -4,6 +4,7 @@ import { ARTarget, AppSettings } from '../types';
 import { getDefaultSettingsFromSupabase } from '../lib/data';
 import { unpackARTarget } from '../lib/arHelpers';
 import ARScannerMind from './ARScannerMind';
+import ARScannerXR8 from './ARScannerXR8';
 import { Loader2 } from 'lucide-react';
 import { setCustomPageSEO } from '../lib/seoConfig';
 
@@ -97,7 +98,9 @@ export default function PublicARScanner() {
           <img src={settings.webAppIcon} alt="Logo" className="h-8 object-contain" />
         </div>
       )}
-      <ARScannerMind target={stableTarget} onClose={handleClose} />
+      {new URLSearchParams(window.location.search).get('engine') === 'mind'
+        ? <ARScannerMind target={stableTarget} onClose={handleClose} />
+        : <ARScannerXR8 target={stableTarget} onClose={handleClose} />}
     </div>
   );
 }

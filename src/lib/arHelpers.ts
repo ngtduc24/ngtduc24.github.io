@@ -58,6 +58,7 @@ export function unpackARTarget(raw: any): ARTarget {
     scene_objects: raw.scene_objects ?? extraConfig.scene_objects ?? [],
     material_config: raw.material_config ?? extraConfig.material_config ?? undefined,
     scene_lights: raw.scene_lights ?? extraConfig.scene_lights ?? undefined,
+    xr8_target: raw.xr8_target ?? extraConfig.xr8_target ?? null,
   };
 }
 
@@ -100,6 +101,7 @@ export function packARTargetPayload(target: Partial<ARTarget> & { rawTextDescrip
     scene_objects: target.scene_objects ?? [],
     material_config: target.material_config ?? undefined,
     scene_lights: target.scene_lights ?? undefined,
+    xr8_target: target.xr8_target ?? null,
   };
 
   return {
