@@ -298,21 +298,33 @@ export default function ARScannerMind({ target: rawTarget, onClose }: ARScannerM
         const HOLD_MS = 900;
         let lastSeenAt = 0;
         const tmpM = new THREE.Matrix4();
+        // Làm mượt tư thế: bộ nhận diện trả về vị trí nhiễu nhẹ mỗi khung hình khiến vật thể rung.
+        // Lưu tư thế đích rồi mỗi khung vẽ kéo tư thế hiện tại về đích theo hệ số nhỏ, khi nhảy
+        // xa (mới nhận diện lại) thì đặt thẳng để không trôi chậm.
+        const targetPos = new THREE.Vector3(), targetQuat = new THREE.Quaternion(), targetScl = new THREE.Vector3(1, 1, 1);
+        const curPos = new THREE.Vector3(), curQuat = new THREE.Quaternion(), curScl = new THREE.Vector3(1, 1, 1);
+        let poseInit = false;
+        let snapDist = Infinity; // khoảng nhảy (đơn vị điểm ảnh target) coi là nhận diện lại, đặt sau khi biết cỡ target
         controller = new Controller({
           inputWidth: video.videoWidth,
           inputHeight: video.videoHeight,
           maxTrack: 1,
           warmupTolerance: 2,
           missTolerance: 15,
-          filterMinCF: 0.001,
-          filterBeta: 1000,
+          // Bộ lọc One Euro của MindAR: beta nhỏ thì lọc mạnh khi máy đứng yên, mặc định 1000 gần như không lọc.
+          filterMinCF: 0.0005,
+          filterBeta: 2,
           onUpdate: (data: any) => {
             if (data.type !== 'updateMatrix') return;
             const { worldMatrix } = data;
             if (worldMatrix) {
               tmpM.fromArray(worldMatrix as number[]);
               tmpM.multiply(postMatrix);
-              anchor.matrix.copy(tmpM);
+              tmpM.decompose(targetPos, targetQuat, targetScl);
+              if (!poseInit || !anchor.visible || curPos.distanceTo(targetPos) > snapDist) {
+                curPos.copy(targetPos); curQuat.copy(targetQuat); curScl.copy(targetScl); poseInit = true;
+                anchor.matrix.compose(curPos, curQuat, curScl);
+              }
               lastSeenAt = performance.now();
               if (!anchor.visible) { anchor.visible = true; setFound(true); }
             }
@@ -325,6 +337,7 @@ export default function ARScannerMind({ target: rawTarget, onClose }: ARScannerM
         if (!active) return;
         // Ma trận hậu xử lý như MindARThree: đưa tâm ảnh về gốc và bề rộng ảnh bằng 1 đơn vị.
         const [markerWidth, markerHeight] = dimensions[0];
+        snapDist = markerWidth * 0.5;
         postMatrix = new THREE.Matrix4().compose(
           new THREE.Vector3(markerWidth / 2, markerWidth / 2 + (markerHeight - markerWidth) / 2, 0),
           new THREE.Quaternion(),
@@ -341,6 +354,13 @@ export default function ARScannerMind({ target: rawTarget, onClose }: ARScannerM
         const loop = () => {
           if (!active || !renderer) return;
           if (anchor.visible && performance.now() - lastSeenAt > HOLD_MS) { anchor.visible = false; setFound(false); }
+          if (anchor.visible && poseInit) {
+            // Kéo mượt về tư thế đích, hệ số 0.25 mỗi khung (khoảng 60 khung/giây) đủ dập rung mà không trễ rõ.
+            curPos.lerp(targetPos, 0.25);
+            curQuat.slerp(targetQuat, 0.25);
+            curScl.lerp(targetScl, 0.25);
+            anchor.matrix.compose(curPos, curQuat, curScl);
+          }
           // Áp cử chỉ người dùng lên nhóm nội dung, giữ nguyên số liệu gốc của studio làm nền.
           const s = rt.current;
           if (s.contentGroup) {
