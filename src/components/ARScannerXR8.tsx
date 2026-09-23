@@ -59,8 +59,43 @@ export default function ARScannerXR8({ target: rawTarget, onClose }: ARScannerXR
     let renderer: THREE.WebGLRenderer | null = null;
     let canvasEl: HTMLCanvasElement | null = null;
     let blobUrl: string | null = null;
+    let resizeObs: ResizeObserver | null = null;
+    let restoreGUM: (() => void) | null = null;
     const videoTextures: HTMLVideoElement[] = [];
     const MODULE_NAME = 'smartresearch-studio-scene';
+
+    // Độ phân giải canvas: engine không tự đặt canvas.width/height, nếu để mặc định (300×150) thì
+    // luồng camera bị kéo giãn ra toàn màn hình nên rất mờ. Ta đặt theo kích thước thật của màn hình
+    // nhân tỉ lệ điểm ảnh (tối đa 2 và cạnh dài không quá 2560 để máy yếu vẫn chạy mượt).
+    const MAX_EDGE = 2560;
+    const sizeCanvas = (c: HTMLCanvasElement) => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      let w = Math.max(1, Math.round(container.clientWidth * dpr));
+      let h = Math.max(1, Math.round(container.clientHeight * dpr));
+      const long = Math.max(w, h);
+      if (long > MAX_EDGE) { const k = MAX_EDGE / long; w = Math.round(w * k); h = Math.round(h * k); }
+      if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    };
+
+    // Chất lượng camera: engine chỉ xin luồng tối thiểu 960×720 (iOS) nên ảnh quét và ảnh chụp mờ.
+    // Bọc getUserMedia để xin thêm độ phân giải mong muốn Full HD, vẫn giữ nguyên hướng camera engine
+    // yêu cầu. Dùng "ideal" nên máy không hỗ trợ sẽ tự trả về mức gần nhất, không gây lỗi.
+    const upgradeCamera = () => {
+      const md = navigator.mediaDevices;
+      if (!md || !md.getUserMedia) return;
+      const orig = md.getUserMedia.bind(md);
+      md.getUserMedia = (constraints: any) => {
+        try {
+          const v = constraints && constraints.video;
+          if (v && typeof v === 'object' && !v.width?.exact && !v.height?.exact) {
+            const nv = { ...v, width: { ...(v.width || {}), ideal: 1920 }, height: { ...(v.height || {}), ideal: 1080 }, frameRate: { ideal: 30 } };
+            return orig({ ...constraints, video: nv });
+          }
+        } catch { /* dùng ràng buộc gốc */ }
+        return orig(constraints);
+      };
+      restoreGUM = () => { md.getUserMedia = orig; };
+    };
 
     const start = async () => {
       try {
@@ -295,6 +330,12 @@ export default function ARScannerXR8({ target: rawTarget, onClose }: ARScannerXR
         canvas.style.width = '100%';
         canvas.style.height = '100%';
         container.appendChild(canvas);
+        sizeCanvas(canvas);
+        if (typeof ResizeObserver !== 'undefined') {
+          resizeObs = new ResizeObserver(() => { if (canvasEl) sizeCanvas(canvasEl); });
+          resizeObs.observe(container);
+        }
+        upgradeCamera();
 
         XR8.XrController.configure({
           disableWorldTracking: true,
@@ -329,6 +370,8 @@ export default function ARScannerXR8({ target: rawTarget, onClose }: ARScannerXR
     return () => {
       active = false;
       try { XR8?.stop?.(); XR8?.clearCameraPipelineModules?.(); } catch { /* bỏ qua */ }
+      if (resizeObs) { try { resizeObs.disconnect(); } catch { /* bỏ qua */ } }
+      if (restoreGUM) restoreGUM();
       videoTextures.forEach((v) => { try { v.pause(); v.src = ''; } catch { /* bỏ qua */ } });
       if (blobUrl) URL.revokeObjectURL(blobUrl);
       if (renderer) { try { renderer.dispose(); } catch { /* bỏ qua */ } }
