@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { QrCode, RefreshCw, Search, AlertCircle, X, Link2, ExternalLink, Download, Check, Plus, Loader2, Upload, Box, ArrowLeft, Pencil, Trash2, Save } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadARAssetToSupabase } from '../lib/upload';
-import { compileImageToMindBlob } from '../lib/mindar';
+import { compileImageToMind, TargetQuality } from '../lib/mindar';
 import { UserAccount, ARTarget } from '../types';
 import ARStudioWorkspace from './ARStudioWorkspace';
 import { unpackARTarget, packARTargetPayload } from '../lib/arHelpers';
@@ -168,6 +168,19 @@ function ARCreateView({ currentUser, onCancel, onCreated }: { currentUser?: User
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [progressText, setProgressText] = useState('');
+  // Biên dịch và chấm chất lượng ảnh target ngay khi chọn, lưu kết quả để lúc lưu không phải biên dịch lại.
+  const [targetQuality, setTargetQuality] = useState<TargetQuality | null>(null);
+  const [analyzing, setAnalyzing] = useState<number | null>(null);
+  const compiledRef = useRef<{ file: File; blob: Blob } | null>(null);
+  const analyzeTarget = async (f: File) => {
+    setTargetQuality(null); compiledRef.current = null; setAnalyzing(0);
+    try {
+      const { blob, quality } = await compileImageToMind(f, (p) => setAnalyzing(p));
+      compiledRef.current = { file: f, blob };
+      setTargetQuality(quality);
+    } catch (e) { console.warn('Không đánh giá được ảnh target:', e); }
+    finally { setAnalyzing(null); }
+  };
 
   const pick = (setFile: any, setPrev: any) => (f: File) => { setFile(f); setPrev(URL.createObjectURL(f)); };
   const contentAccept = contentType === 'video' ? 'video/*' : contentType === '3d' ? '.glb,.gltf' : 'image/*';
@@ -195,9 +208,9 @@ function ARCreateView({ currentUser, onCancel, onCreated }: { currentUser?: User
       let mind_file_url: string | null = null;
       try {
         setProgressText('Đang biên dịch ảnh target, vui lòng chờ...');
-        const mindBlob = await compileImageToMindBlob(targetFile, (percent) => {
-          setProgressText(`Đang biên dịch ảnh target ${percent}%`);
-        });
+        const mindBlob = compiledRef.current && compiledRef.current.file === targetFile
+          ? compiledRef.current.blob
+          : (await compileImageToMind(targetFile, (percent) => { setProgressText(`Đang biên dịch ảnh target ${percent}%`); })).blob;
         const mindFile = new File([mindBlob], `${Date.now()}-target.mind`, { type: 'application/octet-stream' });
         mind_file_url = await uploadARAssetToSupabase(mindFile);
       } catch (compileError) {
@@ -340,7 +353,19 @@ function ARCreateView({ currentUser, onCancel, onCreated }: { currentUser?: User
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-3 shadow-sm">
           <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2"><span className="w-6 h-6 rounded-lg bg-brand/10 text-brand flex items-center justify-center text-xs font-black">1</span>Ảnh Target (ảnh để quét)</h3>
-          <ARDropZone label="Ảnh Target" hint="Kéo thả ảnh vào đây hoặc bấm để chọn" accept="image/*" previewUrl={targetPreview} kind="image" fileName={targetFile ? targetFile.name : ''} onFile={pick(setTargetFile, setTargetPreview)} />
+          <ARDropZone label="Ảnh Target" hint="Kéo thả ảnh vào đây hoặc bấm để chọn" accept="image/*" previewUrl={targetPreview} kind="image" fileName={targetFile ? targetFile.name : ''} onFile={(f) => { pick(setTargetFile, setTargetPreview)(f); analyzeTarget(f); }} />
+          {analyzing !== null && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-500">
+              Đang phân tích độ bám của ảnh target {analyzing}%...
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-brand transition-all" style={{ width: `${analyzing}%` }} /></div>
+            </div>
+          )}
+          {targetQuality && (
+            <div className={`rounded-xl border px-3 py-2 text-[11px] font-semibold ${targetQuality.level === 'good' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : targetQuality.level === 'fair' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
+              <p className="text-[10px] font-black uppercase tracking-wider">Độ bám ảnh target: {targetQuality.level === 'good' ? 'Tốt' : targetQuality.level === 'fair' ? 'Trung bình' : 'Kém'} · {targetQuality.trackingPoints} điểm bám, {targetQuality.matchingPoints} điểm khớp</p>
+              <p className="mt-0.5 leading-snug">{targetQuality.message}</p>
+            </div>
+          )}
         </div>
         <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-3 shadow-sm">
           <h3 className="font-bold text-slate-700 text-sm flex items-center gap-2"><span className="w-6 h-6 rounded-lg bg-brand/10 text-brand flex items-center justify-center text-xs font-black">2</span>Nội dung hiển thị</h3>
