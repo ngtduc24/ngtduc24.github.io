@@ -298,37 +298,82 @@ export default function ARScannerMind({ target: rawTarget, onClose }: ARScannerM
         const HOLD_MS = 900;
         let lastSeenAt = 0;
         const tmpM = new THREE.Matrix4();
-        // Làm mượt tư thế: bộ nhận diện trả về vị trí nhiễu nhẹ mỗi khung hình khiến vật thể rung.
-        // Lưu tư thế đích rồi mỗi khung vẽ kéo tư thế hiện tại về đích theo hệ số nhỏ, khi nhảy
-        // xa (mới nhận diện lại) thì đặt thẳng để không trôi chậm.
+
+        // Bộ lọc One Euro (Casiez, Roustan, Vogel, 2012) áp riêng cho vị trí (3 chiều) và góc xoay
+        // (quaternion 4 chiều, chuẩn hóa lại sau lọc). Bộ lọc sẵn có của MindAR lọc từng phần tử
+        // ma trận nên khi lọc mạnh phần xoay bị méo, vật thể phóng to nhỏ và lệch. Ở đây tỉ lệ
+        // giữ cố định bằng bề rộng target, chỉ lọc vị trí và hướng nên hình khối luôn đúng.
+        const makeOneEuro = (n: number, minCutoff: number, beta: number, dCutoff = 1) => {
+          let xPrev: number[] | null = null, dxPrev: number[] = new Array(n).fill(0), tPrev = 0;
+          const alpha = (dt: number, cutoff: number) => { const tau = 1 / (2 * Math.PI * cutoff); return 1 / (1 + tau / dt); };
+          return {
+            reset() { xPrev = null; },
+            filter(t: number, x: number[]): number[] {
+              if (!xPrev) { xPrev = x.slice(); dxPrev = new Array(n).fill(0); tPrev = t; return x.slice(); }
+              const dt = Math.max(1e-3, (t - tPrev) / 1000);
+              tPrev = t;
+              const out = new Array(n);
+              const ad = alpha(dt, dCutoff);
+              for (let i = 0; i < n; i++) {
+                const dx = (x[i] - xPrev[i]) / dt;
+                const dxHat = ad * dx + (1 - ad) * dxPrev[i];
+                const cutoff = minCutoff + beta * Math.abs(dxHat);
+                const a = alpha(dt, cutoff);
+                out[i] = a * x[i] + (1 - a) * xPrev[i];
+                dxPrev[i] = dxHat;
+              }
+              xPrev = out.slice();
+              return out;
+            },
+          };
+        };
+        // Vị trí tính theo đơn vị điểm ảnh target (hàng trăm), tốc độ lớn nên beta nhỏ.
+        const posFilter = makeOneEuro(3, 1.2, 0.002);
+        const rotFilter = makeOneEuro(4, 1.2, 0.3);
         const targetPos = new THREE.Vector3(), targetQuat = new THREE.Quaternion(), targetScl = new THREE.Vector3(1, 1, 1);
-        const curPos = new THREE.Vector3(), curQuat = new THREE.Quaternion(), curScl = new THREE.Vector3(1, 1, 1);
-        let poseInit = false;
-        let snapDist = Infinity; // khoảng nhảy (đơn vị điểm ảnh target) coi là nhận diện lại, đặt sau khi biết cỡ target
+        const smoothPos = new THREE.Vector3(), smoothQuat = new THREE.Quaternion();
+        let lastQuat: THREE.Quaternion | null = null;
+        let snapDist = Infinity; // nhảy xa hơn mức này (đơn vị điểm ảnh target) coi là nhận diện lại, đặt sau khi biết cỡ target
+        let fixedScale = 1;
+
+        // Bộ nhận diện chạy trên khung hình thu nhỏ (rộng 640) để bám theo kịp thời gian thực trên
+        // điện thoại, còn video hiển thị và ảnh chụp vẫn giữ độ phân giải gốc của camera.
+        const TRACK_W = 640;
+        const trackW = TRACK_W, trackH = Math.round((TRACK_W * video.videoHeight) / video.videoWidth);
+        const trackCanvas = document.createElement('canvas');
+        trackCanvas.width = trackW; trackCanvas.height = trackH;
+        const trackCtx = trackCanvas.getContext('2d', { willReadFrequently: false })!;
+
         controller = new Controller({
-          inputWidth: video.videoWidth,
-          inputHeight: video.videoHeight,
+          inputWidth: trackW,
+          inputHeight: trackH,
           maxTrack: 1,
           warmupTolerance: 2,
           missTolerance: 15,
-          // Bộ lọc One Euro của MindAR: beta nhỏ thì lọc mạnh khi máy đứng yên, mặc định 1000 gần như không lọc.
-          filterMinCF: 0.0005,
-          filterBeta: 2,
+          // Để nguyên bộ lọc của MindAR ở mức gần như tắt, việc lọc do bộ lọc riêng ở trên đảm nhiệm.
+          filterMinCF: 0.001,
+          filterBeta: 1000,
           onUpdate: (data: any) => {
             if (data.type !== 'updateMatrix') return;
             const { worldMatrix } = data;
-            if (worldMatrix) {
-              tmpM.fromArray(worldMatrix as number[]);
-              tmpM.multiply(postMatrix);
-              tmpM.decompose(targetPos, targetQuat, targetScl);
-              if (!poseInit || !anchor.visible || curPos.distanceTo(targetPos) > snapDist) {
-                curPos.copy(targetPos); curQuat.copy(targetQuat); curScl.copy(targetScl); poseInit = true;
-                anchor.matrix.compose(curPos, curQuat, curScl);
-              }
-              lastSeenAt = performance.now();
-              if (!anchor.visible) { anchor.visible = true; setFound(true); }
-            }
-            // worldMatrix null: không ẩn ngay, vòng lặp vẽ sẽ ẩn khi quá HOLD_MS không thấy lại.
+            if (!worldMatrix) return; // mất dấu tạm thời: vòng vẽ sẽ ẩn khi quá HOLD_MS
+            tmpM.fromArray(worldMatrix as number[]);
+            tmpM.multiply(postMatrix);
+            tmpM.decompose(targetPos, targetQuat, targetScl);
+            const now = performance.now();
+            // Nhận diện lại sau khi mất dấu lâu hoặc nhảy xa thì đặt lại bộ lọc để không trôi chậm.
+            if (!anchor.visible || smoothPos.distanceTo(targetPos) > snapDist) { posFilter.reset(); rotFilter.reset(); lastQuat = null; }
+            // Quaternion q và -q cùng một hướng, ép cùng dấu với mẫu trước để lọc không nhảy.
+            if (lastQuat && lastQuat.dot(targetQuat) < 0) targetQuat.set(-targetQuat.x, -targetQuat.y, -targetQuat.z, -targetQuat.w);
+            lastQuat = lastQuat || new THREE.Quaternion();
+            lastQuat.copy(targetQuat);
+            const p = posFilter.filter(now, [targetPos.x, targetPos.y, targetPos.z]);
+            const q = rotFilter.filter(now, [targetQuat.x, targetQuat.y, targetQuat.z, targetQuat.w]);
+            smoothPos.set(p[0], p[1], p[2]);
+            smoothQuat.set(q[0], q[1], q[2], q[3]).normalize();
+            anchor.matrix.compose(smoothPos, smoothQuat, new THREE.Vector3(fixedScale, fixedScale, fixedScale));
+            lastSeenAt = now;
+            if (!anchor.visible) { anchor.visible = true; setFound(true); }
           },
         });
 
@@ -338,6 +383,7 @@ export default function ARScannerMind({ target: rawTarget, onClose }: ARScannerM
         // Ma trận hậu xử lý như MindARThree: đưa tâm ảnh về gốc và bề rộng ảnh bằng 1 đơn vị.
         const [markerWidth, markerHeight] = dimensions[0];
         snapDist = markerWidth * 0.5;
+        fixedScale = markerWidth;
         postMatrix = new THREE.Matrix4().compose(
           new THREE.Vector3(markerWidth / 2, markerWidth / 2 + (markerHeight - markerWidth) / 2, 0),
           new THREE.Quaternion(),
@@ -347,20 +393,16 @@ export default function ARScannerMind({ target: rawTarget, onClose }: ARScannerM
         resize();
         window.addEventListener('resize', resize);
         setStatusText('Đang làm nóng bộ nhận diện.');
-        await controller.dummyRun(video);
+        trackCtx.drawImage(video, 0, 0, trackW, trackH);
+        await controller.dummyRun(trackCanvas);
         if (!active) return;
-        controller.processVideo(video);
+        controller.processVideo(trackCanvas);
 
         const loop = () => {
           if (!active || !renderer) return;
+          // Cấp khung hình mới nhất (thu nhỏ) cho bộ nhận diện.
+          if (video.readyState >= 2) trackCtx.drawImage(video, 0, 0, trackW, trackH);
           if (anchor.visible && performance.now() - lastSeenAt > HOLD_MS) { anchor.visible = false; setFound(false); }
-          if (anchor.visible && poseInit) {
-            // Kéo mượt về tư thế đích, hệ số 0.25 mỗi khung (khoảng 60 khung/giây) đủ dập rung mà không trễ rõ.
-            curPos.lerp(targetPos, 0.25);
-            curQuat.slerp(targetQuat, 0.25);
-            curScl.lerp(targetScl, 0.25);
-            anchor.matrix.compose(curPos, curQuat, curScl);
-          }
           // Áp cử chỉ người dùng lên nhóm nội dung, giữ nguyên số liệu gốc của studio làm nền.
           const s = rt.current;
           if (s.contentGroup) {
