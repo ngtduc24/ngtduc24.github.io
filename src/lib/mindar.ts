@@ -99,20 +99,57 @@ function loadImageElement(source: string | File): Promise<HTMLImageElement> {
   });
 }
 
-// Biên dịch ảnh target thành dữ liệu .mind. Nên gọi một lần lúc tạo AR target
-// rồi lưu tệp kết quả lên storage, tránh biên dịch lại trên điện thoại mỗi lần quét.
-export async function compileImageToMindBlob(
+// Đánh giá chất lượng ảnh target dựa trên số điểm đặc trưng MindAR trích được.
+// Số đo đối chiếu: ảnh nhiều chi tiết cho khoảng 340 điểm khớp và 57 điểm bám,
+// poster nền chuyển sắc chỉ có chữ ở góc cho khoảng 66 điểm khớp và 9 điểm bám,
+// ảnh loại sau bám rất kém, vật thể rung và nhảy vị trí.
+export interface TargetQuality {
+  trackingPoints: number;
+  matchingPoints: number;
+  level: 'good' | 'fair' | 'poor';
+  message: string;
+}
+
+function gradeQuality(trackingPoints: number, matchingPoints: number): TargetQuality {
+  let level: TargetQuality['level'] = 'poor';
+  if (trackingPoints >= 40 && matchingPoints >= 220) level = 'good';
+  else if (trackingPoints >= 22 && matchingPoints >= 120) level = 'fair';
+  const message = level === 'good'
+    ? 'Ảnh target tốt, nhiều chi tiết để bám, vật thể sẽ đứng vững khi quét.'
+    : level === 'fair'
+      ? 'Ảnh target ở mức trung bình, vẫn quét được nhưng có thể rung nhẹ. Nên thêm chi tiết, hoa văn hoặc ảnh chụp thật để bám chắc hơn.'
+      : 'Ảnh target kém, quá ít chi tiết để bám (nền trơn, chuyển sắc, chữ ít). Vật thể sẽ rung, nhảy vị trí và phóng to nhỏ khi quét. Hãy dùng ảnh có nhiều chi tiết, tương phản cao, phủ kín toàn khung.';
+  return { trackingPoints, matchingPoints, level, message };
+}
+
+// Biên dịch ảnh target thành dữ liệu .mind kèm đánh giá chất lượng. Nên gọi một lần lúc tạo
+// AR target rồi lưu tệp kết quả lên storage, tránh biên dịch lại trên điện thoại mỗi lần quét.
+export async function compileImageToMind(
   source: string | File,
   onProgress?: (percent: number) => void,
-): Promise<Blob> {
+): Promise<{ blob: Blob; quality: TargetQuality }> {
   const Compiler = await loadMindARCompiler();
   const compiler = new Compiler();
   const img = await loadImageElement(source);
 
-  await compiler.compileImageTargets([img], (progress: number) => {
+  const data = await compiler.compileImageTargets([img], (progress: number) => {
     if (onProgress) onProgress(Math.max(0, Math.min(100, Math.round(progress))));
   });
 
+  let trackingPoints = 0, matchingPoints = 0;
+  try {
+    const d = data?.[0];
+    (d?.trackingData || []).forEach((t: any) => { trackingPoints = Math.max(trackingPoints, (t.points || []).length); });
+    (d?.matchingData || []).forEach((k: any) => { matchingPoints = Math.max(matchingPoints, (k.maximaPoints?.length || 0) + (k.minimaPoints?.length || 0)); });
+  } catch { /* không có số liệu thì coi như chưa đánh giá */ }
+
   const buffer = await compiler.exportData();
-  return new Blob([buffer], { type: 'application/octet-stream' });
+  return { blob: new Blob([buffer], { type: 'application/octet-stream' }), quality: gradeQuality(trackingPoints, matchingPoints) };
+}
+
+export async function compileImageToMindBlob(
+  source: string | File,
+  onProgress?: (percent: number) => void,
+): Promise<Blob> {
+  return (await compileImageToMind(source, onProgress)).blob;
 }
