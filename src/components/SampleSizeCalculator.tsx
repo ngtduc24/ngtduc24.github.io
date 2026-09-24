@@ -1,3 +1,4 @@
+import { PageHeader, Badge, IconButton } from './ui';
 import React, { useState, useEffect } from 'react';
 import { uploadImageToCloudinary } from '../lib/upload';
 import MediaSourcePicker from './MediaSourcePicker';
@@ -253,7 +254,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
 </head>
 <body class="flex flex-col items-center justify-center p-4 sm:p-6 md:p-8">
 
-    <div class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl shadow-brand-hover/10 border border-slate-100 overflow-hidden">
+    <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl shadow-brand-hover/10 border border-slate-100 overflow-hidden">
         <!-- Header -->
         <div class="bg-gradient-to-r from-brand to-brand-hover p-6 sm:p-8 text-white relative">
             <div class="flex items-center gap-3 mb-2">
@@ -374,13 +375,13 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                     <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex flex-col justify-center items-center">
                         <span class="text-xs font-medium text-slate-500 mb-1">Cỡ mẫu lý thuyết tối thiểu</span>
                         <div class="text-2xl font-bold text-slate-800" id="result-theoretical">0</div>
-                        <span class="text-[10px] text-slate-400 mt-1">Tính theo công thức khoa học</span>
+                        <span class="text-xs text-slate-400 mt-1">Tính theo công thức khoa học</span>
                     </div>
 
                     <div class="bg-brand-light rounded-2xl p-5 border-2 border-brand/20 flex flex-col justify-center items-center relative overflow-hidden">
                         <span class="text-xs font-semibold text-brand mb-1">Số phiếu thực tế cần phát ra</span>
-                        <div class="text-4xl font-extrabold text-brand" id="result-actual">0</div>
-                        <span class="text-[10px] text-brand/70 mt-1 font-medium" id="result-backup-desc">Đã cộng dự phòng</span>
+                        <div class="text-4xl font-bold text-brand" id="result-actual">0</div>
+                        <span class="text-xs text-brand/70 mt-1 font-medium" id="result-backup-desc">Đã cộng dự phòng</span>
                     </div>
                 </div>
 
@@ -790,39 +791,15 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
   };
 
   return (
-    <div className="flex justify-center p-2 sm:p-4">
-      <div className="w-full bg-white rounded-3xl shadow-2xl shadow-brand-hover/5 border border-slate-100 overflow-hidden relative">
-        
-        {/* Card Header */}
-        <div 
-          className="bg-brand text-white rounded-2xl p-6 shadow-xl border border-brand flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden"
-          style={{ 
-            backgroundColor: brandColor,
-            ...(settings?.calcBannerImage ? { backgroundImage: `url(${settings.calcBannerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {})
-          }}
-        >
-          {settings?.calcBannerImage && <div className="absolute inset-0 bg-black/40" />}
-          
-          {currentUser?.role === 'admin' && (
-            <button 
-              onClick={() => setShowBannerSettings(true)} 
-              className="absolute top-4 right-4 z-20 p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-colors cursor-pointer"
-              title="Cài đặt Banner"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-          )}
-
-          <div className="relative z-10 space-y-1.5 flex-1 text-left">
-            <div className="flex items-center gap-2">
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-white/80">{settings?.calcBannerLabel || "Smart Research VN"}</span>
-                <h1 className="text-xl md:text-2xl font-bold tracking-tight font-display text-slate-50">{settings?.calcBannerTitle || "Công Cụ Tính Cỡ Mẫu Chuẩn"}</h1>
-              </div>
-            </div>
-            <p className="text-xs text-white/90 max-w-2xl leading-relaxed">{settings?.calcBannerDescription || "Được đóng gói chuẩn hóa, tính toán đúng định chuẩn của Hoàng Trọng, Hair, Taro Yamane & Cochran."}</p>
-          </div>
-        </div>
+    <div className="space-y-6 animate-fadeIn">
+      <PageHeader
+        icon={<Calculator size={22} />}
+        title={settings?.calcBannerTitle || "Tính cỡ mẫu nghiên cứu"}
+        description={settings?.calcBannerDescription || "Tính cỡ mẫu theo Hoàng Trọng, Hair, Taro Yamane và Cochran, có dự phòng phiếu hỏng."}
+        badge={settings?.calcBannerLabel ? <Badge tone="brand">{settings.calcBannerLabel}</Badge> : undefined}
+        actions={currentUser?.role === 'admin' ? <IconButton label="Cài đặt đầu trang" variant="outline" onClick={() => setShowBannerSettings(true)}><Settings size={18} /></IconButton> : undefined}
+      />
+      <div className="w-full max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden relative">
 
         {/* Wizard progress bar */}
         <div className="px-6 sm:px-8 pt-6 pb-2">
@@ -833,7 +810,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
               }`}
               style={step > 1 ? undefined : { color: brandColor }}
             >
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] transition-all duration-200 ${
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs transition-all duration-200 ${
                 step > 1 ? 'bg-brand-light text-brand border border-brand' : ''
               }`}
               style={step > 1 ? undefined : { backgroundColor: brandColor + '10', color: brandColor, borderColor: brandColor }}
@@ -851,7 +828,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
               }`}
               style={step === 2 ? { color: brandColor } : undefined}
             >
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] transition-all duration-200 ${
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs transition-all duration-200 ${
                 step > 2 ? 'bg-brand-light text-brand border border-brand' : 
                 step === 2 ? '' : 'bg-slate-50 text-slate-400 border border-slate-200'
               }`}
@@ -870,7 +847,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
               }`}
               style={step === 3 ? { color: brandColor } : undefined}
             >
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] transition-all duration-200 ${
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs transition-all duration-200 ${
                 step === 3 ? '' : 'bg-slate-50 text-slate-400 border border-slate-200'
               }`}
               style={step === 3 ? { backgroundColor: brandColor + '10', color: brandColor, borderColor: brandColor } : undefined}
@@ -903,7 +880,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
             <form onSubmit={handleSaveBanner} className="space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tiêu đề Banner</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tiêu đề Banner</label>
                   <input 
                     type="text" 
                     value={bannerTitle} 
@@ -913,7 +890,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Nhãn phụ (Badge)</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nhãn phụ (Badge)</label>
                   <input 
                     type="text" 
                     value={bannerLabel} 
@@ -925,7 +902,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
               </div>
               
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Mô tả chi tiết</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Mô tả chi tiết</label>
                 <textarea 
                   value={bannerDesc} 
                   onChange={e => setBannerDesc(e.target.value)} 
@@ -937,9 +914,9 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
 
               <div className="space-y-2.5">
                 <div className="flex justify-between items-center">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Ảnh bìa (Tùy chọn)</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ảnh bìa (Tùy chọn)</label>
                   {bannerImg && (
-                    <button type="button" onClick={() => setBannerImg('')} className="text-rose-500 hover:text-rose-600 text-[10px] font-bold flex items-center gap-1 bg-rose-50 px-2 py-1 rounded-lg">
+                    <button type="button" onClick={() => setBannerImg('')} className="text-rose-500 hover:text-rose-600 text-xs font-bold flex items-center gap-1 bg-rose-50 px-2 py-1 rounded-lg">
                       <X className="w-3 h-3" /> Xóa ảnh & dùng màu nền
                     </button>
                   )}
@@ -960,7 +937,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                 <button 
                   type="submit" 
                   disabled={isUploading} 
-                  className="px-8 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-extrabold shadow-lg shadow-brand/20 transition-all disabled:opacity-50"
+                  className="px-8 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-xl text-xs font-bold shadow-lg shadow-brand/20 transition-all disabled:opacity-50"
                 >
                   {isUploading ? 'Đang xử lý...' : 'Lưu cài đặt'}
                 </button>
@@ -1054,7 +1031,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                 className="space-y-4"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-brand bg-brand-light border border-brand-light px-2 py-0.5 rounded-md uppercase">
+                  <span className="text-xs font-bold text-brand bg-brand-light border border-brand-light px-2 py-0.5 rounded-md uppercase">
                     Phương pháp {method}
                   </span>
                   <span className="text-xs text-slate-500 font-medium">
@@ -1265,7 +1242,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                 className="space-y-6 text-center"
               >
                 <div>
-                  <span className="text-[10px] font-bold tracking-widest text-brand uppercase bg-brand-light px-3 py-1 rounded-full border border-brand/10">
+                  <span className="text-xs font-bold tracking-widest text-brand uppercase bg-brand-light px-3 py-1 rounded-full border border-brand/10">
                     BÁO CÁO KẾT QUẢ CỠ MẪU
                   </span>
                   <h3 className="text-base sm:text-lg font-bold text-slate-800 mt-2 font-display">
@@ -1283,7 +1260,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                     <div className="text-2xl font-bold text-slate-800 font-display">
                       {theoreticalN.toFixed(2)}
                     </div>
-                    <span className="text-[10px] text-slate-400 mt-1">
+                    <span className="text-xs text-slate-400 mt-1">
                       (Theo công thức toán gốc)
                     </span>
                   </div>
@@ -1292,10 +1269,10 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                     <span className="text-xs font-bold text-brand mb-1 uppercase tracking-wide">
                       Số phiếu thực tế cần phát ra
                     </span>
-                    <div className="text-4xl font-extrabold text-brand font-display">
+                    <div className="text-4xl font-bold text-brand font-display">
                       {actualN}
                     </div>
-                    <span className="text-[10px] text-brand/80 mt-1 font-semibold">
+                    <span className="text-xs text-brand/80 mt-1 font-semibold">
                       (Đã gộp {backupRate}% dự phòng phiếu hỏng)
                     </span>
                   </div>
@@ -1331,7 +1308,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                       <>
                         <div>
                           <p className="font-semibold text-slate-800">1. Công thức Taro Yamane (1967) tổng thể hữu hạn:</p>
-                          <p className="pl-3 font-mono text-slate-500 text-[10px] my-1 bg-white border border-slate-200/50 p-1 rounded-md text-center">n = N / (1 + N × e²)</p>
+                          <p className="pl-3 font-mono text-slate-500 text-xs my-1 bg-white border border-slate-200/50 p-1 rounded-md text-center">n = N / (1 + N × e²)</p>
                           <p className="pl-3 text-slate-500">N = {populationSize} (Dân số), e = {marginOfError}% = {parseFloat(marginOfError) / 100}</p>
                         </div>
                         <div>
@@ -1345,7 +1322,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                       <>
                         <div>
                           <p className="font-semibold text-slate-800">1. Công thức Cochran (1977) tổng thể vô hạn:</p>
-                          <p className="pl-3 font-mono text-slate-500 text-[10px] my-1 bg-white border border-slate-200/50 p-1 rounded-md text-center">n = (Z² × p × (1 - p)) / e²</p>
+                          <p className="pl-3 font-mono text-slate-500 text-xs my-1 bg-white border border-slate-200/50 p-1 rounded-md text-center">n = (Z² × p × (1 - p)) / e²</p>
                           <p className="pl-3 text-slate-500">Z = {confidenceZ} ({confidenceZ === '1.96' ? 'Tin cậy 95%' : 'Tin cậy 99%'}), p = {proportionP}, e = {marginOfError}%</p>
                         </div>
                         <div>
@@ -1357,7 +1334,7 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
 
                     <div className="border-t border-slate-200/60 pt-2 p-2 rounded-lg" style={{ backgroundColor: brandColor + '10' }}>
                       <p className="font-bold" style={{ color: brandColor }}>Tính mẫu thực tế gồm hao hụt (dự phòng {backupRate}%):</p>
-                      <p className="pl-2 mt-0.5 text-[11px] text-slate-700 leading-normal">
+                      <p className="pl-2 mt-0.5 text-xs text-slate-700 leading-normal">
                         N_thucte = Math.ceil(n / (1 - d)) = Math.ceil({theoreticalN.toFixed(2)} / (1 - {parseFloat(backupRate) / 100})) = <span className="font-bold text-sm" style={{ color: brandColor }}>{actualN} phiếu</span>
                       </p>
                     </div>

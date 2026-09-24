@@ -58,9 +58,9 @@ export default function Settings({ users, currentUser, onSaveUser, isUserAdmin, 
     <div className="space-y-6">
       
       {/* Banner Settings */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4 text-left">
+      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 text-left">
         <div className="border-b border-slate-100 pb-3">
-          <h2 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+          <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
             <ImageIcon className="w-5 h-5 text-brand" />
             <span>Cài đặt Banner Module Định Lượng</span>
           </h2>
@@ -68,20 +68,20 @@ export default function Settings({ users, currentUser, onSaveUser, isUserAdmin, 
         <form onSubmit={handleSaveBanner} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-500 uppercase">Tiêu đề</label>
+              <label className="text-xs font-bold text-slate-500 uppercase">Tiêu đề</label>
               <input type="text" value={bannerTitle} onChange={e => setBannerTitle(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-xs bg-slate-50" />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-500 uppercase">Nhãn phụ (Badge)</label>
+              <label className="text-xs font-bold text-slate-500 uppercase">Nhãn phụ (Badge)</label>
               <input type="text" value={bannerLabel} onChange={e => setBannerLabel(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-xs bg-slate-50" />
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-slate-500 uppercase">Mô tả</label>
+            <label className="text-xs font-bold text-slate-500 uppercase">Mô tả</label>
             <textarea value={bannerDesc} onChange={e => setBannerDesc(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-xs bg-slate-50" rows={2}></textarea>
           </div>
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-slate-500 uppercase">Ảnh bìa (Tùy chọn)</label>
+            <label className="text-xs font-bold text-slate-500 uppercase">Ảnh bìa (Tùy chọn)</label>
             <div className="flex items-center gap-2">
               <MediaSourcePicker onSelect={setBannerImg} accept="image/*" resourceType="image" folder="module-banners/quantitative" label="Chọn ảnh bìa" disabled={isUploading} />
               {bannerImg && (
@@ -95,9 +95,9 @@ export default function Settings({ users, currentUser, onSaveUser, isUserAdmin, 
         </form>
       </div>
 
-<div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4 text-left">
+<div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 text-left">
         <div className="border-b border-slate-100 pb-3">
-          <h2 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+          <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
             <Shield className="w-5 h-5 text-brand" />
             <span>Phân quyền chuyên sâu Phân tích định lượng</span>
           </h2>
@@ -107,7 +107,7 @@ export default function Settings({ users, currentUser, onSaveUser, isUserAdmin, 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="text-[10px] font-extrabold text-slate-400 uppercase border-b border-slate-100 tracking-wider">
+              <tr className="text-xs font-bold text-slate-400 uppercase border-b border-slate-100 tracking-wider">
                 <th className="py-3 px-4">Thành viên</th>
                 <th className="py-3 px-4 text-center">Thêm biến</th>
                 <th className="py-3 px-4 text-center">Sửa biến</th>
@@ -129,7 +129,7 @@ export default function Settings({ users, currentUser, onSaveUser, isUserAdmin, 
                         </div>
                         <div>
                           <p className="font-bold text-slate-800">{user.fullName}</p>
-                          <p className="text-[10px] text-slate-400 font-mono">@{user.username || user.role}</p>
+                          <p className="text-xs text-slate-400 font-mono">@{user.username || user.role}</p>
                         </div>
                       </div>
                     </td>
@@ -137,7 +137,7 @@ export default function Settings({ users, currentUser, onSaveUser, isUserAdmin, 
                       <button
                         disabled={isUserAdminRole}
                         onClick={() => handleTogglePermission(user, 'canCreateQuantitative')}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                           isUserAdminRole || user.canCreateQuantitative 
                             ? 'bg-brand-light text-brand border border-brand/30' 
                             : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'
@@ -150,7 +150,7 @@ export default function Settings({ users, currentUser, onSaveUser, isUserAdmin, 
                       <button
                         disabled={isUserAdminRole}
                         onClick={() => handleTogglePermission(user, 'canEditQuantitative')}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                           isUserAdminRole || user.canEditQuantitative 
                             ? 'bg-brand-light text-brand border border-brand/30' 
                             : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'
@@ -163,7 +163,7 @@ export default function Settings({ users, currentUser, onSaveUser, isUserAdmin, 
                       <button
                         disabled={isUserAdminRole}
                         onClick={() => handleTogglePermission(user, 'canDeleteQuantitative')}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                           isUserAdminRole || user.canDeleteQuantitative 
                             ? 'bg-brand-light text-brand border border-brand/30' 
                             : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'
@@ -176,7 +176,7 @@ export default function Settings({ users, currentUser, onSaveUser, isUserAdmin, 
                       <button
                         disabled={isUserAdminRole}
                         onClick={() => handleTogglePermission(user, 'canImportQuantitative')}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                           isUserAdminRole || user.canImportQuantitative 
                             ? 'bg-brand-light text-brand border border-brand/30' 
                             : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'
@@ -189,7 +189,7 @@ export default function Settings({ users, currentUser, onSaveUser, isUserAdmin, 
                       <button
                         disabled={isUserAdminRole}
                         onClick={() => handleTogglePermission(user, 'canExportQuantitative')}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                           isUserAdminRole || user.canExportQuantitative 
                             ? 'bg-brand-light text-brand border border-brand/30' 
                             : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'
@@ -202,7 +202,7 @@ export default function Settings({ users, currentUser, onSaveUser, isUserAdmin, 
                       <button
                         disabled={isUserAdminRole}
                         onClick={() => handleTogglePermission(user, 'canManageQuantitativeSettings')}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                           isUserAdminRole || user.canManageQuantitativeSettings 
                             ? 'bg-brand-light text-brand border border-brand/30' 
                             : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'

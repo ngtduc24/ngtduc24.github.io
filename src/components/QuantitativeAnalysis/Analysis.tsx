@@ -774,7 +774,7 @@ export default function Analysis({ onAnalysisComplete }: { onAnalysisComplete?: 
                  
                  {selectedModel === 'regression' && (
                    <div className="mt-8 flex flex-col items-center gap-1">
-                     <span className="text-[10px] uppercase font-bold text-slate-400">Dependent</span>
+                     <span className="text-xs uppercase font-bold text-slate-400">Dependent</span>
                      <button 
                         disabled={!selectedAvailableVar && !selectedTargetVar}
                         onClick={() => {

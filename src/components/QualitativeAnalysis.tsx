@@ -1,3 +1,4 @@
+import { PageHeader, Badge, IconButton } from './ui';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   FolderKanban,
@@ -895,7 +896,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
       if (lineAnns.length === 0) {
         return (
           <div key={lineIndex} className="flex items-start py-1.5 hover:bg-slate-50 border-b border-slate-100/40">
-            <span className="w-10 text-right select-none font-mono text-[11px] text-slate-400 pr-3 font-semibold">
+            <span className="w-10 text-right select-none font-mono text-xs text-slate-400 pr-3 font-semibold">
               [{String(lineIndex + 1).padStart(2, '0')}]
             </span>
             <span className="flex-1 whitespace-pre-wrap text-slate-800 text-sm leading-relaxed">{line}</span>
@@ -953,7 +954,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
             >
               {segText}
               {/* Floating micro flag indicating which code is assigned */}
-              <span className="absolute -top-3.5 left-0 scale-75 origin-left bg-slate-900 text-white text-[9px] px-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 whitespace-nowrap shadow font-sans">
+              <span className="absolute -top-3.5 left-0 scale-75 origin-left bg-slate-900 text-white text-xs px-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 whitespace-nowrap shadow font-sans">
                 {codeObj?.name} {isOverlapping && `(+${matchingAnns.length - 1} khác)`}
               </span>
             </span>
@@ -965,7 +966,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
 
       return (
         <div key={lineIndex} className="flex items-start py-1.5 hover:bg-slate-50 border-b border-slate-100/40">
-          <span className="w-10 text-right select-none font-mono text-[11px] text-slate-400 pr-3 font-semibold">
+          <span className="w-10 text-right select-none font-mono text-xs text-slate-400 pr-3 font-semibold">
             [{String(lineIndex + 1).padStart(2, '0')}]
           </span>
           <span className="flex-1 whitespace-pre-wrap text-slate-800 text-sm leading-relaxed">
@@ -1483,13 +1484,13 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                   <div>
                     <span className="font-semibold text-slate-800 text-sm">{node.name}</span>
                     {node.description && (
-                      <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{node.description}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{node.description}</p>
                     )}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold text-brand bg-brand-light px-2 py-0.5 rounded-full border border-brand/10">
+                  <span className="text-xs font-bold text-brand bg-brand-light px-2 py-0.5 rounded-full border border-brand/10">
                     {quoteCount} trích dẫn
                   </span>
                   
@@ -1517,7 +1518,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
       {/* New Codebook Modal */}
       {showNewCodebookModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-100 animate-in fade-in zoom-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-100 animate-in fade-in zoom-in duration-200">
             <div className="bg-brand px-6 py-4 flex items-center justify-between text-white">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5" />
@@ -1543,7 +1544,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
               
               <div className="bg-brand-light border border-brand-light rounded-xl p-3 flex gap-3">
                 <AlertTriangle className="w-5 h-5 text-brand shrink-0" />
-                <p className="text-[10px] text-brand-hover leading-relaxed">
+                <p className="text-xs text-brand-hover leading-relaxed">
                   Việc tạo bộ mã mới cho phép bạn phân tách các hệ thống mã hóa khác nhau cho cùng một tập dữ liệu. Bạn có thể chuyển đổi giữa các bộ mã bất cứ lúc nào.
                 </p>
               </div>
@@ -1593,29 +1594,13 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
         </>
       )}
 
-      {/* Header Panel */}
-        <div className="bg-brand rounded-3xl p-8 text-white relative overflow-hidden shadow-lg animate-fadeIn" style={{ ...(settings?.qdaBannerImage ? { backgroundImage: `url(${settings.qdaBannerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}) }}>
-        {settings?.qdaBannerImage && <div className="absolute inset-0 bg-black/40" />}
-          {isUserAdmin && (
-            <button onClick={() => setShowBannerSettings(true)} className="absolute top-4 right-4 z-20 p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-colors cursor-pointer">
-              <Settings className="w-5 h-5" />
-            </button>
-          )}
-          {/* Banner Settings Removed */}
-
-          <div className="flex flex-col items-start gap-4">
-            {/* Badge */}
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-[10px] font-bold tracking-wider uppercase backdrop-blur-xs relative z-10">
-              <span>{settings?.qdaBannerLabel || "QDA"}</span>
-            </div>
-
-            {/* Title & Description */}
-            <div className="space-y-1 relative z-10">
-              <h1 className="text-3xl font-extrabold tracking-tight">{settings?.qdaBannerTitle || "Phân tích định tính"}</h1>
-              <p className="text-xs text-white/90 opacity-90 max-w-lg">{settings?.qdaBannerDescription || "Công cụ phân tích dữ liệu định tính, mã hóa và trực quan hóa chủ đề."}</p>
-            </div>
-          </div>
-        </div>
+      <PageHeader
+        icon={<IconFolderKanban size={22} />}
+        title={settings?.qdaBannerTitle || "Phân tích định tính"}
+        description={settings?.qdaBannerDescription || "Công cụ phân tích dữ liệu định tính, mã hóa và trực quan hóa chủ đề."}
+        badge={settings?.qdaBannerLabel ? <Badge tone="brand">{settings.qdaBannerLabel}</Badge> : undefined}
+        actions={isUserAdmin ? <IconButton label="Cài đặt đầu trang" variant="outline" onClick={() => setShowBannerSettings(true)}><Settings size={18} /></IconButton> : undefined}
+      />
 
       {/* Linear Wizard Navigation matching Steps 0-5 */}
       <div ref={tabsScrollRef} className="bg-white rounded-2xl border border-slate-200/60 p-1 shadow-sm overflow-x-auto whitespace-nowrap scrollbar-hide flex gap-1">
@@ -1697,7 +1682,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
               <FolderKanban className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Dự án đang làm việc</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Dự án đang làm việc</p>
               <select
                 value={selectedProjectId}
                 onChange={(e) => setSelectedProjectId(e.target.value)}
@@ -1768,7 +1753,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                             className="font-bold text-slate-800 hover:text-brand transition-colors flex items-center gap-2 text-left cursor-pointer"
                           >
                             {proj.name}
-                            {isSelected && <span className="bg-brand text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">Đang chọn</span>}
+                            {isSelected && <span className="bg-brand text-white text-xs px-2 py-0.5 rounded-full uppercase tracking-wider">Đang chọn</span>}
                           </button>
                         </td>
                         <td className="px-4 py-3 text-center font-semibold text-brand">
@@ -1908,13 +1893,13 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                   style={{ top: contextMenuPos.y - 120, left: contextMenuPos.x - 200 }}
                   className="absolute z-50 bg-slate-900 text-white rounded-xl shadow-2xl p-3.5 border border-slate-800 w-72 space-y-2 animate-fadeIn scale-100"
                 >
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1 border-b border-slate-800 pb-1.5">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider line-clamp-1 border-b border-slate-800 pb-1.5">
                     Gán nhãn: "{selectedTextRange.text}"
                   </p>
                   
                   {/* Select Existing Code */}
                   <div className="space-y-1 max-h-40 overflow-y-auto">
-                    <span className="text-[9px] font-semibold text-slate-400 block">Chọn mã sẵn có:</span>
+                    <span className="text-xs font-semibold text-slate-400 block">Chọn mã sẵn có:</span>
                     {currentCodes.map(code => (
                       <button
                         key={code.id}
@@ -1926,13 +1911,13 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                       </button>
                     ))}
                     {currentCodes.length === 0 && (
-                      <p className="text-[10px] text-slate-500 italic">Chưa có mã nào trong danh mục.</p>
+                      <p className="text-xs text-slate-500 italic">Chưa có mã nào trong danh mục.</p>
                     )}
                   </div>
 
                   {/* Create New Code Inline */}
                   <div className="border-t border-slate-800 pt-2 space-y-1.5">
-                    <span className="text-[9px] font-semibold text-slate-400 block">Hoặc tạo mã phân loại mới:</span>
+                    <span className="text-xs font-semibold text-slate-400 block">Hoặc tạo mã phân loại mới:</span>
                     <div className="flex gap-1">
                       <input
                         type="text"
@@ -1964,12 +1949,12 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
             </div>
 
             {/* Hint bar */}
-            <div className="p-3 bg-slate-50 border-t border-slate-100 rounded-b-2xl text-[10.5px] text-slate-500 flex items-center justify-between gap-2 shrink-0">
+            <div className="p-3 bg-slate-50 border-t border-slate-100 rounded-b-2xl text-xs text-slate-500 flex items-center justify-between gap-2 shrink-0">
               <div className="flex items-center gap-1">
                 <HelpCircle className="w-3.5 h-3.5 text-brand" />
                 <span>Mẹo: Dùng chuột bôi đen các cụm từ trong văn bản để hiển thị menu gán mã tức thì!</span>
               </div>
-              <span className="font-mono text-[9px] text-slate-400">Offset Mapping Engine v2.0</span>
+              <span className="font-mono text-xs text-slate-400">Offset Mapping Engine v2.0</span>
             </div>
           </div>
 
@@ -2003,7 +1988,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                       </p>
                       
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-slate-500">Mã gán:</span>
+                        <span className="text-xs text-slate-500">Mã gán:</span>
                         <span
                           style={{ color: codeObj?.color, backgroundColor: `${codeObj?.color}15` }}
                           className="font-bold px-2.5 py-0.5 rounded-full border border-brand/40"
@@ -2012,7 +1997,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                         </span>
                       </div>
 
-                      <div className="text-[10px] text-slate-500 space-y-1 pt-1">
+                      <div className="text-xs text-slate-500 space-y-1 pt-1">
                         <p>• Vị trí: Ký tự [{ann.startIndex} - {ann.endIndex}]</p>
                         <p>• Người gán: {ann.createdBy}</p>
                         {ann.isAiSuggested && (
@@ -2021,17 +2006,17 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                               <AlertTriangle className="w-3.5 h-3.5" />
                               Đề xuất tự động của AI
                             </p>
-                            <p className="text-[10px] text-amber-700 leading-relaxed">{ann.aiExplanation}</p>
+                            <p className="text-xs text-amber-700 leading-relaxed">{ann.aiExplanation}</p>
                             <div className="flex gap-1.5 pt-1">
                               <button
                                 onClick={() => handleAcceptAiAnnotation(ann.id)}
-                                className="bg-brand hover:bg-brand-hover text-white text-[10px] font-bold px-2 py-1 rounded cursor-pointer"
+                                className="bg-brand hover:bg-brand-hover text-white text-xs font-bold px-2 py-1 rounded cursor-pointer"
                               >
                                 Chấp nhận
                               </button>
                               <button
                                 onClick={() => handleDeleteAnnotation(ann.id)}
-                                className="bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold px-2 py-1 rounded cursor-pointer"
+                                className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-2 py-1 rounded cursor-pointer"
                               >
                                 Loại bỏ
                               </button>
@@ -2044,7 +2029,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                         <div className="pt-2 border-t border-brand/50 flex justify-end">
                           <button
                             onClick={() => handleDeleteAnnotation(ann.id)}
-                            className="flex items-center gap-1 text-rose-600 hover:text-rose-800 font-bold text-[11px]"
+                            className="flex items-center gap-1 text-rose-600 hover:text-rose-800 font-bold text-xs"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             Gỡ nhãn mã hóa này
@@ -2069,7 +2054,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                     <select
                       value={activeCodebookId}
                       onChange={(e) => setActiveCodebookId(e.target.value)}
-                      className="text-[9px] font-bold text-brand bg-brand/5 border-none rounded-md px-1 py-0.5 focus:outline-none cursor-pointer"
+                      className="text-xs font-bold text-brand bg-brand/5 border-none rounded-md px-1 py-0.5 focus:outline-none cursor-pointer"
                     >
                       {codebooks.map(cb => (
                         <option key={cb.id} value={cb.id}>{cb.name}</option>
@@ -2084,7 +2069,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                     </button>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
                   {currentCodes.length} mã
                 </span>
               </div>
@@ -2153,13 +2138,13 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                           <button
                             type="button"
                             onClick={() => setEditingCodeId(null)}
-                            className="px-2 py-1 text-[10px] font-bold text-slate-500 hover:bg-slate-200 rounded-md transition-colors"
+                            className="px-2 py-1 text-xs font-bold text-slate-500 hover:bg-slate-200 rounded-md transition-colors"
                           >
                             Hủy
                           </button>
                           <button
                             type="submit"
-                            className="px-2 py-1 text-[10px] font-bold bg-brand text-white hover:bg-brand-hover rounded-md transition-colors shadow-sm"
+                            className="px-2 py-1 text-xs font-bold bg-brand text-white hover:bg-brand-hover rounded-md transition-colors shadow-sm"
                           >
                             Lưu
                           </button>
@@ -2200,7 +2185,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                       </div>
                       
                       <div className="flex items-center gap-2 group-hover:hidden">
-                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
                           {count} trích dẫn
                         </span>
                       </div>
@@ -2254,7 +2239,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-[10px] font-semibold text-slate-500 block">Vai trò:</label>
+                    <label className="text-xs font-semibold text-slate-500 block">Vai trò:</label>
                     <select
                       value={newDocMeta['Vai trò'] || ''}
                       onChange={(e) => setNewDocMeta(prev => ({ ...prev, 'Vai trò': e.target.value }))}
@@ -2277,7 +2262,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-semibold text-slate-500 block">Giới tính:</label>
+                    <label className="text-xs font-semibold text-slate-500 block">Giới tính:</label>
                     <select
                       value={newDocMeta['Giới tính']}
                       onChange={(e) => setNewDocMeta(prev => ({ ...prev, 'Giới tính': e.target.value }))}
@@ -2289,7 +2274,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                   </div>
 
                   <div className="col-span-2">
-                    <label className="text-[10px] font-semibold text-slate-500 block">Kinh nghiệm:</label>
+                    <label className="text-xs font-semibold text-slate-500 block">Kinh nghiệm:</label>
                     <select
                       value={newDocMeta['Kinh nghiệm']}
                       onChange={(e) => setNewDocMeta(prev => ({ ...prev, 'Kinh nghiệm': e.target.value }))}
@@ -2336,19 +2321,19 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                         <span className="font-bold text-slate-800 text-sm">{doc.name}</span>
                         <div className="flex flex-wrap gap-1.5 mt-1.5">
                           {Object.entries(doc.metadata).map(([key, val]) => (
-                            <span key={key} className="inline-flex items-center text-[9px] font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded">
+                            <span key={key} className="inline-flex items-center text-xs font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded">
                               {key}: {val}
                             </span>
                           ))}
                         </div>
                       </div>
-                      <p className="text-[11px] text-slate-500 line-clamp-2 italic">
+                      <p className="text-xs text-slate-500 line-clamp-2 italic">
                         "{doc.plainText}"
                       </p>
                     </div>
 
                     <div className="flex md:flex-col justify-between items-end shrink-0 gap-2">
-                      <span className="text-[11px] font-bold text-brand bg-brand-light border border-brand-light px-2.5 py-1 rounded-lg">
+                      <span className="text-xs font-bold text-brand bg-brand-light border border-brand-light px-2.5 py-1 rounded-lg">
                         {annCount} đoạn mã hóa
                       </span>
 
@@ -2385,7 +2370,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                 <GitFork className="w-5 h-5 text-brand" />
                 <h3 className="text-sm font-bold text-slate-800">Tổ chức cây chủ đề nghiên cứu khoa học</h3>
               </div>
-              <span className="text-[10px] text-slate-400 font-bold italic">
+              <span className="text-xs text-slate-400 font-bold italic">
                 Kéo &amp; Thả mã con vào mã cha để thiết lập phân cấp
               </span>
             </div>
@@ -2508,7 +2493,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                 <FileSpreadsheet className="w-5 h-5 text-brand" />
                 <div>
                   <h3 className="text-sm font-bold text-slate-800">Ma trận phân tích chéo (Matrix Coding Query)</h3>
-                  <p className="text-[10px] text-slate-400 mt-0.5">So sánh quan điểm/số liệu trích dẫn giao thoa giữa các nhóm phân loại.</p>
+                  <p className="text-xs text-slate-400 mt-0.5">So sánh quan điểm/số liệu trích dẫn giao thoa giữa các nhóm phân loại.</p>
                 </div>
               </div>
 
@@ -2542,7 +2527,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                 {/* Export excel */}
                 <button
                   onClick={handleExportMatrixReport}
-                  className="flex items-center gap-1 bg-brand hover:bg-brand-hover text-white font-bold px-3 py-1.5 rounded-lg transition-all text-[11px] cursor-pointer shadow-sm"
+                  className="flex items-center gap-1 bg-brand hover:bg-brand-hover text-white font-bold px-3 py-1.5 rounded-lg transition-all text-xs cursor-pointer shadow-sm"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Excel</span>
@@ -2576,7 +2561,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                           {row.counts[xVal] || 0}
                         </td>
                       ))}
-                      <td className="p-3 text-center font-mono font-black bg-slate-100/20 text-brand">
+                      <td className="p-3 text-center font-mono font-bold bg-slate-100/20 text-brand">
                         {row.total}
                       </td>
                     </tr>
@@ -2601,13 +2586,13 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                   <BarChart3 className="w-5 h-5 text-brand" />
                   <h3 className="text-sm font-bold text-slate-800">Tần suất từ lặp (Word Frequency)</h3>
                 </div>
-                <span className="text-[10px] text-slate-400 font-bold italic">Đã lọc stop words tiếng Việt</span>
+                <span className="text-xs text-slate-400 font-bold italic">Đã lọc stop words tiếng Việt</span>
               </div>
 
               <div className="space-y-3.5">
                 {getWordFrequency().map(([word, freq], idx) => (
                   <div key={word} className="space-y-1.5 text-xs">
-                    <div className="flex justify-between items-center text-[11px]">
+                    <div className="flex justify-between items-center text-xs">
                       <span className="font-bold text-slate-700">#{idx + 1} {word}</span>
                       <span className="text-slate-400 font-mono font-semibold">{freq} lần xuất hiện</span>
                     </div>
@@ -2668,7 +2653,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                   {isAiSynthesisLoading ? (
                     <div className="text-center py-12 space-y-2">
                       <RefreshCw className="w-6 h-6 animate-spin text-brand mx-auto" />
-                      <p className="text-[10px] text-slate-400 font-semibold">Gemini đang đọc toàn bộ quotes, phân loại động lực và viết bài tóm tắt...</p>
+                      <p className="text-xs text-slate-400 font-semibold">Gemini đang đọc toàn bộ quotes, phân loại động lực và viết bài tóm tắt...</p>
                     </div>
                   ) : aiSynthesisResult ? (
                     aiSynthesisResult
@@ -2781,10 +2766,10 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                     className="p-4 rounded-xl border border-slate-200 bg-slate-50/40 space-y-2 relative group hover:border-brand/30 transition-all text-xs cursor-pointer"
                   >
                     <div className="flex justify-between items-center border-b border-slate-100 pb-1">
-                      <span className="font-bold text-slate-800 flex items-center gap-1 bg-slate-200 px-2 py-0.5 rounded text-[10px]">
+                      <span className="font-bold text-slate-800 flex items-center gap-1 bg-slate-200 px-2 py-0.5 rounded text-xs">
                         {label}
                       </span>
-                      <span className="text-[10px] text-slate-400">{memo.createdAt}</span>
+                      <span className="text-xs text-slate-400">{memo.createdAt}</span>
                     </div>
                     
                     <p className="text-slate-700 leading-relaxed font-sans">{memo.content}</p>
@@ -3166,7 +3151,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
       {showBannerSettings && (
         <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-lg p-6 space-y-4 text-left animate-fadeIn">
-            <h2 className="text-sm font-extrabold text-slate-800">Cài đặt Banner Module Định Tính</h2>
+            <h2 className="text-sm font-bold text-slate-800">Cài đặt Banner Module Định Tính</h2>
             <form onSubmit={handleSaveBanner} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1">Biểu tượng</label>
@@ -3179,22 +3164,22 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Tiêu đề</label>
+                <label className="text-xs font-bold text-slate-500 uppercase">Tiêu đề</label>
                 <input type="text" value={bannerTitle} onChange={e => setBannerTitle(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-xs bg-slate-50" />
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Nhãn phụ (Badge)</label>
+                <label className="text-xs font-bold text-slate-500 uppercase">Nhãn phụ (Badge)</label>
                 <input type="text" value={bannerLabel} onChange={e => setBannerLabel(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-xs bg-slate-50" />
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Mô tả</label>
+                <label className="text-xs font-bold text-slate-500 uppercase">Mô tả</label>
                 <textarea value={bannerDesc} onChange={e => setBannerDesc(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-xs bg-slate-50" rows={2}></textarea>
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase flex justify-between items-center">
+                <label className="text-xs font-bold text-slate-500 uppercase flex justify-between items-center">
                   <span>Ảnh bìa (Tùy chọn)</span>
                   {bannerImg && (
-                    <button type="button" onClick={() => setBannerImg('')} className="text-rose-500 hover:text-rose-600 text-[10px] flex items-center gap-1">
+                    <button type="button" onClick={() => setBannerImg('')} className="text-rose-500 hover:text-rose-600 text-xs flex items-center gap-1">
                       <X className="w-3 h-3" /> Xóa ảnh (Dùng màu nền)
                     </button>
                   )}
