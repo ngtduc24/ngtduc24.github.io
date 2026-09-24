@@ -46,14 +46,16 @@
 }
 
 /* Hiệu ứng dùng chung, trước đây chỉ khai báo trong SocialDesigner nên các nơi khác không chạy */
-/* Khung cuối phải là transform: none, nếu để translate(0) thì phần tử vẫn giữ transform và trở thành khối chứa của các lớp fixed bên trong, làm hộp thoại và studio AR bị cắt */
-@keyframes ui-fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-@keyframes ui-scaleUp { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
-@keyframes ui-slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-.animate-fadeIn { animation: ui-fadeIn 0.2s ease-out both; }
-.animate-scaleUp { animation: ui-scaleUp 0.18s ease-out both; }
-.animate-slideUp { animation: ui-slideUp 0.25s ease-out both; }
-.animate-in { animation: ui-fadeIn 0.2s ease-out both; }
+/* fadeIn chỉ đổi độ mờ, không dùng transform, vì phần tử mang transform (kể cả giá trị đồng nhất do
+   animation để lại khi fill forwards) sẽ trở thành khối chứa của các lớp fixed bên trong, làm hộp thoại
+   và studio AR bị cắt. Các hiệu ứng khác dùng fill backwards để sau khi chạy xong không giữ lại transform. */
+@keyframes ui-fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ui-scaleUp { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes ui-slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fadeIn { animation: ui-fadeIn 0.2s ease-out backwards; }
+.animate-scaleUp { animation: ui-scaleUp 0.18s ease-out backwards; }
+.animate-slideUp { animation: ui-slideUp 0.25s ease-out backwards; }
+.animate-in { animation: ui-fadeIn 0.2s ease-out backwards; }
 @media (prefers-reduced-motion: reduce) {
   .animate-fadeIn, .animate-scaleUp, .animate-slideUp, .animate-in { animation: none; }
 }
