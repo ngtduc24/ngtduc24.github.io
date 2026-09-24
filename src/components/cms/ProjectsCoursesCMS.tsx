@@ -22,6 +22,9 @@ import RichTextEditor from './RichTextEditor';
 import PortfolioListToolbar from './PortfolioListToolbar';
 import { useConfirmation } from '../ConfirmationContext';
 import { useNotifications } from '../NotificationContext';
+import { getMyLessons, getPublicLessons, ELLesson } from '../../lib/elearning';
+import { getQuizzesForCourse, setQuizOpenAccess } from '../../lib/quiz';
+import { getEduCtx } from '../../lib/edu';
 
 const createEmptyProject = (sortOrder: number): PortfolioProject => ({
   id: `proj_${Date.now()}`, title: '', slug: '', coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800', gallery: [], introVideo: '', briefDescription: '', detailedContent: '', context: '', problem: '', goal: '', targetAudience: '', process: '', designIdea: '', solution: '', result: '', role: 'Multimedia Designer', client: '', members: [], timeline: '', tools: [], category: 'Graphic Design', tags: [], relatedProjects: [], status: 'draft', publishDate: new Date().toISOString().slice(0, 10), isFeatured: false, isPinned: false, viewCount: 0, sortOrder, showViews: true, showShare: true, isPrivate: false
@@ -69,6 +72,39 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
   const [activeCourseEditorTab, setActiveCourseEditorTab] = useState<'info' | 'curriculum' | 'students'>('info');
   const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
   const [fetchingLessons, setFetchingLessons] = useState<Record<string, boolean>>({});
+  // Nguồn để gắn vào bài học của khoá học: bài giảng E-Learning (của tôi + công khai) và đề trắc nghiệm đã phát hành.
+  const [elLessons, setElLessons] = useState<ELLesson[]>([]);
+  const [quizOptions, setQuizOptions] = useState<{ id: string; title: string; slug: string; owner_id?: string | null; owner_name?: string | null; is_public?: boolean; open_access?: boolean }[]>([]);
+  const [sourcesLoaded, setSourcesLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!editingCourse || sourcesLoaded) return;
+    setSourcesLoaded(true);
+    (async () => {
+      try {
+        const [mine, pub, quizzes] = await Promise.all([
+          getMyLessons().catch(() => [] as ELLesson[]),
+          getPublicLessons().catch(() => [] as ELLesson[]),
+          getQuizzesForCourse().catch(() => []),
+        ]);
+        const seen = new Set<string>();
+        const merged: ELLesson[] = [];
+        [...mine, ...pub].forEach(l => { if (!seen.has(l.id)) { seen.add(l.id); merged.push(l); } });
+        setElLessons(merged);
+        const uid = getEduCtx().userId;
+        const isAdmin = getEduCtx().isAdmin;
+        setQuizOptions((quizzes as any[]).filter(q => isAdmin || q.owner_id === uid || q.is_public));
+      } catch { /* bỏ qua */ }
+    })();
+  }, [editingCourse, sourcesLoaded]);
+
+  const patchLesson = (chapterId: string, lessonId: string, patch: Partial<CourseLesson>) => {
+    if (!editingCourse) return;
+    const chapters = (editingCourse.chapters || []).map(chap => chap.id === chapterId
+      ? { ...chap, lessons: (chap.lessons || []).map(l => l.id === lessonId ? { ...l, ...patch } : l) }
+      : chap);
+    setEditingCourse({ ...editingCourse, chapters });
+  };
 
   const getYouTubeId = (url: string): string | null => {
     if (!url) return null;
@@ -1946,6 +1982,50 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                       }}
                                       className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs focus:outline-none"
                                     />
+                                  </div>
+
+                                  {/* Gắn bài giảng E-Learning và đề trắc nghiệm */}
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                      <label className="text-[9px] font-black text-slate-400">Bài giảng E-Learning (nội dung hiện dưới video)</label>
+                                      <select
+                                        value={lesson.elLessonId || ''}
+                                        onChange={(e) => {
+                                          const el = elLessons.find(x => x.id === e.target.value);
+                                          patchLesson(chapter.id, lesson.id, { elLessonId: el?.id || '', elLessonTitle: el?.title || '' });
+                                        }}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs focus:outline-none"
+                                      >
+                                        <option value="">Không gắn (dùng nội dung thuyết minh ở trên)</option>
+                                        {elLessons.map(el => (
+                                          <option key={el.id} value={el.id}>{el.title}{el.owner_name ? ` · ${el.owner_name}` : ''}{el.is_public ? ' (công khai)' : ''}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-[9px] font-black text-slate-400">Đề trắc nghiệm (nút làm bài góc trên phải)</label>
+                                      <select
+                                        value={lesson.quizId || ''}
+                                        onChange={async (e) => {
+                                          const q = quizOptions.find(x => x.id === e.target.value);
+                                          patchLesson(chapter.id, lesson.id, { quizId: q?.id || '', quizSlug: q?.slug || '', quizTitle: q?.title || '' });
+                                          // Học viên khoá học không thuộc lớp nào nên đề cần mở cho mã người học bên ngoài.
+                                          if (q && !q.open_access && (q.owner_id === getEduCtx().userId || getEduCtx().isAdmin)) {
+                                            try {
+                                              await setQuizOpenAccess(q.id, true);
+                                              setQuizOptions(prev => prev.map(x => x.id === q.id ? { ...x, open_access: true } : x));
+                                              addNotification(`Đã mở đề "${q.title}" cho học viên khoá học.`, 'success');
+                                            } catch (err: any) { addNotification('Không mở được đề cho học viên: ' + (err?.message || err), 'error'); }
+                                          }
+                                        }}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs focus:outline-none"
+                                      >
+                                        <option value="">Không gắn đề</option>
+                                        {quizOptions.map(q => (
+                                          <option key={q.id} value={q.id}>{q.title}{q.owner_name ? ` · ${q.owner_name}` : ''}{q.open_access ? '' : ' (chưa mở cho học viên)'}</option>
+                                        ))}
+                                      </select>
+                                    </div>
                                   </div>
 
                                   {/* Preview & requirement flags */}

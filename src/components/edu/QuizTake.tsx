@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Clock, ListChecks, Flag, ChevronLeft, ChevronRight, Send, AlertTriangle, Maximize2, CheckCircle2, Trophy } from 'lucide-react';
-import { Button, Input, Field, Card, Badge, Z } from '../ui';
+import { Button, Input, Field, Card, Badge, Z, Spinner } from '../ui';
 import { rpcQuizOpen, rpcQuizStart, rpcSaveAnswer, rpcLogEvent, rpcSubmit } from '../../lib/quiz';
 
 interface QuizTakeProps { slug: string; }
@@ -39,23 +39,39 @@ export default function QuizTake({ slug }: QuizTakeProps) {
 
   const LS_KEY = `quiz_answers_${slug}_${studentCode}`;
 
+  // Người học khoá học công khai được mở đề qua link kèm mã người học và tên (không cần nhập MSSV).
+  const learner = useRef<{ code: string; name: string; courseId: string; lessonId: string } | null>(null);
+  if (learner.current === null && typeof window !== 'undefined') {
+    const sp = new URLSearchParams(window.location.search);
+    const code = (sp.get('learner') || '').trim();
+    learner.current = code ? { code, name: (sp.get('name') || '').trim(), courseId: sp.get('course') || '', lessonId: sp.get('lesson') || '' } : { code: '', name: '', courseId: '', lessonId: '' };
+  }
+  const isLearner = !!learner.current?.code;
+
   // ---------------- Vào thi ----------------
-  const checkStudent = async () => {
-    if (!studentCode.trim()) { setError('Vui lòng nhập mã số sinh viên.'); return; }
+  const checkStudent = async (codeOverride?: string) => {
+    const code = (codeOverride ?? studentCode).trim();
+    if (!code) { setError('Vui lòng nhập mã số sinh viên.'); return; }
     setLoading(true); setError('');
     try {
-      const r = await rpcQuizOpen(slug, studentCode.trim());
+      const r = await rpcQuizOpen(slug, code, isLearner ? learner.current!.name : undefined);
       if (!r?.ok) { setError(r?.error || 'Không mở được đề.'); setInfo(null); }
       else { setInfo(r); setPhase('ready'); }
     } catch (e: any) { setError('Lỗi kết nối: ' + (e.message || e)); }
     finally { setLoading(false); }
   };
 
+  useEffect(() => {
+    if (isLearner && learner.current) { setStudentCode(learner.current.code); checkStudent(learner.current.code); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ---------------- Bắt đầu làm ----------------
   const start = async () => {
     setLoading(true); setError('');
     try {
-      const r = await rpcQuizStart(slug, studentCode.trim());
+      const r = await rpcQuizStart(slug, studentCode.trim(), undefined,
+        isLearner && learner.current ? { studentName: learner.current.name, courseId: learner.current.courseId || undefined, lessonId: learner.current.lessonId || undefined } : undefined);
       if (!r?.ok) { setError(r?.error || 'Không bắt đầu được.'); setLoading(false); return; }
       setAttemptId(r.attempt_id);
       setQuestions(r.questions || []);
@@ -205,20 +221,26 @@ export default function QuizTake({ slug }: QuizTakeProps) {
             </div>
           )}
 
-          {phase === 'enter' ? (
+          {phase === 'enter' && isLearner ? (
+            <div className="mt-5 space-y-4">
+              {loading && <Spinner label="Đang mở đề cho học viên khoá học..." />}
+              {error && <p className="text-center text-[13px] font-medium text-rose-600">{error}</p>}
+              {error && <Button full variant="secondary" onClick={() => checkStudent(learner.current?.code)} loading={loading}>Thử lại</Button>}
+            </div>
+          ) : phase === 'enter' ? (
             <div className="mt-5 space-y-4">
               <Field label="Mã số sinh viên">
                 <Input value={studentCode} autoFocus onChange={e => setStudentCode(e.target.value)} onKeyDown={e => e.key === 'Enter' && checkStudent()} placeholder="Ví dụ: 010100141601" invalid={!!error} />
               </Field>
               {error && <p className="text-[13px] font-medium text-rose-600">{error}</p>}
-              <Button full onClick={checkStudent} loading={loading} iconRight={<ChevronRight size={16} />}>Tiếp tục</Button>
+              <Button full onClick={() => checkStudent()} loading={loading} iconRight={<ChevronRight size={16} />}>Tiếp tục</Button>
             </div>
           ) : (
             <div className="mt-5 space-y-4">
               <div className="rounded-xl border border-brand/20 bg-brand-light p-4 text-center">
-                <p className="text-xs font-medium text-slate-500">Xác nhận sinh viên</p>
+                <p className="text-xs font-medium text-slate-500">{isLearner ? 'Học viên khoá học' : 'Xác nhận sinh viên'}</p>
                 <p className="mt-0.5 text-base font-bold text-slate-800">{info.student.name}</p>
-                <p className="text-[13px] font-medium text-slate-500">MSSV {studentCode}</p>
+                {!isLearner && <p className="text-[13px] font-medium text-slate-500">MSSV {studentCode}</p>}
               </div>
               {info.quiz.fullscreen && <p className="flex items-center justify-center gap-1.5 text-xs font-semibold text-amber-700"><Maximize2 size={14} /> Bài thi chạy ở chế độ toàn màn hình</p>}
               {error && <p className="text-center text-[13px] font-medium text-rose-600">{error}</p>}
@@ -227,7 +249,7 @@ export default function QuizTake({ slug }: QuizTakeProps) {
               ) : (
                 <p className="text-center text-sm font-semibold text-rose-600">Bạn đã hết số lần làm bài.</p>
               )}
-              <Button full variant="secondary" onClick={() => { setPhase('enter'); setInfo(null); }}>Không phải bạn? Nhập lại MSSV</Button>
+              {!isLearner && <Button full variant="secondary" onClick={() => { setPhase('enter'); setInfo(null); }}>Không phải bạn? Nhập lại MSSV</Button>}
             </div>
           )}
         </Card>

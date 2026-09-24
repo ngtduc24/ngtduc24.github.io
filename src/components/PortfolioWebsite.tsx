@@ -58,8 +58,11 @@ import {
   LogOut,
   LayoutGrid,
   List,
-  UserCircle
+  UserCircle,
+  ClipboardList,
+  ListChecks,
 } from 'lucide-react';
+import { getSections as getELSections, getResources as getELResources, ELSection, ELResource } from '../lib/elearning';
 import ProfileModal from './ProfileModal';
 import {
   getPortfolioAbout,
@@ -848,6 +851,42 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
   }, [courseLessons, activeLessonId]);
 
   const activeLesson = useMemo(() => courseLessons.find(l => l.id === activeLessonId) || courseLessons[0], [courseLessons, activeLessonId]);
+
+  // Nội dung bài giảng E-Learning gắn với bài học đang xem (hiện dưới video, mục lục bên phải).
+  const [elSections, setElSections] = useState<ELSection[]>([]);
+  const [elResources, setElResources] = useState<ELResource[]>([]);
+  const [elLoading, setElLoading] = useState(false);
+  const [activeElSectionId, setActiveElSectionId] = useState<string | null>(null);
+  const elLessonId = activeLesson?.elLessonId || '';
+  const elVisible = Boolean(activeLesson && elLessonId && (canLearn || activeLesson.allowPreview));
+  useEffect(() => {
+    let cancelled = false;
+    if (!elVisible) { setElSections([]); setElResources([]); setActiveElSectionId(null); return; }
+    setElLoading(true);
+    Promise.all([getELSections(elLessonId), getELResources(elLessonId)])
+      .then(([secs, res]) => { if (!cancelled) { setElSections(secs); setElResources(res); setActiveElSectionId(secs[0]?.id || null); } })
+      .catch(() => { if (!cancelled) { setElSections([]); setElResources([]); } })
+      .finally(() => { if (!cancelled) setElLoading(false); });
+    return () => { cancelled = true; };
+  }, [elLessonId, elVisible]);
+  const scrollToElSection = (id: string) => {
+    setActiveElSectionId(id);
+    const el = document.getElementById(`el-sec-${id}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  // Theo dõi phần đang đọc để tô sáng ở mục lục bên phải.
+  useEffect(() => {
+    if (elSections.length === 0 || typeof IntersectionObserver === 'undefined') return;
+    const obs = new IntersectionObserver((entries) => {
+      const visible = entries.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      if (visible) setActiveElSectionId(visible.target.id.replace('el-sec-', ''));
+    }, { rootMargin: '-96px 0px -60% 0px', threshold: 0 });
+    elSections.forEach(sec => { const el = document.getElementById(`el-sec-${sec.id}`); if (el) obs.observe(el); });
+    return () => obs.disconnect();
+  }, [elSections]);
+  const quizUrl = activeLesson?.quizSlug && viewer
+    ? `/?quiz=${encodeURIComponent(activeLesson.quizSlug)}&learner=${encodeURIComponent(viewer.id)}&name=${encodeURIComponent(viewer.fullName || viewer.username || '')}&course=${encodeURIComponent(course?.id || '')}&lesson=${encodeURIComponent(activeLesson.id)}`
+    : '';
   const courseProgress = courseLessons.length ? Math.round((completedLessonIds.length / courseLessons.length) * 100) : 0;
 
   // Load notes and highlights for active lesson - unique to each logged-in account
@@ -1474,7 +1513,58 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                           )}
                         </div>
 
+                        {/* Nội dung bài giảng E-Learning (dưới video) */}
+                        {elVisible && (
+                          <div className="bg-white rounded-2xl border border-slate-100 p-6 space-y-6" onMouseUp={handleTextMouseUp}>
+                            <div className="flex items-center justify-between gap-3">
+                              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Tài liệu bài giảng{activeLesson.elLessonTitle ? ` · ${activeLesson.elLessonTitle}` : ''}</h3>
+                              {elSections.length > 0 && <span className="text-[11px] font-bold text-slate-400">{elSections.length} mục</span>}
+                            </div>
+                            {elLoading ? (
+                              <p className="flex items-center gap-2 text-[13px] text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Đang tải tài liệu...</p>
+                            ) : elSections.length === 0 ? (
+                              <p className="text-sm text-slate-400">Bài giảng chưa có nội dung.</p>
+                            ) : elSections.map((sec, i) => {
+                              const secRes = elResources.filter(r => r.section_id === sec.id);
+                              return (
+                                <section key={sec.id} id={`el-sec-${sec.id}`} className="scroll-mt-24 border-t border-slate-100 pt-5 first:border-t-0 first:pt-0">
+                                  <h4 className="text-base font-bold text-slate-900 flex items-start gap-2.5">
+                                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-light text-brand text-[11px] font-bold mt-0.5">{i + 1}</span>
+                                    <span>{sec.title || `Phần ${i + 1}`}</span>
+                                  </h4>
+                                  <div className="prose prose-sm max-w-none mt-3 break-words text-slate-700 [overflow-wrap:anywhere] [&_a]:break-all [&_img]:rounded-xl" dangerouslySetInnerHTML={{ __html: sanitizeHtml(sec.content) || '<p class="text-slate-400">(Chưa có nội dung)</p>' }} />
+                                  {secRes.length > 0 && (
+                                    <div className="mt-4 space-y-1.5">
+                                      {secRes.map(r => (
+                                        <a key={r.id} href={isSafeUrl(r.url || '') ? r.url || undefined : undefined} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl border border-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-brand/30 hover:text-brand">
+                                          <FileText className="h-4 w-4 text-brand" /> <span className="min-w-0 flex-1 truncate">{r.title || 'Tài nguyên'}</span> <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+                                        </a>
+                                      ))}
+                                    </div>
+                                  )}
+                                </section>
+                              );
+                            })}
+                            {(() => {
+                              const general = elResources.filter(r => !r.section_id);
+                              return general.length > 0 ? (
+                                <div className="border-t border-slate-100 pt-5">
+                                  <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Tài nguyên chung</p>
+                                  <div className="space-y-1.5">
+                                    {general.map(r => (
+                                      <a key={r.id} href={isSafeUrl(r.url || '') ? r.url || undefined : undefined} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl border border-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-brand/30 hover:text-brand">
+                                        <FileText className="h-4 w-4 text-brand" /> <span className="min-w-0 flex-1 truncate">{r.title || 'Tài nguyên'}</span> <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+                                      </a>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : null;
+                            })()}
+                          </div>
+                        )}
+
                         {/* Interactive Highlight Block for Lesson Text Content */}
+                        {(!elVisible || activeLesson.textContent) && (
                         <div className="bg-white rounded-2xl border border-slate-100 p-6 space-y-4">
                           <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Tóm tắt & Nội dung cốt lõi</h3>
                           
@@ -1523,6 +1613,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                             );
                           })()}
                         </div>
+                        )}
 
                         {/* Highly Interactive Notepad */}
                         <div className="rounded-[2rem] border border-slate-100 bg-slate-50/50 p-6 sm:p-8 space-y-6">
@@ -1707,7 +1798,59 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
 
                   {/* Right Column: Course Playlist navigation */}
                   <div className="lg:col-span-4">
-                    <div className="sticky top-24 rounded-[2.2rem] bg-slate-900 text-white p-6 sm:p-7 space-y-6 shadow-xl shadow-slate-950/30">
+                    <div className="sticky top-24 space-y-4">
+                    {/* Nút làm bài trắc nghiệm (góc trên bên phải) */}
+                    {activeLesson && activeLesson.quizSlug && (
+                      canLearn && quizUrl ? (
+                        <a
+                          href={quizUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex w-full items-center justify-between gap-3 rounded-2xl bg-brand hover:bg-brand-hover text-white px-5 py-4 shadow-lg shadow-brand/20 transition-colors"
+                        >
+                          <span className="flex items-center gap-3">
+                            <span className="grid h-9 w-9 place-items-center rounded-xl bg-white/15"><ClipboardList className="h-5 w-5" /></span>
+                            <span>
+                              <span className="block text-sm font-bold">Làm bài trắc nghiệm</span>
+                              <span className="block text-[11px] text-white/80 truncate max-w-[200px]">{activeLesson.quizTitle || 'Kiểm tra sau bài học'}</span>
+                            </span>
+                          </span>
+                          <ArrowRight className="h-4 w-4 shrink-0" />
+                        </a>
+                      ) : (
+                        <div className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-slate-400">
+                          <span className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100"><LockKeyhole className="h-5 w-5" /></span>
+                          <span>
+                            <span className="block text-sm font-bold text-slate-600">Bài trắc nghiệm</span>
+                            <span className="block text-[11px]">{viewer ? 'Đăng ký khoá học để làm bài' : 'Đăng nhập và đăng ký để làm bài'}</span>
+                          </span>
+                        </div>
+                      )
+                    )}
+
+                    {/* Mục lục tài liệu E-Learning của bài đang xem */}
+                    {elVisible && elSections.length > 0 && (
+                      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                        <div className="flex items-center gap-2 px-1 mb-2">
+                          <ListChecks className="h-4 w-4 text-brand" />
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Mục trong bài</span>
+                          <span className="ml-auto text-[11px] font-semibold text-slate-400">{elSections.length}</span>
+                        </div>
+                        <div className="space-y-1 max-h-[260px] overflow-y-auto pr-1">
+                          {elSections.map((sec, i) => {
+                            const on = activeElSectionId === sec.id;
+                            return (
+                              <button key={sec.id} onClick={() => scrollToElSection(sec.id)} className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-colors ${on ? 'bg-brand-light text-brand' : 'text-slate-600 hover:bg-slate-50'}`}>
+                                <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold ${on ? 'bg-brand text-white' : 'border border-slate-300 text-slate-500'}`}>{i + 1}</span>
+                                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">{sec.title || `Phần ${i + 1}`}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="rounded-[2.2rem] bg-slate-900 text-white p-6 sm:p-7 space-y-6 shadow-xl shadow-slate-950/30">
                       
                       {/* Navigation Header */}
                       <div>
@@ -1871,6 +2014,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                         </div>
                       )}
 
+                    </div>
                     </div>
                   </div>
                   

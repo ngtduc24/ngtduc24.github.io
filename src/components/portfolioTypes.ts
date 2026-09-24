@@ -321,6 +321,13 @@ export interface CourseLesson {
   chapterId: string;
   courseId: string;
   title: string;
+  // Bài giảng E-Learning gắn vào bài học này (nguồn nội dung duy nhất, không sao chép).
+  elLessonId?: string;
+  elLessonTitle?: string;
+  // Đề trắc nghiệm cuối bài (đề phải bật open_access để học viên khoá học làm được).
+  quizId?: string;
+  quizSlug?: string;
+  quizTitle?: string;
   description?: string;
   videoUrl?: string;
   videoDuration?: string;
