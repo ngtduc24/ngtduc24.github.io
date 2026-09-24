@@ -1797,8 +1797,8 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                   </div>
 
                   {/* Right Column: Course Playlist navigation */}
-                  <div className="lg:col-span-4">
-                    <div className="sticky top-24 space-y-4">
+                  <div className="lg:col-span-4 lg:sticky lg:top-[7.5rem] lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto lg:pr-1 scrollbar-thin">
+                    <div className="space-y-4">
                     {/* Nút làm bài trắc nghiệm (góc trên bên phải) */}
                     {activeLesson && activeLesson.quizSlug && (
                       canLearn && quizUrl ? (
