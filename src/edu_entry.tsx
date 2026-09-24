@@ -1,6 +1,7 @@
 
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { startBandwidthMeter } from './lib/usage';
 import EduModule from './components/EduModule';
 import LoginScreen from './components/LoginScreen';
 import Sidebar from './components/Sidebar';
@@ -128,6 +129,7 @@ function EduApp() {
   );
 }
 
+startBandwidthMeter();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <NotificationProvider>

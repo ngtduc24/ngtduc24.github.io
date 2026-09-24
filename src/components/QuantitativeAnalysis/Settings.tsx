@@ -33,7 +33,7 @@ export default function Settings({ users, currentUser, onSaveUser, isUserAdmin, 
         quantBannerTitle: bannerTitle,
         quantBannerDescription: bannerDesc,
         quantBannerLabel: bannerLabel,
-        quantBannerImage: bannerImg
+        quantBannerImage: ''
       };
       await saveDefaultSettingsToSupabase(updated);
       if (onRefreshSettings) await onRefreshSettings();
@@ -79,17 +79,6 @@ export default function Settings({ users, currentUser, onSaveUser, isUserAdmin, 
           <div className="space-y-1">
             <label className="text-xs font-bold text-slate-500 uppercase">Mô tả</label>
             <textarea value={bannerDesc} onChange={e => setBannerDesc(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-xs bg-slate-50" rows={2}></textarea>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-500 uppercase">Ảnh bìa (Tùy chọn)</label>
-            <div className="flex items-center gap-2">
-              <MediaSourcePicker onSelect={setBannerImg} accept="image/*" resourceType="image" folder="module-banners/quantitative" label="Chọn ảnh bìa" disabled={isUploading} />
-              {bannerImg && (
-                <button type="button" onClick={() => setBannerImg('')} className="px-3 py-1 bg-rose-50 text-rose-500 rounded-lg text-xs font-bold">Xóa</button>
-              )}
-            </div>
-            {isUploading && <p className="text-xs text-brand mt-1">Đang tải...</p>}
-            {bannerImg && <img src={bannerImg} alt="Preview" className="h-16 rounded-xl object-cover mt-2" />}
           </div>
           <button type="submit" className="px-6 py-2 bg-brand text-white rounded-xl text-sm font-bold">Lưu Cài Đặt Banner</button>
         </form>

@@ -103,7 +103,7 @@ export default function QuantitativeAnalysis({ users = [], currentUser, onSaveUs
         quantBannerTitle: bannerTitle,
         quantBannerDescription: bannerDesc,
         quantBannerLabel: bannerLabel,
-        quantBannerImage: bannerImg,
+        quantBannerImage: '',
         quantBannerIcon: bannerIcon,
       });
       if (onRefreshSettings) await onRefreshSettings();
@@ -154,18 +154,6 @@ export default function QuantitativeAnalysis({ users = [], currentUser, onSaveUs
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase">Mô tả</label>
                 <textarea value={bannerDesc} onChange={e => setBannerDesc(e.target.value)} rows={3} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand resize-none" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase flex justify-between items-center">
-                  <span>Ảnh bìa</span>
-                  {bannerImg && (
-                    <button type="button" onClick={() => setBannerImg('')} className="text-rose-500 hover:text-rose-600 text-xs flex items-center gap-1">
-                      <X className="w-3 h-3" /> Xóa ảnh (Dùng màu nền)
-                    </button>
-                  )}
-                </label>
-                <MediaSourcePicker onSelect={setBannerImg} accept="image/*" resourceType="image" folder="module-banners/quantitative" label="Chọn ảnh bìa" disabled={isUploading} />
-                {bannerImg && <img src={bannerImg} alt="Preview" className="h-16 rounded-xl object-cover mt-2" />}
               </div>
               <div className="flex gap-2 justify-end pt-4">
                 <button type="button" onClick={() => setShowBannerSettings(false)} className="px-4 py-2 text-slate-500 text-xs font-bold rounded-xl hover:bg-slate-100">Hủy</button>

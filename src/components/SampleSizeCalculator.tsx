@@ -63,7 +63,7 @@ export default function SampleSizeCalculator({ settings, onRefreshSettings, curr
         calcBannerTitle: bannerTitle,
         calcBannerDescription: bannerDesc,
         calcBannerLabel: bannerLabel,
-        calcBannerImage: bannerImg
+        calcBannerImage: ''
       });
       if (onRefreshSettings) await onRefreshSettings();
       setShowBannerSettings(false);
@@ -912,19 +912,6 @@ Hệ thống tính toán cỡ mẫu nghiên cứu khoa học toàn diện`;
                 ></textarea>
               </div>
 
-              <div className="space-y-2.5">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ảnh bìa (Tùy chọn)</label>
-                  {bannerImg && (
-                    <button type="button" onClick={() => setBannerImg('')} className="text-rose-500 hover:text-rose-600 text-xs font-bold flex items-center gap-1 bg-rose-50 px-2 py-1 rounded-lg">
-                      <X className="w-3 h-3" /> Xóa ảnh & dùng màu nền
-                    </button>
-                  )}
-                </div>
-                
-                {bannerImg && <img src={bannerImg} alt="Preview" className="h-28 w-full rounded-2xl object-cover" />}
-                <MediaSourcePicker onSelect={setBannerImg} accept="image/*" resourceType="image" folder="module-banners/calculator" label={bannerImg ? 'Thay đổi ảnh' : 'Chọn ảnh bìa'} disabled={isUploading} className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-brand text-xs font-bold text-white hover:bg-brand-hover" />
-              </div>
 
               <div className="flex gap-3 justify-end pt-2 border-t border-slate-100">
                 <button 

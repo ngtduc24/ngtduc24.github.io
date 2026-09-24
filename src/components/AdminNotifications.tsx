@@ -1,5 +1,6 @@
 import { uploadImageToCloudinary } from '../lib/upload';
 import MediaSourcePicker from './MediaSourcePicker';
+import { PageHeader, Badge, IconButton, Button } from './ui';
 import React, { useState, useEffect } from 'react';
 import { 
   Bell, 
@@ -221,7 +222,7 @@ export default function AdminNotifications({ currentUser, users, settings, onRef
         notificationBannerTitle: bannerTitle.trim(),
         notificationBannerDescription: bannerDesc.trim(),
         notificationBannerText: bannerText.trim(),
-        notificationBannerImage: bannerImg
+        notificationBannerImage: ''
       } as AppSettings;
 
       await saveDefaultSettingsToSupabase(updatedSettings);
@@ -254,48 +255,16 @@ export default function AdminNotifications({ currentUser, users, settings, onRef
 
   return (
     <div id="admin-notifications-section" className="space-y-6 pb-12 animate-fadeIn text-left">
-      {/* Header Banner */}
-      <div 
-        className="bg-brand text-white rounded-2xl p-6 shadow-xl border border-brand flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden"
-        style={{ 
-          ...(bannerImg ? { backgroundImage: `url(${bannerImg})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {})
-        }}
-      >
-        {bannerImg && <div className="absolute inset-0 bg-black/40" />}
-        
-        <div className="relative z-10 space-y-1.5 flex-1 text-left">
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-white/80">{bannerText}</span>
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight font-display text-slate-50">{bannerTitle}</h1>
-            </div>
-          </div>
-          <p className="text-xs text-white/90 max-w-2xl leading-relaxed">{bannerDesc}</p>
-        </div>
-
-        <button 
-          onClick={() => setShowBannerSettings(true)} 
-          className="absolute top-4 right-4 z-20 p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-colors cursor-pointer"
-          title="Cài đặt Banner"
-        >
-          <Settings className="w-5 h-5" />
-        </button>
-
-        <div className="flex items-center gap-3 self-stretch md:self-auto shrink-0 justify-end relative z-10">
-          {onBackToInbox && (
-            <button
-              onClick={onBackToInbox}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/10 shrink-0 cursor-pointer shadow-lg shadow-black/10"
-            >
-              <Inbox className="w-4 h-4" />
-              <span>Hộp thư cá nhân</span>
-            </button>
-          )}
-          <div className="p-4 bg-white/5 rounded-2xl border border-white/10 shrink-0 hidden sm:block backdrop-blur-md">
-            <Bell className="w-8 h-8 text-white animate-pulse" />
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={<Bell size={22} />}
+        title={bannerTitle}
+        description={bannerDesc}
+        badge={bannerText ? <Badge tone="brand">{bannerText}</Badge> : undefined}
+        actions={<>
+          {onBackToInbox && <Button variant="outline" icon={<Inbox size={16} />} onClick={onBackToInbox}>Hộp thư cá nhân</Button>}
+          <IconButton label="Cài đặt đầu trang" variant="outline" onClick={() => setShowBannerSettings(true)}><Settings size={18} /></IconButton>
+        </>}
+      />
 
       {showBannerSettings && (
         <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
@@ -313,18 +282,6 @@ export default function AdminNotifications({ currentUser, users, settings, onRef
               <div className="space-y-1">
                 <label className="text-[11px] font-bold text-slate-500 uppercase">Mô tả</label>
                 <textarea value={bannerDesc} onChange={e => setBannerDesc(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-xs bg-slate-50" rows={2}></textarea>
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase flex justify-between items-center">
-                  <span>Ảnh bìa (Tùy chọn)</span>
-                  {bannerImg && (
-                    <button type="button" onClick={() => setBannerImg('')} className="text-rose-500 hover:text-rose-600 text-[10px] flex items-center gap-1">
-                      <X className="w-3 h-3" /> Xóa ảnh (Dùng màu nền)
-                    </button>
-                  )}
-                </label>
-                <MediaSourcePicker onSelect={setBannerImg} accept="image/*" resourceType="image" folder="module-banners/notifications" label="Chọn ảnh bìa" />
-                {bannerImg && <img src={bannerImg} alt="Preview" className="h-16 rounded-xl object-cover mt-2" />}
               </div>
               <div className="flex gap-2 justify-end pt-4">
                 <button type="button" onClick={() => setShowBannerSettings(false)} className="px-4 py-2 text-slate-500 text-xs font-bold rounded-xl hover:bg-slate-100">Hủy</button>
@@ -690,24 +647,6 @@ export default function AdminNotifications({ currentUser, users, settings, onRef
                   <span>{isSending ? 'Đang phát thông báo...' : 'Phát thông báo ngay'}</span>
                 </button>
               
-                {/* Banner Image */}
-                <div className="space-y-1.5 pt-2">
-                  <label className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex justify-between items-center">
-                    <span>Ảnh bìa Banner (Tùy chọn)</span>
-                    {bannerImg && (
-                      <button type="button" onClick={() => setBannerImg('')} className="text-rose-500 hover:text-rose-600 text-[10px] flex items-center gap-1">
-                        <X className="w-3 h-3" /> Xóa ảnh (Dùng màu nền)
-                      </button>
-                    )}
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <MediaSourcePicker onSelect={setBannerImg} accept="image/*" resourceType="image" folder="module-banners/notifications" label="Chọn ảnh bìa" />
-                    {bannerImg && (
-                      <button type="button" onClick={() => setBannerImg('')} className="px-3 py-1 bg-rose-50 text-rose-500 rounded-lg text-xs font-bold">Xóa</button>
-                    )}
-                  </div>
-                  {bannerImg && <img src={bannerImg} alt="Preview" className="h-16 rounded-xl object-cover mt-2" />}
-                </div>
 
               </form>
             ) : (
