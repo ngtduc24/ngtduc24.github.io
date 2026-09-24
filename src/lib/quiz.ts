@@ -55,6 +55,7 @@ export interface Quiz {
   close_at?: string | null;
   max_attempts: number;
   grading_method: 'highest' | 'first' | 'last' | 'average';
+  open_access?: boolean;
   scale_to_10: boolean;
   result_visibility: 'hidden' | 'score_only' | 'score_and_answers';
   proctor_fullscreen: boolean;
@@ -363,13 +364,13 @@ export async function getAttemptDetail(attemptId: string): Promise<{ answers: an
 
 // --------------------------- RPC luồng sinh viên ---------------------------
 
-export async function rpcQuizOpen(slug: string, studentCode: string) {
-  const { data, error } = await supabase.rpc('quiz_open', { p_slug: slug, p_student_code: studentCode });
+export async function rpcQuizOpen(slug: string, studentCode: string, studentName?: string) {
+  const { data, error } = await supabase.rpc('quiz_open', { p_slug: slug, p_student_code: studentCode, p_student_name: studentName || null });
   if (error) throw error;
   return data;
 }
-export async function rpcQuizStart(slug: string, studentCode: string, ua?: string) {
-  const { data, error } = await supabase.rpc('quiz_start', { p_slug: slug, p_student_code: studentCode, p_ua: ua || navigator.userAgent });
+export async function rpcQuizStart(slug: string, studentCode: string, ua?: string, extra?: { studentName?: string; courseId?: string; lessonId?: string }) {
+  const { data, error } = await supabase.rpc('quiz_start', { p_slug: slug, p_student_code: studentCode, p_ua: ua || navigator.userAgent, p_student_name: extra?.studentName || null, p_course_id: extra?.courseId || null, p_lesson_id: extra?.lessonId || null });
   if (error) throw error;
   return data;
 }
@@ -389,3 +390,16 @@ export async function rpcSubmit(attemptId: string, auto = false) {
 }
 
 export { stripHtml };
+
+// Đề gắn vào khoá học công khai: bật open_access để người học ngoài lớp (học viên khoá học) làm được.
+export async function setQuizOpenAccess(quizId: string, open: boolean) {
+  const { error } = await supabase.from('quizzes').update({ open_access: open }).eq('id', quizId);
+  if (error) throw error;
+}
+
+// Danh sách đề để gắn vào bài học của khoá học: đề của tôi và đề công khai, chỉ đề đã phát hành.
+export async function getQuizzesForCourse(): Promise<Pick<Quiz, 'id' | 'title' | 'slug' | 'owner_id' | 'owner_name' | 'status' | 'is_public' | 'open_access' | 'subject_id'>[]> {
+  const { data, error } = await supabase.from('quizzes').select('id, title, slug, owner_id, owner_name, status, is_public, open_access, subject_id').eq('status', 'published').order('updated_at', { ascending: false });
+  if (error) throw error;
+  return (data || []) as any;
+}
