@@ -61,7 +61,7 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
         taskBannerTitle: bannerTitle,
         taskBannerDescription: bannerDesc,
         taskBannerLabel: bannerLabel,
-        taskBannerImage: bannerImg,
+        taskBannerImage: '',
         taskBannerIcon: bannerIcon,
       });
       if (onRefreshSettings) await onRefreshSettings();
@@ -803,18 +803,6 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
               <div className="space-y-1">
                 <label className="text-[11px] font-bold text-slate-500 uppercase">Mô tả</label>
                 <textarea value={bannerDesc} onChange={e => setBannerDesc(e.target.value)} className="w-full px-3 py-2 border rounded-xl text-xs bg-slate-50" rows={2}></textarea>
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase flex justify-between items-center">
-                  <span>Ảnh bìa (Tùy chọn)</span>
-                  {bannerImg && (
-                    <button type="button" onClick={() => setBannerImg('')} className="text-rose-500 hover:text-rose-600 text-[10px] flex items-center gap-1">
-                      <X className="w-3 h-3" /> Xóa ảnh (Dùng màu nền)
-                    </button>
-                  )}
-                </label>
-                <MediaSourcePicker onSelect={setBannerImg} accept="image/*" resourceType="image" folder="module-banners/tasks" category="Ảnh dự án & công việc" label="Chọn ảnh bìa" disabled={isUploading} />
-                {bannerImg && <img src={bannerImg} alt="Preview" className="h-16 rounded-xl object-cover mt-2" />}
               </div>
               <div className="flex gap-2 justify-end pt-4">
                 <button type="button" onClick={() => setShowBannerSettings(false)} className="px-4 py-2 text-slate-500 text-xs font-bold rounded-xl hover:bg-slate-100 cursor-pointer">Hủy</button>

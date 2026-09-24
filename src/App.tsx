@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { applyBrandTheme, applyFontTheme } from './lib/applyTheme';
+import { startBandwidthMeter } from './lib/usage';
 import Sidebar from './components/Sidebar';
 import DashboardOverview from './components/DashboardOverview';
 import AllFeatures from './components/AllFeatures';
@@ -75,6 +76,9 @@ export default function App() {
   useEffect(() => {
     setEduAuthContext(currentUser?.id ?? null, currentUser?.role === 'admin');
   }, [currentUser]);
+
+  // Đo băng thông tải về của trình duyệt này để cộng dồn vào thống kê hệ thống.
+  useEffect(() => { startBandwidthMeter(); }, []);
 
   const [currentTab, setCurrentTab] = useState<string>(() => {
     if (typeof window !== 'undefined') {
