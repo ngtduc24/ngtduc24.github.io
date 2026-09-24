@@ -872,7 +872,10 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
   const scrollToElSection = (id: string) => {
     setActiveElSectionId(id);
     const el = document.getElementById(`el-sec-${id}`);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!el) return;
+    // Bài dài hàng chục nghìn px thì cuộn mượt rất chậm và dễ bị ngắt, nên chỉ cuộn mượt khi gần.
+    const far = Math.abs(el.getBoundingClientRect().top) > 4000;
+    el.scrollIntoView({ behavior: far ? 'auto' : 'smooth', block: 'start' });
   };
   // Theo dõi phần đang đọc để tô sáng ở mục lục bên phải.
   useEffect(() => {
