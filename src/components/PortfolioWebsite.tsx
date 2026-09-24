@@ -2559,7 +2559,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-white font-sans text-slate-800 selection:bg-brand selection:text-brand-hover lg:pb-0">
+    <div className="min-h-screen overflow-x-clip bg-white font-sans text-slate-800 selection:bg-brand selection:text-brand-hover lg:pb-0">
       <a href="#main-content" className="fixed left-4 top-3 z-[120] -translate-y-20 rounded-lg bg-slate-950 px-4 py-2 text-sm font-bold text-white focus:translate-y-0">Bỏ qua menu</a>
 
       {enrollNotice && (
