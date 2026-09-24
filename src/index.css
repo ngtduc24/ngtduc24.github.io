@@ -46,9 +46,10 @@
 }
 
 /* Hiệu ứng dùng chung, trước đây chỉ khai báo trong SocialDesigner nên các nơi khác không chạy */
-@keyframes ui-fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes ui-scaleUp { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
-@keyframes ui-slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+/* Khung cuối phải là transform: none, nếu để translate(0) thì phần tử vẫn giữ transform và trở thành khối chứa của các lớp fixed bên trong, làm hộp thoại và studio AR bị cắt */
+@keyframes ui-fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes ui-scaleUp { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes ui-slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 .animate-fadeIn { animation: ui-fadeIn 0.2s ease-out both; }
 .animate-scaleUp { animation: ui-scaleUp 0.18s ease-out both; }
 .animate-slideUp { animation: ui-slideUp 0.25s ease-out both; }
