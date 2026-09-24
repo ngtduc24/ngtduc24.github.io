@@ -33,9 +33,9 @@ export default function QualitativeSettings({ users, currentUser, onSaveUser, is
       
       {/* Banner Settings Removed */}
 
-<div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4 text-left">
+<div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 text-left">
         <div className="border-b border-slate-100 pb-3">
-          <h2 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+          <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
             <Shield className="w-5 h-5 text-brand" />
             <span>Phân quyền chuyên sâu Phân tích định tính</span>
           </h2>
@@ -45,7 +45,7 @@ export default function QualitativeSettings({ users, currentUser, onSaveUser, is
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="text-[10px] font-extrabold text-slate-400 uppercase border-b border-slate-100 tracking-wider">
+              <tr className="text-xs font-bold text-slate-400 uppercase border-b border-slate-100 tracking-wider">
                 <th className="py-3 px-4">Thành viên</th>
                 <th className="py-3 px-4 text-center">Thêm mới</th>
                 <th className="py-3 px-4 text-center">Chỉnh sửa</th>
@@ -67,7 +67,7 @@ export default function QualitativeSettings({ users, currentUser, onSaveUser, is
                         </div>
                         <div>
                           <p className="font-bold text-slate-800">{user.fullName}</p>
-                          <p className="text-[10px] text-slate-400 font-mono">@{user.username || user.role}</p>
+                          <p className="text-xs text-slate-400 font-mono">@{user.username || user.role}</p>
                         </div>
                       </div>
                     </td>
@@ -75,7 +75,7 @@ export default function QualitativeSettings({ users, currentUser, onSaveUser, is
                       <button
                         disabled={isUserAdminRole}
                         onClick={() => handleTogglePermission(user, 'canCreateQualitative')}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                           isUserAdminRole || user.canCreateQualitative 
                             ? 'bg-brand-light text-brand border border-brand/30' 
                             : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'
@@ -88,7 +88,7 @@ export default function QualitativeSettings({ users, currentUser, onSaveUser, is
                       <button
                         disabled={isUserAdminRole}
                         onClick={() => handleTogglePermission(user, 'canEditQualitative')}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                           isUserAdminRole || user.canEditQualitative 
                             ? 'bg-brand-light text-brand border border-brand/30' 
                             : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'
@@ -101,7 +101,7 @@ export default function QualitativeSettings({ users, currentUser, onSaveUser, is
                       <button
                         disabled={isUserAdminRole}
                         onClick={() => handleTogglePermission(user, 'canDeleteQualitative')}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                           isUserAdminRole || user.canDeleteQualitative 
                             ? 'bg-brand-light text-brand border border-brand/30' 
                             : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'
@@ -114,7 +114,7 @@ export default function QualitativeSettings({ users, currentUser, onSaveUser, is
                       <button
                         disabled={isUserAdminRole}
                         onClick={() => handleTogglePermission(user, 'canImportQualitative')}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                           isUserAdminRole || user.canImportQualitative 
                             ? 'bg-brand-light text-brand border border-brand/30' 
                             : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'
@@ -127,7 +127,7 @@ export default function QualitativeSettings({ users, currentUser, onSaveUser, is
                       <button
                         disabled={isUserAdminRole}
                         onClick={() => handleTogglePermission(user, 'canExportQualitative')}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                           isUserAdminRole || user.canExportQualitative 
                             ? 'bg-brand-light text-brand border border-brand/30' 
                             : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'
@@ -140,7 +140,7 @@ export default function QualitativeSettings({ users, currentUser, onSaveUser, is
                       <button
                         disabled={isUserAdminRole}
                         onClick={() => handleTogglePermission(user, 'canManageQualitativeSettings')}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                           isUserAdminRole || user.canManageQualitativeSettings 
                             ? 'bg-brand-light text-brand border border-brand/30' 
                             : 'bg-slate-50 text-slate-400 border border-slate-100 hover:bg-slate-100'

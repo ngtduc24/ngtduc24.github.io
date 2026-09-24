@@ -1,3 +1,4 @@
+import { PageHeader, Badge, IconButton, Button } from './ui';
 import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Play, BarChart3, Database, Sparkles, Settings2, X, Lock, Plus, Trash2 } from 'lucide-react';
 
@@ -143,22 +144,22 @@ export default function QuantitativeAnalysis({ users = [], currentUser, onSaveUs
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Tiêu đề</label>
+                <label className="text-xs font-bold text-slate-500 uppercase">Tiêu đề</label>
                 <input type="text" value={bannerTitle} onChange={e => setBannerTitle(e.target.value)} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand" />
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Nhãn phụ (Badge)</label>
+                <label className="text-xs font-bold text-slate-500 uppercase">Nhãn phụ (Badge)</label>
                 <input type="text" value={bannerLabel} onChange={e => setBannerLabel(e.target.value)} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand" />
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Mô tả</label>
+                <label className="text-xs font-bold text-slate-500 uppercase">Mô tả</label>
                 <textarea value={bannerDesc} onChange={e => setBannerDesc(e.target.value)} rows={3} className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand resize-none" />
               </div>
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase flex justify-between items-center">
+                <label className="text-xs font-bold text-slate-500 uppercase flex justify-between items-center">
                   <span>Ảnh bìa</span>
                   {bannerImg && (
-                    <button type="button" onClick={() => setBannerImg('')} className="text-rose-500 hover:text-rose-600 text-[10px] flex items-center gap-1">
+                    <button type="button" onClick={() => setBannerImg('')} className="text-rose-500 hover:text-rose-600 text-xs flex items-center gap-1">
                       <X className="w-3 h-3" /> Xóa ảnh (Dùng màu nền)
                     </button>
                   )}
@@ -174,38 +175,16 @@ export default function QuantitativeAnalysis({ users = [], currentUser, onSaveUs
           </div>
         </div>
       )}
-        {/* Banner */}
-        <div className="bg-brand rounded-3xl p-8 text-white relative overflow-hidden shadow-lg animate-fadeIn" style={{ ...(settings?.quantBannerImage ? { backgroundImage: `url(${settings.quantBannerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}) }}>
-        {settings?.quantBannerImage && <div className="absolute inset-0 bg-black/40" />}
-          {isUserAdmin && (
-            <button onClick={() => setShowBannerSettings(true)} className="absolute top-4 right-4 z-20 p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-colors cursor-pointer">
-              <Settings className="w-5 h-5" />
-            </button>
-          )}
-          <div className="absolute top-14 right-4 z-20">
-          <button
-            onClick={() => setActiveTab('settings')}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors shrink-0 relative z-10"
-          >
-            <Settings2 className="w-4 h-4" />
-            Cài đặt & Phân quyền
-          </button>
-          </div>
-          {/* Banner Settings Removed */}
-
-          <div className="flex flex-col items-start gap-4">
-            {/* Badge */}
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-[10px] font-bold tracking-wider uppercase backdrop-blur-xs relative z-10">
-              <span>{settings?.quantBannerLabel || "QUANTITATIVE ANALYSIS SUITE"}</span>
-            </div>
-
-            {/* Title & Description */}
-            <div className="space-y-1 relative z-10">
-              <h1 className="text-3xl font-extrabold tracking-tight">{settings?.quantBannerTitle || "Phân tích số liệu định lượng"}</h1>
-              <p className="text-xs text-white/90 opacity-90 max-w-lg">{settings?.quantBannerDescription || "Hệ thống phân tích số liệu chuyên sâu mô phỏng SPSS. Hỗ trợ Data View, Variable View, Transform, Mô hình hóa và Báo cáo."}</p>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          icon={<BarChart3 size={22} />}
+          title={settings?.quantBannerTitle || "Phân tích số liệu định lượng"}
+          description={settings?.quantBannerDescription || "Hệ thống phân tích số liệu chuyên sâu mô phỏng SPSS. Hỗ trợ Data View, Variable View, Transform, Mô hình hóa và Báo cáo."}
+          badge={settings?.quantBannerLabel ? <Badge tone="brand">{settings.quantBannerLabel}</Badge> : undefined}
+          actions={<>
+            <Button variant="outline" icon={<Settings2 size={16} />} onClick={() => setActiveTab('settings')}>Cài đặt và phân quyền</Button>
+            {isUserAdmin && <IconButton label="Cài đặt đầu trang" variant="outline" onClick={() => setShowBannerSettings(true)}><Settings size={18} /></IconButton>}
+          </>}
+        />
 
         {/* Tabs */}
         <div ref={tabsScrollRef} className="flex overflow-x-auto scrollbar-none gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-200">
