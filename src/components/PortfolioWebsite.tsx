@@ -60,6 +60,7 @@ import {
   List,
   UserCircle,
   ClipboardList,
+  ArrowLeft,
   ListChecks,
 } from 'lucide-react';
 import { getSections as getELSections, getResources as getELResources, ELSection, ELResource } from '../lib/elearning';
@@ -869,24 +870,19 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
       .finally(() => { if (!cancelled) setElLoading(false); });
     return () => { cancelled = true; };
   }, [elLessonId, elVisible]);
-  const scrollToElSection = (id: string) => {
+  // Mỗi mục là 1 trang riêng dưới video, chuyển mục thì kéo về đầu phần tài liệu (video vẫn ở ngay trên).
+  const elContentRef = useRef<HTMLDivElement>(null);
+  const activeElIndex = Math.max(0, elSections.findIndex(sec => sec.id === activeElSectionId));
+  const goToElSection = (id: string) => {
     setActiveElSectionId(id);
-    const el = document.getElementById(`el-sec-${id}`);
-    if (!el) return;
-    // Bài dài hàng chục nghìn px thì cuộn mượt rất chậm và dễ bị ngắt, nên chỉ cuộn mượt khi gần.
-    const far = Math.abs(el.getBoundingClientRect().top) > 4000;
-    el.scrollIntoView({ behavior: far ? 'auto' : 'smooth', block: 'start' });
+    window.setTimeout(() => {
+      const el = elContentRef.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top;
+      // Chỉ kéo khi phần tài liệu đang nằm ngoài vùng nhìn (dưới thanh menu 120px).
+      if (top < 120 || top > window.innerHeight * 0.6) window.scrollTo({ top: window.scrollY + top - 128, behavior: 'smooth' });
+    }, 0);
   };
-  // Theo dõi phần đang đọc để tô sáng ở mục lục bên phải.
-  useEffect(() => {
-    if (elSections.length === 0 || typeof IntersectionObserver === 'undefined') return;
-    const obs = new IntersectionObserver((entries) => {
-      const visible = entries.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-      if (visible) setActiveElSectionId(visible.target.id.replace('el-sec-', ''));
-    }, { rootMargin: '-96px 0px -60% 0px', threshold: 0 });
-    elSections.forEach(sec => { const el = document.getElementById(`el-sec-${sec.id}`); if (el) obs.observe(el); });
-    return () => obs.disconnect();
-  }, [elSections]);
   const quizUrl = activeLesson?.quizSlug && viewer
     ? `/?quiz=${encodeURIComponent(activeLesson.quizSlug)}&learner=${encodeURIComponent(viewer.id)}&name=${encodeURIComponent(viewer.fullName || viewer.username || '')}&course=${encodeURIComponent(course?.id || '')}&lesson=${encodeURIComponent(activeLesson.id)}`
     : '';
@@ -1516,28 +1512,33 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                           )}
                         </div>
 
-                        {/* Nội dung bài giảng E-Learning (dưới video) */}
+                        {/* Tài liệu bài giảng E-Learning (dưới video), mỗi mục 1 trang */}
                         {elVisible && (
-                          <div className="bg-white rounded-2xl border border-slate-100 p-6 space-y-6" onMouseUp={handleTextMouseUp}>
+                          <div ref={elContentRef} className="bg-white rounded-2xl border border-slate-100 p-6 space-y-5 scroll-mt-32" onMouseUp={handleTextMouseUp}>
                             <div className="flex items-center justify-between gap-3">
-                              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Tài liệu bài giảng{activeLesson.elLessonTitle ? ` · ${activeLesson.elLessonTitle}` : ''}</h3>
-                              {elSections.length > 0 && <span className="text-[11px] font-bold text-slate-400">{elSections.length} mục</span>}
+                              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 truncate">Tài liệu bài giảng{activeLesson.elLessonTitle ? ` · ${activeLesson.elLessonTitle}` : ''}</h3>
+                              {elSections.length > 0 && <span className="shrink-0 text-[11px] font-bold text-slate-400">Mục {activeElIndex + 1}/{elSections.length}</span>}
                             </div>
                             {elLoading ? (
                               <p className="flex items-center gap-2 text-[13px] text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Đang tải tài liệu...</p>
                             ) : elSections.length === 0 ? (
                               <p className="text-sm text-slate-400">Bài giảng chưa có nội dung.</p>
-                            ) : elSections.map((sec, i) => {
+                            ) : (() => {
+                              const sec = elSections[activeElIndex];
                               const secRes = elResources.filter(r => r.section_id === sec.id);
+                              const general = elResources.filter(r => !r.section_id);
+                              const prev = elSections[activeElIndex - 1];
+                              const next = elSections[activeElIndex + 1];
                               return (
-                                <section key={sec.id} id={`el-sec-${sec.id}`} className="scroll-mt-24 border-t border-slate-100 pt-5 first:border-t-0 first:pt-0">
-                                  <h4 className="text-base font-bold text-slate-900 flex items-start gap-2.5">
-                                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-light text-brand text-[11px] font-bold mt-0.5">{i + 1}</span>
-                                    <span>{sec.title || `Phần ${i + 1}`}</span>
+                                <section key={sec.id} id={`el-sec-${sec.id}`} className="space-y-4">
+                                  <h4 className="text-lg font-bold text-slate-900 flex items-start gap-2.5">
+                                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-light text-brand text-xs font-bold mt-0.5">{activeElIndex + 1}</span>
+                                    <span>{sec.title || `Phần ${activeElIndex + 1}`}</span>
                                   </h4>
-                                  <div className="prose prose-sm max-w-none mt-3 break-words text-slate-700 [overflow-wrap:anywhere] [&_a]:break-all [&_img]:rounded-xl" dangerouslySetInnerHTML={{ __html: sanitizeHtml(sec.content) || '<p class="text-slate-400">(Chưa có nội dung)</p>' }} />
+                                  <div className="prose prose-sm max-w-none break-words text-slate-700 [overflow-wrap:anywhere] [&_a]:break-all [&_img]:rounded-xl" dangerouslySetInnerHTML={{ __html: sanitizeHtml(sec.content) || '<p class="text-slate-400">(Chưa có nội dung)</p>' }} />
                                   {secRes.length > 0 && (
-                                    <div className="mt-4 space-y-1.5">
+                                    <div className="space-y-1.5 border-t border-slate-100 pt-4">
+                                      <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Tài nguyên của mục</p>
                                       {secRes.map(r => (
                                         <a key={r.id} href={isSafeUrl(r.url || '') ? r.url || undefined : undefined} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl border border-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-brand/30 hover:text-brand">
                                           <FileText className="h-4 w-4 text-brand" /> <span className="min-w-0 flex-1 truncate">{r.title || 'Tài nguyên'}</span> <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
@@ -1545,23 +1546,27 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                                       ))}
                                     </div>
                                   )}
+                                  {activeElIndex === elSections.length - 1 && general.length > 0 && (
+                                    <div className="space-y-1.5 border-t border-slate-100 pt-4">
+                                      <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Tài nguyên chung</p>
+                                      {general.map(r => (
+                                        <a key={r.id} href={isSafeUrl(r.url || '') ? r.url || undefined : undefined} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl border border-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-brand/30 hover:text-brand">
+                                          <FileText className="h-4 w-4 text-brand" /> <span className="min-w-0 flex-1 truncate">{r.title || 'Tài nguyên'}</span> <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+                                        </a>
+                                      ))}
+                                    </div>
+                                  )}
+                                  <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                                    <button disabled={!prev} onClick={() => prev && goToElSection(prev.id)} className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                                      <ArrowLeft className="h-4 w-4" /> Mục trước
+                                    </button>
+                                    <span className="hidden sm:block text-xs font-semibold text-slate-400 truncate">{next ? `Tiếp: ${next.title || `Phần ${activeElIndex + 2}`}` : 'Hết tài liệu của bài'}</span>
+                                    <button disabled={!next} onClick={() => next && goToElSection(next.id)} className="inline-flex h-10 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed">
+                                      Mục tiếp theo <ArrowRight className="h-4 w-4" />
+                                    </button>
+                                  </div>
                                 </section>
                               );
-                            })}
-                            {(() => {
-                              const general = elResources.filter(r => !r.section_id);
-                              return general.length > 0 ? (
-                                <div className="border-t border-slate-100 pt-5">
-                                  <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Tài nguyên chung</p>
-                                  <div className="space-y-1.5">
-                                    {general.map(r => (
-                                      <a key={r.id} href={isSafeUrl(r.url || '') ? r.url || undefined : undefined} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl border border-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-brand/30 hover:text-brand">
-                                        <FileText className="h-4 w-4 text-brand" /> <span className="min-w-0 flex-1 truncate">{r.title || 'Tài nguyên'}</span> <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
-                                      </a>
-                                    ))}
-                                  </div>
-                                </div>
-                              ) : null;
                             })()}
                           </div>
                         )}
@@ -1831,28 +1836,6 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                       )
                     )}
 
-                    {/* Mục lục tài liệu E-Learning của bài đang xem */}
-                    {elVisible && elSections.length > 0 && (
-                      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-                        <div className="flex items-center gap-2 px-1 mb-2">
-                          <ListChecks className="h-4 w-4 text-brand" />
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Mục trong bài</span>
-                          <span className="ml-auto text-[11px] font-semibold text-slate-400">{elSections.length}</span>
-                        </div>
-                        <div className="space-y-1 max-h-[260px] overflow-y-auto pr-1">
-                          {elSections.map((sec, i) => {
-                            const on = activeElSectionId === sec.id;
-                            return (
-                              <button key={sec.id} onClick={() => scrollToElSection(sec.id)} className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-colors ${on ? 'bg-brand-light text-brand' : 'text-slate-600 hover:bg-slate-50'}`}>
-                                <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold ${on ? 'bg-brand text-white' : 'border border-slate-300 text-slate-500'}`}>{i + 1}</span>
-                                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">{sec.title || `Phần ${i + 1}`}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
                     <div className="rounded-[2.2rem] bg-slate-900 text-white p-6 sm:p-7 space-y-6 shadow-xl shadow-slate-950/30">
                       
                       {/* Navigation Header */}
@@ -2018,6 +2001,28 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                       )}
 
                     </div>
+
+                    {/* Mục trong bài: đặt dưới nội dung khoá học, bấm để mở trang của mục đó dưới video */}
+                    {elVisible && elSections.length > 0 && (
+                      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                        <div className="flex items-center gap-2 px-1 mb-2">
+                          <ListChecks className="h-4 w-4 text-brand" />
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Mục trong bài</span>
+                          <span className="ml-auto text-[11px] font-semibold text-slate-400">{activeElIndex + 1}/{elSections.length}</span>
+                        </div>
+                        <div className="space-y-1">
+                          {elSections.map((sec, i) => {
+                            const on = i === activeElIndex;
+                            return (
+                              <button key={sec.id} onClick={() => goToElSection(sec.id)} className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-colors ${on ? 'bg-brand-light text-brand' : 'text-slate-600 hover:bg-slate-50'}`}>
+                                <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold ${on ? 'bg-brand text-white' : 'border border-slate-300 text-slate-500'}`}>{i + 1}</span>
+                                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">{sec.title || `Phần ${i + 1}`}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                     </div>
                   </div>
                   
