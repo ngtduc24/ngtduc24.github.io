@@ -1,3 +1,4 @@
+import { PageHeader, Badge, IconButton, Button } from './ui';
 import React, { useState } from 'react';
 import { 
   Users, 
@@ -423,47 +424,16 @@ export default function UserManagement({ currentUser, users, onSaveUser, onDelet
   return (
     <div className="space-y-6">
       
-      {/* Intro Header */}
-      <div 
-        className="bg-brand text-white rounded-2xl p-6 shadow-xl border border-brand flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden"
-        style={{ 
-          ...(settings?.userBannerImage ? { backgroundImage: `url(${settings.userBannerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {})
-        }}
-      >
-        {settings?.userBannerImage && <div className="absolute inset-0 bg-black/40" />}
-        
-        {currentUser?.role === 'admin' && (
-          <button 
-            onClick={() => setShowBannerSettings(true)} 
-            className="absolute top-4 right-4 z-20 p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-colors cursor-pointer"
-            title="Cài đặt Banner"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-        )}
-
-        <div className="relative z-10 space-y-1.5 flex-1 text-left">
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-white/80">{settings?.userBannerLabel || "Tài khoản hệ thống"}</span>
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight font-display text-slate-50">{settings?.userBannerTitle || "Quản lý người dùng"}</h1>
-            </div>
-          </div>
-          <p className="text-xs text-white/90 max-w-2xl leading-relaxed">{settings?.userBannerDescription || "Tạo tài khoản và quản lý vai trò Admin, User, Học viên cho từng thành viên. Việc phân quyền chức năng nằm ở module Phân quyền riêng."}</p>
-        </div>
-
-        <button
-          onClick={() => setIsAdding(!isAdding)}
-          className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs cursor-pointer transition-all self-start sm:self-center relative z-10 ${
-            isAdding 
-              ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20' 
-              : 'bg-white/10 hover:bg-white/20 text-white'
-          }`}
-        >
-          {isAdding ? <X className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-          <span>{isAdding ? 'Hủy bỏ' : 'Thêm tài khoản mới'}</span>
-        </button>
-      </div>
+      <PageHeader
+        icon={<Users size={22} />}
+        title={settings?.userBannerTitle || "Quản lý người dùng"}
+        description={settings?.userBannerDescription || "Tạo tài khoản và quản lý vai trò Admin, User, Học viên cho từng thành viên. Việc phân quyền chức năng nằm ở module Phân quyền riêng."}
+        badge={settings?.userBannerLabel ? <Badge tone="brand">{settings.userBannerLabel}</Badge> : undefined}
+        actions={<>
+          {currentUser?.role === 'admin' && <IconButton label="Cài đặt đầu trang" variant="outline" onClick={() => setShowBannerSettings(true)}><Settings size={18} /></IconButton>}
+          <Button variant={isAdding ? 'danger' : 'primary'} icon={isAdding ? <X size={16} /> : <UserPlus size={16} />} onClick={() => setIsAdding(!isAdding)}>{isAdding ? 'Hủy bỏ' : 'Thêm tài khoản mới'}</Button>
+        </>}
+      />
 
       {/* Add User Expandable Panel */}
       

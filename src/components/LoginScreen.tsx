@@ -6,10 +6,10 @@ import {
   EyeOff, 
   LogIn, 
   Calculator,
-  ShieldAlert,
-  Loader2
+  ShieldAlert
 } from 'lucide-react';
 import { UserAccount } from '../types';
+import { Button, IconButton, Input, Field, Card } from './ui';
 import { auth, db } from '../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
@@ -144,141 +144,67 @@ export default function LoginScreen({ users, onLoginSuccess, onBackToPublic }: L
   };
 
   return (
-    <div className="min-h-[100dvh] w-screen flex flex-col items-center justify-center bg-slate-900 px-4 py-8 relative overflow-x-hidden overflow-y-auto" id="login-screen-wrapper">
-      
-      {/* Decorative ambient blurred shapes */}
+    <div className="min-h-[100dvh] w-screen flex flex-col items-center justify-center bg-slate-50 px-4 py-8 relative overflow-x-hidden overflow-y-auto" id="login-screen-wrapper">
+      {/* Nền sáng cùng bộ màu với phần bên trong, điểm nhấn màu thương hiệu rất nhạt */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-brand/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-brand/10 rounded-full blur-3xl translate-x-1/3 translate-y-1/3 pointer-events-none" />
-      
-      <div className="w-full max-w-md my-auto bg-slate-800 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 shrink-0">
-        
-        {/* Brand/Logo Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-brand text-white shadow-lg shadow-brand/40 mb-3 animate-bounce-subtle">
-            <Calculator className="w-8 h-8" />
+
+      <Card padding="none" className="w-full max-w-md my-auto p-6 sm:p-8 shadow-xl relative z-10 shrink-0 animate-fadeIn">
+        <div className="text-center mb-7">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-light text-brand mb-3">
+            <Calculator size={28} />
           </div>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight font-display">
-            Smart Research VN
-          </h2>
-          <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
-            Hỗ trợ tính toán cỡ mẫu chính xác & tra cứu báo khoa học thông minh.
-          </p>
+          <h1 className="text-xl font-bold text-slate-800">Smart Research VN</h1>
+          <p className="text-[13px] text-slate-500 mt-1 max-w-xs mx-auto">Hệ thống làm việc cho giảng dạy, nghiên cứu và thiết kế.</p>
         </div>
 
-        {/* Form area */}
         <form onSubmit={handleLoginSubmit} className="space-y-4">
-          
           {loginError && (
-            <div className="p-3.5 rounded-xl bg-rose-950/40 border border-rose-500/30 text-rose-400 text-xs font-semibold flex flex-col gap-2.5 animate-shake">
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-[13px] font-medium flex flex-col gap-2.5 animate-shake" role="alert">
               <div className="flex items-start gap-2.5">
-                <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
+                <ShieldAlert size={16} className="shrink-0 mt-0.5" />
                 <span>{loginError}</span>
               </div>
               {loginError.includes('Email/Mật khẩu') && (
-                <div className="mt-1 p-3 bg-slate-900/80 rounded-xl text-slate-300 text-[11px] leading-relaxed border border-slate-700/60 space-y-2 font-normal">
-                  <p className="font-bold text-amber-400 flex items-center gap-1">
-                    <span>💡 Hướng dẫn kích hoạt cực nhanh:</span>
-                  </p>
-                  <ol className="list-decimal list-inside space-y-1.5 text-slate-300">
-                    <li>
-                      Click để mở: <a 
-                        href={`https://console.firebase.google.com/project/${auth.app.options.projectId}/authentication/providers`} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="text-[#9d4edd] hover:text-[#b5179e] hover:underline font-bold transition-colors"
-                      >
-                        Firebase Console Auth Page
-                      </a>
-                    </li>
-                    <li>Nhấn nút <span className="font-semibold text-white">"Add new provider"</span> (Thêm nhà cung cấp mới)</li>
-                    <li>Chọn <span className="font-semibold text-white">"Email/Password"</span> (Email/Mật khẩu)</li>
-                    <li>Bật dòng <span className="font-semibold text-white">"Email/Password"</span> đầu tiên sang trạng thái <span className="font-semibold text-brand">Enable</span></li>
-                    <li>Nhấn <span className="font-semibold text-white">"Save"</span> (Lưu) để hoàn tất</li>
-                    <li>Quay lại ứng dụng này và thực hiện đăng nhập!</li>
+                <div className="mt-1 p-3 bg-white rounded-xl text-slate-600 text-xs leading-relaxed border border-slate-200 space-y-2 font-normal">
+                  <p className="font-semibold text-amber-700">Hướng dẫn kích hoạt nhanh</p>
+                  <ol className="list-decimal list-inside space-y-1.5">
+                    <li>Mở <a href={`https://console.firebase.google.com/project/${auth.app.options.projectId}/authentication/providers`} target="_blank" rel="noreferrer" className="text-brand hover:underline font-semibold">trang Authentication của Firebase Console</a></li>
+                    <li>Bấm <span className="font-semibold text-slate-800">Add new provider</span> rồi chọn <span className="font-semibold text-slate-800">Email/Password</span></li>
+                    <li>Bật dòng Email/Password sang <span className="font-semibold text-brand">Enable</span> và bấm Save</li>
+                    <li>Quay lại ứng dụng này và đăng nhập lại</li>
                   </ol>
                 </div>
               )}
             </div>
           )}
 
-          <div className="space-y-1.5">
-            <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider">Tên đăng nhập</label>
+          <Field label="Tên đăng nhập">
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                <User className="w-4 h-4" />
-              </span>
-              <input
-                type="text"
-                required
-                value={loginUsername}
-                onChange={(e) => setLoginUsername(e.target.value)}
-                autoComplete="username"
-                placeholder="Nhập username của bạn"
-                className="w-full bg-slate-950/40 border border-slate-700/80 focus:border-brand focus:outline-none focus:bg-slate-950/20 text-white rounded-xl pl-10 pr-4 py-3 text-xs font-semibold transition-all"
-              />
+              <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <Input type="text" required value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} autoComplete="username" placeholder="Nhập tên đăng nhập" className="pl-9" />
             </div>
-          </div>
+          </Field>
 
-          <div className="space-y-1.5">
-            <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider">Mật khẩu</label>
+          <Field label="Mật khẩu">
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                <Lock className="w-4 h-4" />
-              </span>
-              <input
-                type={showLoginPass ? 'text' : 'password'}
-                required
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                autoComplete="current-password"
-                placeholder="••••••••"
-                className="w-full bg-slate-950/40 border border-slate-700/80 focus:border-brand focus:outline-none focus:bg-slate-950/20 text-white rounded-xl pl-10 pr-10 py-3 text-xs font-semibold transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowLoginPass(!showLoginPass)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 cursor-pointer"
-              >
-                {showLoginPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+              <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <Input type={showLoginPass ? 'text' : 'password'} required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} autoComplete="current-password" placeholder="Nhập mật khẩu" className="pl-9 pr-11" />
+              <IconButton label={showLoginPass ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} size="sm" variant="ghost" onClick={() => setShowLoginPass(!showLoginPass)} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400">
+                {showLoginPass ? <EyeOff size={16} /> : <Eye size={16} />}
+              </IconButton>
             </div>
+          </Field>
+
+          <Button type="submit" full loading={loading} iconRight={<LogIn size={16} />} className="mt-1">
+            {loading ? 'Đang xử lý...' : 'Đăng nhập'}
+          </Button>
+
+          <div className="pt-4 border-t border-slate-100 text-center">
+            <Button type="button" variant="ghost" size="sm" onClick={() => { window.location.href = '/tracuu.html'; }}>Truy cập trang tra cứu công cộng</Button>
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-2 py-3 rounded-xl bg-brand hover:bg-brand-hover hover:shadow-lg hover:shadow-brand/20 disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-          >
-            {loading ? (
-              <>
-                <span>Đang xử lý...</span>
-                <Loader2 className="w-4 h-4 animate-spin" />
-              </>
-            ) : (
-              <>
-                <span>Xác nhận đăng nhập</span>
-                <LogIn className="w-4 h-4" />
-              </>
-            )}
-          </button>
-
-          <div className="pt-4 border-t border-slate-700/60 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                window.location.href = '/tracuu.html';
-              }}
-              className="text-xs font-bold text-brand-hover hover:text-brand hover:underline flex items-center justify-center gap-1.5 mx-auto cursor-pointer"
-            >
-              <span>Truy cập trang tra cứu công cộng</span>
-            </button>
-          </div>
-
-
-
         </form>
-
-      </div>
+      </Card>
     </div>
   );
 }
