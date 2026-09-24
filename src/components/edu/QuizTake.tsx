@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Clock, ListChecks, Flag, ChevronLeft, ChevronRight, Send, Loader2, AlertTriangle, Maximize2, CheckCircle2, Trophy } from 'lucide-react';
+import { Clock, ListChecks, Flag, ChevronLeft, ChevronRight, Send, AlertTriangle, Maximize2, CheckCircle2, Trophy } from 'lucide-react';
+import { Button, Input, Field, Card, Badge, Z } from '../ui';
 import { rpcQuizOpen, rpcQuizStart, rpcSaveAnswer, rpcLogEvent, rpcSubmit } from '../../lib/quiz';
 
 interface QuizTakeProps { slug: string; }
@@ -190,43 +191,46 @@ export default function QuizTake({ slug }: QuizTakeProps) {
   if (phase === 'enter' || phase === 'ready') {
     return shell(
       <div className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center px-4 py-10">
-        <div className="w-full rounded-3xl border border-slate-100 bg-white p-7 shadow-sm">
-          <h1 className="font-display text-xl font-black text-slate-900">{info?.quiz?.title || 'Vào làm bài trắc nghiệm'}</h1>
-          <p className="mt-1 text-xs text-slate-400">Nhập mã số sinh viên để vào làm bài. Không cần đăng nhập.</p>
+        <Card padding="none" className="w-full p-7 sm:p-8 shadow-xl animate-fadeIn">
+          <div className="w-11 h-11 rounded-xl bg-brand-light text-brand flex items-center justify-center mb-3"><ListChecks size={22} /></div>
+          <h1 className="text-xl font-bold text-slate-800">{info?.quiz?.title || 'Vào làm bài trắc nghiệm'}</h1>
+          <p className="mt-1 text-[13px] text-slate-500">Nhập mã số sinh viên để vào làm bài, không cần đăng nhập.</p>
 
           {info && (
-            <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl bg-slate-50 p-4 text-center">
-              <div><p className="text-lg font-black text-slate-800">{info.quiz.num_questions}</p><p className="text-[10px] font-semibold text-slate-400">Số câu</p></div>
-              <div><p className="text-lg font-black text-slate-800">{info.quiz.duration}′</p><p className="text-[10px] font-semibold text-slate-400">Thời gian</p></div>
-              <div><p className="text-lg font-black text-slate-800">{info.quiz.total_points}</p><p className="text-[10px] font-semibold text-slate-400">Tổng điểm</p></div>
-              <div><p className="text-lg font-black text-slate-800">{info.attempts_used}/{info.quiz.max_attempts}</p><p className="text-[10px] font-semibold text-slate-400">Số lần đã làm</p></div>
+            <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-xl bg-slate-50 border border-slate-100 p-4 text-center">
+              <div><p className="text-lg font-bold text-slate-800">{info.quiz.num_questions}</p><p className="text-xs font-medium text-slate-500">Số câu</p></div>
+              <div><p className="text-lg font-bold text-slate-800">{info.quiz.duration}′</p><p className="text-xs font-medium text-slate-500">Thời gian</p></div>
+              <div><p className="text-lg font-bold text-slate-800">{info.quiz.total_points}</p><p className="text-xs font-medium text-slate-500">Tổng điểm</p></div>
+              <div><p className="text-lg font-bold text-slate-800">{info.attempts_used}/{info.quiz.max_attempts}</p><p className="text-xs font-medium text-slate-500">Lần đã làm</p></div>
             </div>
           )}
 
           {phase === 'enter' ? (
-            <div className="mt-5 space-y-3">
-              <input value={studentCode} onChange={e => setStudentCode(e.target.value)} onKeyDown={e => e.key === 'Enter' && checkStudent()} placeholder="Mã số sinh viên" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 outline-none focus:border-brand focus:bg-white" />
-              {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
-              <button onClick={checkStudent} disabled={loading} className="w-full rounded-xl bg-brand py-3 text-sm font-bold text-white hover:bg-brand-hover disabled:opacity-50">{loading ? 'Đang kiểm tra...' : 'Tiếp tục'}</button>
+            <div className="mt-5 space-y-4">
+              <Field label="Mã số sinh viên">
+                <Input value={studentCode} autoFocus onChange={e => setStudentCode(e.target.value)} onKeyDown={e => e.key === 'Enter' && checkStudent()} placeholder="Ví dụ: 010100141601" invalid={!!error} />
+              </Field>
+              {error && <p className="text-[13px] font-medium text-rose-600">{error}</p>}
+              <Button full onClick={checkStudent} loading={loading} iconRight={<ChevronRight size={16} />}>Tiếp tục</Button>
             </div>
           ) : (
             <div className="mt-5 space-y-4">
-              <div className="rounded-2xl border border-brand/20 bg-brand-light/40 p-4 text-center">
-                <p className="text-[11px] font-semibold text-slate-500">Xác nhận sinh viên</p>
-                <p className="mt-0.5 text-base font-black text-slate-900">{info.student.name}</p>
-                <p className="text-xs font-semibold text-slate-500">MSSV: {studentCode}</p>
+              <div className="rounded-xl border border-brand/20 bg-brand-light p-4 text-center">
+                <p className="text-xs font-medium text-slate-500">Xác nhận sinh viên</p>
+                <p className="mt-0.5 text-base font-bold text-slate-800">{info.student.name}</p>
+                <p className="text-[13px] font-medium text-slate-500">MSSV {studentCode}</p>
               </div>
-              {info.quiz.fullscreen && <p className="flex items-center justify-center gap-1.5 text-[11px] font-semibold text-amber-600"><Maximize2 className="h-3.5 w-3.5" /> Bài thi chạy ở chế độ toàn màn hình</p>}
-              {error && <p className="text-center text-xs font-semibold text-rose-600">{error}</p>}
+              {info.quiz.fullscreen && <p className="flex items-center justify-center gap-1.5 text-xs font-semibold text-amber-700"><Maximize2 size={14} /> Bài thi chạy ở chế độ toàn màn hình</p>}
+              {error && <p className="text-center text-[13px] font-medium text-rose-600">{error}</p>}
               {info.can_start ? (
-                <button onClick={start} disabled={loading} className="w-full rounded-xl bg-brand py-3 text-sm font-bold text-white hover:bg-brand-hover disabled:opacity-50">{loading ? 'Đang tải đề...' : 'Bắt đầu làm bài'}</button>
+                <Button full onClick={start} loading={loading}>{loading ? 'Đang tải đề...' : 'Bắt đầu làm bài'}</Button>
               ) : (
-                <p className="text-center text-sm font-bold text-rose-600">Bạn đã hết số lần làm bài.</p>
+                <p className="text-center text-sm font-semibold text-rose-600">Bạn đã hết số lần làm bài.</p>
               )}
-              <button onClick={() => { setPhase('enter'); setInfo(null); }} className="w-full rounded-xl bg-slate-100 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-200">Không phải bạn? Nhập lại MSSV</button>
+              <Button full variant="secondary" onClick={() => { setPhase('enter'); setInfo(null); }}>Không phải bạn? Nhập lại MSSV</Button>
             </div>
           )}
-        </div>
+        </Card>
       </div>
     );
   }
@@ -235,23 +239,23 @@ export default function QuizTake({ slug }: QuizTakeProps) {
     const vis = result?.visibility;
     return shell(
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4 py-10 text-center">
-        <div className="w-full rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10 text-brand"><CheckCircle2 className="h-9 w-9" /></div>
-          <h1 className="mt-4 font-display text-xl font-black text-slate-900">Đã nộp bài</h1>
+        <Card padding="none" className="w-full p-8 shadow-xl animate-fadeIn">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-light text-brand"><CheckCircle2 size={34} /></div>
+          <h1 className="mt-4 text-xl font-bold text-slate-800">Đã nộp bài</h1>
           {vis === 'hidden' ? (
             <p className="mt-2 text-sm text-slate-500">Bài của bạn đã được ghi nhận. Điểm sẽ do giảng viên công bố.</p>
           ) : (
             <div className="mt-4">
-              <div className="inline-flex items-center gap-2 rounded-2xl bg-brand-light px-5 py-3">
-                <Trophy className="h-5 w-5 text-brand" />
-                <span className="text-2xl font-black text-brand">{result?.score}</span>
-                <span className="text-sm font-bold text-slate-500">/ {result?.max_score}</span>
+              <div className="inline-flex items-center gap-2 rounded-xl bg-brand-light px-5 py-3">
+                <Trophy size={20} className="text-brand" />
+                <span className="text-2xl font-bold text-brand">{result?.score}</span>
+                <span className="text-sm font-semibold text-slate-500">/ {result?.max_score}</span>
               </div>
-              {vis === 'score_and_answers' && <p className="mt-3 text-[11px] text-slate-400">Xem đáp án đúng ở bảng kết quả do giảng viên cung cấp.</p>}
+              {vis === 'score_and_answers' && <p className="mt-3 text-xs text-slate-500">Xem đáp án đúng ở bảng kết quả do giảng viên cung cấp.</p>}
             </div>
           )}
-          <p className="mt-5 text-[11px] text-slate-400">Bạn có thể đóng trang này.</p>
-        </div>
+          <p className="mt-5 text-xs text-slate-500">Bạn có thể đóng trang này.</p>
+        </Card>
       </div>
     );
   }
@@ -261,69 +265,69 @@ export default function QuizTake({ slug }: QuizTakeProps) {
   return shell(
     <div className="mx-auto max-w-5xl px-4 py-5">
       {/* Thanh trên: đồng hồ + tiến độ */}
-      <div className="sticky top-0 z-20 mb-4 flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-700"><ListChecks className="h-4 w-4 text-brand" /> Đã trả lời {answeredCount}/{questions.length}</div>
-        <div className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-black ${remaining <= 60 ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-700'}`}><Clock className="h-4 w-4" /> {fmt(remaining)}</div>
+      <div className={`sticky top-0 ${Z.sticky} mb-4 flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white/95 px-4 py-3 shadow-sm backdrop-blur`}>
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700"><ListChecks size={16} className="text-brand" /> Đã trả lời {answeredCount}/{questions.length}</div>
+        <div className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-bold tabular-nums ${remaining <= 60 ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-700'}`}><Clock size={16} /> {fmt(remaining)}</div>
       </div>
 
       {fsWarn && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-          <span className="flex items-center gap-2 text-xs font-bold text-amber-700"><AlertTriangle className="h-4 w-4" /> Bạn đã rời chế độ toàn màn hình. Vui lòng quay lại để tiếp tục.</span>
-          <button onClick={enterFullscreen} className="rounded-lg bg-amber-500 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-amber-600">Vào lại toàn màn hình</button>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+          <span className="flex items-center gap-2 text-[13px] font-semibold text-amber-700"><AlertTriangle size={16} /> Bạn đã rời chế độ toàn màn hình. Vui lòng quay lại để tiếp tục.</span>
+          <Button size="sm" onClick={enterFullscreen} className="bg-amber-500 hover:bg-amber-600">Vào lại toàn màn hình</Button>
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_220px]">
         {/* Câu hỏi */}
-        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-          <div className="mb-3 flex items-center justify-between">
-            <span className="inline-flex h-7 items-center rounded-full bg-brand px-3 text-[11px] font-black text-white">Câu {current + 1}/{questions.length}</span>
-            <button onClick={() => toggleFlag(q.question_id)} className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold ${flags.has(q.question_id) ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}><Flag className="h-3.5 w-3.5" /> {flags.has(q.question_id) ? 'Đã đánh dấu' : 'Đánh dấu xem lại'}</button>
+        <Card>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <Badge tone="brand" className="bg-brand text-white">Câu {current + 1}/{questions.length}</Badge>
+            <Button size="sm" variant={flags.has(q.question_id) ? 'secondary' : 'ghost'} icon={<Flag size={14} />} onClick={() => toggleFlag(q.question_id)} className={flags.has(q.question_id) ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'text-slate-600'}>{flags.has(q.question_id) ? 'Đã đánh dấu' : 'Đánh dấu xem lại'}</Button>
           </div>
           <div className="prose prose-sm max-w-none text-slate-800" dangerouslySetInnerHTML={{ __html: q.content }} />
-          <p className="mt-1 text-[11px] font-semibold text-slate-400">{q.type === 'single' ? 'Chọn 1 đáp án' : 'Chọn nhiều đáp án'} · {q.points} điểm</p>
+          <p className="mt-1 text-xs font-medium text-slate-500">{q.type === 'single' ? 'Chọn 1 đáp án' : 'Chọn nhiều đáp án'} · {q.points} điểm</p>
 
           <div className="mt-4 space-y-2.5">
             {q.options.map((o, i) => {
               const sel = (answers[q.question_id] || []).includes(o.id);
               return (
-                <button key={o.id} onClick={() => select(q, o.id)} className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${sel ? 'border-brand bg-brand-light/50' : 'border-slate-200 hover:border-slate-300'}`}>
-                  <span className={`grid h-6 w-6 shrink-0 place-items-center border-2 ${q.type === 'single' ? 'rounded-full' : 'rounded-md'} ${sel ? 'border-brand bg-brand text-white' : 'border-slate-300 text-transparent'}`}><CheckCircle2 className="h-3.5 w-3.5" /></span>
-                  <span className="text-xs font-black text-slate-400">{String.fromCharCode(65 + i)}</span>
+                <button key={o.id} type="button" onClick={() => select(q, o.id)} aria-pressed={sel} className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${sel ? 'border-brand bg-brand-light' : 'border-slate-200 hover:border-slate-300 bg-white'}`}>
+                  <span className={`grid h-6 w-6 shrink-0 place-items-center border-2 ${q.type === 'single' ? 'rounded-full' : 'rounded-md'} ${sel ? 'border-brand bg-brand text-white' : 'border-slate-300 text-transparent'}`}><CheckCircle2 size={14} /></span>
+                  <span className="text-[13px] font-bold text-slate-500 w-4">{String.fromCharCode(65 + i)}</span>
                   <span className="text-sm font-medium text-slate-800">{o.content}</span>
                 </button>
               );
             })}
           </div>
 
-          <div className="mt-5 flex items-center justify-between">
-            <button onClick={() => setCurrent(c => Math.max(0, c - 1))} disabled={current === 0} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-40"><ChevronLeft className="h-4 w-4" /> Câu trước</button>
+          <div className="mt-5 flex items-center justify-between gap-2">
+            <Button variant="secondary" size="sm" icon={<ChevronLeft size={16} />} onClick={() => setCurrent(c => Math.max(0, c - 1))} disabled={current === 0}>Câu trước</Button>
             {current < questions.length - 1 ? (
-              <button onClick={() => setCurrent(c => Math.min(questions.length - 1, c + 1))} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold text-white hover:bg-brand-hover">Câu sau <ChevronRight className="h-4 w-4" /></button>
+              <Button size="sm" iconRight={<ChevronRight size={16} />} onClick={() => setCurrent(c => Math.min(questions.length - 1, c + 1))}>Câu sau</Button>
             ) : (
-              <button onClick={() => doSubmit(false)} disabled={submitting} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-5 py-2.5 text-xs font-bold text-white hover:bg-brand-hover disabled:opacity-50">{submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Nộp bài</button>
+              <Button size="sm" icon={<Send size={16} />} loading={submitting} onClick={() => doSubmit(false)}>Nộp bài</Button>
             )}
           </div>
-        </div>
+        </Card>
 
         {/* Bảng điều hướng câu */}
-        <div className="h-fit rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Danh sách câu</p>
+        <Card padding="item" className="h-fit">
+          <p className="mb-2 text-xs font-semibold text-slate-500">Danh sách câu</p>
           <div className="grid grid-cols-5 gap-2 lg:grid-cols-4">
             {questions.map((qq, i) => {
               const answered = (answers[qq.question_id] || []).length > 0;
               const flagged = flags.has(qq.question_id);
               return (
-                <button key={qq.question_id} onClick={() => setCurrent(i)} className={`relative grid h-9 w-full place-items-center rounded-lg text-xs font-black ${i === current ? 'ring-2 ring-brand ring-offset-1' : ''} ${answered ? 'bg-brand text-white' : 'bg-slate-100 text-slate-500'}`}>
+                <button key={qq.question_id} type="button" aria-label={`Câu ${i + 1}`} onClick={() => setCurrent(i)} className={`relative grid h-9 w-full place-items-center rounded-lg text-[13px] font-bold ${i === current ? 'ring-2 ring-brand ring-offset-1' : ''} ${answered ? 'bg-brand text-white' : 'bg-slate-100 text-slate-600'}`}>
                   {i + 1}
                   {flagged && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-amber-400" />}
                 </button>
               );
             })}
           </div>
-          <button onClick={() => doSubmit(false)} disabled={submitting} className="mt-4 w-full rounded-xl bg-brand py-2.5 text-xs font-bold text-white hover:bg-brand-hover disabled:opacity-50">{submitting ? 'Đang nộp...' : 'Nộp bài'}</button>
-          <p className="mt-2 text-center text-[10px] text-slate-400">Bài tự nộp khi hết giờ.</p>
-        </div>
+          <Button full size="sm" className="mt-4" loading={submitting} onClick={() => doSubmit(false)}>Nộp bài</Button>
+          <p className="mt-2 text-center text-xs text-slate-500">Bài tự nộp khi hết giờ.</p>
+        </Card>
       </div>
     </div>
   );

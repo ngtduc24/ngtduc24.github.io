@@ -5,15 +5,19 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", sans-serif;
-  --color-brand: var(--color-brand);
-  --color-brand-hover: var(--color-brand-hover);
-  --color-brand-light: var(--color-brand-light);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-light: var(--brand-light);
 }
 
+/* Màu thương hiệu mặc định là Xanh lá và Đen, trùng với applyTheme.ts và vòng xoay tải trang */
 :root {
-  --color-brand: #712cf9;
-  --color-brand-hover: #5b21d3;
-  --color-brand-light: #f3eeff;
+  --brand: #10b981;
+  --brand-hover: #059669;
+  --brand-light: #ecfdf5;
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-light: var(--brand-light);
 }
 
 /* Custom Scrollbar */
@@ -25,11 +29,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155; /* slate-700 */
+  background: #cbd5e1; /* slate-300, thanh cuộn nhạt trên nền sáng */
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569; /* slate-600 */
+  background: #94a3b8; /* slate-400 */
 }
 
 /* Hide scrollbar utility */
@@ -39,4 +43,16 @@
 .scrollbar-hide, .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Hiệu ứng dùng chung, trước đây chỉ khai báo trong SocialDesigner nên các nơi khác không chạy */
+@keyframes ui-fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ui-scaleUp { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes ui-slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fadeIn { animation: ui-fadeIn 0.2s ease-out both; }
+.animate-scaleUp { animation: ui-scaleUp 0.18s ease-out both; }
+.animate-slideUp { animation: ui-slideUp 0.25s ease-out both; }
+.animate-in { animation: ui-fadeIn 0.2s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .animate-fadeIn, .animate-scaleUp, .animate-slideUp, .animate-in { animation: none; }
 }

@@ -1,3 +1,4 @@
+import { PageHeader, Button } from './ui';
 import React, { useEffect, useState } from 'react';
 import {
   Award,
@@ -124,36 +125,12 @@ export default function PortfolioCMS({ currentUser }: PortfolioCMSProps = {}) {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12 text-slate-800">
-      {/* Module banner — cùng cấu trúc với các phân hệ quản trị khác */}
-      <section className="bg-brand rounded-3xl p-8 text-white relative overflow-hidden shadow-lg">
-        <div className="absolute -right-12 -top-16 w-64 h-64 rounded-full bg-white/10" />
-        <div className="absolute right-20 -bottom-24 w-48 h-48 rounded-full bg-slate-950/10" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-          <div className="flex flex-col items-start gap-4">
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-[10px] font-bold tracking-wider uppercase backdrop-blur-xs">
-              <Shield className="w-3.5 h-3.5" />
-              <span>QUẢN TRỊ WEBSITE PORTFOLIO</span>
-            </div>
-
-            <div className="space-y-1">
-              <h1 className="text-3xl font-extrabold tracking-tight">Quản trị Portfolio</h1>
-              <p className="text-xs text-white/90 max-w-2xl leading-relaxed">
-                Biên tập nội dung hồ sơ, dự án, chương trình đào tạo và học thuật hiển thị trên trang Portfolio công khai.
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => window.open('/?portfolio=true', '_blank', 'noopener,noreferrer')}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-brand hover:bg-white/90 rounded-xl text-xs font-extrabold shadow-sm transition-all cursor-pointer shrink-0"
-          >
-            <Eye className="w-4 h-4" />
-            <span>Xem trang Portfolio</span>
-          </button>
-        </div>
-      </section>
+      <PageHeader
+        icon={<Shield size={22} />}
+        title="Quản trị Portfolio"
+        description="Biên tập nội dung hồ sơ, dự án, chương trình đào tạo và học thuật hiển thị trên trang Portfolio công khai."
+        actions={<Button variant="outline" icon={<Eye size={16} />} onClick={() => window.open('/?portfolio=true', '_blank', 'noopener,noreferrer')}>Xem trang Portfolio</Button>}
+      />
 
       {/* Trạng thái và thao tác nhanh */}
       <section className="space-y-4">

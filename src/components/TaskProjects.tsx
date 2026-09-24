@@ -1,7 +1,8 @@
 import { uploadImageToCloudinary } from '../lib/upload';
 import MediaSourcePicker from './MediaSourcePicker';
+import { PageHeader, Badge, IconButton } from './ui';
 import React, { useState, useEffect } from 'react';
-import { Settings, Plus, Search, BookOpen, Layers, X, Sparkles, CheckCircle2, PlayCircle, AlertCircle, XCircle, Coins, Wallet, FileCheck } from 'lucide-react';
+import { Settings, Plus, Search, BookOpen, Layers, X, Sparkles, CheckCircle2, PlayCircle, AlertCircle, XCircle, Coins, Wallet, FileCheck, ClipboardList } from 'lucide-react';
 import { useTasks } from './TaskContext';
 import TaskForm from './TaskForm';
 import TaskDetailModal from './TaskDetailModal';
@@ -483,30 +484,15 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
-      {/* Header Banner */}
+      {/* Đầu trang module theo chuẩn chung */}
       {showBanner && (
-        <div className="bg-brand rounded-3xl p-8 text-white relative overflow-hidden shadow-lg animate-fadeIn" style={{ ...(settings?.taskBannerImage ? { backgroundImage: `url(${settings.taskBannerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}) }}>
-        {settings?.taskBannerImage && <div className="absolute inset-0 bg-black/40" />}
-          {isUserAdmin && (
-            <button onClick={() => setShowBannerSettings(true)} className="absolute top-4 right-4 z-20 p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-colors cursor-pointer">
-              <Settings className="w-5 h-5" />
-            </button>
-          )}
-          {/* Banner Settings Removed */}
-
-          <div className="flex flex-col items-start gap-4">
-            {/* Badge */}
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-[10px] font-bold tracking-wider uppercase backdrop-blur-xs relative z-10">
-              <span>{settings?.taskBannerLabel || "Smart Research VN"}</span>
-            </div>
-
-            {/* Title & Description */}
-            <div className="space-y-1 relative z-10">
-              <h1 className="text-3xl font-extrabold tracking-tight">{settings?.taskBannerTitle || "Hệ thống quản lý công việc"}</h1>
-              <p className="text-xs text-white/90 opacity-90 max-w-lg">{settings?.taskBannerDescription || "Quản lý công việc"}</p>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          icon={<ClipboardList size={22} />}
+          title={settings?.taskBannerTitle || "Quản lý công việc"}
+          description={settings?.taskBannerDescription || "Tạo, theo dõi và quản lý công việc cá nhân, nhóm"}
+          badge={settings?.taskBannerLabel ? <Badge tone="brand">{settings.taskBannerLabel}</Badge> : undefined}
+          actions={isUserAdmin ? <IconButton label="Cài đặt đầu trang" variant="outline" onClick={() => setShowBannerSettings(true)}><Settings size={18} /></IconButton> : undefined}
+        />
       )}
 
       {/* Statistics Cards */}

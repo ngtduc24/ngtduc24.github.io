@@ -8,9 +8,9 @@ import {
   ArrowLeft,
   Calendar,
   ExternalLink,
-  Copy,
-  Layout
+  Copy
 } from 'lucide-react';
+import { Button, IconButton, Card, CardTitle, PageHeader, Badge, Spinner, EmptyState } from '../ui';
 import { EduAssignment, EduSubmission, EduUser, EduGradeColumn } from '../../types/edu';
 import { getSubmissions, getClassUsers, getGradeColumns } from '../../lib/edu';
 import { useNotifications } from '../NotificationContext';
@@ -65,8 +65,8 @@ export default function EduAssignmentDetail({ classId, assignmentId, onBack }: E
     addNotification("Đã sao chép link nộp bài", "success");
   };
 
-  if (loading) return <div className="py-20 text-center text-slate-400">Đang tải chi tiết bài tập...</div>;
-  if (!assignment) return <div className="py-20 text-center text-slate-400">Không tìm thấy bài tập</div>;
+  if (loading) return <Spinner label="Đang tải chi tiết bài tập..." />;
+  if (!assignment) return <EmptyState icon={<FileText size={24} />} title="Không tìm thấy bài tập" action={<Button variant="outline" icon={<ArrowLeft size={16} />} onClick={onBack}>Quay lại</Button>} />;
 
   const submissionCount = submissions.length;
   const totalStudents = users.length;
@@ -74,128 +74,70 @@ export default function EduAssignmentDetail({ classId, assignmentId, onBack }: E
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      <div className="flex items-center justify-between bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={onBack}
-            className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <h2 className="text-xl font-black text-slate-900">{assignment.title}</h2>
-            <p className="text-xs text-slate-500 font-medium">Chi tiết bài tập và thống kê nộp bài</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={copyShareLink}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all"
-          >
-            <Copy className="w-4 h-4" />
-            <span>Sao chép Link</span>
-          </button>
-          <a 
-            href={`/tracuu.html?edu=${assignment.shareLinkId}`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-xl text-xs font-bold hover:bg-brand-hover transition-all"
-          >
-            <ExternalLink className="w-4 h-4" />
-            <span>Mở Link nộp bài</span>
-          </a>
-        </div>
-      </div>
+      <PageHeader
+        icon={<IconButton label="Quay lại danh sách" variant="ghost" onClick={onBack} className="text-brand hover:bg-brand-light"><ArrowLeft size={20} /></IconButton>}
+        title={assignment.title}
+        description="Chi tiết bài tập và thống kê nộp bài"
+        actions={<>
+          <Button variant="outline" icon={<Copy size={16} />} onClick={copyShareLink}>Sao chép link</Button>
+          <Button icon={<ExternalLink size={16} />} onClick={() => window.open(`/tracuu.html?edu=${assignment.shareLinkId}`, '_blank', 'noreferrer')}>Mở link nộp bài</Button>
+        </>}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
+        {/* Nội dung */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-            <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider mb-6 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-brand" />
-              Nội dung bài tập
-            </h3>
+          <Card>
+            <CardTitle>Nội dung bài tập</CardTitle>
             <div 
-              className="prose prose-slate max-w-none text-sm text-slate-600 leading-relaxed"
+              className="prose prose-slate prose-sm max-w-none text-sm text-slate-600 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: assignment.content || 'Không có nội dung mô tả.' }}
             />
-          </div>
+          </Card>
         </div>
 
-        {/* Sidebar Info */}
+        {/* Cột phải */}
         <div className="space-y-6">
-          {/* Stats Card */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
-            <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-              <Layout className="w-4 h-4 text-brand" />
-              Thống kê nộp bài
-            </h3>
-
+          <Card>
+            <CardTitle>Thống kê nộp bài</CardTitle>
             <div className="space-y-4">
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                 <div className="flex justify-between items-end mb-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase">Tỷ lệ nộp bài</span>
-                  <span className="text-xl font-black text-brand">{submissionCount}/{totalStudents}</span>
+                  <span className="text-xs font-semibold text-slate-500">Tỷ lệ nộp bài</span>
+                  <span className="text-xl font-bold text-brand">{submissionCount}/{totalStudents}</span>
                 </div>
                 <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-brand transition-all duration-500" 
-                    style={{ width: `${submissionRate}%` }}
-                  />
+                  <div className="h-full bg-brand transition-all duration-500" style={{ width: `${submissionRate}%` }} />
                 </div>
-                <p className="text-[9px] text-slate-500 font-bold mt-2 uppercase">
-                  {submissionCount} sinh viên đã nộp bài trên tổng số {totalStudents}
-                </p>
+                <p className="text-xs text-slate-500 mt-2">{submissionCount} sinh viên đã nộp bài trên tổng số {totalStudents}</p>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400 font-bold flex items-center gap-2">
-                    <Calendar className="w-3.5 h-3.5" /> Hạn nộp
-                  </span>
-                  <span className="text-slate-700 font-black">
-                    {assignment.deadline ? new Date(assignment.deadline).toLocaleString('vi-VN') : 'Không giới hạn'}
-                  </span>
+              <div className="space-y-3 text-[13px]">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-500 font-medium flex items-center gap-2"><Calendar size={14} /> Hạn nộp</span>
+                  <span className="text-slate-800 font-semibold text-right">{assignment.deadline ? new Date(assignment.deadline).toLocaleString('vi-VN') : 'Không giới hạn'}</span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400 font-bold flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Cột điểm
-                  </span>
-                  <span className="text-slate-700 font-black">
-                    {gradeColumn?.name || 'Chưa gán'}
-                  </span>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-500 font-medium flex items-center gap-2"><CheckCircle2 size={14} /> Cột điểm</span>
+                  <span className="text-slate-800 font-semibold text-right">{gradeColumn?.name || 'Chưa gán'}</span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400 font-bold flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5" /> Định dạng
-                  </span>
-                  <span className="text-slate-700 font-black uppercase">
-                    {assignment.allowedFileTypes.join(', ') || 'Tất cả'}
-                  </span>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-500 font-medium flex items-center gap-2"><FileText size={14} /> Định dạng</span>
+                  <span className="flex flex-wrap gap-1 justify-end">{assignment.allowedFileTypes.length ? assignment.allowedFileTypes.map(t => <Badge key={t} tone="brand" className="uppercase">{t}</Badge>) : <Badge>Tất cả</Badge>}</span>
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
-          {/* Quick Actions */}
-          <div className="bg-brand/5 p-6 rounded-3xl border border-brand/10">
-            <p className="text-xs font-bold text-brand mb-4">Bạn muốn chấm điểm cho bài tập này?</p>
-            <button 
-              onClick={() => {
-                if (gradeColumn) {
-                  // This is a bit tricky since we need to tell the parent to switch to grading
-                  // For now, we'll assume the parent handles this if we provide a way
-                  window.dispatchEvent(new CustomEvent('edu_start_grading', { 
-                    detail: { assignmentId: assignment.id, gradeColumnId: gradeColumn.id } 
-                  }));
-                }
-              }}
-              className="w-full bg-brand text-white py-3 rounded-xl text-xs font-black shadow-lg shadow-brand/20 hover:bg-brand-hover transition-all"
-            >
-              BẮT ĐẦU CHẤM ĐIỂM
-            </button>
-          </div>
+          <Card padding="item" className="bg-brand-light border-brand/10">
+            <p className="text-[13px] font-semibold text-slate-700 mb-3">Bạn muốn chấm điểm cho bài tập này?</p>
+            <Button full disabled={!gradeColumn} icon={<Users size={16} />} onClick={() => {
+              if (gradeColumn) {
+                window.dispatchEvent(new CustomEvent('edu_start_grading', { detail: { assignmentId: assignment.id, gradeColumnId: gradeColumn.id } }));
+              }
+            }}>Bắt đầu chấm điểm</Button>
+            {!gradeColumn && <p className="text-xs text-slate-500 mt-2">Bài tập chưa gán cột điểm nên chưa chấm được.</p>}
+          </Card>
         </div>
       </div>
     </div>
