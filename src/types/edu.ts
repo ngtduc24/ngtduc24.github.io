@@ -108,6 +108,9 @@ export interface EduSubmissionFile {
   type: string;
   name: string;
   submittedAt: string;
+  // Tệp còn lưu base64 trong cơ sở dữ liệu: url để trống, tải riêng bằng getSubmissionFileUrl khi cần xem.
+  inline?: boolean;
+  size?: number;
 }
 
 export interface EduGrade {
