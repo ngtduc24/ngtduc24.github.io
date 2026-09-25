@@ -23,7 +23,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { EduUser, EduClass, EduAssignment, EduSubmission, EduGrade, EduGradeColumn, EduExtensionRequest } from '../../types/edu';
-import { getClassUsers, getSubmissions, getGrades, saveGrades, saveGradeColumn, reopenSubmission, deleteGradeForUser, getAssignmentById, getApprovedExtensions } from '../../lib/edu';
+import { getClassUsers, getSubmissions, getGrades, saveGrades, saveGradeColumn, reopenSubmission, deleteGradeForUser, getAssignmentById, getApprovedExtensions, resolveSubmissionFile } from '../../lib/edu';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import Model3DViewer from './Model3DViewer';
@@ -46,10 +46,27 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
   const [activeSubmission, setActiveSubmission] = useState<EduSubmission | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [previewFile, setPreviewFile] = useState<{ url: string; name: string; type: string } | null>(null);
+  const { addNotification } = useNotifications();
+  const [loadingFile, setLoadingFile] = useState<string | null>(null);
+  // Tệp còn lưu base64 trong cơ sở dữ liệu chỉ được tải khi bấm xem, không tải cả lớp cùng lúc.
+  const openFile = async (submission: EduSubmission, file: EduSubmission['files'][number], idx: number) => {
+    if (!file.inline || file.url) { setPreviewFile(file); return; }
+    const key = `${submission.id}_${idx}`;
+    setLoadingFile(key);
+    try {
+      const full = await resolveSubmissionFile(submission.id, file, idx);
+      // Ghi lại url để lần sau không phải tải lại.
+      file.url = full.url;
+      setPreviewFile(full);
+    } catch (e: any) {
+      addNotification('Không tải được tệp: ' + (e?.message || e), 'error');
+    } finally {
+      setLoadingFile(null);
+    }
+  };
   const [previewText, setPreviewText] = useState<{ name: string; content: string } | null>(null);
   const [editingCommentUserId, setEditingCommentUserId] = useState<string | null>(null);
 
-  const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
 
   // Xác định bài nộp trễ: so thời điểm nộp lần đầu với hạn nộp, hoặc hạn được gia hạn riêng nếu có.
@@ -184,11 +201,11 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
         {submission.files.map((file, idx) => (
           <button 
             key={idx}
-            onClick={() => setPreviewFile(file)}
+            onClick={() => openFile(submission, file, idx)}
             className="text-brand font-black hover:underline uppercase text-[11px] tracking-tight truncate max-w-[200px] text-center"
             title={file.name}
           >
-            {file.name}
+            {loadingFile === `${submission.id}_${idx}` ? 'Đang tải...' : file.name}
           </button>
         ))}
       </div>
@@ -327,11 +344,11 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
                           {submission.files && submission.files.map((file, idx) => (
                             <button
                               key={idx}
-                              onClick={() => setPreviewFile(file)}
+                              onClick={() => openFile(submission, file, idx)}
                               className="text-brand font-black hover:underline uppercase text-[11px] tracking-tight truncate max-w-[200px]"
                               title={`Xem ${file.name}`}
                             >
-                              {file.name}
+                              {loadingFile === `${submission.id}_${idx}` ? 'Đang tải...' : file.name}
                             </button>
                           ))}
                           {submission.content && submission.content.trim() && (

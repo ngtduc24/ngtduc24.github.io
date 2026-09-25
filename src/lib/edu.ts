@@ -7,6 +7,7 @@ import {
   EduGradeColumn, 
   EduAssignment,
   EduSubmission,
+  EduSubmissionFile,
   EduGrade,
   EduSubject,
   EduAssignmentBankItem
@@ -453,20 +454,44 @@ export async function deleteAssignmentBankItem(id: string) {
 }
 
 // Submissions
+// Trang giảng viên đọc view edu_submissions_meta (xem EDU_SUBMISSIONS_META.sql): bài nộp cũ có tệp base64
+// nằm ngay trong cột files, nặng hàng MB mỗi bài, đọc cả lớp sẽ quá thời gian cho phép và tốn băng thông.
+// View trả về tệp với cờ inline = true thay cho chuỗi base64, khi cần xem thì gọi getSubmissionFileUrl.
+const SUBMISSIONS_META_VIEW = 'edu_submissions_meta';
+
+async function selectSubmissionsLight(apply: (q: any) => any) {
+  let res = await apply(supabase.from(SUBMISSIONS_META_VIEW).select('*'));
+  // Chưa chạy migration thì view không tồn tại, đọc thẳng bảng gốc như trước.
+  if (res.error && /relation|does not exist|schema cache/i.test(res.error.message || '')) {
+    res = await apply(supabase.from(SUBMISSIONS_TABLE).select('*'));
+  }
+  if (res.error) throw res.error;
+  return (res.data || []).map(mapSubmission);
+}
+
 export async function getSubmissions(assignmentId: string) {
-  const { data, error } = await supabase.from(SUBMISSIONS_TABLE).select('*').eq('assignment_id', assignmentId);
-  if (error) throw error;
-  return (data || []).map(mapSubmission);
+  return selectSubmissionsLight(q => q.eq('assignment_id', assignmentId));
 }
 
 export async function getAllClassSubmissions(classId: string) {
   const { data: assignments } = await supabase.from(ASSIGNMENTS_TABLE).select('id').eq('class_id', classId);
   if (!assignments || assignments.length === 0) return [];
-  
   const assignmentIds = assignments.map(a => a.id);
-  const { data, error } = await supabase.from(SUBMISSIONS_TABLE).select('*').in('assignment_id', assignmentIds);
+  return selectSubmissionsLight(q => q.in('assignment_id', assignmentIds));
+}
+
+// Lấy đúng 1 tệp của bài nộp khi tệp đó còn lưu base64 trong cơ sở dữ liệu.
+export async function getSubmissionFileUrl(submissionId: string, index: number): Promise<string> {
+  const { data, error } = await supabase.rpc('edu_submission_file_url', { p_submission: submissionId, p_index: index });
   if (error) throw error;
-  return (data || []).map(mapSubmission);
+  return (data as string) || '';
+}
+
+// Tệp của bài nộp; nếu là tệp inline thì tải url thật rồi trả về bản đầy đủ.
+export async function resolveSubmissionFile(submissionId: string, file: EduSubmissionFile, index: number): Promise<EduSubmissionFile> {
+  if (!file.inline || file.url) return file;
+  const url = await getSubmissionFileUrl(submissionId, index);
+  return { ...file, url };
 }
 
 export async function getSubmissionByMssv(assignmentId: string, mssv: string) {
