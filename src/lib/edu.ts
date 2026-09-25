@@ -657,3 +657,71 @@ export async function getGradesForUser(classId: string, userId: string) {
     grade: data.find(g => g.grade_column_id === col.id) ? mapGrade(data.find(g => g.grade_column_id === col.id)) : undefined
   })).filter(item => item.grade !== undefined); // Only show columns that have been graded
 }
+
+// ---------------------------------------------------------------------------------------------
+// Chuyển tệp bài nộp còn lưu base64 trong cơ sở dữ liệu lên Cloudinary, thay url trong cột files.
+// Chạy từ tài khoản giảng viên đã đăng nhập (tải lên có ký). Mỗi bài nộp xử lý riêng nên không
+// vượt thời gian cho phép của Supabase, chạy lại nhiều lần vẫn an toàn (chỉ xử lý tệp còn base64).
+export interface InlineMigrationProgress { done: number; total: number; files: number; bytes: number; failed: number; current?: string }
+
+export async function countInlineSubmissions(): Promise<{ submissions: number; files: number; bytes: number }> {
+  const { data, error } = await supabase.from(SUBMISSIONS_META_VIEW).select('id, files');
+  if (error) throw error;
+  let submissions = 0, files = 0, bytes = 0;
+  (data || []).forEach((r: any) => {
+    const inl = (r.files || []).filter((f: any) => f?.inline);
+    if (inl.length) { submissions++; files += inl.length; bytes += inl.reduce((a: number, f: any) => a + (Number(f.size) || 0), 0); }
+  });
+  return { submissions, files, bytes };
+}
+
+export async function migrateInlineSubmissions(onProgress: (p: InlineMigrationProgress) => void, shouldStop: () => boolean = () => false): Promise<InlineMigrationProgress> {
+  const { uploadMediaToCloudinary } = await import('./upload');
+  const { data, error } = await supabase.from(SUBMISSIONS_META_VIEW).select('id, mssv, files');
+  if (error) throw error;
+  const todo = (data || []).filter((r: any) => (r.files || []).some((f: any) => f?.inline));
+  const prog: InlineMigrationProgress = { done: 0, total: todo.length, files: 0, bytes: 0, failed: 0 };
+  onProgress({ ...prog });
+  for (const row of todo) {
+    if (shouldStop()) break;
+    prog.current = row.mssv;
+    onProgress({ ...prog });
+    try {
+      const { data: full, error: e1 } = await supabase.from(SUBMISSIONS_TABLE).select('files').eq('id', row.id).single();
+      if (e1) throw e1;
+      const files: any[] = Array.isArray(full?.files) ? full.files : [];
+      let changed = false;
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        const url = String(f?.url || '');
+        if (!url.startsWith('data:')) continue;
+        const mime = url.slice(5, url.indexOf(';'));
+        const isImageLike = mime.startsWith('image/') || mime === 'application/pdf';
+        const isVideo = mime.startsWith('video/');
+        const newUrl = await uploadMediaToCloudinary(url, {
+          resourceType: isVideo ? 'video' : isImageLike ? 'image' : 'raw',
+          folder: 'edu_submissions/migrated',
+          category: 'Bài nộp',
+          noBase64Fallback: true,
+        });
+        if (!newUrl || newUrl.startsWith('data:')) throw new Error('Tải lên thất bại');
+        prog.bytes += url.length;
+        prog.files++;
+        files[i] = { ...f, url: newUrl };
+        changed = true;
+      }
+      if (changed) {
+        const { error: e2 } = await supabase.from(SUBMISSIONS_TABLE).update({ files }).eq('id', row.id);
+        if (e2) throw e2;
+      }
+    } catch (e) {
+      console.warn('Chuyển tệp bài nộp thất bại', row.id, e);
+      prog.failed++;
+    }
+    prog.done++;
+    onProgress({ ...prog });
+  }
+  prog.current = undefined;
+  onProgress({ ...prog });
+  return prog;
+}

@@ -199,13 +199,16 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
     const isPdf = ext === 'pdf';
     try {
       setUploadProgress(30);
-      let url: string;
-      if (isImageLike || isPdf) {
-        const dataUrl = await readAsDataUrl(file);
-        url = await uploadImageToCloudinary(dataUrl);
-      } else {
-        url = await uploadMediaToCloudinary(file, { resourceType: 'raw', folder: 'edu_submissions' });
-      }
+      // Sinh viên không đăng nhập: hàm sign-upload kiểm tra mã link và MSSV rồi ký cho thư mục bài nộp.
+      // Không bao giờ lưu base64 vào cơ sở dữ liệu nữa, lỗi thì báo để sinh viên thử lại.
+      const studentSign = identifiedUser ? { linkId: shareLinkId, mssv: identifiedUser.mssv } : undefined;
+      const url = await uploadMediaToCloudinary(file, {
+        resourceType: isImageLike || isPdf ? 'image' : 'raw',
+        folder: 'edu_submissions',
+        studentSign,
+        noBase64Fallback: true,
+      });
+      if (!url || url.startsWith('data:')) throw new Error('Không tải được tệp lên kho lưu trữ.');
       setUploadProgress(100);
       setFiles(prev => [...prev, {
         url,

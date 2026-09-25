@@ -8,6 +8,10 @@ export interface CloudinaryUploadOptions {
   resourceType?: CloudinaryResourceType;
   folder?: string;
   category?: string;
+  // Sinh viên nộp bài qua link công khai không đăng nhập: gửi mã link và MSSV để hàm sign-upload kiểm tra rồi ký.
+  studentSign?: { linkId: string; mssv: string };
+  // true: không bao giờ lưu base64 thay cho tệp, báo lỗi để người dùng thử lại.
+  noBase64Fallback?: boolean;
 }
 
 interface CloudinaryUploadResult {
@@ -91,13 +95,15 @@ async function uploadSignedToCloudinary(source: File | string, options: Cloudina
   if (!supabaseUrl) return null;
 
   const idToken = await auth.currentUser?.getIdToken().catch(() => null);
-  if (!idToken) throw new Error('Bạn cần đăng nhập để tải tệp lên.');
+  if (!idToken && !options.studentSign) throw new Error('Bạn cần đăng nhập để tải tệp lên.');
 
   const folder = `smart_research_vn/${safeFolder(options.folder || 'shared_library')}`;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
   const signResp = await fetch(`${supabaseUrl.replace(/\/$/, '')}/functions/v1/sign-upload`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-    body: JSON.stringify({ folder }),
+    headers,
+    body: JSON.stringify({ folder, ...(options.studentSign || {}) }),
   });
   if (!signResp.ok) {
     if (signResp.status === 401) throw new Error('Bạn cần đăng nhập để tải tệp lên.');
@@ -155,6 +161,7 @@ export async function uploadMediaToCloudinary(source: File | string, options: Cl
         });
         data = await parseUploadResponse(response);
       } catch (fallbackError) {
+        if (options.noBase64Fallback) throw new Error('Không tải được tệp lên kho lưu trữ. Vui lòng thử lại.');
         console.warn('Server fallback upload failed (possibly blocked or payload too large). Using local base64 instead:', fallbackError);
         data = { url: file, secureUrl: file, publicId: '', resourceType: options.resourceType || 'image', format: '', bytes: 0 };
       }
