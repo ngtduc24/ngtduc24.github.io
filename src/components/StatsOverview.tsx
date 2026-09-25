@@ -7,6 +7,7 @@ import { isTaskRelevantToUser } from '../lib/tasks';
 import OnlineUsersPresence from './OnlineUsersPresence';
 import { getBandwidthRows, getStorageStats, getMediaStats, formatBytes, BandwidthRow, StorageStats, MediaStats, UsageHost } from '../lib/usage';
 import { PageHeader, Card, CardTitle, Badge, Button, Spinner } from './ui';
+import { countInlineSubmissions, migrateInlineSubmissions, InlineMigrationProgress } from '../lib/edu';
 
 interface StatsOverviewProps {
   currentUser: UserAccount;
@@ -40,6 +41,19 @@ export default function StatsOverview({ currentUser }: StatsOverviewProps) {
   const [usageError, setUsageError] = useState('');
 
   const isUserAdmin = currentUser?.role === 'admin';
+
+  // Tệp bài nộp còn lưu base64 trong cơ sở dữ liệu (nguyên nhân chính làm đầy dung lượng và băng thông)
+  const [inline, setInline] = useState<{ submissions: number; files: number; bytes: number } | null>(null);
+  const [mig, setMig] = useState<InlineMigrationProgress | null>(null);
+  const [migRunning, setMigRunning] = useState(false);
+  const stopRef = React.useRef(false);
+  const loadInline = () => countInlineSubmissions().then(setInline).catch(() => setInline(null));
+  useEffect(() => { if (isUserAdmin) loadInline(); }, [isUserAdmin]);
+  const runMigration = async () => {
+    stopRef.current = false; setMigRunning(true);
+    try { await migrateInlineSubmissions(setMig, () => stopRef.current); }
+    finally { setMigRunning(false); loadInline(); loadUsage(); }
+  };
 
   useEffect(() => {
     getStatsFromSupabase().then(setStatsData).catch(() => {});
@@ -154,6 +168,35 @@ export default function StatsOverview({ currentUser }: StatsOverviewProps) {
               {media && <Meter value={media.bytes} max={LIMITS.media} />}
             </Card>
           </div>
+
+          {(inline && (inline.files > 0 || mig)) && (
+            <Card padding="item" className="border-amber-100">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-800">Tệp bài nộp còn lưu trong cơ sở dữ liệu</p>
+                  <p className="text-[13px] text-slate-500 mt-1">
+                    {inline.files > 0
+                      ? `${inline.files.toLocaleString('vi-VN')} tệp của ${inline.submissions.toLocaleString('vi-VN')} bài nộp, khoảng ${formatBytes(inline.bytes)}, đang nằm dạng base64 trong bảng edu_submissions. Chuyển lên Cloudinary để giảm dung lượng Postgres và băng thông.`
+                      : 'Không còn tệp base64 nào, toàn bộ bài nộp đã nằm trên Cloudinary.'}
+                  </p>
+                  {mig && (
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between text-xs text-slate-600">
+                        <span>{mig.done}/{mig.total} bài nộp · {mig.files} tệp · {formatBytes(mig.bytes)}{mig.failed ? ` · ${mig.failed} lỗi` : ''}</span>
+                        {mig.current && <span className="text-slate-400">Đang xử lý {mig.current}</span>}
+                      </div>
+                      <Meter value={mig.done} max={Math.max(1, mig.total)} />
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  {migRunning
+                    ? <Button variant="outline" size="sm" onClick={() => { stopRef.current = true; }}>Dừng</Button>
+                    : inline.files > 0 && <Button size="sm" icon={<HardDrive size={14} />} onClick={runMigration}>Chuyển lên Cloudinary</Button>}
+                </div>
+              </div>
+            </Card>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card className="lg:col-span-2">
