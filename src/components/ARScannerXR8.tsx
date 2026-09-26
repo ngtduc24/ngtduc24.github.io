@@ -130,6 +130,10 @@ export default function ARScannerXR8({ target: rawTarget, onClose }: ARScannerXR
         const anchor = new THREE.Group();
         anchor.visible = false;
         scene.add(anchor);
+        // Tư thế mới nhất 8th Wall báo về, anchor tiến dần tới đây mỗi khung hình.
+        const hold = { pos: new THREE.Vector3(), quat: new THREE.Quaternion(), scale: 1, hasPose: false, snap: true, lostAt: 0 };
+        const SMOOTH = 0.35;
+        const HOLD_MS = 2500;
 
         // Nhóm gốc quy đổi đơn vị studio sang hệ của 8th Wall (xem chú thích đầu tệp).
         const W = crop.originalWidth, H = crop.originalHeight;
@@ -290,6 +294,26 @@ export default function ARScannerXR8({ target: rawTarget, onClose }: ARScannerXR
             }
             if (rotation) camera.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
             if (position) camera.position.set(position.x, position.y, position.z);
+            // Làm mượt vị trí nội dung AR: tiến dần tới tư thế mới thay vì nhảy thẳng, bớt rung khi
+            // target bị che một phần. Khi mất target thì giữ nguyên tư thế cuối (xem hold bên dưới).
+            if (hold.hasPose) {
+              if (hold.snap) {
+                anchor.position.copy(hold.pos); anchor.quaternion.copy(hold.quat); anchor.scale.setScalar(hold.scale);
+                hold.snap = false;
+              } else {
+                anchor.position.lerp(hold.pos, SMOOTH);
+                anchor.quaternion.slerp(hold.quat, SMOOTH);
+                anchor.scale.setScalar(anchor.scale.x + (hold.scale - anchor.scale.x) * SMOOTH);
+              }
+            }
+            // Đang mất target: có SLAM (trackingStatus NORMAL) thì nội dung đứng yên trong không gian,
+            // người đi ngang che ảnh cũng không mất. Không có SLAM thì giữ thêm HOLD_MS rồi mới ẩn.
+            if (hold.lostAt && anchor.visible) {
+              const slamOk = r.trackingStatus === 'NORMAL';
+              if (!slamOk && performance.now() - hold.lostAt > HOLD_MS) {
+                anchor.visible = false; hold.lostAt = 0; setFound(false);
+              }
+            }
             // Áp cử chỉ người dùng lên nhóm nội dung, giữ nguyên số liệu gốc của studio làm nền.
             const s = rt.current;
             if (s.contentGroup) {
@@ -307,21 +331,26 @@ export default function ARScannerXR8({ target: rawTarget, onClose }: ARScannerXR
             renderer.render(scene, camera);
           },
           listeners: [
-            { event: 'reality.imagefound', process: ({ detail }: any) => { applyPose(detail); anchor.visible = true; setFound(true); } },
+            { event: 'reality.imagefound', process: ({ detail }: any) => {
+              // Lần đầu thấy target (hoặc đã ẩn hẳn) thì đặt thẳng, còn thấy lại sau khi bị che thì trôi mượt về.
+              if (!anchor.visible) hold.snap = true;
+              applyPose(detail); hold.lostAt = 0; anchor.visible = true; setFound(true);
+            } },
             { event: 'reality.imageupdated', process: ({ detail }: any) => { applyPose(detail); } },
-            { event: 'reality.imagelost', process: () => { anchor.visible = false; setFound(false); } },
+            // Không ẩn ngay khi mất target (người đứng che ảnh, lóa sáng), giữ tư thế cuối.
+            { event: 'reality.imagelost', process: () => { hold.lostAt = performance.now(); } },
           ],
         };
         const applyPose = (d: any) => {
           if (!d) return;
-          anchor.position.set(d.position.x, d.position.y, d.position.z);
-          anchor.quaternion.set(d.rotation.x, d.rotation.y, d.rotation.z, d.rotation.w);
-          const sc = d.scale || 1;
-          anchor.scale.set(sc, sc, sc);
+          hold.pos.set(d.position.x, d.position.y, d.position.z);
+          hold.quat.set(d.rotation.x, d.rotation.y, d.rotation.z, d.rotation.w);
+          hold.scale = d.scale || 1;
+          hold.hasPose = true;
           vec.set(0, 0, 0);
         };
 
-        // 5. Khởi động pipeline 8th Wall: luồng camera, bộ bám ảnh (không dùng SLAM), chụp ảnh, scene.
+        // 5. Khởi động pipeline 8th Wall: luồng camera, bộ bám ảnh kèm SLAM, chụp ảnh, scene.
         setStatusText('Đang mở camera.');
         const canvas = document.createElement('canvas');
         canvasEl = canvas;
@@ -338,7 +367,8 @@ export default function ARScannerXR8({ target: rawTarget, onClose }: ARScannerXR
         upgradeCamera();
 
         XR8.XrController.configure({
-          disableWorldTracking: true,
+          // Bật bám không gian (SLAM) để khi ảnh target bị người che, nội dung vẫn đứng yên đúng chỗ.
+          disableWorldTracking: false,
           imageTargetData: [targetData],
           imageTargets: [targetData.name],
         });
