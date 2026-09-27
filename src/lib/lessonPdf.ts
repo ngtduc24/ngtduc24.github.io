@@ -1,4 +1,5 @@
 import { ELLesson, ELSection, ELResource } from './elearning';
+import { supabase } from './supabase';
 
 // Xuất toàn bộ bài giảng ra PDF bằng cách dựng một tài liệu in gọn gàng rồi mở hộp thoại in
 // của trình duyệt, người dùng chọn Lưu thành PDF. Cách này chạy được trên cả máy tính và điện
@@ -8,9 +9,28 @@ function esc(s: string): string {
   return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-// Chân trang mặc định cho PDF bài giảng, hiện ở cuối mọi trang khi in.
-const FOOTER_LEFT = 'Biên soạn: Nguyễn Trọng Đức';
-const FOOTER_RIGHT = 'Giáo Trình Tạo Hình Blender';
+// Đầu trang ghi "Giáo trình <tên môn>" theo môn học gắn với bài giảng, chân trang ghi người biên soạn.
+// Trước đây 2 dòng này bị viết cứng là giáo trình Blender nên môn nào xuất PDF cũng sai tên môn.
+async function resolveSubjectName(lesson: Partial<ELLesson> & { subject_name?: string | null }): Promise<string> {
+  if (lesson.subject_name) return lesson.subject_name;
+  try {
+    let subjectId = lesson.subject_id || null;
+    if (!subjectId && lesson.id) {
+      const { data } = await supabase.from('el_lessons').select('subject_id').eq('id', lesson.id).maybeSingle();
+      subjectId = (data as any)?.subject_id || null;
+    }
+    // Trang sinh viên xem qua link chia sẻ chỉ có mã chia sẻ, tra ngược ra bài giảng.
+    if (!subjectId && lesson.share_token) {
+      const { data } = await supabase.from('el_lessons').select('subject_id').eq('share_token', lesson.share_token).maybeSingle();
+      subjectId = (data as any)?.subject_id || null;
+    }
+    if (!subjectId) return '';
+    const { data } = await supabase.from('edu_subjects').select('name').eq('id', subjectId).maybeSingle();
+    return ((data as any)?.name || '').trim();
+  } catch {
+    return '';
+  }
+}
 
 function buildLessonHtml(lesson: ELLesson, sections: ELSection[], resources: ELResource[], footerLeft: string, footerRight: string): string {
   const author = lesson.author_label || lesson.owner_name || 'Ẩn danh';
@@ -74,8 +94,12 @@ function buildLessonHtml(lesson: ELLesson, sections: ELSection[], resources: ELR
 </body></html>`;
 }
 
-export function exportLessonToPdf(lesson: ELLesson, sections: ELSection[], resources: ELResource[], footer?: { left?: string; right?: string }): void {
-  const html = buildLessonHtml(lesson, sections, resources, footer?.left ?? FOOTER_LEFT, footer?.right ?? FOOTER_RIGHT);
+export async function exportLessonToPdf(lesson: ELLesson, sections: ELSection[], resources: ELResource[], footer?: { left?: string; right?: string }): Promise<void> {
+  const subject = footer?.right === undefined ? await resolveSubjectName(lesson as any) : '';
+  const author = (lesson.author_label || lesson.owner_name || '').trim();
+  const right = footer?.right ?? (subject ? `Giáo trình ${subject}` : (lesson.title || ''));
+  const left = footer?.left ?? (author ? `Biên soạn: ${author}` : '');
+  const html = buildLessonHtml(lesson, sections, resources, left, right);
 
   // Dùng iframe ẩn để in, chạy ổn định trên di động hơn là mở cửa sổ mới (hay bị chặn popup).
   const iframe = document.createElement('iframe');

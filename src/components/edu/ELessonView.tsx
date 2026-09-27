@@ -74,7 +74,7 @@ export default function ELessonView({ token }: Props) {
           </div>
           <button
             onClick={() => exportLessonToPdf(
-              { title: data?.title, author_label: data?.author_label, owner_name: data?.owner_name } as any,
+              { id: data?.lesson_id || data?.id, share_token: token, subject_id: data?.subject_id, subject_name: data?.subject_name, title: data?.title, author_label: data?.author_label, owner_name: data?.owner_name } as any,
               sections.map((s: any) => ({ id: s.id, title: s.title, content: s.content })) as any,
               sections.flatMap((s: any) => (s.resources || []).map((r: any) => ({ section_id: s.id, url: r.url, title: r.title }))) as any
             )}
