@@ -538,6 +538,8 @@ export default function App() {
 
     setCurrentUser(updatedUser);
     localStorage.setItem('logged_in_user', JSON.stringify(updatedUser));
+    // Đổi họ tên thì cập nhật tên người biên soạn trên bài giảng E-Learning và đề trắc nghiệm.
+    import('./lib/elearning').then(m => m.syncOwnerName(updatedUser.id, updatedUser.fullName)).catch(() => {});
   };
 
   // Delete the user profile from Firebase Firestore.

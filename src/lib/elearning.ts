@@ -311,3 +311,14 @@ export async function elLogView(token: string, studentCode: string, sectionId: s
 }
 
 export { stripHtml };
+
+// Tên người biên soạn lưu kèm bài giảng (owner_name) là bản chụp tên lúc tạo bài. Khi người dùng đổi
+// họ tên trong hồ sơ thì cập nhật lại cho mọi bài giảng và đề trắc nghiệm của họ, để trang xem, thẻ
+// bài giảng và chân trang PDF hiện đúng tên mới.
+export async function syncOwnerName(ownerId: string, name: string): Promise<void> {
+  const n = (name || '').trim();
+  if (!ownerId || !n) return;
+  try { await supabase.from(L_TABLE).update({ owner_name: n }).eq('owner_id', ownerId).neq('owner_name', n); } catch { /* bỏ qua */ }
+  try { await supabase.from(L_TABLE).update({ owner_name: n }).eq('owner_id', ownerId).is('owner_name', null); } catch { /* bỏ qua */ }
+  try { await supabase.from('quizzes').update({ owner_name: n }).eq('owner_id', ownerId).neq('owner_name', n); } catch { /* bỏ qua */ }
+}

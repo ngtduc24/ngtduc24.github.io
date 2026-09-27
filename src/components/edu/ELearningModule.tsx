@@ -12,7 +12,7 @@ import { useConfirmation } from '../ConfirmationContext';
 import { getSubjects, saveSubject, getClasses, getClassUsers, setEduAuthContext } from '../../lib/edu';
 import {
   ELLesson, ELSection, ELResource,
-  getMyLessons, getPublicLessons, getPublicSubjectCounts, getLesson, createLesson, updateLesson,
+  syncOwnerName, getMyLessons, getPublicLessons, getPublicSubjectCounts, getLesson, createLesson, updateLesson,
   softDeleteLesson, restoreLesson, purgeLesson, getTrashLessons,
   getSections, createSection, updateSection, deleteSection, reorderSections,
   getResources, addResource, uploadResource, updateResource, deleteResource,
@@ -45,6 +45,8 @@ export default function ELearningModule({ currentUser, onExit }: Props) {
   const [subjects, setSubjects] = useState<EduSubject[]>([]);
 
   useEffect(() => { setEduAuthContext(currentUser?.id ?? null, currentUser?.role === 'admin'); }, [currentUser]);
+  // Bài giảng cũ lưu tên cũ của người biên soạn, mở E-Learning là đồng bộ lại theo họ tên hiện tại.
+  useEffect(() => { if (currentUser?.id && currentUser.fullName) syncOwnerName(currentUser.id, currentUser.fullName); }, [currentUser?.id, currentUser?.fullName]);
   useEffect(() => { getSubjects().then(setSubjects).catch(() => {}); }, []);
 
   // Ghi màn hình con và bài giảng đang mở lên URL.
