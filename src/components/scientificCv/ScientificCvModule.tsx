@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FileUser, Plus, Pencil, Copy, Trash2, FileDown, FileText, ArrowLeft, Save, ChevronDown, ChevronUp,
   ArrowUp, ArrowDown, X, ImagePlus, Lock, Eye, PanelLeft,
@@ -407,7 +407,9 @@ function Preview({ data }: { data: CvData }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  const html = useMemo(() => renderCvBody(data), [data]);
+  // Dựng bản xem trước chậm hơn nhịp gõ một chút để ô nhập không bị giật với hồ sơ dài.
+  const deferred = useDeferredValue(data);
+  const html = useMemo(() => renderCvBody(deferred), [deferred]);
   const pageRef = useRef<HTMLDivElement>(null);
   const [h, setH] = useState(1123);
   useEffect(() => { if (pageRef.current) setH(pageRef.current.scrollHeight); }, [html, scale]);

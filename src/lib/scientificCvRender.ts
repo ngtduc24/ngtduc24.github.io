@@ -31,7 +31,8 @@ export const CV_STYLES = `
   .cv p { margin: 0 0 4pt; }
   .cv table.lay { width: 100%; border-collapse: collapse; }
   .cv table.lay td { border: none; padding: 0; vertical-align: top; }
-  .cv .hdr td { width: 50%; text-align: center; font-size: 12pt; }
+  .cv .hdr td { width: 45%; text-align: center; font-size: 12pt; white-space: nowrap; }
+  .cv .hdr td + td { width: 55%; }
   .cv .hdr .b { font-weight: bold; }
   .cv .hdr .rule { width: 60%; margin: 3pt auto 0; border-top: 1px solid #000; height: 0; }
   .cv .top { margin: 10pt 0 14pt; }
