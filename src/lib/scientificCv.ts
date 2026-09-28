@@ -91,8 +91,10 @@ export function normalizeCvData(d: Partial<CvData> | undefined): CvData {
 export interface CvSummary { id: string; name: string; fullName: string; school: string; hasPhoto: boolean; updatedAt?: number; createdAt?: number }
 
 async function call(action: string, payload: Record<string, unknown> = {}): Promise<any> {
+  // Firebase khôi phục phiên đăng nhập bất đồng bộ lúc mở trang, chờ xong rồi mới lấy token.
+  try { await (auth as any).authStateReady?.(); } catch { /* bỏ qua */ }
   const user = auth.currentUser;
-  if (!user) throw new Error('Bạn cần đăng nhập để dùng Lý lịch khoa học.');
+  if (!user) throw new Error('Phiên đăng nhập đã hết hạn. Hãy đăng xuất rồi đăng nhập lại để dùng Lý lịch khoa học.');
   const token = await user.getIdToken();
   const base = (import.meta.env.VITE_SUPABASE_URL || '').trim().replace(/\/$/, '');
   const r = await fetch(`${base}/functions/v1/scientific-cv`, {
