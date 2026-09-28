@@ -319,9 +319,9 @@ function CvEditor({ id, onBack }: { id: string; onBack: () => void }) {
                   <Sub title="1. Nơi làm việc hiện nay"><Rows rows={data.currentJobs} onChange={v => set('currentJobs', v)} empty={{ mode: '', unit: '', address: '', position: '', years: '', note: '' }}
                     cols={[{ k: 'mode', l: 'Hình thức công tác', wide: true }, { k: 'unit', l: 'Tên đơn vị', wide: true }, { k: 'address', l: 'Địa chỉ', wide: true }, { k: 'position', l: 'Chức danh/Chức vụ' }, { k: 'years', l: 'Số năm công tác' }, { k: 'note', l: 'Ghi chú', wide: true }]} /></Sub>
                   <Sub title="2. Quá trình giảng dạy tại các trường"><Rows rows={data.teaching} onChange={v => set('teaching', v)} empty={{ from: '', to: '', unit: '', position: '' }}
-                    cols={[{ k: 'from', l: 'Từ tháng', ph: 'mm/yyyy' }, { k: 'to', l: 'Đến tháng', ph: 'mm/yyyy' }, { k: 'unit', l: 'Tên đơn vị', wide: true }, { k: 'position', l: 'Chức danh/Chức vụ', wide: true }]} /></Sub>
+                    cols={[{ k: 'from', l: 'Từ tháng', ph: 'mm/yyyy' }, { k: 'to', l: 'Đến tháng', ph: 'mm/yyyy', nowFlag: true }, { k: 'unit', l: 'Tên đơn vị', wide: true }, { k: 'position', l: 'Chức danh/Chức vụ', wide: true }]} /></Sub>
                   <Sub title="3. Kinh nghiệm tại các đơn vị thực tế"><Rows rows={data.experience} onChange={v => set('experience', v)} empty={{ from: '', to: '', unit: '', position: '' }}
-                    cols={[{ k: 'from', l: 'Từ tháng', ph: 'mm/yyyy' }, { k: 'to', l: 'Đến tháng', ph: 'mm/yyyy' }, { k: 'unit', l: 'Tên đơn vị', wide: true }, { k: 'position', l: 'Chức danh/Chức vụ', wide: true }]} /></Sub>
+                    cols={[{ k: 'from', l: 'Từ tháng', ph: 'mm/yyyy' }, { k: 'to', l: 'Đến tháng', ph: 'mm/yyyy', nowFlag: true }, { k: 'unit', l: 'Tên đơn vị', wide: true }, { k: 'position', l: 'Chức danh/Chức vụ', wide: true }]} /></Sub>
                 </>}
                 {sec.key === 'D' && <>
                   <Field label="1. Lĩnh vực nghiên cứu"><Textarea rows={2} value={data.researchField} onChange={e => set('researchField', e.target.value)} /></Field>
@@ -371,9 +371,10 @@ function Sub({ title, children }: { title: string; children: React.ReactNode }) 
   return <div><p className="text-[13px] font-semibold text-slate-700 mb-2">{title}</p>{children}</div>;
 }
 
-type ColDef = { k: string; l: string; ph?: string; wide?: boolean };
+// nowFlag: ô này có thêm lựa chọn "Hiện tại" (lưu vào trường current của dòng, khoá ô nhập).
+type ColDef = { k: string; l: string; ph?: string; wide?: boolean; nowFlag?: boolean };
 function Rows<T extends Record<string, any>>({ rows, onChange, cols, empty }: { rows: T[]; onChange: (v: T[]) => void; cols: ColDef[]; empty: T }) {
-  const upd = (i: number, k: string, v: string) => onChange(rows.map((r, j) => j === i ? { ...r, [k]: v } : r));
+  const upd = (i: number, k: string, v: any) => onChange(rows.map((r, j) => j === i ? { ...r, [k]: v } : r));
   const move = (i: number, d: number) => { const j = i + d; if (j < 0 || j >= rows.length) return; const n = [...rows]; [n[i], n[j]] = [n[j], n[i]]; onChange(n); };
   return (
     <div className="space-y-2">
@@ -389,10 +390,19 @@ function Rows<T extends Record<string, any>>({ rows, onChange, cols, empty }: { 
           </div>
           <div className="grid grid-cols-2 gap-2">
             {cols.map(c => (
-              <label key={c.k} className={cx('block', c.wide && 'col-span-2')}>
-                <span className="block text-xs text-slate-500 mb-1">{c.l}</span>
-                <Input size="sm" value={r[c.k] || ''} placeholder={c.ph} onChange={e => upd(i, c.k, e.target.value)} />
-              </label>
+              <div key={c.k} className={cx('block', c.wide && 'col-span-2')}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-slate-500">{c.l}</span>
+                  {c.nowFlag && (
+                    <label className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer select-none">
+                      <input type="checkbox" className="rounded accent-[var(--brand)]" checked={!!r.current}
+                        onChange={e => onChange(rows.map((x, j) => j === i ? { ...x, current: e.target.checked, [c.k]: e.target.checked ? '' : x[c.k] } : x))} />
+                      Hiện tại
+                    </label>
+                  )}
+                </div>
+                <Input size="sm" aria-label={c.l} value={c.nowFlag && r.current ? 'Hiện tại' : (r[c.k] || '')} disabled={!!(c.nowFlag && r.current)} placeholder={c.ph} onChange={e => upd(i, c.k, e.target.value)} />
+              </div>
             ))}
           </div>
         </div>

@@ -10,7 +10,8 @@ import { auth } from './firebase';
 export interface CvDegree { name: string; years: string; school: string; major: string; mode: string; place: string; year: string; thesis?: string }
 export interface CvCertificate { type: string; name: string; issuer: string; year: string }
 export interface CvCurrentJob { mode: string; unit: string; address: string; position: string; years: string; note: string }
-export interface CvPeriod { from: string; to: string; unit: string; position: string }
+// current = true: đang công tác tại đơn vị này, cột Đến tháng in là "Hiện tại".
+export interface CvPeriod { from: string; to: string; unit: string; position: string; current?: boolean }
 export interface CvBook { title: string; publisher: string; year: string }
 export interface CvArticle { authors: string; title: string; journal: string; year: string; role: string }
 export interface CvConference { authors: string; title: string; conference: string; place: string; note: string }

@@ -70,7 +70,10 @@ export function renderCvBody(d: CvData): string {
     { label: 'Nơi học', key: 'place', w: '9%', center: true }, { label: 'Năm được cấp', key: 'year', w: '8%', center: true },
   ] as Col<any>[];
   const periodTable = (rows: any[]) => {
-    const body = rows.map(r => `<tr><td class="c">${r.from ? 'Từ tháng<br/>' + esc(r.from) : ''}</td><td class="c">${r.to ? 'Đến tháng<br/>' + esc(r.to) : ''}</td><td>${multi(r.unit)}</td><td class="c">${multi(r.position)}</td></tr>`).join('');
+    // Đang công tác (tick Hiện tại, hoặc gõ "nay", "hiện tại", "hiện nay") thì in "Hiện tại" thay cho "Đến tháng ...".
+    const isNow = (r: any) => !!r.current || /^\s*(nay|hiện tại|hiện nay|đến nay|present|now)\s*$/i.test(r.to || '');
+    const toCell = (r: any) => isNow(r) ? 'Hiện tại' : (r.to ? 'Đến tháng<br/>' + esc(r.to) : '');
+    const body = rows.map(r => `<tr><td class="c">${r.from ? 'Từ tháng<br/>' + esc(r.from) : ''}</td><td class="c">${toCell(r)}</td><td>${multi(r.unit)}</td><td class="c">${multi(r.position)}</td></tr>`).join('');
     return `<table class="t"><thead><tr><th colspan="2" style="width:36%">Thời gian</th><th style="width:32%">Tên đơn vị</th><th style="width:32%">Chức danh/Chức vụ</th></tr></thead><tbody>${body}</tbody></table>`;
   };
   const articleCols = [
