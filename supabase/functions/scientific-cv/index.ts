@@ -66,8 +66,8 @@ async function canWrite(uid: string, token: string): Promise<boolean> {
 const isUuid = (s: unknown) => typeof s === "string" && /^[0-9a-f-]{36}$/i.test(s);
 
 // Tóm tắt để hiện danh sách, không kèm ảnh cho nhẹ.
-function summary(row: any, data: any) {
-  return { id: row.id, name: row.name, updatedAt: row.updated_at, createdAt: row.created_at,
+function summary(row: any, data: any, name: string) {
+  return { id: row.id, name, updatedAt: row.updated_at, createdAt: row.created_at,
     fullName: data?.fullName || "", school: data?.school || "", hasPhoto: !!data?.photo };
 }
 
@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
       const rows = await r.json();
       if (!r.ok) throw new Error(rows?.message || "Lỗi đọc dữ liệu");
       const out = [];
-      for (const row of rows) { let d: any = {}; try { d = (await decrypt(row.payload)).data; } catch { /* hỏng thì bỏ qua */ } out.push(summary(row, d)); }
+      for (const row of rows) { let p: any = {}; try { p = await decrypt(row.payload); } catch { /* hỏng thì bỏ qua */ } out.push(summary(row, p.data, p.name || row.name)); }
       return json({ items: out });
     }
     if (action === "get") {
@@ -105,24 +105,26 @@ Deno.serve(async (req) => {
       if (!r.ok) throw new Error(rows?.message || "Lỗi đọc dữ liệu");
       if (!rows.length) return json({ error: "Không tìm thấy hồ sơ." }, 404);
       const row = rows[0];
-      return json({ item: { id: row.id, name: row.name, createdAt: row.created_at, updatedAt: row.updated_at, data: (await decrypt(row.payload)).data } });
+      const p = await decrypt(row.payload);
+      return json({ item: { id: row.id, name: p.name || row.name, createdAt: row.created_at, updatedAt: row.updated_at, data: p.data } });
     }
 
     if (!(await canWrite(uid, token))) return json({ error: "Tài khoản chưa được cấp quyền Lý lịch khoa học." }, 403);
 
     if (action === "create") {
-      const payload = await encrypt({ data: body.data || {} });
+      // Tên hồ sơ cũng nằm trong phần mã hoá, cột name chỉ để giá trị chung.
+      const payload = await encrypt({ name: String(body.name || "Lý lịch khoa học").slice(0, 200), data: body.data || {} });
       const r = await fetch(TABLE, { method: "POST", headers: { ...H, Prefer: "return=representation" },
-        body: JSON.stringify({ owner_id: uid, name: String(body.name || "Lý lịch khoa học").slice(0, 200), payload }) });
+        body: JSON.stringify({ owner_id: uid, name: "LLKH", payload }) });
       const rows = await r.json();
       if (!r.ok) throw new Error(rows?.message || "Lỗi tạo hồ sơ");
       return json({ id: rows[0].id });
     }
     if (action === "update") {
       if (!isUuid(body.id)) return json({ error: "Mã hồ sơ không hợp lệ." }, 400);
-      const payload = await encrypt({ data: body.data || {} });
+      const payload = await encrypt({ name: String(body.name || "Lý lịch khoa học").slice(0, 200), data: body.data || {} });
       const r = await fetch(`${TABLE}?id=eq.${body.id}&${owner}`, { method: "PATCH", headers: { ...H, Prefer: "return=representation" },
-        body: JSON.stringify({ name: String(body.name || "Lý lịch khoa học").slice(0, 200), payload, updated_at: new Date().toISOString() }) });
+        body: JSON.stringify({ name: "LLKH", payload, updated_at: new Date().toISOString() }) });
       const rows = await r.json();
       if (!r.ok) throw new Error(rows?.message || "Lỗi lưu hồ sơ");
       if (!rows.length) return json({ error: "Không tìm thấy hồ sơ." }, 404);
