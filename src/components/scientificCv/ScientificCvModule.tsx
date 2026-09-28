@@ -1,7 +1,7 @@
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FileUser, Plus, Pencil, Copy, Trash2, FileDown, FileText, ArrowLeft, Save, ChevronDown, ChevronUp,
-  ArrowUp, ArrowDown, X, ImagePlus, Lock, Eye, PanelLeft,
+  ArrowUp, ArrowDown, X, ImagePlus, Lock, Eye, PanelLeft, List, LayoutGrid,
 } from 'lucide-react';
 import { UserAccount } from '../../types';
 import {
@@ -29,6 +29,11 @@ function CvList({ currentUser, onEdit }: { currentUser: UserAccount; onEdit: (id
   const [items, setItems] = useState<CvSummary[] | null>(null);
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
+  // Mặc định dạng danh sách, người dùng chọn lưới thì nhớ lựa chọn trên trình duyệt này.
+  const [view, setView] = useState<'list' | 'grid'>(() => {
+    try { return localStorage.getItem('llkh_view') === 'grid' ? 'grid' : 'list'; } catch { return 'list'; }
+  });
+  const changeView = (v: 'list' | 'grid') => { setView(v); try { localStorage.setItem('llkh_view', v); } catch { /* bỏ qua */ } };
   const { confirm } = useConfirmation();
   const { addNotification } = useNotifications();
 
@@ -65,13 +70,14 @@ function CvList({ currentUser, onEdit }: { currentUser: UserAccount; onEdit: (id
         title="Lý lịch khoa học"
         description="Tạo và quản lý lý lịch khoa học của riêng bạn theo mẫu, xuất ra PDF hoặc Word để nộp cho từng trường."
         badge={<Badge tone="brand" icon={<Lock size={12} />}>Riêng tư</Badge>}
-        actions={<Button icon={<Plus size={16} />} onClick={() => setCreating(true)}>Tạo lý lịch mới</Button>}
+        actions={<div className="flex items-center gap-2">
+          <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1" role="group" aria-label="Kiểu hiển thị">
+            <IconButton label="Dạng danh sách" size="sm" variant={view === 'list' ? 'primary' : 'ghost'} onClick={() => changeView('list')}><List size={16} /></IconButton>
+            <IconButton label="Dạng lưới" size="sm" variant={view === 'grid' ? 'primary' : 'ghost'} onClick={() => changeView('grid')}><LayoutGrid size={16} /></IconButton>
+          </div>
+          <Button icon={<Plus size={16} />} onClick={() => setCreating(true)}>Tạo lý lịch mới</Button>
+        </div>}
       />
-
-      <div className="rounded-xl border border-brand/20 bg-brand-light px-4 py-3 text-[13px] text-slate-600 flex items-start gap-2">
-        <Lock size={16} className="text-brand shrink-0 mt-0.5" />
-        <span>Hồ sơ trong mục này chỉ tài khoản của bạn xem và sửa được. Nội dung được mã hoá trước khi lưu, quản trị viên và người dùng khác không đọc được.</span>
-      </div>
 
       {items === null ? <Spinner /> : error ? (
         <Card><p className="text-[13px] text-rose-600">Không tải được danh sách: {error}</p></Card>
@@ -80,6 +86,32 @@ function CvList({ currentUser, onEdit }: { currentUser: UserAccount; onEdit: (id
           <EmptyState icon={<FileUser size={26} />} title="Chưa có lý lịch khoa học nào"
             description="Tạo hồ sơ đầu tiên, điền thông tin theo từng mục rồi xuất PDF hoặc Word. Có thể nhân bản để sửa tên trường cho từng nơi nộp."
             action={<Button icon={<Plus size={16} />} onClick={() => setCreating(true)}>Tạo lý lịch mới</Button>} />
+        </Card>
+      ) : view === 'list' ? (
+        <Card padding="none" className="overflow-hidden">
+          <div className="hidden md:grid grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_minmax(0,1.8fr)_150px_200px] gap-4 px-5 py-3 border-b border-slate-100 text-xs font-semibold text-slate-500">
+            <span>Tên hồ sơ</span><span>Họ và tên</span><span>Trường</span><span>Cập nhật</span><span className="text-right">Thao tác</span>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {items.map(cv => (
+              <div key={cv.id} className="grid grid-cols-1 md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_minmax(0,1.8fr)_150px_200px] gap-1 md:gap-4 px-5 py-3 items-center hover:bg-slate-50/70">
+                <button onClick={() => onEdit(cv.id)} className="flex items-center gap-3 min-w-0 text-left">
+                  <span className="w-9 h-9 rounded-lg bg-brand-light text-brand flex items-center justify-center shrink-0"><FileUser size={18} /></span>
+                  <span className="text-sm font-semibold text-slate-800 truncate hover:text-brand">{cv.name}</span>
+                </button>
+                <span className="text-[13px] text-slate-600 truncate md:pl-0 pl-12">{cv.fullName || 'Chưa nhập họ tên'}</span>
+                <span className="text-[13px] text-slate-500 truncate md:pl-0 pl-12">{cv.school || 'Chưa nhập tên trường'}</span>
+                <span className="text-xs text-slate-400 md:pl-0 pl-12">{cv.updatedAt ? new Date(cv.updatedAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}</span>
+                <div className="flex items-center justify-end gap-0.5">
+                  <IconButton label="Mở" variant="ghost" onClick={() => onEdit(cv.id)}><Pencil size={16} /></IconButton>
+                  <IconButton label="Xuất PDF" variant="ghost" onClick={() => exportPdf(cv)}><FileDown size={16} /></IconButton>
+                  <IconButton label="Tải file Word" variant="ghost" onClick={() => exportWord(cv)}><FileText size={16} /></IconButton>
+                  <IconButton label="Nhân bản" variant="ghost" onClick={() => duplicate(cv)}><Copy size={16} /></IconButton>
+                  <IconButton label="Xoá" variant="danger" onClick={() => remove(cv)}><Trash2 size={16} /></IconButton>
+                </div>
+              </div>
+            ))}
+          </div>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
