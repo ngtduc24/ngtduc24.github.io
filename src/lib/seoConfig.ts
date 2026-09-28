@@ -204,6 +204,13 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
     description: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn học, công khai lên kho chung và giao bài giảng cho lớp.',
     keywords: 'e-learning, bài giảng, học liệu, kho bài giảng, giao bài giảng',
   },
+  scientific_cv: {
+    id: 'scientific_cv',
+    slug: 'ly-lich-khoa-hoc',
+    title: 'Lý lịch khoa học cá nhân | SmartResearch',
+    description: 'Tạo, lưu và xuất lý lịch khoa học cá nhân theo mẫu cho giảng viên, nội dung chỉ riêng chủ hồ sơ xem được.',
+    keywords: 'lý lịch khoa học, lý lịch giảng viên, CV khoa học, mẫu lý lịch khoa học',
+  },
   remier: {
     id: 'remier',
     slug: 'remier-dung-phim',
@@ -372,7 +379,7 @@ export function getTabUrl(tabId: string): string {
 //   ltab : kho bài giảng đang xem (của tôi hay chung)
 //   qv   : màn hình con của trắc nghiệm
 //   qid  : id đề trắc nghiệm
-export const SUBROUTE_PARAMS = ['sv', 'cid', 'aid', 'gcol', 'lid', 'ltab', 'qv', 'qid'];
+export const SUBROUTE_PARAMS = ['sv', 'cid', 'aid', 'gcol', 'lid', 'ltab', 'qv', 'qid', 'cvid'];
 
 // Đọc các tham số màn hình con hiện có trên URL.
 export function readSubRoute(): Record<string, string> {

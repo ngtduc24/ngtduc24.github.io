@@ -1,7 +1,7 @@
 import {
   CalendarDays, BookOpen, LayoutGrid, Image as ImageIcon, BarChart3,
   GraduationCap, Library, CheckCircle2, ClipboardList, Clapperboard,
-  Scan, LayoutTemplate, FolderKanban, Mail, Megaphone, Users, Shield, Settings, Sparkles, FileArchive, Globe
+  Scan, LayoutTemplate, FolderKanban, Mail, Megaphone, Users, Shield, Settings, Sparkles, FileArchive, Globe, FileUser
 } from 'lucide-react';
 import { AppSettings, ModuleOverride } from '../types';
 
@@ -30,6 +30,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { id: 'edu_grade', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường', icon: ClipboardList, color: 'emerald', group: 'Giảng dạy và nội dung' },
   { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn', icon: BookOpen, color: 'orange', group: 'Giảng dạy và nội dung' },
   { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp trên trình duyệt', icon: Clapperboard, color: 'rose', group: 'Công cụ thiết kế' },
+  { id: 'scientific_cv', label: 'Lý lịch khoa học', desc: 'Tạo lý lịch khoa học cá nhân theo mẫu, xuất PDF và Word, chỉ riêng bạn xem được', icon: FileUser, color: 'indigo', group: 'Nghiên cứu và phân tích' },
   { id: 'ar_module', label: 'Tạo AR', desc: 'Tạo điểm ảnh AR kèm mã QR để quét bằng điện thoại', icon: Scan, color: 'red', group: 'Công cụ thiết kế' },
   { id: 'vr360', label: 'VR 360', desc: 'Ghép ảnh chụp thành không gian 360 độ, chia sẻ link xem bằng kính VR hoặc xoay điện thoại', icon: Globe, color: 'indigo', group: 'Công cụ thiết kế' },
   { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn', icon: ImageIcon, color: 'blue', group: 'Công cụ thiết kế' },

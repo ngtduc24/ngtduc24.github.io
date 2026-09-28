@@ -33,10 +33,11 @@ import ELessonView from './components/edu/ELessonView';
 import ELessonPreviewPage from './components/edu/ELessonPreviewPage';
 import ELearningModule from './components/edu/ELearningModule';
 import RemierModule from './components/remier/RemierModule';
+import ScientificCvModule from './components/scientificCv/ScientificCvModule';
 import EduModule from './components/EduModule';
 import { setEduAuthContext } from './lib/edu';
 import { TaskProvider } from './components/TaskContext';
-import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban, GraduationCap, Film } from 'lucide-react';
+import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban, GraduationCap, Film, FileUser } from 'lucide-react';
 import { supabase } from "./lib/supabase";
 import { saveUser, deleteUser, getUsers, getUserById, mapUserFromDB, seedDefaultUsersIfNeeded, getDefaultSettingsFromSupabase, getCachedSettings, saveDefaultSettingsToSupabase, testSupabaseConnection, getNotificationsFromSupabase, subscribeToNotificationChanges, USERS_TABLE } from './lib/data';
 import { auth, db } from './lib/firebase';
@@ -350,6 +351,7 @@ export default function App() {
       edu: 'Quản lý Giáo dục & Đào tạo',
       elearning: 'E-Learning · Bài giảng',
       remier: 'Remier · Dựng phim',
+      scientific_cv: 'Lý lịch khoa học',
       assistant: 'Trợ lý giáo dục',
     };
 
@@ -766,6 +768,8 @@ export default function App() {
         return <ELearningModule currentUser={currentUser} onExit={() => setCurrentTab('dashboard')} />;
       case 'remier':
         return <RemierModule currentUser={currentUser} />;
+      case 'scientific_cv':
+        return <ScientificCvModule currentUser={currentUser} />;
       // Mã cũ của mục Tạo AR. Giữ lại để tài khoản nào đang mở sẵn mục này, hoặc có
       // đường dẫn cũ lưu trong trình duyệt, vẫn vào đúng nơi thay vì gặp trang trắng.
       case 'ar_module':
@@ -942,6 +946,7 @@ export default function App() {
       { id: 'edu', label: 'Quản lý Giáo dục', icon: GraduationCap },
       { id: 'elearning', label: 'E-Learning', icon: BookOpen },
       { id: 'remier', label: 'Remier · Dựng phim', icon: Film },
+      { id: 'scientific_cv', label: 'Lý lịch khoa học', icon: FileUser },
       { id: 'utilities', label: 'Tiện ích', icon: Wrench },
       { id: 'portfolio_cms', label: 'Quản trị Portfolio', icon: Shield },
       { id: 'notifications', icon: Bell, label: 'Thông báo' },
