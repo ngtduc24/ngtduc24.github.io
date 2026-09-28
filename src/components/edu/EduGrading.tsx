@@ -469,6 +469,12 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
                 if (is3D) {
                   return <div className="w-full h-full"><Model3DViewer url={previewFile.url} fileName={previewFile.name} /></div>;
                 }
+                if (previewFile.type.includes('video') || ['mp4', 'mov', 'webm', 'm4v'].includes(ext)) {
+                  return <video src={previewFile.url} controls className="max-w-full max-h-full rounded-xl shadow-lg bg-black" />;
+                }
+                if (previewFile.type.includes('audio') || ['mp3', 'wav', 'm4a', 'ogg'].includes(ext)) {
+                  return <audio src={previewFile.url} controls className="w-full max-w-md" />;
+                }
                 return (
                   <div className="text-center space-y-4">
                     <div className="w-20 h-20 bg-white rounded-3xl shadow-sm flex items-center justify-center mx-auto">

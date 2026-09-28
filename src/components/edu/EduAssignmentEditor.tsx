@@ -29,8 +29,10 @@ import {
   FileDigit,
   Type,
   Box,
-  ChevronDown
+  ChevronDown,
+  Files,
 } from 'lucide-react';
+import { toggleEduFileType } from '../../lib/eduFileTypes';
 import { EduAssignment, EduGradeColumn } from '../../types/edu';
 import { getGradeColumns, saveAssignment, getAssignments, getSubjects, saveSubject, getAssignmentBank, saveAssignmentBankItem } from '../../lib/edu';
 import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
@@ -45,6 +47,7 @@ interface EduAssignmentEditorProps {
 }
 
 const FILE_TYPES = [
+  { id: 'any', label: 'Mọi loại tệp', icon: Files },
   { id: 'pdf', label: 'PDF', icon: FileText },
   { id: 'link', label: 'Link', icon: Link2 },
   { id: 'image', label: 'Hình ảnh', icon: ImageIcon },
@@ -241,9 +244,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
   };
 
   const toggleType = (id: string) => {
-    setAllowedTypes(prev => 
-      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
-    );
+    setAllowedTypes(prev => toggleEduFileType(prev, id));
   };
 
   return (

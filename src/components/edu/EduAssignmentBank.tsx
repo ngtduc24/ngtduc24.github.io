@@ -10,6 +10,7 @@ import {
   Bold, Italic, List, ListOrdered, Heading1, Heading2,
   AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, Link as LinkIcon, Undo, Redo
 } from 'lucide-react';
+import { toggleEduFileType } from '../../lib/eduFileTypes';
 import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
 import { UserAccount } from '../../types';
 import { getSubjects, saveSubject, deleteSubject, getAssignmentBank, saveAssignmentBankItem, deleteAssignmentBankItem } from '../../lib/edu';
@@ -19,6 +20,7 @@ import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 
 const FORMAT_OPTIONS = [
+  { id: 'any', label: 'Mọi loại tệp' },
   { id: 'pdf', label: 'PDF' },
   { id: 'link', label: 'Link' },
   { id: 'image', label: 'Hình ảnh' },
@@ -221,7 +223,7 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
     setEditing(prev => {
       if (!prev) return prev;
       const cur = prev.allowedFileTypes || [];
-      return { ...prev, allowedFileTypes: cur.includes(id) ? cur.filter(t => t !== id) : [...cur, id] };
+      return { ...prev, allowedFileTypes: toggleEduFileType(cur, id) };
     });
   };
 

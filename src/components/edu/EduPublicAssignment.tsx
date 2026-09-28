@@ -18,6 +18,7 @@ import {
 import { Button, IconButton, Input, Select, Textarea, Field, Card, Badge, Spinner, EmptyState, Z } from '../ui';
 import { EduAssignment, EduClass, EduSchool, EduSubmission, EduUser, EduGrade, EduExtensionRequest } from '../../types/edu';
 import { getAssignmentByLinkId, getSubmissionByMssv, saveSubmission, getGradesForUser, requestExtension, getExtensionForUser } from '../../lib/edu';
+import { eduFileTypeLabel } from '../../lib/eduFileTypes';
 import { CalendarClock } from 'lucide-react';
 import { uploadImageToCloudinary, uploadMediaToCloudinary } from '../../lib/upload';
 import { useNotifications } from '../NotificationContext';
@@ -172,7 +173,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
   const isFileAllowed = (file: File) => {
     const ext = file.name.split('.').pop()?.toLowerCase();
     const allowed = assignment?.allowedFileTypes || [];
-    if (allowed.length === 0) return true;
+    if (allowed.length === 0 || allowed.includes('any')) return true;
     return allowed.some(t => {
       if (t === 'pdf') return ext === 'pdf';
       if (t === 'doc') return ['doc', 'docx'].includes(ext || '');
@@ -203,7 +204,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
       // Không bao giờ lưu base64 vào cơ sở dữ liệu nữa, lỗi thì báo để sinh viên thử lại.
       const studentSign = identifiedUser ? { linkId: shareLinkId, mssv: identifiedUser.mssv } : undefined;
       const url = await uploadMediaToCloudinary(file, {
-        resourceType: isImageLike || isPdf ? 'image' : 'raw',
+        resourceType: isImageLike || isPdf ? 'image' : ['mp4', 'mov', 'avi', 'webm', 'mkv'].includes(ext) ? 'video' : 'raw',
         folder: 'edu_submissions',
         studentSign,
         noBase64Fallback: true,
@@ -561,7 +562,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                     <h3 className="text-sm font-semibold text-slate-800">{assignment.title}</h3>
                     <div className="flex flex-wrap gap-1.5 justify-end">
                       {(assignment.allowedFileTypes || []).map(type => (
-                        <Badge key={type} tone="brand" className="uppercase">{type}</Badge>
+                        <Badge key={type} tone="brand">{eduFileTypeLabel(type)}</Badge>
                       ))}
                     </div>
                   </div>
@@ -609,7 +610,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                     >
                       <Upload className={`w-8 h-8 mx-auto mb-3 transition-colors ${isDragging ? 'text-brand' : 'text-slate-400'}`} />
                       <p className="text-sm font-semibold text-slate-600">Kéo thả tệp vào đây</p>
-                      <p className="text-xs text-slate-500 mt-1">Hoặc bấm “Tải tệp mới” để chọn tệp. Hỗ trợ PDF, DOC, DOCX, PPT, PPTX, ZIP, RAR{allowedTypes.includes('3d') ? ', FBX, OBJ, GLB' : ''}, tối đa 50MB mỗi tệp.</p>
+                      <p className="text-xs text-slate-500 mt-1">Hoặc bấm “Tải tệp mới” để chọn tệp. {allowedTypes.includes('any') ? 'Nhận mọi loại tệp (zip, rar, psd, ai, blend, mp3...).' : `Hỗ trợ PDF, DOC, DOCX, PPT, PPTX, ZIP, RAR${allowedTypes.includes('3d') ? ', FBX, OBJ, GLB' : ''}.`} Nên nén thành .zip nếu có nhiều tệp, mỗi tệp tối đa khoảng 10MB, video tối đa khoảng 100MB.</p>
                     </div>
                   )}
 

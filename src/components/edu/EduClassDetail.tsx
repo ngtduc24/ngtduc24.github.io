@@ -27,6 +27,7 @@ import {
   CalendarClock,
   Check
 } from 'lucide-react';
+import { eduFileTypeLabel } from '../../lib/eduFileTypes';
 import { EduUser, EduClass, EduSchool, EduGradeColumn, EduAssignment, EduGrade } from '../../types/edu';
 import { 
   getClassById, 
@@ -845,7 +846,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                           {assignment.title}
                         </button>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[9px] font-bold text-slate-400 uppercase">{assignment.allowedFileTypes.join(', ')}</span>
+                          <span className="text-[9px] font-bold text-slate-400 uppercase">{assignment.allowedFileTypes.map(eduFileTypeLabel).join(', ')}</span>
                           <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
                           <span className={`text-[9px] font-black uppercase ${subCount === totalCount ? 'text-brand' : 'text-amber-500'}`}>
                             {subCount}/{totalCount} SV đã nộp

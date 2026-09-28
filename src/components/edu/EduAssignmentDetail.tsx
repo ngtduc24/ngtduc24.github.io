@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Copy
 } from 'lucide-react';
+import { eduFileTypeLabel } from '../../lib/eduFileTypes';
 import { Button, IconButton, Card, CardTitle, PageHeader, Badge, Spinner, EmptyState } from '../ui';
 import { EduAssignment, EduSubmission, EduUser, EduGradeColumn } from '../../types/edu';
 import { getSubmissions, getClassUsers, getGradeColumns } from '../../lib/edu';
@@ -123,7 +124,7 @@ export default function EduAssignmentDetail({ classId, assignmentId, onBack }: E
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-500 font-medium flex items-center gap-2"><FileText size={14} /> Định dạng</span>
-                  <span className="flex flex-wrap gap-1 justify-end">{assignment.allowedFileTypes.length ? assignment.allowedFileTypes.map(t => <Badge key={t} tone="brand" className="uppercase">{t}</Badge>) : <Badge>Tất cả</Badge>}</span>
+                  <span className="flex flex-wrap gap-1 justify-end">{assignment.allowedFileTypes.length ? assignment.allowedFileTypes.map(t => <Badge key={t} tone="brand">{eduFileTypeLabel(t)}</Badge>) : <Badge>Tất cả</Badge>}</span>
                 </div>
               </div>
             </div>
