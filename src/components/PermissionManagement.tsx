@@ -32,6 +32,7 @@ const MODULES: ModuleDef[] = [
   { id: 'edu', label: 'Quản lý Giáo dục', desc: 'Trường, lớp, sinh viên, bài tập, bảng điểm', flags: [['canCreateEdu', 'Tạo lớp/trường'], ['canEditEdu', 'Sửa'], ['canDeleteEdu', 'Xóa'], ['canImportEdu', 'Nhập lớp/SV'], ['canExportEdu', 'Xuất bảng điểm'], ['canGradeImportEdu', 'Nhập điểm'], ['canGradeEdu', 'Chấm điểm']] },
   { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn', flags: [['canElearningPublic', 'Công khai kho chung'], ['canElearningAssign', 'Giao cho lớp']] },
   { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp trên trình duyệt', flags: [['canRemierShared', 'Quản lý thư viện chung']] },
+  { id: 'qr_codes', label: 'Tạo mã QR', desc: 'Tạo, sửa, xoá mã QR của riêng mình, người khác và admin không xem được' },
   { id: 'scientific_cv', label: 'Lý lịch khoa học', desc: 'Tạo, sửa, xoá lý lịch khoa học của riêng mình, người khác và admin không xem được nội dung' },
   { id: 'ar_module', label: 'Tạo AR', desc: 'Tạo điểm ảnh AR kèm mã QR để quét bằng điện thoại' },
   { id: 'vr360', label: 'VR 360', desc: 'Ghép ảnh thành không gian 360 độ, chia sẻ link xem bằng kính VR' },

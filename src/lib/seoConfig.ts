@@ -204,6 +204,13 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
     description: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn học, công khai lên kho chung và giao bài giảng cho lớp.',
     keywords: 'e-learning, bài giảng, học liệu, kho bài giảng, giao bài giảng',
   },
+  qr_codes: {
+    id: 'qr_codes',
+    slug: 'tao-ma-qr',
+    title: 'Tạo mã QR cá nhân | SmartResearch',
+    description: 'Tạo mã QR từ đường link ngay trên trình duyệt, lưu và quản lý mã QR của riêng bạn.',
+    keywords: 'tạo mã QR, QR code, mã QR link, quản lý mã QR',
+  },
   scientific_cv: {
     id: 'scientific_cv',
     slug: 'ly-lich-khoa-hoc',

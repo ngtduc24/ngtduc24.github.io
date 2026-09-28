@@ -5,7 +5,7 @@ import {
   CalendarDays, BarChart3, GraduationCap, Wrench, FolderKanban, Mail,
   Library, Image as ImageIcon, LayoutGrid, ArrowRight, Bell, ChevronDown,
   Home, FileText, CheckCircle2, ClipboardList, Scan, LayoutTemplate, Megaphone, Minus, Eye, Shield, Plus, Clapperboard, FileArchive, Globe
-, FileUser } from 'lucide-react';
+, FileUser, QrCode } from 'lucide-react';
 import {
   getStatsFromSupabase,
   getJournalsFromSupabase,
@@ -270,6 +270,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { id: 'edu_grade', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường', icon: ClipboardList, color: 'emerald' },
     { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn', icon: BookOpen, color: 'orange' },
     { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp trên trình duyệt', icon: Clapperboard, color: 'rose' },
+    { id: 'qr_codes', label: 'Tạo mã QR', desc: 'Tạo và quản lý mã QR từ đường link', icon: QrCode, color: 'emerald' },
     { id: 'scientific_cv', label: 'Lý lịch khoa học', desc: 'Lý lịch khoa học cá nhân theo mẫu, xuất PDF và Word', icon: FileUser, color: 'indigo' },
     { id: 'ar_module', label: 'Tạo AR', desc: 'Tạo điểm ảnh AR kèm mã QR để quét bằng điện thoại', icon: Scan, color: 'red' },
     { id: 'vr360', label: 'VR 360', desc: 'Ghép ảnh thành không gian 360 độ, xem bằng kính VR hoặc xoay điện thoại', icon: Globe, color: 'indigo' },
