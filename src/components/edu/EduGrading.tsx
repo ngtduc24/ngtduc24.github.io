@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { EduUser, EduClass, EduAssignment, EduSubmission, EduGrade, EduGradeColumn, EduExtensionRequest } from '../../types/edu';
 import { getClassUsers, getSubmissions, getGrades, saveGrades, saveGradeColumn, reopenSubmission, deleteGradeForUser, getAssignmentById, getApprovedExtensions, resolveSubmissionFile } from '../../lib/edu';
+import SwfPlayer from '../SwfPlayer';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import Model3DViewer from './Model3DViewer';
@@ -468,6 +469,9 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
                 }
                 if (is3D) {
                   return <div className="w-full h-full"><Model3DViewer url={previewFile.url} fileName={previewFile.name} /></div>;
+                }
+                if (ext === 'swf' || previewFile.type.includes('shockwave')) {
+                  return <div className="w-full h-full"><SwfPlayer url={previewFile.url} /></div>;
                 }
                 if (previewFile.type.includes('video') || ['mp4', 'mov', 'webm', 'm4v'].includes(ext)) {
                   return <video src={previewFile.url} controls className="max-w-full max-h-full rounded-xl shadow-lg bg-black" />;

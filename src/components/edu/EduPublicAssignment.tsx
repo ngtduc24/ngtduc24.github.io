@@ -15,11 +15,12 @@ import {
   LogOut,
   ArrowRight
 } from 'lucide-react';
-import { Button, IconButton, Input, Select, Textarea, Field, Card, Badge, Spinner, EmptyState, Z } from '../ui';
+import { Button, IconButton, Input, Select, Textarea, Field, Card, Badge, Spinner, EmptyState, Z, Modal } from '../ui';
 import { EduAssignment, EduClass, EduSchool, EduSubmission, EduUser, EduGrade, EduExtensionRequest } from '../../types/edu';
 import { getAssignmentByLinkId, getSubmissionByMssv, saveSubmission, getGradesForUser, requestExtension, getExtensionForUser } from '../../lib/edu';
 import { eduFileTypeLabel } from '../../lib/eduFileTypes';
-import { CalendarClock } from 'lucide-react';
+import SwfPlayer, { isSwfFile } from '../SwfPlayer';
+import { CalendarClock, Eye } from 'lucide-react';
 import { uploadImageToCloudinary, uploadMediaToCloudinary } from '../../lib/upload';
 import { useNotifications } from '../NotificationContext';
 
@@ -47,6 +48,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
   
   // Submission Form State
   const [files, setFiles] = useState<any[]>([]);
+  const [swfPreview, setSwfPreview] = useState<any | null>(null);
   const [textContent, setTextContent] = useState('');
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -629,6 +631,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                             </div>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
+                            {file.url && isSwfFile(file.name, file.type) && <IconButton label="Xem tệp Flash" variant="ghost" onClick={() => setSwfPreview(file)}><Eye size={16} /></IconButton>}
                             {file.url && <IconButton label="Tải tệp về" variant="ghost" onClick={() => window.open(file.url, '_blank')}><Download size={16} /></IconButton>}
                             {canEdit && <IconButton label="Gỡ tệp này" variant="danger" onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))}><Trash2 size={16} /></IconButton>}
                           </div>
@@ -676,6 +679,11 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
             </Card>
           </div>
         </div>
+      )}
+      {swfPreview && (
+        <Modal open onClose={() => setSwfPreview(null)} size="xl" title={swfPreview.name} description="Xem tệp Flash (.swf) ngay trên trình duyệt">
+          <div className="h-[60vh]"><SwfPlayer url={swfPreview.url} /></div>
+        </Modal>
       )}
     </div>
   );
