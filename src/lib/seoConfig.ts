@@ -386,7 +386,7 @@ export function getTabUrl(tabId: string): string {
 //   ltab : kho bài giảng đang xem (của tôi hay chung)
 //   qv   : màn hình con của trắc nghiệm
 //   qid  : id đề trắc nghiệm
-export const SUBROUTE_PARAMS = ['sv', 'cid', 'aid', 'gcol', 'lid', 'ltab', 'qv', 'qid', 'cvid'];
+export const SUBROUTE_PARAMS = ['sv', 'cid', 'aid', 'gcol', 'lid', 'ltab', 'qv', 'qid', 'cvid', 'bid'];
 
 // Đọc các tham số màn hình con hiện có trên URL.
 export function readSubRoute(): Record<string, string> {

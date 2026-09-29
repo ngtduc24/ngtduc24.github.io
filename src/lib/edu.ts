@@ -438,7 +438,8 @@ export async function getAssignmentBank(subjectId?: string): Promise<EduAssignme
 export async function saveAssignmentBankItem(item: Partial<EduAssignmentBankItem>) {
   const dbData: any = {
     id: item.id,
-    subject_id: item.subjectId,
+    // Chuỗi rỗng (chưa chọn môn) phải gửi null, gửi '' thì Supabase báo lỗi kiểu uuid và không lưu được.
+    subject_id: item.subjectId === '' ? null : item.subjectId,
     title: item.title,
     content: item.content,
     allowed_file_types: item.allowedFileTypes,
@@ -450,6 +451,21 @@ export async function saveAssignmentBankItem(item: Partial<EduAssignmentBankItem
   const { data, error } = await supabase.from(ASSIGNMENT_BANK_TABLE).upsert(dbData).select().single();
   if (error) throw error;
   return mapBankItem(data);
+}
+
+// Thao tác hàng loạt trong ngân hàng bài tập (chỉ nên truyền id bài của chính mình, admin thì tùy ý).
+export async function bulkUpdateAssignmentBank(ids: string[], patch: { subjectId?: string | null; isPublic?: boolean }) {
+  if (!ids.length) return;
+  const data: any = {};
+  if ('subjectId' in patch) data.subject_id = patch.subjectId || null;
+  if ('isPublic' in patch) data.is_public = !!patch.isPublic;
+  const { error } = await supabase.from(ASSIGNMENT_BANK_TABLE).update(data).in('id', ids);
+  if (error) throw error;
+}
+export async function bulkDeleteAssignmentBank(ids: string[]) {
+  if (!ids.length) return;
+  const { error } = await supabase.from(ASSIGNMENT_BANK_TABLE).delete().in('id', ids);
+  if (error) throw error;
 }
 
 export async function deleteAssignmentBankItem(id: string) {

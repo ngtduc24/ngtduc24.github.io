@@ -21,7 +21,8 @@ import { getAssignmentByLinkId, getSubmissionByMssv, saveSubmission, getGradesFo
 import { eduFileTypeLabel } from '../../lib/eduFileTypes';
 import SwfPlayer, { isSwfFile } from '../SwfPlayer';
 import { EduResourceList } from './EduResources';
-import { CalendarClock, Eye } from 'lucide-react';
+import { exportAssignmentToPdf, subjectNameById } from '../../lib/assignmentPdf';
+import { CalendarClock, Eye, FileDown } from 'lucide-react';
 import { uploadImageToCloudinary, uploadMediaToCloudinary } from '../../lib/upload';
 import { useNotifications } from '../NotificationContext';
 
@@ -563,10 +564,16 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <h3 className="text-sm font-semibold text-slate-800">{assignment.title}</h3>
-                    <div className="flex flex-wrap gap-1.5 justify-end">
+                    <div className="flex flex-wrap items-center gap-1.5 justify-end">
                       {(assignment.allowedFileTypes || []).map(type => (
                         <Badge key={type} tone="brand">{eduFileTypeLabel(type)}</Badge>
                       ))}
+                      <button type="button" onClick={async () => exportAssignmentToPdf({
+                        title: assignment.title, content: assignment.content, subjectName: await subjectNameById(assignment.subjectId),
+                        className: assignment.edu_classes?.name, deadline: assignment.deadline, allowedFileTypes: assignment.allowedFileTypes, resources: assignment.resources,
+                      })} title="Tải đề bài tập về dạng PDF" className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[12px] font-semibold text-slate-600 hover:border-brand/40 hover:text-brand">
+                        <FileDown size={14} /> Tải PDF
+                      </button>
                     </div>
                   </div>
                   <div

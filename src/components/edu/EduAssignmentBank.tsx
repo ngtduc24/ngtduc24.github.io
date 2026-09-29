@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -6,19 +6,25 @@ import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
 import {
-  BookMarked, Plus, Trash2, Edit3, X, Save, FolderOpen, FileText,
-  Bold, Italic, List, ListOrdered, Heading1, Heading2,
-  AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, Link as LinkIcon, Undo, Redo
+  BookMarked, Plus, Trash2, Edit3, X, Save, FileText, Search, LayoutGrid, List as ListIcon, Globe, Lock,
+  Bold, Italic, List, ListOrdered, Heading1, Heading2, FileDown, Eye, ArrowLeft, Loader2, FolderInput, Check,
+  AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, Link as LinkIcon, Undo, Redo, Paperclip, ChevronDown, ChevronUp
 } from 'lucide-react';
-import { toggleEduFileType } from '../../lib/eduFileTypes';
+import { toggleEduFileType, eduFileTypeLabel } from '../../lib/eduFileTypes';
 import { EduResourceEditor, EduResourceList } from './EduResources';
 import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
 import { UserAccount } from '../../types';
-import { getSubjects, saveSubject, deleteSubject, getAssignmentBank, saveAssignmentBankItem, deleteAssignmentBankItem } from '../../lib/edu';
+import {
+  getSubjects, saveSubject, deleteSubject, getAssignmentBank, saveAssignmentBankItem, deleteAssignmentBankItem,
+  bulkUpdateAssignmentBank, bulkDeleteAssignmentBank,
+} from '../../lib/edu';
 import { getUsers } from '../../lib/data';
 import { uploadImageToCloudinary } from '../../lib/upload';
+import { exportAssignmentToPdf } from '../../lib/assignmentPdf';
+import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
+import { fold, usePaging, Pager } from './ListPager';
 
 const FORMAT_OPTIONS = [
   { id: 'any', label: 'Mọi loại tệp' },
@@ -31,30 +37,50 @@ const FORMAT_OPTIONS = [
   { id: 'text', label: 'Nhập văn bản' },
 ];
 
-const emptyItem = (): Partial<EduAssignmentBankItem> => ({ title: '', content: '', allowedFileTypes: ['pdf'] });
+const emptyItem = (subjectId?: string): Partial<EduAssignmentBankItem> => ({ title: '', content: '', allowedFileTypes: ['pdf'], subjectId: subjectId || undefined, resources: [] });
+const fmtDate = (v?: string) => (v ? new Date(v).toLocaleDateString('vi-VN') : '');
+const firstImage = (html?: string) => (html || '').match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] || '';
+const plain = (html?: string) => (html || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+const formatsText = (t?: string[]) => (t || []).map(x => FORMAT_OPTIONS.find(f => f.id === x)?.label || eduFileTypeLabel(x)).join(', ');
 
 export default function EduAssignmentBank({ currentUser }: { currentUser: UserAccount }) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
+  const isAdmin = currentUser?.role === 'admin';
 
   // Chỉ người tạo ra bài hoặc admin mới được sửa, xóa và bật chia sẻ công khai.
-  const canEdit = (item?: { ownerId?: string } | null) =>
-    !!item && (item.ownerId === currentUser?.id || currentUser?.role === 'admin');
+  const canEdit = (item?: { ownerId?: string } | null) => !!item && (item.ownerId === currentUser?.id || isAdmin);
 
   const [subjects, setSubjects] = useState<EduSubject[]>([]);
-  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const [items, setItems] = useState<EduAssignmentBankItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [tablesMissing, setTablesMissing] = useState(false);
 
+  // Bộ lọc và cách hiển thị
+  const [subjectId, setSubjectId] = useState('');
+  const [search, setSearch] = useState('');
+  const [scope, setScope] = useState<'all' | 'mine' | 'shared'>('all');
+  const [sort, setSort] = useState<'new' | 'name'>('new');
+  const [mode, setModeState] = useState<'grid' | 'table'>(() => { try { return localStorage.getItem('bank_view') === 'table' ? 'table' : 'grid'; } catch { return 'grid'; } });
+  const setMode = (m: 'grid' | 'table') => { setModeState(m); try { localStorage.setItem('bank_view', m); } catch { /* bỏ qua */ } };
+
+  // Quản lý môn ở cột trái
+  const [addingSubject, setAddingSubject] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState('');
   const [editingSubjectId, setEditingSubjectId] = useState('');
   const [editSubjectName, setEditSubjectName] = useState('');
 
-  const [viewingItem, setViewingItem] = useState<EduAssignmentBankItem | null>(null);
+  // Xem, sửa
+  const [expandedId, setExpandedId] = useState('');                       // dạng danh sách: mở rộng ngay dưới dòng
+  const [viewId, setViewId] = useState<string>(() => readSubRoute().bid || ''); // dạng lưới: trang xem riêng
   const [editing, setEditing] = useState<Partial<EduAssignmentBankItem> | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Chọn nhiều bài ở dạng danh sách
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkSubject, setBulkSubject] = useState('');
 
   const editor = useEditor({
     extensions: [
@@ -67,73 +93,74 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
     content: '',
   });
 
-  // Bản đồ uid -> tên người tạo, để hiện bài do ai tạo ra.
+  // Bản đồ uid -> tên người tạo
   const [userNames, setUserNames] = useState<Record<string, string>>({});
   const ownerName = (ownerId?: string) => (ownerId ? userNames[ownerId] || '' : '');
+  const subjName = (id?: string) => subjects.find(s => s.id === id)?.name || '';
 
-  const loadSubjects = async () => {
-    try {
-      const data = await getSubjects();
-      setSubjects(data);
-      setTablesMissing(false);
-      // Mặc định để trống nghĩa là Tất cả, hiện toàn bộ bài không phân theo môn.
-    } catch {
-      setTablesMissing(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const reloadItems = () => getAssignmentBank().then(setItems).catch(() => setItems([]));
 
-  useEffect(() => { loadSubjects(); }, []);
-
-  // Nạp tên người dùng một lần để hiển thị người tạo bài.
   useEffect(() => {
-    getUsers()
-      .then(list => {
-        const map: Record<string, string> = {};
-        list.forEach(u => { map[u.id] = u.fullName || u.username || u.email || u.id; });
-        setUserNames(map);
-      })
-      .catch(() => {});
+    (async () => {
+      try { setSubjects(await getSubjects()); setTablesMissing(false); } catch { setTablesMissing(true); }
+      await reloadItems();
+      setLoading(false);
+    })();
+    getUsers().then(list => {
+      const map: Record<string, string> = {};
+      list.forEach(u => { map[u.id] = u.fullName || u.username || u.email || u.id; });
+      setUserNames(map);
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    // Không chọn môn (Tất cả) thì hiện toàn bộ bài, chọn môn thì lọc theo môn.
-    getAssignmentBank(selectedSubjectId || undefined).then(setItems).catch(() => setItems([]));
-    setViewingItem(null);
-    setEditing(null);
-  }, [selectedSubjectId]);
+  useEffect(() => { writeSubRoute({ bid: viewId || null }); }, [viewId]);
+  useEffect(() => () => { writeSubRoute({ bid: null }); }, []);
 
-  const reloadItems = () => {
-    getAssignmentBank(selectedSubjectId || undefined).then(setItems).catch(() => setItems([]));
-  };
+  // Đếm số bài theo môn (sau khi lọc phạm vi), để hiện ở cột trái
+  const scoped = useMemo(() => items.filter(it => scope === 'all' ? true : scope === 'mine' ? it.ownerId === currentUser.id : it.ownerId !== currentUser.id), [items, scope, currentUser.id]);
+  const counts = useMemo(() => {
+    const m: Record<string, number> = {};
+    scoped.forEach(it => { const k = it.subjectId || '__none'; m[k] = (m[k] || 0) + 1; });
+    return m;
+  }, [scoped]);
+
+  const shown = useMemo(() => {
+    const q = fold(search);
+    let list = scoped.filter(it => !subjectId ? true : subjectId === '__none' ? !it.subjectId : it.subjectId === subjectId);
+    if (q) list = list.filter(it => fold(`${it.title} ${subjName(it.subjectId)} ${ownerName(it.ownerId)} ${plain(it.content)}`).includes(q));
+    list = [...list].sort((a, b) => sort === 'name' ? a.title.localeCompare(b.title, 'vi') : (b.updatedAt || b.createdAt || '').localeCompare(a.updatedAt || a.createdAt || ''));
+    return list;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scoped, subjectId, search, sort, subjects, userNames]);
+  const pg = usePaging(shown.length, 'bank_page_size', 12, [search, subjectId, scope, sort]);
+  const pageItems = shown.slice(pg.from, pg.to);
+
+  // Bỏ các mục đã chọn không còn trong danh sách
+  useEffect(() => { setSelected(prev => { const ids = new Set(items.map(i => i.id)); const n = new Set([...prev].filter(id => ids.has(id))); return n.size === prev.size ? prev : n; }); }, [items]);
 
   const openEditor = (item: Partial<EduAssignmentBankItem>) => {
-    setViewingItem(null);
+    setExpandedId('');
     setEditing(item);
     editor?.commands.setContent(item.content || '');
   };
 
-  // Môn học
+  const downloadPdf = (it: EduAssignmentBankItem) => exportAssignmentToPdf({
+    title: it.title, content: it.content, subjectName: subjName(it.subjectId), author: ownerName(it.ownerId),
+    allowedFileTypes: it.allowedFileTypes, resources: it.resources,
+  });
+
+  // ---------------- Môn học ----------------
   const handleAddSubject = async () => {
     if (!newSubjectName.trim()) return;
     try {
       const saved = await saveSubject({ name: newSubjectName.trim() });
       setSubjects(prev => [...prev, saved].sort((a, b) => a.name.localeCompare(b.name)));
-      setSelectedSubjectId(saved.id);
-      setNewSubjectName('');
+      setSubjectId(saved.id);
+      setNewSubjectName(''); setAddingSubject(false);
       addNotification('Đã thêm môn học', 'success');
-    } catch {
-      addNotification('Lỗi thêm môn. Kiểm tra bảng ngân hàng trên Supabase.', 'error');
-    }
+    } catch { addNotification('Lỗi thêm môn học', 'error'); }
   };
-
-  const startRenameSubject = (s: EduSubject, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditingSubjectId(s.id);
-    setEditSubjectName(s.name);
-  };
-
   const handleRenameSubject = async (s: EduSubject) => {
     const name = editSubjectName.trim();
     if (!name || name === s.name) { setEditingSubjectId(''); return; }
@@ -142,33 +169,29 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
       setSubjects(prev => prev.map(x => x.id === s.id ? saved : x).sort((a, b) => a.name.localeCompare(b.name)));
       setEditingSubjectId('');
       addNotification('Đã đổi tên môn', 'success');
-    } catch {
-      addNotification('Lỗi đổi tên môn', 'error');
-    }
+    } catch { addNotification('Lỗi đổi tên môn', 'error'); }
   };
-
   const handleDeleteSubject = async (s: EduSubject) => {
     const ok = await confirm({ title: 'Xóa môn học', message: `Xóa môn "${s.name}"? Các bài tập trong ngân hàng của môn này cũng sẽ bị xóa.`, confirmText: 'Xóa' });
     if (!ok) return;
     try {
       await deleteSubject(s.id);
       setSubjects(prev => prev.filter(x => x.id !== s.id));
-      if (selectedSubjectId === s.id) setSelectedSubjectId('');
+      if (subjectId === s.id) setSubjectId('');
+      reloadItems();
       addNotification('Đã xóa môn học', 'success');
-    } catch {
-      addNotification('Lỗi xóa môn học', 'error');
-    }
+    } catch { addNotification('Lỗi xóa môn học', 'error'); }
   };
 
-  // Bài tập trong ngân hàng
+  // ---------------- Bài tập ----------------
   const handleSaveItem = async () => {
     if (!editing) return;
     if (!editing.title?.trim()) { addNotification('Vui lòng nhập tên bài tập', 'error'); return; }
     setSaving(true);
     try {
-      await saveAssignmentBankItem({
+      const saved = await saveAssignmentBankItem({
         id: editing.id,
-        subjectId: selectedSubjectId,
+        subjectId: editing.subjectId || '',
         title: editing.title,
         content: editor?.getHTML() || '',
         allowedFileTypes: editing.allowedFileTypes && editing.allowedFileTypes.length ? editing.allowedFileTypes : ['pdf'],
@@ -178,12 +201,11 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
       });
       addNotification('Đã lưu bài tập vào ngân hàng', 'success');
       setEditing(null);
-      reloadItems();
-    } catch {
-      addNotification('Lỗi lưu bài tập', 'error');
-    } finally {
-      setSaving(false);
-    }
+      await reloadItems();
+      if (viewId && saved?.id === viewId) setViewId(saved.id);
+    } catch (e: any) {
+      addNotification('Lỗi lưu bài tập: ' + (e?.message || 'không rõ nguyên nhân'), 'error');
+    } finally { setSaving(false); }
   };
 
   const handleDeleteItem = async (item: EduAssignmentBankItem) => {
@@ -192,43 +214,66 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
     try {
       await deleteAssignmentBankItem(item.id);
       setItems(prev => prev.filter(x => x.id !== item.id));
-      if (viewingItem?.id === item.id) setViewingItem(null);
+      if (viewId === item.id) setViewId('');
+      if (expandedId === item.id) setExpandedId('');
       addNotification('Đã xóa bài tập', 'success');
-    } catch {
-      addNotification('Lỗi xóa bài tập', 'error');
-    }
+    } catch { addNotification('Lỗi xóa bài tập', 'error'); }
   };
 
-  // Bật tắt chia sẻ công khai ngay tại chi tiết, chỉ người tạo hoặc admin dùng được.
   const handleTogglePublic = async (item: EduAssignmentBankItem) => {
     const next = !item.isPublic;
     try {
-      await saveAssignmentBankItem({
-        id: item.id,
-        subjectId: item.subjectId,
-        title: item.title,
-        content: item.content,
-        allowedFileTypes: item.allowedFileTypes,
-        ownerId: item.ownerId,
-        isPublic: next,
-      });
-      const updated = { ...item, isPublic: next };
-      setItems(prev => prev.map(x => (x.id === item.id ? updated : x)));
-      if (viewingItem?.id === item.id) setViewingItem(updated);
+      await bulkUpdateAssignmentBank([item.id], { isPublic: next });
+      setItems(prev => prev.map(x => (x.id === item.id ? { ...x, isPublic: next } : x)));
       addNotification(next ? 'Đã bật chia sẻ công khai' : 'Đã tắt chia sẻ công khai', 'success');
-    } catch {
-      addNotification('Lỗi cập nhật chia sẻ', 'error');
+    } catch { addNotification('Lỗi cập nhật chia sẻ', 'error'); }
+  };
+
+  // ---------------- Thao tác hàng loạt ----------------
+  const picked = items.filter(i => selected.has(i.id));
+  const pickedOwn = picked.filter(canEdit);
+  const skipNote = (n: number) => (n ? ` Bỏ qua ${n} bài của người khác.` : '');
+  const allChecked = pageItems.length > 0 && pageItems.every(i => selected.has(i.id));
+  const someChecked = !allChecked && pageItems.some(i => selected.has(i.id));
+  const toggleOne = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleAll = () => setSelected(prev => { const n = new Set(prev); pageItems.forEach(i => allChecked ? n.delete(i.id) : n.add(i.id)); return n; });
+
+  const runBulk = async (fn: () => Promise<void>, done: string) => {
+    setBulkBusy(true);
+    try { await fn(); addNotification(done, 'success'); setSelected(new Set()); await reloadItems(); }
+    catch (e: any) { addNotification('Lỗi: ' + (e?.message || e), 'error'); }
+    finally { setBulkBusy(false); }
+  };
+  const needOwn = () => { if (!pickedOwn.length) { addNotification('Các bài đã chọn đều là bài của người khác, bạn không sửa được.', 'warning'); return false; } return true; };
+
+  const bulkDelete = async () => {
+    if (!needOwn()) return;
+    const skip = picked.length - pickedOwn.length;
+    const ok = await confirm({ title: 'Xóa nhiều bài tập', message: `Xóa ${pickedOwn.length} bài tập khỏi ngân hàng? Không thể hoàn tác.${skipNote(skip)}`, confirmText: 'Xóa', danger: true } as any);
+    if (!ok) return;
+    runBulk(() => bulkDeleteAssignmentBank(pickedOwn.map(i => i.id)), `Đã xóa ${pickedOwn.length} bài tập.${skipNote(skip)}`);
+  };
+  const bulkChangeSubject = async (sid: string) => {
+    setBulkSubject('');
+    if (!sid || !needOwn()) return;
+    const skip = picked.length - pickedOwn.length;
+    const name = sid === '__none' ? 'Chưa chọn môn' : subjName(sid);
+    const ok = await confirm({ title: 'Đổi môn học', message: `Chuyển ${pickedOwn.length} bài tập sang môn ${name}?${skipNote(skip)}`, confirmText: 'Đổi môn', cancelText: 'Hủy' });
+    if (!ok) return;
+    runBulk(() => bulkUpdateAssignmentBank(pickedOwn.map(i => i.id), { subjectId: sid === '__none' ? null : sid }), `Đã đổi môn cho ${pickedOwn.length} bài tập.${skipNote(skip)}`);
+  };
+  const bulkPublic = async (on: boolean) => {
+    if (!needOwn()) return;
+    const skip = picked.length - pickedOwn.length;
+    if (on) {
+      const ok = await confirm({ title: 'Chia sẻ công khai', message: `Công khai ${pickedOwn.length} bài tập cho mọi người dùng thấy và dùng lại?${skipNote(skip)}`, confirmText: 'Công khai', cancelText: 'Hủy' });
+      if (!ok) return;
     }
+    runBulk(() => bulkUpdateAssignmentBank(pickedOwn.map(i => i.id), { isPublic: on }), `${on ? 'Đã công khai' : 'Đã tắt công khai'} ${pickedOwn.length} bài tập.${skipNote(skip)}`);
   };
 
-  const toggleFormat = (id: string) => {
-    setEditing(prev => {
-      if (!prev) return prev;
-      const cur = prev.allowedFileTypes || [];
-      return { ...prev, allowedFileTypes: toggleEduFileType(cur, id) };
-    });
-  };
-
+  // ---------------- Soạn thảo ----------------
+  const toggleFormat = (id: string) => setEditing(prev => prev ? { ...prev, allowedFileTypes: toggleEduFileType(prev.allowedFileTypes || [], id) } : prev);
   const handleInsertImageFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -244,14 +289,11 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
       });
       const url = await uploadImageToCloudinary(dataUrl);
       editor.chain().focus().setImage({ src: url }).run();
-    } catch {
-      addNotification('Lỗi tải ảnh lên. Vui lòng thử lại.', 'error');
-    } finally {
-      setUploadingImage(false);
-    }
+    } catch { addNotification('Lỗi tải ảnh lên. Vui lòng thử lại.', 'error'); }
+    finally { setUploadingImage(false); }
   };
 
-  if (loading) return <div className="bg-white rounded-3xl border border-slate-100 p-10 text-center text-slate-400">Đang tải...</div>;
+  if (loading) return <div className="bg-white rounded-3xl border border-slate-100 p-10 text-center text-slate-400"><Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" /> Đang tải...</div>;
 
   if (tablesMissing) {
     return (
@@ -265,86 +307,23 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
 
   const tbBtn = (active: boolean) => `p-2 rounded-lg transition-all ${active ? 'bg-brand text-white' : 'hover:bg-slate-200 text-slate-500'}`;
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Subjects column */}
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5 space-y-4">
-        <div className="flex items-center gap-2 text-slate-900 font-bold text-sm uppercase tracking-wide">
-          <FolderOpen className="w-4 h-4 text-brand" /> Môn học
-        </div>
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            value={newSubjectName}
-            onChange={e => setNewSubjectName(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleAddSubject()}
-            placeholder="Tên môn mới"
-            className="flex-1 bg-slate-50 border border-slate-200 focus:border-brand focus:outline-none rounded-xl px-3 py-2 text-xs"
-          />
-          <button onClick={handleAddSubject} className="bg-brand hover:bg-brand-hover text-white p-2 rounded-xl shrink-0"><Plus className="w-4 h-4" /></button>
-        </div>
-        <div className="space-y-1.5">
-          {/* Mục Tất cả: mặc định hiện toàn bộ bài không phân theo môn. */}
-          <div
-            onClick={() => setSelectedSubjectId('')}
-            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all cursor-pointer ${selectedSubjectId === '' ? 'bg-brand-light text-brand' : 'hover:bg-slate-50 text-slate-600'}`}
-          >
-            <BookMarked className="w-4 h-4 shrink-0" />
-            <span className="text-[13px] font-bold truncate flex-1">Tất cả bài tập</span>
+  // ===================== Màn soạn bài =====================
+  if (editing) {
+    return (
+      <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6 space-y-4 animate-fadeIn">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-slate-900 font-bold text-sm uppercase tracking-wide">
+            <Edit3 className="w-4 h-4 text-brand" /> {editing.id ? 'Sửa bài tập mẫu' : 'Thêm bài tập mẫu'}
           </div>
-          {subjects.length === 0 && <p className="text-xs text-slate-400 italic text-center py-4">Chưa có môn nào. Thêm môn để phân loại bài tập.</p>}
-          {subjects.map(s => (
-            <div
-              key={s.id}
-              onClick={() => editingSubjectId !== s.id && setSelectedSubjectId(s.id)}
-              className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl transition-all group ${editingSubjectId === s.id ? '' : 'cursor-pointer'} ${selectedSubjectId === s.id ? 'bg-brand-light text-brand' : 'hover:bg-slate-50 text-slate-600'}`}
-            >
-              {editingSubjectId === s.id ? (
-                <input
-                  type="text"
-                  autoFocus
-                  value={editSubjectName}
-                  onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => setEditSubjectName(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleRenameSubject(s); if (e.key === 'Escape') setEditingSubjectId(''); }}
-                  onBlur={() => handleRenameSubject(s)}
-                  className="flex-1 bg-white border border-brand focus:outline-none rounded-lg px-2 py-1 text-[13px] font-bold text-slate-700"
-                />
-              ) : (
-                <span className="text-[13px] font-bold truncate flex-1">{s.name}</span>
-              )}
-              <div className="flex items-center gap-0.5 shrink-0">
-                <button onClick={(e) => startRenameSubject(s, e)} className="p-1 text-slate-300 hover:text-brand opacity-0 group-hover:opacity-100 transition-all" title="Sửa tên môn"><Edit3 className="w-4 h-4" /></button>
-                <button onClick={(e) => { e.stopPropagation(); handleDeleteSubject(s); }} className="p-1 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all" title="Xóa môn"><Trash2 className="w-4 h-4" /></button>
-              </div>
-            </div>
-          ))}
+          <button onClick={() => setEditing(null)} className="p-2 text-slate-400 hover:text-slate-700 transition-all" title="Đóng"><X className="w-5 h-5" /></button>
         </div>
-      </div>
 
-      {/* Bank items column */}
-      <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm p-5 space-y-4">
-        {editing ? (
-          /* ===== Inline editor (không popup) ===== */
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-slate-900 font-bold text-sm uppercase tracking-wide">
-                <Edit3 className="w-4 h-4 text-brand" /> {editing.id ? 'Sửa bài tập mẫu' : 'Thêm bài tập mẫu'}
-              </div>
-              <button onClick={() => setEditing(null)} className="p-2 text-slate-400 hover:text-slate-700 transition-all" title="Đóng"><X className="w-5 h-5" /></button>
-            </div>
-
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]">
+          <div className="space-y-4 min-w-0">
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-slate-400 uppercase">Tên bài tập</label>
-              <input
-                type="text"
-                value={editing.title || ''}
-                onChange={e => setEditing({ ...editing, title: e.target.value })}
-                placeholder="Ví dụ: Vẽ art work cơ bản"
-                className="w-full bg-slate-50 border border-slate-200 focus:border-brand focus:outline-none rounded-xl px-4 py-2.5 text-sm font-bold"
-              />
+              <input type="text" value={editing.title || ''} onChange={e => setEditing({ ...editing, title: e.target.value })} placeholder="Ví dụ: Vẽ art work cơ bản" className="w-full bg-slate-50 border border-slate-200 focus:border-brand focus:outline-none rounded-xl px-4 py-2.5 text-sm font-bold" />
             </div>
-
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-slate-400 uppercase">Yêu cầu và hướng dẫn</label>
               <div className="border border-slate-200 rounded-xl overflow-hidden">
@@ -371,39 +350,36 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
                   <button onClick={() => editor?.chain().focus().undo().run()} className="p-2 rounded-lg hover:bg-slate-200 text-slate-500"><Undo className="w-4 h-4" /></button>
                   <button onClick={() => editor?.chain().focus().redo().run()} className="p-2 rounded-lg hover:bg-slate-200 text-slate-500"><Redo className="w-4 h-4" /></button>
                 </div>
-                <EditorContent editor={editor} className="prose prose-slate max-w-none text-sm p-4 min-h-[220px] max-h-[420px] overflow-y-auto focus:outline-none" />
+                <EditorContent editor={editor} className="prose prose-slate max-w-none text-sm p-4 min-h-[320px] max-h-[560px] overflow-y-auto focus:outline-none" />
               </div>
             </div>
+          </div>
 
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-400 uppercase">Môn học</label>
+              <select value={editing.subjectId || ''} onChange={e => setEditing({ ...editing, subjectId: e.target.value || undefined })} className="w-full bg-slate-50 border border-slate-200 focus:border-brand focus:outline-none rounded-xl px-3 py-2.5 text-xs font-bold">
+                <option value="">Chưa chọn môn</option>
+                {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-slate-400 uppercase">Định dạng nộp bài</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {FORMAT_OPTIONS.map(f => {
                   const active = (editing.allowedFileTypes || []).includes(f.id);
-                  return (
-                    <button key={f.id} onClick={() => toggleFormat(f.id)} className={`px-3 py-2 rounded-xl text-[11px] font-bold border transition-all ${active ? 'bg-brand-light text-brand border-brand' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-brand'}`}>
-                      {f.label}
-                    </button>
-                  );
+                  return <button key={f.id} onClick={() => toggleFormat(f.id)} className={`px-3 py-2 rounded-xl text-[11px] font-bold border transition-all ${active ? 'bg-brand-light text-brand border-brand' : 'bg-slate-50 text-slate-500 border-slate-200 hover:border-brand'}`}>{f.label}</button>;
                 })}
               </div>
             </div>
-
             <EduResourceEditor value={editing.resources || []} onChange={v => setEditing(prev => prev ? { ...prev, resources: v } : prev)} />
-
             <label className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={editing.isPublic === true}
-                onChange={e => setEditing({ ...editing, isPublic: e.target.checked })}
-                className="mt-0.5 w-4 h-4 accent-brand"
-              />
+              <input type="checkbox" checked={editing.isPublic === true} onChange={e => setEditing({ ...editing, isPublic: e.target.checked })} className="mt-0.5 w-4 h-4 accent-brand" />
               <span className="min-w-0">
                 <span className="block text-[12px] font-bold text-slate-700">Chia sẻ công khai cho mọi người</span>
                 <span className="block text-[11px] text-slate-400 leading-snug">Bật thì tất cả người dùng đều thấy và dùng lại được bài này.</span>
               </span>
             </label>
-
             <div className="flex justify-end gap-3 pt-2">
               <button onClick={() => setEditing(null)} className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-all">Hủy</button>
               <button onClick={handleSaveItem} disabled={saving} className="flex items-center gap-2 bg-brand hover:bg-brand-hover disabled:opacity-50 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide">
@@ -411,94 +387,263 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
               </button>
             </div>
           </div>
-        ) : (
-          /* ===== Danh sách + chi tiết ===== */
-          <>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-slate-900 font-bold text-sm uppercase tracking-wide">
-                <BookMarked className="w-4 h-4 text-brand" /> Ngân hàng bài tập
-              </div>
-              <button onClick={() => openEditor(emptyItem())} className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wide">
-                <Plus className="w-4 h-4" /> Thêm bài tập
-              </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ===================== Trang xem bài (từ dạng lưới) =====================
+  const viewing = viewId ? items.find(i => i.id === viewId) : null;
+  if (viewId && viewing) {
+    const it = viewing;
+    return (
+      <div className="space-y-5 animate-fadeIn">
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+          <button onClick={() => setViewId('')} title="Quay lại ngân hàng bài tập" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 transition-colors hover:bg-brand-light hover:text-brand"><ArrowLeft className="h-5 w-5" /></button>
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand"><FileText className="h-6 w-6" /></span>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg font-black tracking-tight text-slate-900 sm:text-xl">{it.title}</h1>
+            <p className="text-sm font-medium text-slate-500">{[subjName(it.subjectId) || 'Chưa chọn môn', ownerName(it.ownerId)].filter(Boolean).join(' · ')}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={() => downloadPdf(it)} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand"><FileDown className="h-3.5 w-3.5" /> Tải PDF</button>
+            {canEdit(it) && <button onClick={() => openEditor({ ...it })} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-3 py-2 text-[11px] font-bold text-white hover:bg-brand-hover"><Edit3 className="h-3.5 w-3.5" /> Sửa</button>}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_280px]">
+          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
+            <h2 className="mb-3 text-[11px] font-black uppercase tracking-wider text-slate-400">Yêu cầu và hướng dẫn</h2>
+            {it.content && plain(it.content) || firstImage(it.content)
+              ? <div className="prose prose-slate max-w-none break-words text-[15px] leading-relaxed text-slate-700 [overflow-wrap:anywhere] [&_a]:break-all" dangerouslySetInnerHTML={{ __html: it.content || '' }} />
+              : <p className="text-sm italic text-slate-400">Bài tập này chưa có phần yêu cầu và hướng dẫn.</p>}
+            <EduResourceList resources={it.resources} className="mt-6 border-t border-slate-100 pt-5" />
+          </div>
+          <div className="h-fit space-y-4 lg:sticky lg:top-6">
+            <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm space-y-3 text-[13px]">
+              <p className="text-[10px] font-black uppercase text-slate-400">Thông tin</p>
+              <Info k="Môn học" v={subjName(it.subjectId) || 'Chưa chọn môn'} />
+              <Info k="Định dạng nộp" v={formatsText(it.allowedFileTypes) || 'Chưa chọn'} />
+              <Info k="Tài nguyên" v={`${(it.resources || []).length} mục`} />
+              {ownerName(it.ownerId) && <Info k="Người tạo" v={ownerName(it.ownerId)} />}
+              <Info k="Cập nhật" v={fmtDate(it.updatedAt || it.createdAt)} />
+              <Info k="Chia sẻ" v={it.isPublic ? 'Công khai' : 'Không công khai'} />
             </div>
-
-            {items.length === 0 ? (
-              <p className="text-xs text-slate-400 italic text-center py-10">{selectedSubjectId ? 'Môn này chưa có bài tập mẫu nào. Bấm Thêm bài tập để tạo.' : 'Chưa có bài tập nào. Bấm Thêm bài tập để tạo.'}</p>
-            ) : (
-              <div className="space-y-2.5">
-                {items.map(item => (
-                  <React.Fragment key={item.id}>
-                  <button
-                    onClick={() => setViewingItem(viewingItem?.id === item.id ? null : item)}
-                    className={`w-full flex items-center gap-3 p-4 border rounded-2xl transition-all text-left ${viewingItem?.id === item.id ? 'border-brand bg-brand-light/50' : 'border-slate-200 hover:border-brand hover:bg-brand-light/40'}`}
-                  >
-                    <div className="w-10 h-10 bg-brand-light text-brand rounded-xl flex items-center justify-center shrink-0"><FileText className="w-5 h-5" /></div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[14px] font-bold text-slate-800 truncate">{item.title}</p>
-                      <p className="text-[11px] text-slate-400">{(item.allowedFileTypes || []).map(t => FORMAT_OPTIONS.find(f => f.id === t)?.label || t).join(', ')}</p>
-                    </div>
-                  </button>
-
-                  {viewingItem?.id === item.id && (
-              <div className="border border-brand/30 rounded-2xl overflow-hidden mt-2.5">
-                <div className="px-5 py-4 bg-brand-light/40 border-b border-brand/20 flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-[15px] font-black text-slate-900 tracking-tight truncate">{viewingItem.title}</h3>
-                      {viewingItem.isPublic && (
-                        <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">Công khai</span>
-                      )}
-                      {!canEdit(viewingItem) && (
-                        <span className="text-[9px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">Bài dùng chung</span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-slate-400 font-medium">{(viewingItem.allowedFileTypes || []).map(t => FORMAT_OPTIONS.find(f => f.id === t)?.label || t).join(', ')}</p>
-                    {ownerName(viewingItem.ownerId) && (
-                      <p className="text-[11px] text-slate-500 font-medium mt-0.5">Tạo bởi {ownerName(viewingItem.ownerId)}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {canEdit(viewingItem) && (
-                      <>
-                        <button
-                          onClick={() => handleTogglePublic(viewingItem)}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold transition-all border-2 ${viewingItem.isPublic ? 'border-emerald-400 bg-emerald-50 text-emerald-600' : 'border-slate-200 bg-slate-50 text-slate-500 hover:border-emerald-300'}`}
-                          title="Bật hoặc tắt chia sẻ công khai bài này"
-                        >
-                          <span className={`w-8 h-4 rounded-full relative transition-colors ${viewingItem.isPublic ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                            <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${viewingItem.isPublic ? 'left-4' : 'left-0.5'}`} />
-                          </span>
-                          {viewingItem.isPublic ? 'Đang công khai' : 'Chia sẻ công khai'}
-                        </button>
-                        <button onClick={() => openEditor({ ...viewingItem })} className="flex items-center gap-2 border-2 border-brand text-brand hover:bg-brand-light px-4 py-2 rounded-xl text-[11px] font-bold transition-all">
-                          <Edit3 className="w-4 h-4" /> Sửa
-                        </button>
-                        <button onClick={() => { const it = viewingItem; handleDeleteItem(it); }} className="flex items-center gap-2 border-2 border-rose-300 text-rose-500 hover:bg-rose-50 px-4 py-2 rounded-xl text-[11px] font-bold transition-all">
-                          <Trash2 className="w-4 h-4" /> Xóa
-                        </button>
-                      </>
-                    )}
-                    <button onClick={() => setViewingItem(null)} className="p-2 text-slate-400 hover:text-slate-700 transition-all" title="Đóng"><X className="w-5 h-5" /></button>
-                  </div>
-                </div>
-                <div className="p-5">
-                  {viewingItem.content && viewingItem.content.trim() ? (
-                    <div className="prose prose-slate max-w-none text-[14px] text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: viewingItem.content }} />
-                  ) : (
-                    <p className="text-sm text-slate-400 italic">Bài tập này chưa có phần yêu cầu và hướng dẫn.</p>
-                  )}
-                  <EduResourceList resources={viewingItem.resources} className="mt-5 border-t border-slate-100 pt-4" />
-                </div>
-              </div>
-                  )}
-                  </React.Fragment>
-                ))}
+            {canEdit(it) && (
+              <div className="rounded-3xl border border-slate-100 bg-white p-3 shadow-sm space-y-1.5">
+                <button onClick={() => handleTogglePublic(it)} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold text-slate-600 hover:bg-slate-50">{it.isPublic ? <Lock className="h-4 w-4" /> : <Globe className="h-4 w-4" />} {it.isPublic ? 'Tắt công khai' : 'Chia sẻ công khai'}</button>
+                <button onClick={() => handleDeleteItem(it)} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold text-rose-500 hover:bg-rose-50"><Trash2 className="h-4 w-4" /> Xóa bài tập</button>
               </div>
             )}
-          </>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ===================== Danh sách =====================
+  const StatusTag = ({ it }: { it: EduAssignmentBankItem }) => it.isPublic
+    ? <span className="shrink-0 rounded-md bg-brand-light px-2 py-0.5 text-[9px] font-bold text-brand">Công khai</span>
+    : !canEdit(it) ? <span className="shrink-0 rounded-md bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-500">Dùng chung</span> : null;
+
+  const Actions = ({ it }: { it: EduAssignmentBankItem }) => (
+    <>
+      {canEdit(it) && <IconBtn title="Sửa" onClick={() => openEditor({ ...it })}><Edit3 className="w-3.5 h-3.5" /></IconBtn>}
+      <IconBtn title="Xem" onClick={() => setViewId(it.id)}><Eye className="w-3.5 h-3.5" /></IconBtn>
+      <IconBtn title="Tải PDF" onClick={() => downloadPdf(it)}><FileDown className="w-3.5 h-3.5" /></IconBtn>
+      {canEdit(it) && <IconBtn title={it.isPublic ? 'Tắt công khai' : 'Chia sẻ công khai'} onClick={() => handleTogglePublic(it)}>{it.isPublic ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}</IconBtn>}
+      {canEdit(it) && <IconBtn title="Xóa" danger onClick={() => handleDeleteItem(it)}><Trash2 className="w-3.5 h-3.5" /></IconBtn>}
+    </>
+  );
+
+  const total = scoped.length;
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[240px_1fr]">
+      {/* Cột môn học */}
+      <div className="h-fit rounded-3xl border border-slate-100 bg-white p-3 shadow-sm">
+        <div className="mb-2 flex items-center justify-between px-2">
+          <span className="text-[10px] font-black uppercase text-slate-400">Môn học</span>
+          <button onClick={() => setAddingSubject(v => !v)} title="Thêm môn" className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-brand"><Plus className="h-3.5 w-3.5" /></button>
+        </div>
+        {addingSubject && (
+          <div className="mb-2 flex items-center gap-1.5 px-1">
+            <input autoFocus value={newSubjectName} onChange={e => setNewSubjectName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleAddSubject(); if (e.key === 'Escape') setAddingSubject(false); }} placeholder="Tên môn mới" className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs outline-none focus:border-brand" />
+            <button onClick={handleAddSubject} className="rounded-lg bg-brand p-1.5 text-white"><Check className="h-3.5 w-3.5" /></button>
+          </div>
         )}
+        <SubjectBtn active={!subjectId} label="Tất cả" count={total} onClick={() => setSubjectId('')} />
+        {subjects.map(s => editingSubjectId === s.id ? (
+          <input key={s.id} autoFocus value={editSubjectName} onChange={e => setEditSubjectName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleRenameSubject(s); if (e.key === 'Escape') setEditingSubjectId(''); }}
+            onBlur={() => handleRenameSubject(s)} className="mb-1 w-full rounded-xl border border-brand bg-white px-3 py-2 text-xs font-bold text-slate-700 outline-none" />
+        ) : (
+          <SubjectBtn key={s.id} active={subjectId === s.id} label={s.name} count={counts[s.id] || 0} onClick={() => setSubjectId(s.id)}
+            onRename={() => { setEditingSubjectId(s.id); setEditSubjectName(s.name); }} onDelete={() => handleDeleteSubject(s)} />
+        ))}
+        {(counts.__none || 0) > 0 && <SubjectBtn active={subjectId === '__none'} label="Chưa chọn môn" count={counts.__none} onClick={() => setSubjectId('__none')} />}
+      </div>
+
+      <div className="min-w-0 space-y-4">
+        {/* Thanh công cụ */}
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+          <div className="relative min-w-[200px] flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm theo tên bài, môn học, người tạo, nội dung..." className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-xs outline-none focus:border-brand" />
+            {search && <button onClick={() => setSearch('')} title="Xoá tìm kiếm" className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600"><X className="h-3.5 w-3.5" /></button>}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <select value={scope} onChange={e => setScope(e.target.value as any)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-brand">
+              <option value="all">Mọi bài tập</option>
+              <option value="mine">Bài của tôi</option>
+              <option value="shared">Bài dùng chung</option>
+            </select>
+            <select value={sort} onChange={e => setSort(e.target.value as any)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-brand">
+              <option value="new">Mới nhất</option>
+              <option value="name">Tên A đến Z</option>
+            </select>
+            <div className="inline-flex rounded-xl bg-slate-100 p-1">
+              <button onClick={() => setMode('grid')} title="Dạng lưới" className={`rounded-lg p-1.5 ${mode === 'grid' ? 'bg-white text-brand shadow-sm' : 'text-slate-400'}`}><LayoutGrid className="w-4 h-4" /></button>
+              <button onClick={() => setMode('table')} title="Dạng danh sách" className={`rounded-lg p-1.5 ${mode === 'table' ? 'bg-white text-brand shadow-sm' : 'text-slate-400'}`}><ListIcon className="w-4 h-4" /></button>
+            </div>
+            <button onClick={() => openEditor(emptyItem(subjectId && subjectId !== '__none' ? subjectId : undefined))} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover">
+              <Plus className="w-4 h-4" /> Thêm bài tập
+            </button>
+          </div>
+        </div>
+
+        {shown.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center">
+            <BookMarked className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+            <p className="text-sm font-bold text-slate-500">{search ? 'Không tìm thấy bài tập phù hợp' : 'Chưa có bài tập nào trong mục này'}</p>
+            {!search && <p className="mt-1 text-xs text-slate-400">Bấm Thêm bài tập để tạo.</p>}
+          </div>
+        ) : mode === 'grid' ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {pageItems.map(it => {
+              const img = firstImage(it.content);
+              return (
+                <div key={it.id} onClick={() => setViewId(it.id)} title="Bấm để xem bài tập" className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-all hover:border-brand/30 hover:shadow-md">
+                  <div className="h-28 bg-slate-100 bg-cover bg-center" style={img ? { backgroundImage: `url(${img})` } : undefined}>
+                    {!img && <div className="flex h-full items-center justify-center bg-gradient-to-br from-brand-light to-slate-50 text-brand/40"><FileText className="h-9 w-9" /></div>}
+                  </div>
+                  <div className="flex flex-1 flex-col p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-[13px] font-black leading-tight text-slate-800 line-clamp-2 group-hover:text-brand">{it.title}</h3>
+                      <StatusTag it={it} />
+                    </div>
+                    <p className="mt-1 text-[11px] text-slate-400">{[subjName(it.subjectId) || 'Chưa chọn môn', ownerName(it.ownerId)].filter(Boolean).join(' · ')}</p>
+                    <p className="mt-1 text-[10px] text-slate-400">{formatsText(it.allowedFileTypes)}{(it.resources || []).length ? ` · ${(it.resources || []).length} tài nguyên` : ''}</p>
+                    <div onClick={e => e.stopPropagation()} className="mt-auto flex cursor-default flex-wrap gap-1 border-t border-slate-50 pt-3"><Actions it={it} /></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {selected.size > 0 && (
+              <div className="sticky top-2 z-10 flex flex-wrap items-center gap-2 rounded-2xl border border-brand/20 bg-brand-light/60 px-4 py-2.5 shadow-sm backdrop-blur">
+                <span className="text-xs font-bold text-brand">Đã chọn {selected.size} bài</span>
+                <button onClick={() => setSelected(new Set())} className="text-[11px] font-semibold text-slate-500 underline hover:text-slate-700">Bỏ chọn</button>
+                <div className="ml-auto flex flex-wrap items-center gap-2">
+                  {bulkBusy && <Loader2 className="h-4 w-4 animate-spin text-brand" />}
+                  <label className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white pl-2.5 text-[11px] font-bold text-slate-600">
+                    <FolderInput className="h-3.5 w-3.5" />
+                    <select value={bulkSubject} disabled={bulkBusy} onChange={e => { setBulkSubject(e.target.value); bulkChangeSubject(e.target.value); }} className="rounded-xl bg-transparent py-1.5 pr-2 text-[11px] font-bold outline-none">
+                      <option value="">Đổi môn...</option>
+                      {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      <option value="__none">Bỏ môn (chưa chọn môn)</option>
+                    </select>
+                  </label>
+                  <BulkBtn disabled={bulkBusy} onClick={() => bulkPublic(true)} icon={<Globe className="h-3.5 w-3.5" />}>Công khai</BulkBtn>
+                  <BulkBtn disabled={bulkBusy} onClick={() => bulkPublic(false)} icon={<Lock className="h-3.5 w-3.5" />}>Tắt công khai</BulkBtn>
+                  <BulkBtn disabled={bulkBusy} danger onClick={bulkDelete} icon={<Trash2 className="h-3.5 w-3.5" />}>Xóa</BulkBtn>
+                </div>
+              </div>
+            )}
+            <div className="overflow-x-auto rounded-3xl border border-slate-100 bg-white shadow-sm">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-slate-100 bg-slate-50/40 text-[10px] uppercase text-slate-400">
+                  <tr>
+                    <th className="w-10 py-3 pl-4 pr-1"><CheckBox checked={allChecked} indeterminate={someChecked} onChange={toggleAll} title="Chọn tất cả" /></th>
+                    <th className="px-4 py-3">Tên bài tập</th><th className="px-4 py-3">Môn học</th>
+                    <th className="px-4 py-3">Định dạng nộp</th><th className="px-4 py-3 text-center">Tài nguyên</th>
+                    <th className="px-4 py-3 text-center">Chia sẻ</th><th className="px-4 py-3">Người tạo</th>
+                    <th className="px-4 py-3">Cập nhật</th><th className="px-4 py-3 text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {pageItems.map(it => {
+                    const open = expandedId === it.id;
+                    return (
+                      <React.Fragment key={it.id}>
+                        <tr className={selected.has(it.id) || open ? 'bg-brand-light/30' : 'hover:bg-slate-50/40'}>
+                          <td className="py-3 pl-4 pr-1"><CheckBox checked={selected.has(it.id)} onChange={() => toggleOne(it.id)} title="Chọn bài này" /></td>
+                          <td className="px-4 py-3">
+                            <button onClick={() => setExpandedId(open ? '' : it.id)} title="Bấm để xem nhanh" className="inline-flex items-center gap-1.5 text-left font-bold text-slate-800 hover:text-brand">
+                              {open ? <ChevronUp className="h-3.5 w-3.5 shrink-0 text-brand" /> : <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-400" />}
+                              <span>{it.title}</span>
+                            </button>
+                          </td>
+                          <td className="px-4 py-3 text-slate-500">{subjName(it.subjectId) || 'Chưa chọn môn'}</td>
+                          <td className="px-4 py-3 text-slate-500">{formatsText(it.allowedFileTypes)}</td>
+                          <td className="px-4 py-3 text-center">{(it.resources || []).length || ''}</td>
+                          <td className="px-4 py-3 text-center"><StatusTag it={it} /></td>
+                          <td className="px-4 py-3 text-slate-500">{ownerName(it.ownerId)}</td>
+                          <td className="px-4 py-3 text-slate-500">{fmtDate(it.updatedAt || it.createdAt)}</td>
+                          <td className="px-4 py-3"><div className="flex items-center justify-end gap-1"><Actions it={it} /></div></td>
+                        </tr>
+                        {open && (
+                          <tr className="bg-white">
+                            <td colSpan={9} className="px-4 pb-5 pt-1">
+                              <div className="rounded-2xl border border-brand/20 bg-slate-50/50 p-5">
+                                {plain(it.content) || firstImage(it.content)
+                                  ? <div className="prose prose-slate max-w-none break-words text-[14px] leading-relaxed text-slate-700 [overflow-wrap:anywhere]" dangerouslySetInnerHTML={{ __html: it.content || '' }} />
+                                  : <p className="text-sm italic text-slate-400">Bài tập này chưa có phần yêu cầu và hướng dẫn.</p>}
+                                <EduResourceList resources={it.resources} className="mt-5 border-t border-slate-100 pt-4" />
+                                <div className="mt-4 flex flex-wrap justify-end gap-2">
+                                  <button onClick={() => downloadPdf(it)} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand"><FileDown className="h-3.5 w-3.5" /> Tải PDF</button>
+                                  {canEdit(it) && <button onClick={() => openEditor({ ...it })} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-3 py-2 text-[11px] font-bold text-white hover:bg-brand-hover"><Edit3 className="h-3.5 w-3.5" /> Sửa</button>}
+                                  <button onClick={() => setExpandedId('')} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><X className="h-3.5 w-3.5" /> Thu gọn</button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        {shown.length > 0 && <Pager pg={pg} total={shown.length} unit="bài tập" sizes={[12, 24, 48, 96]} />}
       </div>
     </div>
   );
+}
+
+function Info({ k, v }: { k: string; v: string }) {
+  return <div className="flex items-start justify-between gap-3"><span className="text-slate-500">{k}</span><span className="text-right font-semibold text-slate-800">{v}</span></div>;
+}
+function SubjectBtn({ active, label, count, onClick, onRename, onDelete }: { active: boolean; label: string; count: number; onClick: () => void; onRename?: () => void; onDelete?: () => void }) {
+  return (
+    <div onClick={onClick} className={`group mb-1 flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold ${active ? 'bg-brand-light text-brand' : 'text-slate-600 hover:bg-slate-50'}`}>
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+      {onRename && <button onClick={e => { e.stopPropagation(); onRename(); }} title="Sửa tên môn" className="hidden rounded p-0.5 text-slate-300 hover:text-brand group-hover:block"><Edit3 className="h-3.5 w-3.5" /></button>}
+      {onDelete && <button onClick={e => { e.stopPropagation(); onDelete(); }} title="Xóa môn" className="hidden rounded p-0.5 text-slate-300 hover:text-rose-500 group-hover:block"><Trash2 className="h-3.5 w-3.5" /></button>}
+      <span className="shrink-0 text-[10px] text-slate-400">{count}</span>
+    </div>
+  );
+}
+function IconBtn({ children, title, onClick, danger }: { children: React.ReactNode; title: string; onClick: () => void; danger?: boolean }) {
+  return <button title={title} onClick={onClick} className={`grid h-7 w-7 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 ${danger ? 'hover:text-rose-500 hover:bg-rose-50' : 'hover:text-brand'}`}>{children}</button>;
+}
+function CheckBox({ checked, indeterminate, onChange, title }: { checked: boolean; indeterminate?: boolean; onChange: () => void; title?: string }) {
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (ref.current) ref.current.indeterminate = !!indeterminate; }, [indeterminate]);
+  return <input ref={ref} type="checkbox" title={title} checked={checked} onChange={onChange} className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-brand align-middle" />;
+}
+function BulkBtn({ children, icon, onClick, disabled, danger }: { children: React.ReactNode; icon: React.ReactNode; onClick: () => void; disabled?: boolean; danger?: boolean }) {
+  return <button onClick={onClick} disabled={disabled} className={`inline-flex items-center gap-1.5 rounded-xl border bg-white px-2.5 py-1.5 text-[11px] font-bold transition-colors disabled:opacity-50 ${danger ? 'border-rose-200 text-rose-600 hover:bg-rose-50' : 'border-slate-200 text-slate-600 hover:border-brand/40 hover:text-brand'}`}>{icon}{children}</button>;
 }

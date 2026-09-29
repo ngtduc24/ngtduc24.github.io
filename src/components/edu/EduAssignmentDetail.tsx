@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { eduFileTypeLabel } from '../../lib/eduFileTypes';
 import { EduResourceList } from './EduResources';
+import { exportAssignmentToPdf, subjectNameById } from '../../lib/assignmentPdf';
+import { FileDown } from 'lucide-react';
 import { Button, IconButton, Card, CardTitle, PageHeader, Badge, Spinner, EmptyState } from '../ui';
 import { EduAssignment, EduSubmission, EduUser, EduGradeColumn } from '../../types/edu';
 import { getSubmissions, getClassUsers, getGradeColumns } from '../../lib/edu';
@@ -81,6 +83,10 @@ export default function EduAssignmentDetail({ classId, assignmentId, onBack }: E
         title={assignment.title}
         description="Chi tiết bài tập và thống kê nộp bài"
         actions={<>
+          <Button variant="outline" icon={<FileDown size={16} />} onClick={async () => exportAssignmentToPdf({
+            title: assignment.title, content: assignment.content, subjectName: await subjectNameById(assignment.subjectId),
+            deadline: assignment.deadline, allowedFileTypes: assignment.allowedFileTypes, resources: assignment.resources,
+          })}>Tải PDF</Button>
           <Button variant="outline" icon={<Copy size={16} />} onClick={copyShareLink}>Sao chép link</Button>
           <Button icon={<ExternalLink size={16} />} onClick={() => window.open(`/tracuu.html?edu=${assignment.shareLinkId}`, '_blank', 'noreferrer')}>Mở link nộp bài</Button>
         </>}
