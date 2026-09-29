@@ -8,7 +8,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import {
   BookMarked, Plus, Trash2, Edit3, X, Save, FileText, Search, LayoutGrid, List as ListIcon, Globe, Lock,
   Bold, Italic, List, ListOrdered, Heading1, Heading2, FileDown, Eye, ArrowLeft, Loader2, FolderInput, Check,
-  AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, Link as LinkIcon, Undo, Redo, Paperclip, ChevronDown, ChevronUp
+  AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, Link as LinkIcon, Undo, Redo, ChevronDown, ChevronUp, Link2
 } from 'lucide-react';
 import { toggleEduFileType, eduFileTypeLabel } from '../../lib/eduFileTypes';
 import { EduResourceEditor, EduResourceList } from './EduResources';
@@ -16,7 +16,7 @@ import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
 import { UserAccount } from '../../types';
 import {
   getSubjects, saveSubject, deleteSubject, getAssignmentBank, saveAssignmentBankItem, deleteAssignmentBankItem,
-  bulkUpdateAssignmentBank, bulkDeleteAssignmentBank,
+  bulkUpdateAssignmentBank, bulkDeleteAssignmentBank, ensureBankShareToken, bankShareUrl,
 } from '../../lib/edu';
 import { getUsers } from '../../lib/data';
 import { uploadImageToCloudinary } from '../../lib/upload';
@@ -149,6 +149,19 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
     title: it.title, content: it.content, subjectName: subjName(it.subjectId), author: ownerName(it.ownerId),
     allowedFileTypes: it.allowedFileTypes, resources: it.resources,
   });
+
+  // Link xem bài không cần MSSV. Sinh mã lần đầu rồi giữ nguyên.
+  const copyShareLink = async (it: EduAssignmentBankItem) => {
+    try {
+      const name = it.ownerId === currentUser.id ? currentUser.fullName : ownerName(it.ownerId);
+      const token = await ensureBankShareToken(it, name || undefined);
+      if (!it.shareToken) setItems(prev => prev.map(x => x.id === it.id ? { ...x, shareToken: token, ownerName: x.ownerName || name } : x));
+      const url = bankShareUrl(token);
+      try { await navigator.clipboard.writeText(url); } catch { window.prompt('Sao chép link xem bài tập:', url); }
+      addNotification(it.shareToken ? 'Đã sao chép link xem bài tập.' : 'Đã tạo và sao chép link xem bài tập. Khung xem trước trên Zalo, Facebook hiện sau vài phút.', 'success');
+    } catch (e: any) { addNotification('Không tạo được link: ' + (e?.message || e), 'error'); }
+  };
+  const canShare = (it: EduAssignmentBankItem) => canEdit(it) || !!it.shareToken || it.isPublic;
 
   // ---------------- Môn học ----------------
   const handleAddSubject = async () => {
@@ -406,6 +419,7 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
             <p className="text-sm font-medium text-slate-500">{[subjName(it.subjectId) || 'Chưa chọn môn', ownerName(it.ownerId)].filter(Boolean).join(' · ')}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {canShare(it) && <button onClick={() => copyShareLink(it)} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand"><Link2 className="h-3.5 w-3.5" /> Sao chép link</button>}
             <button onClick={() => downloadPdf(it)} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand"><FileDown className="h-3.5 w-3.5" /> Tải PDF</button>
             {canEdit(it) && <button onClick={() => openEditor({ ...it })} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-3 py-2 text-[11px] font-bold text-white hover:bg-brand-hover"><Edit3 className="h-3.5 w-3.5" /> Sửa</button>}
           </div>
@@ -450,6 +464,7 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
       {canEdit(it) && <IconBtn title="Sửa" onClick={() => openEditor({ ...it })}><Edit3 className="w-3.5 h-3.5" /></IconBtn>}
       <IconBtn title="Xem" onClick={() => setViewId(it.id)}><Eye className="w-3.5 h-3.5" /></IconBtn>
       <IconBtn title="Tải PDF" onClick={() => downloadPdf(it)}><FileDown className="w-3.5 h-3.5" /></IconBtn>
+      {canShare(it) && <IconBtn title="Sao chép link xem bài (không cần MSSV)" onClick={() => copyShareLink(it)}><Link2 className="w-3.5 h-3.5" /></IconBtn>}
       {canEdit(it) && <IconBtn title={it.isPublic ? 'Tắt công khai' : 'Chia sẻ công khai'} onClick={() => handleTogglePublic(it)}>{it.isPublic ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}</IconBtn>}
       {canEdit(it) && <IconBtn title="Xóa" danger onClick={() => handleDeleteItem(it)}><Trash2 className="w-3.5 h-3.5" /></IconBtn>}
     </>
@@ -601,6 +616,7 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
                                   : <p className="text-sm italic text-slate-400">Bài tập này chưa có phần yêu cầu và hướng dẫn.</p>}
                                 <EduResourceList resources={it.resources} className="mt-5 border-t border-slate-100 pt-4" />
                                 <div className="mt-4 flex flex-wrap justify-end gap-2">
+                                  {canShare(it) && <button onClick={() => copyShareLink(it)} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand"><Link2 className="h-3.5 w-3.5" /> Sao chép link</button>}
                                   <button onClick={() => downloadPdf(it)} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand"><FileDown className="h-3.5 w-3.5" /> Tải PDF</button>
                                   {canEdit(it) && <button onClick={() => openEditor({ ...it })} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-3 py-2 text-[11px] font-bold text-white hover:bg-brand-hover"><Edit3 className="h-3.5 w-3.5" /> Sửa</button>}
                                   <button onClick={() => setExpandedId('')} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><X className="h-3.5 w-3.5" /> Thu gọn</button>

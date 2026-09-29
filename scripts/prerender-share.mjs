@@ -19,6 +19,7 @@
 
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { loadBankShares } from './bank-share.mjs';
 
 const SITE_ORIGIN = 'https://ngtduc24.github.io';
 const DIST_DIR = path.resolve(process.cwd(), 'dist');
@@ -217,6 +218,35 @@ async function applyDefaultShareImage() {
   }
 }
 
+/** Trang chia sẻ bài tập trong ngân hàng: /bt/<mã>/ chuyển vào /?bt=<mã>, kèm tệp manifest để kiểm tra định kỳ. */
+async function writeBankSharePages() {
+  try {
+    const { items, hash } = await loadBankShares(SUPABASE_URL, SUPABASE_KEY);
+    let fallbackImage = '';
+    try { fallbackImage = toAbsoluteUrl((await loadSetting('banner'))?.backgroundImage); } catch { /* bỏ qua */ }
+    for (const it of items) {
+      const folder = path.join(DIST_DIR, 'bt', it.token);
+      await mkdir(folder, { recursive: true });
+      const meta = [it.subject && `Bài tập môn ${it.subject}`, it.author && `Giảng viên ${it.author}`].filter(Boolean).join(' · ');
+      const summary = toPlainSummary(it.content, 170);
+      await writeFile(path.join(folder, 'index.html'), buildSharePage({
+        title: toPlainSummary(it.title, 110),
+        description: [meta, summary].filter(Boolean).join('. ') || 'Xem đề bài tập.',
+        image: toAbsoluteUrl(it.image) || fallbackImage,
+        targetUrl: `${SITE_ORIGIN}/?bt=${it.token}`,
+        shareUrl: `${SITE_ORIGIN}/bt/${it.token}/`,
+      }), 'utf8');
+    }
+    await mkdir(path.join(DIST_DIR, 'bt'), { recursive: true });
+    await writeFile(path.join(DIST_DIR, 'bt', 'manifest.txt'), hash, 'utf8');
+    console.log(`Đã tạo ${items.length} trang chia sẻ cho bài tập.`);
+    return items.length;
+  } catch (error) {
+    console.warn('Bỏ qua trang chia sẻ bài tập:', error.message);
+    return 0;
+  }
+}
+
 async function run() {
   if (!SUPABASE_URL || !SUPABASE_KEY) {
     console.warn('Thiếu cấu hình Supabase nên bỏ qua bước tạo trang chia sẻ.');
@@ -268,6 +298,7 @@ async function run() {
     console.log(`Đã tạo ${written} trang chia sẻ cho ${type.name}.`);
   }
 
+  total += await writeBankSharePages();
   await applyDefaultShareImage();
   console.log(`Tổng cộng ${total} trang chia sẻ.`);
 }

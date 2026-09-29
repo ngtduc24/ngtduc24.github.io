@@ -31,6 +31,7 @@ import VR360Module from './components/vr/VR360Module';
 import QuizTake from './components/edu/QuizTake';
 import ELessonView from './components/edu/ELessonView';
 import ELessonPreviewPage from './components/edu/ELessonPreviewPage';
+import EduBankShareView from './components/edu/EduBankShareView';
 import ELearningModule from './components/edu/ELearningModule';
 import RemierModule from './components/remier/RemierModule';
 import ScientificCvModule from './components/scientificCv/ScientificCvModule';
@@ -849,6 +850,12 @@ export default function App() {
   const elessonToken = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('elesson') : null;
   if (elessonToken) {
     return <ELessonView token={elessonToken} />;
+  }
+
+  // Link xem bài tập trong ngân hàng: ai có link đều xem được, không cần MSSV.
+  const bankShareToken = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('bt') : null;
+  if (bankShareToken) {
+    return <EduBankShareView token={bankShareToken} />;
   }
 
   // Trang xem bài giảng ở chế độ riêng, có link riêng: dùng để xem/chia sẻ bài công khai.

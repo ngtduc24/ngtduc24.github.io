@@ -147,7 +147,9 @@ function mapBankItem(b: any): EduAssignmentBankItem {
     createdAt: b.created_at,
     updatedAt: b.updated_at,
     ownerId: b.owner_id,
-    isPublic: b.is_public === true
+    isPublic: b.is_public === true,
+    shareToken: b.share_token || null,
+    ownerName: b.owner_name || null
   };
 }
 
@@ -452,6 +454,26 @@ export async function saveAssignmentBankItem(item: Partial<EduAssignmentBankItem
   if (error) throw error;
   return mapBankItem(data);
 }
+
+// Link xem bài tập trong ngân hàng, ai có link thì xem được, không cần MSSV (khác link nộp bài của lớp).
+// Mã link sinh một lần rồi giữ nguyên để link đã gửi đi không bị hỏng.
+export async function ensureBankShareToken(item: EduAssignmentBankItem, ownerName?: string): Promise<string> {
+  if (item.shareToken) {
+    if (ownerName && !item.ownerName) await supabase.from(ASSIGNMENT_BANK_TABLE).update({ owner_name: ownerName }).eq('id', item.id);
+    return item.shareToken;
+  }
+  const bytes = crypto.getRandomValues(new Uint8Array(9));
+  const token = Array.from(bytes, b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('');
+  const { error } = await supabase.from(ASSIGNMENT_BANK_TABLE).update({ share_token: token, ...(ownerName ? { owner_name: ownerName } : {}) }).eq('id', item.id);
+  if (error) throw error;
+  return token;
+}
+export async function getBankItemByShareToken(token: string): Promise<EduAssignmentBankItem | null> {
+  const { data, error } = await supabase.from(ASSIGNMENT_BANK_TABLE).select('*').eq('share_token', token).maybeSingle();
+  if (error) throw error;
+  return data ? mapBankItem(data) : null;
+}
+export const bankShareUrl = (token: string) => `${window.location.origin}/bt/${token}/`;
 
 // Thao tác hàng loạt trong ngân hàng bài tập (chỉ nên truyền id bài của chính mình, admin thì tùy ý).
 export async function bulkUpdateAssignmentBank(ids: string[], patch: { subjectId?: string | null; isPublic?: boolean }) {

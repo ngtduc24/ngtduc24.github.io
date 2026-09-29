@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Đang mở...</title>
+<script>
+  // Link chia sẻ bài tập mới tạo (/bt/<mã>/) chưa có trang tĩnh cho tới lần build kế tiếp,
+  // chuyển thẳng vào trang xem bài để người mở link vẫn xem được ngay.
+  (function () {
+    var m = location.pathname.match(/^\/bt\/([a-z0-9]{6,40})\/?$/);
+    location.replace(m ? '/?bt=' + m[1] : '/');
+  })();
+</script>
+</head>
+<body style="font-family:system-ui,sans-serif;color:#475569;text-align:center;padding:48px">Đang mở trang, vui lòng chờ trong giây lát.</body>
+</html>

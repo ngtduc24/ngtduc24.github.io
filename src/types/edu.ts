@@ -58,6 +58,8 @@ export interface EduAssignmentBankItem {
   updatedAt: string;
   ownerId?: string;
   isPublic?: boolean;
+  shareToken?: string | null; // mã link xem bài không cần MSSV
+  ownerName?: string | null;
 }
 
 // Tài nguyên thực hành đính kèm bài tập: tệp tải lên Cloudinary hoặc đường link (Google Drive, OneDrive...).
