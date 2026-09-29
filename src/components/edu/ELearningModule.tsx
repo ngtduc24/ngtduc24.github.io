@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Plus, Search, LayoutGrid, List as ListIcon, Edit2, Eye, Copy, Send, Trash2, Globe, Lock,
   ArrowLeft, ArrowUp, ArrowDown, Loader2, X, Check, BookOpen, Users, Link2, QrCode, FileText,
-  Upload, RotateCcw, FileSpreadsheet, ChevronRight, GraduationCap, Image as ImageIconEl
+  Upload, RotateCcw, FileSpreadsheet, ChevronRight, GraduationCap, Image as ImageIconEl, FolderInput, Rocket
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { UserAccount } from '../../types';
@@ -13,13 +13,14 @@ import { getSubjects, saveSubject, getClasses, getClassUsers, setEduAuthContext 
 import {
   ELLesson, ELSection, ELResource,
   syncOwnerName, getMyLessons, getPublicLessons, getPublicSubjectCounts, getLesson, createLesson, updateLesson,
-  softDeleteLesson, restoreLesson, purgeLesson, getTrashLessons,
+  softDeleteLesson, bulkSoftDeleteLessons, bulkUpdateLessons, restoreLesson, purgeLesson, getTrashLessons,
   getSections, createSection, updateSection, deleteSection, reorderSections,
   getResources, addResource, uploadResource, updateResource, deleteResource,
   copyPublicLesson, getLessonClasses, setLessonClasses, getSectionViews, stripHtml,
 } from '../../lib/elearning';
 import QuizRichText from './QuizRichText';
 import MediaSourcePicker from '../MediaSourcePicker';
+import { fold, usePaging, Pager } from './ListPager';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
 
 interface Props { currentUser: UserAccount; onExit?: () => void; }
@@ -111,26 +112,93 @@ export default function ELearningModule({ currentUser, onExit }: Props) {
 function MyLessons({ subjects, currentUser, onEdit, onAssign }: { subjects: EduSubject[]; currentUser: UserAccount; onEdit: (id: string) => void; onAssign: (id: string) => void; }) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
-  const [lessons, setLessons] = useState<ELLesson[]>([]);
+  const [all, setAll] = useState<ELLesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [subjectId, setSubjectId] = useState('');
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
-  const [mode, setMode] = useState<'grid' | 'table'>('grid');
+  const [mode, setModeState] = useState<'grid' | 'table'>(() => { try { return localStorage.getItem('el_view') === 'table' ? 'table' : 'grid'; } catch { return 'grid'; } });
+  const setMode = (m: 'grid' | 'table') => { setModeState(m); try { localStorage.setItem('el_view', m); } catch { /* bỏ qua */ } };
   const [creating, setCreating] = useState(false);
+  // Chọn nhiều bài ở dạng danh sách để thao tác cùng lúc
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkSubject, setBulkSubject] = useState('');
   const isAdmin = currentUser.role === 'admin';
   const mayPublic = isAdmin || !!currentUser.canElearningPublic;
   const mayAssign = isAdmin || !!currentUser.canElearningAssign;
 
   const load = useCallback(async () => {
     setLoading(true);
-    try { setLessons(await getMyLessons({ subjectId: subjectId || undefined, status: (status as any) || undefined, search })); }
+    try { setAll(await getMyLessons({ subjectId: subjectId || undefined, status: (status as any) || undefined })); }
     catch (e: any) { addNotification('Lỗi tải bài giảng: ' + (e.message || e), 'error'); }
     finally { setLoading(false); }
-  }, [subjectId, status, search, addNotification]);
+  }, [subjectId, status, addNotification]);
   useEffect(() => { load(); }, [load]);
+  // Tìm kiếm lọc ngay trên máy (không dấu vẫn tìm được), rồi chia trang
+  const lessons = useMemo(() => {
+    const q = fold(search);
+    return q ? all.filter(l => fold(`${l.title} ${subjects.find(s => s.id === l.subject_id)?.name || ''}`).includes(q)) : all;
+  }, [all, search, subjects]);
+  const pg = usePaging(lessons.length, 'el_mine_size', 12, [search, subjectId, status]);
+  const pageLessons = lessons.slice(pg.from, pg.to);
+  // Danh sách thay đổi (lọc, tải lại) thì bỏ các mục chọn không còn hiển thị
+  useEffect(() => { setSelected(prev => { const ids = new Set(lessons.map(l => l.id)); const next = new Set([...prev].filter(id => ids.has(id))); return next.size === prev.size ? prev : next; }); }, [lessons]);
 
   const subjName = (id?: string | null) => subjects.find(s => s.id === id)?.name || 'Chưa chọn môn';
+
+  // Ô chọn đầu bảng chọn hoặc bỏ chọn các bài ở trang đang xem
+  const allChecked = pageLessons.length > 0 && pageLessons.every(l => selected.has(l.id));
+  const someChecked = !allChecked && pageLessons.some(l => selected.has(l.id));
+  const toggleOne = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleAll = () => setSelected(prev => { const n = new Set(prev); pageLessons.forEach(l => allChecked ? n.delete(l.id) : n.add(l.id)); return n; });
+  const picked = lessons.filter(l => selected.has(l.id));
+
+  const runBulk = async (fn: () => Promise<void>, done: string) => {
+    setBulkBusy(true);
+    try { await fn(); addNotification(done, 'success'); setSelected(new Set()); await load(); }
+    catch (e: any) { addNotification('Lỗi: ' + (e.message || e), 'error'); }
+    finally { setBulkBusy(false); }
+  };
+
+  const bulkDelete = async () => {
+    const pub = picked.filter(l => l.is_public).length;
+    const ok = await confirm({ title: 'Xóa nhiều bài giảng', message: `Chuyển ${picked.length} bài giảng vào Thùng rác?${pub ? ` Trong đó có ${pub} bài đang công khai sẽ bị tắt công khai.` : ''} Có thể khôi phục trong 30 ngày.`, confirmText: 'Xóa', cancelText: 'Hủy', danger: true } as any);
+    if (!ok) return;
+    runBulk(() => bulkSoftDeleteLessons(picked.map(l => l.id)), `Đã chuyển ${picked.length} bài giảng vào Thùng rác.`);
+  };
+
+  const bulkChangeSubject = async (sid: string) => {
+    setBulkSubject('');
+    if (!sid) return;
+    const name = sid === '__none' ? 'Chưa chọn môn' : subjName(sid);
+    const ok = await confirm({ title: 'Đổi môn học', message: `Chuyển ${picked.length} bài giảng sang môn ${name}?`, confirmText: 'Đổi môn', cancelText: 'Hủy' });
+    if (!ok) return;
+    runBulk(() => bulkUpdateLessons(picked.map(l => l.id), { subject_id: sid === '__none' ? null : sid }), `Đã đổi môn cho ${picked.length} bài giảng.`);
+  };
+
+  const bulkPublish = async (on: boolean) => {
+    const ids = picked.map(l => l.id);
+    if (on) {
+      runBulk(() => bulkUpdateLessons(ids, { status: 'published' }), `Đã xuất bản ${ids.length} bài giảng.`);
+      return;
+    }
+    const pub = picked.filter(l => l.is_public).length;
+    const ok = await confirm({ title: 'Chuyển về nháp', message: `Chuyển ${ids.length} bài giảng về nháp?${pub ? ` ${pub} bài đang công khai sẽ bị tắt công khai.` : ''}`, confirmText: 'Chuyển về nháp', cancelText: 'Hủy' });
+    if (!ok) return;
+    runBulk(() => bulkUpdateLessons(ids, { status: 'draft', is_public: false }), `Đã chuyển ${ids.length} bài giảng về nháp.`);
+  };
+
+  const bulkPublic = async (on: boolean) => {
+    if (!mayPublic) { addNotification('Tài khoản chưa được cấp quyền công khai lên kho chung.', 'warning'); return; }
+    if (!on) { runBulk(() => bulkUpdateLessons(picked.map(l => l.id), { is_public: false }), `Đã tắt công khai ${picked.length} bài giảng.`); return; }
+    const ready = picked.filter(l => l.status === 'published');
+    const skip = picked.length - ready.length;
+    if (!ready.length) { addNotification('Các bài đã chọn đều chưa xuất bản. Cần xuất bản trước khi công khai.', 'warning'); return; }
+    const ok = await confirm({ title: 'Công khai bài giảng', message: `Công khai ${ready.length} bài giảng lên kho chung, mọi người dùng khác xem và sao chép được.${skip ? ` Bỏ qua ${skip} bài chưa xuất bản.` : ''} Tiếp tục?`, confirmText: 'Công khai', cancelText: 'Hủy' });
+    if (!ok) return;
+    runBulk(() => bulkUpdateLessons(ready.map(l => l.id), { is_public: true }), `Đã công khai ${ready.length} bài giảng.${skip ? ` Bỏ qua ${skip} bài chưa xuất bản.` : ''}`);
+  };
 
   const togglePublic = async (l: ELLesson) => {
     if (!mayPublic) { addNotification('Tài khoản chưa được cấp quyền công khai lên kho chung.', 'warning'); return; }
@@ -189,27 +257,29 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign }: { subjects: EduS
 
       {loading ? (
         <div className="py-20 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" /> Đang tải...</div>
-      ) : lessons.length === 0 ? (
+      ) : all.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center">
           <BookOpen className="mx-auto mb-3 h-10 w-10 text-slate-300" />
           <p className="text-sm font-bold text-slate-500">Chưa có bài giảng nào</p>
           <p className="mt-1 text-xs text-slate-400">Bấm Tạo bài giảng mới để bắt đầu.</p>
         </div>
+      ) : lessons.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-sm text-slate-400">Không tìm thấy bài giảng phù hợp.</div>
       ) : mode === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {lessons.map(l => (
-            <div key={l.id} className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md hover:border-brand/30 transition-all">
-              <div onClick={() => openLessonView(l.id)} title="Bấm để xem bài giảng" className="h-28 cursor-pointer bg-slate-100 bg-cover bg-center" style={l.cover_url ? { backgroundImage: `url(${l.cover_url})` } : undefined}>
+          {pageLessons.map(l => (
+            <div key={l.id} onClick={() => openLessonView(l.id)} title="Bấm để xem bài giảng" className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md hover:border-brand/30 transition-all">
+              <div className="h-28 bg-slate-100 bg-cover bg-center" style={l.cover_url ? { backgroundImage: `url(${l.cover_url})` } : undefined}>
                 {!l.cover_url && <div className="flex h-full items-center justify-center text-slate-300"><BookOpen className="h-8 w-8" /></div>}
               </div>
               <div className="flex flex-1 flex-col p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 onClick={() => openLessonView(l.id)} className="cursor-pointer text-[13px] font-black text-slate-800 leading-tight line-clamp-2 hover:text-brand">{l.title}</h3>
+                  <h3 className="text-[13px] font-black text-slate-800 leading-tight line-clamp-2 group-hover:text-brand">{l.title}</h3>
                   <StatusTag lesson={l} />
                 </div>
                 <p className="mt-1 text-[11px] text-slate-400">{subjName(l.subject_id)}</p>
                 <p className="mt-1 text-[10px] text-slate-400">{l.sectionCount ?? 0} phần · cập nhật {fmtDate(l.updated_at)}</p>
-                <div className="mt-3 flex flex-wrap gap-1 border-t border-slate-50 pt-3">
+                <div onClick={e => e.stopPropagation()} className="mt-auto flex flex-wrap gap-1 border-t border-slate-50 pt-3 cursor-default">
                   <IconBtn title="Sửa" onClick={() => onEdit(l.id)}><Edit2 className="w-3.5 h-3.5" /></IconBtn>
                   <IconBtn title="Xem trước" onClick={() => openLessonView(l.id)}><Eye className="w-3.5 h-3.5" /></IconBtn>
                   {mayPublic && <IconBtn title={l.is_public ? 'Tắt công khai' : 'Công khai'} onClick={() => togglePublic(l)}>{l.is_public ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}</IconBtn>}
@@ -223,10 +293,34 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign }: { subjects: EduS
           ))}
         </div>
       ) : (
+        <div className="space-y-3">
+        {selected.size > 0 && (
+          <div className="sticky top-2 z-10 flex flex-wrap items-center gap-2 rounded-2xl border border-brand/20 bg-brand-light/60 px-4 py-2.5 shadow-sm backdrop-blur">
+            <span className="text-xs font-bold text-brand">Đã chọn {selected.size} bài</span>
+            <button onClick={() => setSelected(new Set())} className="text-[11px] font-semibold text-slate-500 underline hover:text-slate-700">Bỏ chọn</button>
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              {bulkBusy && <Loader2 className="h-4 w-4 animate-spin text-brand" />}
+              <label className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white pl-2.5 text-[11px] font-bold text-slate-600">
+                <FolderInput className="h-3.5 w-3.5" />
+                <select value={bulkSubject} disabled={bulkBusy} onChange={e => { setBulkSubject(e.target.value); bulkChangeSubject(e.target.value); }} className="rounded-xl bg-transparent py-1.5 pr-2 text-[11px] font-bold outline-none">
+                  <option value="">Đổi môn...</option>
+                  {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  <option value="__none">Bỏ môn (chưa chọn môn)</option>
+                </select>
+              </label>
+              <BulkBtn disabled={bulkBusy} onClick={() => bulkPublish(true)} icon={<Rocket className="h-3.5 w-3.5" />}>Xuất bản</BulkBtn>
+              <BulkBtn disabled={bulkBusy} onClick={() => bulkPublish(false)} icon={<FileText className="h-3.5 w-3.5" />}>Về nháp</BulkBtn>
+              {mayPublic && <BulkBtn disabled={bulkBusy} onClick={() => bulkPublic(true)} icon={<Globe className="h-3.5 w-3.5" />}>Công khai</BulkBtn>}
+              {mayPublic && <BulkBtn disabled={bulkBusy} onClick={() => bulkPublic(false)} icon={<Lock className="h-3.5 w-3.5" />}>Tắt công khai</BulkBtn>}
+              <BulkBtn disabled={bulkBusy} danger onClick={bulkDelete} icon={<Trash2 className="h-3.5 w-3.5" />}>Xóa</BulkBtn>
+            </div>
+          </div>
+        )}
         <div className="overflow-x-auto rounded-3xl border border-slate-100 bg-white shadow-sm">
           <table className="w-full text-left text-xs">
             <thead className="border-b border-slate-100 bg-slate-50/40 text-[10px] uppercase text-slate-400">
               <tr>
+                <th className="w-10 py-3 pl-4 pr-1"><CheckBox checked={allChecked} indeterminate={someChecked} onChange={toggleAll} title="Chọn tất cả" /></th>
                 <th className="px-4 py-3">Tên bài giảng</th><th className="px-4 py-3">Môn học</th>
                 <th className="px-4 py-3 text-center">Phần</th><th className="px-4 py-3 text-center">Tài nguyên</th>
                 <th className="px-4 py-3 text-center">Công khai</th><th className="px-4 py-3 text-center">Lượt sao chép</th>
@@ -234,9 +328,10 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign }: { subjects: EduS
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {lessons.map(l => (
-                <tr key={l.id} className="hover:bg-slate-50/40">
-                  <td className="px-4 py-3 font-bold text-slate-800">{l.title}</td>
+              {pageLessons.map(l => (
+                <tr key={l.id} className={selected.has(l.id) ? 'bg-brand-light/30' : 'hover:bg-slate-50/40'}>
+                  <td className="py-3 pl-4 pr-1"><CheckBox checked={selected.has(l.id)} onChange={() => toggleOne(l.id)} title="Chọn bài này" /></td>
+                  <td className="px-4 py-3"><button onClick={() => openLessonView(l.id)} title="Bấm để xem bài giảng" className="text-left font-bold text-slate-800 hover:text-brand hover:underline">{l.title}</button></td>
                   <td className="px-4 py-3 text-slate-500">{subjName(l.subject_id)}</td>
                   <td className="px-4 py-3 text-center">{l.sectionCount ?? 0}</td>
                   <td className="px-4 py-3 text-center">{l.resourceCount ?? 0}</td>
@@ -258,7 +353,9 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign }: { subjects: EduS
             </tbody>
           </table>
         </div>
+        </div>
       )}
+      {!loading && lessons.length > 0 && <Pager pg={pg} total={lessons.length} unit="bài giảng" sizes={[12, 24, 48, 96]} />}
 
       {creating && <CreateDialog subjects={subjects} onClose={() => setCreating(false)} onCreated={(id) => { setCreating(false); onEdit(id); }} ownerName={currentUser.fullName} />}
     </div>
@@ -553,14 +650,15 @@ function PublicLibrary({ subjects, currentUser, onCopied }: { subjects: EduSubje
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [subjectId, setSubjectId] = useState('');
   const [sort, setSort] = useState<'new' | 'views' | 'copies'>('new');
-  const [lessons, setLessons] = useState<ELLesson[]>([]);
+  const [all, setAll] = useState<ELLesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [copyingId, setCopyingId] = useState('');
+  const [search, setSearch] = useState('');
 
   useEffect(() => { getPublicSubjectCounts().then(setCounts).catch(() => {}); }, []);
   const load = useCallback(async () => {
     setLoading(true);
-    try { setLessons(await getPublicLessons({ subjectId: subjectId || undefined, sort })); }
+    try { setAll(await getPublicLessons({ subjectId: subjectId || undefined, sort })); }
     catch (e: any) { addNotification('Lỗi tải kho chung: ' + (e.message || e), 'error'); }
     finally { setLoading(false); }
   }, [subjectId, sort, addNotification]);
@@ -574,6 +672,14 @@ function PublicLibrary({ subjects, currentUser, onCopied }: { subjects: EduSubje
   };
 
   const subjName = (id?: string | null) => subjects.find(s => s.id === id)?.name || 'Khác';
+  // Tìm theo tên bài, môn, tác giả (gõ không dấu vẫn tìm được), rồi chia trang
+  const lessons = useMemo(() => {
+    const q = fold(search);
+    return q ? all.filter(l => fold(`${l.title} ${subjName(l.subject_id)} ${l.author_label || ''} ${l.owner_name || ''} ${(l as any).summary ? stripHtml((l as any).summary) : ''}`).includes(q)) : all;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [all, search, subjects]);
+  const pg = usePaging(lessons.length, 'el_pub_size', 12, [search, subjectId, sort]);
+  const pageLessons = lessons.slice(pg.from, pg.to);
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[240px_1fr]">
@@ -589,28 +695,36 @@ function PublicLibrary({ subjects, currentUser, onCopied }: { subjects: EduSubje
         ))}
       </div>
       <div className="space-y-4">
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative flex-1 min-w-[180px]">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm theo tên bài, môn học, tác giả..." className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-xs outline-none focus:border-brand" />
+            {search && <button onClick={() => setSearch('')} title="Xoá tìm kiếm" className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600"><X className="h-3.5 w-3.5" /></button>}
+          </div>
+          <div className="flex items-center justify-end gap-2">
           <span className="text-[11px] font-semibold text-slate-400">Sắp xếp</span>
           <select value={sort} onChange={e => setSort(e.target.value as any)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-brand">
             <option value="new">Mới nhất</option><option value="views">Xem nhiều nhất</option><option value="copies">Sao chép nhiều nhất</option>
           </select>
+          </div>
         </div>
         {loading ? (
           <div className="py-20 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" /> Đang tải...</div>
         ) : lessons.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-sm text-slate-400">Chưa có bài giảng công khai nào trong mục này.</div>
+          <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-sm text-slate-400">{search ? 'Không tìm thấy bài giảng phù hợp.' : 'Chưa có bài giảng công khai nào trong mục này.'}</div>
         ) : (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {lessons.map(l => (
-              <div key={l.id} className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md hover:border-brand/30 transition-all">
-                <button onClick={() => openLessonView(l.id)} className="block text-left h-28 bg-slate-100 bg-cover bg-center" style={l.cover_url ? { backgroundImage: `url(${l.cover_url})` } : undefined}>
+            {pageLessons.map(l => (
+              <div key={l.id} onClick={() => openLessonView(l.id)} title="Bấm để xem bài giảng" className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md hover:border-brand/30 transition-all">
+                <div className="h-28 bg-slate-100 bg-cover bg-center" style={l.cover_url ? { backgroundImage: `url(${l.cover_url})` } : undefined}>
                   {!l.cover_url && <div className="flex h-full items-center justify-center text-slate-300"><BookOpen className="h-8 w-8" /></div>}
-                </button>
+                </div>
                 <div className="flex flex-1 flex-col p-4">
-                  <button onClick={() => openLessonView(l.id)} className="text-left"><h3 className="text-[13px] font-black text-slate-800 leading-tight line-clamp-2 group-hover:text-brand">{l.title}</h3></button>
+                  <h3 className="text-[13px] font-black text-slate-800 leading-tight line-clamp-2 group-hover:text-brand">{l.title}</h3>
                   <p className="mt-1 text-[11px] text-slate-400">{subjName(l.subject_id)} · {l.author_label || l.owner_name || 'Ẩn danh'}</p>
                   <p className="mt-1 text-[10px] text-slate-400">{l.view_count} lượt xem · {l.copy_count} lượt sao chép</p>
-                  <div className="mt-3 flex gap-1.5 border-t border-slate-50 pt-3">
+                  <div onClick={e => e.stopPropagation()} className="mt-auto flex gap-1.5 border-t border-slate-50 pt-3 cursor-default">
                     <button onClick={() => openLessonView(l.id)} className="flex-1 rounded-lg bg-slate-100 px-2 py-1.5 text-center text-[10px] font-bold text-slate-600 hover:bg-slate-200">Xem</button>
                     {l.allow_copy && <button onClick={() => copy(l)} disabled={copyingId === l.id} className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-brand px-2 py-1.5 text-[10px] font-bold text-white hover:bg-brand-hover disabled:opacity-50">{copyingId === l.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Copy className="h-3 w-3" />} Sao chép</button>}
                   </div>
@@ -618,6 +732,8 @@ function PublicLibrary({ subjects, currentUser, onCopied }: { subjects: EduSubje
               </div>
             ))}
           </div>
+          <Pager pg={pg} total={lessons.length} unit="bài giảng" sizes={[12, 24, 48, 96]} />
+          </>
         )}
       </div>
     </div>
@@ -825,6 +941,14 @@ function StatusTag({ lesson }: { lesson: ELLesson }) {
   if (lesson.is_public) return <span className="shrink-0 rounded-md bg-brand-light px-2 py-0.5 text-[9px] font-bold text-brand">Công khai</span>;
   if (lesson.status === 'published') return <span className="shrink-0 rounded-md bg-blue-50 px-2 py-0.5 text-[9px] font-bold text-blue-600">Đã xuất bản</span>;
   return <span className="shrink-0 rounded-md bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-500">Nháp</span>;
+}
+function CheckBox({ checked, indeterminate, onChange, title }: { checked: boolean; indeterminate?: boolean; onChange: () => void; title?: string }) {
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (ref.current) ref.current.indeterminate = !!indeterminate; }, [indeterminate]);
+  return <input ref={ref} type="checkbox" title={title} checked={checked} onChange={onChange} className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-brand align-middle" />;
+}
+function BulkBtn({ children, icon, onClick, disabled, danger }: { children: React.ReactNode; icon: React.ReactNode; onClick: () => void; disabled?: boolean; danger?: boolean }) {
+  return <button onClick={onClick} disabled={disabled} className={`inline-flex items-center gap-1.5 rounded-xl border bg-white px-2.5 py-1.5 text-[11px] font-bold transition-colors disabled:opacity-50 ${danger ? 'border-rose-200 text-rose-600 hover:bg-rose-50' : 'border-slate-200 text-slate-600 hover:border-brand/40 hover:text-brand'}`}>{icon}{children}</button>;
 }
 function IconBtn({ children, title, onClick, danger }: { children: React.ReactNode; title: string; onClick: () => void; danger?: boolean }) {
   return <button title={title} onClick={onClick} className={`grid h-7 w-7 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 ${danger ? 'hover:text-rose-500 hover:bg-rose-50' : 'hover:text-brand'}`}>{children}</button>;

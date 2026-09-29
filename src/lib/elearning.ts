@@ -144,6 +144,19 @@ export async function softDeleteLesson(id: string): Promise<void> {
   const { error } = await supabase.from(L_TABLE).update({ deleted_at: new Date().toISOString(), is_public: false }).eq('id', id);
   if (error) throw error;
 }
+// Thao tác hàng loạt trên nhiều bài giảng (một câu lệnh cho cả nhóm).
+export async function bulkUpdateLessons(ids: string[], patch: Partial<Pick<ELLesson, 'subject_id' | 'status' | 'is_public'>>): Promise<void> {
+  if (!ids.length) return;
+  const allowed: any = {};
+  (['subject_id', 'status', 'is_public'] as const).forEach(k => { if (k in patch) allowed[k] = (patch as any)[k]; });
+  const { error } = await supabase.from(L_TABLE).update(allowed).in('id', ids);
+  if (error) throw error;
+}
+export async function bulkSoftDeleteLessons(ids: string[]): Promise<void> {
+  if (!ids.length) return;
+  const { error } = await supabase.from(L_TABLE).update({ deleted_at: new Date().toISOString(), is_public: false }).in('id', ids);
+  if (error) throw error;
+}
 export async function restoreLesson(id: string): Promise<void> {
   const { error } = await supabase.from(L_TABLE).update({ deleted_at: null }).eq('id', id);
   if (error) throw error;

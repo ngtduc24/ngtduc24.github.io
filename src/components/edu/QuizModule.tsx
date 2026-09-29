@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Plus, Trash2, Edit2, Save, X, FileCheck2, Clock, ListChecks, Check, ChevronLeft,
   Search, Library, BookOpen, Users, Link2, Copy, QrCode, Send, ArrowUp, ArrowDown, Loader2, Share2, Globe, ChevronRight
@@ -16,6 +16,7 @@ import {
   stripHtml,
 } from '../../lib/quiz';
 import QuizRichText from './QuizRichText';
+import { fold, usePaging, Pager } from './ListPager';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
 import { exportExamToPdf, ExamHeader } from '../../lib/quizPdf';
 import { FileDown } from 'lucide-react';
@@ -84,6 +85,16 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
 
   const subjectName = (id?: string | null) => subjects.find(s => s.id === id)?.name || '';
 
+  // Tìm kiếm (gõ không dấu vẫn tìm được) và chia trang cho Đề của tôi, Kho đề chung
+  const [quizSearch, setQuizSearch] = useState('');
+  const shownQuizzes = useMemo(() => {
+    const q = fold(quizSearch);
+    return q ? quizzes.filter(z => fold(`${z.title} ${subjectName(z.subject_id)} ${z.description || ''} ${z.owner_name || ''}`).includes(q)) : quizzes;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quizzes, quizSearch, subjects]);
+  const quizPg = usePaging(shownQuizzes.length, 'quiz_list_size', 12, [quizSearch, filterSubject, listTab]);
+  const pageQuizzes = shownQuizzes.slice(quizPg.from, quizPg.to);
+
   // ---------- Danh sách đề ----------
   const openNewQuiz = async () => {
     try {
@@ -125,6 +136,11 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
               <option value="">Tất cả môn học</option>
               {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
+            <div className="relative min-w-[200px] flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input value={quizSearch} onChange={e => setQuizSearch(e.target.value)} placeholder={listTab === 'shared' ? 'Tìm đề theo tên, môn, người soạn...' : 'Tìm đề theo tên, môn học...'} className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-9 pr-8 text-[13px] font-semibold text-slate-700 outline-none focus:border-brand" />
+              {quizSearch && <button onClick={() => setQuizSearch('')} title="Xoá tìm kiếm" className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600"><X className="h-3.5 w-3.5" /></button>}
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             <button onClick={() => { setBankSelectMode(false); setView('bank'); }} className="inline-flex items-center gap-2 rounded-2xl border border-brand bg-white px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-brand hover:bg-brand-light">
@@ -143,9 +159,11 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
             <p className="text-sm font-bold text-slate-700">{listTab === 'shared' ? 'Kho đề chung chưa có đề nào' : 'Chưa có đề trắc nghiệm nào'}</p>
             <p className="mt-1 text-xs text-slate-400">{listTab === 'shared' ? 'Đề được chia sẻ khi người soạn bật "Chia sẻ vào kho đề chung" trong phần Thiết lập của đề.' : 'Bấm "Tạo đề mới" để bắt đầu, hoặc thêm câu hỏi vào ngân hàng trước.'}</p>
           </div>
+        ) : shownQuizzes.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-sm text-slate-400">Không tìm thấy đề phù hợp.</div>
         ) : listTab === 'shared' ? (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {quizzes.map(q => {
+            {pageQuizzes.map(q => {
               const mine = q.owner_id === currentUser.id;
               return (
                 <div key={q.id} className="flex flex-col rounded-3xl border border-slate-100 bg-white p-5 text-left shadow-sm">
@@ -176,7 +194,7 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {quizzes.map(q => (
+            {pageQuizzes.map(q => (
               <button key={q.id} onClick={() => { setActiveQuiz(q); setView('detail'); }} className="group flex flex-col rounded-3xl border border-slate-100 bg-white p-5 text-left shadow-sm transition-all hover:border-brand/30 hover:shadow-md">
                 <div className="flex items-start justify-between gap-3">
                   {/* Chỉ tạo nhãn khi đề đã phát hành hoặc lưu trữ. Đề còn là bản nháp thì không có nhãn. */}
@@ -198,6 +216,7 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
             ))}
           </div>
         )}
+        {!loading && shownQuizzes.length > 0 && <Pager pg={quizPg} total={shownQuizzes.length} unit="đề" sizes={[12, 24, 48, 96]} />}
       </div>
     );
   }
