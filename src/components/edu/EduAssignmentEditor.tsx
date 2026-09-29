@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { askText } from '../ui/Dialogs';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -295,9 +296,9 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
               label=""
               className="p-2 rounded-lg text-slate-500 hover:bg-slate-200 flex items-center"
             />
-            <button onClick={() => {
-              const url = prompt('Nhập URL liên kết:');
-              if (url) editor?.chain().focus().setLink({ href: url }).run();
+            <button onClick={async () => {
+              const url = await askText({ title: 'Chèn liên kết', placeholder: 'https://...', okText: 'Chèn', defaultValue: editor?.getAttributes('link').href || '' });
+              if (url) editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
             }} className={`p-2 rounded-lg transition-all ${editor?.isActive('link') ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><LinkIcon className="w-4 h-4" /></button>
             <div className="flex-1" />
             <button onClick={() => editor?.chain().focus().undo().run()} className="p-2 rounded-lg hover:bg-slate-200 text-slate-500"><Undo className="w-4 h-4" /></button>

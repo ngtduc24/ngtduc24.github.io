@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { notice } from './ui/Dialogs';
 import { 
   Image, 
   Search, 
@@ -169,12 +170,12 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
     const isVideo = file.type.startsWith('video/');
 
     if (!isImage && !isVideo) {
-      alert('Vui lòng chỉ tải lên tệp tin hình ảnh hoặc video!');
+      notice('Vui lòng chỉ tải lên tệp tin hình ảnh hoặc video!');
       return;
     }
 
     if (file.size > 30 * 1024 * 1024) {
-      alert('Tệp tin quá dung lượng cho phép. Vui lòng chọn tệp dưới 30MB!');
+      notice('Tệp tin quá dung lượng cho phép. Vui lòng chọn tệp dưới 30MB!');
       return;
     }
 

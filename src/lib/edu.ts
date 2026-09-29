@@ -457,13 +457,16 @@ export async function saveAssignmentBankItem(item: Partial<EduAssignmentBankItem
 
 // Link xem bài tập trong ngân hàng, ai có link thì xem được, không cần MSSV (khác link nộp bài của lớp).
 // Mã link sinh một lần rồi giữ nguyên để link đã gửi đi không bị hỏng.
-export async function ensureBankShareToken(item: EduAssignmentBankItem, ownerName?: string): Promise<string> {
+export function newShareToken(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(10));
+  return Array.from(bytes, b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('');
+}
+export async function ensureBankShareToken(item: EduAssignmentBankItem, ownerName?: string, presetToken?: string): Promise<string> {
   if (item.shareToken) {
     if (ownerName && !item.ownerName) await supabase.from(ASSIGNMENT_BANK_TABLE).update({ owner_name: ownerName }).eq('id', item.id);
     return item.shareToken;
   }
-  const bytes = crypto.getRandomValues(new Uint8Array(9));
-  const token = Array.from(bytes, b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('');
+  const token = presetToken || newShareToken();
   const { error } = await supabase.from(ASSIGNMENT_BANK_TABLE).update({ share_token: token, ...(ownerName ? { owner_name: ownerName } : {}) }).eq('id', item.id);
   if (error) throw error;
   return token;

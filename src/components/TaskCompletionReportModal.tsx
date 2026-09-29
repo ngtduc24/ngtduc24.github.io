@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
+import { notice } from './ui/Dialogs';
 import { 
   X, 
   Printer, 
@@ -121,7 +122,7 @@ export default function TaskCompletionReportModal({
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      alert('Trình duyệt đang chặn cửa sổ bật lên. Vui lòng cho phép popup để xuất PDF.');
+      notice('Trình duyệt đang chặn cửa sổ bật lên. Vui lòng cho phép popup để xuất PDF.');
       return;
     }
 

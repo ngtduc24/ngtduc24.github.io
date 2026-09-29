@@ -16,13 +16,14 @@ import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
 import { UserAccount } from '../../types';
 import {
   getSubjects, saveSubject, deleteSubject, getAssignmentBank, saveAssignmentBankItem, deleteAssignmentBankItem,
-  bulkUpdateAssignmentBank, bulkDeleteAssignmentBank, ensureBankShareToken, bankShareUrl,
+  bulkUpdateAssignmentBank, bulkDeleteAssignmentBank, ensureBankShareToken, bankShareUrl, newShareToken,
 } from '../../lib/edu';
 import { getUsers } from '../../lib/data';
 import { uploadImageToCloudinary } from '../../lib/upload';
 import { exportAssignmentToPdf } from '../../lib/assignmentPdf';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
 import { useNotifications } from '../NotificationContext';
+import { askText, copyText } from '../ui/Dialogs';
 import { useConfirmation } from '../ConfirmationContext';
 import { fold, usePaging, Pager } from './ListPager';
 
@@ -151,15 +152,19 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
   });
 
   // Link xem bài không cần MSSV. Sinh mã lần đầu rồi giữ nguyên.
-  const copyShareLink = async (it: EduAssignmentBankItem) => {
-    try {
-      const name = it.ownerId === currentUser.id ? currentUser.fullName : ownerName(it.ownerId);
-      const token = await ensureBankShareToken(it, name || undefined);
-      if (!it.shareToken) setItems(prev => prev.map(x => x.id === it.id ? { ...x, shareToken: token, ownerName: x.ownerName || name } : x));
-      const url = bankShareUrl(token);
-      try { await navigator.clipboard.writeText(url); } catch { window.prompt('Sao chép link xem bài tập:', url); }
-      addNotification(it.shareToken ? 'Đã sao chép link xem bài tập.' : 'Đã tạo và sao chép link xem bài tập. Khung xem trước trên Zalo, Facebook hiện sau vài phút.', 'success');
-    } catch (e: any) { addNotification('Không tạo được link: ' + (e?.message || e), 'error'); }
+  const copyShareLink = (it: EduAssignmentBankItem) => {
+    // Mã link có sẵn thì dùng lại, chưa có thì sinh ngay trên máy để chép được liền trong lúc bấm.
+    const token = it.shareToken || newShareToken();
+    const copying = copyText(bankShareUrl(token));
+    const name = it.ownerId === currentUser.id ? currentUser.fullName : ownerName(it.ownerId);
+    (async () => {
+      try {
+        const saved = await ensureBankShareToken(it, name || undefined, token);
+        if (saved !== token) await copyText(bankShareUrl(saved));
+        if (!it.shareToken) setItems(prev => prev.map(x => x.id === it.id ? { ...x, shareToken: saved, ownerName: x.ownerName || name } : x));
+        addNotification((await copying) ? 'Đã sao chép link xem bài tập.' : 'Không sao chép được, hãy thử lại.', (await copying) ? 'success' : 'error');
+      } catch (e: any) { addNotification('Không tạo được link: ' + (e?.message || e), 'error'); }
+    })();
   };
   const canShare = (it: EduAssignmentBankItem) => canEdit(it) || !!it.shareToken || it.isPublic;
 
@@ -358,7 +363,7 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
                     <input type="file" accept="image/*" className="hidden" onChange={handleInsertImageFile} disabled={uploadingImage} />
                     <ImageIcon className="w-4 h-4" />
                   </label>
-                  <button onClick={() => { const url = prompt('Nhập URL liên kết:'); if (url) editor?.chain().focus().setLink({ href: url }).run(); }} className={tbBtn(!!editor?.isActive('link'))}><LinkIcon className="w-4 h-4" /></button>
+                  <button onClick={async () => { const url = await askText({ title: 'Chèn liên kết', placeholder: 'https://...', okText: 'Chèn', defaultValue: editor?.getAttributes('link').href || '' }); if (url) editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run(); }} className={tbBtn(!!editor?.isActive('link'))}><LinkIcon className="w-4 h-4" /></button>
                   <div className="flex-1" />
                   <button onClick={() => editor?.chain().focus().undo().run()} className="p-2 rounded-lg hover:bg-slate-200 text-slate-500"><Undo className="w-4 h-4" /></button>
                   <button onClick={() => editor?.chain().focus().redo().run()} className="p-2 rounded-lg hover:bg-slate-200 text-slate-500"><Redo className="w-4 h-4" /></button>

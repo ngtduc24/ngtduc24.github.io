@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { notice } from '../ui/Dialogs';
 import { UserAccount, SocialTemplate } from '../../types';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
@@ -93,7 +94,7 @@ export default function SettingsMode({ currentUser }: SettingsModeProps) {
       setBgImage('');
     } catch (error) {
       console.error("Lỗi khi thêm khung mẫu:", error);
-      alert("Đã xảy ra lỗi khi thêm khung mẫu.");
+      notice("Đã xảy ra lỗi khi thêm khung mẫu.");
     }
   };
 

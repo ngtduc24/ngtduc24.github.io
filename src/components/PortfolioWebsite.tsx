@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { copyText, notice } from './ui/Dialogs';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { sanitizeHtml, isSafeUrl } from '../lib/sanitizeHtml';
 import {
@@ -1032,12 +1033,11 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
   const handleCopyShareLink = async () => {
     if (!shareUrl) return;
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      if (!(await copyText(shareUrl))) throw new Error('copy');
       setShareCopied(true);
       window.setTimeout(() => setShareCopied(false), 2500);
     } catch {
-      // Trình duyệt chặn quyền ghi bộ nhớ tạm thì mở hộp thoại để người dùng tự chép.
-      window.prompt('Sao chép đường link chia sẻ', shareUrl);
+      notice('Không sao chép được link, hãy thử lại.');
     }
   };
 

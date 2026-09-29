@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { notice } from './ui/Dialogs';
 import { 
   X, 
   Play, 
@@ -263,7 +264,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
   const handlePrintTaskReport = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      alert('Vui lòng cho phép popup trình duyệt để in báo cáo.');
+      notice('Vui lòng cho phép popup trình duyệt để in báo cáo.');
       return;
     }
 

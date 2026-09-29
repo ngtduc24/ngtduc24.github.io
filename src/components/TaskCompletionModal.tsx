@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { notice } from './ui/Dialogs';
 import { 
   X, 
   CheckCircle2, 
@@ -94,7 +95,7 @@ export default function TaskCompletionModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!summary.trim()) {
-      alert('Vui lòng nhập nội dung báo cáo kết quả hoàn thành công việc.');
+      notice('Vui lòng nhập nội dung báo cáo kết quả hoàn thành công việc.');
       return;
     }
 

@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { askText } from '../ui/Dialogs';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -93,9 +94,9 @@ const MenuBar = ({ editor }: { editor: any }) => {
     return null;
   }
 
-  const setLink = useCallback(() => {
+  const setLink = useCallback(async () => {
     const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('URL liên kết:', previousUrl);
+    const url = await askText({ title: 'Chèn liên kết', placeholder: 'https://...', okText: 'Chèn', defaultValue: previousUrl || '' });
     if (url === null) {
       return;
     }
