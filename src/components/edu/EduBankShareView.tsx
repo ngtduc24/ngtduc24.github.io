@@ -5,6 +5,7 @@ import { getBankItemByShareToken } from '../../lib/edu';
 import { exportAssignmentToPdf, subjectNameById } from '../../lib/assignmentPdf';
 import { eduFileTypeLabel } from '../../lib/eduFileTypes';
 import { EduResourceList } from './EduResources';
+import { copyText } from '../ui/Dialogs';
 
 // Trang xem bài tập trong ngân hàng qua link chia sẻ: ai có link đều xem được, không cần đăng nhập, không cần MSSV.
 export default function EduBankShareView({ token }: { token: string }) {
@@ -20,6 +21,8 @@ export default function EduBankShareView({ token }: { token: string }) {
         setItem(it);
         setState('ok');
         document.title = it.title;
+        // Đổi thanh địa chỉ về link chia sẻ /bt/<mã>/ để ai chép link từ thanh địa chỉ vẫn có khung xem trước.
+        try { window.history.replaceState(null, '', `/bt/${token}/`); } catch { /* bỏ qua */ }
         setSubject(await subjectNameById(it.subjectId));
       })
       .catch(() => setState('missing'));
@@ -40,7 +43,7 @@ export default function EduBankShareView({ token }: { token: string }) {
 
   const author = item.ownerName || '';
   const formats = (item.allowedFileTypes || []).map(eduFileTypeLabel).join(', ');
-  const copyLink = () => { navigator.clipboard?.writeText(window.location.href.split('#')[0]); setCopied(true); setTimeout(() => setCopied(false), 1800); };
+  const copyLink = () => { copyText(`${window.location.origin}/bt/${token}/`); setCopied(true); setTimeout(() => setCopied(false), 1800); };
 
   return (
     <div className="min-h-screen bg-slate-50">

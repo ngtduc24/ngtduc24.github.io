@@ -137,7 +137,7 @@ export default function EduModule({ currentUser, settings, initialView }: EduMod
   return (
     <div className="space-y-6 animate-fadeIn" id="edu-module-container">
       {/* Module Header - Ẩn ở danh sách và ở chi tiết lớp (chi tiết lớp có nút quay lại riêng ở tiêu đề). */}
-      {view !== 'list' && view !== 'class_detail' && (
+      {view !== 'list' && view !== 'class_detail' && view !== 'assignment_bank' && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-brand/10 text-brand rounded-2xl flex items-center justify-center">
@@ -147,7 +147,6 @@ export default function EduModule({ currentUser, settings, initialView }: EduMod
               <h1 className="text-xl font-bold text-slate-900 font-display">
                 {view === 'import' ? 'Import dữ liệu' :
                  view === 'grading' ? 'Chấm điểm sinh viên' :
-                 view === 'assignment_bank' ? 'Ngân hàng bài tập' :
                  view === 'grade_entry' ? 'Nhập điểm' :
                  view === 'exam_bank' ? 'Kiểm tra trắc nghiệm' :
                  view === 'question_bank' ? 'Ngân hàng câu hỏi' :
@@ -182,7 +181,7 @@ export default function EduModule({ currentUser, settings, initialView }: EduMod
         )}
 
         {view === 'assignment_bank' && (
-          <EduAssignmentBank currentUser={currentUser} />
+          <EduAssignmentBank currentUser={currentUser} onExit={handleBack} />
         )}
 
         {view === 'grade_entry' && (

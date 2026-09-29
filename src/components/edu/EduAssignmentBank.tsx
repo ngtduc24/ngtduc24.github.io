@@ -44,7 +44,7 @@ const firstImage = (html?: string) => (html || '').match(/<img[^>]+src=["']([^"'
 const plain = (html?: string) => (html || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 const formatsText = (t?: string[]) => (t || []).map(x => FORMAT_OPTIONS.find(f => f.id === x)?.label || eduFileTypeLabel(x)).join(', ');
 
-export default function EduAssignmentBank({ currentUser }: { currentUser: UserAccount }) {
+export default function EduAssignmentBank({ currentUser, onExit }: { currentUser: UserAccount; onExit?: () => void }) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
   const isAdmin = currentUser?.role === 'admin';
@@ -328,14 +328,10 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
   // ===================== Màn soạn bài =====================
   if (editing) {
     return (
-      <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6 space-y-4 animate-fadeIn">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-slate-900 font-bold text-sm uppercase tracking-wide">
-            <Edit3 className="w-4 h-4 text-brand" /> {editing.id ? 'Sửa bài tập mẫu' : 'Thêm bài tập mẫu'}
-          </div>
-          <button onClick={() => setEditing(null)} className="p-2 text-slate-400 hover:text-slate-700 transition-all" title="Đóng"><X className="w-5 h-5" /></button>
-        </div>
-
+      <div className="space-y-5 animate-fadeIn">
+      <Banner onBack={() => setEditing(null)} backTitle="Hủy, quay lại ngân hàng bài tập" icon={<Edit3 className="h-6 w-6" />}
+        title={editing.id ? 'Sửa bài tập mẫu' : 'Thêm bài tập mẫu'} subtitle={editing.id ? (editing.title || '') : 'Soạn đề, chọn định dạng nộp và đính kèm tài nguyên thực hành.'} />
+      <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6">
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]">
           <div className="space-y-4 min-w-0">
             <div className="space-y-1.5">
@@ -407,6 +403,7 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
           </div>
         </div>
       </div>
+      </div>
     );
   }
 
@@ -416,41 +413,32 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
     const it = viewing;
     return (
       <div className="space-y-5 animate-fadeIn">
-        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
-          <button onClick={() => setViewId('')} title="Quay lại ngân hàng bài tập" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 transition-colors hover:bg-brand-light hover:text-brand"><ArrowLeft className="h-5 w-5" /></button>
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand"><FileText className="h-6 w-6" /></span>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-lg font-black tracking-tight text-slate-900 sm:text-xl">{it.title}</h1>
-            <p className="text-sm font-medium text-slate-500">{[subjName(it.subjectId) || 'Chưa chọn môn', ownerName(it.ownerId)].filter(Boolean).join(' · ')}</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {canShare(it) && <button onClick={() => copyShareLink(it)} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand"><Link2 className="h-3.5 w-3.5" /> Sao chép link</button>}
-            <button onClick={() => downloadPdf(it)} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand"><FileDown className="h-3.5 w-3.5" /> Tải PDF</button>
-            {canEdit(it) && <button onClick={() => openEditor({ ...it })} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-3 py-2 text-[11px] font-bold text-white hover:bg-brand-hover"><Edit3 className="h-3.5 w-3.5" /> Sửa</button>}
-          </div>
-        </div>
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_280px]">
-          <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="mb-3 text-[11px] font-black uppercase tracking-wider text-slate-400">Yêu cầu và hướng dẫn</h2>
-            {it.content && plain(it.content) || firstImage(it.content)
-              ? <div className="prose prose-slate max-w-none break-words text-[15px] leading-relaxed text-slate-700 [overflow-wrap:anywhere] [&_a]:break-all" dangerouslySetInnerHTML={{ __html: it.content || '' }} />
+        <Banner onBack={() => setViewId('')} backTitle="Quay lại ngân hàng bài tập" icon={<FileText className="h-6 w-6" />}
+          title={it.title} subtitle={[subjName(it.subjectId) || 'Chưa chọn môn', ownerName(it.ownerId)].filter(Boolean).join(' · ')}
+          actions={<>
+            {canShare(it) && <HeadBtn onClick={() => copyShareLink(it)} icon={<Link2 className="h-3.5 w-3.5" />}>Sao chép link</HeadBtn>}
+            <HeadBtn onClick={() => downloadPdf(it)} icon={<FileDown className="h-3.5 w-3.5" />}>Tải PDF</HeadBtn>
+            {canEdit(it) && <HeadBtn primary onClick={() => openEditor({ ...it })} icon={<Edit3 className="h-3.5 w-3.5" />}>Sửa</HeadBtn>}
+          </>} />
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_260px]">
+          <div className="min-w-0 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7">
+            {plain(it.content) || firstImage(it.content)
+              ? <div className="prose prose-slate max-w-none break-words text-[15px] leading-relaxed text-slate-700 [overflow-wrap:anywhere] [&_a]:break-all [&_img]:rounded-xl" dangerouslySetInnerHTML={{ __html: it.content || '' }} />
               : <p className="text-sm italic text-slate-400">Bài tập này chưa có phần yêu cầu và hướng dẫn.</p>}
             <EduResourceList resources={it.resources} className="mt-6 border-t border-slate-100 pt-5" />
           </div>
-          <div className="h-fit space-y-4 lg:sticky lg:top-6">
-            <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm space-y-3 text-[13px]">
-              <p className="text-[10px] font-black uppercase text-slate-400">Thông tin</p>
+          <div className="h-fit rounded-3xl border border-slate-100 bg-white p-4 text-[12px] shadow-sm lg:sticky lg:top-6">
+            <div className="space-y-2.5 px-1">
               <Info k="Môn học" v={subjName(it.subjectId) || 'Chưa chọn môn'} />
               <Info k="Định dạng nộp" v={formatsText(it.allowedFileTypes) || 'Chưa chọn'} />
               <Info k="Tài nguyên" v={`${(it.resources || []).length} mục`} />
-              {ownerName(it.ownerId) && <Info k="Người tạo" v={ownerName(it.ownerId)} />}
               <Info k="Cập nhật" v={fmtDate(it.updatedAt || it.createdAt)} />
               <Info k="Chia sẻ" v={it.isPublic ? 'Công khai' : 'Không công khai'} />
             </div>
             {canEdit(it) && (
-              <div className="rounded-3xl border border-slate-100 bg-white p-3 shadow-sm space-y-1.5">
-                <button onClick={() => handleTogglePublic(it)} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold text-slate-600 hover:bg-slate-50">{it.isPublic ? <Lock className="h-4 w-4" /> : <Globe className="h-4 w-4" />} {it.isPublic ? 'Tắt công khai' : 'Chia sẻ công khai'}</button>
-                <button onClick={() => handleDeleteItem(it)} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold text-rose-500 hover:bg-rose-50"><Trash2 className="h-4 w-4" /> Xóa bài tập</button>
+              <div className="mt-3 flex gap-1.5 border-t border-slate-100 pt-3">
+                <button onClick={() => handleTogglePublic(it)} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-2 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-100">{it.isPublic ? <Lock className="h-3.5 w-3.5" /> : <Globe className="h-3.5 w-3.5" />} {it.isPublic ? 'Tắt công khai' : 'Công khai'}</button>
+                <button onClick={() => handleDeleteItem(it)} className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-rose-50 px-3 py-2 text-[11px] font-bold text-rose-600 hover:bg-rose-100"><Trash2 className="h-3.5 w-3.5" /> Xóa</button>
               </div>
             )}
           </div>
@@ -477,6 +465,8 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
 
   const total = scoped.length;
   return (
+    <div className="space-y-5 animate-fadeIn">
+    <Banner onBack={onExit} backTitle="Quay lại" icon={<BookMarked className="h-6 w-6" />} title="Ngân hàng bài tập" subtitle="Lưu, chia sẻ và dùng lại bài tập theo môn cho các lớp." />
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[240px_1fr]">
       {/* Cột môn học */}
       <div className="h-fit rounded-3xl border border-slate-100 bg-white p-3 shadow-sm">
@@ -641,7 +631,26 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
         {shown.length > 0 && <Pager pg={pg} total={shown.length} unit="bài tập" sizes={[12, 24, 48, 96]} />}
       </div>
     </div>
+    </div>
   );
+}
+
+// Banner đầu trang giống E-Learning: nút quay lại, biểu tượng, tiêu đề, mô tả, nút thao tác bên phải.
+function Banner({ onBack, backTitle, icon, title, subtitle, actions }: { onBack?: () => void; backTitle?: string; icon: React.ReactNode; title: string; subtitle?: string; actions?: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+      {onBack && <button onClick={onBack} title={backTitle} className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 transition-colors hover:bg-brand-light hover:text-brand"><ArrowLeft className="h-5 w-5" /></button>}
+      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand">{icon}</span>
+      <div className="min-w-0 flex-1">
+        <h1 className="text-lg font-black leading-tight tracking-tight text-slate-900 sm:text-2xl">{title}</h1>
+        {subtitle && <p className="mt-0.5 truncate text-sm font-medium text-slate-500">{subtitle}</p>}
+      </div>
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+    </div>
+  );
+}
+function HeadBtn({ children, icon, onClick, primary }: { children: React.ReactNode; icon: React.ReactNode; onClick: () => void; primary?: boolean }) {
+  return <button onClick={onClick} className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-bold transition-colors ${primary ? 'bg-brand text-white hover:bg-brand-hover' : 'border border-slate-200 bg-white text-slate-600 hover:border-brand/30 hover:text-brand'}`}>{icon}{children}</button>;
 }
 
 function Info({ k, v }: { k: string; v: string }) {
