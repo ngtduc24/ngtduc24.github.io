@@ -856,7 +856,9 @@ export default function App() {
   }
 
   // Link xem bài tập trong ngân hàng: ai có link đều xem được, không cần MSSV.
-  const bankShareToken = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('bt') : null;
+  const bankShareToken = typeof window !== 'undefined'
+    ? (new URLSearchParams(window.location.search).get('bt') || (window.location.pathname.match(/^\/bt\/([a-z0-9]{6,40})\/?$/) || [])[1] || null)
+    : null;
   if (bankShareToken) {
     return <EduBankShareView token={bankShareToken} />;
   }
