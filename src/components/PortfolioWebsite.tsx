@@ -1629,7 +1629,7 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
                             <div>
                               <h3 className="text-base font-black text-slate-900">Ghi chú của học viên</h3>
                               <p className="text-xs text-slate-400 font-medium mt-1">
-                                Các ghi chú sẽ được tự động lưu trữ riêng tư cho bài học này.
+                                Ghi chú được tự động lưu cho bài học này.
                               </p>
                             </div>
                             

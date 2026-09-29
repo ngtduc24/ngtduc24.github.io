@@ -1,7 +1,7 @@
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FileUser, Plus, Pencil, Copy, Trash2, FileDown, FileText, ArrowLeft, Save, ChevronDown, ChevronUp,
-  ArrowUp, ArrowDown, X, ImagePlus, Lock, Eye, PanelLeft, List, LayoutGrid,
+  ArrowUp, ArrowDown, X, ImagePlus, Eye, PanelLeft, List, LayoutGrid,
 } from 'lucide-react';
 import { UserAccount } from '../../types';
 import {
@@ -9,7 +9,7 @@ import {
 } from '../../lib/scientificCv';
 import { renderCvBody, CV_STYLES, printCv, downloadCvWord } from '../../lib/scientificCvRender';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
-import { PageHeader, Card, Button, IconButton, Input, Textarea, Field, Badge, EmptyState, Spinner, Modal, Select, cx } from '../ui';
+import { PageHeader, Card, Button, IconButton, Input, Textarea, Field, EmptyState, Spinner, Modal, Select, cx } from '../ui';
 import { useConfirmation } from '../ConfirmationContext';
 import { useNotifications } from '../NotificationContext';
 
@@ -68,8 +68,7 @@ function CvList({ currentUser, onEdit }: { currentUser: UserAccount; onEdit: (id
       <PageHeader
         icon={<FileUser size={22} />}
         title="Lý lịch khoa học"
-        description="Tạo và quản lý lý lịch khoa học của riêng bạn theo mẫu, xuất ra PDF hoặc Word để nộp cho từng trường."
-        badge={<Badge tone="brand" icon={<Lock size={12} />}>Riêng tư</Badge>}
+        description="Tạo và quản lý lý lịch khoa học theo mẫu, xuất ra PDF hoặc Word để nộp cho từng trường."
         actions={<div className="flex items-center gap-2">
           <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1" role="group" aria-label="Kiểu hiển thị">
             <IconButton label="Dạng danh sách" size="sm" variant={view === 'list' ? 'primary' : 'ghost'} onClick={() => changeView('list')}><List size={16} /></IconButton>
@@ -425,7 +424,7 @@ function PhotoField({ value, onChange }: { value: string; onChange: (v: string) 
         {value ? <img src={value} alt="" className="w-full h-full object-cover" /> : <ImagePlus size={20} />}
       </div>
       <div className="space-y-2">
-        <p className="text-[13px] text-slate-600">Ảnh chân dung 3x4, được thu nhỏ và lưu riêng trong hồ sơ của bạn.</p>
+        <p className="text-[13px] text-slate-600">Ảnh chân dung 3x4, được thu nhỏ và lưu trong hồ sơ.</p>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" icon={<ImagePlus size={14} />} onClick={() => ref.current?.click()}>{value ? 'Đổi ảnh' : 'Chọn ảnh'}</Button>
           {value && <Button size="sm" variant="ghost" onClick={() => onChange('')}>Bỏ ảnh</Button>}

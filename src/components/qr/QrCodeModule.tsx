@@ -1,13 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  QrCode, Plus, Pencil, Trash2, Download, Copy, ExternalLink, Lock, List, LayoutGrid, FileImage,
+  QrCode, Plus, Pencil, Trash2, Download, Copy, ExternalLink, List, LayoutGrid, FileImage,
 } from 'lucide-react';
 import { UserAccount } from '../../types';
 import {
   QrItem, QrData, QrLevel, emptyQr, listQrs, createQr, updateQr, deleteQr, normalizeUrl, isValidUrl,
   qrDataUrl, downloadPng, downloadSvg, copyPng,
 } from '../../lib/qrCodes';
-import { PageHeader, Card, Button, IconButton, Input, Textarea, Field, Badge, EmptyState, Spinner, Modal, Select, SearchInput } from '../ui';
+import { PageHeader, Card, Button, IconButton, Input, Textarea, Field, EmptyState, Spinner, Modal, Select, SearchInput } from '../ui';
 import { useConfirmation } from '../ConfirmationContext';
 import { useNotifications } from '../NotificationContext';
 
@@ -88,7 +88,6 @@ export default function QrCodeModule({ currentUser: _currentUser }: Props) {
         icon={<QrCode size={22} />}
         title="Tạo mã QR"
         description="Tạo mã QR từ đường link, lưu lại để tải, chép hoặc chỉnh sửa khi cần."
-        badge={<Badge tone="brand" icon={<Lock size={12} />}>Riêng tư</Badge>}
         actions={<div className="flex items-center gap-2">
           <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1" role="group" aria-label="Kiểu hiển thị">
             <IconButton label="Dạng danh sách" size="sm" variant={view === 'list' ? 'primary' : 'ghost'} onClick={() => changeView('list')}><List size={16} /></IconButton>
