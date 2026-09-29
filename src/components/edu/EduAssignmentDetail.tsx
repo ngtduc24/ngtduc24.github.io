@@ -11,6 +11,7 @@ import {
   Copy
 } from 'lucide-react';
 import { eduFileTypeLabel } from '../../lib/eduFileTypes';
+import { EduResourceList } from './EduResources';
 import { Button, IconButton, Card, CardTitle, PageHeader, Badge, Spinner, EmptyState } from '../ui';
 import { EduAssignment, EduSubmission, EduUser, EduGradeColumn } from '../../types/edu';
 import { getSubmissions, getClassUsers, getGradeColumns } from '../../lib/edu';
@@ -95,6 +96,7 @@ export default function EduAssignmentDetail({ classId, assignmentId, onBack }: E
               dangerouslySetInnerHTML={{ __html: assignment.content || 'Không có nội dung mô tả.' }}
             />
           </Card>
+          {!!assignment.resources?.length && <Card><EduResourceList resources={assignment.resources} /></Card>}
         </div>
 
         {/* Cột phải */}

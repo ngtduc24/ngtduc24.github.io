@@ -20,6 +20,7 @@ import { EduAssignment, EduClass, EduSchool, EduSubmission, EduUser, EduGrade, E
 import { getAssignmentByLinkId, getSubmissionByMssv, saveSubmission, getGradesForUser, requestExtension, getExtensionForUser } from '../../lib/edu';
 import { eduFileTypeLabel } from '../../lib/eduFileTypes';
 import SwfPlayer, { isSwfFile } from '../SwfPlayer';
+import { EduResourceList } from './EduResources';
 import { CalendarClock, Eye } from 'lucide-react';
 import { uploadImageToCloudinary, uploadMediaToCloudinary } from '../../lib/upload';
 import { useNotifications } from '../NotificationContext';
@@ -573,6 +574,9 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                     dangerouslySetInnerHTML={{ __html: assignment.content || 'Không có hướng dẫn cụ thể.' }}
                   />
                 </div>
+
+                {/* Tài nguyên thực hành giảng viên đính kèm */}
+                <EduResourceList resources={assignment.resources} />
 
                 {/* Khung nhập văn bản trực tiếp cho bài dạng text */}
                 {isTextMode && (

@@ -35,7 +35,8 @@ import {
 import { toggleEduFileType } from '../../lib/eduFileTypes';
 import { EduAssignment, EduGradeColumn } from '../../types/edu';
 import { getGradeColumns, saveAssignment, getAssignments, getSubjects, saveSubject, getAssignmentBank, saveAssignmentBankItem } from '../../lib/edu';
-import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
+import { EduSubject, EduAssignmentBankItem, EduResource } from '../../types/edu';
+import { EduResourceEditor } from './EduResources';
 import { useNotifications } from '../NotificationContext';
 import { uploadImageToCloudinary } from '../../lib/upload';
 import MediaSourcePicker from '../MediaSourcePicker';
@@ -66,6 +67,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
   const [deadline, setDeadline] = useState('');
   const [allowLate, setAllowLate] = useState(false);
   const [allowSupplement, setAllowSupplement] = useState(true);
+  const [resources, setResources] = useState<EduResource[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
 
   // Ngân hàng bài tập theo môn
@@ -136,6 +138,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
     if (!item) return;
     setTitle(item.title);
     setAllowedTypes(item.allowedFileTypes || ['pdf']);
+    setResources(item.resources || []);
     editor?.commands.setContent(item.content || '');
   };
 
@@ -180,6 +183,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
             setDeadline(assignment.deadline ? assignment.deadline.slice(0, 16) : '');
             setAllowLate(!!assignment.allowLate);
             setAllowSupplement(assignment.allowSupplement !== false);
+            setResources(assignment.resources || []);
             editor?.commands.setContent(assignment.content || '');
           }
         } else if (filteredColumns.length > 0) {
@@ -216,6 +220,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
         deadline: deadline ? new Date(deadline).toISOString() : undefined,
         allowLate,
         allowSupplement,
+        resources,
       });
 
       // Tùy chọn lưu bài này vào ngân hàng để tái dùng cho lớp khác.
@@ -226,6 +231,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
             title,
             content: editor?.getHTML(),
             allowedFileTypes: allowedTypes,
+            resources,
           });
         } catch (bankErr) {
           console.error(bankErr);
@@ -431,6 +437,8 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
               </div>
             </div>
           </div>
+
+          <EduResourceEditor value={resources} onChange={setResources} className="pt-4 border-t border-slate-50" />
 
           <div className="pt-4 border-t border-slate-50 space-y-3">
             {/* Ẩn ô lưu vào ngân hàng khi đang dùng bài chọn sẵn từ ngân hàng bài tập. */}

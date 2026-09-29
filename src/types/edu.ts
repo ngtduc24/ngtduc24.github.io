@@ -53,10 +53,20 @@ export interface EduAssignmentBankItem {
   title: string;
   content?: string;
   allowedFileTypes: string[];
+  resources?: EduResource[];
   createdAt: string;
   updatedAt: string;
   ownerId?: string;
   isPublic?: boolean;
+}
+
+// Tài nguyên thực hành đính kèm bài tập: tệp tải lên Cloudinary hoặc đường link (Google Drive, OneDrive...).
+export interface EduResource {
+  id: string;
+  name: string;
+  url: string;
+  kind: 'file' | 'link';
+  size?: number;
 }
 
 export interface EduAssignment {
@@ -71,6 +81,7 @@ export interface EduAssignment {
   deadline?: string;
   allowLate?: boolean; // cho phép nộp bài sau khi hết hạn
   allowSupplement?: boolean; // cho phép nộp bổ sung sau khi đã nộp
+  resources?: EduResource[]; // tài nguyên thực hành để sinh viên tải về
   createdAt: string;
   updatedAt: string;
   shareLinkId: string;

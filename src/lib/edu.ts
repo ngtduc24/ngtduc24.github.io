@@ -118,6 +118,7 @@ function mapAssignment(a: any): EduAssignment {
     deadline: a.deadline,
     allowLate: a.allow_late ?? false,
     allowSupplement: a.allow_supplement ?? true,
+    resources: Array.isArray(a.resources) ? a.resources : [],
     createdAt: a.created_at,
     updatedAt: a.updated_at,
     shareLinkId: a.share_link_id
@@ -142,6 +143,7 @@ function mapBankItem(b: any): EduAssignmentBankItem {
     title: b.title,
     content: b.content,
     allowedFileTypes: b.allowed_file_types || [],
+    resources: Array.isArray(b.resources) ? b.resources : [],
     createdAt: b.created_at,
     updatedAt: b.updated_at,
     ownerId: b.owner_id,
@@ -370,7 +372,8 @@ export async function saveAssignment(assignment: Partial<EduAssignment>) {
     subject_id: assignment.subjectId,
     bank_id: assignment.bankId,
     allow_late: assignment.allowLate,
-    allow_supplement: assignment.allowSupplement
+    allow_supplement: assignment.allowSupplement,
+    resources: assignment.resources
   };
   Object.keys(baseData).forEach(key => baseData[key] === undefined && delete baseData[key]);
   Object.keys(extraCols).forEach(key => extraCols[key] === undefined && delete extraCols[key]);
@@ -439,6 +442,7 @@ export async function saveAssignmentBankItem(item: Partial<EduAssignmentBankItem
     title: item.title,
     content: item.content,
     allowed_file_types: item.allowedFileTypes,
+    resources: item.resources,
     owner_id: item.ownerId ?? getCtx().userId ?? undefined,
     is_public: item.isPublic === true
   };

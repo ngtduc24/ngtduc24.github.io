@@ -11,6 +11,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, Link as LinkIcon, Undo, Redo
 } from 'lucide-react';
 import { toggleEduFileType } from '../../lib/eduFileTypes';
+import { EduResourceEditor, EduResourceList } from './EduResources';
 import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
 import { UserAccount } from '../../types';
 import { getSubjects, saveSubject, deleteSubject, getAssignmentBank, saveAssignmentBankItem, deleteAssignmentBankItem } from '../../lib/edu';
@@ -171,6 +172,7 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
         title: editing.title,
         content: editor?.getHTML() || '',
         allowedFileTypes: editing.allowedFileTypes && editing.allowedFileTypes.length ? editing.allowedFileTypes : ['pdf'],
+        resources: editing.resources || [],
         ownerId: editing.ownerId,
         isPublic: editing.isPublic === true,
       });
@@ -387,6 +389,8 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
               </div>
             </div>
 
+            <EduResourceEditor value={editing.resources || []} onChange={v => setEditing(prev => prev ? { ...prev, resources: v } : prev)} />
+
             <label className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -396,7 +400,7 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
               />
               <span className="min-w-0">
                 <span className="block text-[12px] font-bold text-slate-700">Chia sẻ công khai cho mọi người</span>
-                <span className="block text-[11px] text-slate-400 leading-snug">Bật thì tất cả người dùng đều thấy và dùng lại được bài này. Tắt thì chỉ mình bạn thấy.</span>
+                <span className="block text-[11px] text-slate-400 leading-snug">Bật thì tất cả người dùng đều thấy và dùng lại được bài này.</span>
               </span>
             </label>
 
@@ -484,6 +488,7 @@ export default function EduAssignmentBank({ currentUser }: { currentUser: UserAc
                   ) : (
                     <p className="text-sm text-slate-400 italic">Bài tập này chưa có phần yêu cầu và hướng dẫn.</p>
                   )}
+                  <EduResourceList resources={viewingItem.resources} className="mt-5 border-t border-slate-100 pt-4" />
                 </div>
               </div>
                   )}
