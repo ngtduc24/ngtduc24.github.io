@@ -134,6 +134,9 @@ export default function App() {
   // Đồng bộ tiêu đề trang (SEO), OpenGraph và URL hai chiều
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    // Các link công khai riêng (xem bài tập, làm trắc nghiệm, xem bài giảng...) giữ nguyên địa chỉ, không gắn ?tab.
+    const sp = new URLSearchParams(window.location.search);
+    if (['bt', 'quiz', 'elesson', 'elview', 'vr'].some(k => sp.has(k)) || window.location.pathname.startsWith('/bt/')) return;
 
     if (entryView === 'portfolio') {
       updateDocumentSEO('portfolio');

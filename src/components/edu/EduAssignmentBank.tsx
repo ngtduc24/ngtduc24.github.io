@@ -96,7 +96,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
 
   // Bản đồ uid -> tên người tạo
   const [userNames, setUserNames] = useState<Record<string, string>>({});
-  const ownerName = (ownerId?: string) => (ownerId ? userNames[ownerId] || '' : '');
+  const ownerName = (ownerId?: string) => (ownerId ? userNames[ownerId] || items.find(i => i.ownerId === ownerId && i.ownerName)?.ownerName || '' : '');
   const subjName = (id?: string) => subjects.find(s => s.id === id)?.name || '';
 
   const reloadItems = () => getAssignmentBank().then(setItems).catch(() => setItems([]));
