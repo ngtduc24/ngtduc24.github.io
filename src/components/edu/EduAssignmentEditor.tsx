@@ -37,6 +37,7 @@ import { EduAssignment, EduGradeColumn } from '../../types/edu';
 import { getGradeColumns, saveAssignment, getAssignments, getSubjects, saveSubject, getAssignmentBank, saveAssignmentBankItem } from '../../lib/edu';
 import { EduSubject, EduAssignmentBankItem, EduResource } from '../../types/edu';
 import { EduResourceEditor } from './EduResources';
+import DateTime24, { isoToLocalInput, localInputToIso } from '../ui/DateTime24';
 import { useNotifications } from '../NotificationContext';
 import { uploadImageToCloudinary } from '../../lib/upload';
 import MediaSourcePicker from '../MediaSourcePicker';
@@ -180,7 +181,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
             setGradeColumnId(assignment.gradeColumnId || '');
             setSubjectId(assignment.subjectId || '');
             setAllowedTypes(assignment.allowedFileTypes || []);
-            setDeadline(assignment.deadline ? assignment.deadline.slice(0, 16) : '');
+            setDeadline(isoToLocalInput(assignment.deadline));
             setAllowLate(!!assignment.allowLate);
             setAllowSupplement(assignment.allowSupplement !== false);
             setResources(assignment.resources || []);
@@ -217,7 +218,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
         title,
         content: editor?.getHTML(),
         allowedFileTypes: allowedTypes,
-        deadline: deadline ? new Date(deadline).toISOString() : undefined,
+        deadline: localInputToIso(deadline) ?? undefined,
         allowLate,
         allowSupplement,
         resources,
@@ -392,15 +393,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-slate-400 uppercase">Thời hạn nộp bài</label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input 
-                  type="datetime-local" 
-                  value={deadline}
-                  onChange={e => setDeadline(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 focus:border-brand focus:outline-none rounded-xl pl-10 pr-4 py-2.5 text-xs font-bold transition-all"
-                />
-              </div>
+              <DateTime24 value={deadline} onChange={setDeadline} />
               <button type="button" onClick={() => setAllowLate(v => !v)} className="mt-2 flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left transition-colors hover:border-brand/30">
                 <span className="min-w-0">
                   <span className="block text-xs font-bold text-slate-700">Cho phép nộp trễ</span>

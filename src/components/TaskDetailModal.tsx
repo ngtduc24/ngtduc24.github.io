@@ -393,7 +393,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
                 <Calendar className="w-4 h-4 text-brand shrink-0" />
                 <div>
                   <span className="text-[10px] text-slate-400 block font-normal">Hạn chót (Deadline)</span>
-                  <span className="text-slate-700">{new Date(localTask.deadline).toLocaleString()}</span>
+                  <span className="text-slate-700">{new Date(localTask.deadline).toLocaleString('vi-VN', { hour12: false })}</span>
                 </div>
               </div>
               {isAdmin && localTask.hasIncome && (
@@ -722,7 +722,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
                         <div className="flex justify-between items-start flex-wrap gap-1 mb-1">
                           <span className="font-bold text-xs text-slate-800">{entry.action}</span>
                           <span className="text-[10px] text-slate-400">
-                            {new Date(entry.timestamp).toLocaleString()}
+                            {new Date(entry.timestamp).toLocaleString('vi-VN', { hour12: false })}
                           </span>
                         </div>
                         {entry.details && <p className="text-xs text-slate-600 mb-1 leading-relaxed">{entry.details}</p>}

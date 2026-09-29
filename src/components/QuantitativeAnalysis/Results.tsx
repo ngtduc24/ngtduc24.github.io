@@ -71,7 +71,7 @@ export default function Results() {
                       <FileText className="w-4 h-4 text-brand" />
                       {getModelName(res.model)}
                     </h4>
-                    <span className="text-xs text-slate-400">{new Date(res.timestamp).toLocaleTimeString()}</span>
+                    <span className="text-xs text-slate-400">{new Date(res.timestamp).toLocaleTimeString('vi-VN', { hour12: false })}</span>
                   </div>
                   
                   <div className="p-4">

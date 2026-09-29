@@ -1,5 +1,6 @@
 import { uploadImageToCloudinary } from '../lib/upload';
 import React, { useState } from 'react';
+import { Time24 } from './ui/DateTime24';
 import { Plus, X, Upload, Trash2 } from 'lucide-react';
 import { Task, Subtask, TaskTag, UserAccount, AppSettings } from '../types';
 import { saveTaskToSupabase, addTaskHistory } from '../lib/tasks';
@@ -72,7 +73,7 @@ export default function TaskForm({ onClose, onCreated, users, settings, taskToEd
         "Tạo công việc",
         currentUser.id,
         currentUser.fullName,
-        `Tên công việc: "${name}", Loại: "${tag}", Hạn chót: ${dead.toLocaleString()}`
+        `Tên công việc: "${name}", Loại: "${tag}", Hạn chót: ${dead.toLocaleString('vi-VN', { hour12: false })}`
       );
     } else {
       newTask = addTaskHistory(
@@ -154,7 +155,7 @@ export default function TaskForm({ onClose, onCreated, users, settings, taskToEd
         </select>
         <div className="flex gap-2">
           <input type="date" value={deadlineDate} onChange={(e) => setDeadlineDate(e.target.value)} className="flex-1 px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand/20 rounded-xl text-xs bg-white" />
-          <input type="time" value={deadlineTime} onChange={(e) => setDeadlineTime(e.target.value)} className="flex-1 px-4 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand/20 rounded-xl text-xs bg-white" />
+          <div className="flex flex-1 items-center justify-center px-4 py-2 border border-slate-200 rounded-xl text-xs bg-white"><Time24 value={deadlineTime} onChange={setDeadlineTime} /></div>
         </div>
         <label className="text-xs font-bold text-slate-500">Ảnh bìa</label>
         <MediaSourcePicker onSelect={setCoverImage} accept="image/*" resourceType="image" folder="tasks/covers" category="Ảnh dự án & công việc" label="Chọn ảnh bìa" disabled={isUploadingImage} />{isUploadingImage && <p className="text-xs text-brand mt-1">Đang tải ảnh lên Cloudinary...</p>}

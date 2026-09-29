@@ -17,6 +17,7 @@ import {
 } from '../../lib/quiz';
 import QuizRichText from './QuizRichText';
 import { fold, usePaging, Pager } from './ListPager';
+import DateTime24, { isoToLocalInput, localInputToIso } from '../ui/DateTime24';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
 import { exportExamToPdf, ExamHeader } from '../../lib/quizPdf';
 import { FileDown } from 'lucide-react';
@@ -982,8 +983,6 @@ function QuizDetail({ quiz, subjects, onEdit, onAssign, onDelete, onBack, onQuiz
 
 // ---------- Thiết lập đề ----------
 function QuizSettings({ form, patch, totalQuestions, onSave, saving }: { form: Quiz; patch: (p: Partial<Quiz>) => void; totalQuestions: number; onSave: () => void; saving: boolean; }) {
-  const toLocal = (v?: string | null) => v ? new Date(v).toISOString().slice(0, 16) : '';
-  const fromLocal = (v: string) => v ? new Date(v).toISOString() : null;
   const row = 'flex flex-col gap-1.5';
   const lbl = 'text-[11px] font-bold uppercase tracking-wider text-slate-500';
   const inp = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-brand focus:bg-white';
@@ -1007,8 +1006,8 @@ function QuizSettings({ form, patch, totalQuestions, onSave, saving }: { form: Q
       <div className="grid gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:grid-cols-2">
         <div className={row}><label className={lbl}>Thời gian làm bài (phút)</label><input type="number" min={1} value={form.duration_minutes} onChange={e => patch({ duration_minutes: Math.max(1, Number(e.target.value) || 1) })} className={inp} /></div>
         <div className={row}><label className={lbl}>Số câu rút ngẫu nhiên (để trống = tất cả {totalQuestions})</label><input type="number" min={1} value={form.random_pick_count ?? ''} onChange={e => patch({ random_pick_count: e.target.value ? Number(e.target.value) : null })} placeholder={`${totalQuestions}`} className={inp} /></div>
-        <div className={row}><label className={lbl}>Mở đề từ</label><input type="datetime-local" value={toLocal(form.open_at)} onChange={e => patch({ open_at: fromLocal(e.target.value) })} className={inp} /></div>
-        <div className={row}><label className={lbl}>Đóng đề lúc</label><input type="datetime-local" value={toLocal(form.close_at)} onChange={e => patch({ close_at: fromLocal(e.target.value) })} className={inp} /></div>
+        <div className={row}><label className={lbl}>Mở đề từ</label><DateTime24 value={isoToLocalInput(form.open_at)} onChange={v => patch({ open_at: localInputToIso(v) })} defaultTime="07:00" className="py-2.5 text-sm" /></div>
+        <div className={row}><label className={lbl}>Đóng đề lúc</label><DateTime24 value={isoToLocalInput(form.close_at)} onChange={v => patch({ close_at: localInputToIso(v) })} className="py-2.5 text-sm" /></div>
         <div className={row}><label className={lbl}>Số lần được làm</label><input type="number" min={1} value={form.max_attempts} onChange={e => patch({ max_attempts: Math.max(1, Number(e.target.value) || 1) })} className={inp} /></div>
         <div className={row}><label className={lbl}>Cách lấy điểm</label>
           <select value={form.grading_method} onChange={e => patch({ grading_method: e.target.value as any })} className={inp}>

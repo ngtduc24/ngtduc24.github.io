@@ -76,7 +76,7 @@ export default function TaskRow({ task, users, currentUser, progress, onAction, 
         <div className='cursor-pointer min-w-0 flex-1' onClick={() => !task.isDeleted && onView(task)}>
           <h3 className={`font-bold text-sm sm:text-base leading-snug break-words ${task.status === 'Cancelled' ? 'line-through text-slate-400' : 'text-slate-800'}`}>{task.name}</h3>
           <p className="text-xs text-slate-500 mt-0.5">{task.tag} • {task.status} {isOverdue && <span className="text-red-500 font-bold"> (Quá hạn)</span>} {isWarning && <span className="text-yellow-500 font-bold"> (Sắp đến hạn)</span>}</p>
-          <p className="text-xs text-slate-400 mt-0.5">{new Date(task.deadline).toLocaleString()}</p>
+          <p className="text-xs text-slate-400 mt-0.5">{new Date(task.deadline).toLocaleString('vi-VN', { hour12: false })}</p>
           <div className="flex flex-wrap gap-1.5 mt-1.5">
              <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">Tạo bởi: {creatorUser?.fullName || 'Hệ thống'}</span>
              {assignedUser && <span className="text-[10px] bg-brand/10 text-brand px-1.5 py-0.5 rounded font-bold">Giao cho: {assignedUser.fullName}</span>}
@@ -92,7 +92,7 @@ export default function TaskRow({ task, users, currentUser, progress, onAction, 
               <span className="block text-[11px] font-bold text-emerald-800">Đã hoàn thành</span>
               <span className="block text-[10px] text-brand-hover truncate">
                 {task.completionReport
-                  ? `${task.completionReport.completedByName} • ${new Date(task.completionReport.completedAt).toLocaleString()}`
+                  ? `${task.completionReport.completedByName} • ${new Date(task.completionReport.completedAt).toLocaleString('vi-VN', { hour12: false })}`
                   : 'Công việc đã được nghiệm thu'}
               </span>
             </div>
