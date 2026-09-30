@@ -26,6 +26,22 @@ const fmtDeadline = (iso?: string | null) => {
   return `${p(d.getHours())}:${p(d.getMinutes())} ngày ${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
 };
 
+// Video không in được ra giấy, đổi thành dòng "Video: <link>" để người đọc bản PDF vẫn mở được.
+export function videosToLinks(html: string): string {
+  const toWatch = (src: string) => {
+    const yt = src.match(/youtube(?:-nocookie)?\.com\/embed\/([^?&#/]+)/);
+    if (yt) return `https://www.youtube.com/watch?v=${yt[1]}`;
+    const vm = src.match(/player\.vimeo\.com\/video\/(\d+)/);
+    if (vm) return `https://vimeo.com/${vm[1]}`;
+    return src.replace(/\/preview(\?.*)?$/, '/view');
+  };
+  const line = (src: string) => `<p class="video-link">▶ Video: <a href="${esc(toWatch(src))}">${esc(toWatch(src))}</a></p>`;
+  return (html || '')
+    .replace(/<div[^>]*data-video-embed[^>]*>\s*<iframe[^>]*src=["']([^"']+)["'][^>]*>\s*<\/iframe>\s*<\/div>/gi, (_m, src) => line(src))
+    .replace(/<iframe[^>]*src=["']([^"']+)["'][^>]*>\s*<\/iframe>/gi, (_m, src) => line(src))
+    .replace(/<video[^>]*src=["']([^"']+)["'][^>]*>(?:[\s\S]*?<\/video>)?/gi, (_m, src) => line(src));
+}
+
 function buildHtml(a: AssignmentPdfInput): string {
   const top = a.subjectName ? `Bài tập môn ${a.subjectName}` : 'Bài tập';
   const bottom = a.author ? `Giảng viên: ${a.author}` : '';
@@ -62,13 +78,15 @@ function buildHtml(a: AssignmentPdfInput): string {
   .content td, .content th { border: 1px solid #cbd5e1; padding: 6px 8px; }
   .res ol { margin: 0; padding-left: 20px; font-size: 13px; }
   .res li { margin-bottom: 6px; }
+  .video-link { background: #f1f5f9; border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+  .video-link a { color: #2563eb; word-break: break-all; }
   .res a { color: #2563eb; word-break: break-all; font-size: 12px; text-decoration: none; }
 </style></head>
 <body>
   <h1>${esc(a.title || 'Bài tập')}</h1>
   ${rows.length ? `<table class="meta">${rows.join('')}</table>` : ''}
   <h2>Yêu cầu và hướng dẫn</h2>
-  <div class="content">${a.content && a.content.trim() ? a.content : '<p><i>Không có hướng dẫn cụ thể.</i></p>'}</div>
+  <div class="content">${a.content && a.content.trim() ? videosToLinks(a.content) : '<p><i>Không có hướng dẫn cụ thể.</i></p>'}</div>
   ${res}
 </body></html>`;
 }

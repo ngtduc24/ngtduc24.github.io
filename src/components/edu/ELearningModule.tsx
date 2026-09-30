@@ -577,7 +577,7 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
           ) : (
             <>
               <input value={sec.title} onChange={e => markDirty(sec.id, { title: e.target.value })} placeholder="Tiêu đề phần" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold outline-none focus:border-brand" />
-              <QuizRichText value={sec.content} onChange={html => markDirty(sec.id, { content: html })} placeholder="Soạn nội dung bài giảng..." />
+              <QuizRichText allowVideo value={sec.content} onChange={html => markDirty(sec.id, { content: html })} placeholder="Soạn nội dung bài giảng..." />
 
               {/* Đính kèm tài nguyên */}
               <div>

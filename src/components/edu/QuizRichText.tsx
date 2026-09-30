@@ -5,22 +5,26 @@ import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Bold, Italic, List, ListOrdered, Image as ImageIcon } from 'lucide-react';
 import MediaSourcePicker from '../MediaSourcePicker';
+import { VideoNode } from '../../lib/tiptapVideo';
+import VideoInsertButtons from './VideoInsertButtons';
 
 interface QuizRichTextProps {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
+  allowVideo?: boolean; // bật nút chèn video (dùng cho nội dung bài giảng E-Learning)
 }
 
 /**
  * Trình soạn thảo nội dung câu hỏi trắc nghiệm, dùng lại đúng bộ TipTap và cách
  * chèn ảnh qua Cloudinary như trình soạn bài tập hiện có.
  */
-export default function QuizRichText({ value, onChange, placeholder }: QuizRichTextProps) {
+export default function QuizRichText({ value, onChange, placeholder, allowVideo }: QuizRichTextProps) {
   const editor = useEditor({
     extensions: [
       StarterKit,
       Image,
+      VideoNode,
       Placeholder.configure({ placeholder: placeholder || 'Nhập nội dung câu hỏi...' }),
     ],
     content: value || '',
@@ -54,6 +58,7 @@ export default function QuizRichText({ value, onChange, placeholder }: QuizRichT
           label=""
           className="p-2 rounded-lg text-slate-500 hover:bg-slate-200 flex items-center"
         />
+        {allowVideo && <VideoInsertButtons editor={editor} folder="elearning-videos" />}
       </div>
       <EditorContent editor={editor} />
     </div>

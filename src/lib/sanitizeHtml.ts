@@ -8,14 +8,23 @@ const ALLOWED_TAGS = new Set([
   'A', 'ABBR', 'B', 'BLOCKQUOTE', 'BR', 'CAPTION', 'CODE', 'DD', 'DIV', 'DL', 'DT',
   'EM', 'FIGCAPTION', 'FIGURE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HR', 'I',
   'IMG', 'LI', 'MARK', 'OL', 'P', 'PRE', 'S', 'SMALL', 'SPAN', 'STRONG', 'SUB',
-  'SUP', 'TABLE', 'TBODY', 'TD', 'TFOOT', 'TH', 'THEAD', 'TR', 'U', 'UL'
+  'SUP', 'TABLE', 'TBODY', 'TD', 'TFOOT', 'TH', 'THEAD', 'TR', 'U', 'UL',
+  // Video chèn trong bài giảng, bài tập: thẻ video (tệp trực tiếp) và iframe nhúng từ nguồn tin cậy.
+  'VIDEO', 'SOURCE', 'IFRAME'
 ]);
+
+// Khung nhúng chỉ giữ lại khi đến từ các nguồn video này, nguồn khác bị xoá.
+const EMBED_HOSTS = new Set(['www.youtube.com', 'youtube.com', 'www.youtube-nocookie.com', 'player.vimeo.com', 'drive.google.com']);
 
 const ALLOWED_ATTRS: Record<string, Set<string>> = {
   A: new Set(['href', 'title', 'target', 'rel']),
   IMG: new Set(['src', 'alt', 'title', 'width', 'height', 'loading']),
   TD: new Set(['colspan', 'rowspan']),
-  TH: new Set(['colspan', 'rowspan', 'scope'])
+  TH: new Set(['colspan', 'rowspan', 'scope']),
+  VIDEO: new Set(['src', 'controls', 'preload', 'playsinline', 'poster', 'width', 'height']),
+  SOURCE: new Set(['src', 'type']),
+  IFRAME: new Set(['src', 'allow', 'allowfullscreen', 'frameborder', 'loading', 'width', 'height']),
+  DIV: new Set(['data-video-embed'])
 };
 
 const GLOBAL_ATTRS = new Set(['class', 'style', 'dir']);
@@ -124,6 +133,15 @@ export const sanitizeHtml = (dirty: string | null | undefined): string => {
         }
       }
 
+      if (node.tagName === 'IFRAME') {
+        const u = resolveUrl(node.getAttribute('src') || '');
+        if (!u || u.protocol !== 'https:' || !EMBED_HOSTS.has(u.hostname)) { doomed.push(node); node = walker.nextNode() as Element | null; continue; }
+        node.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation allow-popups');
+      }
+      if (node.tagName === 'VIDEO' && !node.getAttribute('src') && !node.querySelector('source[src]')) {
+        doomed.push(node); node = walker.nextNode() as Element | null; continue;
+      }
+
       if (node.tagName === 'A') {
         // Chặn tab-nabbing khi mở liên kết ra cửa sổ mới.
         node.setAttribute('rel', 'noopener noreferrer nofollow');
@@ -134,7 +152,7 @@ export const sanitizeHtml = (dirty: string | null | undefined): string => {
 
   const DROP_ENTIRELY = new Set([
     'SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'LINK', 'META', 'BASE',
-    'FORM', 'INPUT', 'BUTTON', 'TEXTAREA', 'SELECT', 'AUDIO', 'VIDEO', 'SOURCE',
+    'FORM', 'INPUT', 'BUTTON', 'TEXTAREA', 'SELECT', 'AUDIO',
     'SVG', 'MATH', 'TEMPLATE', 'NOSCRIPT'
   ]);
 

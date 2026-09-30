@@ -66,7 +66,7 @@ export default function EduBankShareView({ token }: { token: string }) {
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-5 px-4 py-6 lg:grid-cols-[1fr_260px]">
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
           <p className="mb-3 text-[11px] font-black uppercase tracking-wider text-slate-400">Yêu cầu và hướng dẫn</p>
-          {item.content && item.content.replace(/<[^>]+>/g, '').trim() || /<img/i.test(item.content || '')
+          {item.content && item.content.replace(/<[^>]+>/g, '').trim() || /<(img|video|iframe)/i.test(item.content || '')
             ? <div className="prose prose-slate max-w-none break-words text-[15px] leading-relaxed text-slate-700 [overflow-wrap:anywhere] [&_a]:break-all" dangerouslySetInnerHTML={{ __html: item.content || '' }} />
             : <p className="text-sm italic text-slate-400">Bài tập này chưa có phần yêu cầu và hướng dẫn.</p>}
           <EduResourceList resources={item.resources} className="mt-6 border-t border-slate-100 pt-5" />

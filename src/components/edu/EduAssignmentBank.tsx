@@ -26,6 +26,9 @@ import { useNotifications } from '../NotificationContext';
 import { askText, copyText } from '../ui/Dialogs';
 import { useConfirmation } from '../ConfirmationContext';
 import { fold, usePaging, Pager } from './ListPager';
+import MediaSourcePicker from '../MediaSourcePicker';
+import { VideoNode } from '../../lib/tiptapVideo';
+import VideoInsertButtons from './VideoInsertButtons';
 
 const FORMAT_OPTIONS = [
   { id: 'any', label: 'Mọi loại tệp' },
@@ -87,6 +90,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
     extensions: [
       StarterKit,
       Image,
+      VideoNode,
       Link.configure({ openOnClick: false }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Placeholder.configure({ placeholder: 'Nhập yêu cầu và hướng dẫn bài tập...' }),
@@ -355,10 +359,10 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
                   <button onClick={() => editor?.chain().focus().setTextAlign('center').run()} className={tbBtn(!!editor?.isActive({ textAlign: 'center' }))}><AlignCenter className="w-4 h-4" /></button>
                   <button onClick={() => editor?.chain().focus().setTextAlign('right').run()} className={tbBtn(!!editor?.isActive({ textAlign: 'right' }))}><AlignRight className="w-4 h-4" /></button>
                   <div className="w-px h-6 bg-slate-200 mx-1 self-center" />
-                  <label className={`p-2 rounded-lg text-slate-500 cursor-pointer flex items-center ${uploadingImage ? 'opacity-50 pointer-events-none' : 'hover:bg-slate-200'}`} title="Tải ảnh lên">
-                    <input type="file" accept="image/*" className="hidden" onChange={handleInsertImageFile} disabled={uploadingImage} />
-                    <ImageIcon className="w-4 h-4" />
-                  </label>
+                  <span title="Chèn ảnh từ thư viện hoặc tải lên" className="inline-flex">
+                    <MediaSourcePicker onSelect={url => editor?.chain().focus().setImage({ src: url }).run()} accept="image/*" resourceType="image" folder="edu-assignments" icon={ImageIcon} label="" className="p-2 rounded-lg text-slate-500 hover:bg-slate-200 flex items-center" />
+                  </span>
+                  <VideoInsertButtons editor={editor} folder="edu-assignments" />
                   <button onClick={async () => { const url = await askText({ title: 'Chèn liên kết', placeholder: 'https://...', okText: 'Chèn', defaultValue: editor?.getAttributes('link').href || '' }); if (url) editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run(); }} className={tbBtn(!!editor?.isActive('link'))}><LinkIcon className="w-4 h-4" /></button>
                   <div className="flex-1" />
                   <button onClick={() => editor?.chain().focus().undo().run()} className="p-2 rounded-lg hover:bg-slate-200 text-slate-500"><Undo className="w-4 h-4" /></button>
@@ -422,7 +426,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
           </>} />
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_260px]">
           <div className="min-w-0 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7">
-            {plain(it.content) || firstImage(it.content)
+            {plain(it.content) || /<(img|video|iframe)/i.test(it.content || '')
               ? <div className="prose prose-slate max-w-none break-words text-[15px] leading-relaxed text-slate-700 [overflow-wrap:anywhere] [&_a]:break-all [&_img]:rounded-xl" dangerouslySetInnerHTML={{ __html: it.content || '' }} />
               : <p className="text-sm italic text-slate-400">Bài tập này chưa có phần yêu cầu và hướng dẫn.</p>}
             <EduResourceList resources={it.resources} className="mt-6 border-t border-slate-100 pt-5" />
@@ -606,7 +610,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
                           <tr className="bg-white">
                             <td colSpan={9} className="px-4 pb-5 pt-1">
                               <div className="rounded-2xl border border-brand/20 bg-slate-50/50 p-5">
-                                {plain(it.content) || firstImage(it.content)
+                                {plain(it.content) || /<(img|video|iframe)/i.test(it.content || '')
                                   ? <div className="prose prose-slate max-w-none break-words text-[14px] leading-relaxed text-slate-700 [overflow-wrap:anywhere]" dangerouslySetInnerHTML={{ __html: it.content || '' }} />
                                   : <p className="text-sm italic text-slate-400">Bài tập này chưa có phần yêu cầu và hướng dẫn.</p>}
                                 <EduResourceList resources={it.resources} className="mt-5 border-t border-slate-100 pt-4" />

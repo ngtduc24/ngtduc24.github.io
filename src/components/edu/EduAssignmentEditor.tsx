@@ -38,6 +38,8 @@ import { EduAssignment, EduGradeColumn } from '../../types/edu';
 import { getGradeColumns, saveAssignment, getAssignments, getSubjects, saveSubject, getAssignmentBank, saveAssignmentBankItem } from '../../lib/edu';
 import { EduSubject, EduAssignmentBankItem, EduResource } from '../../types/edu';
 import { EduResourceEditor } from './EduResources';
+import { VideoNode } from '../../lib/tiptapVideo';
+import VideoInsertButtons from './VideoInsertButtons';
 import DateTime24, { isoToLocalInput, localInputToIso } from '../ui/DateTime24';
 import { useNotifications } from '../NotificationContext';
 import { uploadImageToCloudinary } from '../../lib/upload';
@@ -115,6 +117,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
     extensions: [
       StarterKit,
       Image,
+      VideoNode,
       Link.configure({ openOnClick: false }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Placeholder.configure({ placeholder: 'Nhập nội dung bài tập tại đây...' }),
@@ -296,6 +299,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
               label=""
               className="p-2 rounded-lg text-slate-500 hover:bg-slate-200 flex items-center"
             />
+            <VideoInsertButtons editor={editor} folder="edu-assignments" />
             <button onClick={async () => {
               const url = await askText({ title: 'Chèn liên kết', placeholder: 'https://...', okText: 'Chèn', defaultValue: editor?.getAttributes('link').href || '' });
               if (url) editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run();

@@ -1,5 +1,6 @@
 import { ELLesson, ELSection, ELResource } from './elearning';
 import { supabase } from './supabase';
+import { videosToLinks } from './assignmentPdf';
 
 // Xuất toàn bộ bài giảng ra PDF bằng cách dựng một tài liệu in gọn gàng rồi mở hộp thoại in
 // của trình duyệt, người dùng chọn Lưu thành PDF. Cách này chạy được trên cả máy tính và điện
@@ -41,7 +42,7 @@ function buildLessonHtml(lesson: ELLesson, sections: ELSection[], resources: ELR
       : '';
     return `<section class="sec">
       <h2>${i + 1}. ${esc(s.title || 'Phần ' + (i + 1))}</h2>
-      <div class="content">${s.content || '<p class="empty">(Chưa có nội dung)</p>'}</div>
+      <div class="content">${s.content ? videosToLinks(s.content) : '<p class="empty">(Chưa có nội dung)</p>'}</div>
       ${resHtml}
     </section>`;
   }).join('');
