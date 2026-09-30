@@ -1,5 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
+import { prettyShareUrl } from '../../lib/shareLinks';
+import { copyText } from '../ui/Dialogs';
 import { 
   FileText, 
   Clock, 
@@ -64,9 +66,7 @@ export default function EduAssignmentDetail({ classId, assignmentId, onBack }: E
 
   const copyShareLink = () => {
     if (!assignment) return;
-    const link = `${window.location.origin}/tracuu.html?edu=${assignment.shareLinkId}`;
-    navigator.clipboard.writeText(link);
-    addNotification("Đã sao chép link nộp bài", "success");
+    copyText(prettyShareUrl('edu', assignment.shareLinkId)).then(ok => addNotification(ok ? "Đã sao chép link nộp bài" : "Không sao chép được, hãy thử lại.", ok ? "success" : "error"));
   };
 
   if (loading) return <Spinner label="Đang tải chi tiết bài tập..." />;

@@ -21,7 +21,7 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
   const goBack = () => {
     // Luôn quay về trang E-Learning cho chắc, không phụ thuộc lịch sử trình duyệt.
     try { localStorage.setItem('app_last_active_tab', 'elearning'); } catch {}
-    window.location.href = `${window.location.origin}${window.location.pathname}?tab=e-learning`;
+    window.location.href = `${window.location.origin}/?tab=e-learning`;
   };
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
   }, [active]);
 
   const doCopy = async () => {
-    if (!me) { window.location.href = window.location.origin + window.location.pathname; return; }
+    if (!me) { window.location.href = window.location.origin + '/'; return; }
     setCopying(true);
     try { await copyPublicLesson(lessonId, me.fullName); setCopied(true); }
     catch { /* bỏ qua */ }

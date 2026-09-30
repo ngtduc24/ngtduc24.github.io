@@ -8,13 +8,15 @@ import { NotificationProvider } from './components/NotificationContext.tsx';
 import { ConfirmationProvider } from './components/ConfirmationContext.tsx';
 import { getDefaultSettingsFromSupabase } from './lib/data';
 import { applyBrandTheme } from './lib/applyTheme';
+import { normalizeShareAddress, publicParam } from './lib/shareLinks';
+
+normalizeShareAddress(['edu']);
 
 function TraCuuRoot() {
   const [eduLinkId, setEduLinkId] = useState<string | null>(null);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const edu = params.get('edu');
+    const edu = publicParam('edu');
     if (edu) {
       setEduLinkId(edu);
     }

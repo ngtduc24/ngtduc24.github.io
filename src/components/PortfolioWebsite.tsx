@@ -2109,6 +2109,29 @@ function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSett
   );
 }
 
+// Đường dẫn gọn cho trang chi tiết (trùng với trang tĩnh có khung xem trước do prerender-share.mjs sinh ra):
+// /c/<id>/ khoá học, /p/<id>/ dự án, /r/<id>/ nghiên cứu, /b/<id>/ bài viết.
+const PRETTY_DETAIL: Record<string, { folder: string; param: string; page: string }> = {
+  course: { folder: 'c', param: 'course', page: 'courses' },
+  project: { folder: 'p', param: 'project', page: 'projects' },
+  research: { folder: 'r', param: 'research', page: 'research' },
+  article: { folder: 'b', param: 'post', page: '' },
+};
+// Đọc tham số trang từ ?portfolio=true&... hoặc từ đường dẫn gọn /c/<id>/.
+function portfolioRouteParams(): URLSearchParams {
+  const params = new URLSearchParams(window.location.search);
+  const m = window.location.pathname.match(/^\/(c|p|r|b)\/([A-Za-z0-9_-]{1,120})\/?$/);
+  if (m) {
+    const def = Object.values(PRETTY_DETAIL).find(d => d.folder === m[1]);
+    if (def) { params.set(def.param, m[2]); if (def.page && !params.get('page')) params.set('page', def.page); }
+  }
+  return params;
+}
+function prettyDetailPath(type: string, id?: string): string | null {
+  const def = PRETTY_DETAIL[type];
+  return def && id && /^[A-Za-z0-9_-]{1,120}$/.test(id) ? `/${def.folder}/${id}/` : null;
+}
+
 export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthenticated = false, currentUser = null, onUpdateUser, onLogout }: PortfolioWebsiteProps) {
   const [banner, setBanner] = useState<PortfolioBanner | null>(() => {
     try {
@@ -2204,7 +2227,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
   const [showProfile, setShowProfile] = useState(false);
   const [generatedMenuId, setGeneratedMenuId] = useState<string | null>(() => new URLSearchParams(window.location.search).get('menu'));
   const [collectionPage, setCollectionPage] = useState<CollectionPage | null>(() => {
-    const page = new URLSearchParams(window.location.search).get('page');
+    const page = portfolioRouteParams().get('page');
     return page === 'projects' || page === 'courses' || page === 'research' || page === 'lectures' ? page : null;
   });
   const [projectFilter, setProjectFilter] = useState('Tất cả');
@@ -2320,7 +2343,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
       setLectures(lectureData.filter(item => item.status === 'published'));
       setNavigation(navigationData);
       setPosts(postData.filter(item => item.status === 'published'));
-      const params = new URLSearchParams(window.location.search);
+      const params = portfolioRouteParams();
       const requestedProject = projectData.find(item => item.id === params.get('project'));
       const requestedCourse = mappedCourses.find(item => item.id === params.get('course'));
       const requestedPost = postData.find(item => item.id === params.get('post') && item.status === 'published');
@@ -2331,6 +2354,14 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
       if (requestedPost) setDetail({ type: 'article', data: requestedPost });
       if (requestedResearch) setDetail({ type: 'research', data: requestedResearch });
       if (requestedLecture) setDetail({ type: 'lecture', data: requestedLecture });
+      // Mở từ link chia sẻ (?portfolio=true&course=...) thì đổi thanh địa chỉ về đường dẫn gọn /c/<id>/.
+      const opened = requestedProject ? ['project', requestedProject.id] : requestedCourse ? ['course', requestedCourse.id] : requestedPost ? ['article', requestedPost.id] : requestedResearch ? ['research', requestedResearch.id] : null;
+      const pretty = opened && !params.get('menu') ? prettyDetailPath(opened[0], opened[1]) : null;
+      if (pretty && window.location.pathname !== pretty) {
+        const extra = new URLSearchParams(window.location.search);
+        ['portfolio', 'page', 'project', 'course', 'post', 'research'].forEach(k => extra.delete(k));
+        if (!Array.from(extra.keys()).length) window.history.replaceState({}, '', pretty + window.location.hash);
+      }
     }).catch(console.error).finally(() => mounted && setLoading(false));
     return () => { mounted = false; };
   }, []);
@@ -2359,7 +2390,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
     setDetail(null);
     setGeneratedMenuId(null);
     setCollectionPage(page);
-    const url = `?portfolio=true&page=${page}`;
+    const url = `/?portfolio=true&page=${page}`;
     window.history[replace ? 'replaceState' : 'pushState']({}, '', url);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -2367,7 +2398,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
     setDetail(null);
     setGeneratedMenuId(null);
     setCollectionPage(null);
-    window.history.pushState({}, '', `?portfolio=true${link}`);
+    window.history.pushState({}, '', `/?portfolio=true${link}`);
     window.setTimeout(() => scrollToLink(link), 0);
   };
   const showDetail = (item: DetailItem, replace = false) => {
@@ -2376,14 +2407,16 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
     setCollectionPage(generatedMenuId ? null : page);
     setDetail(item);
     const parentQuery = generatedMenuId ? `menu=${generatedMenuId}` : `page=${page}`;
-    window.history[replace ? 'replaceState' : 'pushState']({}, '', `?portfolio=true&${parentQuery}&${queryKey}=${item.data.id}`);
+    // Khoá học, dự án, nghiên cứu, bài viết dùng đường dẫn gọn để chép từ thanh địa chỉ vẫn có khung xem trước.
+    const pretty = prettyDetailPath(item.type, item.data.id);
+    window.history[replace ? 'replaceState' : 'pushState']({}, '', pretty || `/?portfolio=true&${parentQuery}&${queryKey}=${item.data.id}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const showGeneratedMenuPage = (item: PortfolioNavigation, replace = false) => {
     setDetail(null);
     setCollectionPage(null);
     setGeneratedMenuId(item.id);
-    window.history[replace ? 'replaceState' : 'pushState']({}, '', `?portfolio=true&menu=${item.id}`);
+    window.history[replace ? 'replaceState' : 'pushState']({}, '', `/?portfolio=true&menu=${item.id}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const openMenuItem = (item: PortfolioNavigation) => {
@@ -2479,7 +2512,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
   } : null;
   useEffect(() => {
     const syncRoute = () => {
-      const params = new URLSearchParams(window.location.search);
+      const params = portfolioRouteParams();
       const page = params.get('page');
       const nextPage = page === 'projects' || page === 'courses' || page === 'research' || page === 'lectures' || page === 'my-courses' ? page : null;
       setCollectionPage(nextPage);

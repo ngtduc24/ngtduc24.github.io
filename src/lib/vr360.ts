@@ -2,6 +2,7 @@
 // trên Cloudinary) và các thuật toán ghép ảnh thành ảnh toàn cảnh equirectangular chạy
 // hoàn toàn trên trình duyệt.
 import { supabase } from './supabase';
+import { prettyShareUrl } from './shareLinks';
 import { getEduCtx } from './edu';
 import { uploadMediaToCloudinary } from './upload';
 
@@ -91,7 +92,7 @@ export async function uploadPanorama(blob: Blob, ownerId: string): Promise<{ url
 }
 
 export function buildTourLink(id: string): string {
-  return `${window.location.origin}${window.location.pathname}?vr=${id}`;
+  return prettyShareUrl('vr', id);
 }
 
 // ------------------------------ Xử lý ảnh ------------------------------

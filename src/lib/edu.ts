@@ -476,7 +476,7 @@ export async function getBankItemByShareToken(token: string): Promise<EduAssignm
   if (error) throw error;
   return data ? mapBankItem(data) : null;
 }
-export const bankShareUrl = (token: string) => `${window.location.origin}/bt/${token}/`;
+export const bankShareUrl = (token: string) => `${window.location.origin}/bt/${token}/`; // cùng dạng với prettyShareUrl('bt', ...)
 
 // Thao tác hàng loạt trong ngân hàng bài tập (chỉ nên truyền id bài của chính mình, admin thì tùy ý).
 export async function bulkUpdateAssignmentBank(ids: string[], patch: { subjectId?: string | null; isPublic?: boolean }) {

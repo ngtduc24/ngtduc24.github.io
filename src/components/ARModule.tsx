@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { prettyShareUrl } from '../lib/shareLinks';
 import { QrCode, RefreshCw, Search, AlertCircle, X, Link2, ExternalLink, Download, Check, Plus, Loader2, Upload, Box, ArrowLeft, Pencil, Trash2, Save } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadARAssetToSupabase } from '../lib/upload';
@@ -14,15 +15,17 @@ function ARDetailModal({ target, onClose }: { target: ARTarget; onClose: () => v
   const [copied, setCopied] = useState(false);
   const [qrDownloading, setQrDownloading] = useState(false);
 
+  // Mã QR dùng link trực tiếp để quét mở AR nhanh nhất, link sao chép dùng dạng gọn có khung xem trước.
   const arLink = `${window.location.origin}/?ar=${target.id}`;
+  const shareLink = prettyShareUrl('ar', target.id);
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(arLink)}&format=png&margin=10`;
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(arLink);
+      await navigator.clipboard.writeText(shareLink);
     } catch {
       const el = document.createElement('textarea');
-      el.value = arLink;
+      el.value = shareLink;
       document.body.appendChild(el);
       el.select();
       document.execCommand('copy');
@@ -78,7 +81,7 @@ function ARDetailModal({ target, onClose }: { target: ARTarget; onClose: () => v
           <div className="space-y-2">
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Link AR Scanner</p>
             <div className="bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-200">
-              <span className="text-xs text-slate-600 truncate font-mono block">{arLink}</span>
+              <span className="text-xs text-slate-600 truncate font-mono block">{shareLink}</span>
             </div>
             <div className="flex gap-2">
               <button onClick={handleCopy} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold transition-all ${copied ? 'bg-brand text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { publicParam } from '../lib/shareLinks';
 import { Loader2, Globe } from 'lucide-react';
 import VRViewer360 from './vr/VRViewer360';
 import { getTourById, bumpTourView, VRTour } from '../lib/vr360';
@@ -11,7 +12,7 @@ export default function PublicVRViewer() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get('vr') || '';
+    const id = publicParam('vr') || '';
     if (!id) { setError('Không tìm thấy mã không gian 360.'); return; }
     getTourById(id).then(t => {
       if (!t) { setError('Không gian 360 này không tồn tại.'); return; }

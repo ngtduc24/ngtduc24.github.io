@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { publicParam } from '../lib/shareLinks';
 import { supabase } from '../lib/supabase';
 import { ARTarget, AppSettings } from '../types';
 import { getDefaultSettingsFromSupabase } from '../lib/data';
@@ -25,7 +26,7 @@ export default function PublicARScanner() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const targetId = new URLSearchParams(window.location.search).get('ar');
+        const targetId = publicParam('ar');
 
         if (!targetId) {
           throw new Error('Không tìm thấy ID target.');

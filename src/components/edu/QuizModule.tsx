@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { prettyShareUrl } from '../../lib/shareLinks';
 import {
   Plus, Trash2, Edit2, Save, X, FileCheck2, Clock, ListChecks, Check, ChevronLeft,
   Search, Library, BookOpen, Users, Link2, Copy, QrCode, Send, ArrowUp, ArrowDown, Loader2, Share2, Globe, ChevronRight
@@ -1116,7 +1117,7 @@ function QuizAssign({ quiz, currentUser, onQuizChange, onBack }: { quiz: Quiz; c
     finally { setPublishing(false); }
   };
 
-  const link = `${window.location.origin}${window.location.pathname}?quiz=${q.slug}`;
+  const link = prettyShareUrl('quiz', q.slug);
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(link)}&format=png&margin=10`;
 
   return (

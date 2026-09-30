@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { prettyShareUrl } from '../../lib/shareLinks';
+import { copyText } from '../ui/Dialogs';
 import {
   Plus, Search, LayoutGrid, List as ListIcon, Edit2, Eye, Copy, Send, Trash2, Globe, Lock,
   ArrowLeft, ArrowUp, ArrowDown, Loader2, X, Check, BookOpen, Users, Link2, QrCode, FileText,
@@ -29,7 +31,7 @@ type Tab = 'mine' | 'public';
 
 // Mở trang xem bài giảng ở chế độ riêng (link riêng). Điều hướng ngay trong tab
 // hiện tại để chạy ổn định trên di động (mở tab mới hay bị trình duyệt chặn).
-const openLessonView = (id: string) => { window.location.href = `${window.location.origin}${window.location.pathname}?elview=${id}`; };
+const openLessonView = (id: string) => { window.location.href = `${window.location.origin}/?elview=${id}`; };
 
 export default function ELearningModule({ currentUser, onExit }: Props) {
   const { addNotification } = useNotifications();
@@ -217,8 +219,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign }: { subjects: EduS
   };
 
   const copyLink = (l: ELLesson) => {
-    const link = `${window.location.origin}${window.location.pathname}?elesson=${l.share_token}`;
-    navigator.clipboard?.writeText(link); addNotification('Đã sao chép liên kết.', 'success');
+    copyText(prettyShareUrl('elesson', l.share_token)).then(ok => addNotification(ok ? 'Đã sao chép liên kết.' : 'Không sao chép được, hãy thử lại.', ok ? 'success' : 'error'));
   };
 
   const remove = async (l: ELLesson) => {
@@ -768,7 +769,7 @@ function AssignScreen({ lessonId, onBack, onProgress }: { lessonId: string; onBa
     catch (e: any) { addNotification('Lỗi lưu: ' + (e.message || e), 'error'); }
   };
 
-  const link = lesson ? `${window.location.origin}${window.location.pathname}?elesson=${lesson.share_token}` : '';
+  const link = lesson ? prettyShareUrl('elesson', lesson.share_token) : '';
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(link)}&format=png&margin=10`;
 
   if (loading || !lesson) return <div className="py-20 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" /> Đang tải...</div>;

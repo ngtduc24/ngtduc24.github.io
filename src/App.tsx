@@ -32,6 +32,7 @@ import QuizTake from './components/edu/QuizTake';
 import ELessonView from './components/edu/ELessonView';
 import ELessonPreviewPage from './components/edu/ELessonPreviewPage';
 import EduBankShareView from './components/edu/EduBankShareView';
+import { publicParam } from './lib/shareLinks';
 import ELearningModule from './components/edu/ELearningModule';
 import RemierModule from './components/remier/RemierModule';
 import ScientificCvModule from './components/scientificCv/ScientificCvModule';
@@ -136,7 +137,7 @@ export default function App() {
     if (typeof window === 'undefined') return;
     // Các link công khai riêng (xem bài tập, làm trắc nghiệm, xem bài giảng...) giữ nguyên địa chỉ, không gắn ?tab.
     const sp = new URLSearchParams(window.location.search);
-    if (['bt', 'quiz', 'elesson', 'elview', 'vr'].some(k => sp.has(k)) || window.location.pathname.startsWith('/bt/')) return;
+    if (['bt', 'quiz', 'elesson', 'elview', 'vr', 'ar'].some(k => sp.has(k)) || /^\/(bt|bg|hl|tn|vr|ar|nb)\//.test(window.location.pathname)) return;
 
     if (entryView === 'portfolio') {
       updateDocumentSEO('portfolio');
@@ -150,7 +151,8 @@ export default function App() {
       // Cập nhật query param ?tab=slug mà không làm reload trang
       const meta = getSeoMeta(currentTab);
       const url = new URL(window.location.href);
-      if (url.searchParams.get('tab') !== meta.slug) {
+      if (url.searchParams.get('tab') !== meta.slug || url.pathname !== '/') {
+        url.pathname = '/'; // rời đường dẫn gọn của trang chia sẻ (/c/<id>/...) khi vào khu quản trị
         url.searchParams.set('tab', meta.slug);
         url.searchParams.delete('portfolio');
         // Đổi sang chức năng khác thì bỏ các tham số màn hình con của chức năng cũ.
@@ -832,39 +834,37 @@ export default function App() {
 
   // Link AR công khai phải hiển thị ngay, không chờ bước khởi tạo phân quyền,
   // nếu không thì Supabase hoặc Firestore chậm sẽ làm màn hình quét đứng vĩnh viễn.
-  const isPublicARRoute = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('ar');
+  const isPublicARRoute = !!publicParam('ar');
 
   if (isPublicARRoute) {
     return <PublicARScanner />;
   }
 
   // Link xem VR 360 công khai, không cần đăng nhập.
-  if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('vr')) {
+  if (publicParam('vr')) {
     return <PublicVRViewer />;
   }
 
   // Link làm bài trắc nghiệm công khai: sinh viên vào bằng MSSV, không cần đăng nhập.
-  const quizSlug = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('quiz') : null;
+  const quizSlug = publicParam('quiz');
   if (quizSlug) {
     return <QuizTake slug={quizSlug} />;
   }
 
   // Link xem bài giảng E-Learning công khai: sinh viên vào bằng MSSV, không cần đăng nhập.
-  const elessonToken = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('elesson') : null;
+  const elessonToken = publicParam('elesson');
   if (elessonToken) {
     return <ELessonView token={elessonToken} />;
   }
 
   // Link xem bài tập trong ngân hàng: ai có link đều xem được, không cần MSSV.
-  const bankShareToken = typeof window !== 'undefined'
-    ? (new URLSearchParams(window.location.search).get('bt') || (window.location.pathname.match(/^\/bt\/([a-z0-9]{6,40})\/?$/) || [])[1] || null)
-    : null;
+  const bankShareToken = publicParam('bt');
   if (bankShareToken) {
     return <EduBankShareView token={bankShareToken} />;
   }
 
   // Trang xem bài giảng ở chế độ riêng, có link riêng: dùng để xem/chia sẻ bài công khai.
-  const elviewId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('elview') : null;
+  const elviewId = publicParam('elview');
   if (elviewId) {
     return <ELessonPreviewPage lessonId={elviewId} />;
   }
@@ -906,6 +906,7 @@ export default function App() {
         onEnterSystem={() => {
           if (currentUser?.role === 'member') {
             const url = new URL(window.location.href);
+            url.pathname = '/';
             url.searchParams.set('portfolio', 'true');
             url.searchParams.set('page', 'my-courses');
             window.history.pushState({}, '', url);

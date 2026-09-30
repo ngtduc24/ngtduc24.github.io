@@ -1,5 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { prettyShareUrl } from '../../lib/shareLinks';
+import { copyText } from '../ui/Dialogs';
 import { 
   Users, 
   BookOpen, 
@@ -376,9 +378,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
   };
 
   const copyShareLink = (shareLinkId: string) => {
-    const link = `${window.location.origin}/tracuu.html?edu=${shareLinkId}`;
-    navigator.clipboard.writeText(link);
-    addNotification("Đã sao chép link chia sẻ", "success");
+    copyText(prettyShareUrl('edu', shareLinkId)).then(ok => addNotification(ok ? "Đã sao chép link chia sẻ" : "Không sao chép được, hãy thử lại.", ok ? "success" : "error"));
   };
 
   if (loading) return <div className="py-20 text-center text-slate-400">Đang tải...</div>;

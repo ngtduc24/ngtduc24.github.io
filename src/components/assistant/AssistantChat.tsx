@@ -193,7 +193,7 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
     }
     onAfterNavigate?.();
   };
-  const openLesson = (id: string) => { window.location.href = `${window.location.origin}${window.location.pathname}?elview=${id}`; };
+  const openLesson = (id: string) => { window.location.href = `${window.location.origin}/?elview=${id}`; };
 
   // Gọi AI Gemini qua Edge Function trên Supabase, khóa API nằm ở máy chủ, cần đăng nhập.
   const callGeminiChat = async (question: string, context: string, systemPrompt: string): Promise<string> => {

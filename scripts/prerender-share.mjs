@@ -19,7 +19,7 @@
 
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { loadBankShares } from './bank-share.mjs';
+import { loadShareRoutes } from './share-routes.mjs';
 
 const SITE_ORIGIN = 'https://ngtduc24.github.io';
 const DIST_DIR = path.resolve(process.cwd(), 'dist');
@@ -218,31 +218,30 @@ async function applyDefaultShareImage() {
   }
 }
 
-/** Trang chia sẻ bài tập trong ngân hàng: /bt/<mã>/ chuyển vào /?bt=<mã>, kèm tệp manifest để kiểm tra định kỳ. */
-async function writeBankSharePages() {
+/** Trang chia sẻ của các chức năng (bài tập, bài giảng, trắc nghiệm, VR, AR, nộp bài), kèm tệp manifest để kiểm tra định kỳ. */
+async function writeAppSharePages() {
   try {
-    const { items, hash } = await loadBankShares(SUPABASE_URL, SUPABASE_KEY);
+    const { routes, hash } = await loadShareRoutes(SUPABASE_URL, SUPABASE_KEY);
     let fallbackImage = '';
     try { fallbackImage = toAbsoluteUrl((await loadSetting('banner'))?.backgroundImage); } catch { /* bỏ qua */ }
-    for (const it of items) {
-      const folder = path.join(DIST_DIR, 'bt', it.token);
+    const counts = {};
+    for (const r of routes) {
+      const folder = path.join(DIST_DIR, r.folder, r.id);
       await mkdir(folder, { recursive: true });
-      const meta = [it.subject && `Bài tập môn ${it.subject}`, it.author && `Giảng viên ${it.author}`].filter(Boolean).join(' · ');
-      const summary = toPlainSummary(it.content, 170);
       await writeFile(path.join(folder, 'index.html'), buildSharePage({
-        title: toPlainSummary(it.title, 110),
-        description: [meta, summary].filter(Boolean).join('. ') || 'Xem đề bài tập.',
-        image: toAbsoluteUrl(it.image) || fallbackImage,
-        targetUrl: `${SITE_ORIGIN}/?bt=${it.token}`,
-        shareUrl: `${SITE_ORIGIN}/bt/${it.token}/`,
+        title: toPlainSummary(r.title, 110),
+        description: toPlainSummary(r.description, 220) || 'Xem chi tiết trên trang của Andy Nguyễn.',
+        image: toAbsoluteUrl(r.image) || fallbackImage,
+        targetUrl: `${SITE_ORIGIN}${r.target}`,
+        shareUrl: `${SITE_ORIGIN}/${r.folder}/${r.id}/`,
       }), 'utf8');
+      counts[r.folder] = (counts[r.folder] || 0) + 1;
     }
-    await mkdir(path.join(DIST_DIR, 'bt'), { recursive: true });
-    await writeFile(path.join(DIST_DIR, 'bt', 'manifest.txt'), hash, 'utf8');
-    console.log(`Đã tạo ${items.length} trang chia sẻ cho bài tập.`);
-    return items.length;
+    await writeFile(path.join(DIST_DIR, 'share-manifest.txt'), hash, 'utf8');
+    console.log('Đã tạo trang chia sẻ cho các chức năng:', JSON.stringify(counts));
+    return routes.length;
   } catch (error) {
-    console.warn('Bỏ qua trang chia sẻ bài tập:', error.message);
+    console.warn('Bỏ qua trang chia sẻ của các chức năng:', error.message);
     return 0;
   }
 }
@@ -298,7 +297,7 @@ async function run() {
     console.log(`Đã tạo ${written} trang chia sẻ cho ${type.name}.`);
   }
 
-  total += await writeBankSharePages();
+  total += await writeAppSharePages();
   await applyDefaultShareImage();
   console.log(`Tổng cộng ${total} trang chia sẻ.`);
 }
