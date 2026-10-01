@@ -22,8 +22,10 @@ import {
   Maximize2,
   RotateCcw,
   Loader2,
-  CloudOff
+  CloudOff,
+  ScanSearch
 } from 'lucide-react';
+import SimilarityCheck, { SimilarityMap } from './SimilarityCheck';
 import { EduUser, EduClass, EduAssignment, EduSubmission, EduGrade, EduGradeColumn, EduExtensionRequest } from '../../types/edu';
 import { getClassUsers, getSubmissions, getGrades, saveGrades, saveGradeColumn, reopenSubmission, deleteGradeForUser, getAssignmentById, getApprovedExtensions, resolveSubmissionFile } from '../../lib/edu';
 import SwfPlayer from '../SwfPlayer';
@@ -69,6 +71,8 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
   };
   const [previewText, setPreviewText] = useState<{ name: string; content: string } | null>(null);
   const [editingCommentUserId, setEditingCommentUserId] = useState<string | null>(null);
+  const [simOpen, setSimOpen] = useState(false);
+  const [simMap, setSimMap] = useState<SimilarityMap>({});
 
   const { confirm } = useConfirmation();
 
@@ -330,8 +334,8 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
         </div>
         
         <div className="flex items-center gap-3">
-          <button className="text-[11px] font-black text-brand uppercase tracking-widest hover:underline px-2 py-1">
-            EXPAND TABLE
+          <button onClick={() => setSimOpen(true)} className="inline-flex items-center gap-1.5 rounded-xl border border-brand/30 bg-white px-3 py-2 text-[11px] font-bold text-brand hover:bg-brand-light" title="So ảnh và trang PDF giữa các bài nộp để tìm bài giống nhau">
+            <ScanSearch className="w-4 h-4" /> Kiểm tra trùng bài
           </button>
           <div className="h-4 w-px bg-slate-200 mx-2 hidden sm:block"></div>
           <div className="relative">
@@ -383,6 +387,11 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
                       <div className="space-y-1 text-center">
                         <p className="text-[13px] font-black text-slate-800 uppercase tracking-tight">{user.fullName}</p>
                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{user.mssv}</p>
+                        {simMap[user.id] && (
+                          <button onClick={() => setSimOpen(true)} title="Bấm để xem so sánh" className={`mt-1 inline-block rounded-lg px-2 py-0.5 text-[10px] font-bold ${simMap[user.id].pct >= 95 ? 'bg-rose-600 text-white' : simMap[user.id].pct >= 90 ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}`}>
+                            Giống {simMap[user.id].pct}% với {users.find(u => u.id === simMap[user.id].withId)?.fullName || 'bài khác'}
+                          </button>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-8 text-center">
@@ -620,6 +629,8 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
       )}
 
       {/* Comment Editor Modal */}
+      {simOpen && <SimilarityCheck users={users} submissions={submissions} onClose={() => setSimOpen(false)} onResults={setSimMap} />}
+
       {editingCommentUserId && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-fadeIn">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setEditingCommentUserId(null)} />
