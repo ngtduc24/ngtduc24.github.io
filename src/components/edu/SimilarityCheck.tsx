@@ -2,13 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { X, ScanSearch, Loader2, AlertTriangle, ArrowLeftRight, FileWarning } from 'lucide-react';
 import { EduSubmission, EduUser } from '../../types/edu';
 import { resolveSubmissionFile } from '../../lib/edu';
-import { cloudinaryThumb, pdfPageImages, fingerprintUrl, similarity, saveCache, pool, Fingerprint } from '../../lib/imageSimilarity';
+import { cloudinaryThumb, pdfPageImages, fingerprintUrl, similarity, colorSimilarity, saveCache, pool, Fingerprint } from '../../lib/imageSimilarity';
 
 // Quét các bài nộp của một bài tập, so ảnh từng cặp sinh viên và liệt kê các cặp giống nhau.
 
 interface Img { studentId: string; label: string; thumb: string; big: string; fp?: Fingerprint }
 interface FileSig { studentId: string; name: string; sig: string; url: string }
-export interface PairResult { a: string; b: string; pct: number; imgA?: Img; imgB?: Img; exactFile?: string }
+export interface PairResult { a: string; b: string; pct: number; shape: number; color: number; imgA?: Img; imgB?: Img; exactFile?: string }
 export type SimilarityMap = Record<string, { pct: number; withId: string }>;
 
 const isImage = (f: { name?: string; type?: string }) => /^image\//.test(f.type || '') || /\.(jpe?g|png|webp|gif|bmp|avif)$/i.test(f.name || '');
@@ -21,6 +21,8 @@ export default function SimilarityCheck({ users, submissions, onClose, onResults
   const [progress, setProgress] = useState({ done: 0, total: 0, failed: 0 });
   const [pairs, setPairs] = useState<PairResult[]>([]);
   const [threshold, setThreshold] = useState(85);
+  // Bố cục và màu: bắt bài chép y nguyên. Chỉ bố cục: bắt cả bài chép rồi đổi màu (đề cho sẵn ảnh mẫu thì nên dùng kiểu đầu).
+  const [mode, setMode] = useState<'both' | 'shape'>('both');
   const [view, setView] = useState<PairResult | null>(null);
   const [stats, setStats] = useState({ students: 0, images: 0, skipped: 0 });
   const cancelled = useRef(false);
@@ -89,12 +91,15 @@ export default function SimilarityCheck({ users, submissions, onClose, onResults
       const out: PairResult[] = [];
       for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
         const A = byStudent.get(ids[i]) || [], B = byStudent.get(ids[j]) || [];
-        let best: PairResult = { a: ids[i], b: ids[j], pct: 0 };
-        for (const x of A) for (const y of B) { const s = similarity(x.fp!, y.fp!); if (s > best.pct) best = { a: ids[i], b: ids[j], pct: s, imgA: x, imgB: y }; }
+        let best: PairResult = { a: ids[i], b: ids[j], pct: 0, shape: 0, color: 0 };
+        for (const x of A) for (const y of B) {
+          const shape = similarity(x.fp!, y.fp!);
+          if (shape > best.shape) best = { a: ids[i], b: ids[j], pct: shape, shape, color: colorSimilarity(x.fp!, y.fp!), imgA: x, imgB: y };
+        }
         const sa = sigs.filter(s => s.studentId === ids[i]), sb = sigs.filter(s => s.studentId === ids[j]);
         const same = sa.find(x => sb.some(y => y.sig === x.sig));
-        if (same) best = { ...best, pct: 100, exactFile: same.name };
-        if (best.pct >= 60) out.push(best);
+        if (same) best = { ...best, pct: 100, shape: 100, color: 100, exactFile: same.name };
+        if (best.shape >= 60) out.push(best);
       }
       out.sort((x, y) => y.pct - x.pct);
       setPairs(out);
@@ -105,7 +110,8 @@ export default function SimilarityCheck({ users, submissions, onClose, onResults
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const shown = useMemo(() => pairs.filter(p => p.pct >= threshold), [pairs, threshold]);
+  const scored = useMemo(() => pairs.map(p => ({ ...p, pct: p.exactFile ? 100 : mode === 'shape' ? p.shape : Math.round(0.55 * p.shape + 0.45 * p.color) })).sort((x, y) => y.pct - x.pct), [pairs, mode]);
+  const shown = useMemo(() => scored.filter(p => p.pct >= threshold), [scored, threshold]);
   useEffect(() => {
     if (phase !== 'done') return;
     const m: SimilarityMap = {};
@@ -143,6 +149,7 @@ export default function SimilarityCheck({ users, submissions, onClose, onResults
             <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-5 py-3">
               <button onClick={() => setView(null)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200">Quay lại danh sách</button>
               <span className={`rounded-lg px-2.5 py-1 text-xs font-black ${tone(view.pct)}`}>Giống {view.pct}%</span>
+              <span className="text-xs text-slate-500">Bố cục {view.shape}% · Màu sắc {view.color}%</span>
               {view.exactFile && <span className="text-xs font-semibold text-rose-600">Trùng y hệt tệp {view.exactFile}</span>}
             </div>
             <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-auto p-4 md:grid-cols-2">
@@ -160,7 +167,11 @@ export default function SimilarityCheck({ users, submissions, onClose, onResults
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-slate-100 px-5 py-3 text-xs text-slate-500">
               <span>Đã quét <b className="text-slate-800">{stats.images}</b> ảnh của <b className="text-slate-800">{stats.students}</b> sinh viên</span>
               {stats.skipped > 0 && <span className="inline-flex items-center gap-1 text-amber-600"><FileWarning className="h-3.5 w-3.5" /> {stats.skipped} tệp không đọc được</span>}
-              <label className="ml-auto inline-flex items-center gap-2 font-semibold text-slate-600">
+              <select value={mode} onChange={e => setMode(e.target.value as any)} className="ml-auto rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 outline-none focus:border-brand" title="Cách so">
+                <option value="both">So bố cục và màu sắc</option>
+                <option value="shape">Chỉ so bố cục (bắt cả bài đổi màu)</option>
+              </select>
+              <label className="inline-flex items-center gap-2 font-semibold text-slate-600">
                 Ngưỡng giống từ {threshold}%
                 <input type="range" min={70} max={100} value={threshold} onChange={e => setThreshold(Number(e.target.value))} className="accent-brand" />
               </label>
@@ -181,14 +192,14 @@ export default function SimilarityCheck({ users, submissions, onClose, onResults
                       {p.imgB && <img src={p.imgB.thumb} alt="" className="h-14 w-14 shrink-0 rounded-lg bg-slate-100 object-cover" />}
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[13px] font-bold text-slate-800">{name(p.a)?.fullName} <span className="font-normal text-slate-400">và</span> {name(p.b)?.fullName}</p>
-                        <p className="truncate text-[11px] text-slate-500">{name(p.a)?.mssv} · {name(p.b)?.mssv}{p.exactFile ? ` · trùng y hệt tệp ${p.exactFile}` : ''}</p>
+                        <p className="truncate text-[11px] text-slate-500">{name(p.a)?.mssv} · {name(p.b)?.mssv} · bố cục {p.shape}% · màu {p.color}%{p.exactFile ? ` · trùng y hệt tệp ${p.exactFile}` : ''}</p>
                       </div>
                       {p.pct >= 95 && <AlertTriangle className="h-4 w-4 shrink-0 text-rose-500" />}
                     </button>
                   ))}
                 </div>
               )}
-              <p className="mt-4 text-[11px] leading-relaxed text-slate-400">Kết quả chỉ để giảng viên xem xét thêm. Bài làm theo cùng ảnh mẫu, cùng khung đề cho sẵn hoặc nền trắng nhiều có thể cho tỷ lệ cao dù không chép bài.</p>
+              <p className="mt-4 text-[11px] leading-relaxed text-slate-400">Kết quả chỉ để giảng viên xem xét thêm. Đề cho sẵn ảnh mẫu (ví dụ tô màu lại một đôi giày) thì bố cục các bài luôn giống nhau, nên dùng kiểu so bố cục và màu sắc để tìm bài tô màu giống nhau.</p>
             </div>
           </div>
         )}

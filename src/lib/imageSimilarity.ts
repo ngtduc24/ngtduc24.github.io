@@ -8,7 +8,7 @@
 
 import { draftGet, draftSet } from './localDraft';
 
-export interface Fingerprint { p: string; d: string; pf: string; df: string; pc: string; dc: string }
+export interface Fingerprint { p: string; d: string; pf: string; df: string; pc: string; dc: string; h: number[] }
 export interface ScanImage { key: string; studentId: string; label: string; url: string; thumb: string; fp?: Fingerprint }
 
 const SIZE_P = 32;
@@ -72,11 +72,31 @@ function dHash(px: Float64Array): string {
 export function fingerprintOf(src: CanvasImageSource, sw: number, sh: number): Fingerprint {
   const p = (crop: number, flip: boolean) => pHash(grayPixels(src, sw, sh, crop, flip, SIZE_P, SIZE_P));
   const d = (crop: number, flip: boolean) => dHash(grayPixels(src, sw, sh, crop, flip, 9, 8));
-  return { p: p(0, false), d: d(0, false), pf: p(0, true), df: d(0, true), pc: p(0.1, false), dc: d(0.1, false) };
+  return { p: p(0, false), d: d(0, false), pf: p(0, true), df: d(0, true), pc: p(0.1, false), dc: d(0.1, false), h: colorHist(src, sw, sh) };
+}
+
+// Biểu đồ màu 4x4x4 ô (64 ô), dùng để phân biệt bài cùng ảnh mẫu nhưng tô màu khác nhau.
+function colorHist(src: CanvasImageSource, sw: number, sh: number): number[] {
+  const w = 48, h = Math.max(1, Math.round((48 * sh) / Math.max(1, sw)));
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const ctx = c.getContext('2d', { willReadFrequently: true })!;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(src, 0, 0, sw, sh, 0, 0, w, h);
+  const d = ctx.getImageData(0, 0, w, h).data;
+  const bins = new Array(64).fill(0);
+  for (let i = 0; i < d.length; i += 4) bins[(d[i] >> 6) * 16 + (d[i + 1] >> 6) * 4 + (d[i + 2] >> 6)]++;
+  const total = w * h;
+  return bins.map(v => Math.round((v / total) * 1000) / 1000);
+}
+export function colorSimilarity(a: Fingerprint, b: Fingerprint): number {
+  if (!a.h || !b.h) return 0;
+  let s = 0; for (let i = 0; i < 64; i++) s += Math.min(a.h[i], b.h[i]);
+  return Math.round(Math.min(1, s) * 100);
 }
 
 const ham = (a: string, b: string) => { let n = 0; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) n++; return n; };
 // Độ giống 0 đến 100%: lấy cách so khớp nhất giữa bản gốc, bản lật và bản cắt viền.
+// Độ giống về bố cục, hình khối (không xét màu).
 export function similarity(a: Fingerprint, b: Fingerprint): number {
   const pairs: [string, string, string, string][] = [
     [a.p, b.p, a.d, b.d], [a.pf, b.p, a.df, b.d], [a.p, b.pf, a.d, b.df],
@@ -138,7 +158,7 @@ export async function pdfPageImages(url: string): Promise<{ thumb: string; canva
 }
 
 // ---------------------------------------------------------------- quét có lưu đệm
-const CACHE_KEY = 'img_fp_cache_v1';
+const CACHE_KEY = 'img_fp_cache_v2';
 let memCache: Record<string, Fingerprint> | null = null;
 async function cache(): Promise<Record<string, Fingerprint>> {
   if (!memCache) memCache = (await draftGet<Record<string, Fingerprint>>(CACHE_KEY)) || {};
