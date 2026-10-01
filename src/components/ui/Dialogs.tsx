@@ -78,7 +78,7 @@ function checkSharePreview(text: string) {
   if (u.origin !== window.location.origin || !SHARE_PATH_RE.test(u.pathname) || /localhost|127\.0\.0\.1/.test(u.hostname)) return;
   fetch(u.pathname, { method: 'HEAD', cache: 'no-store' })
     .then(r => {
-      if (r.status === 404) notice('Đã sao chép link. Link này vừa tạo, khoảng 15 phút nữa trang cập nhật xong thì dán vào Zalo, Facebook mới hiện tên và ảnh bìa.', 'info', 9000);
+      if (r.status === 404) notice('Đã sao chép link. Link này vừa tạo nên trang chưa cập nhật khung xem trước, đợi trang cập nhật xong rồi hãy dán vào Zalo, Facebook để hiện tên và ảnh bìa.', 'info', 9000);
     })
     .catch(() => { /* bỏ qua */ });
 }
