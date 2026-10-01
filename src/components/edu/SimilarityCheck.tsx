@@ -110,7 +110,7 @@ export default function SimilarityCheck({ users, submissions, onClose, onResults
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const scored = useMemo(() => pairs.map(p => ({ ...p, pct: p.exactFile ? 100 : mode === 'shape' ? p.shape : Math.round(0.55 * p.shape + 0.45 * p.color) })).sort((x, y) => y.pct - x.pct), [pairs, mode]);
+  const scored = useMemo(() => pairs.map(p => ({ ...p, pct: p.exactFile ? 100 : mode === 'shape' || p.color < 0 ? p.shape : Math.round(0.55 * p.shape + 0.45 * p.color) })).sort((x, y) => y.pct - x.pct), [pairs, mode]);
   const shown = useMemo(() => scored.filter(p => p.pct >= threshold), [scored, threshold]);
   useEffect(() => {
     if (phase !== 'done') return;
@@ -149,7 +149,7 @@ export default function SimilarityCheck({ users, submissions, onClose, onResults
             <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-5 py-3">
               <button onClick={() => setView(null)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200">Quay lại danh sách</button>
               <span className={`rounded-lg px-2.5 py-1 text-xs font-black ${tone(view.pct)}`}>Giống {view.pct}%</span>
-              <span className="text-xs text-slate-500">Bố cục {view.shape}% · Màu sắc {view.color}%</span>
+              <span className="text-xs text-slate-500">Bố cục {view.shape}% · {view.color < 0 ? 'ảnh không màu' : `Màu sắc ${view.color}%`}</span>
               {view.exactFile && <span className="text-xs font-semibold text-rose-600">Trùng y hệt tệp {view.exactFile}</span>}
             </div>
             <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-auto p-4 md:grid-cols-2">
@@ -192,7 +192,7 @@ export default function SimilarityCheck({ users, submissions, onClose, onResults
                       {p.imgB && <img src={p.imgB.thumb} alt="" className="h-14 w-14 shrink-0 rounded-lg bg-slate-100 object-cover" />}
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[13px] font-bold text-slate-800">{name(p.a)?.fullName} <span className="font-normal text-slate-400">và</span> {name(p.b)?.fullName}</p>
-                        <p className="truncate text-[11px] text-slate-500">{name(p.a)?.mssv} · {name(p.b)?.mssv} · bố cục {p.shape}% · màu {p.color}%{p.exactFile ? ` · trùng y hệt tệp ${p.exactFile}` : ''}</p>
+                        <p className="truncate text-[11px] text-slate-500">{name(p.a)?.mssv} · {name(p.b)?.mssv} · bố cục {p.shape}% · {p.color < 0 ? 'ảnh không màu' : `màu ${p.color}%`}{p.exactFile ? ` · trùng y hệt tệp ${p.exactFile}` : ''}</p>
                       </div>
                       {p.pct >= 95 && <AlertTriangle className="h-4 w-4 shrink-0 text-rose-500" />}
                     </button>

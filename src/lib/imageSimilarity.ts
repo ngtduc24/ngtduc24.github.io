@@ -103,8 +103,8 @@ function colorHist(src: CanvasImageSource, sw: number, sh: number): number[] {
 export function colorSimilarity(a: Fingerprint, b: Fingerprint): number {
   if (!a.h || !b.h || a.h.length !== 19 || b.h.length !== 19) return 0;
   const fa = a.h[18], fb = b.h[18];
-  // Cả 2 gần như không có màu (ảnh đen trắng, bản vẽ chì): coi như giống về màu.
-  if (fa < 0.03 && fb < 0.03) return 100;
+  // Cả 2 gần như không có màu (ảnh đen trắng, bản vẽ chì): không so được màu, trả về -1.
+  if (fa < 0.03 && fb < 0.03) return -1;
   let s = 0; for (let i = 0; i < 18; i++) s += Math.min(a.h[i], b.h[i]);
   const amount = 1 - Math.min(1, Math.abs(fa - fb) / Math.max(fa, fb, 0.05));
   return Math.round(Math.min(1, s) * (0.75 + 0.25 * amount) * 100);
