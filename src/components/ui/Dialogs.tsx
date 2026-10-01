@@ -63,12 +63,28 @@ export function copyText(text: string): Promise<boolean> {
       return ok;
     } catch { return false; }
   };
-  if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text).then(() => true, () => fallback());
-  return Promise.resolve(fallback());
+  const done = (ok: boolean) => { if (ok) checkSharePreview(text); return ok; };
+  if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text).then(() => true, () => fallback()).then(done);
+  return Promise.resolve(done(fallback()));
+}
+
+// Link chia sẻ /<thư mục>/<mã>/ chỉ có tên và ảnh bìa khi dán vào Zalo, Facebook sau khi trang đã
+// tạo xong trang tĩnh cho link đó. Link vừa tạo thì báo cho người dùng biết để không dán quá sớm,
+// vì Zalo, Facebook sẽ ghi nhớ khung xem trước trống của lần dán đầu tiên.
+const SHARE_PATH_RE = /^\/(bt|bg|hl|tn|vr|ar|nb|c|p|r|b)\/[A-Za-z0-9_-]{1,120}\/$/;
+function checkSharePreview(text: string) {
+  let u: URL;
+  try { u = new URL(text); } catch { return; }
+  if (u.origin !== window.location.origin || !SHARE_PATH_RE.test(u.pathname) || /localhost|127\.0\.0\.1/.test(u.hostname)) return;
+  fetch(u.pathname, { method: 'HEAD', cache: 'no-store' })
+    .then(r => {
+      if (r.status === 404) notice('Đã sao chép link. Link này vừa tạo, khoảng 15 phút nữa trang cập nhật xong thì dán vào Zalo, Facebook mới hiện tên và ảnh bìa.', 'info', 9000);
+    })
+    .catch(() => { /* bỏ qua */ });
 }
 
 // Thông báo ngắn góc màn hình, tự ẩn.
-export function notice(message: string, tone: 'error' | 'info' = 'error') {
+export function notice(message: string, tone: 'error' | 'info' = 'error', ms = 4000) {
   const host = document.createElement('div');
   document.body.appendChild(host);
   const root = createRoot(host);
@@ -79,5 +95,5 @@ export function notice(message: string, tone: 'error' | 'info' = 'error') {
       </div>
     </div>
   );
-  setTimeout(() => { root.unmount(); host.remove(); }, 4000);
+  setTimeout(() => { root.unmount(); host.remove(); }, ms);
 }

@@ -1,5 +1,5 @@
 /**
- * Sinh trang chia sẻ tĩnh cho từng nội dung của trang portfolio.
+ * Sinh trang chia sẻ tĩnh cho từng nội dung có link chia sẻ.
  *
  * Zalo, Facebook, Messenger và các mạng xã hội khác không chạy JavaScript khi lấy
  * thông tin xem trước. Chúng chỉ đọc đúng đoạn HTML mà máy chủ trả về. Trang này là
@@ -7,14 +7,17 @@
  * đường link chia sẻ đều nhận chung một tiêu đề nằm sẵn trong tệp index.html.
  *
  * Vì vậy sau khi build xong, tập lệnh này đọc dữ liệu công khai từ Supabase rồi tạo
- * thêm cho mỗi khóa học, dự án, nghiên cứu và bài viết một tệp HTML tĩnh riêng, bên
- * trong có đúng tiêu đề, mô tả và ảnh bìa của nội dung đó. Người thật mở link sẽ được
- * chuyển ngay vào nội dung trong ứng dụng, còn máy quét của mạng xã hội thì dừng lại
- * ở đoạn HTML tĩnh và lấy được đúng thông tin xem trước.
+ * cho mỗi nội dung (khoá học, dự án, nghiên cứu, bài viết, bài tập, bài giảng, đề trắc
+ * nghiệm, VR, AR, link nộp bài) một tệp HTML tĩnh /<thư mục>/<mã>/ có đúng tiêu đề,
+ * mô tả và ảnh bìa. Người thật mở link được chuyển ngay vào ứng dụng, còn máy quét của
+ * mạng xã hội dừng lại ở đoạn HTML tĩnh và lấy được đúng thông tin xem trước.
+ *
+ * Ảnh xem trước được đưa về đúng chuẩn mà Zalo, Facebook đọc được ổn định: ảnh JPG
+ * 1200x630, dung lượng nhỏ, có khai báo kích thước. Ảnh gốc dạng WebP, AVIF hay ảnh nặng
+ * hàng chục MB (ví dụ ảnh nhận diện AR) thường bị các mạng xã hội bỏ qua.
  *
  * Tập lệnh này không bao giờ được phép làm hỏng quá trình build. Mọi trục trặc về
- * mạng hay cấu hình đều chỉ ghi một dòng cảnh báo rồi kết thúc êm, trang web vẫn lên
- * bình thường, chỉ là tạm thời chưa có trang chia sẻ riêng.
+ * mạng hay cấu hình đều chỉ ghi một dòng cảnh báo rồi kết thúc êm.
  */
 
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
@@ -23,6 +26,10 @@ import { loadShareRoutes } from './share-routes.mjs';
 
 const SITE_ORIGIN = 'https://ngtduc24.github.io';
 const DIST_DIR = path.resolve(process.cwd(), 'dist');
+const OG_W = 1200;
+const OG_H = 630;
+// Biến đổi của Cloudinary: cắt khung 1200x630 theo vùng nổi bật, nén JPG.
+const CLD_TRANSFORM = `c_fill,g_auto,w_${OG_W},h_${OG_H},q_auto:good,f_jpg`;
 
 const cleanEnv = value => {
   if (!value) return '';
@@ -66,16 +73,13 @@ const toPlainSummary = (value, limit = 200) => {
 
 /** Ảnh xem trước phải là đường dẫn tuyệt đối thì mạng xã hội mới tải được. */
 const toAbsoluteUrl = value => {
-  const raw = String(value ?? '').trim();
+  const raw = String(value ?? '').trim().replace(/&amp;/g, '&');
   if (!raw) return '';
   if (/^https?:\/\//i.test(raw)) return raw;
   if (raw.startsWith('//')) return `https:${raw}`;
   if (raw.startsWith('/')) return `${SITE_ORIGIN}${raw}`;
   return '';
 };
-
-/** Chỉ nhận mã định danh lành mạnh để không tạo ra đường dẫn thư mục lạ. */
-const isSafeId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,120}$/.test(value);
 
 async function fetchJson(url) {
   const response = await fetch(url, {
@@ -85,67 +89,81 @@ async function fetchJson(url) {
   return response.json();
 }
 
-/** Đọc một bảng nội dung công khai, trả về mảng đối tượng nằm trong cột data. */
-async function loadTable(table) {
-  const rows = await fetchJson(`${SUPABASE_URL}/rest/v1/${table}?select=data`);
-  return Array.isArray(rows) ? rows.map(row => row?.data).filter(Boolean) : [];
-}
-
-/** Bài viết không có bảng riêng, chúng nằm chung trong bảng cấu hình theo khóa posts. */
 async function loadSetting(key) {
   const rows = await fetchJson(`${SUPABASE_URL}/rest/v1/portfolio_settings?select=data&key=eq.${key}`);
   return Array.isArray(rows) && rows.length ? rows[0]?.data : null;
 }
 
-const CONTENT_TYPES = [
-  {
-    name: 'khóa học',
-    folder: 'c',
-    param: 'course',
-    page: 'courses',
-    load: () => loadTable('portfolio_courses'),
-    keep: item => item?.status === 'published',
-    title: item => item.title,
-    description: item => item.briefDescription || item.detailedDescription,
-    image: item => item.coverImage
-  },
-  {
-    name: 'dự án',
-    folder: 'p',
-    param: 'project',
-    page: 'projects',
-    load: () => loadTable('portfolio_projects'),
-    keep: item => ['published', 'completed', 'ongoing'].includes(item?.status),
-    title: item => item.title,
-    description: item => item.briefDescription || item.detailedContent,
-    image: item => item.coverImage || item.gallery?.[0]
-  },
-  {
-    name: 'nghiên cứu',
-    folder: 'r',
-    param: 'research',
-    page: 'research',
-    load: () => loadTable('portfolio_research'),
-    keep: () => true,
-    title: item => item.titleVi || item.titleEn,
-    description: item => item.abstractVi || item.abstractEn,
-    image: item => item.coverImage
-  },
-  {
-    name: 'bài viết',
-    folder: 'b',
-    param: 'post',
-    page: null,
-    load: async () => {
-      const posts = await loadSetting('posts');
-      return Array.isArray(posts) ? posts : [];
-    },
-    keep: item => item?.status === 'published',
-    title: item => item.title,
-    description: item => item.excerpt || item.content,
-    image: item => item.coverImage
+// ---------------------------------------------------------------------------
+// Ảnh xem trước
+// ---------------------------------------------------------------------------
+
+/** Ảnh trên Cloudinary: chèn biến đổi để Cloudinary trả về JPG 1200x630. Video thì lấy một khung hình. */
+function cloudinaryOg(url) {
+  const m = url.match(/^https?:\/\/res\.cloudinary\.com\/([^/]+)\/(image|video)\/upload\/(.+)$/i);
+  if (!m) return '';
+  const [, cloud, kind, rest] = m;
+  const clean = rest.split('?')[0].split('#')[0];
+  if (kind.toLowerCase() === 'video') return `https://res.cloudinary.com/${cloud}/video/upload/so_auto,${CLD_TRANSFORM}/${clean.replace(/\.[a-z0-9]+$/i, '')}.jpg`;
+  // Tệp PDF trên Cloudinary lấy trang đầu.
+  const page = /\.pdf$/i.test(clean) ? 'pg_1,' : '';
+  return `https://res.cloudinary.com/${cloud}/image/upload/${page}${CLD_TRANSFORM}/${clean}`;
+}
+
+let sharpLib = null;
+let sharpTried = false;
+async function getSharp() {
+  if (sharpTried) return sharpLib;
+  sharpTried = true;
+  try { sharpLib = (await import('sharp')).default; } catch { sharpLib = null; }
+  return sharpLib;
+}
+
+const localCache = new Map();
+/** Ảnh ở nơi khác (ví dụ kho Supabase): tải về, thu nhỏ thành og.jpg đặt cạnh trang chia sẻ. */
+async function localOg(url, folder, id) {
+  if (localCache.has(url)) {
+    const cached = await localCache.get(url);
+    return cached;
   }
-];
+  const job = (async () => {
+    const sharp = await getSharp();
+    if (!sharp) return '';
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 60000);
+      const res = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!res.ok) return '';
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (buf.length > 120 * 1024 * 1024) return '';
+      const out = await sharp(buf, { limitInputPixels: false, failOn: 'none' })
+        .rotate()
+        .resize(OG_W, OG_H, { fit: 'cover', position: 'attention' })
+        .flatten({ background: '#ffffff' })
+        .jpeg({ quality: 82, mozjpeg: true })
+        .toBuffer();
+      const dir = path.join(DIST_DIR, folder, id);
+      await mkdir(dir, { recursive: true });
+      await writeFile(path.join(dir, 'og.jpg'), out);
+      return `${SITE_ORIGIN}/${folder}/${id}/og.jpg`;
+    } catch (e) {
+      console.warn(`Không tạo được ảnh xem trước cho /${folder}/${id}/:`, e?.message || e);
+      return '';
+    }
+  })();
+  localCache.set(url, job);
+  return job;
+}
+
+/** Trả về địa chỉ ảnh xem trước đạt chuẩn, rỗng nếu không có ảnh dùng được. */
+async function ogImage(raw, folder, id) {
+  const url = toAbsoluteUrl(raw);
+  if (!url || /^data:/i.test(url)) return '';
+  const cld = cloudinaryOg(url);
+  if (cld) return cld;
+  return localOg(url, folder, id);
+}
 
 function buildSharePage({ title, description, image, targetUrl, shareUrl }) {
   const safeTitle = escapeHtml(title);
@@ -154,14 +172,19 @@ function buildSharePage({ title, description, image, targetUrl, shareUrl }) {
   const imageTags = image
     ? `
     <meta property="og:image" content="${escapeHtml(image)}" />
+    <meta property="og:image:secure_url" content="${escapeHtml(image)}" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="${OG_W}" />
+    <meta property="og:image:height" content="${OG_H}" />
     <meta property="og:image:alt" content="${safeTitle}" />
-    <meta name="twitter:image" content="${escapeHtml(image)}" />`
+    <meta name="twitter:image" content="${escapeHtml(image)}" />
+    <link rel="image_src" href="${escapeHtml(image)}" />`
     : '';
 
   // Chuyển hướng bằng JavaScript chứ không dùng thẻ refresh, để máy quét của mạng
   // xã hội đọc trọn phần thẻ mô tả thay vì bị đẩy sang địa chỉ khác giữa chừng.
   return `<!doctype html>
-<html lang="vi">
+<html lang="vi" prefix="og: https://ogp.me/ns#">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -199,17 +222,15 @@ function buildSharePage({ title, description, image, targetUrl, shareUrl }) {
 }
 
 /** Gắn ảnh mặc định của trang chủ vào tệp index.html đã build. */
-async function applyDefaultShareImage() {
+async function applyDefaultShareImage(image) {
   try {
-    const banner = await loadSetting('banner');
-    const image = toAbsoluteUrl(banner?.backgroundImage);
     if (!image) return;
     const indexPath = path.join(DIST_DIR, 'index.html');
     const html = await readFile(indexPath, 'utf8');
     if (html.includes('property="og:image"')) return;
     const injected = html.replace(
       '<meta name="twitter:card"',
-      `<meta property="og:image" content="${escapeHtml(image)}" />\n    <meta name="twitter:image" content="${escapeHtml(image)}" />\n    <meta name="twitter:card"`
+      `<meta property="og:image" content="${escapeHtml(image)}" />\n    <meta property="og:image:width" content="${OG_W}" />\n    <meta property="og:image:height" content="${OG_H}" />\n    <meta name="twitter:image" content="${escapeHtml(image)}" />\n    <meta name="twitter:card"`
     );
     await writeFile(indexPath, injected, 'utf8');
     console.log('Đã gắn ảnh xem trước mặc định cho trang chủ.');
@@ -218,32 +239,9 @@ async function applyDefaultShareImage() {
   }
 }
 
-/** Trang chia sẻ của các chức năng (bài tập, bài giảng, trắc nghiệm, VR, AR, nộp bài), kèm tệp manifest để kiểm tra định kỳ. */
-async function writeAppSharePages() {
-  try {
-    const { routes, hash } = await loadShareRoutes(SUPABASE_URL, SUPABASE_KEY);
-    let fallbackImage = '';
-    try { fallbackImage = toAbsoluteUrl((await loadSetting('banner'))?.backgroundImage); } catch { /* bỏ qua */ }
-    const counts = {};
-    for (const r of routes) {
-      const folder = path.join(DIST_DIR, r.folder, r.id);
-      await mkdir(folder, { recursive: true });
-      await writeFile(path.join(folder, 'index.html'), buildSharePage({
-        title: toPlainSummary(r.title, 110),
-        description: toPlainSummary(r.description, 220) || 'Xem chi tiết trên trang của Andy Nguyễn.',
-        image: toAbsoluteUrl(r.image) || fallbackImage,
-        targetUrl: `${SITE_ORIGIN}${r.target}`,
-        shareUrl: `${SITE_ORIGIN}/${r.folder}/${r.id}/`,
-      }), 'utf8');
-      counts[r.folder] = (counts[r.folder] || 0) + 1;
-    }
-    await writeFile(path.join(DIST_DIR, 'share-manifest.txt'), hash, 'utf8');
-    console.log('Đã tạo trang chia sẻ cho các chức năng:', JSON.stringify(counts));
-    return routes.length;
-  } catch (error) {
-    console.warn('Bỏ qua trang chia sẻ của các chức năng:', error.message);
-    return 0;
-  }
+/** Chạy lần lượt theo nhóm nhỏ để không tải dồn quá nhiều ảnh cùng lúc. */
+async function inBatches(items, size, fn) {
+  for (let i = 0; i < items.length; i += size) await Promise.all(items.slice(i, i + size).map(fn));
 }
 
 async function run() {
@@ -252,54 +250,44 @@ async function run() {
     return;
   }
 
-  let total = 0;
-  for (const type of CONTENT_TYPES) {
-    let items = [];
-    try {
-      items = await type.load();
-    } catch (error) {
-      console.warn(`Không đọc được dữ liệu ${type.name}, bỏ qua:`, error.message);
-      continue;
-    }
+  let fallbackImage = '';
+  try {
+    const banner = await loadSetting('banner');
+    fallbackImage = await ogImage(banner?.backgroundImage, 'og', 'home');
+  } catch { /* bỏ qua */ }
 
-    let written = 0;
-    for (const item of items) {
-      if (!item || !isSafeId(item.id) || !type.keep(item)) continue;
-
-      const title = toPlainSummary(type.title(item), 110);
-      if (!title) continue;
-
-      const description = toPlainSummary(type.description(item)) || 'Xem chi tiết trên trang của Andy Nguyễn.';
-      const image = toAbsoluteUrl(type.image(item));
-
-      const target = new URL(SITE_ORIGIN);
-      target.searchParams.set('portfolio', 'true');
-      if (type.page) target.searchParams.set('page', type.page);
-      target.searchParams.set(type.param, item.id);
-
-      const folder = path.join(DIST_DIR, type.folder, item.id);
-      await mkdir(folder, { recursive: true });
-      await writeFile(
-        path.join(folder, 'index.html'),
-        buildSharePage({
-          title,
-          description,
-          image,
-          targetUrl: target.toString(),
-          shareUrl: `${SITE_ORIGIN}/${type.folder}/${item.id}/`
-        }),
-        'utf8'
-      );
-      written += 1;
-    }
-
-    total += written;
-    console.log(`Đã tạo ${written} trang chia sẻ cho ${type.name}.`);
+  let routes = [];
+  let hash = '';
+  try {
+    ({ routes, hash } = await loadShareRoutes(SUPABASE_URL, SUPABASE_KEY));
+  } catch (error) {
+    console.warn('Không đọc được danh sách link chia sẻ:', error?.message || error);
   }
 
-  total += await writeAppSharePages();
-  await applyDefaultShareImage();
-  console.log(`Tổng cộng ${total} trang chia sẻ.`);
+  const counts = {};
+  let ownImage = 0;
+  await inBatches(routes, 6, async r => {
+    try {
+      const image = (await ogImage(r.image, r.folder, r.id)) || fallbackImage;
+      if (image && image !== fallbackImage) ownImage += 1;
+      const folder = path.join(DIST_DIR, r.folder, r.id);
+      await mkdir(folder, { recursive: true });
+      await writeFile(path.join(folder, 'index.html'), buildSharePage({
+        title: toPlainSummary(r.title, 110) || 'Andy Nguyễn',
+        description: toPlainSummary(r.description, 220) || 'Xem chi tiết trên trang của Andy Nguyễn.',
+        image,
+        targetUrl: `${SITE_ORIGIN}${r.target}`,
+        shareUrl: `${SITE_ORIGIN}/${r.folder}/${r.id}/`,
+      }), 'utf8');
+      counts[r.folder] = (counts[r.folder] || 0) + 1;
+    } catch (error) {
+      console.warn(`Bỏ qua trang /${r.folder}/${r.id}/:`, error?.message || error);
+    }
+  });
+
+  if (hash) await writeFile(path.join(DIST_DIR, 'share-manifest.txt'), hash, 'utf8');
+  await applyDefaultShareImage(fallbackImage);
+  console.log('Đã tạo trang chia sẻ:', JSON.stringify(counts), `(${ownImage} trang có ảnh riêng)`);
 }
 
 run().catch(error => {

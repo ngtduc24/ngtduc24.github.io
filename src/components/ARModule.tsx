@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { prettyShareUrl } from '../lib/shareLinks';
+import { copyText } from './ui/Dialogs';
 import { QrCode, RefreshCw, Search, AlertCircle, X, Link2, ExternalLink, Download, Check, Plus, Loader2, Upload, Box, ArrowLeft, Pencil, Trash2, Save } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadARAssetToSupabase } from '../lib/upload';
@@ -21,16 +22,7 @@ function ARDetailModal({ target, onClose }: { target: ARTarget; onClose: () => v
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(arLink)}&format=png&margin=10`;
 
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(shareLink);
-    } catch {
-      const el = document.createElement('textarea');
-      el.value = shareLink;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand('copy');
-      document.body.removeChild(el);
-    }
+    if (!(await copyText(shareLink))) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

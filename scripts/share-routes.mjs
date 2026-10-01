@@ -81,6 +81,33 @@ export async function loadShareRoutes(supabaseUrl, key) {
       target: `/tracuu.html?edu=${x.share_link_id}` });
   }
 
+  // Nội dung trang portfolio: khoá học /c/, dự án /p/, nghiên cứu /r/, bài viết /b/.
+  const dataOf = rows => rows.map(r => r?.data).filter(Boolean);
+  const portfolio = [
+    { folder: 'c', items: dataOf(await get('portfolio_courses?select=data')), keep: x => x.status === 'published',
+      title: x => x.title, desc: x => x.briefDescription || x.detailedDescription, image: x => x.coverImage,
+      target: x => `/?portfolio=true&page=courses&course=${x.id}` },
+    { folder: 'p', items: dataOf(await get('portfolio_projects?select=data')), keep: x => ['published', 'completed', 'ongoing'].includes(x.status),
+      title: x => x.title, desc: x => x.briefDescription || x.detailedContent, image: x => x.coverImage || x.gallery?.[0],
+      target: x => `/?portfolio=true&page=projects&project=${x.id}` },
+    { folder: 'r', items: dataOf(await get('portfolio_research?select=data')), keep: () => true,
+      title: x => x.titleVi || x.titleEn, desc: x => x.abstractVi || x.abstractEn, image: x => x.coverImage,
+      target: x => `/?portfolio=true&page=research&research=${x.id}` },
+    { folder: 'b', items: (() => [])(), keep: x => x.status === 'published',
+      title: x => x.title, desc: x => x.excerpt || x.content, image: x => x.coverImage,
+      target: x => `/?portfolio=true&post=${x.id}` },
+  ];
+  const postsRow = (await get('portfolio_settings?select=data&key=eq.posts'))[0]?.data;
+  portfolio[3].items = Array.isArray(postsRow) ? postsRow : [];
+  for (const t of portfolio) {
+    for (const x of t.items) {
+      if (!x || !safe(x.id) || !t.keep(x)) continue;
+      const title = plain(t.title(x), 110);
+      if (!title) continue;
+      routes.push({ folder: t.folder, id: x.id, title, image: (typeof t.image(x) === 'string' ? t.image(x) : '') || '', description: plain(t.desc(x), 200), target: t.target(x) });
+    }
+  }
+
   const hash = createHash('sha1')
     .update(JSON.stringify(routes.map(r => [r.folder, r.id, r.title, r.image, r.description])))
     .digest('hex');

@@ -4,6 +4,7 @@ import {
   Upload, X, Check, Copy, ExternalLink, Pencil, Save, Sparkles, EyeOff, Images
 } from 'lucide-react';
 import MediaSourcePicker from '../MediaSourcePicker';
+import { copyText } from '../ui/Dialogs';
 import { UserAccount } from '../../types';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
@@ -154,7 +155,7 @@ function LinkDialog({ tour, onClose }: { tour: VRTour; onClose: () => void }) {
   const link = buildTourLink(tour.id);
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(link)}&format=png&margin=10`;
   const [copied, setCopied] = useState(false);
-  const copy = async () => { try { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* bỏ qua */ } };
+  const copy = async () => { if (await copyText(link)) { setCopied(true); setTimeout(() => setCopied(false), 1500); } };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" onClick={onClose}>
       <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
