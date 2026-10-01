@@ -75,27 +75,42 @@ export function fingerprintOf(src: CanvasImageSource, sw: number, sh: number): F
   return { p: p(0, false), d: d(0, false), pf: p(0, true), df: d(0, true), pc: p(0.1, false), dc: d(0.1, false), h: colorHist(src, sw, sh) };
 }
 
-// Biểu đồ màu 4x4x4 ô (64 ô), dùng để phân biệt bài cùng ảnh mẫu nhưng tô màu khác nhau.
+// Biểu đồ màu theo sắc độ (18 dải màu), chỉ tính các điểm có màu rõ, bỏ nền trắng, xám, đen.
+// Dùng để phân biệt bài cùng ảnh mẫu nhưng tô màu khác nhau. Ô cuối lưu tỷ lệ điểm có màu.
 function colorHist(src: CanvasImageSource, sw: number, sh: number): number[] {
-  const w = 48, h = Math.max(1, Math.round((48 * sh) / Math.max(1, sw)));
+  const w = 64, h = Math.max(1, Math.round((64 * sh) / Math.max(1, sw)));
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   const ctx = c.getContext('2d', { willReadFrequently: true })!;
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
   ctx.drawImage(src, 0, 0, sw, sh, 0, 0, w, h);
   const d = ctx.getImageData(0, 0, w, h).data;
-  const bins = new Array(64).fill(0);
-  for (let i = 0; i < d.length; i += 4) bins[(d[i] >> 6) * 16 + (d[i + 1] >> 6) * 4 + (d[i + 2] >> 6)]++;
-  const total = w * h;
-  return bins.map(v => Math.round((v / total) * 1000) / 1000);
+  const bins = new Array(18).fill(0);
+  let colored = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), delta = mx - mn;
+    const sat = mx === 0 ? 0 : delta / mx;
+    if (sat < 0.25 || mx < 0.15) continue;
+    let hue = mx === r ? ((g - b) / delta) % 6 : mx === g ? (b - r) / delta + 2 : (r - g) / delta + 4;
+    hue = (hue * 60 + 360) % 360;
+    bins[Math.floor(hue / 20) % 18]++;
+    colored++;
+  }
+  const out = bins.map(v => (colored ? Math.round((v / colored) * 1000) / 1000 : 0));
+  out.push(Math.round((colored / (w * h)) * 1000) / 1000);
+  return out;
 }
 export function colorSimilarity(a: Fingerprint, b: Fingerprint): number {
-  if (!a.h || !b.h) return 0;
-  let s = 0; for (let i = 0; i < 64; i++) s += Math.min(a.h[i], b.h[i]);
-  return Math.round(Math.min(1, s) * 100);
+  if (!a.h || !b.h || a.h.length !== 19 || b.h.length !== 19) return 0;
+  const fa = a.h[18], fb = b.h[18];
+  // Cả 2 gần như không có màu (ảnh đen trắng, bản vẽ chì): coi như giống về màu.
+  if (fa < 0.03 && fb < 0.03) return 100;
+  let s = 0; for (let i = 0; i < 18; i++) s += Math.min(a.h[i], b.h[i]);
+  const amount = 1 - Math.min(1, Math.abs(fa - fb) / Math.max(fa, fb, 0.05));
+  return Math.round(Math.min(1, s) * (0.75 + 0.25 * amount) * 100);
 }
 
 const ham = (a: string, b: string) => { let n = 0; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) n++; return n; };
-// Độ giống 0 đến 100%: lấy cách so khớp nhất giữa bản gốc, bản lật và bản cắt viền.
 // Độ giống về bố cục, hình khối (không xét màu).
 export function similarity(a: Fingerprint, b: Fingerprint): number {
   const pairs: [string, string, string, string][] = [
@@ -158,7 +173,7 @@ export async function pdfPageImages(url: string): Promise<{ thumb: string; canva
 }
 
 // ---------------------------------------------------------------- quét có lưu đệm
-const CACHE_KEY = 'img_fp_cache_v2';
+const CACHE_KEY = 'img_fp_cache_v3';
 let memCache: Record<string, Fingerprint> | null = null;
 async function cache(): Promise<Record<string, Fingerprint>> {
   if (!memCache) memCache = (await draftGet<Record<string, Fingerprint>>(CACHE_KEY)) || {};
