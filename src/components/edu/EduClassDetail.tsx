@@ -821,100 +821,146 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
 
       {activeTab === 'assignments' && (
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden animate-fadeIn">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider">Tên bài tập</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider">Cột điểm</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider">Hạn nộp</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider text-center">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {assignments.map(assignment => {
-                const column = gradeColumns.find(c => c.id === (assignment as any).grade_column_id || c.id === assignment.gradeColumnId);
-                const subCount = submissions.filter(s => s.assignmentId === assignment.id).length;
-                const totalCount = users.length;
-                return (
-                  <tr key={assignment.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <button 
-                          onClick={() => onViewAssignment(assignment.id)}
-                          className="text-xs font-black text-slate-900 group-hover:text-brand transition-colors text-left"
-                        >
+          {(() => {
+            const info = (assignment: EduAssignment) => {
+              const column = gradeColumns.find(c => c.id === (assignment as any).grade_column_id || c.id === assignment.gradeColumnId);
+              const subCount = submissions.filter(s => s.assignmentId === assignment.id).length;
+              return { column, subCount, totalCount: users.length };
+            };
+            // Các nút thao tác dùng chung cho bảng (máy tính) và thẻ (điện thoại).
+            const actions = (assignment: EduAssignment, column: EduGradeColumn | undefined, big: boolean) => {
+              const icon = big ? 'w-4 h-4' : 'w-3.5 h-3.5';
+              const pad = big ? 'p-2.5' : 'p-2';
+              return (
+                <>
+                  {canGrade && (
+                    <button
+                      onClick={() => column && onGrading(assignment.id, column.id)}
+                      className={`${big ? 'flex-1 px-4 py-2.5 text-[11px]' : 'px-3 py-1.5 text-[10px]'} bg-brand text-white rounded-xl font-black hover:bg-brand-hover transition-all`}
+                    >
+                      CHẤM BÀI
+                    </button>
+                  )}
+                  <button
+                    onClick={() => copyShareLink(assignment.shareLinkId)}
+                    className={`${pad} bg-slate-50 text-slate-400 hover:text-brand hover:bg-brand/10 rounded-xl transition-all`}
+                    title="Sao chép link nộp bài"
+                  >
+                    <Copy className={icon} />
+                  </button>
+                  {canEdit && (
+                    <button
+                      onClick={() => onEditAssignment(assignment.id)}
+                      className={`${pad} bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all`}
+                      title="Chỉnh sửa bài tập"
+                    >
+                      <Edit2 className={icon} />
+                    </button>
+                  )}
+                  <a
+                    href={prettyShareUrl('edu', assignment.shareLinkId)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`${pad} ${big ? 'bg-slate-50' : ''} text-slate-400 hover:text-slate-600 rounded-xl transition-all`}
+                    title="Mở link nộp bài"
+                  >
+                    <ExternalLink className={icon} />
+                  </a>
+                  {canDelete && (
+                    <button
+                      onClick={() => handleDeleteAssignment(assignment.id, assignment.gradeColumnId)}
+                      className={`${pad} ${big ? 'bg-slate-50' : ''} text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all`}
+                      title="Xóa bài tập"
+                    >
+                      <Trash2 className={icon} />
+                    </button>
+                  )}
+                </>
+              );
+            };
+            const deadlineText = (a: EduAssignment) => a.deadline ? new Date(a.deadline).toLocaleString('vi-VN', { hour12: false }) : 'Không giới hạn';
+            return (
+              <>
+                {/* Điện thoại: mỗi bài tập là một thẻ, nút thao tác nằm ngay trong thẻ nên không cần kéo ngang. */}
+                <div className="md:hidden divide-y divide-slate-100">
+                  {assignments.map(assignment => {
+                    const { column, subCount, totalCount } = info(assignment);
+                    return (
+                      <div key={assignment.id} className="p-4">
+                        <button onClick={() => onViewAssignment(assignment.id)} className="text-left text-sm font-black text-slate-900 hover:text-brand">
                           {assignment.title}
                         </button>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[9px] font-bold text-slate-400 uppercase">{assignment.allowedFileTypes.map(eduFileTypeLabel).join(', ')}</span>
-                          <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                          <span className={`text-[9px] font-black uppercase ${subCount === totalCount ? 'text-brand' : 'text-amber-500'}`}>
-                            {subCount}/{totalCount} SV đã nộp
-                          </span>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-bold">
+                          <span className="uppercase text-slate-400">{assignment.allowedFileTypes.map(eduFileTypeLabel).join(', ')}</span>
+                          <span className={`uppercase ${subCount === totalCount ? 'text-brand' : 'text-amber-500'}`}>{subCount}/{totalCount} SV đã nộp</span>
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+                          <span className="px-2 py-1 bg-slate-100 rounded font-bold text-slate-600">{column?.name || 'Chưa gán'}</span>
+                          <span className="font-bold text-slate-500">Hạn nộp {deadlineText(assignment)}</span>
+                        </div>
+                        <div className="mt-3 flex items-center gap-2">
+                          {actions(assignment, column, true)}
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-2 py-1 bg-slate-100 rounded text-[10px] font-bold text-slate-600">
-                        {column?.name || 'Chưa gán'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-xs font-bold text-slate-500">
-                        {assignment.deadline ? new Date(assignment.deadline).toLocaleString('vi-VN') : 'Không giới hạn'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        {canGrade && (
-                        <button
-                          onClick={() => column && onGrading(assignment.id, column.id)}
-                          className="px-3 py-1.5 bg-brand text-white rounded-xl text-[10px] font-black hover:bg-brand-hover transition-all"
-                        >
-                          CHẤM BÀI
-                        </button>
-                        )}
-                        <button
-                          onClick={() => copyShareLink(assignment.shareLinkId)}
-                          className="p-2 bg-slate-50 text-slate-400 hover:text-brand hover:bg-brand/10 rounded-xl transition-all"
-                          title="Sao chép link nộp bài"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-                        {canEdit && (
-                        <button
-                          onClick={() => onEditAssignment(assignment.id)}
-                          className="p-2 bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
-                          title="Chỉnh sửa bài tập"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        )}
-                        <a
-                          href={`/tracuu.html?edu=${assignment.shareLinkId}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-2 text-slate-400 hover:text-slate-600 transition-all"
-                          title="Mở link nộp bài"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                        {canDelete && (
-                        <button
-                          onClick={() => handleDeleteAssignment(assignment.id, assignment.gradeColumnId)}
-                          className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
-                          title="Xóa bài tập"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    );
+                  })}
+                </div>
+
+                {/* Máy tính bảng và máy tính: bảng, có thanh kéo ngang khi màn hình hẹp. */}
+                <div className="hidden md:block overflow-x-auto scrollbar-thin">
+                  <table className="w-full min-w-[760px] text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/50 border-b border-slate-100">
+                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider">Tên bài tập</th>
+                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider">Cột điểm</th>
+                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider">Hạn nộp</th>
+                        <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-wider text-center">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {assignments.map(assignment => {
+                        const { column, subCount, totalCount } = info(assignment);
+                        return (
+                          <tr key={assignment.id} className="hover:bg-slate-50/50 transition-colors group">
+                            <td className="px-6 py-4">
+                              <div className="flex flex-col">
+                                <button
+                                  onClick={() => onViewAssignment(assignment.id)}
+                                  className="text-xs font-black text-slate-900 group-hover:text-brand transition-colors text-left"
+                                >
+                                  {assignment.title}
+                                </button>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase">{assignment.allowedFileTypes.map(eduFileTypeLabel).join(', ')}</span>
+                                  <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                  <span className={`text-[9px] font-black uppercase ${subCount === totalCount ? 'text-brand' : 'text-amber-500'}`}>
+                                    {subCount}/{totalCount} SV đã nộp
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="px-2 py-1 bg-slate-100 rounded text-[10px] font-bold text-slate-600 whitespace-nowrap">
+                                {column?.name || 'Chưa gán'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-xs font-bold text-slate-500 whitespace-nowrap">{deadlineText(assignment)}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center justify-center gap-2">
+                                {actions(assignment, column, false)}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            );
+          })()}
           {assignments.length === 0 && (
             <div className="py-20 text-center">
               <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
