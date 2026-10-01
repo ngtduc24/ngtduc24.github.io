@@ -359,7 +359,9 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
   const isTextMode = allowedTypes.includes('text');
   const hasFileMode = allowedTypes.some(t => t !== 'text');
 
-  const currentGrade = grades.find(g => g.column.id === assignment.gradeColumnId)?.grade;
+  // Chỉ hiện cột đã được giảng viên chấm (có điểm), chưa chấm thì không hiện gì.
+  const gradedItems = grades.filter(g => g.grade && g.grade.score !== null && g.grade.score !== undefined && g.grade.score !== '');
+  const currentGrade = gradedItems.find(g => g.column.id === assignment.gradeColumnId)?.grade;
 
   // Sinh viên được gia hạn còn hiệu lực thì mở khóa nộp bài bất kể quá hạn, trừ khi đã chấm điểm.
   const graded = !!(currentGrade && currentGrade.score !== undefined && currentGrade.score !== null);
@@ -481,18 +483,18 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
             })()}
 
             {/* Kết quả học tập */}
-            {grades.length > 0 && (() => {
+            {gradedItems.length > 0 && (() => {
               // Điểm trung bình môn tính theo tỷ trọng, cùng công thức với bảng điểm của giảng viên:
               // chỉ gộp các cột đã có điểm và có tỷ trọng lớn hơn 0, chia cho tổng tỷ trọng của các cột đó.
               let sw = 0, sv = 0, counted = 0;
-              for (const item of grades) {
+              for (const item of gradedItems) {
                 const w = item.column?.weight || 0;
                 const score = item.grade?.score;
                 if (w <= 0 || score === undefined || score === null) continue;
                 sw += w; sv += Number(score) * w; counted += 1;
               }
               const avg = sw > 0 ? Math.round((sv / sw) * 100) / 100 : null;
-              const hasWeights = grades.some(item => (item.column?.weight || 0) > 0);
+              const hasWeights = gradedItems.some(item => (item.column?.weight || 0) > 0);
               return (
                 <div className="space-y-4">
                   <Card padding="item" className="flex items-center justify-between gap-4">
@@ -510,24 +512,28 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
                     </div>
                   </Card>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {grades.map((item, idx) => (
-                      <Card key={idx} padding="item" className={idx === 0 ? 'bg-brand text-white border-transparent' : ''}>
+                    {gradedItems.map((item, idx) => {
+                      const current = item.column?.id === assignment.gradeColumnId;
+                      return (
+                      <Card key={idx} padding="item" className={current ? 'border-brand/40 ring-1 ring-brand/20' : ''}>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className={`text-xs font-semibold ${idx === 0 ? 'text-white/80' : 'text-slate-500'}`}>{item.column.name}</p>
-                          {(item.column?.weight || 0) > 0 && <Badge tone={idx === 0 ? 'neutral' : 'brand'} className={idx === 0 ? 'bg-white/15 text-white' : ''}>Tỷ trọng {item.column.weight}%</Badge>}
+                          <p className="text-xs font-semibold text-slate-500">{item.column.name}</p>
+                          {current && <Badge tone="brand">Bài tập này</Badge>}
+                          {(item.column?.weight || 0) > 0 && <Badge tone="neutral">Tỷ trọng {item.column.weight}%</Badge>}
                         </div>
                         <div className="flex items-end gap-2 mt-3">
-                          <p className="text-4xl font-bold leading-none">{item.grade?.score !== undefined ? item.grade.score : '-'}</p>
-                          <p className={`text-[13px] font-semibold mb-1 ${idx === 0 ? 'text-white/60' : 'text-slate-400'}`}>/ 10</p>
+                          <p className="text-4xl font-bold leading-none text-brand">{item.grade.score}</p>
+                          <p className="text-[13px] font-semibold mb-1 text-slate-400">/ 10</p>
                         </div>
                         {item.grade?.note && (
-                          <div className={`pt-3 mt-3 border-t ${idx === 0 ? 'border-white/15' : 'border-slate-100'}`}>
-                            <p className={`text-xs font-semibold ${idx === 0 ? 'text-white/70' : 'text-slate-500'}`}>Nhận xét của giảng viên</p>
-                            <p className={`text-[13px] italic leading-relaxed mt-1 ${idx === 0 ? 'text-white/90' : 'text-slate-600'}`}>“{item.grade.note}”</p>
+                          <div className="pt-3 mt-3 border-t border-slate-100">
+                            <p className="text-xs font-semibold text-slate-500">Nhận xét của giảng viên</p>
+                            <p className="text-[13px] italic leading-relaxed mt-1 text-slate-700">“{item.grade.note}”</p>
                           </div>
                         )}
                       </Card>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               );
