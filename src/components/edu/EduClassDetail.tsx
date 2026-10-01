@@ -836,7 +836,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                   {canGrade && (
                     <button
                       onClick={() => column && onGrading(assignment.id, column.id)}
-                      className={`${big ? 'flex-1 px-4 py-2.5 text-[11px]' : 'px-3 py-1.5 text-[10px]'} bg-brand text-white rounded-xl font-black hover:bg-brand-hover transition-all`}
+                      className={`${big ? 'flex-1 px-3 py-2.5 text-[11px]' : 'px-3 py-1.5 text-[10px]'} whitespace-nowrap bg-brand text-white rounded-xl font-black hover:bg-brand-hover transition-all`}
                     >
                       CHẤM BÀI
                     </button>
@@ -878,7 +878,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                 </>
               );
             };
-            const deadlineText = (a: EduAssignment) => a.deadline ? new Date(a.deadline).toLocaleString('vi-VN', { hour12: false }) : 'Không giới hạn';
+            const deadlineText = (a: EduAssignment) => a.deadline ? new Date(a.deadline).toLocaleString('vi-VN', { hour12: false, hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Không giới hạn';
             return (
               <>
                 {/* Điện thoại: mỗi bài tập là một thẻ, nút thao tác nằm ngay trong thẻ nên không cần kéo ngang. */}
@@ -898,7 +898,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                           <span className="px-2 py-1 bg-slate-100 rounded font-bold text-slate-600">{column?.name || 'Chưa gán'}</span>
                           <span className="font-bold text-slate-500">Hạn nộp {deadlineText(assignment)}</span>
                         </div>
-                        <div className="mt-3 flex items-center gap-2">
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
                           {actions(assignment, column, true)}
                         </div>
                       </div>
