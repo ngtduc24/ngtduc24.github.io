@@ -373,10 +373,15 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
   const submittedLate = !!submission && !!deadlineDate && firstSubTime > deadlineDate.getTime();
   const fmtTime = (t: number) => new Date(t).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-  if (graded) {
+  // Giảng viên bấm Cho nộp lại sẽ đặt firstSubmittedAt mới hơn lần nộp cuối: mở lại cả khi đã có điểm.
+  const reopenedByTeacher = !!submission && new Date(submission.firstSubmittedAt).getTime() > new Date(submission.submittedAt).getTime() + 1000;
+  if (graded && !reopenedByTeacher) {
     canEdit = false;
     lockReason = 'Bài tập đã được chấm điểm';
   } else if (extApproved) {
+    canEdit = true;
+  } else if (reopenedByTeacher && Date.now() <= new Date(submission!.firstSubmittedAt).getTime() + 24 * 60 * 60 * 1000) {
+    // Giảng viên đã cho nộp lại: mở 24 giờ kể từ lúc cho phép, kể cả khi đã quá hạn.
     canEdit = true;
   } else if (isOverdue && !assignment.allowLate) {
     canEdit = false;

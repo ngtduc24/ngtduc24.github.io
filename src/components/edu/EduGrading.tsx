@@ -241,21 +241,21 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
     });
   };
 
-  // Cho sinh viên nộp lại hoặc nộp bổ sung: mở lại cửa sổ nộp (giữ nguyên file cũ) và
-  // gỡ điểm đã chấm (nếu có) để sinh viên nộp thêm rồi chấm lại. Dùng cả khi đã khóa do chấm điểm.
+  // Cho sinh viên nộp lại hoặc nộp bổ sung: mở lại cửa sổ nộp (giữ nguyên file cũ). Điểm và nhận xét
+  // đã chấm được giữ nguyên, không bị xoá; sinh viên nộp thêm xong thì giảng viên sửa điểm nếu cần.
   const handleResetSubmission = async (submissionId: string, userId: string, fullName: string) => {
     const ok = await confirm({
       title: 'Cho nộp lại',
-      message: `Mở cho ${fullName} nộp lại hoặc nộp bổ sung? File đã nộp vẫn được giữ, điểm đã chấm (nếu có) sẽ được gỡ để chấm lại.`,
+      message: `Mở cho ${fullName} nộp lại hoặc nộp bổ sung? File đã nộp, điểm và nhận xét đã chấm vẫn được giữ nguyên.`,
       confirmText: 'Cho nộp lại',
       cancelText: 'Hủy',
     } as any);
     if (!ok) return;
     try {
+      // Lưu ngay điểm, nhận xét đang nhập dở trước khi tải lại danh sách.
+      if (Object.keys(pendingRef.current).length) await flush();
       await reopenSubmission(submissionId);
-      try { await deleteGradeForUser(gradeColumnId, userId); } catch {}
-      setGradingData(prev => ({ ...prev, [userId]: { ...prev[userId], score: '' } }));
-      addNotification('Đã mở cho sinh viên nộp lại hoặc nộp bổ sung.', 'success');
+      addNotification(`Đã mở cho ${fullName} nộp lại. Điểm và nhận xét vẫn giữ nguyên.`, 'success');
       loadData();
     } catch (e: any) {
       addNotification('Lỗi: ' + (e.message || e), 'error');
