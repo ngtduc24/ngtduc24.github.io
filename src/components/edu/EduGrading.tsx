@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Users, 
   CheckCircle2, 
@@ -20,7 +20,9 @@ import {
   Type,
   X,
   Maximize2,
-  RotateCcw
+  RotateCcw,
+  Loader2,
+  CloudOff
 } from 'lucide-react';
 import { EduUser, EduClass, EduAssignment, EduSubmission, EduGrade, EduGradeColumn, EduExtensionRequest } from '../../types/edu';
 import { getClassUsers, getSubmissions, getGrades, saveGrades, saveGradeColumn, reopenSubmission, deleteGradeForUser, getAssignmentById, getApprovedExtensions, resolveSubmissionFile } from '../../lib/edu';
@@ -86,6 +88,7 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
     return { late: true as const, extended: !!ext, text, at };
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadData = useCallback(async () => {
     try {
       const [usersData, submissionsData, gradesData, asgData, extData] = await Promise.all([
@@ -112,7 +115,16 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
           };
         }
       });
+      // Khôi phục điểm đã nhập mà chưa kịp lưu (trang tải lại, mất mạng) rồi lưu tiếp.
+      const draft = readDraft();
+      Object.entries(draft).forEach(([uid, row]) => { initialGrading[uid] = row; pendingRef.current[uid] = row; });
+      Object.entries(pendingRef.current).forEach(([uid, row]) => { initialGrading[uid] = row; });
       setGradingData(initialGrading);
+      if (Object.keys(pendingRef.current).length) {
+        setSaveState('pending');
+        addNotification(`Đã khôi phục ${Object.keys(pendingRef.current).length} điểm nhập trước đó chưa kịp lưu, đang lưu tiếp.`, 'info');
+        window.setTimeout(() => flush(), 300);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -124,11 +136,109 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
     loadData();
   }, [loadData]);
 
+  // ================= Tự động lưu điểm =================
+  // Mỗi lần nhập điểm hoặc nhận xét, ô đó được ghi ngay vào bản nháp trên máy (localStorage) và
+  // tự lưu lên hệ thống sau 0,8 giây ngừng gõ. Trang có tải lại giữa chừng thì bản nháp chưa lưu
+  // được khôi phục và lưu tiếp, không mất điểm đã nhập.
+  const draftKey = `edu_grading_draft_${gradeColumnId}`;
+  const pendingRef = useRef<Record<string, { score: string; note: string }>>({});
+  const timerRef = useRef<number | null>(null);
+  const savingRef = useRef(false);
+  const [saveState, setSaveState] = useState<'idle' | 'pending' | 'saving' | 'saved' | 'error'>('idle');
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [invalidIds, setInvalidIds] = useState<Set<string>>(new Set());
+
+  const readDraft = (): Record<string, { score: string; note: string }> => {
+    try { return JSON.parse(localStorage.getItem(draftKey) || '{}') || {}; } catch { return {}; }
+  };
+  const writeDraft = () => {
+    try {
+      if (Object.keys(pendingRef.current).length) localStorage.setItem(draftKey, JSON.stringify(pendingRef.current));
+      else localStorage.removeItem(draftKey);
+    } catch { /* bộ nhớ trình duyệt bị chặn thì vẫn lưu lên hệ thống bình thường */ }
+  };
+  // Điểm hợp lệ: số từ 0 đến 10, nhận cả dấu phẩy thập phân.
+  const parseScore = (v: string): number | null => {
+    const t = (v || '').trim().replace(',', '.');
+    if (t === '') return null;
+    const n = Number(t);
+    return Number.isFinite(n) && n >= 0 && n <= 10 ? Math.round(n * 100) / 100 : NaN;
+  };
+
+  const flush = useCallback(async () => {
+    if (timerRef.current) { window.clearTimeout(timerRef.current); timerRef.current = null; }
+    if (savingRef.current) { timerRef.current = window.setTimeout(() => flush(), 400); return; }
+    const snapshot = { ...pendingRef.current };
+    const ids = Object.keys(snapshot);
+    if (!ids.length) return;
+    const toSave: Partial<EduGrade>[] = [];
+    const toDelete: string[] = [];
+    const bad = new Set<string>();
+    ids.forEach(uid => {
+      const row = snapshot[uid];
+      const n = parseScore(row.score);
+      if (n === null) toDelete.push(uid);
+      else if (Number.isNaN(n)) bad.add(uid);
+      else toSave.push({ gradeColumnId, userId: uid, score: n, note: row.note || '' });
+    });
+    setInvalidIds(bad);
+    if (!toSave.length && !toDelete.length) { setSaveState(bad.size ? 'error' : 'idle'); return; }
+    savingRef.current = true;
+    setSaveState('saving');
+    try {
+      if (toSave.length) await saveGrades(toSave);
+      for (const uid of toDelete) await deleteGradeForUser(gradeColumnId, uid);
+      // Bỏ khỏi danh sách chờ những ô không bị sửa thêm trong lúc đang lưu.
+      [...toSave.map(g => g.userId as string), ...toDelete].forEach(uid => {
+        const cur = pendingRef.current[uid];
+        if (cur && cur.score === snapshot[uid].score && cur.note === snapshot[uid].note) delete pendingRef.current[uid];
+      });
+      writeDraft();
+      setGrades(prev => {
+        const next = prev.filter(g => !toDelete.includes(g.userId || (g as any).user_id));
+        toSave.forEach(g => {
+          const i = next.findIndex(x => (x.userId || (x as any).user_id) === g.userId);
+          if (i >= 0) next[i] = { ...next[i], score: g.score as number, note: g.note };
+          else next.push({ ...(g as any), id: `local_${g.userId}` });
+        });
+        return next;
+      });
+      setSavedAt(new Date());
+      const left = Object.keys(pendingRef.current).length;
+      setSaveState(bad.size ? 'error' : left ? 'pending' : 'saved');
+      if (left && !bad.size) timerRef.current = window.setTimeout(() => flush(), 600);
+    } catch (e) {
+      console.error(e);
+      setSaveState('error');
+      // Mất mạng hoặc lỗi máy chủ: giữ bản nháp, tự thử lại sau 5 giây.
+      timerRef.current = window.setTimeout(() => flush(), 5000);
+    } finally {
+      savingRef.current = false;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gradeColumnId]);
+
+  const queueSave = (userId: string, row: { score: string; note: string }, delay = 800) => {
+    pendingRef.current[userId] = { score: row.score ?? '', note: row.note ?? '' };
+    writeDraft();
+    setSaveState('pending');
+    if (timerRef.current) window.clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => flush(), delay);
+  };
+
+  // Rời trang khi còn điểm chưa lưu thì trình duyệt hỏi lại, rời màn chấm điểm thì lưu ngay.
+  useEffect(() => {
+    const h = (e: BeforeUnloadEvent) => { if (Object.keys(pendingRef.current).length) { e.preventDefault(); e.returnValue = ''; } };
+    window.addEventListener('beforeunload', h);
+    return () => { window.removeEventListener('beforeunload', h); if (Object.keys(pendingRef.current).length) flush(); };
+  }, [flush]);
+
   const handleScoreChange = (userId: string, score: string) => {
-    setGradingData(prev => ({
-      ...prev,
-      [userId]: { ...prev[userId], score }
-    }));
+    setGradingData(prev => {
+      const row = { ...(prev[userId] || { score: '', note: '' }), score };
+      queueSave(userId, row);
+      return { ...prev, [userId]: row };
+    });
   };
 
   // Cho sinh viên nộp lại hoặc nộp bổ sung: mở lại cửa sổ nộp (giữ nguyên file cũ) và
@@ -153,34 +263,11 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
   };
 
   const handleNoteChange = (userId: string, note: string) => {
-    setGradingData(prev => ({
-      ...prev,
-      [userId]: { ...prev[userId], note }
-    }));
-  };
-
-  const handleSave = async () => {
-    setLoading(true);
-    try {
-      const gradesToSave = Object.entries(gradingData)
-        .filter(([_, data]) => data.score !== '')
-        .map(([userId, data]) => ({
-          gradeColumnId: gradeColumnId,
-          userId: userId,
-          score: Number(data.score),
-          note: data.note
-        }));
-
-      await saveGrades(gradesToSave);
-      addNotification("Đã lưu điểm thành công", "success");
-      // Nạp lại dữ liệu điểm ngay tại trang nhập điểm, không chuyển sang trang khác.
-      await loadData();
-    } catch (err) {
-      console.error(err);
-      addNotification("Lỗi khi lưu điểm", "error");
-    } finally {
-      setLoading(false);
-    }
+    setGradingData(prev => {
+      const row = { ...(prev[userId] || { score: '', note: '' }), note };
+      queueSave(userId, row, 1200);
+      return { ...prev, [userId]: row };
+    });
   };
 
   // Hiện các em đã nộp bài HOẶC đã có điểm ở cột này (tránh sót em có điểm mà thiếu bài nộp).
@@ -257,13 +344,17 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
               className="bg-slate-50 border border-slate-100 focus:border-brand focus:outline-none rounded-xl pl-9 pr-4 py-2 text-[10px] font-black uppercase tracking-wider w-full sm:w-48 transition-all"
             />
           </div>
-          <button 
-            onClick={handleSave}
-            className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white px-6 py-2.5 rounded-xl text-[10px] font-black shadow-lg shadow-brand/20 transition-all uppercase tracking-widest"
-          >
-            <Save className="w-4 h-4" />
-            Lưu điểm số
-          </button>
+          {/* Trạng thái tự động lưu, không cần bấm Lưu */}
+          <div className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-bold ${saveState === 'error' ? 'bg-rose-50 text-rose-600' : saveState === 'saved' || saveState === 'idle' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+            {saveState === 'saving' ? <Loader2 className="w-4 h-4 animate-spin" /> : saveState === 'error' ? <CloudOff className="w-4 h-4" /> : saveState === 'pending' ? <Save className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+            <span>
+              {saveState === 'saving' ? 'Đang lưu...'
+                : saveState === 'pending' ? 'Chờ lưu...'
+                : saveState === 'error' ? (invalidIds.size ? `${invalidIds.size} điểm không hợp lệ (0 đến 10)` : 'Chưa lưu được, đang thử lại')
+                : savedAt ? `Đã tự lưu lúc ${savedAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}` : 'Tự động lưu khi nhập'}
+            </span>
+            {saveState === 'error' && !invalidIds.size && <button onClick={() => flush()} className="ml-1 underline">Thử lại</button>}
+          </div>
         </div>
       </div>
 
@@ -374,8 +465,10 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
                           step="0.1"
                           value={gradingData[user.id]?.score || ''}
                           onChange={e => handleScoreChange(user.id, e.target.value)}
+                          onBlur={() => { if (pendingRef.current[user.id]) flush(); }}
                           placeholder="-"
-                          className="w-14 bg-transparent border-none focus:outline-none text-center text-[15px] font-black text-brand transition-all appearance-none placeholder:text-slate-200"
+                          title={invalidIds.has(user.id) ? 'Điểm phải từ 0 đến 10' : undefined}
+                          className={`w-14 bg-transparent focus:outline-none text-center text-[15px] font-black transition-all appearance-none placeholder:text-slate-200 rounded-lg ${invalidIds.has(user.id) ? 'text-rose-600 ring-2 ring-rose-300' : 'text-brand border-none'}`}
                         />
                       </div>
                     </td>

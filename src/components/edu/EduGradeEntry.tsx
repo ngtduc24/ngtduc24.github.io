@@ -10,6 +10,11 @@ import {
   decodeFg, encodeFg, parseFg, serializeFg, readClasses, readMeta, writeGrades, readGrades,
   normalizeScore, splitComponent, normName, fgFileName, FgClass, FgMeta,
 } from '../../lib/fgCodec';
+import { draftGet, draftSet, draftDel } from '../../lib/localDraft';
+
+// Phiên nhập điểm (file .fg đang sửa) được tự lưu trên máy, trang tải lại vẫn khôi phục được.
+const FG_DRAFT_KEY = `fg_session_draft`;
+interface FgDraft { text: string; fileLabel: string; fgClassIdx: number; sysClassId: string; savedAt: number; }
 
 interface Props { currentUser: UserAccount; }
 
@@ -50,6 +55,30 @@ export default function EduGradeEntry({ currentUser }: Props) {
 
   const fgClass = fgClassIdx >= 0 ? fgClasses[fgClassIdx] : null;
 
+  // ---------------- Tự lưu phiên nhập điểm ----------------
+  const [restorable, setRestorable] = useState<FgDraft | null>(null);
+  const [autoSavedAt, setAutoSavedAt] = useState<number | null>(null);
+  const persistDraft = useCallback((d: Document | null = doc, idx = fgClassIdx, sys = sysClassId) => {
+    if (!d) return;
+    try {
+      const m = readMeta(d);
+      const draft: FgDraft = { text: encodeFg(serializeFg(d)), fileLabel: `${m.login || ''} ${m.semester || ''}`.trim(), fgClassIdx: idx, sysClassId: sys, savedAt: Date.now() };
+      draftSet(FG_DRAFT_KEY, draft).then(() => setAutoSavedAt(draft.savedAt));
+    } catch { /* bỏ qua */ }
+  }, [doc, fgClassIdx, sysClassId]);
+  useEffect(() => { draftGet<FgDraft>(FG_DRAFT_KEY).then(d => { if (d?.text) setRestorable(d); }); }, []);
+  useEffect(() => { if (doc) persistDraft(); }, [fgClassIdx, sysClassId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const restoreDraft = (d: FgDraft) => {
+    try {
+      const nd = parseFg(decodeFg(d.text));
+      setDoc(nd); setMeta(readMeta(nd)); setFgClasses(readClasses(nd));
+      setFgClassIdx(d.fgClassIdx); setSysClassId(d.sysClassId || '');
+      setSelectedSources([]); setMapping({}); setManualPairs({}); setPreviewEdits({});
+      setStep(1); setDone(false); setDirty(true); setRestorable(null); setAutoSavedAt(d.savedAt);
+      addNotification('Đã khôi phục phiên nhập điểm trước đó.', 'success');
+    } catch { addNotification('Không khôi phục được bản nháp.', 'error'); setRestorable(null); draftDel(FG_DRAFT_KEY); }
+  };
+
   useEffect(() => {
     const h = (e: BeforeUnloadEvent) => { if (dirty && !done) { e.preventDefault(); e.returnValue = ''; } };
     window.addEventListener('beforeunload', h);
@@ -63,7 +92,8 @@ export default function EduGradeEntry({ currentUser }: Props) {
       const xml = decodeFg(text);
       const d = parseFg(xml);
       setDoc(d); setMeta(readMeta(d)); setFgClasses(readClasses(d));
-      setStep(1); setDone(false); setDirty(false);
+      setStep(1); setDone(false); setDirty(false); setRestorable(null);
+      persistDraft(d, -1, '');
       setFgClassIdx(-1); setSysClassId(''); setSelectedSources([]); setMapping({}); setManualPairs({}); setPreviewEdits({});
     } catch (e) {
       addNotification('File không đúng định dạng .fg của phần mềm nhập điểm.', 'error');
@@ -257,6 +287,7 @@ export default function EduGradeEntry({ currentUser }: Props) {
     confirm('Xác nhận ghi điểm', `Sẽ ghi điểm cho ${writtenStudents} sinh viên, ${writtenCols} cột điểm. ${reconcile.extra.length} dòng ở nguồn không có trong file sẽ bị bỏ. Tiếp tục?`, () => {
       writeGrades(doc, fgClassIdx, grades);
       persistPreset();
+      persistDraft();
       setDirty(true); setDone(true); setStep(5);
       addNotification('Đã ghi điểm vào file trong bộ nhớ. Nhớ xuất file .fg.', 'success');
     });
@@ -273,6 +304,7 @@ export default function EduGradeEntry({ currentUser }: Props) {
     a.click();
     URL.revokeObjectURL(a.href);
     setDirty(false);
+    persistDraft();
     addNotification('Đã xuất file .fg.', 'success');
   };
 
@@ -286,7 +318,7 @@ export default function EduGradeEntry({ currentUser }: Props) {
   const loginWarn = meta && meta.login && currentUser.username && normName(meta.login) !== normName(currentUser.username);
 
   if (gridOpen && doc && fgClass) {
-    return <EditGrid doc={doc} classIndex={fgClassIdx} fgClass={fgClass} onClose={() => setGridOpen(false)} onSaved={() => setDirty(true)} onExport={exportFile} />;
+    return <EditGrid doc={doc} classIndex={fgClassIdx} fgClass={fgClass} onClose={() => setGridOpen(false)} onSaved={() => { setDirty(true); persistDraft(); }} onExport={exportFile} autoSavedAt={autoSavedAt} />;
   }
 
   return (
@@ -301,6 +333,16 @@ export default function EduGradeEntry({ currentUser }: Props) {
           </div>
         ))}
       </div>
+
+      {/* Khôi phục phiên nhập điểm chưa xong */}
+      {step === 0 && restorable && (
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
+          <p className="min-w-0 flex-1 text-xs font-semibold text-amber-800">Có phiên nhập điểm {restorable.fileLabel ? `(${restorable.fileLabel}) ` : ''}tự lưu lúc {new Date(restorable.savedAt).toLocaleString('vi-VN', { hour12: false })}. Khôi phục để làm tiếp, điểm đã nhập vẫn còn nguyên.</p>
+          <button onClick={() => restoreDraft(restorable)} className="rounded-xl bg-brand px-4 py-2 text-[11px] font-bold text-white hover:bg-brand-hover">Khôi phục</button>
+          <button onClick={() => { draftDel(FG_DRAFT_KEY); setRestorable(null); }} className="rounded-xl bg-white px-3 py-2 text-[11px] font-bold text-slate-500 hover:bg-slate-100">Bỏ bản nháp</button>
+        </div>
+      )}
 
       {/* Bước 1 */}
       {step === 0 && (
@@ -614,8 +656,8 @@ function ExcelSource({ wb, sheetName, setSheetName, headerRow, setHeaderRow, hea
 }
 
 // ---------------- Bảng nhập / xem / sửa điểm trực tiếp trong file .fg ----------------
-function EditGrid({ doc, classIndex, fgClass, onClose, onSaved, onExport }: {
-  doc: Document; classIndex: number; fgClass: FgClass; onClose: () => void; onSaved: () => void; onExport: () => void;
+function EditGrid({ doc, classIndex, fgClass, onClose, onSaved, onExport, autoSavedAt }: {
+  doc: Document; classIndex: number; fgClass: FgClass; onClose: () => void; onSaved: () => void; onExport: () => void; autoSavedAt?: number | null;
 }) {
   const { addNotification } = useNotifications();
   const [grid, setGrid] = useState<Record<string, string[]>>(() => {
@@ -691,11 +733,20 @@ function EditGrid({ doc, classIndex, fgClass, onClose, onSaved, onExport }: {
       });
       return next;
     });
-    addNotification(`Đã điền ${filled} điểm từ Excel vào bảng. Kiểm tra rồi bấm Lưu.`, 'success');
+    addNotification(`Đã điền ${filled} điểm từ Excel vào bảng. Điểm tự lưu vào file, kiểm tra lại trước khi xuất.`, 'success');
     setXlOpen(false);
   };
 
-  const saveAll = () => {
+  // Tự ghi bảng điểm vào file sau 0,6 giây ngừng gõ, không cần bấm Lưu.
+  const firstRun = useRef(true);
+  useEffect(() => {
+    if (firstRun.current) { firstRun.current = false; return; }
+    setSaving(true);
+    const t = window.setTimeout(() => saveAll(true), 600);
+    return () => window.clearTimeout(t);
+  }, [grid]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const saveAll = (silent = false) => {
     setSaving(true);
     try {
       const map = new Map<string, (string | null)[]>();
@@ -706,7 +757,7 @@ function EditGrid({ doc, classIndex, fgClass, onClose, onSaved, onExport }: {
       });
       writeGrades(doc, classIndex, map, true); // bảng trực tiếp: ghi đè đúng những gì đang hiển thị
       onSaved();
-      addNotification('Đã lưu toàn bộ điểm vào file. Nhớ xuất file .fg.', 'success');
+      if (!silent) addNotification('Đã lưu toàn bộ điểm vào file. Nhớ xuất file .fg.', 'success');
     } catch (e: any) { addNotification('Lỗi lưu điểm: ' + (e.message || e), 'error'); }
     finally { setSaving(false); }
   };
@@ -716,11 +767,14 @@ function EditGrid({ doc, classIndex, fgClass, onClose, onSaved, onExport }: {
   return (
     <div className="space-y-4 animate-fadeIn">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <button onClick={onClose} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><ChevronLeft className="h-4 w-4" /> Quay lại</button>
+        <button onClick={() => { saveAll(true); onClose(); }} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><ChevronLeft className="h-4 w-4" /> Quay lại</button>
         <div className="flex flex-wrap items-center gap-2">
           <button onClick={() => setXlOpen(v => !v)} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><Upload className="h-4 w-4 text-brand" /> Nhập từ Excel</button>
-          <button onClick={saveAll} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Lưu tất cả điểm vào file</button>
-          <button onClick={onExport} className="inline-flex items-center gap-2 rounded-xl border border-brand bg-white px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-brand hover:bg-brand-light"><Download className="h-4 w-4" /> Xuất file .fg</button>
+          <span className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-bold ${saving ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            {saving ? 'Đang tự lưu...' : autoSavedAt ? `Đã tự lưu lúc ${new Date(autoSavedAt).toLocaleTimeString('vi-VN', { hour12: false })}` : 'Tự động lưu khi nhập'}
+          </span>
+          <button onClick={() => { saveAll(true); onExport(); }} className="inline-flex items-center gap-2 rounded-xl border border-brand bg-white px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider text-brand hover:bg-brand-light"><Download className="h-4 w-4" /> Xuất file .fg</button>
         </div>
       </div>
 
