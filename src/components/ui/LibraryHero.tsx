@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 import CloudinaryUploadField from '../cms/CloudinaryUploadField';
 
 // Nội dung đầu trang do quản trị chỉnh (tiêu đề, mô tả, ảnh nền), lưu chung trên máy chủ để mọi tài khoản đều thấy.
-interface HeroConfig { title?: string; subtitle?: string; image?: string; position?: string }
+export interface HeroConfig { title?: string; subtitle?: string; image?: string; position?: string }
 const heroKey = (k: string) => `edugo_hero:${k}`;
 const heroCacheKey = (k: string) => `edugo_hero_cache:${k}`;
 const readHeroCache = (k?: string): HeroConfig => { if (!k) return {}; try { return JSON.parse(localStorage.getItem(heroCacheKey(k)) || '{}'); } catch { return {}; } };
@@ -42,7 +42,7 @@ interface LibraryHeroProps {
   canEditBanner?: boolean;
 }
 
-function HeroEditor({ cfg, defaults, onClose, onSave }: { cfg: HeroConfig; defaults: { title: string; subtitle?: string }; onClose: () => void; onSave: (c: HeroConfig) => Promise<boolean> }) {
+export function HeroEditor({ cfg, defaults, onClose, onSave }: { cfg: HeroConfig; defaults: { title: string; subtitle?: string }; onClose: () => void; onSave: (c: HeroConfig) => Promise<boolean> }) {
   const [v, setV] = useState<HeroConfig>(cfg);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -78,26 +78,32 @@ function HeroEditor({ cfg, defaults, onClose, onSave }: { cfg: HeroConfig; defau
     </div>, document.body);
 }
 
-export default function LibraryHero(p: LibraryHeroProps) {
-  const [cfg, setCfg] = useState<HeroConfig>(() => readHeroCache(p.configKey));
-  const [editingHero, setEditingHero] = useState(false);
+// Đọc và lưu nội dung đầu trang dùng chung theo khoá (tiêu đề, mô tả, ảnh nền do quản trị đặt).
+export function useHeroConfig(configKey?: string): [HeroConfig, (c: HeroConfig) => Promise<boolean>] {
+  const [cfg, setCfg] = useState<HeroConfig>(() => readHeroCache(configKey));
   useEffect(() => {
-    if (!p.configKey) return;
-    supabase.from('portfolio_settings').select('data').eq('key', heroKey(p.configKey)).maybeSingle().then(({ data }) => {
+    if (!configKey) return;
+    supabase.from('portfolio_settings').select('data').eq('key', heroKey(configKey)).maybeSingle().then(({ data }) => {
       const c = (data?.data as HeroConfig) || {};
       setCfg(c);
-      try { localStorage.setItem(heroCacheKey(p.configKey as string), JSON.stringify(c)); } catch { /* bỏ qua */ }
+      try { localStorage.setItem(heroCacheKey(configKey), JSON.stringify(c)); } catch { /* bỏ qua */ }
     }, () => {});
-  }, [p.configKey]);
-  const saveCfg = async (c: HeroConfig) => {
-    if (!p.configKey) return false;
+  }, [configKey]);
+  const save = async (c: HeroConfig) => {
+    if (!configKey) return false;
     const clean: HeroConfig = { title: c.title?.trim() || undefined, subtitle: c.subtitle?.trim() || undefined, image: c.image || undefined, position: c.image ? (c.position || 'center') : undefined };
-    const { error } = await supabase.from('portfolio_settings').upsert({ key: heroKey(p.configKey), data: { ...clean, updatedAt: new Date().toISOString() } });
+    const { error } = await supabase.from('portfolio_settings').upsert({ key: heroKey(configKey), data: { ...clean, updatedAt: new Date().toISOString() } });
     if (error) return false;
     setCfg(clean);
-    try { localStorage.setItem(heroCacheKey(p.configKey), JSON.stringify(clean)); } catch { /* bỏ qua */ }
+    try { localStorage.setItem(heroCacheKey(configKey), JSON.stringify(clean)); } catch { /* bỏ qua */ }
     return true;
   };
+  return [cfg, save];
+}
+
+export default function LibraryHero(p: LibraryHeroProps) {
+  const [cfg, saveCfg] = useHeroConfig(p.configKey);
+  const [editingHero, setEditingHero] = useState(false);
   const title = cfg.title || p.title;
   const subtitle = cfg.subtitle || p.subtitle;
   const [adding, setAdding] = useState(false);

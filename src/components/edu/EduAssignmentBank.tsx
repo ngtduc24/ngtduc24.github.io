@@ -2,10 +2,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { Editor } from '@tiptap/react';
 import RichTextEditor from '../cms/RichTextEditor';
 import LibraryHero, { HeroChip, ViewToggle } from '../ui/LibraryHero';
+import ShareDialog from '../ui/ShareDialog';
+import { CollabRole, ROLE_LABELS } from '../../lib/collab';
 import {
   BookMarked, Plus, Trash2, Edit3, X, Save, FileText, Search, LayoutGrid, List as ListIcon, Globe, Lock,
   Bold, Italic, List, ListOrdered, Heading1, Heading2, FileDown, Eye, ArrowLeft, Loader2, FolderInput, Check,
-  AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, Link as LinkIcon, Undo, Redo, ChevronDown, ChevronUp, Link2
+  AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, Link as LinkIcon, Undo, Redo, ChevronDown, ChevronUp, Link2, Users
 } from 'lucide-react';
 import { toggleEduFileType, eduFileTypeLabel } from '../../lib/eduFileTypes';
 import { EduResourceEditor, EduResourceList } from './EduResources';
@@ -13,7 +15,7 @@ import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
 import { UserAccount } from '../../types';
 import {
   getSubjects, getSubjectsByIds, saveSubject, deleteSubject, getAssignmentBank, saveAssignmentBankItem, deleteAssignmentBankItem,
-  bulkUpdateAssignmentBank, bulkDeleteAssignmentBank, adminMoveBankItems, SYSTEM_SUBJECT_OWNER, isSystemSubject, ensureBankShareToken, bankShareUrl, newShareToken,
+  bulkUpdateAssignmentBank, bulkDeleteAssignmentBank, adminMoveBankItems, getSharedBankItems, SYSTEM_SUBJECT_OWNER, isSystemSubject, ensureBankShareToken, bankShareUrl, newShareToken,
 } from '../../lib/edu';
 import { uploadImageToCloudinary } from '../../lib/upload';
 import { exportAssignmentToPdf } from '../../lib/assignmentPdf';
@@ -45,10 +47,14 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
   // Chỉ người tạo ra bài mới được sửa, xóa và bật chia sẻ công khai.
-  const canEdit = (item?: { ownerId?: string } | null) => !!item && item.ownerId === currentUser?.id;
+  // Quyền cộng tác: chủ bài toàn quyền, người được thêm theo quyền chủ cấp (xem, chỉnh sửa, quản lý).
+  const [roles, setRoles] = useState<Record<string, CollabRole>>({});
+  const [sharing, setSharing] = useState<EduAssignmentBankItem | null>(null);
+  const isOwner = (item?: { ownerId?: string } | null) => !!item && item.ownerId === currentUser?.id;
+  const canEdit = (item?: { id?: string; ownerId?: string } | null) => !!item && (isOwner(item) || (!!item.id && (roles[item.id] === 'edit' || roles[item.id] === 'manage')));
   // Quản trị cao nhất được chuyển bài công khai của người khác sang môn chung để xếp gọn kho chung.
   const isTopAdmin = currentUser?.id === SYSTEM_SUBJECT_OWNER;
-  const canAdminMove = (it: EduAssignmentBankItem) => isTopAdmin && !canEdit(it) && !!it.isPublic;
+  const canAdminMove = (it: EduAssignmentBankItem) => isTopAdmin && !isOwner(it) && !!it.isPublic;
 
   const [subjects, setSubjects] = useState<EduSubject[]>([]);
   const [items, setItems] = useState<EduAssignmentBankItem[]>([]);
@@ -58,7 +64,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   // Bộ lọc và cách hiển thị
   const [subjectId, setSubjectId] = useState('');
   const [search, setSearch] = useState('');
-  const [scope, setScope] = useState<'all' | 'mine' | 'shared'>('mine');
+  const [scope, setScope] = useState<'all' | 'mine' | 'shared' | 'collab'>('mine');
   const [sort, setSort] = useState<'new' | 'name'>('new');
   // Mặc định luôn mở dạng lưới, người dùng tự đổi sang danh sách khi cần.
   const [mode, setMode] = useState<'grid' | 'table'>('grid');
@@ -98,7 +104,12 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   }, [items, subjects]);
   const subjName = (id?: string) => subjects.find(s => s.id === id)?.name || otherSubjects.find(s => s.id === id)?.name || '';
 
-  const reloadItems = () => getAssignmentBank().then(setItems).catch(() => setItems([]));
+  const reloadItems = () => Promise.all([getAssignmentBank().catch(() => [] as EduAssignmentBankItem[]), getSharedBankItems().catch(() => ({ items: [] as EduAssignmentBankItem[], roles: {} }))])
+    .then(([base, sh]) => {
+      const seen = new Set(base.map(i => i.id));
+      setItems([...base, ...sh.items.filter(i => !seen.has(i.id))]);
+      setRoles(sh.roles);
+    });
 
   useEffect(() => {
     (async () => {
@@ -113,7 +124,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   useEffect(() => () => { writeSubRoute({ bid: null }); }, []);
 
   // Đếm số bài theo môn (sau khi lọc phạm vi), để hiện ở cột trái
-  const scoped = useMemo(() => items.filter(it => scope === 'all' ? true : scope === 'mine' ? it.ownerId === currentUser.id : (it.isPublic && it.ownerId !== currentUser.id)), [items, scope, currentUser.id]);
+  const scoped = useMemo(() => items.filter(it => scope === 'all' ? true : scope === 'mine' ? it.ownerId === currentUser.id : scope === 'collab' ? !!roles[it.id] : (it.isPublic && it.ownerId !== currentUser.id)), [items, scope, currentUser.id, roles]);
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
     scoped.forEach(it => { const k = it.subjectId || '__none'; m[k] = (m[k] || 0) + 1; });
@@ -244,7 +255,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
 
   // ---------------- Thao tác hàng loạt ----------------
   const picked = items.filter(i => selected.has(i.id));
-  const pickedOwn = picked.filter(canEdit);
+  const pickedOwn = picked.filter(isOwner);
   const skipNote = (n: number) => (n ? ` Bỏ qua ${n} bài của người khác.` : '');
   const allChecked = pageItems.length > 0 && pageItems.every(i => selected.has(i.id));
   const someChecked = !allChecked && pageItems.some(i => selected.has(i.id));
@@ -420,7 +431,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
               <Info k="Cập nhật" v={fmtDate(it.updatedAt || it.createdAt)} />
               <Info k="Chia sẻ" v={it.isPublic ? 'Công khai' : 'Không công khai'} />
             </div>
-            {canEdit(it) && (
+            {isOwner(it) && (
               <div className="mt-3 flex gap-1.5 border-t border-slate-100 pt-3">
                 <button onClick={() => handleTogglePublic(it)} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-50 px-2 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-100">{it.isPublic ? <Lock className="h-3.5 w-3.5" /> : <Globe className="h-3.5 w-3.5" />} {it.isPublic ? 'Tắt công khai' : 'Công khai'}</button>
                 <button onClick={() => handleDeleteItem(it)} className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-rose-50 px-3 py-2 text-[11px] font-bold text-rose-600 hover:bg-rose-100"><Trash2 className="h-3.5 w-3.5" /> Xóa</button>
@@ -435,6 +446,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   // ===================== Danh sách =====================
   const StatusTag = ({ it }: { it: EduAssignmentBankItem }) => it.isPublic
     ? <span className="shrink-0 rounded-md bg-brand-light px-2 py-0.5 text-[9px] font-bold text-brand">Công khai</span>
+    : roles[it.id] && !isOwner(it) ? <span className="shrink-0 rounded-md bg-sky-50 px-2 py-0.5 text-[9px] font-bold text-sky-700">Chia sẻ · {ROLE_LABELS[roles[it.id]].label}</span>
     : !canEdit(it) ? <span className="shrink-0 rounded-md bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-500">Dùng chung</span> : null;
 
   const Actions = ({ it }: { it: EduAssignmentBankItem }) => (
@@ -443,8 +455,9 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
       <IconBtn title="Xem" onClick={() => setViewId(it.id)}><Eye className="w-3.5 h-3.5" /></IconBtn>
       <IconBtn title="Tải PDF" onClick={() => downloadPdf(it)}><FileDown className="w-3.5 h-3.5" /></IconBtn>
       {canShare(it) && <IconBtn title="Sao chép link xem bài (không cần MSSV)" onClick={() => copyShareLink(it)}><Link2 className="w-3.5 h-3.5" /></IconBtn>}
-      {canEdit(it) && <IconBtn title={it.isPublic ? 'Tắt công khai' : 'Chia sẻ công khai'} onClick={() => handleTogglePublic(it)}>{it.isPublic ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}</IconBtn>}
-      {canEdit(it) && <IconBtn title="Xóa" danger onClick={() => handleDeleteItem(it)}><Trash2 className="w-3.5 h-3.5" /></IconBtn>}
+      <IconBtn title={isOwner(it) || roles[it.id] === 'manage' ? 'Cộng tác: thêm người cùng sửa' : 'Người cộng tác'} onClick={() => setSharing(it)}><Users className="w-3.5 h-3.5" /></IconBtn>
+      {isOwner(it) && <IconBtn title={it.isPublic ? 'Tắt công khai' : 'Chia sẻ công khai'} onClick={() => handleTogglePublic(it)}>{it.isPublic ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}</IconBtn>}
+      {isOwner(it) && <IconBtn title="Xóa" danger onClick={() => handleDeleteItem(it)}><Trash2 className="w-3.5 h-3.5" /></IconBtn>}
       {canAdminMove(it) && <IconBtn title="Chuyển sang môn chung" onClick={() => adminMove([it])}><FolderInput className="w-3.5 h-3.5" /></IconBtn>}
     </>
   );
@@ -489,6 +502,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
             <select value={scope} onChange={e => setScope(e.target.value as any)} className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-brand">
               <option value="mine">Bài của tôi</option>
               <option value="shared">Bài dùng chung</option>
+              <option value="collab">Được chia sẻ với tôi</option>
               <option value="all">Tất cả</option>
             </select>
             <select value={sort} onChange={e => setSort(e.target.value as any)} className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-brand">
@@ -608,6 +622,8 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
           </div>
         )}
         {shown.length > 0 && <Pager pg={pg} total={shown.length} unit="bài tập" sizes={[12, 24, 48, 96]} />}
+        {sharing && <ShareDialog type="bank_item" resourceId={sharing.id} resourceTitle={sharing.title} ownerId={sharing.ownerId || currentUser.id} ownerName={ownerName(sharing.ownerId) || undefined}
+          currentUser={currentUser} canManage={isOwner(sharing) || roles[sharing.id] === 'manage'} onClose={() => { setSharing(null); reloadItems(); }} />}
       </div>
     </div>
   );

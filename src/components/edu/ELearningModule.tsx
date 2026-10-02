@@ -19,9 +19,11 @@ import {
   softDeleteLesson, bulkSoftDeleteLessons, bulkUpdateLessons, restoreLesson, purgeLesson, getTrashLessons,
   getSections, createSection, updateSection, deleteSection, reorderSections,
   getResources, addResource, uploadResource, updateResource, deleteResource,
-  copyPublicLesson, getLessonClasses, setLessonClasses, getSectionViews, stripHtml, adminMoveLessons,
+  copyPublicLesson, getLessonClasses, setLessonClasses, getSectionViews, stripHtml, adminMoveLessons, getSharedLessons,
 } from '../../lib/elearning';
 import QuizRichText from './QuizRichText';
+import ShareDialog from '../ui/ShareDialog';
+import { CollabRole, ROLE_LABELS } from '../../lib/collab';
 import MediaSourcePicker from '../MediaSourcePicker';
 import { fold, usePaging, Pager } from './ListPager';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
@@ -94,7 +96,12 @@ const EL_TABS = [{ id: 'mine', label: 'Kho của tôi' }, { id: 'public', label:
 function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects: EduSubject[]; currentUser: UserAccount; onEdit: (id: string) => void; onAssign: (id: string) => void; hero: ElHero }) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
-  const [all, setAll] = useState<ELLesson[]>([]);
+  const [own, setAll] = useState<ELLesson[]>([]);
+  // Bài người khác đã thêm mình vào cộng tác.
+  const [shared, setShared] = useState<Array<ELLesson & { my_role: CollabRole }>>([]);
+  const [shareScope, setShareScope] = useState<'mine' | 'shared'>('mine');
+  const all: Array<ELLesson & { my_role?: CollabRole }> = shareScope === 'shared' ? shared : own;
+  const [sharing, setSharing] = useState<ELLesson | null>(null);
   const [loading, setLoading] = useState(true);
   const [subjectId, setSubjectId] = useState('');
   const [status, setStatus] = useState('');
@@ -112,7 +119,10 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
 
   const load = useCallback(async () => {
     setLoading(true);
-    try { setAll(await getMyLessons({ status: (status as any) || undefined })); }
+    try {
+      const [mine, sh] = await Promise.all([getMyLessons({ status: (status as any) || undefined }), getSharedLessons().catch(() => [])]);
+      setAll(mine); setShared(sh);
+    }
     catch (e: any) { addNotification('Lỗi tải bài giảng: ' + (e.message || e), 'error'); }
     finally { setLoading(false); }
   }, [status, addNotification]);
@@ -122,7 +132,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
     const q = fold(search);
     const bySubject = subjectId ? all.filter(l => (subjectId === '__none' ? !l.subject_id : l.subject_id === subjectId)) : all;
     return q ? bySubject.filter(l => fold(`${l.title} ${subjects.find(s => s.id === l.subject_id)?.name || ''}`).includes(q)) : bySubject;
-  }, [all, search, subjects, subjectId]);
+  }, [all, search, subjects, subjectId]); // eslint-disable-line react-hooks/exhaustive-deps
   const subjectCounts = useMemo(() => {
     const m: Record<string, number> = {};
     all.forEach(l => { const k = l.subject_id || '__none'; m[k] = (m[k] || 0) + 1; });
@@ -208,6 +218,33 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
     copyText(prettyShareUrl('elesson', l.share_token)).then(ok => addNotification(ok ? 'Đã sao chép liên kết.' : 'Không sao chép được, hãy thử lại.', ok ? 'success' : 'error'));
   };
 
+  // Thao tác theo quyền: bài của mình đủ thao tác, bài được chia sẻ theo quyền được cấp.
+  const lessonActions = (l: ELLesson & { my_role?: CollabRole }) => {
+    const mine = l.owner_id === currentUser.id;
+    const r = l.my_role;
+    if (!mine) return (
+      <>
+        {(r === 'edit' || r === 'manage') && <IconBtn title="Sửa" onClick={() => onEdit(l.id)}><Edit2 className="w-3.5 h-3.5" /></IconBtn>}
+        <IconBtn title="Xem trước" onClick={() => openLessonView(l.id)}><Eye className="w-3.5 h-3.5" /></IconBtn>
+        <IconBtn title={r === 'manage' ? 'Cộng tác' : 'Người cộng tác'} onClick={() => setSharing(l)}><Users className="w-3.5 h-3.5" /></IconBtn>
+      </>
+    );
+    return (
+      <>
+        <IconBtn title="Sửa" onClick={() => onEdit(l.id)}><Edit2 className="w-3.5 h-3.5" /></IconBtn>
+        <IconBtn title="Xem trước" onClick={() => openLessonView(l.id)}><Eye className="w-3.5 h-3.5" /></IconBtn>
+        <IconBtn title="Cộng tác: thêm người cùng sửa" onClick={() => setSharing(l)}><Users className="w-3.5 h-3.5" /></IconBtn>
+        {mayPublic && <IconBtn title={l.is_public ? 'Tắt công khai' : 'Công khai'} onClick={() => togglePublic(l)}>{l.is_public ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}</IconBtn>}
+        <IconBtn title="Nhân bản" onClick={() => duplicate(l)}><Copy className="w-3.5 h-3.5" /></IconBtn>
+        {mayAssign && <IconBtn title="Giao cho lớp" onClick={() => onAssign(l.id)}><Send className="w-3.5 h-3.5" /></IconBtn>}
+        <IconBtn title="Sao chép liên kết" onClick={() => copyLink(l)}><Link2 className="w-3.5 h-3.5" /></IconBtn>
+        <IconBtn title="Xóa" danger onClick={() => remove(l)}><Trash2 className="w-3.5 h-3.5" /></IconBtn>
+      </>
+    );
+  };
+  const roleBadge = (l: ELLesson & { my_role?: CollabRole }) => l.my_role && l.owner_id !== currentUser.id
+    ? <span className="shrink-0 rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700">Chia sẻ · {ROLE_LABELS[l.my_role].label}</span> : null;
+
   const remove = async (l: ELLesson) => {
     const ok = await confirm({ title: 'Xóa bài giảng', message: l.is_public ? `Bài giảng đang công khai và đã có ${l.copy_count} lượt sao chép. Chuyển vào Thùng rác?` : 'Chuyển bài giảng vào Thùng rác? Có thể khôi phục trong 30 ngày.', confirmText: 'Xóa', cancelText: 'Hủy', danger: true } as any);
     if (!ok) return;
@@ -250,6 +287,10 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{lessons.length}</span> bài giảng</p>
         <div className="flex flex-wrap items-center gap-2">
+          <select value={shareScope} onChange={e => { setShareScope(e.target.value as 'mine' | 'shared'); setSelected(new Set()); setSubjectId(''); }} className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-brand">
+            <option value="mine">Bài của tôi ({own.length})</option>
+            <option value="shared">Được chia sẻ với tôi ({shared.length})</option>
+          </select>
           <select value={status} onChange={e => setStatus(e.target.value)} className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-brand">
             <option value="">Mọi trạng thái</option>
             <option value="draft">Nháp</option>
@@ -280,18 +321,12 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
               <div className="flex flex-1 flex-col p-4">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="text-[13px] font-black text-slate-800 leading-tight line-clamp-2 group-hover:text-brand">{l.title}</h3>
-                  <StatusTag lesson={l} />
+                  {roleBadge(l) || <StatusTag lesson={l} />}
                 </div>
                 <p className="mt-1 text-[11px] text-slate-400">{subjName(l.subject_id)}</p>
                 <p className="mt-1 text-[10px] text-slate-400">{l.sectionCount ?? 0} phần · cập nhật {fmtDate(l.updated_at)}</p>
                 <div onClick={e => e.stopPropagation()} className="mt-auto flex flex-wrap gap-1 border-t border-slate-50 pt-3 cursor-default">
-                  <IconBtn title="Sửa" onClick={() => onEdit(l.id)}><Edit2 className="w-3.5 h-3.5" /></IconBtn>
-                  <IconBtn title="Xem trước" onClick={() => openLessonView(l.id)}><Eye className="w-3.5 h-3.5" /></IconBtn>
-                  {mayPublic && <IconBtn title={l.is_public ? 'Tắt công khai' : 'Công khai'} onClick={() => togglePublic(l)}>{l.is_public ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}</IconBtn>}
-                  <IconBtn title="Nhân bản" onClick={() => duplicate(l)}><Copy className="w-3.5 h-3.5" /></IconBtn>
-                  {mayAssign && <IconBtn title="Giao cho lớp" onClick={() => onAssign(l.id)}><Send className="w-3.5 h-3.5" /></IconBtn>}
-                  <IconBtn title="Sao chép liên kết" onClick={() => copyLink(l)}><Link2 className="w-3.5 h-3.5" /></IconBtn>
-                  <IconBtn title="Xóa" danger onClick={() => remove(l)}><Trash2 className="w-3.5 h-3.5" /></IconBtn>
+                  {lessonActions(l)}
                 </div>
               </div>
             </div>
@@ -335,7 +370,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
             <tbody className="divide-y divide-slate-50">
               {pageLessons.map(l => (
                 <tr key={l.id} className={selected.has(l.id) ? 'bg-brand-light/30' : 'hover:bg-slate-50/40'}>
-                  <td className="py-3 pl-4 pr-1"><CheckBox checked={selected.has(l.id)} onChange={() => toggleOne(l.id)} title="Chọn bài này" /></td>
+                  <td className="py-3 pl-4 pr-1">{shareScope === 'mine' && <CheckBox checked={selected.has(l.id)} onChange={() => toggleOne(l.id)} title="Chọn bài này" />}</td>
                   <td className="px-4 py-3"><button onClick={() => openLessonView(l.id)} title="Bấm để xem bài giảng" className="text-left font-bold text-slate-800 hover:text-brand hover:underline">{l.title}</button></td>
                   <td className="px-4 py-3 text-slate-500">{subjName(l.subject_id)}</td>
                   <td className="px-4 py-3 text-center">{l.sectionCount ?? 0}</td>
@@ -345,12 +380,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
                   <td className="px-4 py-3 text-slate-500">{fmtDate(l.updated_at)}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
-                      <IconBtn title="Sửa" onClick={() => onEdit(l.id)}><Edit2 className="w-3.5 h-3.5" /></IconBtn>
-                      <IconBtn title="Xem trước" onClick={() => openLessonView(l.id)}><Eye className="w-3.5 h-3.5" /></IconBtn>
-                      {mayPublic && <IconBtn title={l.is_public ? 'Tắt công khai' : 'Công khai'} onClick={() => togglePublic(l)}>{l.is_public ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}</IconBtn>}
-                      {mayAssign && <IconBtn title="Giao cho lớp" onClick={() => onAssign(l.id)}><Send className="w-3.5 h-3.5" /></IconBtn>}
-                      <IconBtn title="Sao chép liên kết" onClick={() => copyLink(l)}><Link2 className="w-3.5 h-3.5" /></IconBtn>
-                      <IconBtn title="Xóa" danger onClick={() => remove(l)}><Trash2 className="w-3.5 h-3.5" /></IconBtn>
+                      {lessonActions(l)}
                     </div>
                   </td>
                 </tr>
@@ -362,6 +392,8 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
       )}
       {!loading && lessons.length > 0 && <Pager pg={pg} total={lessons.length} unit="bài giảng" sizes={[12, 24, 48, 96]} />}
 
+      {sharing && <ShareDialog type="el_lesson" resourceId={sharing.id} resourceTitle={sharing.title} ownerId={sharing.owner_id || currentUser.id} ownerName={sharing.owner_name || undefined}
+        currentUser={currentUser} canManage={sharing.owner_id === currentUser.id || (sharing as any).my_role === 'manage'} onClose={() => { setSharing(null); load(); }} />}
       {creating && <CreateDialog subjects={subjects} onClose={() => setCreating(false)} onCreated={(id) => { setCreating(false); onEdit(id); }} ownerName={currentUser.fullName} />}
     </div>
   );

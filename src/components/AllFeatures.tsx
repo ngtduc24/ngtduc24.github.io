@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { canUseModule } from '../lib/moduleAccess';
+import { useHeroConfig, HeroEditor } from './ui/LibraryHero';
 import {
   Search, ArrowLeft, ArrowRight, LayoutGrid,
   CalendarDays, BookOpen, LayoutTemplate, Image as ImageIcon, BarChart3,
   GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone, Shield, CheckCircle2, ClipboardList, Clapperboard, Sparkles, FileArchive, Globe, FolderOpen
-, FileUser, QrCode } from 'lucide-react';
+, FileUser, QrCode , Settings2 } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
 import { isModuleHidden, resolveModuleMeta } from '../lib/modules';
 
@@ -94,7 +95,13 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
     ? Array.from(new Set(filtered.map(f => f.group)))
     : [activeGroup];
 
-  const hasBg = !!settings?.dashboardBannerImage;
+  // Đầu trang do quản trị chỉnh (ảnh nền, tiêu đề, mô tả), lưu chung cho mọi tài khoản.
+  const [heroCfg, saveHeroCfg] = useHeroConfig('all_features');
+  const [editingHero, setEditingHero] = useState(false);
+  const bgImage = heroCfg.image || settings?.dashboardBannerImage;
+  const hasBg = !!bgImage;
+  const heroTitle = heroCfg.title || 'Tất cả tính năng trên hệ thống';
+  const heroDesc = heroCfg.subtitle || 'Duyệt toàn bộ công cụ phục vụ giảng dạy, nghiên cứu và thiết kế. Chọn một nhóm hoặc tìm kiếm để truy cập nhanh.';
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -102,18 +109,24 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
       <div
         className="relative overflow-hidden rounded-3xl border border-slate-100 shadow-sm"
         style={hasBg
-          ? { backgroundImage: `url(${settings!.dashboardBannerImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          ? { backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: heroCfg.image ? (heroCfg.position || 'center') : 'center' }
           : { background: 'linear-gradient(135deg, var(--color-brand-light, #eef2ff) 0%, #ffffff 60%, var(--color-brand-light, #f5f3ff) 100%)' }}
       >
         {hasBg && <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px]" />}
         <div className="relative z-10 px-6 py-8 md:px-10 space-y-4">
-          <button onClick={onBack} className="inline-flex items-center gap-2 rounded-xl bg-white/80 hover:bg-white text-slate-600 hover:text-brand px-3 py-2 text-xs font-bold shadow-sm transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Quay lại trang chủ
-          </button>
+          <div className="flex items-center justify-between gap-2">
+            <button onClick={onBack} className="inline-flex items-center gap-2 rounded-xl bg-white/80 hover:bg-white text-slate-600 hover:text-brand px-3 py-2 text-xs font-bold shadow-sm transition-colors">
+              <ArrowLeft className="w-4 h-4" /> Quay lại trang chủ
+            </button>
+            {isUserAdmin && (
+              <button onClick={() => setEditingHero(true)} title="Chỉnh đầu trang (mọi tài khoản đều thấy)" aria-label="Chỉnh đầu trang"
+                className="grid h-9 w-9 place-items-center rounded-xl bg-white/80 text-slate-600 shadow-sm hover:bg-white hover:text-brand"><Settings2 className="h-4 w-4" /></button>
+            )}
+          </div>
           <div className="space-y-1.5">
             <span className="inline-block rounded-full bg-brand/10 text-brand text-[10px] font-black uppercase tracking-wider px-3 py-1">Kho tính năng</span>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight font-display text-slate-900">Tất cả tính năng trên hệ thống</h1>
-            <p className="text-sm text-slate-500 font-medium max-w-2xl">Duyệt toàn bộ công cụ phục vụ giảng dạy, nghiên cứu và thiết kế. Chọn một nhóm hoặc tìm kiếm để truy cập nhanh.</p>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight font-display text-slate-900">{heroTitle}</h1>
+            <p className="text-sm text-slate-600 font-medium max-w-2xl">{heroDesc}</p>
           </div>
 
           {/* Ô tìm kiếm */}
@@ -142,6 +155,8 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
           </div>
         </div>
       </div>
+
+      {editingHero && <HeroEditor cfg={heroCfg} defaults={{ title: 'Tất cả tính năng trên hệ thống', subtitle: 'Duyệt toàn bộ công cụ phục vụ giảng dạy, nghiên cứu và thiết kế.' }} onClose={() => setEditingHero(false)} onSave={saveHeroCfg} />}
 
       {/* Danh sách tính năng theo nhóm */}
       {filtered.length === 0 ? (

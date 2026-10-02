@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { getEduCtx, SYSTEM_SUBJECT_OWNER } from './edu';
+import { getMyRole, getMyShares, canEditRole, CollabRole } from './collab';
 import { uploadFileToSupabase } from './upload';
 
 // =====================================================================
@@ -144,9 +145,30 @@ export async function updateLesson(id: string, patch: Partial<ELLesson>): Promis
   const allowed: any = {};
   const keys: (keyof ELLesson)[] = ['title', 'summary', 'cover_url', 'tags', 'subject_id', 'status', 'is_public', 'allow_copy', 'author_label', 'duration_minutes', 'share_enabled'];
   keys.forEach(k => { if (k in patch) allowed[k] = (patch as any)[k]; });
-  const { data, error } = await supabase.from(L_TABLE).update(allowed).eq('id', id).eq('owner_id', ctx().userId || '-').select('*').single();
+  const uid = ctx().userId || '-';
+  const { data: cur } = await supabase.from(L_TABLE).select('owner_id').eq('id', id).maybeSingle();
+  if (cur && cur.owner_id !== uid) {
+    // Người cộng tác có quyền chỉnh sửa hoặc quản lý: sửa nội dung, không đổi công khai, chia sẻ, cho sao chép.
+    const role = await getMyRole('el_lesson', id, cur.owner_id);
+    if (!canEditRole(role)) throw new Error('Bạn không có quyền sửa bài giảng này.');
+    delete allowed.is_public; delete allowed.allow_copy; delete allowed.share_enabled;
+    const { data, error } = await supabase.from(L_TABLE).update(allowed).eq('id', id).select('*').single();
+    if (error) throw error;
+    return mapLesson(data);
+  }
+  const { data, error } = await supabase.from(L_TABLE).update(allowed).eq('id', id).eq('owner_id', uid).select('*').single();
   if (error) throw error;
   return mapLesson(data);
+}
+
+// Bài giảng người khác đã thêm mình vào cộng tác, kèm quyền của mình.
+export async function getSharedLessons(): Promise<Array<ELLesson & { my_role: CollabRole }>> {
+  const shares = await getMyShares('el_lesson').catch(() => [] as Awaited<ReturnType<typeof getMyShares>>);
+  if (!shares.length) return [];
+  const { data, error } = await supabase.from(L_TABLE).select('*, el_sections(count), el_resources(count)').in('id', shares.map(s => s.resourceId)).is('deleted_at', null).order('updated_at', { ascending: false });
+  if (error) throw error;
+  const roleOf = new Map<string, CollabRole>(shares.map(s => [s.resourceId, s.role] as [string, CollabRole]));
+  return (data || []).map((r: any) => ({ ...mapLesson(r), my_role: roleOf.get(r.id) || 'view' }));
 }
 
 export async function softDeleteLesson(id: string): Promise<void> {

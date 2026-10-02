@@ -513,8 +513,17 @@ export async function saveAssignmentBankItem(item: Partial<EduAssignmentBankItem
   if (item.id) {
     const { data: cur } = await supabase.from(ASSIGNMENT_BANK_TABLE).select('owner_id').eq('id', item.id).maybeSingle();
     if (cur) {
-      if (!me || cur.owner_id !== me) throw new Error('Bạn chỉ sửa được bài tập của chính mình.');
       const { owner_id: _o, id: _i, ...patch } = dbData;
+      if (!me) throw new Error('Bạn cần đăng nhập.');
+      if (cur.owner_id !== me) {
+        // Người cộng tác có quyền chỉnh sửa hoặc quản lý: sửa nội dung, không đổi công khai.
+        const { getMyRole, canEditRole } = await import('./collab');
+        if (!canEditRole(await getMyRole('bank_item', item.id, cur.owner_id))) throw new Error('Bạn không có quyền sửa bài tập này.');
+        delete patch.is_public;
+        const { data, error } = await supabase.from(ASSIGNMENT_BANK_TABLE).update(patch).eq('id', item.id).select().single();
+        if (error) throw error;
+        return mapBankItem(data);
+      }
       const { data, error } = await supabase.from(ASSIGNMENT_BANK_TABLE).update(patch).eq('id', item.id).eq('owner_id', me).select().single();
       if (error) throw error;
       return mapBankItem(data);
@@ -525,6 +534,18 @@ export async function saveAssignmentBankItem(item: Partial<EduAssignmentBankItem
   const { data, error } = await supabase.from(ASSIGNMENT_BANK_TABLE).insert(dbData).select().single();
   if (error) throw error;
   return mapBankItem(data);
+}
+
+// Bài tập người khác đã thêm mình vào cộng tác, kèm quyền của mình.
+export async function getSharedBankItems(): Promise<{ items: EduAssignmentBankItem[]; roles: Record<string, 'view' | 'edit' | 'manage'> }> {
+  const { getMyShares } = await import('./collab');
+  const shares = await getMyShares('bank_item').catch(() => []);
+  if (!shares.length) return { items: [], roles: {} };
+  const { data, error } = await supabase.from(ASSIGNMENT_BANK_TABLE).select('*').in('id', shares.map(x => x.resourceId));
+  if (error) throw error;
+  const roles: Record<string, 'view' | 'edit' | 'manage'> = {};
+  shares.forEach(x => { roles[x.resourceId] = x.role; });
+  return { items: (data || []).map(mapBankItem), roles };
 }
 
 // Quản trị cao nhất xếp lại kho chung: chuyển bài tập đã công khai (của bất kỳ ai) sang một môn chung.
