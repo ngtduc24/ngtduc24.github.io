@@ -151,16 +151,16 @@ interface PortfolioWebsiteProps {
   onLogout?: () => void;
 }
 
-type DetailItem =
+export type DetailItem =
   | { type: 'article'; data: PortfolioPost }
   | { type: 'project'; data: PortfolioProject }
   | { type: 'course'; data: PortfolioCourse }
   | { type: 'research'; data: PortfolioResearch }
   | { type: 'lecture'; data: PortfolioLecture };
 
-type CollectionPage = 'projects' | 'courses' | 'research' | 'my-courses' | 'lectures';
+export type CollectionPage = 'projects' | 'courses' | 'research' | 'my-courses' | 'lectures';
 
-type CollectionCard = {
+export type CollectionCard = {
   id: string;
   type: DetailItem['type'];
   title: string;
@@ -470,7 +470,7 @@ function CollectionImage({ card, className = '' }: { card: CollectionCard; class
   return <div className={`grid h-full w-full place-items-center bg-gradient-to-br from-brand-light via-brand-light to-slate-100 text-brand-hover ${className}`}><FileText className="h-12 w-12" /></div>;
 }
 
-function PortfolioCollectionPage({ page, cards, onOpen, metaOverride, projectsSettings, coursesSettings, onCollectionPage, onEnroll, registering, viewer }: { page: CollectionPage; cards: CollectionCard[]; onOpen: (item: DetailItem) => void; metaOverride?: { label: string; eyebrow: string; title: string; description: string }; projectsSettings?: PortfolioProjectsSettings | null; coursesSettings?: PortfolioCoursesSettings | null; onCollectionPage?: (page: CollectionPage) => void; onEnroll?: (course: PortfolioCourse) => void; registering?: boolean; viewer?: UserAccount | null; }) {
+export function PortfolioCollectionPage({ page, cards, onOpen, metaOverride, projectsSettings, coursesSettings, onCollectionPage, onEnroll, registering, viewer }: { page: CollectionPage; cards: CollectionCard[]; onOpen: (item: DetailItem) => void; metaOverride?: { label: string; eyebrow: string; title: string; description: string }; projectsSettings?: PortfolioProjectsSettings | null; coursesSettings?: PortfolioCoursesSettings | null; onCollectionPage?: (page: CollectionPage) => void; onEnroll?: (course: PortfolioCourse) => void; registering?: boolean; viewer?: UserAccount | null; }) {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
@@ -745,7 +745,7 @@ function PortfolioCollectionPage({ page, cards, onOpen, metaOverride, projectsSe
   );
 }
 
-function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSettings, onEnterSystem, onUpdateCourse, onEnroll, registering }: { item: DetailItem; related: CollectionCard[]; onOpen: (item: DetailItem) => void; viewer?: UserAccount | null; onBack?: () => void; globalSettings: PortfolioGlobalSettings | null; onEnterSystem?: () => void; onUpdateCourse?: (course: PortfolioCourse) => void; onEnroll?: (course: PortfolioCourse) => void; registering?: boolean; }) {
+export function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, globalSettings, onEnterSystem, onUpdateCourse, onEnroll, registering }: { item: DetailItem; related: CollectionCard[]; onOpen: (item: DetailItem) => void; viewer?: UserAccount | null; onBack?: () => void; globalSettings: PortfolioGlobalSettings | null; onEnterSystem?: () => void; onUpdateCourse?: (course: PortfolioCourse) => void; onEnroll?: (course: PortfolioCourse) => void; registering?: boolean; }) {
   const course = item.type === 'course' ? item.data : null;
   const [enrollment, setEnrollment] = useState<CourseStudent | null>(null);
   const [loading, setLoading] = useState(true);

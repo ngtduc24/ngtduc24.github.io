@@ -28,6 +28,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { id: 'edu_exam', label: 'Trắc nghiệm', desc: 'Tạo và chấm đề kiểm tra trắc nghiệm', icon: CheckCircle2, color: 'blue', group: 'Giảng dạy và nội dung' },
   { id: 'edu_question_bank', label: 'Ngân hàng câu hỏi', desc: 'Kho câu hỏi trắc nghiệm dùng lại và chia sẻ theo môn', icon: Library, color: 'teal', group: 'Giảng dạy và nội dung' },
   { id: 'edu_grade', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường', icon: ClipboardList, color: 'emerald', group: 'Giảng dạy và nội dung' },
+  { id: 'courses', label: 'Khoá học', desc: 'Học các khoá trực tuyến do EduGo biên soạn, theo dõi tiến độ học', icon: GraduationCap, color: 'purple', group: 'Giảng dạy và nội dung' },
   { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn', icon: BookOpen, color: 'orange', group: 'Giảng dạy và nội dung' },
   { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp trên trình duyệt', icon: Clapperboard, color: 'rose', group: 'Công cụ thiết kế' },
   { id: 'qr_codes', label: 'Tạo mã QR', desc: 'Tạo mã QR từ đường link, lưu và quản lý mã của riêng bạn', icon: QrCode, color: 'emerald', group: 'Công cụ thiết kế' },

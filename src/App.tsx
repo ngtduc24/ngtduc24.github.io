@@ -23,6 +23,7 @@ import AdminNotifications from './components/AdminNotifications';
 import UserNotifications from './components/UserNotifications';
 import MediaLibrary from './components/MediaLibrary';
 import LandingPage from './components/LandingPage';
+import CoursesApp from './components/courses/CoursesApp';
 import { getLandingConfig } from './lib/landing';
 import { canUseModule, setDefaultApps } from './lib/moduleAccess';
 import PortfolioWebsite from './components/PortfolioWebsite';
@@ -590,7 +591,7 @@ export default function App() {
     
     // Set appropriate initial tab
     if (user.role === 'member') {
-      setCurrentTab('portfolio_website');
+      setCurrentTab('courses');
     } else if (user.role === 'admin') {
       setCurrentTab('dashboard');
     } else {
@@ -773,6 +774,8 @@ export default function App() {
         return <EduModule key="edu_question_bank" currentUser={currentUser} settings={settings} initialView="question_bank" />;
       case 'edu_grade':
         return <EduModule key="edu_grade" currentUser={currentUser} settings={settings} initialView="grade_entry" />;
+      case 'courses':
+        return <CoursesApp currentUser={currentUser} />;
       case 'elearning':
         return <ELearningModule currentUser={currentUser} onExit={() => setCurrentTab('dashboard')} />;
       case 'remier':
@@ -942,7 +945,7 @@ export default function App() {
         users={users} 
         onLoginSuccess={(user) => {
           handleLoginSuccess(user);
-          setEntryView(user.role === 'member' ? 'portfolio' : 'admin');
+          setEntryView('admin');
         }} 
         initialMode={loginMode}
         key={loginMode}

@@ -197,6 +197,13 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
     description: 'Nền tảng quản lý trường học, lớp học, danh sách sinh viên, bài tập và bảng điểm học thuật chuyên nghiệp.',
     keywords: 'quản lý giáo dục, quản lý sinh viên, bảng điểm, bài tập trực tuyến, đào tạo khoa học',
   },
+  courses: {
+    id: 'courses',
+    slug: 'khoa-hoc',
+    title: 'Khoá học | EduGo',
+    description: 'Học các khoá trực tuyến do EduGo biên soạn, theo dõi tiến độ và làm bài kiểm tra.',
+    keywords: 'khoá học trực tuyến, học online, edugo',
+  },
   elearning: {
     id: 'elearning',
     slug: 'e-learning',

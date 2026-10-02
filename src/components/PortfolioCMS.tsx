@@ -43,12 +43,6 @@ const DIVISIONS: Array<{
     icon: Folder
   },
   {
-    id: 'courses',
-    title: 'Khóa học',
-    description: 'Danh sách khóa học online, giáo trình và học viên',
-    icon: GraduationCap
-  },
-  {
     id: 'research',
     title: 'Nghiên cứu',
     description: 'Danh sách bài báo và công trình nghiên cứu khoa học',

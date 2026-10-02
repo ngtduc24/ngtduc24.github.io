@@ -35,12 +35,14 @@ export function migratePermissions(user: UserAccount): string[] {
 export function canUseModule(user: UserAccount | null | undefined, id: string): boolean {
   if (!user) return false;
   if (user.role === 'admin') return true;
-  if (user.role === 'member') return id === 'portfolio_website';
+  // Học viên chỉ dùng trang Thư viện, Khoá học, Thông báo, Hồ sơ.
+  if (user.role === 'member') return ['portfolio_website', 'courses', 'dashboard', 'notifications', 'profile', 'all_features'].includes(id);
   const p = effectivePerms(user);
   // Tài khoản đã được phân quyền theo bộ công tắc mới (có dấu PERM_V2) thì chỉ xét công tắc riêng,
   // tài khoản cũ chưa phân quyền lại thì vẫn tính theo quyền Giáo dục kèm cờ thao tác như trước.
   const legacy = !p.includes(PERM_V2);
   switch (id) {
+    case 'courses': // Khoá học: ai đăng nhập cũng học được, chỉ admin quản lý
     case 'dashboard': // trang Thư viện (trang chủ bên trong) luôn mở cho tài khoản đã đăng nhập
     case 'notifications':
     case 'portfolio_website':
