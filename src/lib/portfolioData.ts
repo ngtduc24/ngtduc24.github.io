@@ -57,7 +57,8 @@ export function getSiteOwner(): string { return SITE_OWNER || LEGACY_OWNER; }
 let SITE_PROJECTS = true;
 export function setSiteProjectsEnabled(on: boolean | undefined) { SITE_PROJECTS = on !== false; }
 export function getSiteFeatures(): { research: boolean; projects: boolean } {
-  return { research: !SITE_OWNER || SITE_OWNER === LEGACY_OWNER, projects: SITE_PROJECTS };
+  // Website không còn dạng bài nghiên cứu, kể cả trang của admin.
+  return { research: false, projects: SITE_PROJECTS };
 }
 const isLegacySite = () => !SITE_OWNER || SITE_OWNER === LEGACY_OWNER;
 // Khoá cài đặt của trang đang mở. Cài đặt khoá học là của hệ thống nên giữ khoá chung.
@@ -136,7 +137,7 @@ export async function createSite(uid: string, slug: string, info: SiteInfo & { p
     });
     // Website mới không có Nghiên cứu, menu chỉ giữ các mục phù hợp.
     const nav = await getPortfolioNavigation();
-    const keepResearch = uid === LEGACY_OWNER;
+    const keepResearch = false;
     await savePortfolioNavigation(nav.filter(i => (keepResearch || (i.id !== 'nav_research' && i.link !== '#research')) && !(noProjects && (i.id === 'nav_projects' || i.link === '#projects'))));
   } catch { /* bỏ qua, người dùng vẫn sửa được ở mục Hồ sơ */ }
   return null;

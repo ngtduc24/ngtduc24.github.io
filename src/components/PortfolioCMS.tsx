@@ -420,7 +420,7 @@ export default function PortfolioCMS({ currentUser }: PortfolioCMSProps = {}) {
   const projectsOn = site?.projects !== false;
   setSiteProjectsEnabled(projectsOn);
   useEffect(() => () => setSiteProjectsEnabled(true), []);
-  const manageTabs = MANAGE_TABS.filter(t => (t.id !== 'research' || uid === LEGACY_OWNER) && (t.id !== 'projects' || projectsOn));
+  const manageTabs = MANAGE_TABS.filter(t => t.id !== 'research' && (t.id !== 'projects' || projectsOn));
   const manageCurrent: ManageTab = manageTabs.some(t => t.id === manageTab) ? manageTab : 'posts';
   const info = DIVISIONS.find(d => d.id === active) ?? DIVISIONS[0];
   if (!ready) return null;

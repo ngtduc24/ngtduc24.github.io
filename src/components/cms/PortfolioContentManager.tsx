@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Award, BookOpen, Edit3, FileText, FolderGit2, GraduationCap, Newspaper, Plus, Search, Trash2, Settings, X } from 'lucide-react';
 import { getSiteFeatures, deletePortfolioPost, getPortfolioPosts, savePortfolioPost, getPortfolioCategories, savePortfolioCategories, PortfolioCategory } from '../../lib/portfolioData';
 import { PortfolioPost } from '../portfolioTypes';
 import CloudinaryUploadField from './CloudinaryUploadField';
+import PostComposer from './PostComposer';
 import ProjectsCoursesCMS from './ProjectsCoursesCMS';
 import { useConfirmation } from '../ConfirmationContext';
 import { useNotifications } from '../NotificationContext';
@@ -13,8 +14,8 @@ import { auth } from '../../lib/firebase';
 type SelectedContentType = 'article' | 'project' | 'course' | 'research' | null;
 
 const contentTypes = [
-  { id: 'article', label: 'Bài viết bình thường', description: 'Bài báo, tin tức hoặc nội dung dài với ảnh bìa, chuyên mục và thẻ.', icon: Newspaper },
-  { id: 'project', label: 'Bài dự án Design', description: 'Case study dạng Behance: bối cảnh, quy trình, giải pháp và bộ ảnh.', icon: FolderGit2 },
+  { id: 'article', label: 'Bài viết', description: 'Tin tức, blog, bài chia sẻ với ảnh, video, bảng và định dạng đầy đủ.', icon: Newspaper },
+  { id: 'project', label: 'Dự án', description: 'Đăng dự án thiết kế dạng portfolio: bối cảnh, quy trình, giải pháp và bộ ảnh.', icon: FolderGit2 },
   { id: 'research', label: 'Bài nghiên cứu', description: 'Bài học thuật, tóm tắt, trích dẫn, DOI và tệp PDF.', icon: Award },
 ] as const;
 
@@ -24,6 +25,7 @@ const fieldClass = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 p
 export default function PortfolioContentManager({ mode = 'all', onSaved }: { mode?: 'all' | 'create' | 'manage'; onSaved?: () => void } = {}) {
   const [posts, setPosts] = useState<PortfolioPost[]>([]);
   const [categories, setCategories] = useState<PortfolioCategory[]>([]);
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
   const [showCategoriesModal, setShowCategoriesModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editing, setEditing] = useState<PortfolioPost | null>(null);
@@ -33,9 +35,16 @@ export default function PortfolioContentManager({ mode = 'all', onSaved }: { mod
   const [selectedType, setSelectedType] = useState<SelectedContentType>(null);
   const [editorVersion, setEditorVersion] = useState(0);
 
+  const availableTypes = contentTypes.filter(type => (type.id !== 'research' || getSiteFeatures().research) && (type.id !== 'project' || getSiteFeatures().projects));
+  // Website chỉ có bài viết (đã tắt trang Dự án): mở thẳng trang soạn bài, không cần chọn dạng.
+  const autoOpened = useRef(false);
+  useEffect(() => {
+    if (mode === 'create' && availableTypes.length === 1 && !autoOpened.current && categoriesLoaded) { autoOpened.current = true; createPost(); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, categoriesLoaded]);
   useEffect(() => {
     getPortfolioPosts().then(setPosts);
-    getPortfolioCategories().then(setCategories);
+    getPortfolioCategories().then(c => { setCategories(c); setCategoriesLoaded(true); });
   }, []);
 
   const createPost = () => {
@@ -57,18 +66,6 @@ export default function PortfolioContentManager({ mode = 'all', onSaved }: { mod
     });
   };
 
-  const save = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!editing) return;
-    const normalized = { ...editing, slug: editing.slug.trim() || editing.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') };
-    await savePortfolioPost(normalized);
-    setPosts(current => [normalized, ...current.filter(item => item.id !== normalized.id)]);
-    setEditing(null);
-    if (mode === 'create') setSelectedType(null);
-    addNotification('Đã lưu bài viết.', 'success');
-    onSaved?.();
-  };
-
   const remove = async (id: string) => {
     if (!(await confirm({ title: 'Xác nhận xóa bài viết', message: 'Bạn có chắc chắn muốn xóa bài viết này?', confirmText: 'Xóa' }))) return;
     await deletePortfolioPost(id);
@@ -80,10 +77,10 @@ export default function PortfolioContentManager({ mode = 'all', onSaved }: { mod
 
   return (
     <div className="space-y-6">
-      {mode !== 'manage' && <section className="rounded-2xl bg-slate-50 p-5">
-        <div><h3 className="text-base font-black text-slate-800">Thêm bài viết mới theo các dạng</h3><p className="mt-1 text-[11px] text-slate-500">Bấm vào một thẻ để mở ngay form tạo mới tương ứng.</p></div>
+      {mode !== 'manage' && !editing && <section className="rounded-2xl bg-slate-50 p-5">
+        <div><h3 className="text-base font-semibold text-slate-800">{availableTypes.length > 1 ? 'Chọn dạng bài muốn đăng' : 'Viết bài mới'}</h3><p className="mt-1 text-[13px] text-slate-500">Bấm vào thẻ để mở trang soạn bài.</p></div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {contentTypes.filter(type => (type.id !== 'research' || getSiteFeatures().research) && (type.id !== 'project' || getSiteFeatures().projects)).map(type => <button key={type.id} type="button" onClick={() => { if (type.id === 'article') createPost(); else { setEditing(null); setSelectedType(type.id); setEditorVersion(value => value + 1); } }} className={`group rounded-2xl bg-white p-4 text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-md ${selectedType === type.id ? 'ring-2 ring-brand shadow-md' : ''}`}><span className={`grid h-10 w-10 place-items-center rounded-xl transition-colors ${selectedType === type.id ? 'bg-brand text-white' : 'bg-brand-light text-brand group-hover:bg-brand group-hover:text-white'}`}><type.icon className="h-5 w-5" /></span><strong className="mt-3 block text-xs text-slate-800">{type.label}</strong><span className="mt-1 block text-[10px] leading-4 text-slate-500">{type.description}</span></button>)}
+          {availableTypes.map(type => <button key={type.id} type="button" onClick={() => { if (type.id === 'article') createPost(); else { setEditing(null); setSelectedType(type.id); setEditorVersion(value => value + 1); } }} className={`group rounded-2xl bg-white p-4 text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-md ${selectedType === type.id ? 'ring-2 ring-brand shadow-md' : ''}`}><span className={`grid h-10 w-10 place-items-center rounded-xl transition-colors ${selectedType === type.id ? 'bg-brand text-white' : 'bg-brand-light text-brand group-hover:bg-brand group-hover:text-white'}`}><type.icon className="h-5 w-5" /></span><strong className="mt-3 block text-xs text-slate-800">{type.label}</strong><span className="mt-1 block text-[10px] leading-4 text-slate-500">{type.description}</span></button>)}
         </div>
       </section>}
 
@@ -91,42 +88,18 @@ export default function PortfolioContentManager({ mode = 'all', onSaved }: { mod
       selectedType === 'course' ? <div key={`course-${editorVersion}`}><ProjectsCoursesCMS initialSubTab="courses" createOnMount showSubTabs={false} /></div> :
       selectedType === 'research' ? <div key={`research-${editorVersion}`}><PortfolioResearchCMS createOnMount /></div> :
       editing ? (
-        <form onSubmit={save} className="space-y-5 rounded-2xl bg-white">
-          <div className="flex items-center justify-between gap-4"><div><h3 className="text-base font-black text-slate-800">{posts.some(item => item.id === editing.id) ? 'Chỉnh sửa bài viết' : 'Soạn bài viết mới'}</h3><p className="mt-1 text-[10px] text-slate-500">Trình biên tập bài viết thông thường.</p></div><button type="button" onClick={() => setEditing(null)} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">Quay lại</button></div>
-          <div className="grid gap-5 lg:grid-cols-2">
-            <div className="space-y-4">
-              <label className="block space-y-1"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Tiêu đề *</span><input required value={editing.title} onChange={event => setEditing({ ...editing, title: event.target.value })} className={fieldClass} /></label>
-              <label className="block space-y-1"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Đường dẫn</span><input value={editing.slug} onChange={event => setEditing({ ...editing, slug: event.target.value })} placeholder="Tự tạo theo tiêu đề nếu để trống" className={fieldClass} /></label>
-              <CloudinaryUploadField label="Ảnh bìa bài viết" value={editing.coverImage} onChange={coverImage => setEditing({ ...editing, coverImage })} accept="image/*" resourceType="image" folder="portfolio/posts" />
-              <label className="block space-y-1"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Mô tả ngắn</span><textarea rows={3} value={editing.excerpt} onChange={event => setEditing({ ...editing, excerpt: event.target.value })} className={`${fieldClass} resize-none`} /></label>
-            </div>
-            <div className="space-y-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Chuyên mục</span>
-                    <button type="button" onClick={() => setShowCategoriesModal(true)} className="text-[10px] font-bold text-brand hover:underline">Quản lý</button>
-                  </div>
-                  <select value={editing.category} onChange={event => setEditing({ ...editing, category: event.target.value })} className={fieldClass}>
-                    {categories.length === 0 && <option value="Tin tức">Tin tức</option>}
-                    {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
-                    {editing.category && categories.length > 0 && !categories.some(cat => cat.name === editing.category) && (
-                      <option value={editing.category}>{editing.category}</option>
-                    )}
-                  </select>
-                </label>
-                <label className="space-y-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Tác giả</span>
-                  <input value={editing.author} onChange={event => setEditing({ ...editing, author: event.target.value })} className={fieldClass} />
-                </label>
-              </div>
-              <label className="block space-y-1"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Tags, cách nhau bằng dấu phẩy</span><input value={editing.tags.join(', ')} onChange={event => setEditing({ ...editing, tags: event.target.value.split(',').map(value => value.trim()).filter(Boolean) })} className={fieldClass} /></label>
-              <label className="block space-y-1"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Nội dung bài viết *</span><textarea required rows={12} value={editing.content} onChange={event => setEditing({ ...editing, content: event.target.value })} placeholder="Soạn nội dung bài viết tại đây..." className={`${fieldClass} resize-y leading-6`} /></label>
-              <div className="grid gap-3 sm:grid-cols-2"><label className="space-y-1"><span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Trạng thái</span><select value={editing.status} onChange={event => setEditing({ ...editing, status: event.target.value as PortfolioPost['status'] })} className={fieldClass}><option value="draft">Bản nháp</option><option value="published">Đã xuất bản</option><option value="hidden">Đã ẩn</option></select></label><label className="flex items-center justify-between self-end rounded-xl bg-slate-50 p-3 text-xs font-bold text-slate-700">Bài nổi bật <input type="checkbox" checked={editing.isFeatured} onChange={event => setEditing({ ...editing, isFeatured: event.target.checked })} /></label></div>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4"><button type="button" onClick={() => setEditing(null)} className="rounded-xl bg-slate-100 px-5 py-2.5 text-xs font-bold text-slate-600">Hủy</button><button type="submit" className="rounded-xl bg-brand px-5 py-2.5 text-xs font-bold text-white">Lưu bài viết</button></div>
-        </form>
+        <PostComposer
+          key={editing.id}
+          post={editing}
+          isNew={!posts.some(item => item.id === editing.id)}
+          categories={categories}
+          onManageCategories={() => setShowCategoriesModal(true)}
+          onSaved={(saved, { auto }) => {
+            setPosts(current => [saved, ...current.filter(item => item.id !== saved.id)]);
+            if (!auto) addNotification(saved.status === 'published' ? 'Đã xuất bản bài viết.' : 'Đã lưu bài viết.', 'success');
+          }}
+          onClose={() => { setEditing(null); if (mode === 'create') { setSelectedType(null); onSaved?.(); } }}
+        />
       ) : mode === 'create' ? null : (
         <section className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h3 className="text-base font-black text-slate-800">Bài viết thông thường ({posts.length})</h3><p className="mt-1 text-[10px] text-slate-500">Xem, sửa và xuất bản như một trang báo.</p></div><div className="flex gap-2"><label className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Tìm bài viết..." className="rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-xs outline-none" /></label><button type="button" onClick={createPost} className="inline-flex items-center gap-1 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold text-white"><Plus className="h-4 w-4" /> Tạo bài</button></div></div>

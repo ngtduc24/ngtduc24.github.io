@@ -35,7 +35,10 @@ const SAFE_MEDIA_SCHEMES = ['http:', 'https:'];
 // Chỉ chấp nhận vài thuộc tính style vô hại, chặn url() và expression() vốn hay bị lợi dụng.
 const SAFE_STYLE_PROPS = new Set([
   'color', 'background-color', 'font-weight', 'font-style', 'font-size',
-  'text-align', 'text-decoration', 'margin', 'padding', 'width', 'height'
+  'text-align', 'text-decoration', 'margin', 'padding', 'width', 'height',
+  // Định dạng của trình soạn thảo bài viết: phông chữ, giãn dòng, cỡ và vị trí ảnh.
+  'font-family', 'line-height', 'display', 'float', 'clear', 'max-width', 'border-radius',
+  'margin-left', 'margin-right', 'margin-top', 'margin-bottom', 'vertical-align', 'text-indent', 'min-width'
 ]);
 
 const resolveUrl = (value: string): URL | null => {

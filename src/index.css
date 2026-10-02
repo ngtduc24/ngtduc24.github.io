@@ -88,3 +88,14 @@ video.edu-video, .prose video {
 .ProseMirror .edu-video-embed iframe { pointer-events: none; }
 .ProseMirror .ProseMirror-selectednode.edu-video-embed,
 .ProseMirror video.ProseMirror-selectednode { outline: 3px solid var(--color-brand, #10b981); outline-offset: 2px; }
+
+/* Nội dung soạn bằng trình soạn thảo bài viết (RichTextEditor) khi hiển thị trên Website */
+.rte-view::after { content: ''; display: block; clear: both; }
+.rte-view img { border-radius: 0.75rem; height: auto; max-width: 100%; }
+.rte-view table { width: 100%; border-collapse: collapse; }
+.rte-view td, .rte-view th { border: 1px solid #e2e8f0; padding: 6px 10px; vertical-align: top; }
+.rte-view th { background: #f8fafc; }
+.rte-view mark { border-radius: 0.2em; padding: 0 0.15em; }
+@media (max-width: 640px) {
+  .rte-view img[style*="float"] { float: none !important; width: 100% !important; margin: 1rem 0 !important; }
+}

@@ -1215,7 +1215,7 @@ export function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, glo
             {item.type === 'article' && (
               <article className="prose prose-slate prose-sm sm:prose-base max-w-none">
                 <p className="text-xl font-semibold leading-relaxed text-slate-600">{item.data.excerpt}</p>
-                <div className="mt-10" dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data.content) }} />
+                <div className="rte-view mt-10" dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.data.content) }} />
                 <div className="mt-12 flex flex-wrap gap-2">
                   {item.data.tags.map(tag => (
                     <span key={tag} className="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-bold text-slate-600">#{tag}</span>
@@ -2229,7 +2229,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
   // Khoá học là ứng dụng riêng của EduGo, Website không hiện khối khoá học.
   // Dự án, nghiên cứu không bắt buộc: trang chưa có nội dung loại nào thì ẩn luôn khối và mục menu đó.
   // Website mới không có Nghiên cứu. Trang Dự án do chủ trang bật tắt (tắt thì Website là trang blog).
-  const allowResearch = !siteSlug || site?.owner === LEGACY_OWNER;
+  const allowResearch = false;
   const allowProjects = site?.projects !== false;
   const emptySection = (key: string) => (key === 'research' && (!allowResearch || research.length === 0)) || (key === 'projects' && (!allowProjects || projects.length === 0));
   const showSection = (key: HomeSectionKey) => (key as string) !== 'courses' && !emptySection(key as string) && isHomeSectionVisible(globalSettings, key);
