@@ -39,6 +39,7 @@
     "esbuild": "^0.25.0",
     "express": "^4.21.2",
     "firebase": "^12.16.0",
+    "html-to-image": "^1.11.13",
     "jsdom": "^29.1.1",
     "jspdf": "^2.5.2",
     "jstat": "^1.9.6",

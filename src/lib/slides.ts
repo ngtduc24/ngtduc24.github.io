@@ -127,7 +127,7 @@ export const EFFECT_LABELS: Array<[EffectKind, string]> = [
 ];
 
 export interface SlideBg { color?: string; gradient?: string; image?: string }
-export interface Slide { id: string; bg: SlideBg; els: SlideEl[]; notes?: string; transition?: SlideTransition; hidden?: boolean }
+export interface Slide { id: string; bg: SlideBg; els: SlideEl[]; notes?: string; transition?: SlideTransition; hidden?: boolean; name?: string }
 
 export interface Deck {
   id: string;

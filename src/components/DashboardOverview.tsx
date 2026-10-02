@@ -1,25 +1,19 @@
-import { useMyNotifications } from '../lib/notifications';
 import React, { useState, useEffect, useRef } from 'react';
 import { canUseModule } from '../lib/moduleAccess';
 import MediaSourcePicker from './MediaSourcePicker';
 import {
-  Calculator, Settings, Users, BookOpen, Search, X, Database, Sparkles,
-  CalendarDays, BarChart3, GraduationCap, Wrench, FolderKanban, Mail,
-  Library, Image as ImageIcon, LayoutGrid, ArrowRight, Bell, ChevronDown,
-  Home, FileText, CheckCircle2, ClipboardList, Scan, LayoutTemplate, Megaphone, Minus, Eye, Shield, Plus, Clapperboard, FileArchive, Globe, FolderOpen
-, FileUser, QrCode, Presentation, Workflow } from 'lucide-react';
+  Settings, Users, BookOpen, Search, X, Database, Sparkles,
+  CalendarDays, BarChart3, GraduationCap, Mail,
+  Library, Image as ImageIcon, LayoutGrid, ArrowRight,
+  CheckCircle2, ClipboardList, Scan, LayoutTemplate, Minus, Shield, Plus, Clapperboard, FileArchive, Globe,
+  FileUser, QrCode, Presentation, Workflow } from 'lucide-react';
 import {
-  getStatsFromSupabase,
-  getJournalsFromSupabase,
-  getNotificationsFromSupabase, isNotificationForUser,
   saveDefaultSettingsToSupabase,
   saveUser,
   shareLocalDashboardBannerOnce,
 } from '../lib/data';
-import { useTasks } from './TaskContext';
 import { isModuleHidden, resolveModuleMeta } from '../lib/modules';
-import { UserAccount, AppSettings, ScientificJournal, AppNotification } from '../types';
-import { isTaskRelevantToUser } from '../lib/tasks';
+import { UserAccount, AppSettings } from '../types';
 import { useNotifications } from './NotificationContext';
 
 interface DashboardProps {
@@ -45,18 +39,6 @@ const COLORS: Record<string, { bg: string; text: string }> = {
   indigo: { bg: 'bg-indigo-100', text: 'text-indigo-500' },
 };
 
-function timeAgo(ts?: string) {
-  if (!ts) return '';
-  const diff = Date.now() - new Date(ts).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return 'vừa xong';
-  if (m < 60) return `${m} phút trước`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h} giờ trước`;
-  const d = Math.floor(h / 24);
-  return `${d} ngày trước`;
-}
-
 export default function DashboardOverview({ onSwitchTab, settings, users, currentUser, onRefreshSettings }: DashboardProps) {
   // Ảnh nền đầu trang admin đặt trước đây chỉ lưu trên máy admin: đẩy lên máy chủ một lần cho mọi người thấy.
   useEffect(() => {
@@ -65,7 +47,6 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.role]);
   const { addNotification } = useNotifications();
-  const { tasks } = useTasks();
 
   const [showBannerSettings, setShowBannerSettings] = useState(false);
   const [showDatabaseSettings, setShowDatabaseSettings] = useState(false);
@@ -84,12 +65,6 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     };
   });
 
-  const [statsData, setStatsData] = useState<Record<string, number>>({ calculator: 0, public_search: 0 });
-  const [journals, setJournals] = useState<ScientificJournal[]>([]);
-  const [journalsCount, setJournalsCount] = useState<number>(0);
-  // Thông báo của tài khoản này, đã bỏ các thông báo đã xoá, trạng thái đọc đồng bộ giữa các thiết bị.
-  const myNotifs = useMyNotifications(currentUser);
-  const notifs = myNotifs.items;
   const [search, setSearch] = useState('');
 
   // Thứ tự hàng biểu tượng chức năng do người dùng tự kéo thả sắp xếp, lưu theo tài khoản
@@ -202,12 +177,6 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
       setBannerPos(settings.dashboardBannerPosition || '50% 50%');
     }
   }, [settings]);
-
-  useEffect(() => {
-    getStatsFromSupabase().then(setStatsData).catch(() => {});
-    getJournalsFromSupabase().then(j => { setJournals(j); setJournalsCount(j.length); }).catch(() => {});
-
-  }, []);
 
   const handleSaveDbConfig = (e: React.FormEvent) => {
     e.preventDefault();
@@ -421,27 +390,6 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     document.addEventListener('pointerdown', onDown);
     return () => document.removeEventListener('pointerdown', onDown);
   }, [cardSortMode, showCardPicker]);
-
-  const visibleTasks = tasks.filter(t => !t.isDeleted && isTaskRelevantToUser(t, currentUser));
-  const runningTasks = visibleTasks.filter(t => t.status !== 'Completed' && t.status !== 'Cancelled');
-  const completedCount = visibleTasks.filter(t => t.status === 'Completed').length;
-  const recentTasks = [...visibleTasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3);
-  const unreadCount = myNotifs.unread;
-
-  const statusBadge = (status: string) => {
-    if (status === 'Completed') return { label: 'Hoàn thành', cls: 'bg-emerald-50 text-emerald-600 border-emerald-200' };
-    if (status === 'Paused') return { label: 'Tạm dừng', cls: 'bg-amber-50 text-amber-600 border-amber-200' };
-    if (status === 'Cancelled') return { label: 'Đã hủy', cls: 'bg-slate-100 text-slate-500 border-slate-200' };
-    if (status === 'Pending') return { label: 'Chờ duyệt', cls: 'bg-orange-50 text-orange-600 border-orange-200' };
-    return { label: 'Đang thực hiện', cls: 'bg-blue-50 text-blue-600 border-blue-200' };
-  };
-
-  const tiles = [
-    { label: 'Công việc đang thực hiện', value: runningTasks.length, icon: CalendarDays, color: 'blue' },
-    { label: 'Tài liệu trong thư viện', value: journalsCount, icon: FileText, color: 'emerald' },
-    { label: 'Điểm báo trong hệ thống', value: journalsCount, icon: ImageIcon, color: 'violet' },
-    { label: 'Thông báo chưa đọc', value: unreadCount, icon: Bell, color: 'rose' },
-  ];
 
   const hasBg = !!settings?.dashboardBannerImage;
 
@@ -697,102 +645,6 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
         </div>
       )}
 
-      {/* ===== Ba cột dưới: Công việc gần đây, Thông báo mới, Thống kê tổng quan.
-              Tạm ẩn khi đang tìm kiếm, hiện lại khi xoá nội dung tìm kiếm. ===== */}
-      {!q && (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Công việc gần đây */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <ClipboardList className="w-5 h-5 text-brand" />
-              <h3 className="text-sm font-black text-slate-800">Công việc gần đây</h3>
-            </div>
-            <button onClick={() => onSwitchTab('tasks')} className="text-[11px] font-bold text-brand hover:underline flex items-center gap-1">Xem tất cả <ArrowRight className="w-3 h-3" /></button>
-          </div>
-          {recentTasks.length === 0 ? (
-            <p className="text-xs text-slate-400 italic text-center py-6">Chưa có công việc nào.</p>
-          ) : (
-            <div className="space-y-3">
-              {recentTasks.map(t => {
-                const b = statusBadge(t.status);
-                return (
-                  <div key={t.id} className="flex items-center gap-3">
-                    <span className="w-2 h-2 rounded-full bg-brand shrink-0" />
-                    <span className="text-[13px] font-semibold text-slate-700 truncate flex-1">{t.name}</span>
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${b.cls}`}>{b.label}</span>
-                    <span className="text-[10px] text-slate-400 font-medium shrink-0 hidden sm:block">{t.deadline ? new Date(t.deadline).toLocaleDateString('vi-VN') : ''}</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Thông báo mới */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Bell className="w-5 h-5 text-brand" />
-              <h3 className="text-sm font-black text-slate-800">Thông báo mới</h3>
-            </div>
-            <button onClick={() => onSwitchTab('notifications')} className="text-[11px] font-bold text-brand hover:underline flex items-center gap-1">Xem tất cả <ArrowRight className="w-3 h-3" /></button>
-          </div>
-          {(isUserAdmin || perms.includes('notifications')) && (
-            <button
-              onClick={() => onSwitchTab('notifications_admin')}
-              className="mb-4 w-full flex items-center gap-3 rounded-xl bg-brand-light/60 hover:bg-brand-light text-left px-3 py-2.5 transition-colors border border-brand/10"
-            >
-              <span className="w-8 h-8 rounded-lg bg-brand text-white grid place-items-center shrink-0"><Megaphone className="w-4 h-4" /></span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[12px] font-black text-slate-800 leading-tight">Trung tâm thông báo</span>
-                <span className="block text-[10px] text-slate-500 font-medium">Quản lý và phát thông báo tới người dùng</span>
-              </span>
-              <ArrowRight className="w-4 h-4 text-brand shrink-0" />
-            </button>
-          )}
-          {notifs.length === 0 ? (
-            <p className="text-xs text-slate-400 italic text-center py-6">Chưa có thông báo nào.</p>
-          ) : (
-            <div className="space-y-3.5">
-              {notifs.slice(0, 3).map((n, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <span className="w-2 h-2 rounded-full bg-brand shrink-0 mt-1.5" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-bold text-slate-700 truncate">{n.title}</p>
-                    {n.description && <p className="text-[11px] text-slate-400 font-medium line-clamp-1">{n.description}</p>}
-                  </div>
-                  <span className="text-[10px] text-slate-400 font-medium shrink-0">{timeAgo(n.timestamp)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Thống kê tổng quan */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-brand" />
-              <h3 className="text-sm font-black text-slate-800">Thống kê tổng quan</h3>
-            </div>
-            <button onClick={() => onSwitchTab('stats')} className="text-[11px] font-bold text-brand hover:underline flex items-center gap-1">Chi tiết <ArrowRight className="w-3 h-3" /></button>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {tiles.map((t, i) => {
-              const Icon = t.icon; const c = COLORS[t.color];
-              return (
-                <div key={i} className="rounded-xl border border-slate-100 p-3.5">
-                  <span className={`w-8 h-8 rounded-lg ${c.bg} ${c.text} grid place-items-center mb-2`}><Icon className="w-4 h-4" /></span>
-                  <p className="text-2xl font-black text-slate-800 leading-none">{t.value}</p>
-                  <p className="text-[10px] text-slate-400 font-medium mt-1 leading-tight">{t.label}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-      )}
 
       {/* ===== Modal đổi ảnh nền và nội dung đầu trang (admin) ===== */}
       {showBannerSettings && (

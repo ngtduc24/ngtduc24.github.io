@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  Home, Undo2, Redo2, Cloud, CloudOff, Loader2, Play, Share2, UserPlus, LayoutTemplate, Shapes, Type, Upload, Images, PaintBucket,
+  ArrowLeft, Undo2, Redo2, Cloud, CloudOff, Loader2, Play, Share2, UserPlus, LayoutTemplate, Shapes, Type, Upload, Images, PaintBucket,
   StickyNote, Grid2X2, Maximize, Plus, Copy, Trash2, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List,
   ArrowUpToLine, ArrowDownToLine, Lock, Unlock, Search, X, ChevronDown, Link2, Check, FileDown, Pencil, Minus, Droplet, Eye,
   EyeOff, FileUp, Keyboard, Link as LinkIcon, Crop, Youtube, Presentation,
-  Strikethrough, CaseUpper, MoveVertical, Sparkles, Wand2, Move, Paintbrush, FlipHorizontal2, FlipVertical2, Replace, AlignStartVertical, AlignCenterVertical, AlignEndVertical, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, ChevronsUp, ChevronsDown, ChevronUp, PlayCircle, Blend, MoreHorizontal, Music, Clock3, Library,
+  Strikethrough, CaseUpper, MoveVertical, Sparkles, Wand2, Move, Paintbrush, FlipHorizontal2, FlipVertical2, Replace, AlignStartVertical, AlignCenterVertical, AlignEndVertical, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, ChevronsUp, ChevronsDown, ChevronUp, PlayCircle, Blend, MoreHorizontal, Music, Clock3, Library, ClipboardPaste, CopyPlus, FilePlus2, ChevronsRight, Download, ImageDown,
 } from 'lucide-react';
 import {
   Deck, Slide, SlideEl, SLIDE_W, SLIDE_H, LAYOUTS, LayoutId, makeSlide, textEl, uid, saveDeck, getDeck, getDeckUpdatedAt,
@@ -43,6 +43,25 @@ const SHAPES: Array<{ k: ShapeKind; label: string }> = [
 
 const CLIP_MARK = 'edugo-slide-els:';
 let sharedClipboard: SlideEl[] = [];
+// Bộ nhớ tạm cho cả trang: sao chép trang này dán sang bài giảng khác hoặc thẻ khác.
+const PAGE_MARK = 'edugo-slide-page:';
+const PAGE_CLIP_KEY = 'edugo_slide_page_clip';
+function freshCopy(s: Slide): Slide { const c: Slide = JSON.parse(JSON.stringify(s)); c.id = uid('s'); c.els.forEach(e => { e.id = uid(); }); return c; }
+// Tải 1 trang thành ảnh PNG: dựng trang ở kích thước thật ngoài màn hình rồi chụp lại.
+async function slideToPng(slide: Slide): Promise<string> {
+  const [{ toPng }, { createRoot }, { flushSync }] = await Promise.all([import('html-to-image'), import('react-dom/client'), import('react-dom')]);
+  const host = document.createElement('div');
+  host.style.cssText = `position:fixed;left:-10000px;top:0;width:${SLIDE_W}px;height:${SLIDE_H}px;pointer-events:none;`;
+  document.body.appendChild(host);
+  const root = createRoot(host);
+  try {
+    flushSync(() => root.render(<SlideRenderer slide={slide} width={SLIDE_W} />));
+    const imgs = Array.from(host.querySelectorAll('img'));
+    await Promise.all(imgs.map(im => (im.complete ? Promise.resolve() : new Promise(r => { im.onload = im.onerror = () => r(null); }))));
+    try { await (document as any).fonts?.ready; } catch { /* bỏ qua */ }
+    return await toPng(host.firstElementChild as HTMLElement || host, { width: SLIDE_W, height: SLIDE_H, pixelRatio: 1.5, cacheBust: true });
+  } finally { root.unmount(); host.remove(); }
+}
 
 // Đo chiều cao thật của khối chữ để khung chọn khớp nội dung.
 function measureText(el: SlideEl): number {
@@ -313,6 +332,67 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
     if (slidesRef.current.length <= 1) { addNotification('Bài giảng cần ít nhất 1 trang.', 'warning'); return; }
     const next = slidesRef.current.filter((_, k) => k !== i); commit(next); setCur(c => Math.max(0, Math.min(c > i ? c - 1 : c, next.length - 1))); setSel([]);
   };
+  // ===== Thao tác với cả trang (menu chuột phải và nút 3 chấm ở dải trang) =====
+  const copyPage = (i: number) => {
+    const s = slidesRef.current[i]; if (!s) return;
+    const payload = PAGE_MARK + JSON.stringify(s);
+    try { localStorage.setItem(PAGE_CLIP_KEY, payload); } catch { /* bỏ qua */ }
+    try { navigator.clipboard?.writeText(payload).catch(() => {}); } catch { /* bỏ qua */ }
+    addNotification(`Đã sao chép trang ${i + 1}`, 'success');
+  };
+  const pastePage = (at: number, raw?: string) => {
+    if (readOnly) return;
+    let text = raw;
+    if (!text) { try { text = localStorage.getItem(PAGE_CLIP_KEY) || ''; } catch { text = ''; } }
+    if (!text || !text.startsWith(PAGE_MARK)) { addNotification('Chưa có trang nào được sao chép.', 'warning'); return; }
+    try {
+      const c = freshCopy(JSON.parse(text.slice(PAGE_MARK.length)));
+      const next = [...slidesRef.current]; next.splice(at, 0, c); commit(next); setCur(at); setSel([]);
+    } catch { addNotification('Không dán được trang.', 'error'); }
+  };
+  const pageLocked = (i: number) => { const s = slidesRef.current[i]; return !!s && s.els.length > 0 && s.els.every(e => e.locked); };
+  const toggleLockPage = (i: number) => {
+    const lock = !pageLocked(i);
+    commit(slidesRef.current.map((x, k) => (k === i ? { ...x, els: x.els.map(e => ({ ...e, locked: lock })) } : x)));
+    addNotification(lock ? `Đã khoá mọi khối ở trang ${i + 1}` : `Đã mở khoá trang ${i + 1}`, 'success');
+  };
+  const renamePage = async (i: number) => {
+    const s = slidesRef.current[i]; if (!s) return;
+    const v = await askText({ title: `Đổi tên trang ${i + 1}`, label: 'Tên trang giúp dễ tìm trong dải trang, không hiện khi trình chiếu', defaultValue: s.name || '', placeholder: 'Ví dụ: Mở đầu, Câu hỏi thảo luận...' });
+    if (v === null) return;
+    commit(slidesRef.current.map((x, k) => (k === i ? { ...x, name: v.trim() || undefined } : x)));
+  };
+  const fileBase = () => (title || 'bai-giang').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80);
+  const downloadPagePng = async (i: number) => {
+    const s = slidesRef.current[i]; if (!s) return;
+    setExporting(`Đang tạo ảnh trang ${i + 1}...`);
+    try {
+      const url = await slideToPng(s);
+      const a = document.createElement('a'); a.href = url; a.download = `${fileBase()} - trang ${i + 1}.png`; a.click();
+    } catch (e: any) { addNotification('Chưa tạo được ảnh trang này: ' + (e?.message || e), 'error'); }
+    finally { setExporting(null); }
+  };
+  const downloadPagePptx = async (i: number) => {
+    const s = slidesRef.current[i]; if (!s) return;
+    setExporting(`Đang xuất trang ${i + 1}...`);
+    try { await exportPptx({ ...deckRef.current, slides: [s], title: `${title} - trang ${i + 1}` }); }
+    catch (e: any) { addNotification('Chưa xuất được tệp PowerPoint: ' + (e?.message || e), 'error'); }
+    finally { setExporting(null); }
+  };
+  const copyPageLink = async (i: number) => {
+    const s = slidesRef.current[i]; if (!s) return;
+    let d: Deck | null = deckRef.current;
+    if (!d.shareOn || !d.shareToken) {
+      const ok = await confirm({ title: 'Bật chia sẻ công khai', message: 'Link đến 1 trang chỉ mở được khi bài giảng bật chia sẻ công khai. Bật chia sẻ để ai có link đều xem được bài giảng này?', confirmText: 'Bật và sao chép' });
+      if (!ok) return;
+      d = await toggleShare(true);
+      if (!d?.shareToken) return;
+    }
+    if (s.hidden) addNotification('Trang này đang ẩn nên người xem qua link sẽ không thấy.', 'warning');
+    const okCopy = await copyText(`${deckShareUrl(d.shareToken!)}&p=${encodeURIComponent(s.id)}`);
+    addNotification(okCopy ? `Đã sao chép liên kết đến trang ${i + 1}` : 'Không sao chép được liên kết.', okCopy ? 'success' : 'error');
+  };
+
   const moveSlide = (from: number, to: number) => {
     if (from === to) return;
     const next = [...slidesRef.current]; const [m] = next.splice(from, 1); next.splice(to, 0, m); commit(next); setCur(to);
@@ -465,7 +545,16 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
   useEffect(() => {
     const typing = (t: EventTarget | null) => { const el = t as HTMLElement; return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable); };
     const onCopy = (e: ClipboardEvent) => {
-      if (typing(e.target) || !selected.length || editingId) return;
+      if (typing(e.target) || editingId) return;
+      // Không chọn khối nào thì Ctrl C sao chép cả trang đang mở
+      if (!selected.length) {
+        if (e.type !== 'copy' || window.getSelection()?.toString()) return;
+        const payload = PAGE_MARK + JSON.stringify(slidesRef.current[cur]);
+        e.clipboardData?.setData('text/plain', payload); e.preventDefault();
+        try { localStorage.setItem(PAGE_CLIP_KEY, payload); } catch { /* bỏ qua */ }
+        addNotification(`Đã sao chép trang ${cur + 1}`, 'success');
+        return;
+      }
       const payload = CLIP_MARK + JSON.stringify(selected);
       e.clipboardData?.setData('text/plain', payload);
       e.preventDefault();
@@ -478,6 +567,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
       if (files.length) { e.preventDefault(); uploadFiles(files); return; }
       const text = e.clipboardData?.getData('text/plain') || '';
       e.preventDefault();
+      if (text.startsWith(PAGE_MARK)) { pastePage(cur + 1, text); return; }
       let els: SlideEl[] | null = null;
       if (text.startsWith(CLIP_MARK)) { try { els = JSON.parse(text.slice(CLIP_MARK.length)); } catch { els = null; } }
       else if (!text && sharedClipboard.length) els = sharedClipboard;
@@ -745,8 +835,12 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
     { id: 'background', label: 'Nền', icon: PaintBucket },
   ];
   // Công cụ thiết kế gắn lên đầu thanh bên trái của hệ thống (các mục chung dồn xuống cuối thanh).
+  // Nút quay lại danh sách bài giảng nằm trên cùng thanh bên trái, lưu bản đang sửa trước khi thoát.
+  const exitRef = useRef<() => void>(() => {});
+  exitRef.current = async () => { if (status === 'dirty') await save(); onExit(); };
   useEffect(() => {
-    setSidebarTools(readOnly ? [] : rail.map(r => ({ id: r.id, label: r.label, icon: r.icon, active: panel === r.id, onClick: () => setPanel(p => (p === r.id ? null : r.id)) })));
+    const back = { id: 'back', label: 'Quay lại', icon: ArrowLeft, onClick: () => exitRef.current() };
+    setSidebarTools([back, ...(readOnly ? [] : rail.map(r => ({ id: r.id, label: r.label, icon: r.icon, active: panel === r.id, onClick: () => setPanel(p => (p === r.id ? null : r.id)) })))]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [panel, readOnly]);
   useEffect(() => () => setSidebarTools(null), []);
@@ -935,7 +1029,6 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
     <div className="fixed inset-y-0 left-20 right-0 z-[120] flex flex-col bg-slate-100 text-slate-800">
       {/* Thanh trên */}
       <header className="flex h-14 shrink-0 items-center gap-1 bg-gradient-to-r from-brand to-brand-hover px-2 text-white sm:px-3">
-        <button onClick={async () => { if (status === 'dirty') await save(); onExit(); }} title="Về danh sách bài giảng" className="grid h-10 w-10 place-items-center rounded-lg hover:bg-white/15"><Home className="h-5 w-5" /></button>
         <div className="relative">
           <button onClick={() => setFileMenu(v => !v)} className="flex h-10 items-center gap-1 rounded-lg px-3 text-sm font-semibold hover:bg-white/15">Tệp <ChevronDown className="h-4 w-4" /></button>
           {fileMenu && (
@@ -1187,11 +1280,11 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                 <button onClick={() => { stopEditing(); setCur(i); setSel([]); }} className={`block overflow-hidden rounded-lg border-2 ${i === cur ? 'border-brand' : 'border-slate-200 hover:border-slate-300'} ${s.hidden ? 'opacity-40' : ''}`}>
                   <SlideRenderer slide={s} width={140} />
                 </button>
-                <span className="absolute bottom-1 left-1.5 rounded bg-white/85 px-1 text-[11px] font-semibold text-slate-600">{i + 1}{s.hidden ? ' · ẩn' : ''}</span>
+                <span className="absolute bottom-1 left-1.5 max-w-[118px] truncate rounded bg-white/85 px-1 text-[11px] font-semibold text-slate-600" title={s.name || undefined}>{i + 1}{s.name ? ` · ${s.name}` : ''}{s.hidden ? ' · ẩn' : ''}{s.els.length > 0 && s.els.every(e => e.locked) ? ' · khoá' : ''}</span>
                 {(s.transition && s.transition.type !== 'none' || s.els.some(e => e.anim?.in && e.anim.in !== 'none')) && <span title="Có hiệu ứng" className="absolute bottom-1 right-1.5 rounded bg-white/85 px-1 text-[10px] text-brand">✦</span>}
                 {!readOnly && (
                   // Nút 3 chấm mở menu trang (như bấm chuột phải), luôn hiện trên iPad, hiện khi rê chuột trên máy tính.
-                  <button onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setCur(i); const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); openCtx({ clientX: r.left, clientY: Math.max(8, r.top - 300) }, 'slide', i); }}
+                  <button onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setCur(i); const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); openCtx({ clientX: r.left, clientY: r.top }, 'slide', i); }}
                     title="Thao tác với trang" aria-label="Thao tác với trang"
                     className={`absolute left-1 top-1 grid h-7 w-7 place-items-center rounded-md bg-white/95 text-slate-600 shadow ring-1 ring-slate-200 hover:text-brand ${coarse ? '' : 'opacity-0 group-hover:opacity-100'}`}>
                     <MoreHorizontal className="h-4 w-4" />
@@ -1256,33 +1349,53 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
       )}
       {exporting && createPortal(<div className="fixed bottom-6 left-1/2 z-[260] flex -translate-x-1/2 items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm text-white shadow-xl"><Loader2 className="h-4 w-4 animate-spin" /> {exporting}</div>, document.body)}
       {ctxMenu && createPortal(
-        <div className="fixed inset-0 z-[240] select-none" style={{ WebkitUserSelect: 'none', WebkitTouchCallout: 'none' } as React.CSSProperties} onPointerDown={() => { if (Date.now() - ctxAt.current > 450) setCtxMenu(null); }} onContextMenu={e => { e.preventDefault(); setCtxMenu(null); }}>
-          <div onPointerDown={e => e.stopPropagation()} style={{ left: Math.min(ctxMenu.x, window.innerWidth - 262), top: Math.min(ctxMenu.y, window.innerHeight - 330) }}
-            className="absolute w-64 rounded-xl border border-slate-200 bg-white p-1.5 text-sm text-slate-700 shadow-2xl">
-            {((ctxMenu.kind === 'el' ? [
-              ['Sao chép', 'Ctrl C', () => document.execCommand('copy')],
-              ['Cắt', 'Ctrl X', () => document.execCommand('cut')],
-              ['Nhân bản', 'Ctrl D', duplicateSel],
-              ['Đưa lên trên cùng', '', () => layer('up')],
-              ['Đưa xuống dưới cùng', '', () => layer('down')],
-              [selected.every(x => x.locked) ? 'Mở khoá' : 'Khoá vị trí', '', () => updateEls(sel, { locked: !selected.every(x => x.locked) })],
-              ['Căn giữa trang', '', () => { const c = sel; updateEls(c, e => ({ x: Math.round((SLIDE_W - e.w) / 2), y: Math.round((SLIDE_H - e.h) / 2) })); }],
-              ['Gắn liên kết', '', () => editLink()],
-              ['Chuyển động', '', () => setPanel('animate')],
-              ['Xoá', 'Delete', removeSel],
-            ] : [
-              ['Thêm trang mới sau trang này', 'Ctrl M', () => addSlide('title_content', (ctxMenu.index ?? cur) + 1)],
-              ['Nhân bản trang', '', () => dupSlide(ctxMenu.index ?? cur)],
-              [slides[ctxMenu.index ?? cur]?.hidden ? 'Hiện trang khi trình chiếu' : 'Ẩn trang khi trình chiếu', '', () => toggleHidden(ctxMenu.index ?? cur)],
-              ['Trình chiếu từ trang này', '', () => setPresenting(ctxMenu.index ?? cur)],
-              ['Xoá trang', '', () => delSlide(ctxMenu.index ?? cur)],
-            ]) as Array<[string, string, () => void]>).map(([label, key, fn]) => (
-              <button key={label} onClick={() => { setCtxMenu(null); fn(); }} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left hover:bg-slate-50 ${label.startsWith('Xoá') ? 'text-rose-600' : ''}`}>
-                <span>{label}</span>{key && <span className="text-[11px] text-slate-400">{key}</span>}
+        <CtxMenu ctx={ctxMenu} onClose={() => setCtxMenu(null)} closeGuard={() => Date.now() - ctxAt.current > 450}
+          header={ctxMenu.kind === 'slide' ? (() => {
+            const i = ctxMenu.index ?? cur; const s = slides[i];
+            return (
+              <button onClick={() => { setCtxMenu(null); renamePage(i); }} className="group mb-1 flex w-full items-start gap-2 rounded-lg px-3 pb-2 pt-1.5 text-left hover:bg-slate-50">
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[15px] font-bold text-slate-800">{s?.name ? `${i + 1}. ${s.name}` : `Đổi tên trang ${i + 1}`}</span>
+                  <span className="block text-[12px] text-slate-500">Bài giảng · {SLIDE_W} x {SLIDE_H} px</span>
+                </span>
+                <Pencil className="mt-1 h-4 w-4 shrink-0 text-slate-400 group-hover:text-brand" />
               </button>
-            ))}
-          </div>
-        </div>, document.body)}
+            );
+          })() : null}
+          items={ctxMenu.kind === 'el' ? [
+            { label: 'Sao chép', key: 'Ctrl C', icon: Copy, fn: () => document.execCommand('copy') },
+            { label: 'Cắt', key: 'Ctrl X', fn: () => document.execCommand('cut') },
+            { label: 'Nhân bản', key: 'Ctrl D', icon: CopyPlus, fn: duplicateSel },
+            null,
+            { label: 'Đưa lên trên cùng', icon: ArrowUpToLine, fn: () => layer('up') },
+            { label: 'Đưa xuống dưới cùng', icon: ArrowDownToLine, fn: () => layer('down') },
+            { label: selected.every(x => x.locked) ? 'Mở khoá' : 'Khoá vị trí', icon: selected.every(x => x.locked) ? Unlock : Lock, fn: () => updateEls(sel, { locked: !selected.every(x => x.locked) }) },
+            { label: 'Căn giữa trang', icon: AlignCenter, fn: () => { const c = sel; updateEls(c, e => ({ x: Math.round((SLIDE_W - e.w) / 2), y: Math.round((SLIDE_H - e.h) / 2) })); } },
+            { label: 'Gắn liên kết', icon: LinkIcon, fn: () => editLink() },
+            { label: 'Chuyển động', icon: Sparkles, fn: () => setPanel('animate') },
+            null,
+            { label: 'Xoá', key: 'Delete', icon: Trash2, danger: true, fn: removeSel },
+          ] : (() => {
+            const i = ctxMenu.index ?? cur; const s = slides[i];
+            return [
+              { label: 'Sao chép trang', key: 'Ctrl C', icon: Copy, fn: () => copyPage(i) },
+              { label: 'Dán trang vào sau', key: 'Ctrl V', icon: ClipboardPaste, fn: () => pastePage(i + 1) },
+              { label: 'Tạo bản sao', icon: CopyPlus, fn: () => dupSlide(i) },
+              { label: 'Xoá trang', icon: Trash2, danger: true, fn: () => delSlide(i) },
+              null,
+              { label: 'Thêm trang', key: 'Ctrl Enter', icon: FilePlus2, fn: () => addSlide('title_content', i + 1) },
+              { label: s?.hidden ? 'Hiện trang khi trình chiếu' : 'Ẩn trang khi trình chiếu', icon: s?.hidden ? Eye : EyeOff, fn: () => toggleHidden(i) },
+              { label: 'Thêm chuyển cảnh', icon: ChevronsRight, fn: () => { setCur(i); setPanel('transition'); } },
+              null,
+              { label: pageLocked(i) ? 'Mở khoá trang' : 'Khoá trang', icon: pageLocked(i) ? Unlock : Lock, fn: () => toggleLockPage(i) },
+              { label: 'Tải trang này dạng ảnh PNG', icon: ImageDown, fn: () => downloadPagePng(i) },
+              { label: 'Tải trang này dạng PowerPoint', icon: Download, fn: () => downloadPagePptx(i) },
+              { label: 'Sao chép liên kết đến trang này', icon: Link2, fn: () => copyPageLink(i) },
+              null,
+              { label: 'Ghi chú', icon: StickyNote, fn: () => { setCur(i); setShowNotes(true); } },
+              { label: 'Trình chiếu từ trang này', icon: Play, fn: () => startPresent(i) },
+            ];
+          })()} />, document.body)}
       {helpOpen && createPortal(
         <div className="fixed inset-0 z-[240] flex items-center justify-center bg-slate-950/40 p-4" onMouseDown={() => setHelpOpen(false)}>
           <div onMouseDown={e => e.stopPropagation()} className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl">
@@ -1529,6 +1642,38 @@ function PresentMenu({ onPick, onClose }: { onPick: (o: PresentOptions, fromStar
           <p className="text-[11px] text-slate-400">Khi đang chiếu, bấm phím P để tạm dừng hoặc chạy tiếp.</p>
         </div>
       )}
+    </div>
+  );
+}
+
+// Menu chuột phải và menu 3 chấm, có biểu tượng, nhóm và phím tắt (cách trình bày như Canva).
+// Tự đặt lại vị trí để không tràn khỏi màn hình, cuộn được khi màn hình thấp.
+type CtxItem = { label: string; key?: string; icon?: any; fn: () => void; danger?: boolean } | null;
+function CtxMenu({ ctx, items, header, onClose, closeGuard }: { ctx: { x: number; y: number }; items: CtxItem[]; header?: React.ReactNode; onClose: () => void; closeGuard: () => boolean }) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const [pos, setPos] = React.useState<{ left: number; top: number } | null>(null);
+  React.useLayoutEffect(() => {
+    const el = ref.current; if (!el) return;
+    const w = el.offsetWidth, h = el.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
+    let top = ctx.y;
+    if (top + h > vh - 8) top = Math.max(8, Math.min(ctx.y - h, vh - h - 8));
+    setPos({ left: Math.max(8, Math.min(ctx.x, vw - w - 8)), top: Math.max(8, top) });
+  }, [ctx.x, ctx.y]);
+  return (
+    <div className="fixed inset-0 z-[240] select-none" style={{ WebkitUserSelect: 'none', WebkitTouchCallout: 'none' } as React.CSSProperties} onPointerDown={() => { if (closeGuard()) onClose(); }} onContextMenu={e => { e.preventDefault(); onClose(); }}>
+      <div ref={ref} onPointerDown={e => e.stopPropagation()} style={{ left: pos?.left ?? ctx.x, top: pos?.top ?? ctx.y, visibility: pos ? 'visible' : 'hidden', maxHeight: 'calc(100vh - 16px)' }}
+        className="absolute w-72 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 text-sm text-slate-700 shadow-2xl">
+        {header}
+        {items.map((it, k) => it === null
+          ? <div key={'s' + k} className="my-1 h-px bg-slate-100" />
+          : (
+            <button key={it.label} onClick={() => { onClose(); it.fn(); }} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-slate-50 ${it.danger ? 'text-rose-600' : ''}`}>
+              {it.icon ? <it.icon className={`h-[18px] w-[18px] shrink-0 ${it.danger ? '' : 'text-slate-500'}`} /> : <span className="w-[18px] shrink-0" />}
+              <span className="flex-1">{it.label}</span>
+              {it.key && <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-500">{it.key}</span>}
+            </button>
+          ))}
+      </div>
     </div>
   );
 }

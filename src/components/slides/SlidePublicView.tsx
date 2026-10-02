@@ -12,7 +12,19 @@ export default function SlidePublicView({ token }: { token: string }) {
   const [w, setW] = useState(Math.min(window.innerWidth - 32, 1100));
 
   // Trang ẩn không hiện ở link xem công khai.
-  useEffect(() => { getDeckByShareToken(token).then(d => { setDeck(d ? { ...d, slides: d.slides.filter(x => !x.hidden).length ? d.slides.filter(x => !x.hidden) : d.slides } : d); if (d) document.title = `${d.title} | EduGo`; }).catch(() => setDeck(null)); }, [token]);
+  // Link có &p=<mã trang> thì mở thẳng trang đó.
+  useEffect(() => {
+    getDeckByShareToken(token).then(d => {
+      const list = d ? (d.slides.filter(x => !x.hidden).length ? d.slides.filter(x => !x.hidden) : d.slides) : [];
+      setDeck(d ? { ...d, slides: list } : d);
+      if (d) {
+        document.title = `${d.title} | EduGo`;
+        const pid = new URLSearchParams(window.location.search).get('p');
+        const k = pid ? list.findIndex(x => x.id === pid) : -1;
+        if (k >= 0) setI(k);
+      }
+    }).catch(() => setDeck(null));
+  }, [token]);
   useEffect(() => {
     const r = () => setW(Math.min(window.innerWidth - 32, 1100, (window.innerHeight - 220) * (SLIDE_W / SLIDE_H)));
     r(); window.addEventListener('resize', r); return () => window.removeEventListener('resize', r);
