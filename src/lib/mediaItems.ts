@@ -35,11 +35,16 @@ export interface MediaRecordInput {
 }
 
 const uid = () => auth.currentUser?.uid || null;
+// Firebase khôi phục phiên đăng nhập bất đồng bộ sau khi tải trang, chờ xong rồi mới đọc uid.
+const readyUid = async () => {
+  try { await auth.authStateReady(); } catch { /* bỏ qua */ }
+  return uid();
+};
 
 // Ghi một tệp vừa tải lên vào thư viện của người đang đăng nhập. Người chưa đăng nhập
 // (ví dụ sinh viên nộp bài qua link) thì không ghi gì.
 export async function recordMedia(m: MediaRecordInput): Promise<void> {
-  const owner = uid();
+  const owner = await readyUid();
   if (!owner || !m.url || m.url.startsWith('data:')) return;
   const u = auth.currentUser;
   const { error } = await supabase.from(MEDIA_TABLE).insert({
@@ -68,7 +73,7 @@ const detectType = (url: string, t?: string) => {
 
 // Danh sách tệp của chính người đang đăng nhập, mới nhất trước.
 export async function listMyMedia(): Promise<MediaItem[]> {
-  const owner = uid();
+  const owner = await readyUid();
   if (!owner) return [];
   const out = new Map<string, MediaItem>();
   const [sb, fs] = await Promise.allSettled([
@@ -92,7 +97,7 @@ export async function listMyMedia(): Promise<MediaItem[]> {
 }
 
 export async function deleteMyMedia(item: MediaItem): Promise<void> {
-  const owner = uid();
+  const owner = await readyUid();
   if (!owner) return;
   if (item.source === 'sb') {
     const { error } = await supabase.from(MEDIA_TABLE).delete().eq('id', item.id).eq('owner_id', owner);

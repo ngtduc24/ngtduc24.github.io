@@ -23,6 +23,7 @@ import { saveDefaultSettingsToSupabase } from "../lib/data";
 import { MODULE_REGISTRY } from "../lib/modules";
 import { FONT_OPTIONS, DEFAULT_HEADING_FONT, DEFAULT_BODY_FONT } from "../lib/fonts";
 import { Type } from "lucide-react";
+import { PageHeader, Badge } from "./ui";
 import BackupManager from './BackupManager';
 import MediaSourcePicker from './MediaSourcePicker';
 import MediaLibrary from './MediaLibrary';
@@ -202,7 +203,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
           <span>Đã lưu tự động</span>
         </div>
       ) : (
-        <div className="text-xs text-slate-400 px-1 flex items-center gap-2">
+        <div className="text-[13px] text-slate-500 px-1 flex items-center gap-2">
           <Check className="w-3.5 h-3.5 shrink-0" />
           <span>Thay đổi tự động lưu, không cần bấm nút</span>
         </div>
@@ -211,110 +212,45 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
   );
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto" id="system-settings-panel">
-      {/* Page Header */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-extrabold text-slate-800 flex items-center gap-2 font-display">
-            <Settings className="w-5 h-5 text-brand" />
-            <span>Cấu Hình & Thiết Lập Hệ Thống</span>
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Thay đổi giao diện màu sắc, tiêu đề, logo thương hiệu, và cấu hình hoạt động của ứng dụng.
-          </p>
-        </div>
-        <div className="text-xs text-slate-400 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/50 self-start md:self-auto">
-          Quyền: <strong className="text-brand">Quản trị viên</strong>
-        </div>
-      </div>
+    <div className="space-y-5 animate-fadeIn" id="system-settings-panel">
+      <PageHeader
+        icon={<Settings size={22} />}
+        title="Cấu hình hệ thống"
+        description="Màu sắc, tên và logo ứng dụng, cài đặt từng chức năng, trợ lý và chế độ bảo trì."
+        badge={<Badge tone="brand">{currentUser?.role === 'admin' ? 'Quản trị viên' : 'Được cấp quyền'}</Badge>}
+      />
 
-      {/* Tab Switcher */}
-      <div className="flex border-b border-slate-200 gap-2 pb-px">
-        <button
-          type="button"
-          onClick={() => setActiveTab('general')}
-          className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 cursor-pointer ${
-            activeTab === 'general'
-              ? 'border-brand text-brand bg-brand/5 rounded-t-2xl font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Settings className="w-4 h-4" />
-          <span>Cấu hình chung & Giao diện</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('functions')}
-          className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 cursor-pointer ${
-            activeTab === 'functions'
-              ? 'border-brand text-brand bg-brand/5 rounded-t-2xl font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Boxes className="w-4 h-4" />
-          <span>Cài đặt chức năng</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('assistant')}
-          className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 cursor-pointer ${
-            activeTab === 'assistant'
-              ? 'border-brand text-brand bg-brand/5 rounded-t-2xl font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>Trợ lý</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('maintenance')}
-          className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 cursor-pointer ${
-            activeTab === 'maintenance'
-              ? 'border-brand text-brand bg-brand/5 rounded-t-2xl font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Wrench className="w-4 h-4" />
-          <span>Bảo trì & Tải trang</span>
-        </button>
-        {currentUser?.role === 'admin' && (
-        <button
-          type="button"
-          onClick={() => setActiveTab('backup')}
-          className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 cursor-pointer ${
-            activeTab === 'backup'
-              ? 'border-brand text-brand bg-brand/5 rounded-t-2xl font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Database className="w-4 h-4" />
-          <span>Sao lưu & Phục hồi dữ liệu</span>
-        </button>
-        )}
-        <button
-          type="button"
-          onClick={() => setActiveTab('media')}
-          className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold transition-all border-b-2 cursor-pointer ${
-            activeTab === 'media'
-              ? 'border-brand text-brand bg-brand/5 rounded-t-2xl font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Images className="w-4 h-4" />
-          <span>Quản lý tư liệu</span>
-        </button>
+      {/* Thanh chọn mục, cùng kiểu với các trang khác. Màn hình hẹp thì kéo ngang. */}
+      <div className="overflow-x-auto scrollbar-thin">
+        <div className="flex w-max gap-1 rounded-2xl bg-slate-100 p-1">
+          {([
+            { id: 'general', label: 'Giao diện', icon: Settings },
+            { id: 'functions', label: 'Chức năng', icon: Boxes },
+            { id: 'assistant', label: 'Trợ lý', icon: Sparkles },
+            { id: 'maintenance', label: 'Bảo trì', icon: Wrench },
+            ...(currentUser?.role === 'admin' ? [{ id: 'backup', label: 'Sao lưu', icon: Database }] : []),
+          ] as { id: typeof activeTab; label: string; icon: any }[]).map(t => {
+            const Icon = t.icon;
+            const on = activeTab === t.id;
+            return (
+              <button key={t.id} type="button" onClick={() => setActiveTab(t.id)}
+                className={`inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-[13px] font-semibold transition-all ${on ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                <Icon className={`h-4 w-4 ${on ? 'text-brand' : ''}`} /> {t.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {activeTab === 'general' ? (
         <form onSubmit={handleFormSubmit} className="space-y-6">
         {/* 1. ĐỔI MÀU GIAO DIỆN (THEMES) */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4 text-left">
-          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 text-left">
+          <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
             <Palette className="w-4 h-4 text-brand" />
             <span>Đổi màu giao diện chủ đạo (5 màu lựa chọn)</span>
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-[13px] text-slate-500">
             Chọn tông màu thương hiệu cho toàn bộ ứng dụng. Giao diện mặc định là Xanh lá và Đen.
           </p>
 
@@ -381,11 +317,11 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
         </div>
 
         {/* 2. CẤU HÌNH THƯƠNG HIỆU */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
           
           {/* Left Column: Brand text options */}
           <div className="space-y-4">
-            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+            <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
               <AppWindow className="w-4 h-4 text-brand" />
               <span>Cấu hình thông tin ứng dụng</span>
             </h2>
@@ -440,7 +376,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
 
           {/* Right Column: Icon & Cover files */}
           <div className="space-y-4">
-            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+            <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
               <ImageIcon className="w-4 h-4 text-brand" />
               <span>Thay thế hình ảnh hiển thị</span>
             </h2>
@@ -512,8 +448,8 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
         <div className="rounded-3xl bg-white p-6 text-left shadow-xs ring-1 ring-slate-100">
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-800"><Settings className="h-4 w-4 text-brand" /> Giao diện Sidebar</h2>
-              <p className="mt-1 text-xs text-slate-400">Điều chỉnh độ trong suốt của nền sidebar. Mức thấp giúp nhìn thấy nhẹ nội dung phía sau.</p>
+              <h2 className="flex items-center gap-2 text-base font-semibold text-slate-800"><Settings className="h-4 w-4 text-brand" /> Giao diện Sidebar</h2>
+              <p className="mt-1 text-[13px] text-slate-500">Điều chỉnh độ trong suốt của nền sidebar. Mức thấp giúp nhìn thấy nhẹ nội dung phía sau.</p>
             </div>
             <div className="w-full md:w-[420px]">
               <div className="mb-2 flex items-center justify-between text-[11px] font-bold text-slate-500"><span>Độ trong suốt nền</span><span className="rounded-lg bg-brand-light px-2 py-1 text-brand">{Math.round((formState.sidebarOpacity ?? 0.92) * 100)}%</span></div>
@@ -528,12 +464,12 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
         </div>
 
         {/* PHÔNG CHỮ HỆ THỐNG */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4 text-left">
-          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 text-left">
+          <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
             <Type className="w-4 h-4 text-brand" />
             <span>Phông chữ hệ thống</span>
           </h2>
-          <p className="text-xs text-slate-400">Chọn phông chữ cho tiêu đề và cho nội dung, mô tả. Các phông đều hỗ trợ tiếng Việt.</p>
+          <p className="text-[13px] text-slate-500">Chọn phông chữ cho tiêu đề và cho nội dung, mô tả. Các phông đều hỗ trợ tiếng Việt.</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
@@ -573,12 +509,12 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
         </div>
 
         {/* 3. CẤU HÌNH BANNER THÔNG BÁO */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4 text-left">
-          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 text-left">
+          <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
             <AppWindow className="w-4 h-4 text-brand" />
             <span>Cấu hình Banner Thông Báo Hệ Thống</span>
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-[13px] text-slate-500">
             Tinh chỉnh tiêu đề, mô tả, và nhãn hiển thị của banner thông báo xuất hiện ở đầu trang chủ/dashboard của người dùng.
           </p>
 
@@ -663,12 +599,12 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
       </form>
       ) : activeTab === 'functions' ? (
         <form onSubmit={handleFormSubmit} className="space-y-6">
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-2 text-left">
-            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-2 text-left">
+            <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
               <Boxes className="w-4 h-4 text-brand" />
               <span>Cài đặt chức năng hệ thống</span>
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-[13px] text-slate-500">
               Đổi ảnh icon, tên và mô tả của từng chức năng. Gạt tắt để ẩn một chức năng, khi ẩn thì mọi tài khoản đều không thấy và không truy cập được kể cả khi mở bằng đường dẫn trực tiếp. Bật nhãn thử nghiệm để hiện nhãn nhỏ ở góc nút chức năng, báo cho người dùng biết chức năng đang trong giai đoạn thử nghiệm.
             </p>
           </div>
@@ -753,14 +689,14 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
       ) : activeTab === 'assistant' ? (
         <form onSubmit={handleFormSubmit} className="space-y-6">
           {/* Nút nổi trợ lý ảo */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs text-left">
+          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-brand" />
                   <span>Nút nổi Trợ lý hệ thống</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">Bật tắt nút Trợ lý hệ thống nổi ở góc phải màn hình cho toàn hệ thống. Người dùng thường không đổi được. Chức năng Trợ lý giáo dục trong danh sách vẫn dùng bình thường dù tắt nút nổi này.</p>
+                <p className="text-[13px] text-slate-500 mt-1">Bật tắt nút Trợ lý hệ thống nổi ở góc phải màn hình cho toàn hệ thống. Người dùng thường không đổi được. Chức năng Trợ lý giáo dục trong danh sách vẫn dùng bình thường dù tắt nút nổi này.</p>
               </div>
               <button
                 type="button"
@@ -774,14 +710,14 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
           </div>
 
           {/* Trả lời bằng AI Gemini */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs text-left">
+          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-brand" />
                   <span>Trả lời bằng AI Gemini</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">Bật thì cả Trợ lý hệ thống và Trợ lý giáo dục trả lời bằng AI Gemini dựa trên ngữ cảnh học liệu và hướng dẫn. Cần đã deploy Edge Function gemini-chat và có khóa Gemini. Chế độ AI có tính phí theo lượt gọi. Tắt thì trợ lý chỉ tra cứu trong dữ liệu, miễn phí. Chỉ admin hoặc tài khoản có quyền Cấu hình hệ thống mới đổi được.</p>
+                <p className="text-[13px] text-slate-500 mt-1">Bật thì cả Trợ lý hệ thống và Trợ lý giáo dục trả lời bằng AI Gemini dựa trên ngữ cảnh học liệu và hướng dẫn. Cần đã deploy Edge Function gemini-chat và có khóa Gemini. Chế độ AI có tính phí theo lượt gọi. Tắt thì trợ lý chỉ tra cứu trong dữ liệu, miễn phí. Chỉ admin hoặc tài khoản có quyền Cấu hình hệ thống mới đổi được.</p>
               </div>
               <button
                 type="button"
@@ -795,20 +731,20 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
           </div>
 
           {/* Thư viện kiến thức cho trợ lý */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4 text-left">
+          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 text-left">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
                   <BookMarked className="w-4 h-4 text-brand" />
                   <span>Thư viện kiến thức</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">Thêm các mục kiến thức để Trợ lý giáo dục trả lời thêm. Mỗi mục có tiêu đề, từ khóa gợi ý và nội dung. Khi người dùng hỏi trúng từ khóa hoặc tiêu đề, trợ lý sẽ đưa nội dung này vào câu trả lời.</p>
+                <p className="text-[13px] text-slate-500 mt-1">Thêm các mục kiến thức để Trợ lý giáo dục trả lời thêm. Mỗi mục có tiêu đề, từ khóa gợi ý và nội dung. Khi người dùng hỏi trúng từ khóa hoặc tiêu đề, trợ lý sẽ đưa nội dung này vào câu trả lời.</p>
               </div>
               <button type="button" onClick={addKnowledge} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold text-white hover:bg-brand-hover"><Plus className="w-4 h-4" /> Thêm mục</button>
             </div>
 
             {knowledge.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-slate-200 px-4 py-6 text-center text-xs text-slate-400">Chưa có mục kiến thức nào. Bấm Thêm mục để bắt đầu.</p>
+              <p className="rounded-2xl border border-dashed border-slate-200 px-4 py-6 text-center text-[13px] text-slate-500">Chưa có mục kiến thức nào. Bấm Thêm mục để bắt đầu.</p>
             ) : (
               <div className="space-y-3">
                 {knowledge.map((k, i) => (
@@ -831,12 +767,12 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
       ) : activeTab === 'maintenance' ? (
         <form onSubmit={handleFormSubmit} className="space-y-6">
           {/* Ảnh GIF khi tải trang */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4 text-left">
-            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 text-left">
+            <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
               <ImagePlay className="w-4 h-4 text-brand" />
               <span>Ảnh động khi tải trang</span>
             </h2>
-            <p className="text-xs text-slate-400">Ảnh hiển thị khi trang đang tải lâu. Để trống thì dùng vòng xoay mặc định của hệ thống.</p>
+            <p className="text-[13px] text-slate-500">Ảnh hiển thị khi trang đang tải lâu. Để trống thì dùng vòng xoay mặc định của hệ thống.</p>
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-2xl border border-slate-200 bg-slate-50 grid place-items-center overflow-hidden shrink-0">
                 {formState.loadingGif ? <img src={formState.loadingGif} alt="Loading" className="w-full h-full object-contain" /> : <Loader2 className="w-6 h-6 text-brand animate-spin" />}
@@ -851,14 +787,14 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
           </div>
 
           {/* Tạm tắt hệ thống */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4 text-left">
+          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4 text-left">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
                   <Power className="w-4 h-4 text-brand" />
                   <span>Tạm tắt hệ thống</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">Khi bật, người dùng và khách sẽ thấy trang thông báo. Quản trị viên đăng nhập vẫn dùng bình thường để tắt lại chế độ này.</p>
+                <p className="text-[13px] text-slate-500 mt-1">Khi bật, người dùng và khách sẽ thấy trang thông báo. Quản trị viên đăng nhập vẫn dùng bình thường để tắt lại chế độ này.</p>
               </div>
               <button
                 type="button"
@@ -912,12 +848,12 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
         <BackupManager />
       ) : (
         <div className="space-y-4">
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs text-left">
-            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
+            <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
               <Images className="w-4 h-4 text-brand" />
               <span>Quản lý tư liệu</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-1">Nơi quản trị viên quản lý toàn bộ hình ảnh và tư liệu đã tải lên hệ thống. Đây là khu vực quản lý dữ liệu, không phải chức năng dành cho người dùng thường.</p>
+            <p className="text-[13px] text-slate-500 mt-1">Nơi quản trị viên quản lý toàn bộ hình ảnh và tư liệu đã tải lên hệ thống. Đây là khu vực quản lý dữ liệu, không phải chức năng dành cho người dùng thường.</p>
           </div>
           <MediaLibrary currentUser={currentUser} />
         </div>
