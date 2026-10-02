@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { UserChip } from './ui/People';
 import { notice } from './ui/Dialogs';
 import { 
   X, 
@@ -410,7 +411,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
                 <User className="w-4 h-4 text-brand shrink-0" />
                 <div>
                   <span className="text-[10px] text-slate-400 block font-normal">Người phụ trách</span>
-                  <span className="text-slate-700 font-bold">{assignee ? assignee.fullName : (localTask.assignedToName || localTask.assignedTo || 'Chưa giao')}</span>
+                  <span className="text-slate-700 font-bold">{localTask.assignedTo ? <UserChip id={assignee?.id || localTask.assignedTo} name={assignee?.fullName || localTask.assignedToName} size="xs" nameClass="text-xs font-bold text-slate-700" /> : 'Chưa giao'}</span>
                 </div>
               </div>
             </div>
@@ -420,11 +421,9 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
               <div className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl">
                 <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Người tạo công việc</span>
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-brand-light text-brand flex items-center justify-center font-bold text-xs uppercase shrink-0">
-                    {creator?.fullName ? creator.fullName.charAt(0) : '?'}
-                  </div>
+                  <UserChip id={creator?.id || (localTask as any).createdBy || (localTask as any).creatorId} name={creator?.fullName || localTask.createdByName || 'Hệ thống / Admin'} size="md" showName={false} />
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-800 truncate" title={creatorName}>{creator ? creator.fullName : (localTask.createdByName || 'Hệ thống / Admin')}</p>
+                    <p className="text-xs font-bold text-slate-800 truncate" title={creatorName}><UserChip id={creator?.id || (localTask as any).createdBy || (localTask as any).creatorId} name={creator?.fullName || localTask.createdByName || 'Hệ thống / Admin'} size={0} nameClass="text-xs font-bold text-slate-800" /></p>
                     <p className="text-[10px] text-slate-400 truncate">@{creator ? creator.username : 'admin'}</p>
                   </div>
                 </div>
@@ -433,11 +432,9 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
               <div className="p-3.5 bg-slate-50 border border-slate-100 rounded-2xl">
                 <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Người nhận công việc (Assignee)</span>
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-brand-light text-brand flex items-center justify-center font-bold text-xs uppercase shrink-0">
-                    {assignee?.fullName ? assignee.fullName.charAt(0) : '?'}
-                  </div>
+                  {localTask.assignedTo ? <UserChip id={assignee?.id || localTask.assignedTo} name={assignee?.fullName || localTask.assignedToName} size="md" showName={false} /> : <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center font-bold text-xs shrink-0">?</div>}
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-800 truncate" title={assigneeName}>{assignee ? assignee.fullName : (localTask.assignedToName || 'Chưa phân công')}</p>
+                    <p className="text-xs font-bold text-slate-800 truncate" title={assigneeName}>{localTask.assignedTo ? <UserChip id={assignee?.id || localTask.assignedTo} name={assignee?.fullName || localTask.assignedToName} size={0} nameClass="text-xs font-bold text-slate-800" /> : 'Chưa phân công'}</p>
                     <p className="text-[10px] text-slate-400 truncate">{assignee ? `@${assignee.username}` : 'Vui lòng chọn người nhận'}</p>
                   </div>
                 </div>

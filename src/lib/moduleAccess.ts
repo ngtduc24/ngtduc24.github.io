@@ -36,7 +36,7 @@ export function canUseModule(user: UserAccount | null | undefined, id: string): 
   if (!user) return false;
   if (user.role === 'admin') return true;
   // Học viên chỉ dùng trang Thư viện, Khoá học, Thông báo, Hồ sơ.
-  if (user.role === 'member') return ['portfolio_website', 'courses', 'dashboard', 'notifications', 'profile', 'all_features'].includes(id);
+  if (user.role === 'member') return ['portfolio_website', 'courses', 'dashboard', 'notifications', 'profile', 'user_profile', 'all_features'].includes(id);
   const p = effectivePerms(user);
   // Tài khoản đã được phân quyền theo bộ công tắc mới (có dấu PERM_V2) thì chỉ xét công tắc riêng,
   // tài khoản cũ chưa phân quyền lại thì vẫn tính theo quyền Giáo dục kèm cờ thao tác như trước.
@@ -48,6 +48,7 @@ export function canUseModule(user: UserAccount | null | undefined, id: string): 
     case 'portfolio_website':
     case 'all_features':
     case 'profile':
+    case 'user_profile':
       return true;
     case 'users':
     case 'permissions':

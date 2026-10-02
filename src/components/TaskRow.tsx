@@ -1,4 +1,5 @@
 import React from 'react';
+import { UserChip } from './ui/People';
 import { Play, Pause, CheckCircle, XCircle, MoreVertical, Briefcase, User, Book, Folder } from 'lucide-react';
 import { Task, UserAccount } from '../types';
 
@@ -79,7 +80,7 @@ export default function TaskRow({ task, users, currentUser, progress, onAction, 
           <p className="text-xs text-slate-400 mt-0.5">{new Date(task.deadline).toLocaleString('vi-VN', { hour12: false })}</p>
           <div className="flex flex-wrap gap-1.5 mt-1.5">
              <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">Tạo bởi: {creatorUser?.fullName || 'Hệ thống'}</span>
-             {assignedUser && <span className="text-[10px] bg-brand/10 text-brand px-1.5 py-0.5 rounded font-bold">Giao cho: {assignedUser.fullName}</span>}
+             {task.assignedTo && <span className="inline-flex items-center gap-1 text-[10px] bg-brand/10 text-brand px-1.5 py-0.5 rounded font-bold" onClick={e => e.stopPropagation()}>Giao cho: <UserChip id={task.assignedTo} name={assignedUser?.fullName || task.assignedToName} size="xs" nameClass="text-[10px] font-bold text-brand" /></span>}
           </div>
         </div>
       </div>

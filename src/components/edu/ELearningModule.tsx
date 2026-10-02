@@ -24,10 +24,11 @@ import {
 } from '../../lib/elearning';
 import QuizRichText from './QuizRichText';
 import ShareDialog from '../ui/ShareDialog';
-import { CollabRole, ROLE_LABELS } from '../../lib/collab';
+import { CollabRole, ROLE_LABELS, collaboratorsByResource } from '../../lib/collab';
 import MediaSourcePicker from '../MediaSourcePicker';
 import { fold, usePaging, Pager } from './ListPager';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
+import { AvatarStack, UserChip } from '../ui/People';
 
 interface Props { currentUser: UserAccount; onExit?: () => void; }
 type View = 'list' | 'editor' | 'assign' | 'progress' | 'trash';
@@ -102,6 +103,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
   const [shared, setShared] = useState<Array<ELLesson & { my_role: CollabRole }>>([]);
   const [shareScope, setShareScope] = useState<'mine' | 'shared'>(() => (takeOpenHint('el_lesson') === 'shared' ? 'shared' : 'mine'));
   const all: Array<ELLesson & { my_role?: CollabRole }> = shareScope === 'shared' ? shared : own;
+  const [collabMap, setCollabMap] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
   const [sharing, setSharing] = useState<ELLesson | null>(null);
   const [loading, setLoading] = useState(true);
   const [subjectId, setSubjectId] = useState('');
@@ -123,6 +125,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
     try {
       const [mine, sh] = await Promise.all([getMyLessons({ status: (status as any) || undefined }), getSharedLessons().catch(() => [])]);
       setAll(mine); setShared(sh);
+      collaboratorsByResource('el_lesson', [...mine, ...sh].map((x: any) => x.id)).then(setCollabMap).catch(() => {});
     }
     catch (e: any) { addNotification('Lỗi tải giáo trình: ' + (e.message || e), 'error'); }
     finally { setLoading(false); }
@@ -326,6 +329,9 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
                 </div>
                 <p className="mt-1 text-[11px] text-slate-400">{subjName(l.subject_id)}</p>
                 <p className="mt-1 text-[10px] text-slate-400">{l.sectionCount ?? 0} phần · cập nhật {fmtDate(l.updated_at)}</p>
+                {(l.owner_id !== currentUser.id || (collabMap[l.id] || []).length > 0) && (
+                  <div onClick={e => e.stopPropagation()} className="mt-2"><AvatarStack people={[{ id: l.owner_id, name: l.owner_name }, ...(collabMap[l.id] || [])]} size="sm" /></div>
+                )}
                 <div onClick={e => e.stopPropagation()} className="mt-auto flex flex-wrap gap-1 border-t border-slate-50 pt-3 cursor-default">
                   {lessonActions(l)}
                 </div>
@@ -794,7 +800,7 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
                       <span className="h-10 w-14 shrink-0 rounded-lg bg-slate-100 bg-cover bg-center" style={l.cover_url ? { backgroundImage: `url(${l.cover_url})` } : undefined} />
                       <span className="line-clamp-2">{l.title}</span></button></td>
                     <td className="px-4 py-3 text-slate-500">{subjName(l.subject_id)}</td>
-                    <td className="px-4 py-3 text-slate-500">{l.author_label || l.owner_name || 'Ẩn danh'}</td>
+                    <td className="px-4 py-3 text-slate-500" onClick={e => e.stopPropagation()}>{l.author_label || <UserChip id={l.owner_id} name={l.owner_name || 'Ẩn danh'} />}</td>
                     <td className="px-4 py-3 text-slate-500">{l.view_count}</td>
                     <td className="px-4 py-3 text-slate-500">{l.copy_count}</td>
                     <td className="px-4 py-3"><div className="flex justify-end gap-1.5">
@@ -819,7 +825,7 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
                 </div>
                 <div className="flex flex-1 flex-col p-4">
                   <h3 className="text-[13px] font-black text-slate-800 leading-tight line-clamp-2 group-hover:text-brand">{l.title}</h3>
-                  <p className="mt-1 text-[11px] text-slate-400">{subjName(l.subject_id)} · {l.author_label || l.owner_name || 'Ẩn danh'}</p>
+                  <div className="mt-1 flex min-w-0 items-center gap-1 text-[11px] text-slate-400"><span className="shrink-0">{subjName(l.subject_id)} ·</span>{l.author_label ? <span className="truncate">{l.author_label}</span> : <span onClick={e => e.stopPropagation()} className="min-w-0"><UserChip id={l.owner_id} name={l.owner_name || 'Ẩn danh'} size="xs" nameClass="text-[11px] text-slate-500" /></span>}</div>
                   <p className="mt-1 text-[10px] text-slate-400">{l.view_count} lượt xem · {l.copy_count} lượt sao chép</p>
                   <div onClick={e => e.stopPropagation()} className="mt-auto flex gap-1.5 border-t border-slate-50 pt-3 cursor-default">
                     <button onClick={() => openLessonView(l.id)} className="flex-1 rounded-lg bg-slate-100 px-2 py-1.5 text-center text-[10px] font-bold text-slate-600 hover:bg-slate-200">Xem</button>

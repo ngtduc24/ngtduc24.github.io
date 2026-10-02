@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Plus, Loader2, Presentation, Copy, Trash2, Pencil, Users, LayoutGrid, List as ListIcon, Play } from 'lucide-react';
 import LibraryHero, { ViewToggle } from '../ui/LibraryHero';
+import { AvatarStack } from '../ui/People';
+import { collaboratorsByResource } from '../../lib/collab';
 import SlideRenderer from './SlideRenderer';
 import SlideEditor from './SlideEditor';
 import SlidePresenter from './SlidePresenter';
@@ -27,6 +29,7 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
   const [open, setOpen] = useState<{ deck: Deck; role: 'owner' | 'view' | 'edit' | 'manage' } | null>(null);
   const [presenting, setPresenting] = useState<Deck | null>(null);
   const [busy, setBusy] = useState(false);
+  const [collabMap, setCollabMap] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
 
   useEffect(() => { setEduAuthContext(currentUser.id, currentUser.role === 'admin'); }, [currentUser]);
 
@@ -34,6 +37,7 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
     try {
       const [a, b] = await Promise.all([listMyDecks(), listSharedDecks().catch(() => [])]);
       setMine(a); setShared(b);
+      collaboratorsByResource('slide_deck', [...a, ...b].map(x => x.id)).then(setCollabMap).catch(() => {});
     } catch (e: any) { setMine([]); addNotification('Chưa tải được danh sách bài giảng: ' + (e?.message || e), 'error'); }
   };
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
@@ -133,7 +137,10 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
                   <button onClick={() => openDeck(d)} className="line-clamp-2 text-left text-sm font-semibold text-slate-800 hover:text-brand">{d.title}</button>
                   {d.role && d.role !== 'owner' && <span className="shrink-0 rounded-full bg-brand-light px-2 py-0.5 text-[10px] font-semibold text-brand">{ROLE_TEXT[d.role]}</span>}
                 </div>
-                <p className="text-xs text-slate-500">{d.count} trang · sửa {fmt(d.updatedAt)}{d.ownerName && d.role !== 'owner' ? ` · ${d.ownerName}` : ''}</p>
+                <p className="text-xs text-slate-500">{d.count} trang · sửa {fmt(d.updatedAt)}</p>
+                {(d.role !== 'owner' || (collabMap[d.id] || []).length > 0) && (
+                  <div className="pt-1"><AvatarStack people={[{ id: d.ownerId, name: d.ownerName }, ...(collabMap[d.id] || [])]} size="sm" /></div>
+                )}
                 <div className="flex gap-1 pt-2 text-slate-400">
                   <IconBtn title="Trình chiếu" onClick={() => present(d)}><Play className="h-4 w-4" /></IconBtn>
                   {d.role === 'owner' && <IconBtn title="Đổi tên" onClick={() => rename(d)}><Pencil className="h-4 w-4" /></IconBtn>}

@@ -30,6 +30,8 @@ import { useConfirmation } from '../ConfirmationContext';
 import { eduCan } from '../../lib/eduPermissions';
 import ShareDialog from '../ui/ShareDialog';
 import type { CollabType } from '../../lib/collab';
+import { collaboratorsByResource } from '../../lib/collab';
+import { AvatarStack } from '../ui/People';
 
 interface EduSchoolClassListProps {
   onSelectClass: (classId: string) => void;
@@ -54,6 +56,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
   const [searchTerm, setSearchTerm] = useState('');
   // Mục của mình (không có access) hoặc mục người khác chia sẻ mà mình là chủ.
   const mine = (x: { access?: EduSchool['access'] }) => !x.access || x.access.owner;
+  const [classCollabs, setClassCollabs] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
   const [sharing, setSharing] = useState<{ type: CollabType; id: string; title: string; ownerId: string; canManage: boolean } | null>(null);
   
   const [editingSchool, setEditingSchool] = useState<EduSchool | null>(null);
@@ -130,6 +133,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
       setSchools(allSchools);
       setClasses(allClasses);
       loadClassStats(allClasses);
+      collaboratorsByResource('edu_class', allClasses.map(c => c.id)).then(setClassCollabs).catch(() => {});
     } catch (err) {
       console.error(err);
     } finally {
@@ -557,6 +561,9 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                           <Users className="w-3.5 h-3.5" />
                           <span>{classStats[clazz.id]?.students ?? '-'} sinh viên</span>
                         </div>
+                        {(!mine(clazz) || (classCollabs[clazz.id] || []).length > 0) && (
+                          <span onClick={e => e.stopPropagation()}><AvatarStack people={[{ id: clazz.ownerId }, ...(classCollabs[clazz.id] || [])]} size="xs" singleWithName={false} /></span>
+                        )}
                         <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
                           <Calendar className="w-3.5 h-3.5" />
                           <span>{new Date(clazz.createdAt).toLocaleDateString('vi-VN')}</span>

@@ -3,8 +3,9 @@ import { takeOpenHint } from '../../lib/notifications';
 import type { Editor } from '@tiptap/react';
 import RichTextEditor from '../cms/RichTextEditor';
 import LibraryHero, { HeroChip, ViewToggle } from '../ui/LibraryHero';
+import { AvatarStack } from '../ui/People';
 import ShareDialog from '../ui/ShareDialog';
-import { CollabRole, ROLE_LABELS } from '../../lib/collab';
+import { CollabRole, ROLE_LABELS, collaboratorsByResource } from '../../lib/collab';
 import {
   BookMarked, Plus, Trash2, Edit3, X, Save, FileText, Search, LayoutGrid, List as ListIcon, Globe, Lock,
   Bold, Italic, List, ListOrdered, Heading1, Heading2, FileDown, Eye, ArrowLeft, Loader2, FolderInput, Check,
@@ -94,6 +95,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
 
   // Tên người tạo lấy từ chính bài tập (bài dùng chung của người khác có lưu tên tác giả).
   const userNames: Record<string, string> = {};
+  const [collabMap, setCollabMap] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
   const ownerName = (ownerId?: string) => (ownerId ? (ownerId === currentUser.id ? currentUser.fullName : items.find(i => i.ownerId === ownerId && i.ownerName)?.ownerName || '') : '');
   // Môn của bài dùng chung do người khác tạo: chỉ để hiện tên, không sửa xoá được.
   const [otherSubjects, setOtherSubjects] = useState<EduSubject[]>([]);
@@ -108,7 +110,9 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   const reloadItems = () => Promise.all([getAssignmentBank().catch(() => [] as EduAssignmentBankItem[]), getSharedBankItems().catch(() => ({ items: [] as EduAssignmentBankItem[], roles: {} }))])
     .then(([base, sh]) => {
       const seen = new Set(base.map(i => i.id));
-      setItems([...base, ...sh.items.filter(i => !seen.has(i.id))]);
+      const merged = [...base, ...sh.items.filter(i => !seen.has(i.id))];
+      setItems(merged);
+      collaboratorsByResource('bank_item', merged.filter(i => i.ownerId === currentUser.id || sh.items.some(x => x.id === i.id)).map(i => i.id)).then(setCollabMap).catch(() => {});
       setRoles(sh.roles);
     });
 
@@ -534,7 +538,8 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
                       <h3 className="text-[13px] font-black leading-tight text-slate-800 line-clamp-2 group-hover:text-brand">{it.title}</h3>
                       <StatusTag it={it} />
                     </div>
-                    <p className="mt-1 text-[11px] text-slate-400">{[subjName(it.subjectId) || 'Chưa chọn môn', ownerName(it.ownerId)].filter(Boolean).join(' · ')}</p>
+                    <p className="mt-1 text-[11px] text-slate-400">{subjName(it.subjectId) || 'Chưa chọn môn'}</p>
+                    <div className="mt-1.5" onClick={e => e.stopPropagation()}><AvatarStack people={[{ id: it.ownerId, name: ownerName(it.ownerId) }, ...(collabMap[it.id] || [])]} size="xs" /></div>
                     <p className="mt-1 text-[10px] text-slate-400">{formatsText(it.allowedFileTypes)}{(it.resources || []).length ? ` · ${(it.resources || []).length} tài nguyên` : ''}</p>
                     <div onClick={e => e.stopPropagation()} className="mt-auto flex cursor-default flex-wrap gap-1 border-t border-slate-50 pt-3"><Actions it={it} /></div>
                   </div>
@@ -592,7 +597,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
                           <td className="px-4 py-3 text-slate-500">{formatsText(it.allowedFileTypes)}</td>
                           <td className="px-4 py-3 text-center">{(it.resources || []).length || ''}</td>
                           <td className="px-4 py-3 text-center"><StatusTag it={it} /></td>
-                          <td className="px-4 py-3 text-slate-500">{ownerName(it.ownerId)}</td>
+                          <td className="px-4 py-3 text-slate-500" onClick={e => e.stopPropagation()}><AvatarStack people={[{ id: it.ownerId, name: ownerName(it.ownerId) }, ...(collabMap[it.id] || [])]} size="xs" /></td>
                           <td className="px-4 py-3 text-slate-500">{fmtDate(it.updatedAt || it.createdAt)}</td>
                           <td className="px-4 py-3"><div className="flex items-center justify-end gap-1"><Actions it={it} /></div></td>
                         </tr>

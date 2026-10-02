@@ -490,12 +490,22 @@ export function mapUserFromDB(u: any): UserAccount {
 // Giống trang cá nhân mạng xã hội: ảnh đại diện, ảnh bìa người dùng tự đổi thì mọi người đều thấy, trên mọi máy.
 // Ngoài tài liệu users ở Firestore, bản công khai lưu thêm ở portfolio_settings khoá profile:<uid>,
 // vì luật Firestore có thể chặn tài khoản thường tự ghi, khi đó trước đây ảnh chỉ đổi trên máy đang dùng.
-type PublicProfile = { avatarUrl?: string; coverImage?: string; coverImagePosition?: string; avatarPosition?: string; updatedAt?: string };
+// Bản công khai còn có họ tên, tên đăng nhập, vai trò để hiện tên, ảnh, thẻ thông tin người dùng trên toàn hệ thống.
+type PublicProfile = { avatarUrl?: string; coverImage?: string; coverImagePosition?: string; avatarPosition?: string; updatedAt?: string; fullName?: string; username?: string; role?: string };
 const profileKey = (uid: string) => `profile:${uid}`;
 export async function savePublicProfile(user: UserAccount): Promise<boolean> {
-  const data: PublicProfile = { avatarUrl: user.avatarUrl || '', coverImage: user.coverImage || '', coverImagePosition: user.coverImagePosition || '', avatarPosition: user.avatarPosition || '', updatedAt: new Date().toISOString() };
+  const data: PublicProfile = { avatarUrl: user.avatarUrl || '', coverImage: user.coverImage || '', coverImagePosition: user.coverImagePosition || '', avatarPosition: user.avatarPosition || '', fullName: user.fullName || '', username: user.username || '', role: user.role || '', updatedAt: new Date().toISOString() };
   const { error } = await supabase.from('portfolio_settings').upsert({ key: profileKey(user.id), data });
   return !error;
+}
+// Mỗi lần đăng nhập chỉ cập nhật họ tên, tên đăng nhập, vai trò lên bản công khai, giữ nguyên ảnh đang có
+// (tránh bản lưu cũ trên máy ghi đè ảnh mới đổi ở máy khác). Chưa có bản công khai thì tạo đủ.
+export async function syncPublicName(user: UserAccount): Promise<void> {
+  const { data } = await supabase.from('portfolio_settings').select('data').eq('key', profileKey(user.id)).maybeSingle();
+  const cur: PublicProfile | undefined = (data?.data as any) || undefined;
+  if (!cur) { await savePublicProfile(user); return; }
+  if (cur.fullName === (user.fullName || '') && cur.username === (user.username || '') && cur.role === (user.role || '')) return;
+  await supabase.from('portfolio_settings').upsert({ key: profileKey(user.id), data: { ...cur, fullName: user.fullName || '', username: user.username || '', role: user.role || '' } });
 }
 async function loadPublicProfiles(ids?: string[]): Promise<Record<string, PublicProfile>> {
   try {

@@ -3,6 +3,7 @@ import { Bell, Check, Trash2, ClipboardList, BookOpen, AlertTriangle, Info, X, C
 import { UserAccount, Task, AppSettings, AppNotification } from '../types';
 import { isTaskRelevantToUser } from '../lib/tasks';
 import { useMyNotifications, openNotificationTarget } from '../lib/notifications';
+import { UserChip } from './ui/People';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface NotificationBellProps {
@@ -193,7 +194,7 @@ export default function NotificationBell({ currentUser, settings, setCurrentTab,
                 filteredNotifications.map(n => (
                   <div key={n.id} onClick={() => handleNotificationClick(n)} className={`group relative flex cursor-pointer gap-3 p-4 transition-all hover:bg-slate-50 ${n.unread ? 'bg-brand-light/10' : ''}`}>
                     {n.unread && <span className="absolute right-4 top-4 h-1.5 w-1.5 rounded-full bg-rose-500" />}
-                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${getBgForType(n.type)}`}>{getIconForType(n.type)}</div>
+                    {n.senderId && n.senderId.length > 8 ? <span className="relative shrink-0"><UserChip id={n.senderId} name={n.senderName} size={36} showName={false} /><span className={`absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full ring-2 ring-white ${getBgForType(n.type)} [&_svg]:h-2.5 [&_svg]:w-2.5`}>{getIconForType(n.type)}</span></span> : <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${getBgForType(n.type)}`}>{getIconForType(n.type)}</div>}
                     <div className="flex-1 space-y-1 pr-6">
                       <h4 className={`text-xs leading-snug tracking-tight ${n.unread ? 'font-bold text-slate-800' : 'font-medium text-slate-600'}`}>{n.title}</h4>
                       <p className="text-[11px] leading-relaxed text-slate-500">{n.description}</p>

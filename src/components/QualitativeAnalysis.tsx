@@ -134,7 +134,8 @@ import {
   getQDAMemos, saveQDAMemo, deleteQDAMemo
 } from '../lib/data';
 import ShareDialog from './ui/ShareDialog';
-import { ROLE_LABELS } from '../lib/collab';
+import { ROLE_LABELS, collaboratorsByResource } from '../lib/collab';
+import { AvatarStack } from './ui/People';
 interface Props {
   settings?: AppSettings;
   onRefreshSettings?: () => Promise<void>;
@@ -204,6 +205,8 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
   };
   const [isProjectsLoading, setIsProjectsLoading] = useState(true);
   const [projects, setProjects] = useState<QDAProject[]>([]);
+  const [qdaCollabs, setQdaCollabs] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
+  useEffect(() => { if (projects.length) collaboratorsByResource('qda_project', projects.map(p => p.id)).then(setQdaCollabs).catch(() => {}); }, [projects.length]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   
   const [documents, setDocuments] = useState<QDADocument[]>([]);
@@ -1780,6 +1783,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                             {proj.name}
                             {isSelected && <span className="bg-brand text-white text-xs px-2 py-0.5 rounded-full uppercase tracking-wider">Đang chọn</span>}
                             {proj.role && proj.role !== 'owner' && <span className="bg-amber-50 text-amber-700 text-xs px-2 py-0.5 rounded-full">Được chia sẻ, quyền {ROLE_LABELS[proj.role].label.toLowerCase()}</span>}
+                            {(proj.role && proj.role !== 'owner' || (qdaCollabs[proj.id] || []).length > 0) && <span onClick={e => e.stopPropagation()}><AvatarStack people={[{ id: proj.ownerId || currentUser?.id }, ...(qdaCollabs[proj.id] || [])]} size="xs" singleWithName={false} /></span>}
                           </button>
                         </td>
                         <td className="px-4 py-3 text-center font-semibold text-brand">

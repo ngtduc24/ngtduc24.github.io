@@ -49,7 +49,11 @@ import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, S
 import { supabase } from "./lib/supabase";
 import { useMyNotifications, resetNotificationStore, notifyAppAccessChange } from './lib/notifications';
 import SlidesModule from './components/slides/SlidesModule';
+import UserProfileView from './components/UserProfileView';
+import { readSubRoute, writeSubRoute } from './lib/seoConfig';
+import { rememberUsers, rememberMe, loadPeople } from './lib/people';
 import SlidePublicView from './components/slides/SlidePublicView';
+import { syncPublicName } from './lib/data';
 import { saveUser, savePublicProfile, deleteUser, getUsers, getUserById, mapUserFromDB, seedDefaultUsersIfNeeded, getDefaultSettingsFromSupabase, getCachedSettings, saveDefaultSettingsToSupabase, testSupabaseConnection, getNotificationsFromSupabase, subscribeToNotificationChanges, USERS_TABLE } from './lib/data';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -78,6 +82,8 @@ function siteSlugFromPath(): string | null {
 
 export default function App() {
   const [users, setUsers] = useState<UserAccount[]>([]);
+  // Trang cá nhân công khai đang xem (bấm vào tên, ảnh đại diện của người dùng ở bất kỳ đâu).
+  const [profileUid, setProfileUid] = useState<string | null>(() => readSubRoute().uid || null);
   // Khởi tạo currentUser từ cache để khi tải lại trang không bị giật màn hình đăng nhập
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
     if (typeof window === 'undefined') return null;
@@ -271,6 +277,22 @@ export default function App() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [currentUser]);
+
+  // Bấm tên, ảnh người dùng ở bất kỳ đâu thì mở trang cá nhân công khai của người đó.
+  useEffect(() => {
+    const open = (e: Event) => { const uid = (e as CustomEvent).detail as string; if (!uid) return; setProfileUid(uid); setCurrentTab('user_profile'); };
+    window.addEventListener('app_open_profile', open);
+    return () => window.removeEventListener('app_open_profile', open);
+  }, []);
+  useEffect(() => { if (currentTab === 'user_profile' && profileUid) writeSubRoute({ uid: profileUid }); }, [currentTab, profileUid]);
+  // Danh bạ công khai: cập nhật tên, ảnh của mình lên bản công khai mỗi lần đăng nhập, nạp danh sách tài khoản nếu có.
+  useEffect(() => {
+    if (!currentUser) return;
+    rememberMe(currentUser);
+    syncPublicName(currentUser).then(() => loadPeople(true)).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id, currentUser?.fullName, currentUser?.avatarUrl, currentUser?.coverImage]);
+  useEffect(() => { if (users.length) rememberUsers(users); }, [users]);
 
   // Số thông báo chưa đọc lấy từ kho thông báo dùng chung (đồng bộ giữa các thiết bị).
   const myNotifs = useMyNotifications(currentUser);
@@ -649,6 +671,10 @@ export default function App() {
         return <AllFeatures currentUser={currentUser} settings={settings} onSwitchTab={(tab) => setCurrentTab(tab)} onBack={() => setCurrentTab('dashboard')} />;
       case 'assistant':
         return <AssistantPage currentUser={currentUser} settings={settings} onSwitchTab={(tab) => setCurrentTab(tab)} onBack={() => setCurrentTab('dashboard')} />;
+      case 'user_profile': {
+        const uid = profileUid || readSubRoute().uid || currentUser.id;
+        return <UserProfileView key={uid} uid={uid} isMe={uid === currentUser.id} onBack={() => window.history.length > 1 ? window.history.back() : setCurrentTab('dashboard')} onEditMine={() => setCurrentTab('profile')} />;
+      }
       case 'profile':
         return <ProfilePage user={currentUser} onSaveProfile={handleSaveProfile} onBack={() => setCurrentTab('dashboard')} />;
       case 'stats':

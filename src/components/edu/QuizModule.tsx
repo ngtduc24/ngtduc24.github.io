@@ -20,6 +20,8 @@ import {
 } from '../../lib/quiz';
 import QuizRichText from './QuizRichText';
 import ShareDialog from '../ui/ShareDialog';
+import { AvatarStack } from '../ui/People';
+import { collaboratorsByResource } from '../../lib/collab';
 import { CollabRole, MyRole, ROLE_LABELS, getMyRole, canEditRole, canManageRole } from '../../lib/collab';
 import { fold, usePaging, Pager } from './ListPager';
 import DateTime24, { isoToLocalInput, localInputToIso } from '../ui/DateTime24';
@@ -55,6 +57,8 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
   const [loading, setLoading] = useState(false);
   const [listTab, setListTab] = useState<'mine' | 'collab' | 'shared'>(() => (takeOpenHint('quiz') === 'collab' ? 'collab' : 'mine')); // đề của tôi, được chia sẻ với tôi, kho đề chung
   const [quizRoles, setQuizRoles] = useState<Record<string, CollabRole>>({});
+  const [quizCollabs, setQuizCollabs] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
+  useEffect(() => { if (quizzes.length) collaboratorsByResource('quiz', quizzes.map(z => z.id)).then(setQuizCollabs).catch(() => {}); }, [quizzes]);
   const [copyingId, setCopyingId] = useState<string | null>(null);
 
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
@@ -187,7 +191,7 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
                   <h3 className="mt-3 text-sm font-black text-slate-800">{q.title}</h3>
                   {q.subject_id && <p className="mt-0.5 text-[11px] font-semibold text-brand">{subjectName(q.subject_id)}</p>}
                   {q.description && <p className="mt-1 line-clamp-2 text-[12px] text-slate-500">{q.description}</p>}
-                  <p className="mt-2 text-[11px] font-semibold text-slate-400">Người soạn {q.owner_name || 'không rõ'}</p>
+                  <div className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-slate-400" onClick={e => e.stopPropagation()}>Người soạn <AvatarStack people={[{ id: q.owner_id, name: q.owner_name || 'không rõ' }, ...(quizCollabs[q.id] || [])]} size="xs" /></div>
                   <div className="mt-3 flex flex-wrap gap-3 text-[11px] font-semibold text-slate-500">
                     <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {q.duration_minutes} phút</span>
                     <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {q.max_attempts} lần</span>

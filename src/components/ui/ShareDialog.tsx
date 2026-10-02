@@ -6,6 +6,8 @@ import {
   listCollaborators, addCollaborator, updateCollaborator, removeCollaborator, searchUsers, userAvatar,
 } from '../../lib/collab';
 import type { UserAccount } from '../../types';
+import { usePerson } from '../../lib/people';
+import { AvatarImg, PersonHover } from './People';
 
 // Hộp thêm người cộng tác: tìm tài khoản theo tên hoặc email, chọn quyền, xem và đổi quyền người đã thêm.
 // Bài giảng, bài tập, trắc nghiệm, dự án: 3 mức Xem, Chỉnh sửa, Quản lý. Lớp, trường: tích chọn từng quyền.
@@ -24,11 +26,14 @@ interface ShareDialogProps {
 const isClassType = (t: CollabType) => t === 'edu_class' || t === 'edu_school';
 const DEFAULT_CLASS_PERMS: ClassPerms = { viewSubmissions: true, grade: true };
 
+// Ảnh đại diện lấy từ danh bạ công khai, rê chuột hiện thẻ thông tin, bấm mở trang cá nhân.
 function Avatar({ id, name }: { id: string; name?: string | null }) {
-  const src = userAvatar(id);
-  return src
-    ? <img src={src} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
-    : <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-light text-sm font-semibold text-brand">{(name || '?').trim().charAt(0).toUpperCase()}</span>;
+  const person = usePerson(id, name);
+  return <PersonHover person={person}><AvatarImg person={person} size={36} /></PersonHover>;
+}
+function PName({ id, name, suffix }: { id: string; name?: string | null; suffix?: string }) {
+  const person = usePerson(id, name);
+  return <PersonHover person={person}><span className="truncate text-sm font-semibold text-slate-800 hover:underline">{person?.name || name}{suffix}</span></PersonHover>;
 }
 
 export default function ShareDialog({ type, resourceId, resourceTitle, ownerId, ownerName, currentUser, canManage, onClose }: ShareDialogProps) {
@@ -149,7 +154,7 @@ export default function ShareDialog({ type, resourceId, resourceTitle, ownerId, 
             <p className="text-xs font-semibold text-slate-500">Người có quyền</p>
             <div className="flex items-center gap-3 rounded-xl border border-slate-100 p-2.5">
               <Avatar id={ownerId} name={ownerName} />
-              <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-800">{ownerName || 'Chủ sở hữu'}{ownerId === currentUser.id ? ' (bạn)' : ''}</p></div>
+              <div className="min-w-0 flex-1"><p className="truncate"><PName id={ownerId} name={ownerName || 'Chủ sở hữu'} suffix={ownerId === currentUser.id ? ' (bạn)' : ''} /></p></div>
               <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700"><Crown className="h-3.5 w-3.5" /> Chủ sở hữu</span>
             </div>
             {loading ? (
@@ -158,7 +163,7 @@ export default function ShareDialog({ type, resourceId, resourceTitle, ownerId, 
               <div key={c.id} className="space-y-2 rounded-xl border border-slate-100 p-2.5">
                 <div className="flex items-center gap-3">
                   <Avatar id={c.userId} name={c.userName} />
-                  <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-800">{c.userName}{c.userId === currentUser.id ? ' (bạn)' : ''}</p><p className="truncate text-xs text-slate-500">{c.userEmail}</p></div>
+                  <div className="min-w-0 flex-1"><p className="truncate"><PName id={c.userId} name={c.userName} suffix={c.userId === currentUser.id ? ' (bạn)' : ''} /></p><p className="truncate text-xs text-slate-500">{c.userEmail}</p></div>
                   {!classMode && <RoleSelect value={c.role} disabled={!canManage} onChange={r => change(c, { role: r })} />}
                   {(canManage || c.userId === currentUser.id) && (
                     <button type="button" onClick={() => remove(c)} title={c.userId === currentUser.id ? 'Rời khỏi cộng tác' : 'Bỏ người này'} aria-label="Bỏ người này"

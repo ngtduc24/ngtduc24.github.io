@@ -75,6 +75,18 @@ export async function listCollaborators(type: CollabType, resourceId: string): P
   return (data || []).map(map);
 }
 
+// Người cộng tác của nhiều tài nguyên cùng lúc (để hiện ảnh đại diện trên thẻ danh sách).
+export async function collaboratorsByResource(type: CollabType, ids: string[]): Promise<Record<string, Array<{ id: string; name?: string | null }>>> {
+  const out: Record<string, Array<{ id: string; name?: string | null }>> = {};
+  if (!ids.length) return out;
+  for (let i = 0; i < ids.length; i += 150) {
+    const { data, error } = await supabase.from(T).select('resource_id,user_id,user_name').eq('resource_type', type).in('resource_id', ids.slice(i, i + 150));
+    if (error) { if (missingTable(error)) return out; throw error; }
+    (data || []).forEach((r: any) => { (out[r.resource_id] ||= []).push({ id: r.user_id, name: r.user_name }); });
+  }
+  return out;
+}
+
 // Các tài nguyên người khác đã thêm mình vào (theo loại).
 export async function getMyShares(type: CollabType): Promise<Collaborator[]> {
   const uid = me();
@@ -206,7 +218,12 @@ export async function searchUsers(q: string): Promise<UserAccount[]> {
   const fold = (s: string) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd').toLowerCase();
   const k = fold(q.trim());
   if (!k) return [];
-  return userCache
+  // Tài khoản thường không đọc được danh sách đầy đủ, dùng thêm danh bạ công khai (tìm theo tên, tên đăng nhập).
+  const { loadPeople, getAllPeople } = await import('./people');
+  await loadPeople();
+  const seen = new Set(userCache.map(u => u.id));
+  const pub = getAllPeople().filter(p => !seen.has(p.id) && p.name).map(p => ({ id: p.id, fullName: p.name, username: p.username || '', email: '', avatarUrl: p.avatar, role: p.role } as unknown as UserAccount));
+  return [...userCache, ...pub]
     .filter(u => u.id !== me() && (fold(u.fullName || '').includes(k) || fold(u.email || '').includes(k) || fold(u.username || '').includes(k)))
     .slice(0, 8);
 }

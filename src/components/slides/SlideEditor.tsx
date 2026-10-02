@@ -18,6 +18,7 @@ import { listCollaborators, Collaborator, userAvatar } from '../../lib/collab';
 import SlideRenderer, { ElementView, bgStyle, ensureFont, ensureAnimCss, ElPhase } from './SlideRenderer';
 import SlidePresenter from './SlidePresenter';
 import ShareDialog from '../ui/ShareDialog';
+import { AvatarStack } from '../ui/People';
 import { copyText, askText } from '../ui/Dialogs';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
@@ -699,12 +700,8 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
             ? <span className="truncate text-sm font-semibold">{title} <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-xs">Chỉ xem</span></span>
             : <input value={title} onChange={e => { setTitle(e.target.value); markDirty(); }} className="w-full max-w-md truncate rounded-lg bg-transparent px-2 py-1 text-center text-sm font-semibold outline-none placeholder:text-white/60 hover:bg-white/10 focus:bg-white/15" placeholder="Bài giảng không tên" />}
         </div>
-        <div className="hidden items-center -space-x-2 md:flex">
-          {[{ userId: deck.ownerId, userName: deck.ownerName }, ...collabs].slice(0, 4).map(c => (
-            userAvatar(c.userId)
-              ? <img key={c.userId} src={userAvatar(c.userId)} title={c.userName || ''} className="h-8 w-8 rounded-full border-2 border-white object-cover" alt="" />
-              : <span key={c.userId} title={c.userName || ''} className="grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-brand-hover text-xs font-bold">{(c.userName || '?').trim().charAt(0).toUpperCase()}</span>
-          ))}
+        <div className="hidden items-center md:flex">
+          <AvatarStack people={[{ id: deck.ownerId, name: deck.ownerName }, ...collabs.map(c => ({ id: c.userId, name: c.userName }))]} size="md" max={5} singleWithName={false} />
         </div>
         {canManage && <button onClick={() => setCollabOpen(true)} title="Thêm người cùng chỉnh sửa" className="ml-1 flex h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold hover:bg-white/15"><UserPlus className="h-5 w-5" /><span className="hidden lg:inline">Cộng tác</span></button>}
         <button onClick={() => setPresenting(cur)} className="ml-1 flex h-10 items-center gap-2 rounded-lg border border-white/50 px-3 text-sm font-semibold hover:bg-white/15"><Play className="h-4 w-4" /><span className="hidden sm:inline">Trình chiếu</span></button>
