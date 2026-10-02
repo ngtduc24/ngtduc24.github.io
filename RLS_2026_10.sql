@@ -457,6 +457,25 @@ create policy pcs_write on public.portfolio_course_students for all to authentic
   using (user_id = rls_uid() or data->>'accountId' = rls_uid() or is_top_admin())
   with check (user_id = rls_uid() or data->>'accountId' = rls_uid() or is_top_admin());
 
+-- Token Firebase không có claim role nên Supabase chạy truy vấn với vai trò anon (vẫn đọc được sub).
+-- Vì vậy mọi chính sách dành cho người đã đăng nhập được mở cho cả anon nhưng bắt buộc phải có uid.
+do $$
+declare p record; s text;
+begin
+  for p in select * from pg_policies where schemaname = 'public' and roles = array['authenticated']::name[]
+           and tablename = any (array['collaborators','edu_schools','edu_classes','edu_users','edu_grade_columns','edu_assignments','edu_submissions','edu_grades',
+             'edu_extension_requests','edu_subjects','edu_assignment_bank','el_lessons','el_sections','el_resources','el_lesson_versions','el_lesson_classes',
+             'el_section_views','quizzes','quiz_items','quiz_class_assignments','quiz_bank_questions','quiz_bank_options','quiz_attempts','quiz_attempt_answers',
+             'quiz_proctor_logs','qda_projects','qda_documents','qda_codes','qda_annotations','qda_memos','remier_projects','remier_assets','media_items',
+             'social_presets','tasks','system_notifications','portfolio_settings','portfolio_course_students'])
+  loop
+    s := format('alter policy %I on public.%I to anon, authenticated', p.policyname, p.tablename);
+    if p.qual is not null then s := s || format(' using (public.rls_uid() is not null and (%s))', p.qual); end if;
+    if p.with_check is not null then s := s || format(' with check (public.rls_uid() is not null and (%s))', p.with_check); end if;
+    execute s;
+  end loop;
+end $$;
+
 -- Báo PostgREST nạp lại cấu trúc mới.
 notify pgrst, 'reload schema';
 
