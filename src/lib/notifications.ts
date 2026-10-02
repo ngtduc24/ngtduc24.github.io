@@ -196,13 +196,24 @@ function ensureStore(user: UserAccount): Store {
     s.state = merged; writeCache(s.uid, merged); emit(s);
     if (changed) pushServer(s.uid, merged).catch(() => {});
   });
-  reloadServer(s);
+  // Chờ phiên đăng nhập Firebase sẵn sàng rồi mới tải, nếu không máy chủ coi là khách và trả về rỗng.
+  // Mỗi lần phiên đăng nhập đổi (khôi phục xong, làm mới token) thì tải lại.
+  let unAuth = () => {};
+  import('./firebase').then(async ({ auth }) => {
+    await auth.authStateReady();
+    if (store !== s) return;
+    reloadServer(s);
+    const { onAuthStateChanged } = await import('firebase/auth');
+    unAuth = onAuthStateChanged(auth, u => { if (u && store === s) reloadServer(s); });
+  }).catch(() => reloadServer(s));
+  // Dự phòng khi kênh thời gian thực bị ngắt: 60 giây tải lại 1 lần lúc trang đang mở.
+  const poll = setInterval(() => { if (document.visibilityState === 'visible') reloadServer(s); }, 60000);
   const unNotif = subscribeToNotificationChanges(() => reloadServer(s));
   const unTasks = subscribeToTasks(tasks => { s.tasks = tasks; if (store === s) emit(s); });
   // Quay lại cửa sổ thì đồng bộ trạng thái đọc từ thiết bị khác.
-  const onFocus = () => { reloadState(s); };
+  const onFocus = () => { reloadState(s); reloadServer(s); };
   window.addEventListener('focus', onFocus);
-  s.stop = () => { unNotif(); unTasks(); window.removeEventListener('focus', onFocus); if (s.saveTimer) clearTimeout(s.saveTimer); };
+  s.stop = () => { unNotif(); unTasks(); unAuth(); clearInterval(poll); window.removeEventListener('focus', onFocus); if (s.saveTimer) clearTimeout(s.saveTimer); };
   return s;
 }
 

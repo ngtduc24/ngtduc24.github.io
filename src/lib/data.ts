@@ -1337,6 +1337,8 @@ export function subscribeToNotifications(callback: (notifications: AppNotificati
 export async function pushNotificationToSupabase(notif: Partial<AppNotification>) {
   try {
     const dbData = {
+      // Bảng thông báo không tự sinh mã, phải gửi kèm mã mới cho từng thông báo.
+      id: notif.id || (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `n_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`),
       title: notif.title || '',
       description: notif.description || '',
       type: notif.type || 'system',
