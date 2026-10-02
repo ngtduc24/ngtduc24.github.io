@@ -26,6 +26,7 @@ import { listMyMedia, deleteMyMedia, MediaItem, MEDIA_CHANGED_EVENT } from '../l
 import { uploadImageToCloudinary } from '../lib/upload';
 import { UserAccount } from '../types';
 import { useConfirmation } from './ConfirmationContext';
+import { usePaging, Pager } from './edu/ListPager';
 
 interface MediaLibraryProps {
   currentUser: UserAccount;
@@ -209,6 +210,10 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
     return matchesSearch && matchesCategory && matchesType;
   });
 
+  // Chia trang để thư viện nhiều tệp không kéo dài cả trang.
+  const pg = usePaging(filteredImages.length, 'media_page_size', 24, [searchTerm, selectedCategory, selectedType]);
+  const pageImages = filteredImages.slice(pg.from, pg.to);
+
   const formatDate = (timestamp: any) => {
     if (!timestamp) return 'Vừa xong';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -247,7 +252,7 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
         {/* Left: Drag & Drop upload panel & Storage Capacity */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4">
-            <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-3">
+            <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2 border-b border-slate-50 pb-3">
               <Upload className="w-4 h-4 text-brand" />
               Tải tệp tin lên trực tiếp
             </h3>
@@ -303,14 +308,14 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
 
           {/* Storage Capacity Progress Card */}
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4">
-            <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2 border-b border-slate-50 pb-3">
+            <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2 border-b border-slate-50 pb-3">
               <HardDrive className="w-4 h-4 text-brand" />
               Dung lượng lưu trữ
             </h3>
 
             <div className="space-y-3">
               <div className="flex justify-between items-end">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Trạng thái dung lượng</span>
+                <span className="text-[10px] font-bold text-slate-500 ">Trạng thái dung lượng</span>
                 <span className="text-xs font-extrabold text-slate-800">
                   {formatFileSize(totalBytes)} <span className="text-slate-400 font-medium">/ 25.0 GB</span> ({usedPercent.toFixed(3)}%)
                 </span>
@@ -367,7 +372,7 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex gap-2 items-start mt-2">
                 <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <span className="text-[10px] font-black tracking-wider uppercase text-slate-600 block">Quy định giới hạn</span>
+                  <span className="text-[10px] font-black text-slate-600 block">Quy định giới hạn</span>
                   <p className="text-[10px] text-slate-500 leading-normal">
                     Tài khoản Cloudinary miễn phí hỗ trợ dung lượng tối đa <strong>25 GB</strong>. 
                     Để tối ưu hóa tải trang, hệ thống giới hạn tải lên tối đa <strong>10MB</strong> đối với mỗi hình ảnh và <strong>100MB</strong> đối với mỗi video.
@@ -463,11 +468,11 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
               </p>
             </div>
           ) : (
+            <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {filteredImages.map((img) => (
+              {pageImages.map((img) => (
                 <motion.div
                   key={img.id}
-                  layout
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
@@ -521,7 +526,7 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
                       </button>
                     </div>
 
-                    <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[9px] font-black tracking-wider uppercase text-white bg-slate-900/60 backdrop-blur-xs z-10">
+                    <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[9px] font-black text-white bg-slate-900/60 backdrop-blur-xs z-10">
                       {img.category}
                     </span>
                   </div>
@@ -581,6 +586,8 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
                 </motion.div>
               ))}
             </div>
+            <Pager pg={pg} total={filteredImages.length} unit="tệp" sizes={[12, 24, 48, 96]} />
+            </>
           )}
         </div>
       </div>
@@ -597,10 +604,10 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
             >
               <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                 <div>
-                  <h3 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider">
+                  <h3 className="font-extrabold text-slate-800 text-xs ">
                     {previewImage.type === 'video' ? 'Chi tiết tệp tin video' : 'Chi tiết tệp tin ảnh'}
                   </h3>
-                  <span className="px-2 py-0.5 rounded bg-brand/5 text-brand text-[9px] font-black tracking-wider uppercase mt-1 inline-block">
+                  <span className="px-2 py-0.5 rounded bg-brand/5 text-brand text-[9px] font-black mt-1 inline-block">
                     {previewImage.category}
                   </span>
                 </div>
