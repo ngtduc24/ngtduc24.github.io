@@ -53,6 +53,7 @@ import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import EduExport from './EduExport';
 import { eduCan } from '../../lib/eduPermissions';
+import ShareDialog from '../ui/ShareDialog';
 
 interface EduClassDetailProps {
   classId: string;
@@ -137,12 +138,29 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
 
-  const canCreate = eduCan(currentUser, 'create');
-  const canEdit = eduCan(currentUser, 'edit');
-  const canDelete = eduCan(currentUser, 'delete');
-  const canImportEdu = eduCan(currentUser, 'import');
-  const canExportEdu = eduCan(currentUser, 'export');
-  const canGrade = eduCan(currentUser, 'grade');
+  // Chủ lớp dùng quyền tài khoản như cũ. Người cộng tác dùng đúng các quyền chủ đã tích chọn.
+  const access = clazz?.access;
+  const isOwner = !access || access.owner;
+  const perms = access?.perms || {};
+  const canCreate = isOwner ? eduCan(currentUser, 'create') : false;
+  const canEdit = isOwner ? eduCan(currentUser, 'edit') : false;
+  const canDelete = isOwner ? eduCan(currentUser, 'delete') : false;
+  const canImportEdu = isOwner ? eduCan(currentUser, 'import') : false;
+  const canExportEdu = isOwner ? eduCan(currentUser, 'export') : !!perms.exportGrades;
+  const canGrade = isOwner ? eduCan(currentUser, 'grade') : !!perms.grade;
+  // Quyền theo từng phần việc.
+  const canAssign = isOwner ? canCreate : !!perms.assign;
+  const canEditAssign = isOwner ? canEdit : !!perms.assign;
+  const canDeleteAssign = isOwner ? canDelete : !!perms.assign;
+  const canAddStudent = isOwner ? (canImportEdu || canCreate) : !!perms.editStudents;
+  const canEditStudent = isOwner ? canEdit : !!perms.editStudents;
+  const canDeleteStudent = isOwner ? canDelete : !!perms.editStudents;
+  const canAddColumn = isOwner ? (canCreate || canEdit) : !!perms.editColumns;
+  const canEditColumn = isOwner ? canEdit : !!perms.editColumns;
+  const canDeleteColumn = isOwner ? canDelete : !!perms.editColumns;
+  const canViewSubs = isOwner || !!perms.viewSubmissions || !!perms.grade;
+  const canShare = isOwner || !!perms.manageMembers;
+  const [shareOpen, setShareOpen] = useState(false);
 
   const loadData = async () => {
     try {
@@ -404,6 +422,17 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
 
   return (
     <div className="space-y-6">
+      {shareOpen && (
+        <ShareDialog
+          type="edu_class"
+          resourceId={clazz.id}
+          resourceTitle={clazz.name}
+          ownerId={isOwner ? (clazz.ownerId || currentUser.id) : (clazz.ownerId || '')}
+          currentUser={currentUser}
+          canManage={canShare}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
       {/* Class Info Card */}
       <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="flex items-center gap-3">
@@ -421,6 +450,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
           <div className="flex items-center gap-2 text-brand font-bold text-[10px] uppercase tracking-widest">
             <School className="w-3 h-3" />
             <span>{clazz.edu_schools.name}</span>
+            {!isOwner && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[9px] font-bold normal-case tracking-normal text-amber-700">Được chia sẻ với bạn</span>}
           </div>
           <h2 className="text-2xl font-black text-slate-900">{clazz.name}</h2>
           <div className="flex items-center gap-4 text-xs text-slate-500 font-medium">
@@ -437,7 +467,17 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
         </div>
 
         <div className="flex items-center gap-2">
-          {canCreate && (
+          {canShare && (
+            <button
+              onClick={() => setShareOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:border-brand hover:text-brand transition-all"
+              title="Thêm người cùng chấm điểm, giao bài"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Cộng tác</span>
+            </button>
+          )}
+          {canAssign && (
           <button
             onClick={() => {
               if (gradeColumns.length === 0) {
@@ -599,7 +639,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                 />
               )}
 
-              {(canImportEdu || canCreate) && (
+              {canAddStudent && (
               <button
                 onClick={() => {
                   setEditingUser(null);
@@ -613,7 +653,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
               </button>
               )}
 
-              {!canCreate && !canEdit ? null : (isAddingColumn || editingColumn) ? (
+              {!canAddColumn ? null : (isAddingColumn || editingColumn) ? (
                 <div className="flex items-center gap-2 animate-fadeIn bg-white p-1 rounded-xl shadow-sm border border-brand/20">
                   <input
                     type="text"
@@ -708,7 +748,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                   {gradeColumns.map(col => (
                     <th key={col.id} className="relative px-6 py-4 text-[10px] font-black text-slate-800 uppercase tracking-wider text-center border-l border-slate-50 group min-w-[130px]">
                       {/* Nút xóa cột nằm góc trên phải để tên cột được căn giữa */}
-                      {canDelete && inlineEditColId !== col.id && (
+                      {canDeleteColumn && inlineEditColId !== col.id && (
                         <div className="absolute right-1 top-1">
                           <button onClick={(e) => { e.stopPropagation(); setActiveDropdownId(activeDropdownId === col.id ? null : col.id); }}
                             className={`p-1 rounded-lg transition-all ${activeDropdownId === col.id ? 'bg-slate-100 text-slate-900' : 'text-slate-300 hover:text-slate-600 hover:bg-slate-50'}`}>
@@ -734,9 +774,10 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                         </div>
                       ) : (
                         <div className="flex flex-col items-center gap-1.5">
-                          <span onDoubleClick={() => canEdit && startInlineEdit(col)} title={canEdit ? 'Nhấn đúp để sửa tên và tỷ trọng' : undefined} className={`max-w-[120px] truncate ${canEdit ? 'cursor-pointer hover:text-brand' : ''}`}>{col.name}</span>
+                          <span onDoubleClick={() => canEditColumn && startInlineEdit(col)} title={canEditColumn ? 'Nhấn đúp để sửa tên và tỷ trọng' : undefined} className={`max-w-[120px] truncate ${canEditColumn ? 'cursor-pointer hover:text-brand' : ''}`}>{col.name}</span>
                           <button
-                            onClick={() => handleToggleConfirm(col)}
+                            onClick={() => (canGrade || canEditColumn) && handleToggleConfirm(col)}
+                            disabled={!(canGrade || canEditColumn)}
                             title={col.isConfirmed ? 'Đã chốt (khóa). Bấm để mở khóa chấm lại' : 'Chưa chốt (mở). Bấm để chốt điểm cho sinh viên xem'}
                             aria-label={col.isConfirmed ? 'Đã chốt' : 'Chưa chốt'}
                             className={`grid h-6 w-6 place-items-center rounded-lg border transition-colors ${col.isConfirmed ? 'border-brand bg-brand-light text-brand hover:bg-brand/10' : 'border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100'}`}
@@ -763,7 +804,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                     className={`hover:bg-slate-50/50 transition-colors group ${overUserId === user.id && dragUserId && dragUserId !== user.id ? 'bg-brand-light/40' : ''} ${dragUserId === user.id ? 'opacity-40' : ''}`}>
                     <td className="px-6 py-4 text-xs font-bold text-slate-400">
                       <div className="flex items-center gap-1">
-                        {canEdit && !searchTerm && (
+                        {canEditStudent && !searchTerm && (
                           <span draggable onDragStart={() => setDragUserId(user.id)} onDragEnd={() => { setDragUserId(null); setOverUserId(null); }} title="Kéo để sắp xếp thứ tự" className="cursor-grab text-slate-300 hover:text-slate-500 active:cursor-grabbing"><GripVertical className="h-3.5 w-3.5" /></span>
                         )}
                         {user.stt}
@@ -786,7 +827,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                     </td>
                     <td className="px-6 py-4 text-center border-l border-slate-50">
                       <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                        {canEdit && (
+                        {canEditStudent && (
                         <button
                           onClick={() => {
                             setEditingUser(user);
@@ -798,7 +839,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         )}
-                        {canDelete && (
+                        {canDeleteStudent && (
                         <button
                           onClick={() => handleDeleteUser(user.id)}
                           className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
@@ -848,7 +889,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                   >
                     <Copy className={icon} />
                   </button>
-                  {canEdit && (
+                  {canEditAssign && (
                     <button
                       onClick={() => onEditAssignment(assignment.id)}
                       className={`${pad} bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all`}
@@ -866,7 +907,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                   >
                     <ExternalLink className={icon} />
                   </a>
-                  {canDelete && (
+                  {canDeleteAssign && (
                     <button
                       onClick={() => handleDeleteAssignment(assignment.id, assignment.gradeColumnId)}
                       className={`${pad} ${big ? 'bg-slate-50' : ''} text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all`}
@@ -887,7 +928,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                     const { column, subCount, totalCount } = info(assignment);
                     return (
                       <div key={assignment.id} className="p-4">
-                        <button onClick={() => onViewAssignment(assignment.id)} className="text-left text-sm font-black text-slate-900 hover:text-brand">
+                        <button onClick={() => canViewSubs && onViewAssignment(assignment.id)} className="text-left text-sm font-black text-slate-900 hover:text-brand">
                           {assignment.title}
                         </button>
                         <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-bold">
@@ -925,7 +966,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
                             <td className="px-6 py-4">
                               <div className="flex flex-col">
                                 <button
-                                  onClick={() => onViewAssignment(assignment.id)}
+                                  onClick={() => canViewSubs && onViewAssignment(assignment.id)}
                                   className="text-xs font-black text-slate-900 group-hover:text-brand transition-colors text-left"
                                 >
                                   {assignment.title}
@@ -965,14 +1006,14 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
             <div className="py-20 text-center">
               <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
               <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Chưa có bài tập nào được tạo</p>
-              {gradeColumns.length > 0 && canCreate ? (
+              {gradeColumns.length > 0 && canAssign ? (
                 <button
                   onClick={() => onEditAssignment()}
                   className="mt-4 inline-flex items-center gap-2 text-brand font-bold text-xs hover:underline"
                 >
                   <Plus className="w-4 h-4" /> Tạo bài tập đầu tiên
                 </button>
-              ) : gradeColumns.length === 0 && canCreate ? (
+              ) : gradeColumns.length === 0 && canAssign ? (
                 <p className="mt-2 text-[10px] text-amber-600 font-medium">Vui lòng thêm cột điểm trước khi tạo bài tập</p>
               ) : null}
             </div>

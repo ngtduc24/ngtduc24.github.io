@@ -39,6 +39,9 @@ export interface QDAProject {
   name: string;
   description: string;
   createdAt: string;
+  ownerId?: string;
+  role?: 'owner' | 'view' | 'edit' | 'manage'; // quyền của mình với dự án (cộng tác)
+  ownerName?: string | null;
   settings?: {
     subjectTypes: string[];
     interviewCount: number;
@@ -129,6 +132,8 @@ import {
   getQDAAnnotations, saveQDAAnnotation, deleteQDAAnnotation,
   getQDAMemos, saveQDAMemo, deleteQDAMemo
 } from '../lib/data';
+import ShareDialog from './ui/ShareDialog';
+import { ROLE_LABELS } from '../lib/collab';
 interface Props {
   settings?: AppSettings;
   onRefreshSettings?: () => Promise<void>;
@@ -1684,6 +1689,11 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
         </button>
       </div>
       
+      {activeProject?.role === 'view' && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
+          Dự án "{activeProject.name}" được chia sẻ với bạn ở quyền xem. Bạn xem được tài liệu, mã và kết quả, thay đổi sẽ không được lưu.
+        </div>
+      )}
       {/* Global Project Selection Bar - Moved from Header */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fadeIn">
         <div className="flex items-center gap-6 flex-1">
@@ -1764,6 +1774,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                           >
                             {proj.name}
                             {isSelected && <span className="bg-brand text-white text-xs px-2 py-0.5 rounded-full uppercase tracking-wider">Đang chọn</span>}
+                            {proj.role && proj.role !== 'owner' && <span className="bg-amber-50 text-amber-700 text-xs px-2 py-0.5 rounded-full">Được chia sẻ, quyền {ROLE_LABELS[proj.role].label.toLowerCase()}</span>}
                           </button>
                         </td>
                         <td className="px-4 py-3 text-center font-semibold text-brand">
@@ -1793,6 +1804,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                             >
                               <Eye className="w-4 h-4" />
                             </button>
+                            {(!proj.role || proj.role !== 'view') && (
                             <button
                               onClick={() => {
                                 setEditingProjectId(proj.id);
@@ -1807,16 +1819,20 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                             >
                               <FileEdit className="w-4 h-4" />
                             </button>
+                            )}
+                            {(!proj.role || proj.role === 'owner' || proj.role === 'manage') && (
                             <button
                               onClick={() => {
                                 setSettingsProject(proj);
                                 setShowProjectSettingsModal(true);
                               }}
                               className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
-                              title="Cài đặt phân quyền"
+                              title="Cộng tác, phân quyền người cùng làm dự án"
                             >
-                              <Settings className="w-4 h-4" />
+                              <IconUsers className="w-4 h-4" />
                             </button>
+                            )}
+                            {(!proj.role || proj.role === 'owner') && (
                             <button
                               onClick={() => handleDeleteProject(proj.id, proj.name)}
                               className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
@@ -1824,6 +1840,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -3017,145 +3034,16 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
         </div>
       )}
 
-      {showProjectSettingsModal && settingsProject && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-2xl p-6 space-y-6 text-left animate-fadeIn max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
-                <Settings className="w-5 h-5 text-brand" />
-                Cài đặt & Phân quyền: {settingsProject.name}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowProjectSettingsModal(false);
-                  setSettingsProject(null);
-                }}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="space-y-6">
-              {/* Permissions Section */}
-              <div>
-                <h4 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-brand" />
-                  Phân quyền truy cập dự án
-                </h4>
-                <p className="text-xs text-slate-500 mb-4">
-                  Thêm thành viên vào dự án này và cấp quyền truy cập phù hợp.
-                </p>
-
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex gap-2 items-end mb-6">
-                  <div className="flex-1 space-y-1">
-                    <label className="text-xs font-semibold text-slate-600">Email thành viên</label>
-                    <input 
-                      type="email" 
-                      placeholder="nhapemail@example.com" 
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none"
-                    />
-                  </div>
-                  <div className="w-40 space-y-1">
-                    <label className="text-xs font-semibold text-slate-600">Vai trò</label>
-                    <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none">
-                      <option value="viewer">Người xem (View)</option>
-                      <option value="editor">Người chỉnh sửa (Edit)</option>
-                      <option value="admin">Quản trị (Admin)</option>
-                    </select>
-                  </div>
-                  <button className="bg-brand text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-brand-hover transition-colors flex items-center gap-2 h-9">
-                    <Plus className="w-4 h-4" /> Thêm
-                  </button>
-                </div>
-
-                {/* Mock Member List */}
-                <div className="border border-slate-200 rounded-xl overflow-hidden">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 border-b border-slate-200">
-                      <tr>
-                        <th className="px-4 py-3 font-semibold text-slate-600">Thành viên</th>
-                        <th className="px-4 py-3 font-semibold text-slate-600">Vai trò</th>
-                        <th className="px-4 py-3 font-semibold text-slate-600 text-right">Thao tác</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      <tr>
-                        <td className="px-4 py-3">
-                          <div className="font-semibold text-slate-800">Bạn (Chủ sở hữu)</div>
-                          <div className="text-xs text-slate-500">nguoidung@example.com</div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="bg-brand-light text-brand-hover px-2 py-1 rounded-lg text-xs font-bold">Admin</span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <button disabled className="text-slate-300 cursor-not-allowed">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="px-4 py-3">
-                          <div className="font-semibold text-slate-800">Nguyễn Văn A</div>
-                          <div className="text-xs text-slate-500">nguyenvana@example.com</div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <select className="border-none bg-transparent text-slate-700 font-medium focus:ring-0 cursor-pointer">
-                            <option value="editor" selected>Người chỉnh sửa</option>
-                            <option value="viewer">Người xem</option>
-                            <option value="admin">Admin</option>
-                          </select>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <button className="text-slate-400 hover:text-rose-500 transition-colors">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Advanced Settings Placeholder */}
-              <div className="pt-4 border-t border-slate-100">
-                 <h4 className="text-sm font-bold text-slate-800 mb-2">Cài đặt nâng cao</h4>
-                 <div className="space-y-3">
-                    <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                      <input type="checkbox" className="rounded text-brand focus:ring-brand" />
-                      Yêu cầu phê duyệt khi xuất dữ liệu mã hóa
-                    </label>
-                    <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                      <input type="checkbox" className="rounded text-brand focus:ring-brand" defaultChecked />
-                      Cho phép AI tự động gợi ý (Auto-coding)
-                    </label>
-                 </div>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowProjectSettingsModal(false);
-                  setSettingsProject(null);
-                }}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-bold transition-colors cursor-pointer"
-              >
-                Đóng
-              </button>
-              <button
-                onClick={() => {
-                  showToast('success', 'Đã lưu cài đặt dự án thành công.');
-                  setShowProjectSettingsModal(false);
-                  setSettingsProject(null);
-                }}
-                className="px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-xl text-sm font-bold transition-colors cursor-pointer"
-              >
-                Lưu cài đặt
-              </button>
-            </div>
-          </div>
-        </div>
+      {showProjectSettingsModal && settingsProject && currentUser && (
+        <ShareDialog
+          type="qda_project"
+          resourceId={settingsProject.id}
+          resourceTitle={settingsProject.name}
+          ownerId={settingsProject.ownerId || currentUser.id}
+          currentUser={currentUser}
+          canManage={!settingsProject.role || settingsProject.role === 'owner' || settingsProject.role === 'manage'}
+          onClose={() => { setShowProjectSettingsModal(false); setSettingsProject(null); }}
+        />
       )}
 
       {showBannerSettings && (

@@ -1,4 +1,20 @@
 
+// Quyền của người đang xem với một lớp, trường. Chủ thì có đủ quyền,
+// người cộng tác chỉ có các quyền chủ đã tích chọn.
+export interface EduAccess {
+  owner: boolean;
+  perms: {
+    viewSubmissions?: boolean;
+    assign?: boolean;
+    grade?: boolean;
+    editStudents?: boolean;
+    editColumns?: boolean;
+    exportGrades?: boolean;
+    manageMembers?: boolean;
+  };
+  ownerName?: string | null;
+}
+
 export interface EduSchool {
   id: string;
   name: string;
@@ -6,6 +22,7 @@ export interface EduSchool {
   createdAt: string;
   updatedAt: string;
   ownerId?: string;
+  access?: EduAccess;
 }
 
 export interface EduClass {
@@ -16,6 +33,7 @@ export interface EduClass {
   createdAt: string;
   updatedAt: string;
   ownerId?: string;
+  access?: EduAccess;
 }
 
 export interface EduUser {

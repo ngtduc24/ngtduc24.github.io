@@ -11,7 +11,8 @@ import {
   EduSubmissionFile,
   EduGrade,
   EduSubject,
-  EduAssignmentBankItem
+  EduAssignmentBankItem,
+  EduAccess
 } from '../types/edu';
 
 // Table names
@@ -211,6 +212,7 @@ export async function saveSchool(school: Partial<EduSchool>) {
 export async function deleteSchool(id: string) {
   const { error } = await supabase.from(SCHOOLS_TABLE).delete().eq('id', id);
   if (error) throw error;
+  await supabase.from('collaborators').delete().eq('resource_type', 'edu_school').eq('resource_id', id);
 }
 
 // Classes
@@ -270,17 +272,101 @@ export async function deleteClass(id: string): Promise<number> {
   } catch { /* vẫn xoá lớp, báo lại là chưa dọn được tệp */ }
   const { error } = await supabase.from(CLASSES_TABLE).delete().eq('id', id);
   if (error) throw error;
+  await supabase.from('collaborators').delete().eq('resource_type', 'edu_class').eq('resource_id', id);
   return files;
+}
+
+export const FULL_ACCESS: EduAccess = {
+  owner: true,
+  perms: { viewSubmissions: true, assign: true, grade: true, editStudents: true, editColumns: true, exportGrades: true, manageMembers: true },
+};
+
+// Gộp quyền: có ở lớp hoặc ở trường chứa lớp đều tính.
+function mergePerms(...list: (EduAccess['perms'] | undefined)[]): EduAccess['perms'] {
+  const out: EduAccess['perms'] = {};
+  for (const p of list) if (p) for (const [k, v] of Object.entries(p)) if (v) (out as any)[k] = true;
+  return out;
+}
+
+// Các lượt người khác thêm mình vào lớp, trường (đọc thẳng bảng collaborators).
+async function myEduShares(): Promise<{ schools: Map<string, any>; classes: Map<string, any> }> {
+  const me = getCtx().userId;
+  const schools = new Map<string, any>();
+  const classes = new Map<string, any>();
+  if (!me) return { schools, classes };
+  const { data, error } = await supabase.from('collaborators').select('*').eq('user_id', me).in('resource_type', ['edu_school', 'edu_class']);
+  if (error) return { schools, classes };
+  for (const r of data || []) (r.resource_type === 'edu_school' ? schools : classes).set(r.resource_id, r);
+  return { schools, classes };
+}
+
+// Lớp, trường người khác chia sẻ cho mình, kèm quyền đã được cấp.
+export async function getSharedEdu(): Promise<{ schools: EduSchool[]; classes: (EduClass & { edu_schools: { name: string } })[] }> {
+  const me = getCtx().userId;
+  if (!me) return { schools: [], classes: [] };
+  const sh = await myEduShares();
+  if (!sh.schools.size && !sh.classes.size) return { schools: [], classes: [] };
+  const schoolIds = [...sh.schools.keys()];
+  const classIds = [...sh.classes.keys()];
+  const [sRes, cBySchool, cById] = await Promise.all([
+    schoolIds.length ? supabase.from(SCHOOLS_TABLE).select('*').in('id', schoolIds) : Promise.resolve({ data: [] as any[] }),
+    schoolIds.length ? supabase.from(CLASSES_TABLE).select('*, edu_schools(name, owner_id)').in('school_id', schoolIds) : Promise.resolve({ data: [] as any[] }),
+    classIds.length ? supabase.from(CLASSES_TABLE).select('*, edu_schools(*)').in('id', classIds) : Promise.resolve({ data: [] as any[] }),
+  ]);
+  const schoolMap = new Map<string, EduSchool>();
+  for (const s of (sRes.data || []) as any[]) {
+    if (s.owner_id === me) continue;
+    const r = sh.schools.get(s.id);
+    schoolMap.set(s.id, { ...mapSchool(s), access: { owner: false, perms: r?.perms || {}, ownerName: null } });
+  }
+  const classMap = new Map<string, EduClass & { edu_schools: { name: string } }>();
+  const addClass = (c: any) => {
+    if (c.owner_id === me || c.edu_schools?.owner_id === me) return;
+    const perms = mergePerms(sh.schools.get(c.school_id)?.perms, sh.classes.get(c.id)?.perms);
+    classMap.set(c.id, { ...mapClass(c), edu_schools: { name: c.edu_schools?.name || '' }, access: { owner: false, perms } });
+    // Lớp được chia sẻ lẻ thì vẫn hiện tên trường để xếp nhóm, trường đó chỉ để xem.
+    if (c.school_id && !schoolMap.has(c.school_id) && c.edu_schools) {
+      schoolMap.set(c.school_id, { ...mapSchool({ ...c.edu_schools, id: c.school_id }), access: { owner: false, perms: {} } });
+    }
+  };
+  for (const c of (cBySchool.data || []) as any[]) addClass(c);
+  for (const c of (cById.data || []) as any[]) addClass(c);
+  return { schools: [...schoolMap.values()], classes: [...classMap.values()] };
+}
+
+// Quyền của mình với một lớp. Không có quyền gì thì trả về null.
+export async function getClassAccess(classId: string): Promise<EduAccess | null> {
+  const me = getCtx().userId;
+  if (!me) return null;
+  const { data } = await supabase.from(CLASSES_TABLE).select('id, owner_id, school_id, edu_schools(owner_id)').eq('id', classId).maybeSingle();
+  if (!data) return null;
+  if ((data as any).owner_id === me || (data as any).edu_schools?.owner_id === me) return FULL_ACCESS;
+  const { data: rows } = await supabase.from('collaborators').select('resource_type, resource_id, perms').eq('user_id', me)
+    .or(`and(resource_type.eq.edu_class,resource_id.eq.${classId}),and(resource_type.eq.edu_school,resource_id.eq.${(data as any).school_id})`);
+  if (!rows || !rows.length) return null;
+  return { owner: false, perms: mergePerms(...rows.map((r: any) => r.perms)) };
+}
+
+// Lớp mình được giao bài: lớp của mình và lớp được chia sẻ có quyền giao bài.
+export async function getAssignableClasses() {
+  const [own, shared] = await Promise.all([getClasses(), getSharedEdu().catch(() => ({ schools: [], classes: [] }))]);
+  return [...own, ...shared.classes.filter(c => c.access?.perms.assign)];
 }
 
 export async function getClassById(id: string) {
   const { data, error } = await supabase.from(CLASSES_TABLE).select('*, edu_schools(*)').eq('id', id).single();
   if (error) throw error;
-  // Chỉ mở được lớp của mình hoặc lớp nằm trong trường của mình.
+  // Mở được lớp của mình, lớp nằm trong trường của mình, hoặc lớp, trường người khác thêm mình vào.
   const me = getCtx().userId;
-  if (!me || (data.owner_id !== me && data.edu_schools?.owner_id !== me)) throw new Error('Không tìm thấy lớp học.');
+  if (!me) throw new Error('Không tìm thấy lớp học.');
+  let access: EduAccess | null = FULL_ACCESS;
+  if (data.owner_id !== me && data.edu_schools?.owner_id !== me) {
+    access = await getClassAccess(id);
+    if (!access) throw new Error('Không tìm thấy lớp học.');
+  }
   return {
     ...mapClass(data),
+    access,
     edu_schools: mapSchool(data.edu_schools)
   };
 }

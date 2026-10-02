@@ -31,7 +31,7 @@ import EduAssignmentBank from './edu/EduAssignmentBank';
 import EduGradeEntry from './edu/EduGradeEntry';
 import QuizModule from './edu/QuizModule';
 import { EduClass, EduSchool } from '../types/edu';
-import { getClasses, getSchools } from '../lib/edu';
+import { getClasses, getSchools, getClassAccess } from '../lib/edu';
 import { readSubRoute, writeSubRoute } from '../lib/seoConfig';
 
 interface EduModuleProps {
@@ -74,6 +74,24 @@ export default function EduModule({ currentUser, settings, initialView }: EduMod
       gcol: needsGcol ? selectedGradeColumnId : null,
     });
   }, [view, selectedClassId, selectedAssignmentId, selectedGradeColumnId]);
+
+  // Lớp được chia sẻ: chỉ vào được màn hình con khi chủ lớp đã cấp đúng quyền.
+  useEffect(() => {
+    if (!selectedClassId || !['class_detail', 'assignment_edit', 'assignment_detail', 'grading'].includes(view)) return;
+    let alive = true;
+    getClassAccess(selectedClassId).then(acc => {
+      if (!alive) return;
+      if (!acc) { addNotification('Bạn không có quyền mở lớp này.', 'error'); setView('list'); setSelectedClassId(null); return; }
+      if (acc.owner) return;
+      const p = acc.perms;
+      const ok = view === 'class_detail' ? true
+        : view === 'assignment_edit' ? !!p.assign
+        : view === 'grading' ? !!p.grade
+        : !!(p.viewSubmissions || p.grade);
+      if (!ok) { addNotification('Chủ lớp chưa cấp cho bạn quyền này.', 'warning'); setView('class_detail'); }
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [view, selectedClassId]);
 
   useEffect(() => {
     const handleStartGrading = (e: any) => {

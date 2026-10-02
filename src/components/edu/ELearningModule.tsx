@@ -12,7 +12,7 @@ import { EduSubject, EduClass } from '../../types/edu';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import LibraryHero, { ViewToggle } from '../ui/LibraryHero';
-import { getSubjects, getSubjectsByIds, getSystemSubjects, isSystemSubject, SYSTEM_SUBJECT_OWNER, saveSubject, getClasses, getClassUsers, setEduAuthContext } from '../../lib/edu';
+import { getSubjects, getSubjectsByIds, getSystemSubjects, isSystemSubject, SYSTEM_SUBJECT_OWNER, saveSubject, getClasses, getAssignableClasses, getClassUsers, setEduAuthContext } from '../../lib/edu';
 import {
   ELLesson, ELSection, ELResource,
   syncOwnerName, getMyLessons, getPublicLessons, getPublicSubjectCounts, getLesson, getOwnLesson, createLesson, updateLesson,
@@ -849,7 +849,7 @@ function AssignScreen({ lessonId, onBack, onProgress }: { lessonId: string; onBa
   useEffect(() => {
     (async () => {
       try {
-        const [l, cls, assigned] = await Promise.all([getOwnLesson(lessonId), getClasses(), getLessonClasses(lessonId)]);
+        const [l, cls, assigned] = await Promise.all([getOwnLesson(lessonId), getAssignableClasses(), getLessonClasses(lessonId)]);
         setLesson(l);
         const withCount = await Promise.all(cls.map(async c => ({ ...c, count: (await getClassUsers(c.id)).length })));
         setClasses(withCount);

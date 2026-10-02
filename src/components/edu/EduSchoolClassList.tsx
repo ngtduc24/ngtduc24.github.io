@@ -20,13 +20,16 @@ import {
   X,
   CheckCircle2,
   ClipboardList,
-  FileCheck2
+  FileCheck2,
+  UserPlus
 } from 'lucide-react';
 import { EduClass, EduSchool } from '../../types/edu';
-import { getClasses, getSchools, deleteSchool, deleteClass, saveSchool, saveClass, getClassUsers, getAssignments, getSubmissions } from '../../lib/edu';
+import { getClasses, getSchools, getSharedEdu, deleteSchool, deleteClass, saveSchool, saveClass, getClassUsers, getAssignments, getSubmissions } from '../../lib/edu';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import { eduCan } from '../../lib/eduPermissions';
+import ShareDialog from '../ui/ShareDialog';
+import type { CollabType } from '../../lib/collab';
 
 interface EduSchoolClassListProps {
   onSelectClass: (classId: string) => void;
@@ -49,6 +52,9 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
   const [classes, setClasses] = useState<(EduClass & { edu_schools: { name: string } })[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  // Mục của mình (không có access) hoặc mục người khác chia sẻ mà mình là chủ.
+  const mine = (x: { access?: EduSchool['access'] }) => !x.access || x.access.owner;
+  const [sharing, setSharing] = useState<{ type: CollabType; id: string; title: string; ownerId: string; canManage: boolean } | null>(null);
   
   const [editingSchool, setEditingSchool] = useState<EduSchool | null>(null);
   const [editingClass, setEditingClass] = useState<EduClass | null>(null);
@@ -111,13 +117,19 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
   const loadData = async () => {
     setLoading(true);
     try {
-      const [schoolsData, classesData] = await Promise.all([
+      const [schoolsData, classesData, shared] = await Promise.all([
         getSchools(),
-        getClasses()
+        getClasses(),
+        getSharedEdu().catch(() => ({ schools: [], classes: [] }))
       ]);
-      setSchools(schoolsData);
-      setClasses(classesData);
-      loadClassStats(classesData);
+      // Gộp lớp, trường người khác thêm mình vào cộng tác.
+      const ownSchoolIds = new Set(schoolsData.map(x => x.id));
+      const ownClassIds = new Set(classesData.map(x => x.id));
+      const allSchools = [...schoolsData, ...shared.schools.filter(x => !ownSchoolIds.has(x.id))];
+      const allClasses = [...classesData, ...shared.classes.filter(x => !ownClassIds.has(x.id))];
+      setSchools(allSchools);
+      setClasses(allClasses);
+      loadClassStats(allClasses);
     } catch (err) {
       console.error(err);
     } finally {
@@ -242,6 +254,10 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
 
   return (
     <div className="space-y-8 animate-fadeIn">
+      {sharing && currentUser && (
+        <ShareDialog type={sharing.type} resourceId={sharing.id} resourceTitle={sharing.title} ownerId={sharing.ownerId}
+          currentUser={currentUser} canManage={sharing.canManage} onClose={() => setSharing(null)} />
+      )}
       {/* Hero Banner - Matching Image */}
       <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 flex items-center gap-6">
         <div className="w-16 h-16 bg-brand-light text-brand rounded-2xl flex items-center justify-center shrink-0">
@@ -439,8 +455,9 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                     <School className="w-4 h-4" />
                   </div>
                   <h2 className="text-base font-bold text-slate-800 uppercase tracking-tight">{school.name}</h2>
+                  {!mine(school) && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">Được chia sẻ</span>}
 
-                  {(canEdit || canDelete) && (
+                  {(mine(school) || !!school.access?.perms.manageMembers) ? (
                   <div className="relative">
                     <button
                       onClick={(e) => {
@@ -453,16 +470,17 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                     </button>
                     {activeDropdownId === `school-${school.id}` && (
                       <div className="absolute left-0 top-full mt-1 bg-white border border-slate-100 rounded-xl shadow-xl p-1 z-20 min-w-[150px]">
-                        {canEdit && <button onClick={() => { setEditingSchool(school); setEditForm({ name: school.name, description: school.description || '' }); }} className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Edit2 className="w-3.5 h-3.5" /> Sửa</button>}
-                        {canDelete && <button onClick={() => handleDeleteSchool(school)} className="w-full text-left px-3 py-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Trash2 className="w-3.5 h-3.5" /> Xóa</button>}
+                        {(mine(school) || school.access?.perms.manageMembers) && <button onClick={() => setSharing({ type: 'edu_school', id: school.id, title: school.name, ownerId: school.ownerId || currentUser?.id, canManage: true })} className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><UserPlus className="w-3.5 h-3.5" /> Cộng tác</button>}
+                        {canEdit && mine(school) && <button onClick={() => { setEditingSchool(school); setEditForm({ name: school.name, description: school.description || '' }); }} className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Edit2 className="w-3.5 h-3.5" /> Sửa</button>}
+                        {canDelete && mine(school) && <button onClick={() => handleDeleteSchool(school)} className="w-full text-left px-3 py-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Trash2 className="w-3.5 h-3.5" /> Xóa</button>}
                       </div>
                     )}
                   </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {canCreate && (
+                  {canCreate && mine(school) && (
                   <button
                     onClick={() => {
                       setIsCreatingClassForSchool(school.id);
@@ -487,7 +505,8 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                   >
                     <div className="p-6 flex-1">
                       <div className="flex justify-end items-start mb-2">
-                        {(canEdit || canDelete) && (
+                        {!mine(clazz) && <span className="mr-auto rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">Được chia sẻ</span>}
+                        {(mine(clazz) || !!clazz.access?.perms.manageMembers) && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -498,10 +517,11 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                           <MoreVertical className="w-4 h-4" />
                         </button>
                         )}
-                        {activeDropdownId === clazz.id && (canEdit || canDelete) && (
+                        {activeDropdownId === clazz.id && (
                           <div className="absolute right-4 top-9 bg-white border border-slate-100 rounded-xl shadow-xl p-1 z-30 min-w-[140px]" onClick={e => e.stopPropagation()}>
-                            {canEdit && <button onClick={() => { setEditingClass(clazz); setEditForm({ name: clazz.name, description: clazz.description || '' }); }} className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Edit2 className="w-3.5 h-3.5" /> Sửa</button>}
-                            {canDelete && <button onClick={() => handleDeleteClass(clazz)} className="w-full text-left px-3 py-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Trash2 className="w-3.5 h-3.5" /> Xóa</button>}
+                            <button onClick={() => { setActiveDropdownId(null); setSharing({ type: 'edu_class', id: clazz.id, title: clazz.name, ownerId: clazz.ownerId || currentUser?.id, canManage: true }); }} className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><UserPlus className="w-3.5 h-3.5" /> Cộng tác</button>
+                            {canEdit && mine(clazz) && <button onClick={() => { setEditingClass(clazz); setEditForm({ name: clazz.name, description: clazz.description || '' }); }} className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Edit2 className="w-3.5 h-3.5" /> Sửa</button>}
+                            {canDelete && mine(clazz) && <button onClick={() => handleDeleteClass(clazz)} className="w-full text-left px-3 py-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Trash2 className="w-3.5 h-3.5" /> Xóa</button>}
                           </div>
                         )}
                       </div>

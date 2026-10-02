@@ -920,22 +920,61 @@ export async function deleteJournalTypeFromSupabase(typeId: string) {
 // --- QDA (Qualitative Data Analysis) Operations ---
 // Dữ liệu phân tích định tính là dữ liệu riêng của từng người: mọi bảng qda_* có cột owner_id,
 // đọc ghi đều lọc theo người đang đăng nhập. Chưa xác định được người dùng thì không trả gì.
-const qdaOwner = (): string | null => getEduCtx().userId;
+const qdaMe = (): string | null => getEduCtx().userId;
 const QDA_NONE = '__none__';
+
+// Cộng tác dự án định tính: dự án người khác thêm mình vào thì dữ liệu con (tài liệu, mã, chú thích,
+// ghi chú) vẫn nằm dưới tên chủ dự án, mình đọc ghi theo quyền chủ đã cấp.
+type QdaRole = 'owner' | 'view' | 'edit' | 'manage';
+const qdaProjectInfo = new Map<string, { ownerId: string; role: QdaRole }>();
+const qdaOwnerOf = (projectId?: string | null): string => {
+  const me = qdaMe() || QDA_NONE;
+  if (!projectId) return me;
+  return qdaProjectInfo.get(projectId)?.ownerId || me;
+};
+const qdaCanWrite = (projectId?: string | null) => {
+  const r = projectId ? qdaProjectInfo.get(projectId)?.role : 'owner';
+  return !r || r === 'owner' || r === 'edit' || r === 'manage';
+};
+const assertQdaWrite = (projectId?: string | null) => {
+  if (!qdaCanWrite(projectId)) throw new Error('Bạn chỉ có quyền xem dự án này.');
+};
+// Các chủ mà mình được ghi dữ liệu (chính mình và chủ các dự án cho mình quyền sửa).
+const qdaWritableOwners = (): string[] => {
+  const set = new Set<string>([qdaMe() || QDA_NONE]);
+  for (const v of qdaProjectInfo.values()) if (v.role === 'edit' || v.role === 'manage') set.add(v.ownerId);
+  return [...set];
+};
+export function getQDAProjectRole(projectId: string): QdaRole {
+  return qdaProjectInfo.get(projectId)?.role || 'owner';
+}
 
 export async function getQDAProjects(): Promise<any[]> {
   try {
-    const uid = qdaOwner();
+    const uid = qdaMe();
     if (!uid) return [];
     const { data, error } = await supabase.from(QDA_PROJECTS_TABLE).select('*').eq('owner_id', uid).order('created_at');
     if (error) throw error;
-    return (data || []).map(p => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      createdAt: p.created_at,
-      settings: p.settings
-    }));
+    // Dự án người khác thêm mình vào cộng tác.
+    let shared: any[] = [];
+    const roles = new Map<string, any>();
+    try {
+      const { data: rows } = await supabase.from('collaborators').select('*').eq('resource_type', 'qda_project').eq('user_id', uid);
+      for (const r of rows || []) roles.set(r.resource_id, r);
+      if (roles.size) {
+        const { data: sp } = await supabase.from(QDA_PROJECTS_TABLE).select('*').in('id', [...roles.keys()]);
+        shared = (sp || []).filter((p: any) => p.owner_id !== uid);
+      }
+    } catch { /* chưa có bảng cộng tác thì bỏ qua */ }
+    qdaProjectInfo.clear();
+    const mapP = (p: any, role: QdaRole, ownerName?: string | null) => {
+      qdaProjectInfo.set(p.id, { ownerId: p.owner_id, role });
+      return { id: p.id, name: p.name, description: p.description, createdAt: p.created_at, settings: p.settings, ownerId: p.owner_id, role, ownerName: ownerName || null };
+    };
+    return [
+      ...(data || []).map(p => mapP(p, 'owner')),
+      ...shared.map(p => mapP(p, (roles.get(p.id)?.role || 'view') as QdaRole)),
+    ];
   } catch (error) {
     console.error("Lỗi lấy danh sách dự án QDA:", error);
     return [];
@@ -944,16 +983,20 @@ export async function getQDAProjects(): Promise<any[]> {
 
 export async function saveQDAProject(project: any) {
   try {
+    const info = qdaProjectInfo.get(project.id);
+    // Dự án được chia sẻ chỉ để xem thì bỏ qua, không ghi đè dữ liệu của chủ.
+    if (info && info.role === 'view') return;
     const dbData = {
       id: project.id,
       name: project.name,
       description: project.description,
       created_at: project.createdAt || new Date().toISOString(),
       settings: project.settings,
-      owner_id: qdaOwner()
+      owner_id: info?.ownerId || qdaMe()
     };
     const { error } = await supabase.from(QDA_PROJECTS_TABLE).upsert(dbData);
     if (error) throw error;
+    if (!info) qdaProjectInfo.set(project.id, { ownerId: dbData.owner_id || QDA_NONE, role: 'owner' });
   } catch (error) {
     handleSupabaseError(error, "Lưu dự án QDA", QDA_PROJECTS_TABLE);
     throw error;
@@ -962,18 +1005,24 @@ export async function saveQDAProject(project: any) {
 
 export async function deleteQDAProject(projectId: string) {
   try {
-    const { error } = await supabase.from(QDA_PROJECTS_TABLE).delete().eq('id', projectId).eq('owner_id', qdaOwner() || QDA_NONE);
+    const { error } = await supabase.from(QDA_PROJECTS_TABLE).delete().eq('id', projectId).eq('owner_id', qdaMe() || QDA_NONE);
     if (error) throw error;
+    await supabase.from('collaborators').delete().eq('resource_type', 'qda_project').eq('resource_id', projectId);
+    qdaProjectInfo.delete(projectId);
   } catch (error) {
     console.error("Lỗi xóa dự án QDA:", error);
     throw error;
   }
 }
 
+// Tài liệu thuộc dự án nào, để chú thích ghi đúng chủ dự án.
+const qdaDocProject = new Map<string, string>();
+
 export async function getQDADocuments(projectId: string): Promise<any[]> {
   try {
-    const { data, error } = await supabase.from(QDA_DOCUMENTS_TABLE).select('*').eq('project_id', projectId).eq('owner_id', qdaOwner() || QDA_NONE);
+    const { data, error } = await supabase.from(QDA_DOCUMENTS_TABLE).select('*').eq('project_id', projectId).eq('owner_id', qdaOwnerOf(projectId));
     if (error) throw error;
+    for (const d of data || []) qdaDocProject.set(d.id, d.project_id);
     return (data || []).map(d => ({
       id: d.id,
       projectId: d.project_id,
@@ -995,8 +1044,10 @@ export async function saveQDADocument(doc: any) {
       name: doc.name,
       plain_text: doc.plainText,
       metadata: doc.metadata,
-      owner_id: qdaOwner()
+      owner_id: qdaOwnerOf(doc.projectId)
     };
+    assertQdaWrite(doc.projectId);
+    qdaDocProject.set(doc.id, doc.projectId);
     const { error } = await supabase.from(QDA_DOCUMENTS_TABLE).upsert(dbData);
     if (error) throw error;
   } catch (error) {
@@ -1007,7 +1058,7 @@ export async function saveQDADocument(doc: any) {
 
 export async function deleteQDADocument(docId: string) {
   try {
-    const { error } = await supabase.from(QDA_DOCUMENTS_TABLE).delete().eq('id', docId).eq('owner_id', qdaOwner() || QDA_NONE);
+    const { error } = await supabase.from(QDA_DOCUMENTS_TABLE).delete().eq('id', docId).in('owner_id', qdaWritableOwners());
     if (error) throw error;
   } catch (error) {
     console.error("Lỗi xóa tài liệu QDA:", error);
@@ -1017,7 +1068,7 @@ export async function deleteQDADocument(docId: string) {
 
 export async function getQDACodes(projectId: string): Promise<any[]> {
   try {
-    const { data, error } = await supabase.from(QDA_CODES_TABLE).select('*').eq('project_id', projectId).eq('owner_id', qdaOwner() || QDA_NONE);
+    const { data, error } = await supabase.from(QDA_CODES_TABLE).select('*').eq('project_id', projectId).eq('owner_id', qdaOwnerOf(projectId));
     if (error) throw error;
     return (data || []).map(c => ({
       id: c.id,
@@ -1044,8 +1095,9 @@ export async function saveQDACode(code: any) {
       parent_code_id: code.parentCodeId,
       description: code.description,
       codebook_id: code.codebookId ?? null,
-      owner_id: qdaOwner()
+      owner_id: qdaOwnerOf(code.projectId)
     };
+    assertQdaWrite(code.projectId);
     const { error } = await supabase.from(QDA_CODES_TABLE).upsert(dbData);
     if (error) throw error;
   } catch (error) {
@@ -1056,7 +1108,7 @@ export async function saveQDACode(code: any) {
 
 export async function deleteQDACode(codeId: string) {
   try {
-    const { error } = await supabase.from(QDA_CODES_TABLE).delete().eq('id', codeId).eq('owner_id', qdaOwner() || QDA_NONE);
+    const { error } = await supabase.from(QDA_CODES_TABLE).delete().eq('id', codeId).in('owner_id', qdaWritableOwners());
     if (error) throw error;
   } catch (error) {
     console.error("Lỗi xóa mã QDA:", error);
@@ -1066,11 +1118,11 @@ export async function deleteQDACode(codeId: string) {
 
 export async function getQDAAnnotations(projectId: string): Promise<any[]> {
   try {
-    const { data: docs } = await supabase.from(QDA_DOCUMENTS_TABLE).select('id').eq('project_id', projectId).eq('owner_id', qdaOwner() || QDA_NONE);
+    const { data: docs } = await supabase.from(QDA_DOCUMENTS_TABLE).select('id').eq('project_id', projectId).eq('owner_id', qdaOwnerOf(projectId));
     if (!docs || docs.length === 0) return [];
     
     const docIds = docs.map(d => d.id);
-    const { data, error } = await supabase.from(QDA_ANNOTATIONS_TABLE).select('*').in('doc_id', docIds).eq('owner_id', qdaOwner() || QDA_NONE);
+    const { data, error } = await supabase.from(QDA_ANNOTATIONS_TABLE).select('*').in('doc_id', docIds).eq('owner_id', qdaOwnerOf(projectId));
     if (error) throw error;
     return (data || []).map(a => ({
       id: a.id,
@@ -1097,8 +1149,9 @@ export async function saveQDAAnnotation(ann: any) {
       end_index: ann.endIndex !== undefined ? ann.endIndex : ann.endOffset,
       text: ann.text,
       created_by: ann.createdBy,
-      owner_id: qdaOwner()
+      owner_id: qdaOwnerOf(ann.projectId || qdaDocProject.get(ann.docId || ann.documentId))
     };
+    assertQdaWrite(ann.projectId || qdaDocProject.get(ann.docId || ann.documentId));
     const { error } = await supabase.from(QDA_ANNOTATIONS_TABLE).upsert(dbData);
     if (error) throw error;
   } catch (error) {
@@ -1109,7 +1162,7 @@ export async function saveQDAAnnotation(ann: any) {
 
 export async function deleteQDAAnnotation(annId: string) {
   try {
-    const { error } = await supabase.from(QDA_ANNOTATIONS_TABLE).delete().eq('id', annId).eq('owner_id', qdaOwner() || QDA_NONE);
+    const { error } = await supabase.from(QDA_ANNOTATIONS_TABLE).delete().eq('id', annId).in('owner_id', qdaWritableOwners());
     if (error) throw error;
   } catch (error) {
     console.error("Lỗi xóa annotation QDA:", error);
@@ -1119,7 +1172,7 @@ export async function deleteQDAAnnotation(annId: string) {
 
 export async function getQDAMemos(projectId: string): Promise<any[]> {
   try {
-    const { data, error } = await supabase.from(QDA_MEMOS_TABLE).select('*').eq('project_id', projectId).eq('owner_id', qdaOwner() || QDA_NONE);
+    const { data, error } = await supabase.from(QDA_MEMOS_TABLE).select('*').eq('project_id', projectId).eq('owner_id', qdaOwnerOf(projectId));
     if (error) throw error;
     return (data || []).map(m => ({
       id: m.id,
@@ -1144,8 +1197,9 @@ export async function saveQDAMemo(memo: any) {
       content: memo.content,
       created_at: memo.createdAt || new Date().toISOString(),
       project_id: memo.projectId ?? null,
-      owner_id: qdaOwner()
+      owner_id: qdaOwnerOf(memo.projectId)
     };
+    assertQdaWrite(memo.projectId);
     const { error } = await supabase.from(QDA_MEMOS_TABLE).upsert(dbData);
     if (error) throw error;
   } catch (error) {
@@ -1156,7 +1210,7 @@ export async function saveQDAMemo(memo: any) {
 
 export async function deleteQDAMemo(memoId: string) {
   try {
-    const { error } = await supabase.from(QDA_MEMOS_TABLE).delete().eq('id', memoId).eq('owner_id', qdaOwner() || QDA_NONE);
+    const { error } = await supabase.from(QDA_MEMOS_TABLE).delete().eq('id', memoId).in('owner_id', qdaWritableOwners());
     if (error) throw error;
   } catch (error) {
     console.error("Lỗi xóa ghi chú QDA:", error);

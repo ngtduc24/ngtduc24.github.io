@@ -8,7 +8,7 @@ import {
 import { UserAccount } from '../../types';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
-import { getSubjects, getClasses, getClassUsers, setEduAuthContext, getGradeColumns, saveGradeColumn } from '../../lib/edu';
+import { getSubjects, getClasses, getAssignableClasses, getClassUsers, setEduAuthContext, getGradeColumns, saveGradeColumn } from '../../lib/edu';
 import { EduSubject, EduClass, EduGradeColumn } from '../../types/edu';
 import {
   QuizQuestion, QuizOption, Quiz, QuizItem, QuestionType,
@@ -1090,7 +1090,7 @@ function QuizAssign({ quiz, currentUser, onQuizChange, onBack }: { quiz: Quiz; c
     (async () => {
       setLoading(true);
       try {
-        const [cls, asg] = await Promise.all([getClasses(), getQuizAssignments(quiz.id)]);
+        const [cls, asg] = await Promise.all([getAssignableClasses(), getQuizAssignments(quiz.id)]);
         setClasses(cls);
         const map: Record<string, string> = {};
         asg.forEach(a => { if (a.grade_column_id) map[a.class_id] = a.grade_column_id; });
