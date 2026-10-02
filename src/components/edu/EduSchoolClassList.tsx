@@ -207,12 +207,12 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
   const handleDeleteClass = async (clazz: EduClass) => {
     confirm(
       "Xóa lớp học",
-      `Bạn có chắc chắn muốn xóa lớp "${clazz.name}"? Mọi dữ liệu sinh viên và điểm số sẽ bị xóa vĩnh viễn.`,
+      `Bạn có chắc chắn muốn xóa lớp "${clazz.name}"? Danh sách sinh viên, bài tập, điểm số và toàn bộ bài sinh viên đã nộp (kể cả tệp đính kèm) sẽ bị xóa vĩnh viễn để giải phóng bộ nhớ.`,
       async () => {
         try {
-          await deleteClass(clazz.id);
+          const files = await deleteClass(clazz.id);
           loadData();
-          addNotification("Đã xóa lớp học", "success");
+          addNotification(files >= 0 ? `Đã xóa lớp học và ${files} tệp bài nộp.` : "Đã xóa lớp học. Chưa dọn được tệp bài nộp trên kho lưu trữ.", files >= 0 ? "success" : "info");
         } catch (err) {
           console.error(err);
           addNotification("Lỗi khi xóa lớp học", "error");

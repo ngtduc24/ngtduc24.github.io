@@ -934,7 +934,7 @@ export const savePortfolioSkills = async (items: PortfolioSkill[]) => { await sa
 export const deletePortfolioSkillDoc = async (id: string) => { await deleteOne('portfolio_skills', id, 'skills'); };
 
 export const getPortfolioProjects = () => loadCollection('portfolio_projects', 'projects', DEFAULT_PROJECTS, { orderBy: 'sort_order', row: projectRow });
-export const savePortfolioProject = async (item: PortfolioProject) => { await saveOne('portfolio_projects', 'projects', item, DEFAULT_PROJECTS, projectRow); };
+export const savePortfolioProject = (item: PortfolioProject) => saveOne('portfolio_projects', 'projects', item, DEFAULT_PROJECTS, projectRow);
 export const deletePortfolioProject = async (id: string) => { await deleteOne('portfolio_projects', id, 'projects'); };
 
 export const getPortfolioCourses = () => loadCollection('portfolio_courses', 'courses', DEFAULT_COURSES, { row: courseRow });

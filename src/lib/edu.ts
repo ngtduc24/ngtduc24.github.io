@@ -1,5 +1,6 @@
 
 import { supabase } from './supabase';
+import { auth } from './firebase';
 import { 
   EduSchool, 
   EduClass, 
@@ -248,9 +249,28 @@ export async function saveClass(clazz: Partial<EduClass>) {
   return mapClass(data);
 }
 
-export async function deleteClass(id: string) {
+// Xoá lớp: trước hết xoá hẳn tệp bài nộp của sinh viên trên Cloudinary (giải phóng dung lượng),
+// sau đó xoá lớp. Bài tập, sinh viên, bài nộp, điểm trong cơ sở dữ liệu tự xoá theo lớp.
+// Trả về số tệp đã xoá, hoặc -1 nếu chưa dọn được tệp (hàm media-delete lỗi hoặc chưa cập nhật).
+export async function deleteClass(id: string): Promise<number> {
+  let files = -1;
+  try {
+    await auth.authStateReady();
+    const token = await auth.currentUser?.getIdToken();
+    const base = (import.meta.env.VITE_SUPABASE_URL || '').trim().replace(/\/$/, '');
+    if (token && base) {
+      const r = await fetch(`${base}/functions/v1/media-delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ classId: id }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && typeof j.files === 'number') files = j.files;
+    }
+  } catch { /* vẫn xoá lớp, báo lại là chưa dọn được tệp */ }
   const { error } = await supabase.from(CLASSES_TABLE).delete().eq('id', id);
   if (error) throw error;
+  return files;
 }
 
 export async function getClassById(id: string) {

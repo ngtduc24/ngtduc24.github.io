@@ -8,6 +8,9 @@
 // CLOUDINARY_API_SECRET, FIREBASE_PROJECT_ID. SUPABASE_URL và SUPABASE_SERVICE_ROLE_KEY có sẵn.
 // Body: { urls: string[] }  (tối đa 200 link mỗi lần)
 // Trả về: { deleted: string[], skipped: string[] }
+// Hoặc body: { classId } khi xoá lớp: chủ lớp (hoặc chủ trường của lớp) xoá hẳn mọi tệp sinh viên đã nộp
+// trong các bài tập của lớp (thư mục smart_research_vn/edu_submissions/<mã link bài tập>).
+// Trả về: { files: số tệp đã xoá }
 
 import { jwtVerify, createRemoteJWKSet } from "https://esm.sh/jose@5.9.6";
 
@@ -67,6 +70,60 @@ Deno.serve(async (req) => {
   if (!cloud || !apiKey || !apiSecret) return json({ error: "Chưa cấu hình secret Cloudinary cho hàm." }, 500);
 
   const body = await req.json().catch(() => ({}));
+
+  // ----- Xoá lớp: dọn tệp bài nộp của sinh viên -----
+  if (body?.classId) {
+    const sbUrlC = Deno.env.get("SUPABASE_URL") ?? "";
+    const sbKeyC = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const hC = { apikey: sbKeyC, Authorization: `Bearer ${sbKeyC}` };
+    const classId = String(body.classId).replace(/[^a-zA-Z0-9-]/g, "");
+    const cls = (await (await fetch(`${sbUrlC}/rest/v1/edu_classes?select=id,owner_id,school_id&id=eq.${classId}`, { headers: hC })).json().catch(() => []))?.[0];
+    if (!cls) return json({ files: 0 });
+    let allowed = cls.owner_id === uid;
+    if (!allowed && cls.school_id) {
+      const sch = (await (await fetch(`${sbUrlC}/rest/v1/edu_schools?select=owner_id&id=eq.${cls.school_id}`, { headers: hC })).json().catch(() => []))?.[0];
+      allowed = sch?.owner_id === uid;
+    }
+    if (!allowed) return json({ error: "Bạn không phải chủ lớp này." }, 403);
+    const assigns: Array<{ id: string; share_link_id: string | null }> = await (await fetch(`${sbUrlC}/rest/v1/edu_assignments?select=id,share_link_id&class_id=eq.${classId}`, { headers: hC })).json().catch(() => []);
+    const auth = "Basic " + btoa(`${apiKey}:${apiSecret}`);
+    const SUB = "smart_research_vn/edu_submissions/";
+    let files = 0;
+    // 1. Xoá theo thư mục của từng bài tập (gồm cả tệp không còn ghi trong bài nộp).
+    for (const a of Array.isArray(assigns) ? assigns : []) {
+      const link = String(a.share_link_id || "").replace(/[^a-zA-Z0-9]/g, "");
+      if (!link) continue;
+      for (const type of ["image", "video", "raw"]) {
+        for (let round = 0; round < 20; round++) {
+          const r = await fetch(`https://api.cloudinary.com/v1_1/${cloud}/resources/${type}/upload?prefix=${encodeURIComponent(SUB + link + "/")}`, { method: "DELETE", headers: { Authorization: auth } });
+          const j = await r.json().catch(() => ({}));
+          files += Object.values(j?.deleted || {}).filter((v) => v === "deleted").length;
+          if (!j?.partial) break;
+        }
+      }
+      await fetch(`https://api.cloudinary.com/v1_1/${cloud}/folders/${encodeURIComponent(SUB + link)}`, { method: "DELETE", headers: { Authorization: auth } }).catch(() => null);
+    }
+    // 2. Tệp bài nộp nằm ngoài thư mục trên (cách nộp cũ) nhưng vẫn thuộc khu bài nộp.
+    const ids = (Array.isArray(assigns) ? assigns : []).map((a) => a.id);
+    for (let i = 0; i < ids.length; i += 50) {
+      const subs: Array<{ files: unknown; content: string | null }> = await (await fetch(`${sbUrlC}/rest/v1/edu_submissions?select=files,content&assignment_id=in.(${ids.slice(i, i + 50).join(",")})`, { headers: hC })).json().catch(() => []);
+      const found = new Set<string>();
+      for (const sub of Array.isArray(subs) ? subs : []) {
+        (JSON.stringify(sub.files || []) + (sub.content || "")).match(/https?:\/\/res\.cloudinary\.com\/[^"'\s<>)]+/g)?.forEach((u) => found.add(u));
+      }
+      for (const u of found) {
+        const p = parseCloudinary(u, cloud);
+        if (!p || !p.publicId.startsWith(SUB)) continue;
+        const timestamp = Math.floor(Date.now() / 1000);
+        const signature = await sha1Hex(`invalidate=true&public_id=${p.publicId}&timestamp=${timestamp}${apiSecret}`);
+        const form = new URLSearchParams({ public_id: p.publicId, timestamp: String(timestamp), api_key: apiKey, invalidate: "true", signature });
+        const cj = await (await fetch(`https://api.cloudinary.com/v1_1/${cloud}/${p.type}/destroy`, { method: "POST", body: form })).json().catch(() => ({}));
+        if (cj?.result === "ok") files++;
+      }
+    }
+    return json({ files });
+  }
+
   const urls: string[] = Array.isArray(body?.urls) ? body.urls.map(String).slice(0, 200) : [];
   if (!urls.length) return json({ deleted: [], skipped: [] });
 

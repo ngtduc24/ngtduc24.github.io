@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, CloudUpload, File, Image as ImageIcon, Images, Loader2, Search, Upload, Video, X } from 'lucide-react';
 import { listMyMedia } from '../lib/mediaItems';
 import { CloudinaryResourceType, uploadMediaToCloudinary } from '../lib/upload';
@@ -148,7 +149,8 @@ export default function MediaSourcePicker({
         {!compact && <span>{uploading ? 'Đang tải' : label}</span>}
       </button>
 
-      {open && (
+      {/* Đưa hộp chọn ra thẳng thân trang, để khung cha có hiệu ứng (mờ nền, cuộn) không bó hẹp hộp chọn. */}
+      {open && createPortal(
         <div className="fixed inset-0 z-[180] flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Chọn media" onMouseDown={event => event.target === event.currentTarget && close()}>
           <div className="flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 text-left">
@@ -232,7 +234,7 @@ export default function MediaSourcePicker({
             {error && <p className="px-5 pb-4 text-xs font-semibold text-rose-600">{error}</p>}
           </div>
         </div>
-      )}
+      , document.body)}
     </>
   );
 }

@@ -375,7 +375,7 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Nhập 
   return (
     <div className={shell}>
       {/* Thanh công cụ */}
-      <div className={`sticky top-0 z-20 border-b border-slate-200 bg-slate-50/95 backdrop-blur ${autoHeight && !full ? 'rounded-t-xl' : ''}`}>
+      <div className={`sticky top-0 z-20 border-b border-slate-200 bg-slate-50 ${autoHeight && !full ? 'rounded-t-xl' : ''}`}>
         <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5">
           <Btn title="Hoàn tác (Ctrl+Z)" onClick={() => chain().undo().run()} disabled={!editor.can().undo()}><Undo className="h-4 w-4" /></Btn>
           <Btn title="Làm lại (Ctrl+Y)" onClick={() => chain().redo().run()} disabled={!editor.can().redo()}><Redo className="h-4 w-4" /></Btn>

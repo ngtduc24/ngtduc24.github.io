@@ -1,4 +1,5 @@
 import CategoryManagerModal from './CategoryManagerModal';
+import ProjectComposer from './ProjectComposer';
 import { PortfolioCategory, getPortfolioProjectCategories, savePortfolioProjectCategories, getPortfolioCourseCategories, savePortfolioCourseCategories } from '../../lib/portfolioData';
 import React, { useState, useEffect } from 'react';
 import { GraduationCap, ArrowLeft, 
@@ -1291,152 +1292,20 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
         </div>
       )}
 
-      {/* EDITING / ADDING PROJECT FORM VIEW */}
+      {/* SOẠN DỰ ÁN: trang soạn chuẩn dùng chung với bài viết */}
       {activeSubTab === 'projects' && editingProj && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-5">
-            <div className="flex items-center gap-3">
-              <button type="button" onClick={() => setEditingProj(null)} className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors">
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <div>
-                <h2 className="text-xl font-black text-slate-800 tracking-tight">
-                  {editingProj.title || 'Thêm Dự án mới'}
-                </h2>
-                <p className="text-xs font-semibold text-slate-500 mt-1">Thiết kế nội dung và thông tin dự án</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <button type="button" onClick={() => handleSaveProj('draft')} className="rounded-xl bg-slate-100 px-5 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-200 transition-colors">
-                Lưu bản nháp
-              </button>
-              <button type="button" onClick={() => handleSaveProj('published')} className="rounded-xl bg-brand px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand-hover transition-colors">
-                Xuất bản Dự án
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            {/* Row 1: Setup Information (Moved to top) */}
-            <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-slate-100">
-              <h3 className="mb-6 text-sm font-black text-slate-800 flex items-center gap-2">
-                <Settings className="w-4 h-4 text-brand" /> Cài đặt Thông tin Dự án
-              </h3>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <div className="space-y-1.5 lg:col-span-2">
-                  <label className="text-[11px] font-bold text-slate-700">Tiêu đề (Bắt buộc)</label>
-                  <input type="text" required placeholder="Nhập tiêu đề dự án" value={editingProj.title} onChange={e => setEditingProj({...editingProj, title: e.target.value, slug: e.target.value.toLowerCase().replace(/[\s\W-]+/g, '-')})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:bg-white focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all" />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-700">Trạng thái hiển thị</label>
-                  <select value={editingProj.status} onChange={e => setEditingProj({...editingProj, status: e.target.value as any})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:bg-white focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all">
-                    <option value="published">Đã Xuất bản</option>
-                    <option value="draft">Bản nháp</option>
-                    <option value="hidden">Ẩn</option>
-                    <option value="ongoing">Đang thực hiện</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-[11px] font-bold text-slate-700">Thể loại dự án</label>
-                    <button type="button" onClick={() => setCategoryModalType('project')} className="text-xs text-brand hover:underline font-bold">Quản lý</button>
-                  </div>
-                  <select
-                    value={editingProj.category}
-                    onChange={e => setEditingProj({...editingProj, category: e.target.value})}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:bg-white focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all cursor-pointer"
-                  >
-                    <option value="">Chọn danh mục</option>
-                    {projectCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-700">Năm thực hiện</label>
-                  <input type="text" placeholder="Ví dụ: 2025" value={editingProj.timeline} onChange={e => setEditingProj({...editingProj, timeline: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:bg-white focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all" />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-700">Công cụ chính</label>
-                  <input type="text" placeholder="Ví dụ: Blender" value={editingProj.tools.join(', ')} onChange={e => setEditingProj({...editingProj, tools: e.target.value.split(',').map(s=>s.trim()).filter(Boolean)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:bg-white focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all" />
-                </div>
-
-                <div className="space-y-1.5 lg:col-span-2">
-                  <label className="text-[11px] font-bold text-slate-700">Thẻ (Tags)</label>
-                  <input type="text" placeholder="brand, logo, 2024..." value={editingProj.tags.join(', ')} onChange={e => setEditingProj({...editingProj, tags: e.target.value.split(',').map(s=>s.trim()).filter(Boolean)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:bg-white focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all" />
-                </div>
-
-                <div className="flex gap-4 pt-4 lg:col-span-1 items-center">
-                  <div className="flex-1 flex items-center justify-between bg-slate-50 p-3 border border-slate-100 rounded-xl">
-                    <span className="text-xs font-bold text-slate-700">Nổi bật</span>
-                    <input type="checkbox" checked={editingProj.isFeatured} onChange={(e) => setEditingProj({ ...editingProj, isFeatured: e.target.checked })} className="rounded text-brand w-4 h-4 focus:ring-brand cursor-pointer" />
-                  </div>
-                  <div className="flex-1 flex items-center justify-between bg-slate-50 p-3 border border-slate-100 rounded-xl">
-                    <span className="text-xs font-bold text-slate-700">Ghim</span>
-                    <input type="checkbox" checked={editingProj.isPinned} onChange={(e) => setEditingProj({ ...editingProj, isPinned: e.target.checked })} className="rounded text-brand w-4 h-4 focus:ring-brand cursor-pointer" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Row 2: Design Content (Middle) */}
-            <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-slate-100">
-              <h3 className="mb-6 text-sm font-black text-slate-800 flex items-center gap-2">
-                <LayoutGrid className="w-4 h-4 text-brand" /> Thiết kế Nội dung Chi tiết
-              </h3>
-              
-              <div className="space-y-8">
-                <div className="space-y-3">
-                  <label className="text-[13px] font-semibold text-slate-600">Bài viết chi tiết (Rich Text)</label>
-                  <RichTextEditor 
-                    value={editingProj.detailedContent} 
-                    onChange={val => setEditingProj({...editingProj, detailedContent: val})} 
-                    placeholder="Viết nội dung bài viết giới thiệu dự án của bạn..."
-                  />
-                </div>
-
-                <div className="space-y-3 pt-6 border-t border-slate-100">
-                  <label className="text-[13px] font-semibold text-slate-600">Lưới Ảnh (Photo Grid)</label>
-                  <CloudinaryUploadField label="" value={editingProj.gallery.join('\n')} onChange={value => setEditingProj({ ...editingProj, gallery: value.split('\n').filter(Boolean) })} accept="image/*" resourceType="image" folder="portfolio/projects/gallery" multiple onMultiple={urls => setEditingProj({ ...editingProj, gallery: [...editingProj.gallery, ...urls] })} hint="Tải lên hoặc dán URL nhiều ảnh (mỗi URL 1 dòng)" />
-                </div>
-
-                <div className="space-y-3 pt-6 border-t border-slate-100">
-                  <label className="text-[13px] font-semibold text-slate-600">Video giới thiệu</label>
-                  <CloudinaryUploadField label="" value={editingProj.introVideo || ''} onChange={url => setEditingProj({ ...editingProj, introVideo: url })} accept="video/*" resourceType="video" folder="portfolio/projects/videos" hint="Tải video mp4 hoặc dán URL (YouTube, Vimeo...)" />
-                </div>
-              </div>
-            </div>
-
-            {/* Row 3: Cover Image (Moved to bottom!) */}
-            <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-slate-100">
-              <h3 className="mb-6 text-sm font-black text-slate-800 flex items-center gap-2">
-                <Image className="w-4 h-4 text-brand" /> Ảnh bìa dự án (Cover Image / Video)
-              </h3>
-              <div className="grid gap-6 md:grid-cols-2 items-start">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-bold text-slate-700">Tải ảnh bìa hoặc dán liên kết</label>
-                    <CloudinaryUploadField label="" value={editingProj.coverImage} onChange={url => setEditingProj({ ...editingProj, coverImage: url })} accept="image/*,video/*" resourceType="auto" folder="portfolio/projects/covers" />
-                  </div>
-                  <div className="flex items-center gap-2 pt-2">
-                    <input id="loopVideoProj" type="checkbox" checked={!!editingProj.loopVideo} onChange={e => setEditingProj({...editingProj, loopVideo: e.target.checked})} className="rounded border-slate-300 text-brand focus:ring-brand cursor-pointer" />
-                    <label htmlFor="loopVideoProj" className="text-xs font-bold text-slate-700 cursor-pointer">Tự động phát lại video (nếu chọn bìa dạng video)</label>
-                  </div>
-                </div>
-                {editingProj.coverImage && (
-                  <div className="space-y-2">
-                    <label className="text-[13px] font-semibold text-slate-600">Xem trước ảnh bìa</label>
-                    <div className="aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-                      <img src={editingProj.coverImage} className="w-full h-full object-cover" alt="Cover Preview" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProjectComposer
+          key={editingProj.id}
+          project={editingProj}
+          isNew={!projects.some(p => p.id === editingProj.id)}
+          categories={projectCategories}
+          onManageCategories={() => setCategoryModalType('project')}
+          onSaved={(saved, { auto }) => {
+            setProjects(cur => (cur.some(p => p.id === saved.id) ? cur.map(p => (p.id === saved.id ? saved : p)) : [...cur, saved]));
+            if (!auto) triggerSuccess(saved.status === 'published' ? `Đã xuất bản dự án "${saved.title}".` : `Đã lưu dự án "${saved.title}".`);
+          }}
+          onClose={() => setEditingProj(null)}
+        />
       )}
 
       {/* SUB-VIEW 2: COURSES PANEL */}
