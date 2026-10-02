@@ -48,6 +48,7 @@ const MODULES: ModuleDef[] = [
   { id: 'utility_social_design', group: 'Công cụ thiết kế', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn' },
   { id: 'portfolio_cms', group: 'Công cụ thiết kế', label: 'Website', desc: 'Tạo trang giới thiệu bản thân với địa chỉ riêng' },
   { id: 'notifications', group: 'Quản lý và hệ thống', label: 'Trung tâm thông báo', desc: 'Quản lý và phát thông báo tới người dùng' },
+  { id: 'automatic', group: 'Quản lý và hệ thống', label: 'Automatic', desc: 'Tạo quy trình tự động hoá, chạy thử và chạy theo lịch, chỉ chủ quy trình xem được' },
   { id: 'assistant', group: 'Giảng dạy và nội dung', label: 'Trợ lý giáo dục', desc: 'Hỏi đáp kiến thức bài học từ bài giảng, câu hỏi và bài tập được chia sẻ công khai' },
   { id: 'settings', group: 'Quản lý và hệ thống', label: 'Cấu hình hệ thống', desc: 'Giao diện, cài đặt chức năng, trợ lý, bảo trì, kho lưu trữ', settings: true },
 ];

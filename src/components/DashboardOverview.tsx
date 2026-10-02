@@ -7,7 +7,7 @@ import {
   CalendarDays, BarChart3, GraduationCap, Wrench, FolderKanban, Mail,
   Library, Image as ImageIcon, LayoutGrid, ArrowRight, Bell, ChevronDown,
   Home, FileText, CheckCircle2, ClipboardList, Scan, LayoutTemplate, Megaphone, Minus, Eye, Shield, Plus, Clapperboard, FileArchive, Globe, FolderOpen
-, FileUser, QrCode, Presentation } from 'lucide-react';
+, FileUser, QrCode, Presentation, Workflow } from 'lucide-react';
 import {
   getStatsFromSupabase,
   getJournalsFromSupabase,
@@ -276,6 +276,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { id: 'utility_file_compress', label: 'Giảm dung lượng file', desc: 'Nén PDF, JPG, PNG mà vẫn giữ chất lượng tốt', icon: FileArchive, color: 'emerald' },
     { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn', icon: LayoutTemplate, color: 'violet' },
     { id: 'portfolio_cms', label: 'Website', desc: 'Tạo trang giới thiệu bản thân với địa chỉ riêng ngtduc24.github.io/tên', icon: Globe, color: 'teal' },
+    { id: 'automatic', label: 'Automatic', desc: 'Tự động hoá công việc bằng quy trình kéo thả', icon: Workflow, color: 'orange' },
     { id: 'assistant', label: 'Trợ lý giáo dục', desc: 'Hỏi đáp kiến thức bài học từ nội dung công khai', icon: Sparkles, color: 'violet' },
     { id: 'notifications', label: 'Thông báo', desc: 'Tài liệu, mẫu biểu, dữ liệu tham khảo', icon: Mail, color: 'amber' },
     { id: 'users', label: 'Quản lý người dùng', desc: 'Tạo, chỉnh sửa tài khoản trên hệ thống', icon: Users, color: 'indigo' },

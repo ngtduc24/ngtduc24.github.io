@@ -246,6 +246,13 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
     description: 'Ứng dụng dựng phim nhiều lớp chạy trong trình duyệt, quản lý kho tư liệu và xuất video.',
     keywords: 'dựng phim, video editor, remier, biên tập video, dòng thời gian',
   },
+  automatic: {
+    id: 'automatic',
+    slug: 'automatic',
+    title: 'Automatic · Tự động hoá quy trình | EduGo',
+    description: 'Tạo quy trình tự động hoá kéo thả theo cách của n8n: bước kích hoạt, lịch chạy, gọi API, rẽ nhánh, biến đổi dữ liệu.',
+    keywords: 'tự động hoá, automation, quy trình, n8n, lịch chạy, cron, workflow',
+  },
   assistant: {
     id: 'assistant',
     slug: 'tro-ly-giao-duc',

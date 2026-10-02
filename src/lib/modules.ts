@@ -1,7 +1,7 @@
 import {
   CalendarDays, BookOpen, LayoutGrid, Image as ImageIcon, BarChart3,
   GraduationCap, Library, CheckCircle2, ClipboardList, Clapperboard,
-  Scan, LayoutTemplate, FolderKanban, Mail, Megaphone, Users, Shield, Settings, Sparkles, FileArchive, Globe, FileUser, QrCode, FolderOpen, Presentation
+  Scan, LayoutTemplate, FolderKanban, Mail, Megaphone, Users, Shield, Settings, Sparkles, FileArchive, Globe, FileUser, QrCode, FolderOpen, Presentation, Workflow
 } from 'lucide-react';
 import { AppSettings, ModuleOverride } from '../types';
 
@@ -40,6 +40,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { id: 'utility_file_compress', label: 'Giảm dung lượng file', desc: 'Nén PDF, JPG, PNG ngay trên trình duyệt mà vẫn giữ chất lượng tốt', icon: FileArchive, color: 'emerald', group: 'Công cụ thiết kế' },
   { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn', icon: LayoutTemplate, color: 'violet', group: 'Công cụ thiết kế' },
   { id: 'portfolio_cms', label: 'Website', desc: 'Tạo trang giới thiệu bản thân với địa chỉ riêng ngtduc24.github.io/tên', icon: Globe, color: 'teal', group: 'Giảng dạy và nội dung' },
+  { id: 'automatic', label: 'Automatic', desc: 'Tự động hoá công việc bằng quy trình kéo thả, chạy theo lịch, gọi API, rẽ nhánh dữ liệu', icon: Workflow, color: 'orange', group: 'Quản lý và hệ thống' },
   { id: 'assistant', label: 'Trợ lý giáo dục', desc: 'Hỏi đáp kiến thức bài học từ bài giảng, câu hỏi và bài tập được chia sẻ công khai', icon: Sparkles, color: 'violet', group: 'Quản lý và hệ thống' },
   { id: 'notifications', label: 'Thông báo', desc: 'Xem thông báo, tài liệu và dữ liệu tham khảo', icon: Mail, color: 'amber', group: 'Quản lý và hệ thống' },
   { id: 'notifications_admin', label: 'Trung tâm thông báo', desc: 'Quản lý và phát thông báo tới người dùng', icon: Megaphone, color: 'orange', group: 'Quản lý và hệ thống' },

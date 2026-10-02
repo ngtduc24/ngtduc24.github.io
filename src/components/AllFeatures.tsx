@@ -5,7 +5,7 @@ import {
   Search, ArrowLeft, ArrowRight, LayoutGrid,
   CalendarDays, BookOpen, LayoutTemplate, Image as ImageIcon, BarChart3,
   GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone, Shield, CheckCircle2, ClipboardList, Clapperboard, Sparkles, FileArchive, Globe, FolderOpen
-, FileUser, QrCode , Settings2, Presentation } from 'lucide-react';
+, FileUser, QrCode , Settings2, Presentation, Workflow } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
 import { isModuleHidden, resolveModuleMeta } from '../lib/modules';
 
@@ -65,6 +65,7 @@ const ALL_FEATURES: FeatureItem[] = [
   { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn', icon: LayoutTemplate, color: 'violet', group: 'Công cụ thiết kế' },
 
   { id: 'tasks', label: 'Quản lý công việc', desc: 'Tạo, theo dõi và quản lý công việc cá nhân/nhóm', icon: CalendarDays, color: 'rose', group: 'Quản lý và hệ thống' },
+  { id: 'automatic', label: 'Automatic', desc: 'Tự động hoá công việc bằng quy trình kéo thả, chạy theo lịch, gọi API, rẽ nhánh dữ liệu', icon: Workflow, color: 'orange', group: 'Quản lý và hệ thống' },
   { id: 'assistant', label: 'Trợ lý giáo dục', desc: 'Hỏi đáp kiến thức bài học từ bài giảng, câu hỏi và bài tập được chia sẻ công khai', icon: Sparkles, color: 'violet', group: 'Quản lý và hệ thống' },
   { id: 'notifications', label: 'Thông báo', desc: 'Xem thông báo, tài liệu và dữ liệu tham khảo', icon: Mail, color: 'amber', group: 'Quản lý và hệ thống' },
   { id: 'notifications_admin', label: 'Trung tâm thông báo', desc: 'Quản lý và phát thông báo tới người dùng', icon: Megaphone, color: 'orange', group: 'Quản lý và hệ thống' },

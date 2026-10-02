@@ -42,10 +42,12 @@ import ELearningModule from './components/edu/ELearningModule';
 import RemierModule from './components/remier/RemierModule';
 import ScientificCvModule from './components/scientificCv/ScientificCvModule';
 import QrCodeModule from './components/qr/QrCodeModule';
+const AutomaticModule = React.lazy(() => import('./components/automatic/AutomaticModule'));
+import { useAutomaticScheduler } from './lib/automatic/scheduler';
 import EduModule from './components/EduModule';
 import { setEduAuthContext } from './lib/edu';
 import { TaskProvider } from './components/TaskContext';
-import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban, GraduationCap, Film, FileUser, QrCode, Presentation } from 'lucide-react';
+import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban, GraduationCap, Film, FileUser, QrCode, Presentation, Workflow } from 'lucide-react';
 import { supabase } from "./lib/supabase";
 import { useMyNotifications, resetNotificationStore, notifyAppAccessChange } from './lib/notifications';
 import SlidesModule from './components/slides/SlidesModule';
@@ -369,6 +371,7 @@ export default function App() {
       remier: 'Remier · Dựng phim',
       scientific_cv: 'Lý lịch khoa học',
       qr_codes: 'Tạo mã QR',
+      automatic: 'Automatic · Tự động hoá',
       assistant: 'Trợ lý giáo dục',
     };
 
@@ -619,6 +622,9 @@ export default function App() {
     try { window.history.replaceState(null, '', '/'); } catch { /* bỏ qua */ }
   };
 
+  // Quy trình Automatic đang bật lịch chạy nền khi EduGo đang mở
+  useAutomaticScheduler(currentUser, !!currentUser && !isModuleHidden('automatic', settings) && canUseModule(currentUser, 'automatic'));
+
   // Helper check to verify if currentUser has permission to view a tab
   const hasPermission = (tabId: string) => {
     if (!currentUser) return false;
@@ -793,6 +799,8 @@ export default function App() {
         return <ScientificCvModule currentUser={currentUser} />;
       case 'qr_codes':
         return <QrCodeModule currentUser={currentUser} />;
+      case 'automatic':
+        return <React.Suspense fallback={<div className="py-16 text-center text-sm text-slate-500">Đang tải Automatic...</div>}><AutomaticModule currentUser={currentUser} /></React.Suspense>;
       // Mã cũ của mục Tạo AR. Giữ lại để tài khoản nào đang mở sẵn mục này, hoặc có
       // đường dẫn cũ lưu trong trình duyệt, vẫn vào đúng nơi thay vì gặp trang trắng.
       case 'ar_module':
@@ -1026,6 +1034,7 @@ export default function App() {
       { id: 'remier', label: 'Remier · Dựng phim', icon: Film },
       { id: 'scientific_cv', label: 'Lý lịch khoa học', icon: FileUser },
       { id: 'qr_codes', label: 'Tạo mã QR', icon: QrCode },
+      { id: 'automatic', label: 'Automatic', icon: Workflow },
       { id: 'utilities', label: 'Tiện ích', icon: Wrench },
       { id: 'portfolio_cms', label: 'Website', icon: Shield },
       { id: 'notifications', icon: Bell, label: 'Thông báo' },
