@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { notice } from './ui/Dialogs';
 import { 
   Image, 
@@ -54,6 +54,28 @@ export default function MediaLibrary({ currentUser, embedded }: MediaLibraryProp
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<UploadedImage | null>(null);
   const { confirm } = useConfirmation();
+
+  // Màn hình rộng: khung chính vừa khít chiều cao cửa sổ để đầu trang, cột trái, ô tìm kiếm và
+  // thanh phân trang đứng yên, chỉ danh sách ảnh bên trong khung được lăn chuột.
+  const frameRef = useRef<HTMLDivElement>(null);
+  const gridScrollRef = useRef<HTMLDivElement>(null);
+  const [frameH, setFrameH] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const calc = () => {
+      const el = frameRef.current;
+      if (!el || window.innerWidth < 1024) { setFrameH(null); return; }
+      const main = document.getElementById('main-content');
+      const mainRect = main?.getBoundingClientRect();
+      const top = el.getBoundingClientRect().top - (mainRect?.top || 0) + (main?.scrollTop || 0);
+      const padBottom = main ? parseFloat(getComputedStyle(main).paddingBottom) || 0 : 24;
+      const avail = (main?.clientHeight || window.innerHeight) - top - padBottom;
+      setFrameH(Math.max(420, Math.floor(avail)));
+    };
+    calc();
+    const t = setTimeout(calc, 300);
+    window.addEventListener('resize', calc);
+    return () => { clearTimeout(t); window.removeEventListener('resize', calc); };
+  }, []);
 
   // For direct upload
   const [uploading, setUploading] = useState(false);
@@ -214,6 +236,8 @@ export default function MediaLibrary({ currentUser, embedded }: MediaLibraryProp
   // Chia trang để thư viện nhiều tệp không kéo dài cả trang.
   const pg = usePaging(filteredImages.length, 'media_page_size', 24, [searchTerm, selectedCategory, selectedType]);
   const pageImages = filteredImages.slice(pg.from, pg.to);
+  // Đổi trang thì khung ảnh quay lên đầu.
+  useEffect(() => { if (gridScrollRef.current) gridScrollRef.current.scrollTop = 0; }, [pg.page, pg.size]);
 
   const formatDate = (timestamp: any) => {
     if (!timestamp) return 'Vừa xong';
@@ -248,10 +272,10 @@ export default function MediaLibrary({ currentUser, embedded }: MediaLibraryProp
       </div>
 
       {/* Grid of upload & filters */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div ref={frameRef} style={frameH ? { height: frameH } : undefined} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Left: Drag & Drop upload panel & Storage Capacity */}
-        <div className="lg:col-span-1 space-y-6">
+        {/* Cột trái đứng yên, chỉ khung ảnh bên phải được lăn chuột */}
+        <div className="lg:col-span-1 space-y-6 lg:h-full lg:overflow-y-auto scrollbar-thin">
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4">
             <h3 className="text-base font-semibold text-slate-800 flex items-center gap-2 border-b border-slate-50 pb-3">
               <Upload className="w-4 h-4 text-brand" />
@@ -385,10 +409,10 @@ export default function MediaLibrary({ currentUser, embedded }: MediaLibraryProp
         </div>
 
         {/* Right: Search, category filters & image grid */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 flex min-h-0 flex-col gap-4 lg:h-full">
           
           {/* Filters & search */}
-          <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs space-y-3.5">
+          <div className="shrink-0 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3.5">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -470,6 +494,7 @@ export default function MediaLibrary({ currentUser, embedded }: MediaLibraryProp
             </div>
           ) : (
             <>
+            <div ref={gridScrollRef} className="min-h-0 flex-1 overflow-y-auto scrollbar-thin p-1 -m-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {pageImages.map((img) => (
                 <motion.div
@@ -587,7 +612,11 @@ export default function MediaLibrary({ currentUser, embedded }: MediaLibraryProp
                 </motion.div>
               ))}
             </div>
-            <Pager pg={pg} total={filteredImages.length} unit="tệp" sizes={[12, 24, 48, 96]} />
+            </div>
+            {/* Thanh phân trang đứng yên dưới khung ảnh */}
+            <div className="shrink-0">
+              <Pager pg={pg} total={filteredImages.length} unit="tệp" sizes={[12, 24, 48, 96]} />
+            </div>
             </>
           )}
         </div>
