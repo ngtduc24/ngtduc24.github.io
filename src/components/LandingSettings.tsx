@@ -64,15 +64,84 @@ export default function LandingSettings() {
       {/* Nội dung giới thiệu */}
       <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
         <h2 className="flex items-center gap-2 text-base font-semibold text-slate-800"><Type className="h-4 w-4 text-brand" /> Khối giới thiệu đầu trang</h2>
-        <p className="text-[13px] text-slate-500">Ảnh nền dùng chung với ảnh đầu trang Thư viện. Để trống thì dùng câu mặc định.</p>
+        <p className="text-[13px] text-slate-500">Khối này trải hết chiều ngang trang đầu. Ô nào để trống thì dùng chữ mặc định đang hiện mờ trong ô.</p>
+        <div className="flex flex-col gap-4 md:flex-row">
+          <div className="w-full shrink-0 space-y-2 md:w-72">
+            <span className="text-[13px] font-semibold text-slate-600">Ảnh nền</span>
+            <div className="relative aspect-[21/9] overflow-hidden rounded-xl bg-slate-100">
+              {cfg.heroImage
+                ? <img src={cfg.heroImage} alt="" className="h-full w-full object-cover" style={{ objectPosition: cfg.heroPosition || 'center' }} />
+                : <div className="grid h-full place-items-center px-3 text-center text-[12px] text-slate-400"><span><ImageIcon className="mx-auto mb-1 h-6 w-6" />Chưa chọn, đang dùng ảnh đầu trang Thư viện</span></div>}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <MediaSourcePicker onSelect={url => update({ ...cfg, heroImage: url })} accept="image/*" resourceType="image" folder="system/landing" category="Ảnh cấu hình hệ thống" label={cfg.heroImage ? 'Đổi ảnh' : 'Chọn ảnh'} />
+              {cfg.heroImage && <button type="button" onClick={() => update({ ...cfg, heroImage: '' })} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50">Bỏ ảnh</button>}
+            </div>
+          </div>
+          <div className="grid min-w-0 flex-1 grid-cols-1 gap-4 sm:grid-cols-2">
+            <label className="space-y-1.5">
+              <span className="text-[13px] font-semibold text-slate-600">Chữ lớn đầu trang</span>
+              <input value={cfg.heroBrand || ''} onChange={e => update({ ...cfg, heroBrand: e.target.value })} placeholder="EduGo" className={inputCls} />
+            </label>
+            <label className="space-y-1.5">
+              <span className="text-[13px] font-semibold text-slate-600">Câu giới thiệu chính</span>
+              <input value={cfg.heroTitle || ''} onChange={e => update({ ...cfg, heroTitle: e.target.value })} placeholder="Nền tảng học tập và làm việc trực tuyến" className={inputCls} />
+            </label>
+            <label className="space-y-1.5 sm:col-span-2">
+              <span className="text-[13px] font-semibold text-slate-600">Mô tả ngắn</span>
+              <textarea rows={2} value={cfg.heroDesc || ''} onChange={e => update({ ...cfg, heroDesc: e.target.value })} placeholder="Quản lý lớp học, bài tập, trắc nghiệm, bài giảng E-Learning, dựng phim, AR, VR 360 và nhiều tiện ích khác, gom vào một chỗ." className={inputCls} />
+            </label>
+            <label className="space-y-1.5">
+              <span className="text-[13px] font-semibold text-slate-600">Chữ nút đăng ký</span>
+              <input value={cfg.registerText || ''} onChange={e => update({ ...cfg, registerText: e.target.value })} placeholder="Đăng ký miễn phí" className={inputCls} />
+            </label>
+            <label className="space-y-1.5">
+              <span className="text-[13px] font-semibold text-slate-600">Chữ nút đăng nhập</span>
+              <input value={cfg.loginText || ''} onChange={e => update({ ...cfg, loginText: e.target.value })} placeholder="Đăng nhập" className={inputCls} />
+            </label>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 md:grid-cols-3">
+          <div className="space-y-1.5">
+            <span className="text-[13px] font-semibold text-slate-600">Vị trí lấy ảnh</span>
+            <div className="flex flex-wrap gap-2">
+              {[['top', 'Trên'], ['center', 'Giữa'], ['bottom', 'Dưới']].map(([id, label]) => (
+                <button key={id} type="button" onClick={() => update({ ...cfg, heroPosition: id })}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${(cfg.heroPosition || 'center') === id ? 'bg-brand text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{label}</button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <span className="text-[13px] font-semibold text-slate-600">Chiều cao khối</span>
+            <div className="flex flex-wrap gap-2">
+              {([['compact', 'Thấp'], ['normal', 'Vừa'], ['tall', 'Cao']] as const).map(([id, label]) => (
+                <button key={id} type="button" onClick={() => update({ ...cfg, heroHeight: id })}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${(cfg.heroHeight || 'normal') === id ? 'bg-brand text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{label}</button>
+              ))}
+            </div>
+          </div>
+          <label className="space-y-1.5">
+            <span className="text-[13px] font-semibold text-slate-600">Lớp phủ sáng trên ảnh {cfg.heroOverlay ?? 45}%</span>
+            <input type="range" min={0} max={90} step={5} value={cfg.heroOverlay ?? 45} onChange={e => update({ ...cfg, heroOverlay: Number(e.target.value) })} className="w-full accent-[var(--color-brand,#10b981)]" />
+          </label>
+        </div>
+      </div>
+
+      {/* Phần tiện ích và chân trang */}
+      <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <h2 className="flex items-center gap-2 text-base font-semibold text-slate-800"><Type className="h-4 w-4 text-brand" /> Phần tiện ích và chân trang</h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="space-y-1.5">
-            <span className="text-[13px] font-semibold text-slate-600">Câu giới thiệu chính</span>
-            <input value={cfg.heroTitle || ''} onChange={e => update({ ...cfg, heroTitle: e.target.value })} placeholder="Nền tảng học tập và làm việc trực tuyến" className={inputCls} />
+            <span className="text-[13px] font-semibold text-slate-600">Tiêu đề phần tiện ích</span>
+            <input value={cfg.featuresTitle || ''} onChange={e => update({ ...cfg, featuresTitle: e.target.value })} placeholder="Tiện ích trong EduGo" className={inputCls} />
           </label>
           <label className="space-y-1.5">
-            <span className="text-[13px] font-semibold text-slate-600">Mô tả ngắn</span>
-            <input value={cfg.heroDesc || ''} onChange={e => update({ ...cfg, heroDesc: e.target.value })} placeholder="Quản lý lớp học, bài tập, trắc nghiệm..." className={inputCls} />
+            <span className="text-[13px] font-semibold text-slate-600">Mô tả phần tiện ích</span>
+            <input value={cfg.featuresDesc || ''} onChange={e => update({ ...cfg, featuresDesc: e.target.value })} placeholder="Đăng ký tài khoản để bắt đầu dùng các tiện ích dưới đây." className={inputCls} />
+          </label>
+          <label className="space-y-1.5 md:col-span-2">
+            <span className="text-[13px] font-semibold text-slate-600">Dòng chữ chân trang</span>
+            <input value={cfg.footerText || ''} onChange={e => update({ ...cfg, footerText: e.target.value })} placeholder={`© ${new Date().getFullYear()} EduGo`} className={inputCls} />
           </label>
         </div>
       </div>

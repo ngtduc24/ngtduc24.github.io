@@ -72,9 +72,19 @@ export default function LandingPage({ settings, currentUser, onLogin, onRegister
     .filter(m => !HIDDEN_ON_LANDING.has(m.id) && !isModuleHidden(m.id, settings))
     .map(m => resolveModuleMeta(m, settings));
 
-  const hasBg = !!settings.dashboardBannerImage;
+  // Ảnh nền: ảnh riêng của trang đầu, không có thì dùng ảnh đầu trang Thư viện.
+  const bgImage = cfg.heroImage || settings.dashboardBannerImage || '';
+  const bgPos = cfg.heroImage ? (cfg.heroPosition || 'center') : (settings.dashboardBannerPosition || 'center');
+  const hasBg = !!bgImage;
+  const overlay = (cfg.heroOverlay ?? 45) / 100;
+  const brand = cfg.heroBrand || 'EduGo';
   const title = cfg.heroTitle || 'Nền tảng học tập và làm việc trực tuyến';
   const desc = cfg.heroDesc || 'Quản lý lớp học, bài tập, trắc nghiệm, bài giảng E-Learning, dựng phim, AR, VR 360 và nhiều tiện ích khác, gom vào một chỗ.';
+  const regText = cfg.registerText || 'Đăng ký miễn phí';
+  const loginText = cfg.loginText || 'Đăng nhập';
+  const featTitle = cfg.featuresTitle || 'Tiện ích trong EduGo';
+  const featDesc = cfg.featuresDesc || 'Đăng ký tài khoản để bắt đầu dùng các tiện ích dưới đây.';
+  const heroPad = cfg.heroHeight === 'compact' ? 'py-10 md:py-12' : cfg.heroHeight === 'tall' ? 'py-20 md:py-32' : 'py-14 md:py-20';
 
   return (
     <div className="min-h-[100dvh] bg-slate-50">
@@ -106,36 +116,36 @@ export default function LandingPage({ settings, currentUser, onLogin, onRegister
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl space-y-10 px-4 py-6 sm:px-6 md:py-8">
-        {/* Khối giới thiệu đầu trang, cùng kiểu với trang Thư viện bên trong */}
-        <section
-          className="relative overflow-hidden rounded-3xl border border-slate-100"
-          style={hasBg
-            ? { backgroundImage: `url(${settings.dashboardBannerImage})`, backgroundSize: 'cover', backgroundPosition: settings.dashboardBannerPosition || 'center' }
-            : { background: 'linear-gradient(135deg, var(--color-brand-light, #ecfdf5) 0%, #ffffff 55%, var(--color-brand-light, #ecfdf5) 100%)' }}
-        >
-          {hasBg && <div className="absolute inset-0 bg-gradient-to-b from-white/55 via-white/35 to-white/55" />}
-          <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center gap-4 px-6 py-12 text-center md:py-16">
-            <h1 className="font-display text-4xl font-black tracking-tight text-brand md:text-5xl">EduGo</h1>
-            <p className="text-lg font-bold text-slate-800 md:text-xl">{title}</p>
-            <p className="text-sm text-slate-600 md:text-base">{desc}</p>
-            {!currentUser ? (
-              <div className="mt-2 flex flex-wrap justify-center gap-3">
-                <button onClick={onRegister} className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-6 text-sm font-semibold text-white shadow-lg shadow-brand/20 hover:bg-brand-hover">
-                  <UserPlus className="h-4 w-4" /> Đăng ký miễn phí
-                </button>
-                <button onClick={onLogin} className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-700 hover:border-brand/40 hover:text-brand">
-                  <LogIn className="h-4 w-4" /> Đăng nhập
-                </button>
-              </div>
-            ) : (
-              <button onClick={onEnter} className="mt-2 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-6 text-sm font-semibold text-white shadow-lg shadow-brand/20 hover:bg-brand-hover">
-                Vào EduGo <ArrowRight className="h-4 w-4" />
+      {/* Khối giới thiệu đầu trang, trải hết chiều ngang màn hình */}
+      <section
+        className="relative w-full overflow-hidden border-b border-slate-100"
+        style={hasBg
+          ? { backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: bgPos }
+          : { background: 'linear-gradient(135deg, var(--color-brand-light, #ecfdf5) 0%, #ffffff 55%, var(--color-brand-light, #ecfdf5) 100%)' }}
+      >
+        {hasBg && overlay > 0 && <div className="absolute inset-0" style={{ background: `rgba(255,255,255,${overlay})` }} />}
+        <div className={`relative z-10 mx-auto flex max-w-3xl flex-col items-center gap-4 px-6 text-center ${heroPad}`}>
+          <h1 className="font-display text-4xl font-black tracking-tight text-brand md:text-6xl">{brand}</h1>
+          <p className="text-lg font-bold text-slate-800 md:text-2xl">{title}</p>
+          <p className="text-sm text-slate-600 md:text-base">{desc}</p>
+          {!currentUser ? (
+            <div className="mt-2 flex flex-wrap justify-center gap-3">
+              <button onClick={onRegister} className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-6 text-sm font-semibold text-white shadow-lg shadow-brand/20 hover:bg-brand-hover">
+                <UserPlus className="h-4 w-4" /> {regText}
               </button>
-            )}
-          </div>
-        </section>
+              <button onClick={onLogin} className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-700 hover:border-brand/40 hover:text-brand">
+                <LogIn className="h-4 w-4" /> {loginText}
+              </button>
+            </div>
+          ) : (
+            <button onClick={onEnter} className="mt-2 inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-6 text-sm font-semibold text-white shadow-lg shadow-brand/20 hover:bg-brand-hover">
+              Vào EduGo <ArrowRight className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </section>
 
+      <main className="mx-auto max-w-7xl space-y-10 px-4 py-8 sm:px-6 md:py-10">
         {/* Lưới banner do admin quản lý */}
         {cfg.banners.length > 0 && (
           <section>
@@ -148,8 +158,8 @@ export default function LandingPage({ settings, currentUser, onLogin, onRegister
         {/* Giới thiệu tiện ích */}
         <section className="space-y-4">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-slate-800">Tiện ích trong EduGo</h2>
-            <p className="mt-1 text-[13px] text-slate-500">Đăng ký tài khoản để bắt đầu dùng các tiện ích dưới đây.</p>
+            <h2 className="text-2xl font-bold text-slate-800">{featTitle}</h2>
+            <p className="mt-1 text-[13px] text-slate-500">{featDesc}</p>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {features.map(m => {
@@ -172,7 +182,7 @@ export default function LandingPage({ settings, currentUser, onLogin, onRegister
 
       <footer className="border-t border-slate-100 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-6 text-[13px] text-slate-500 sm:flex-row sm:px-6">
-          <span>© {new Date().getFullYear()} EduGo</span>
+          <span>{cfg.footerText || `© ${new Date().getFullYear()} EduGo`}</span>
           <a href="/tracuu.html" className="font-semibold hover:text-brand">Tra cứu điểm báo khoa học</a>
         </div>
       </footer>

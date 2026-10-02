@@ -14,8 +14,18 @@ export interface LandingBanner {
 }
 
 export interface LandingConfig {
+  heroBrand?: string;      // chữ lớn đầu trang, mặc định EduGo
   heroTitle?: string;
   heroDesc?: string;
+  heroImage?: string;      // ảnh nền riêng của khối đầu trang, trống thì dùng ảnh đầu trang Thư viện
+  heroPosition?: string;   // vị trí lấy ảnh nền: center, top, bottom
+  heroOverlay?: number;    // độ phủ trắng lên ảnh nền, 0 đến 90 (%)
+  heroHeight?: 'compact' | 'normal' | 'tall';
+  registerText?: string;   // chữ nút đăng ký
+  loginText?: string;      // chữ nút đăng nhập
+  featuresTitle?: string;  // tiêu đề phần tiện ích
+  featuresDesc?: string;   // mô tả phần tiện ích
+  footerText?: string;     // dòng chữ chân trang
   banners: LandingBanner[];
   // Ứng dụng tài khoản tự đăng ký được dùng ngay, admin chọn trong Cấu hình hệ thống.
   defaultApps: string[];
@@ -26,9 +36,20 @@ const CACHE = 'edugo_landing_cache';
 
 export const EMPTY_LANDING: LandingConfig = { banners: [], defaultApps: [] };
 
+const str = (x: any) => (typeof x === 'string' ? x : '');
 const normalize = (v: any): LandingConfig => ({
-  heroTitle: typeof v?.heroTitle === 'string' ? v.heroTitle : '',
-  heroDesc: typeof v?.heroDesc === 'string' ? v.heroDesc : '',
+  heroBrand: str(v?.heroBrand),
+  heroTitle: str(v?.heroTitle),
+  heroDesc: str(v?.heroDesc),
+  heroImage: str(v?.heroImage),
+  heroPosition: str(v?.heroPosition) || 'center',
+  heroOverlay: typeof v?.heroOverlay === 'number' ? Math.max(0, Math.min(90, v.heroOverlay)) : 45,
+  heroHeight: (['compact', 'normal', 'tall'].includes(v?.heroHeight) ? v.heroHeight : 'normal'),
+  registerText: str(v?.registerText),
+  loginText: str(v?.loginText),
+  featuresTitle: str(v?.featuresTitle),
+  featuresDesc: str(v?.featuresDesc),
+  footerText: str(v?.footerText),
   banners: Array.isArray(v?.banners) ? v.banners.filter((b: any) => b && b.id) : [],
   defaultApps: Array.isArray(v?.defaultApps) ? v.defaultApps.filter((x: any) => typeof x === 'string') : [],
 });
