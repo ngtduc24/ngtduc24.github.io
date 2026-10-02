@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { getSiteOfOwner, getSiteOwner } from '../../lib/portfolioData';
+import { getSiteOfOwner, getSiteOwner, getSiteFeatures } from '../../lib/portfolioData';
 import {
   ArrowDown, ArrowUp, BookOpen, Boxes, BriefcaseBusiness, ChevronDown, ChevronRight,
   Compass, Edit3, ExternalLink, Eye, EyeOff, FileText, FolderGit2, GraduationCap, GripVertical,
@@ -53,6 +53,10 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 const iconOptions = Object.keys(iconMap);
 const sectionOptions = ['#banner', '#skills', '#about', '#education', '#experience', '#projects', '#research', '#lectures', '#contact'];
 // Khoá học là ứng dụng riêng của EduGo, Website cá nhân không có mục khoá học.
+const homeSectionLabelsFor = () => {
+  const f = getSiteFeatures();
+  return HOME_SECTION_LABELS.filter(item => (item.key !== 'research' || f.research) && (item.key !== 'projects' || f.projects));
+};
 const isCourseNav = (item: PortfolioNavigation) => item.kind === 'course' || item.id === 'nav_courses' || /#(my-)?courses$/.test(item.link || '');
 
 const cloneItems = (items: PortfolioNavigation[]) => items.map(item => ({ ...item }));
@@ -126,12 +130,18 @@ export default function PortfolioNavigationManager() {
     const rec = await getSiteOfOwner(getSiteOwner()).catch(() => null);
     window.open(rec ? `/${rec.slug}` : '/?portfolio=true', '_blank', 'noopener,noreferrer');
   };
+  const homeSectionLabels = homeSectionLabelsFor();
   const [previewDevice, setPreviewDevice] = useState<DevicePreview>('desktop');
   const [draggedId, setDraggedId] = useState<string | null>(null);
   useEffect(() => {
     getPortfolioNavigation()
       .then(data => {
-        const normalizedItems = normalizeOrders(withNavigationMetadata(data.filter(item => !isCourseNav(item))));
+        const f = getSiteFeatures();
+        // Website mới không có Nghiên cứu, tắt Dự án thì ẩn luôn các mục Dự án.
+        const allowed = (item: PortfolioNavigation) => !isCourseNav(item)
+          && (f.research || (item.id !== 'nav_research' && item.link !== '#research'))
+          && (f.projects || (item.id !== 'nav_projects' && item.link !== '#projects' && item.kind !== 'project'));
+        const normalizedItems = normalizeOrders(withNavigationMetadata(data.filter(allowed)));
         setItems(normalizedItems);
         setEditing(createNavigationDraft(normalizedItems));
       })
@@ -381,7 +391,7 @@ export default function PortfolioNavigationManager() {
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
               <span className="rounded-xl bg-slate-50 px-3 py-2 text-[10px] font-bold text-slate-500">
-                Đang bật {HOME_SECTION_LABELS.filter(item => isHomeSectionVisible(globalSettings, item.key)).length}/{HOME_SECTION_LABELS.length}
+                Đang bật {homeSectionLabels.filter(item => isHomeSectionVisible(globalSettings, item.key)).length}/{homeSectionLabels.length}
               </span>
               <button type="button" onClick={() => setAllHomeSections(true)} className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3 py-2 text-[10px] font-bold text-slate-600 shadow-xs hover:bg-slate-50">
                 <Eye className="h-3.5 w-3.5" /> Bật tất cả
@@ -393,7 +403,7 @@ export default function PortfolioNavigationManager() {
           </div>
 
           <div className="grid gap-2 sm:grid-cols-2">
-            {HOME_SECTION_LABELS.map(item => {
+            {homeSectionLabels.map(item => {
               const visible = isHomeSectionVisible(globalSettings, item.key);
               return (
                 <label
@@ -472,7 +482,7 @@ export default function PortfolioNavigationManager() {
             <form onSubmit={saveEditing} className="space-y-4 rounded-2xl bg-slate-50 p-5 sm:p-6">
               <div><h3 className="text-sm font-black text-slate-800">{items.some(item => item.id === editing.id) ? 'Chỉnh sửa mục menu' : 'Thêm mục menu mới'}</h3><p className="mt-1 text-[10px] text-slate-500">Bản xem trước phía trên cập nhật ngay khi nhập.</p></div>
               <label className="block space-y-1"><span className="text-[13px] font-semibold text-slate-600">Tên hiển thị *</span><input required value={editing.label} onChange={event => setEditing({ ...editing, label: event.target.value })} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs outline-none focus:border-brand" /></label>
-              <label className="block space-y-1"><span className="text-[13px] font-semibold text-slate-600">Dạng trang</span><select value={editing.kind || 'article'} onChange={event => { const kind = event.target.value as NonNullable<PortfolioNavigation['kind']>; setEditing({ ...editing, kind, contentId: undefined, link: kind === 'external' ? 'https://' : '' }); }} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold outline-none focus:border-brand"><option value="scroll">Cuộn đến phần (Trang chủ)</option><option value="article">Trang bài viết</option><option value="project">Trang dự án Design</option><option value="external">Nhập link liên kết</option></select><span className="block text-[9px] leading-4 text-slate-400">Khi lưu dạng Bài viết hoặc Dự án, hệ thống tự tạo một trang chuyên mục mới và menu sẽ mở trang đó.</span></label>
+              <label className="block space-y-1"><span className="text-[13px] font-semibold text-slate-600">Dạng trang</span><select value={editing.kind || 'article'} onChange={event => { const kind = event.target.value as NonNullable<PortfolioNavigation['kind']>; setEditing({ ...editing, kind, contentId: undefined, link: kind === 'external' ? 'https://' : '' }); }} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold outline-none focus:border-brand"><option value="scroll">Cuộn đến phần (Trang chủ)</option><option value="article">Trang bài viết</option>{getSiteFeatures().projects && <option value="project">Trang dự án Design</option>}<option value="external">Nhập link liên kết</option></select><span className="block text-[9px] leading-4 text-slate-400">Khi lưu dạng Bài viết hoặc Dự án, hệ thống tự tạo một trang chuyên mục mới và menu sẽ mở trang đó.</span></label>
 
               {editing.kind !== 'external' && editing.kind !== 'scroll' && <label className="block space-y-1"><span className="text-[13px] font-semibold text-slate-600">Mô tả trang</span><textarea rows={3} value={editing.pageDescription || ''} onChange={event => setEditing({ ...editing, pageDescription: event.target.value })} placeholder="Giới thiệu ngắn cho trang chuyên mục..." className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs leading-5 outline-none focus:border-brand" /></label>}
               {(editing.kind === 'external' || editing.kind === 'scroll') && <label className="block space-y-1"><span className="text-[13px] font-semibold text-slate-600">Link liên kết</span><input required value={editing.link} onChange={event => setEditing({ ...editing, link: event.target.value })} placeholder="https://example.com hoặc #tên-phần" className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold outline-none focus:border-brand" /></label>}

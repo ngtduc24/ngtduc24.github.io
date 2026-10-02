@@ -52,6 +52,13 @@ export const LEGACY_OWNER = 'QDaOMwea6MV3XkFnv9uguv4M0Zr1';
 let SITE_OWNER: string | null = null;
 export function setSiteOwner(uid: string | null) { SITE_OWNER = uid || null; }
 export function getSiteOwner(): string { return SITE_OWNER || LEGACY_OWNER; }
+// Chức năng của Website đang soạn hoặc đang xem. Nghiên cứu chỉ có ở trang cũ của admin,
+// Website mới gồm bài viết và Dự án (Dự án bật tắt được).
+let SITE_PROJECTS = true;
+export function setSiteProjectsEnabled(on: boolean | undefined) { SITE_PROJECTS = on !== false; }
+export function getSiteFeatures(): { research: boolean; projects: boolean } {
+  return { research: !SITE_OWNER || SITE_OWNER === LEGACY_OWNER, projects: SITE_PROJECTS };
+}
 const isLegacySite = () => !SITE_OWNER || SITE_OWNER === LEGACY_OWNER;
 // Khoá cài đặt của trang đang mở. Cài đặt khoá học là của hệ thống nên giữ khoá chung.
 const SYSTEM_KEYS = new Set(['courses_settings', 'course_categories']);
@@ -65,6 +72,8 @@ const SITE_TABLES = new Set(['portfolio_education', 'portfolio_experience', 'por
 export interface SiteRecord {
   owner: string; slug: string; title?: string; published?: boolean; updatedAt?: string;
   description?: string; icon?: string; ogImage?: string; keywords?: string; createdAt?: string;
+  // Trang Dự án: bật để đăng dự án cá nhân, tắt khi chỉ muốn Website dạng blog. Mặc định bật.
+  projects?: boolean;
 }
 export type SiteInfo = Pick<SiteRecord, 'title' | 'description' | 'icon' | 'ogImage' | 'keywords'>;
 // Địa chỉ không được dùng vì trùng thư mục, trang hệ thống hoặc link chia sẻ.
@@ -109,19 +118,46 @@ export async function updateSiteInfo(uid: string, info: SiteInfo): Promise<boole
 }
 // Tạo Website lần đầu: giữ địa chỉ, lưu thông tin SEO, đưa tên và biểu tượng vào đầu trang.
 // Cần gọi setSiteOwner(uid) trước để phần đầu trang ghi đúng vào Website của người tạo.
-export async function createSite(uid: string, slug: string, info: SiteInfo & { published?: boolean }): Promise<string | null> {
+export async function createSite(uid: string, slug: string, info: SiteInfo & { published?: boolean; projects?: boolean }): Promise<string | null> {
   const err = await claimSiteSlug(uid, slug, info.title);
   if (err) return err;
   const rec = await getSiteOfOwner(uid);
   if (!rec) return 'Chưa tạo được Website, vui lòng thử lại.';
   const now = new Date().toISOString();
-  const { error } = await supabase.from('portfolio_settings').upsert({ key: `site:${rec.slug}`, data: { ...rec, ...info, published: info.published !== false, createdAt: rec.createdAt || now, updatedAt: now } });
+  const { error } = await supabase.from('portfolio_settings').upsert({ key: `site:${rec.slug}`, data: { ...rec, ...info, published: info.published !== false, projects: info.projects !== false, createdAt: rec.createdAt || now, updatedAt: now } });
+  setSiteProjectsEnabled(info.projects !== false);
   if (error) return 'Chưa lưu được thông tin Website, vui lòng thử lại.';
   try {
     const banner = await getPortfolioBanner();
-    await savePortfolioBanner({ ...banner, logoText: info.title || banner.logoText, logoImage: info.icon || banner.logoImage, title: info.title || banner.title, description: info.description || banner.description });
+    const noProjects = info.projects === false;
+    await savePortfolioBanner({
+      ...banner, logoText: info.title || banner.logoText, logoImage: info.icon || banner.logoImage, title: info.title || banner.title, description: info.description || banner.description,
+      ...(noProjects ? { buttonText: 'Tìm hiểu thêm', buttonLink: '#about' } : {}),
+    });
+    // Website mới không có Nghiên cứu, menu chỉ giữ các mục phù hợp.
+    const nav = await getPortfolioNavigation();
+    const keepResearch = uid === LEGACY_OWNER;
+    await savePortfolioNavigation(nav.filter(i => (keepResearch || (i.id !== 'nav_research' && i.link !== '#research')) && !(noProjects && (i.id === 'nav_projects' || i.link === '#projects'))));
   } catch { /* bỏ qua, người dùng vẫn sửa được ở mục Hồ sơ */ }
   return null;
+}
+// Bật tắt trang Dự án. Bật lại thì thêm mục Dự án vào menu nếu menu đang thiếu.
+export async function setSiteProjects(uid: string, on: boolean): Promise<boolean> {
+  const rec = await getSiteOfOwner(uid);
+  if (!rec) return false;
+  const { error } = await supabase.from('portfolio_settings').upsert({ key: `site:${rec.slug}`, data: { ...rec, projects: on, updatedAt: new Date().toISOString() } });
+  if (error) return false;
+  setSiteProjectsEnabled(on);
+  if (on) {
+    try {
+      const nav = await getPortfolioNavigation();
+      if (!nav.some(i => i.id === 'nav_projects' || i.link === '#projects')) {
+        const item = DEFAULT_PORTFOLIO_NAVIGATION.find(i => i.id === 'nav_projects');
+        if (item) await savePortfolioNavigation([...nav, { ...item, sortOrder: nav.filter(i => !i.parentId).length + 1 }]);
+      }
+    } catch { /* bỏ qua, người dùng tự thêm trong mục Menu */ }
+  }
+  return true;
 }
 export async function setSitePublished(uid: string, published: boolean): Promise<void> {
   const rec = await getSiteOfOwner(uid);

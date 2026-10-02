@@ -93,6 +93,7 @@ import {
   DEFAULT_PROJECTS_SETTINGS,
   DEFAULT_COURSES_SETTINGS,
   SiteRecord,
+  LEGACY_OWNER,
 } from '../lib/portfolioData';
 import { UserAccount } from '../types';
 import { setCustomPageSEO } from '../lib/seoConfig';
@@ -2227,7 +2228,10 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
   // Bật tắt hiển thị từng khối trên trang chủ theo cấu hình trong trang quản trị.
   // Khoá học là ứng dụng riêng của EduGo, Website không hiện khối khoá học.
   // Dự án, nghiên cứu không bắt buộc: trang chưa có nội dung loại nào thì ẩn luôn khối và mục menu đó.
-  const emptySection = (key: string) => (key === 'research' && research.length === 0) || (key === 'projects' && projects.length === 0);
+  // Website mới không có Nghiên cứu. Trang Dự án do chủ trang bật tắt (tắt thì Website là trang blog).
+  const allowResearch = !siteSlug || site?.owner === LEGACY_OWNER;
+  const allowProjects = site?.projects !== false;
+  const emptySection = (key: string) => (key === 'research' && (!allowResearch || research.length === 0)) || (key === 'projects' && (!allowProjects || projects.length === 0));
   const showSection = (key: HomeSectionKey) => (key as string) !== 'courses' && !emptySection(key as string) && isHomeSectionVisible(globalSettings, key);
 
   const [loading, setLoading] = useState(false);
@@ -2389,7 +2393,9 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
 
   const isCourseLink = (item: PortfolioNavigation) => item.kind === 'course' || /#(my-)?courses$/.test(item.link || '') || item.id === 'nav_courses';
   const isEmptyLink = (item: PortfolioNavigation) => item.kind === 'scroll' && /^#(research|projects)$/.test(item.link || '') && emptySection(item.link.slice(1));
-  const menuItems = navigation.filter(item => item.visible && !isCourseLink(item) && (loading || !isEmptyLink(item)) && item.id !== 'nav_lectures' && item.label !== 'Bài giảng' && (!item.parentId || navigation.some(parent => parent.id === item.parentId && parent.visible)));
+  const isOffLink = (item: PortfolioNavigation) => (!allowResearch && (item.id === 'nav_research' || /#research$/.test(item.link || '')))
+    || (!allowProjects && (item.id === 'nav_projects' || item.kind === 'project' || /#projects$/.test(item.link || '')));
+  const menuItems = navigation.filter(item => item.visible && !isCourseLink(item) && !isOffLink(item) && (loading || !isEmptyLink(item)) && item.id !== 'nav_lectures' && item.label !== 'Bài giảng' && (!item.parentId || navigation.some(parent => parent.id === item.parentId && parent.visible)));
   const generatedMenuItem = navigation.find(item => item.id === generatedMenuId && (item.kind === 'article' || item.kind === 'course' || item.kind === 'project')) || null;
   const desktopMenuItems = menuItems.filter(item => !item.parentId && item.deviceVisibility !== 'mobile').sort((a, b) => a.sortOrder - b.sortOrder);
   const menuChildren = (parentId: string) => menuItems.filter(item => item.parentId === parentId).sort((a, b) => a.sortOrder - b.sortOrder);

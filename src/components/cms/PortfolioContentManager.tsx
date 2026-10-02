@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Award, BookOpen, Edit3, FileText, FolderGit2, GraduationCap, Newspaper, Plus, Search, Trash2, Settings, X } from 'lucide-react';
-import { deletePortfolioPost, getPortfolioPosts, savePortfolioPost, getPortfolioCategories, savePortfolioCategories, PortfolioCategory } from '../../lib/portfolioData';
+import { getSiteFeatures, deletePortfolioPost, getPortfolioPosts, savePortfolioPost, getPortfolioCategories, savePortfolioCategories, PortfolioCategory } from '../../lib/portfolioData';
 import { PortfolioPost } from '../portfolioTypes';
 import CloudinaryUploadField from './CloudinaryUploadField';
 import ProjectsCoursesCMS from './ProjectsCoursesCMS';
@@ -82,8 +82,8 @@ export default function PortfolioContentManager({ mode = 'all', onSaved }: { mod
     <div className="space-y-6">
       {mode !== 'manage' && <section className="rounded-2xl bg-slate-50 p-5">
         <div><h3 className="text-base font-black text-slate-800">Thêm bài viết mới theo các dạng</h3><p className="mt-1 text-[11px] text-slate-500">Bấm vào một thẻ để mở ngay form tạo mới tương ứng.</p></div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          {contentTypes.map(type => <button key={type.id} type="button" onClick={() => { if (type.id === 'article') createPost(); else { setEditing(null); setSelectedType(type.id); setEditorVersion(value => value + 1); } }} className={`group rounded-2xl bg-white p-4 text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-md ${selectedType === type.id ? 'ring-2 ring-brand shadow-md' : ''}`}><span className={`grid h-10 w-10 place-items-center rounded-xl transition-colors ${selectedType === type.id ? 'bg-brand text-white' : 'bg-brand-light text-brand group-hover:bg-brand group-hover:text-white'}`}><type.icon className="h-5 w-5" /></span><strong className="mt-3 block text-xs text-slate-800">{type.label}</strong><span className="mt-1 block text-[10px] leading-4 text-slate-500">{type.description}</span></button>)}
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {contentTypes.filter(type => (type.id !== 'research' || getSiteFeatures().research) && (type.id !== 'project' || getSiteFeatures().projects)).map(type => <button key={type.id} type="button" onClick={() => { if (type.id === 'article') createPost(); else { setEditing(null); setSelectedType(type.id); setEditorVersion(value => value + 1); } }} className={`group rounded-2xl bg-white p-4 text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-md ${selectedType === type.id ? 'ring-2 ring-brand shadow-md' : ''}`}><span className={`grid h-10 w-10 place-items-center rounded-xl transition-colors ${selectedType === type.id ? 'bg-brand text-white' : 'bg-brand-light text-brand group-hover:bg-brand group-hover:text-white'}`}><type.icon className="h-5 w-5" /></span><strong className="mt-3 block text-xs text-slate-800">{type.label}</strong><span className="mt-1 block text-[10px] leading-4 text-slate-500">{type.description}</span></button>)}
         </div>
       </section>}
 

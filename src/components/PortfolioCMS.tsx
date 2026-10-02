@@ -19,7 +19,8 @@ import {
   Search,
   Newspaper,
   Folder,
-  Award
+  Award,
+  FolderKanban
 } from 'lucide-react';
 import BannerAboutCMS from './cms/BannerAboutCMS';
 import ProjectsCoursesCMS from './cms/ProjectsCoursesCMS';
@@ -29,7 +30,7 @@ import PortfolioResearchCMS from './cms/PortfolioResearchCMS';
 import CloudinaryUploadField from './cms/CloudinaryUploadField';
 import {
   setSiteOwner, getSiteOfOwner, getSiteBySlug, claimSiteSlug, setSitePublished, normalizeSlug, SiteRecord, SiteInfo,
-  deleteMyWebsite, createSite, updateSiteInfo, SLUG_RE, RESERVED_SLUGS
+  deleteMyWebsite, createSite, updateSiteInfo, SLUG_RE, RESERVED_SLUGS, setSiteProjects, setSiteProjectsEnabled, LEGACY_OWNER
 } from '../lib/portfolioData';
 import { copyText } from './ui/Dialogs';
 
@@ -41,8 +42,8 @@ type Division = 'post' | 'manage' | 'navigation' | 'profile' | 'settings';
 type ManageTab = 'posts' | 'projects' | 'research';
 
 const DIVISIONS: Array<{ id: Division; title: string; description: string; icon: React.ComponentType<{ className?: string }> }> = [
-  { id: 'post', title: 'Đăng bài', description: 'Chọn dạng bài rồi soạn và đăng lên Website', icon: PenSquare },
-  { id: 'manage', title: 'Quản lý bài', description: 'Xem, sửa, ẩn hoặc xoá bài viết, dự án và bài nghiên cứu đã đăng', icon: ListChecks },
+  { id: 'post', title: 'Đăng bài', description: 'Soạn và đăng bài viết hoặc dự án lên Website', icon: PenSquare },
+  { id: 'manage', title: 'Quản lý bài', description: 'Xem, sửa, ẩn hoặc xoá các bài đã đăng', icon: ListChecks },
   { id: 'navigation', title: 'Menu', description: 'Menu chính, menu con và liên kết điều hướng của Website', icon: Compass },
   { id: 'profile', title: 'Hồ sơ', description: 'Banner, giới thiệu, học vấn, kinh nghiệm và kỹ năng', icon: User },
   { id: 'settings', title: 'Cài đặt web', description: 'Tên, mô tả, biểu tượng, SEO, địa chỉ, hiển thị và xoá Website', icon: Settings2 },
@@ -150,12 +151,39 @@ function SitePreview({ info, slug }: { info: SiteInfo; slug: string }) {
   );
 }
 
+// Công tắc bật tắt, cùng kiểu ở bước tạo trang và Cài đặt web.
+function Switch({ on, onChange, disabled }: { on: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} disabled={disabled} onClick={() => onChange(!on)}
+      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 ${on ? 'bg-brand' : 'bg-slate-300'}`}>
+      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? 'left-[22px]' : 'left-0.5'}`} />
+    </button>
+  );
+}
+
+// Ô chọn trang Dự án: Website mới luôn có bài viết, Dự án là phần thêm, tắt khi chỉ muốn trang dạng blog.
+function ProjectsOption({ on, onChange, disabled }: { on: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+  return (
+    <div className="flex items-start justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+      <div className="flex min-w-0 items-start gap-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-brand"><FolderKanban className="h-4 w-4" /></span>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-slate-800">Trang Dự án</p>
+          <p className="mt-0.5 text-xs text-slate-500">{on ? 'Đang bật. Trang có thêm mục Dự án để đăng các dự án cá nhân.' : 'Đang tắt. Website chỉ đăng bài như một trang blog, tin tức.'}</p>
+        </div>
+      </div>
+      <Switch on={on} onChange={onChange} disabled={disabled} />
+    </div>
+  );
+}
+
 // Bước tạo Website lần đầu.
 function SiteSetup({ uid, defaultTitle, onCreated }: { uid: string; defaultTitle: string; onCreated: (rec: SiteRecord) => void }) {
   const [info, setInfo] = useState<SiteInfo>({ title: defaultTitle, description: '', keywords: '', icon: '', ogImage: '' });
   const [slug, setSlug] = useState(normalizeSlug(defaultTitle));
   const slugTouched = useRef(false);
   const [published, setPublished] = useState(true);
+  const [projects, setProjects] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
   const check = useSlugCheck(uid, slug);
@@ -163,7 +191,7 @@ function SiteSetup({ uid, defaultTitle, onCreated }: { uid: string; defaultTitle
   const ready = !!(info.title || '').trim() && !!(info.description || '').trim() && !!check?.ok && check.text !== 'Đang kiểm tra...';
   const submit = async () => {
     setSaving(true); setErr('');
-    const e = await createSite(uid, slug, { ...info, title: (info.title || '').trim(), description: (info.description || '').trim(), published });
+    const e = await createSite(uid, slug, { ...info, title: (info.title || '').trim(), description: (info.description || '').trim(), published, projects });
     if (e) { setErr(e); setSaving(false); return; }
     const rec = await getSiteOfOwner(uid).catch(() => null);
     setSaving(false);
@@ -187,6 +215,9 @@ function SiteSetup({ uid, defaultTitle, onCreated }: { uid: string; defaultTitle
           </div>
           {check && <p className={`text-xs font-semibold ${check.ok ? 'text-brand' : 'text-rose-600'}`}>{check.text}</p>}
         </Field>
+        <Field label="Nội dung của trang" hint="Website luôn có phần đăng bài. Menu và các trang chuyên mục bạn tự thêm trong mục Menu sau khi tạo.">
+          <ProjectsOption on={projects} onChange={setProjects} />
+        </Field>
         <label className="flex cursor-pointer items-start gap-2.5 text-[13px] text-slate-700">
           <input type="checkbox" checked={published} onChange={e => setPublished(e.target.checked)} className="mt-0.5 h-4 w-4 accent-brand" />
           <span>Cho mọi người xem trang ngay sau khi tạo. Bỏ chọn nếu muốn soạn xong nội dung rồi mới mở.</span>
@@ -208,7 +239,7 @@ function SiteSetup({ uid, defaultTitle, onCreated }: { uid: string; defaultTitle
 function SiteSettings({ uid, site, onChanged, onDeleted }: { uid: string; site: SiteRecord; onChanged: (rec: SiteRecord) => void; onDeleted: (msg: string) => void }) {
   const [info, setInfo] = useState<SiteInfo>({ title: site.title || '', description: site.description || '', keywords: site.keywords || '', icon: site.icon || '', ogImage: site.ogImage || '' });
   const [slug, setSlug] = useState(site.slug);
-  const [busy, setBusy] = useState<'' | 'info' | 'slug' | 'pub'>('');
+  const [busy, setBusy] = useState<'' | 'info' | 'slug' | 'pub' | 'proj'>('');
   const [msg, setMsg] = useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
   const check = useSlugCheck(uid, slug, site.slug);
   const reload = async () => { const rec = await getSiteOfOwner(uid).catch(() => null); if (rec) onChanged(rec); };
@@ -236,6 +267,13 @@ function SiteSettings({ uid, site, onChanged, onDeleted }: { uid: string; site: 
     setBusy('');
   };
 
+  const toggleProjects = async (on: boolean) => {
+    setBusy('proj'); setMsg(null);
+    const ok = await setSiteProjects(uid, on);
+    setMsg(ok ? { tone: 'ok', text: on ? 'Đã bật trang Dự án. Mục Dự án có trong Đăng bài, Quản lý bài và Menu.' : 'Đã tắt trang Dự án. Website chỉ còn đăng bài như một trang blog. Các dự án đã đăng vẫn được giữ lại.' } : { tone: 'err', text: 'Chưa lưu được, vui lòng thử lại.' });
+    if (ok) await reload();
+    setBusy('');
+  };
   const card = 'rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6';
   return (
     <div className="space-y-5">
@@ -256,6 +294,14 @@ function SiteSettings({ uid, site, onChanged, onDeleted }: { uid: string; site: 
           <SitePreview info={info} slug={site.slug} />
         </aside>
       </div>
+
+      <section className={`${card} space-y-4`}>
+        <div>
+          <h3 className="text-base font-semibold text-slate-800">Nội dung của trang</h3>
+          <p className="mt-1 text-[13px] text-slate-500">Website luôn có phần đăng bài. Bật trang Dự án khi muốn giới thiệu dự án cá nhân, tắt khi chỉ dùng Website như một trang blog.</p>
+        </div>
+        <ProjectsOption on={site.projects !== false} onChange={toggleProjects} disabled={busy !== ''} />
+      </section>
 
       <section className={`${card} space-y-4`}>
         <div>
@@ -370,6 +416,12 @@ export default function PortfolioCMS({ currentUser }: PortfolioCMSProps = {}) {
     if (!uid) { setSite(null); return; }
     getSiteOfOwner(uid).then(setSite).catch(() => setSite(null));
   }, [uid]);
+  // Đồng bộ trạng thái trang Dự án cho các mục soạn thảo (Đăng bài, Menu).
+  const projectsOn = site?.projects !== false;
+  setSiteProjectsEnabled(projectsOn);
+  useEffect(() => () => setSiteProjectsEnabled(true), []);
+  const manageTabs = MANAGE_TABS.filter(t => (t.id !== 'research' || uid === LEGACY_OWNER) && (t.id !== 'projects' || projectsOn));
+  const manageCurrent: ManageTab = manageTabs.some(t => t.id === manageTab) ? manageTab : 'posts';
   const info = DIVISIONS.find(d => d.id === active) ?? DIVISIONS[0];
   if (!ready) return null;
 
@@ -378,7 +430,7 @@ export default function PortfolioCMS({ currentUser }: PortfolioCMSProps = {}) {
       <PageHeader
         icon={<Globe size={22} />}
         title={site?.title || 'Website'}
-        description={site ? `${window.location.host}/${site.slug}${site.published === false ? ', đang tạm ẩn' : ''}` : 'Tạo trang giới thiệu bản thân với địa chỉ riêng, tự đăng bài, dự án và nghiên cứu.'}
+        description={site ? `${window.location.host}/${site.slug}${site.published === false ? ', đang tạm ẩn' : ''}` : 'Tạo Website với địa chỉ riêng để đăng bài như một trang blog, có thể thêm trang Dự án.'}
         actions={site ? <Button variant="outline" icon={<Eye size={16} />} onClick={() => window.open(`/${site.slug}`, '_blank', 'noopener,noreferrer')}>Xem trang</Button> : undefined}
       />
 
@@ -409,9 +461,9 @@ export default function PortfolioCMS({ currentUser }: PortfolioCMSProps = {}) {
               onDeleted={msg => { setSite(null); setActive('post'); setNotice(msg); }} />
           ) : active === 'manage' ? (
             <div className="space-y-4">
-              <div className="flex w-max gap-1 rounded-xl border border-slate-100 bg-white p-1">
-                {MANAGE_TABS.map(t => {
-                  const Icon = t.icon; const on = manageTab === t.id;
+              {manageTabs.length > 1 && <div className="flex w-max gap-1 rounded-xl border border-slate-100 bg-white p-1">
+                {manageTabs.map(t => {
+                  const Icon = t.icon; const on = manageCurrent === t.id;
                   return (
                     <button key={t.id} type="button" onClick={() => setManageTab(t.id)}
                       className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold ${on ? 'bg-brand-light text-brand' : 'text-slate-500 hover:text-slate-700'}`}>
@@ -419,10 +471,10 @@ export default function PortfolioCMS({ currentUser }: PortfolioCMSProps = {}) {
                     </button>
                   );
                 })}
-              </div>
-              {manageTab === 'posts' && <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6"><PortfolioContentManager mode="manage" /></section>}
-              {manageTab === 'projects' && <ProjectsCoursesCMS initialSubTab="projects" showSubTabs={false} />}
-              {manageTab === 'research' && <PortfolioResearchCMS />}
+              </div>}
+              {manageCurrent === 'posts' && <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6"><PortfolioContentManager mode="manage" /></section>}
+              {manageCurrent === 'projects' && <ProjectsCoursesCMS initialSubTab="projects" showSubTabs={false} />}
+              {manageCurrent === 'research' && <PortfolioResearchCMS />}
             </div>
           ) : (
             <section className="min-h-[440px] rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6">
