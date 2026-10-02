@@ -4,16 +4,18 @@ import {
   Home, Undo2, Redo2, Cloud, CloudOff, Loader2, Play, Share2, UserPlus, LayoutTemplate, Shapes, Type, Upload, Images, PaintBucket,
   StickyNote, Grid2X2, Maximize, Plus, Copy, Trash2, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List,
   ArrowUpToLine, ArrowDownToLine, Lock, Unlock, Search, X, ChevronDown, Link2, Check, FileDown, Pencil, Minus, Droplet, Eye,
+  Strikethrough, CaseUpper, MoveVertical, Sparkles, Wand2, Move, Paintbrush, FlipHorizontal2, FlipVertical2, Replace, AlignStartVertical, AlignCenterVertical, AlignEndVertical, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, ChevronsUp, ChevronsDown, ChevronUp, PlayCircle, Blend, MoreHorizontal,
 } from 'lucide-react';
 import {
   Deck, Slide, SlideEl, SLIDE_W, SLIDE_H, LAYOUTS, LayoutId, makeSlide, textEl, uid, saveDeck, getDeck, getDeckUpdatedAt,
   BG_SWATCHES, GRADIENTS, ShapeKind, setDeckShare, deckShareUrl, DEFAULT_FONT, duplicateDeck, softDeleteDeck,
+  ANIM_IN_LABELS, ANIM_LOOP_LABELS, TRANSITION_LABELS, EFFECT_LABELS, AnimIn, AnimLoop, TransitionKind, EffectKind, ImgFilter,
 } from '../../lib/slides';
 import { FONT_OPTIONS } from '../../lib/fonts';
 import { listMyMedia, MediaItem } from '../../lib/mediaItems';
 import { uploadMediaToCloudinary } from '../../lib/upload';
 import { listCollaborators, Collaborator, userAvatar } from '../../lib/collab';
-import SlideRenderer, { ElementView, bgStyle, ensureFont } from './SlideRenderer';
+import SlideRenderer, { ElementView, bgStyle, ensureFont, ensureAnimCss, ElPhase } from './SlideRenderer';
 import SlidePresenter from './SlidePresenter';
 import ShareDialog from '../ui/ShareDialog';
 import { copyText, askText } from '../ui/Dialogs';
@@ -22,7 +24,7 @@ import { useConfirmation } from '../ConfirmationContext';
 import type { UserAccount } from '../../types';
 
 type Role = 'owner' | 'view' | 'edit' | 'manage';
-type Panel = 'templates' | 'elements' | 'text' | 'uploads' | 'library' | 'background' | null;
+type Panel = 'templates' | 'elements' | 'text' | 'uploads' | 'library' | 'background' | 'effects' | 'animate' | 'position' | 'transition' | null;
 type Handle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
 const COLORS = ['#0f172a', '#334155', '#64748b', '#ffffff', '#ef4444', '#f97316', '#f59e0b', '#eab308', '#22c55e', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', 'var(--color-brand)', '#ec4899', '#f43f5e'];
@@ -39,6 +41,7 @@ function measureText(el: SlideEl): number {
     position: 'absolute', visibility: 'hidden', left: '-99999px', top: '0', width: `${el.w}px`, fontFamily: `'${el.fontFamily || 'Inter'}', sans-serif`,
     fontSize: `${el.fontSize || 32}px`, fontWeight: el.bold ? '700' : '400', fontStyle: el.italic ? 'italic' : 'normal',
     lineHeight: String(el.lineHeight || 1.3), whiteSpace: 'pre-wrap', wordBreak: 'break-word', padding: el.bg ? '0.2em 0.4em' : '0',
+    letterSpacing: el.letterSpacing ? `${el.letterSpacing / 1000}em` : 'normal', textTransform: el.upper ? 'uppercase' : 'none',
   } as CSSStyleDeclaration);
   if (el.list) {
     const ul = document.createElement('ul'); ul.style.margin = '0'; ul.style.paddingLeft = '1.2em';
@@ -107,6 +110,12 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
   const [guides, setGuides] = useState<{ x: number[]; y: number[] }>({ x: [], y: [] });
   const [collabs, setCollabs] = useState<Collaborator[]>([]);
   const [busyUpload, setBusyUpload] = useState(0);
+  const [painter, setPainter] = useState<Partial<SlideEl> | null>(null);       // sao chép kiểu
+  const [replaceId, setReplaceId] = useState<string | null>(null);             // ảnh đang chờ thay
+  const [preview, setPreview] = useState<{ phases: Record<string, ElPhase>; key: number } | null>(null);
+  const [transKey, setTransKey] = useState(0);
+  const [tplMode, setTplMode] = useState<'add' | 'replace'>('add');
+  const previewTimer = useRef<any>(null);
 
   const past = useRef<Slide[][]>([]);
   const future = useRef<Slide[][]>([]);
@@ -241,10 +250,58 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
   const setBg = (bg: Slide['bg'], all = false) => {
     commit(all ? slidesRef.current.map(s => ({ ...s, bg })) : mapSlide(s => ({ ...s, bg })));
   };
+  // Áp mẫu trang (hoặc trang trống) lên trang đang mở, giữ ghi chú và chuyển trang.
+  const applyLayout = (layout: LayoutId) => {
+    const t = makeSlide(layout, layout === 'section' ? undefined : { ...(slide.bg || { color: '#fff' }) });
+    commit(mapSlide(s => ({ ...s, els: t.els, bg: layout === 'section' ? t.bg : s.bg })));
+    setSel([]);
+    addNotification('Đã áp mẫu lên trang hiện tại. Bấm Ctrl Z nếu muốn lấy lại nội dung cũ.', 'info');
+  };
+  const setTransition = (type: TransitionKind, dur?: number, all = false) => {
+    const tr = { type, dur: dur ?? slide.transition?.dur ?? 0.7 };
+    commit(all ? slidesRef.current.map(s => ({ ...s, transition: tr })) : mapSlide(s => ({ ...s, transition: tr })));
+    setTransKey(k => k + 1);
+  };
+  // Xem trước hiệu ứng xuất hiện ngay trên khung soạn.
+  const playPreview = (ids: string[]) => {
+    ensureAnimCss();
+    const ph: Record<string, ElPhase> = {};
+    let total = 0;
+    ids.forEach(id => { const e = slide.els.find(x => x.id === id); if (e?.anim?.in && e.anim.in !== 'none') { ph[id] = 'play'; total = Math.max(total, (e.anim.delay ?? 0) + (e.anim.dur ?? 0.7)); } });
+    clearTimeout(previewTimer.current);
+    setPreview({ phases: ph, key: Date.now() });
+    previewTimer.current = setTimeout(() => setPreview(null), (total + 2.5) * 1000);
+  };
+  const setAnim = (patch: Partial<NonNullable<SlideEl['anim']>>, play = true) => {
+    updateEls(sel, e => ({ anim: { trigger: 'auto', dur: 0.7, delay: 0, ...(e.anim || {}), ...patch } }));
+    if (play) setTimeout(() => playPreview(sel), 30);
+  };
+  // Căn khối theo trang.
+  const alignTo = (how: 'l' | 'c' | 'r' | 't' | 'm' | 'b') => updateEls(sel, e => {
+    if (how === 'l') return { x: 0 }; if (how === 'c') return { x: Math.round((SLIDE_W - e.w) / 2) }; if (how === 'r') return { x: SLIDE_W - e.w };
+    if (how === 't') return { y: 0 }; if (how === 'm') return { y: Math.round((SLIDE_H - e.h) / 2) }; return { y: SLIDE_H - e.h };
+  });
+  const layerStep = (dir: 1 | -1) => commit(mapSlide(s => {
+    const els = [...s.els];
+    const idxs = els.map((e, i) => (sel.includes(e.id) ? i : -1)).filter(i => i >= 0);
+    const order = dir === 1 ? idxs.reverse() : idxs;
+    for (const i of order) { const j = i + dir; if (j < 0 || j >= els.length || sel.includes(els[j].id)) continue; [els[i], els[j]] = [els[j], els[i]]; }
+    return { ...s, els };
+  }));
+  // Sao chép kiểu: lấy kiểu của khối đang chọn, bấm khối khác để dán.
+  const styleOf = (e: SlideEl): Partial<SlideEl> => e.type === 'text'
+    ? { fontFamily: e.fontFamily, fontSize: e.fontSize, color: e.color, bold: e.bold, italic: e.italic, underline: e.underline, strike: e.strike, upper: e.upper, align: e.align, lineHeight: e.lineHeight, letterSpacing: e.letterSpacing, bg: e.bg, effect: e.effect, effectColor: e.effectColor, effectSize: e.effectSize, opacity: e.opacity }
+    : e.type === 'image' ? { radius: e.radius, filter: e.filter, effect: e.effect, effectColor: e.effectColor, effectSize: e.effectSize, opacity: e.opacity }
+    : { fill: e.fill, stroke: e.stroke, strokeWidth: e.strokeWidth, effect: e.effect, effectColor: e.effectColor, effectSize: e.effectSize, opacity: e.opacity };
 
   // ===== Ảnh =====
   const insertImage = async (src: string) => {
     const size = await new Promise<{ w: number; h: number }>(res => { const im = new Image(); im.onload = () => res({ w: im.naturalWidth, h: im.naturalHeight }); im.onerror = () => res({ w: 800, h: 600 }); im.src = src; });
+    if (replaceId) {
+      const target = slidesRef.current[cur]?.els.find(e => e.id === replaceId);
+      setReplaceId(null);
+      if (target) { updateEls([target.id], { src }); setSel([target.id]); return; }
+    }
     const k = Math.min(640 / size.w, 480 / size.h, 1);
     const w = Math.round(size.w * k), h = Math.round(size.h * k);
     addEl({ id: uid(), type: 'image', src, x: (SLIDE_W - w) / 2, y: (SLIDE_H - h) / 2, w, h, fit: 'cover' });
@@ -323,6 +380,11 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
     e.stopPropagation();
     e.preventDefault();
     let ids = sel;
+    if (mode === 'move' && painter) {
+      updateEls([el.id], painter);
+      setPainter(null); setSel([el.id]);
+      return;
+    }
     if (mode === 'move') {
       if (e.shiftKey) { ids = sel.includes(el.id) ? sel.filter(i => i !== el.id) : [...sel, el.id]; setSel(ids); return; }
       if (!sel.includes(el.id)) { ids = [el.id]; setSel(ids); }
@@ -444,6 +506,161 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
   };
 
   const editingEl = slide.els.find(e => e.id === editingId) || null;
+
+  const panelHead = (t: string) => (
+    <div className="mb-3 flex items-center justify-between"><p className="text-sm font-semibold text-slate-800">{t}</p><button onClick={() => setPanel(null)} className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"><X className="h-4 w-4" /></button></div>
+  );
+  const chip = (on: boolean) => `rounded-xl border px-2 py-2 text-xs font-medium ${on ? 'border-brand bg-brand-light text-brand' : 'border-slate-200 text-slate-600 hover:border-slate-300'}`;
+  const FILTERS: Array<[string, ImgFilter | undefined]> = [
+    ['Gốc', undefined], ['Đen trắng', { grayscale: 100 }], ['Cổ điển', { sepia: 60, contrast: 105 }], ['Ấm', { saturate: 130, hue: -10, brightness: 105 }],
+    ['Lạnh', { saturate: 90, hue: 15, brightness: 102 }], ['Rực rỡ', { saturate: 170, contrast: 110 }], ['Nhạt', { saturate: 60, brightness: 110 }], ['Tối', { brightness: 80, contrast: 115 }],
+  ];
+  function renderPropPanel() {
+    if (panel === 'transition') {
+      const tr = slide.transition || { type: 'none' as TransitionKind, dur: 0.7 };
+      return (
+        <div className="space-y-4">{panelHead('Chuyển tiếp trang')}
+          <p className="text-xs text-slate-500">Hiệu ứng khi chuyển sang trang {cur + 1} lúc trình chiếu.</p>
+          <div className="grid grid-cols-3 gap-2">
+            {TRANSITION_LABELS.map(([k, l]) => <button key={k} onClick={() => setTransition(k)} className={chip(tr.type === k)}>{l}</button>)}
+          </div>
+          {tr.type !== 'none' && <SliderRow label="Thời gian (giây)" min={0.2} max={3} step={0.1} value={tr.dur ?? 0.7} onChange={v => setTransition(tr.type, v)} />}
+          <button onClick={() => setTransition(tr.type, tr.dur, true)} className="w-full rounded-xl border border-slate-200 py-2 text-sm hover:bg-slate-50">Áp dụng cho mọi trang</button>
+          <button onClick={() => setPresenting(Math.max(0, cur - 1))} className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-2 text-sm font-semibold text-white hover:bg-brand-hover"><Play className="h-4 w-4" /> Trình chiếu thử</button>
+        </div>
+      );
+    }
+    if (panel === 'animate') {
+      if (!selected.length) {
+        const animated = slide.els.filter(e => e.anim?.in && e.anim.in !== 'none');
+        return (
+          <div className="space-y-3">{panelHead('Chuyển động trên trang')}
+            <p className="text-xs text-slate-500">Chọn một khối trên trang để đặt hiệu ứng xuất hiện và chuyển động. Trang này có {animated.length} khối có hiệu ứng.</p>
+            {animated.length > 0 && <>
+              <button onClick={() => playPreview(slide.els.map(e => e.id))} className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-2 text-sm font-semibold text-white"><PlayCircle className="h-4 w-4" /> Xem trước cả trang</button>
+              <button onClick={() => commit(mapSlide(s => ({ ...s, els: s.els.map(e => ({ ...e, anim: undefined })) })))} className="w-full rounded-xl border border-slate-200 py-2 text-sm text-rose-600 hover:bg-rose-50">Bỏ mọi hiệu ứng trên trang</button>
+            </>}
+          </div>
+        );
+      }
+      const a = selected[0].anim || {};
+      return (
+        <div className="space-y-4">{panelHead('Chuyển động')}
+          <div>
+            <p className="mb-2 text-xs font-semibold text-slate-500">Hiệu ứng xuất hiện</p>
+            <div className="grid grid-cols-3 gap-2">
+              {ANIM_IN_LABELS.map(([k, l]) => <button key={k} onClick={() => setAnim({ in: k as AnimIn })} className={chip((a.in || 'none') === k)}>{l}</button>)}
+            </div>
+          </div>
+          {a.in && a.in !== 'none' && <>
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => setAnim({ trigger: 'auto' }, false)} className={chip(a.trigger !== 'click')}>Tự động khi vào trang</button>
+              <button onClick={() => setAnim({ trigger: 'click' }, false)} className={chip(a.trigger === 'click')}>Khi bấm chuột</button>
+            </div>
+            <SliderRow label="Thời gian (giây)" min={0.2} max={3} step={0.1} value={a.dur ?? 0.7} onChange={v => setAnim({ dur: v }, false)} />
+            <SliderRow label="Chờ trước khi chạy (giây)" min={0} max={5} step={0.1} value={a.delay ?? 0} onChange={v => setAnim({ delay: v }, false)} />
+          </>}
+          <div>
+            <p className="mb-2 text-xs font-semibold text-slate-500">Chuyển động lặp lại</p>
+            <div className="grid grid-cols-3 gap-2">
+              {ANIM_LOOP_LABELS.map(([k, l]) => <button key={k} onClick={() => setAnim({ loop: k as AnimLoop })} className={chip((a.loop || 'none') === k)}>{l}</button>)}
+            </div>
+            {a.loop && a.loop !== 'none' && <div className="mt-3"><SliderRow label="Chu kỳ (giây)" min={0.5} max={10} step={0.5} value={a.loopDur ?? (a.loop === 'spin' ? 6 : 2)} onChange={v => setAnim({ loopDur: v }, false)} /></div>}
+          </div>
+          <button onClick={() => playPreview(sel)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-2 text-sm font-semibold text-white hover:bg-brand-hover"><PlayCircle className="h-4 w-4" /> Xem trước</button>
+          <p className="text-[11px] text-slate-400">Khối đặt "Khi bấm chuột" xuất hiện lần lượt theo thứ tự lớp (số trên khung) mỗi lần bấm khi trình chiếu.</p>
+        </div>
+      );
+    }
+    if (panel === 'position') {
+      if (!selected.length) return <div>{panelHead('Vị trí')}<p className="text-xs text-slate-500">Chọn một khối trên trang.</p></div>;
+      const o = selected[0];
+      const num = (label: string, v: number, k: 'x' | 'y' | 'w' | 'h' | 'rot') => (
+        <label className="space-y-1"><span className="text-[11px] text-slate-500">{label}</span>
+          <input type="number" value={Math.round(v)} onChange={e => updateEls([o.id], { [k]: Number(e.target.value) || 0 } as any)} className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm" /></label>
+      );
+      return (
+        <div className="space-y-4">{panelHead('Vị trí')}
+          <div>
+            <p className="mb-2 text-xs font-semibold text-slate-500">Lớp</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => layer('up')} className={chip(false)}><ChevronsUp className="mr-1 inline h-3.5 w-3.5" />Lên trên cùng</button>
+              <button onClick={() => layerStep(1)} className={chip(false)}><ChevronUp className="mr-1 inline h-3.5 w-3.5" />Lên 1 lớp</button>
+              <button onClick={() => layerStep(-1)} className={chip(false)}><ChevronDown className="mr-1 inline h-3.5 w-3.5" />Xuống 1 lớp</button>
+              <button onClick={() => layer('down')} className={chip(false)}><ChevronsDown className="mr-1 inline h-3.5 w-3.5" />Xuống dưới cùng</button>
+            </div>
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-semibold text-slate-500">Căn theo trang</p>
+            <div className="grid grid-cols-3 gap-2">
+              <button onClick={() => alignTo('l')} className={chip(false)} title="Trái"><AlignStartVertical className="mx-auto h-4 w-4" /></button>
+              <button onClick={() => alignTo('c')} className={chip(false)} title="Giữa ngang"><AlignCenterVertical className="mx-auto h-4 w-4" /></button>
+              <button onClick={() => alignTo('r')} className={chip(false)} title="Phải"><AlignEndVertical className="mx-auto h-4 w-4" /></button>
+              <button onClick={() => alignTo('t')} className={chip(false)} title="Trên"><AlignStartHorizontal className="mx-auto h-4 w-4" /></button>
+              <button onClick={() => alignTo('m')} className={chip(false)} title="Giữa dọc"><AlignCenterHorizontal className="mx-auto h-4 w-4" /></button>
+              <button onClick={() => alignTo('b')} className={chip(false)} title="Dưới"><AlignEndHorizontal className="mx-auto h-4 w-4" /></button>
+            </div>
+          </div>
+          {one && <div>
+            <p className="mb-2 text-xs font-semibold text-slate-500">Kích thước và vị trí chính xác</p>
+            <div className="grid grid-cols-2 gap-2">{num('Ngang (X)', o.x, 'x')}{num('Dọc (Y)', o.y, 'y')}{num('Rộng', o.w, 'w')}{num('Cao', o.h, 'h')}{num('Xoay (độ)', o.rot || 0, 'rot')}</div>
+          </div>}
+          <div className="grid grid-cols-3 gap-2">
+            <button onClick={duplicateSel} className={chip(false)}><Copy className="mx-auto mb-0.5 h-4 w-4" />Nhân bản</button>
+            <button onClick={() => updateEls(sel, { locked: !selected.every(x => x.locked) })} className={chip(selected.every(x => x.locked))}>{selected.every(x => x.locked) ? <Lock className="mx-auto mb-0.5 h-4 w-4" /> : <Unlock className="mx-auto mb-0.5 h-4 w-4" />}{selected.every(x => x.locked) ? 'Mở khoá' : 'Khoá'}</button>
+            <button onClick={removeSel} className="rounded-xl border border-rose-200 px-2 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50"><Trash2 className="mx-auto mb-0.5 h-4 w-4" />Xoá</button>
+          </div>
+        </div>
+      );
+    }
+    // Hiệu ứng
+    if (!selected.length) return <div>{panelHead('Hiệu ứng')}<p className="text-xs text-slate-500">Chọn một khối trên trang.</p></div>;
+    const o = selected[0];
+    const effects = o.type === 'text' ? EFFECT_LABELS : EFFECT_LABELS.filter(([k]) => ['none', 'shadow', 'lift', 'glow', 'echo'].includes(k));
+    const f = o.filter || {};
+    const setF = (patch: ImgFilter) => updateEls(sel, { filter: { ...f, ...patch } }, false);
+    return (
+      <div className="space-y-4">{panelHead('Hiệu ứng')}
+        {o.type === 'image' && <>
+          <div>
+            <p className="mb-2 text-xs font-semibold text-slate-500">Bộ lọc màu</p>
+            <div className="grid grid-cols-4 gap-2">
+              {FILTERS.map(([l, v]) => (
+                <button key={l} onClick={() => updateEls(sel, { filter: v })} className="text-center">
+                  <div className={`aspect-square overflow-hidden rounded-lg ${JSON.stringify(o.filter || null) === JSON.stringify(v || null) ? 'ring-2 ring-brand' : ''}`}>
+                    {o.src && <img src={o.src.replace('/upload/', '/upload/w_120,q_auto,f_auto/')} alt="" className="h-full w-full object-cover" style={{ filter: v ? [v.brightness && `brightness(${v.brightness}%)`, v.contrast && `contrast(${v.contrast}%)`, v.saturate && `saturate(${v.saturate}%)`, v.grayscale && `grayscale(${v.grayscale}%)`, v.sepia && `sepia(${v.sepia}%)`, v.hue && `hue-rotate(${v.hue}deg)`].filter(Boolean).join(' ') : undefined }} />}
+                  </div>
+                  <span className="text-[10px] text-slate-600">{l}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-slate-500">Chỉnh ảnh</p>
+            <SliderRow label="Độ sáng" min={30} max={180} step={1} value={f.brightness ?? 100} onChange={v => setF({ brightness: v })} />
+            <SliderRow label="Tương phản" min={30} max={180} step={1} value={f.contrast ?? 100} onChange={v => setF({ contrast: v })} />
+            <SliderRow label="Độ bão hoà màu" min={0} max={250} step={1} value={f.saturate ?? 100} onChange={v => setF({ saturate: v })} />
+            <SliderRow label="Làm mờ" min={0} max={20} step={0.5} value={f.blur ?? 0} onChange={v => setF({ blur: v })} />
+          </div>
+        </>}
+        <div>
+          <p className="mb-2 text-xs font-semibold text-slate-500">{o.type === 'text' ? 'Kiểu chữ' : 'Bóng và ánh sáng'}</p>
+          <div className="grid grid-cols-3 gap-2">
+            {effects.map(([k, l]) => (
+              <button key={k} onClick={() => updateEls(sel, { effect: k as EffectKind, effectColor: o.effectColor || (k === 'neon' || k === 'glow' ? '#22d3ee' : '#0f172a') })} className={`${chip((o.effect || 'none') === k)} flex flex-col items-center gap-1`}>
+                {o.type === 'text' && <span className="relative block h-8 w-full"><ElementView el={{ id: 'p', type: 'text', x: 0, y: 0, w: 70, h: 30, text: 'Ag', fontSize: 24, bold: true, align: 'center', color: '#1e293b', fontFamily: o.fontFamily, effect: k as EffectKind, effectColor: k === 'neon' || k === 'glow' ? '#22d3ee' : '#64748b' }} /></span>}
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+        {o.effect && o.effect !== 'none' && <>
+          <div className="flex items-center justify-between text-xs text-slate-600">Màu hiệu ứng <ColorButton title="Màu hiệu ứng" value={o.effectColor} onChange={c => updateEls(sel, { effectColor: c })} /></div>
+          <SliderRow label="Độ mạnh" min={0} max={100} step={1} value={o.effectSize ?? 50} onChange={v => updateEls(sel, { effectSize: v }, false)} />
+        </>}
+      </div>
+    );
+  }
   // Kết thúc sửa chữ: lấy nội dung ô đang gõ rồi lưu, gọi trước mọi thao tác làm ô gõ biến mất.
   const editRef = useRef<HTMLTextAreaElement | null>(null);
   const stopEditing = () => {
@@ -534,8 +751,10 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
         )}
         {!readOnly && panel && (
           <aside className="w-[300px] shrink-0 overflow-y-auto border-r border-slate-200 bg-white p-4">
-            <LeftPanel panel={panel} slide={slide} onLayout={l => addSlide(l)} onText={addText} onShape={addShape} onImage={insertImage} onRemoteImage={insertRemote}
-              onUpload={uploadFiles} busy={busyUpload} onBg={setBg} onClose={() => setPanel(null)} />
+            {panel === 'effects' || panel === 'animate' || panel === 'position' || panel === 'transition'
+              ? renderPropPanel()
+              : <LeftPanel panel={panel} slide={slide} onLayout={l => (tplMode === 'replace' ? applyLayout(l) : addSlide(l))} tplMode={tplMode} onTplMode={setTplMode} onText={addText} onShape={addShape} onImage={insertImage} onRemoteImage={insertRemote}
+                  onUpload={uploadFiles} busy={busyUpload} onBg={setBg} onClose={() => setPanel(null)} />}
           </aside>
         )}
 
@@ -543,9 +762,9 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
         <main className="flex min-w-0 flex-1 flex-col">
           {/* Thanh thuộc tính theo khối đang chọn */}
           {!readOnly && (
-            <div className="flex h-12 shrink-0 items-center gap-1 overflow-x-auto border-b border-slate-200 bg-white px-3">
+            <div className="flex min-h-12 shrink-0 flex-wrap items-center gap-1 border-b border-slate-200 bg-white px-3 py-1.5">
               {one?.type === 'text' && <>
-                <select value={one.fontFamily || DEFAULT_FONT} onChange={e => { ensureFont(e.target.value); updateEls([one.id], { fontFamily: e.target.value }); }} className="h-9 w-44 rounded-lg border border-slate-200 px-2 text-sm">
+                <select value={one.fontFamily || DEFAULT_FONT} onChange={e => { ensureFont(e.target.value); updateEls([one.id], { fontFamily: e.target.value }); }} className="h-9 w-40 rounded-lg border border-slate-200 px-2 text-sm">
                   {FONT_OPTIONS.map(f => <option key={f.family} value={f.family} style={{ fontFamily: f.family }}>{f.label}</option>)}
                 </select>
                 <div className="flex items-center rounded-lg border border-slate-200">
@@ -557,10 +776,16 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                 <button className={one.bold ? tbOn : tb} title="Chữ đậm" onClick={() => updateEls([one.id], { bold: !one.bold })}><Bold className="h-4 w-4" /></button>
                 <button className={one.italic ? tbOn : tb} title="Chữ nghiêng" onClick={() => updateEls([one.id], { italic: !one.italic })}><Italic className="h-4 w-4" /></button>
                 <button className={one.underline ? tbOn : tb} title="Gạch chân" onClick={() => updateEls([one.id], { underline: !one.underline })}><Underline className="h-4 w-4" /></button>
+                <button className={one.strike ? tbOn : tb} title="Gạch ngang chữ" onClick={() => updateEls([one.id], { strike: !one.strike })}><Strikethrough className="h-4 w-4" /></button>
+                <button className={one.upper ? tbOn : tb} title="Chữ in hoa" onClick={() => updateEls([one.id], { upper: !one.upper })}><CaseUpper className="h-4 w-4" /></button>
                 <button className={tb} title="Căn lề" onClick={() => updateEls([one.id], { align: one.align === 'left' ? 'center' : one.align === 'center' ? 'right' : 'left' })}>
                   {one.align === 'center' ? <AlignCenter className="h-4 w-4" /> : one.align === 'right' ? <AlignRight className="h-4 w-4" /> : <AlignLeft className="h-4 w-4" />}
                 </button>
                 <button className={one.list ? tbOn : tb} title="Danh sách gạch đầu dòng" onClick={() => updateEls([one.id], { list: !one.list })}><List className="h-4 w-4" /></button>
+                <Popover title="Khoảng cách chữ" icon={<MoveVertical className="h-4 w-4" />}>
+                  <SliderRow label="Khoảng cách giữa các chữ" min={-50} max={400} step={10} value={one.letterSpacing || 0} onChange={v => updateEls([one.id], { letterSpacing: v }, false)} />
+                  <SliderRow label="Khoảng cách dòng" min={0.8} max={2.5} step={0.05} value={one.lineHeight || 1.3} onChange={v => updateEls([one.id], { lineHeight: v }, false)} />
+                </Popover>
                 <ColorButton title="Màu nền khối chữ" value={one.bg} onChange={c => updateEls([one.id], { bg: c === 'transparent' ? undefined : c })} icon={<PaintBucket className="h-4 w-4" />} />
                 <Sep />
               </>}
@@ -573,28 +798,35 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                 <Sep />
               </>}
               {one?.type === 'image' && <>
+                <button className="flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm hover:bg-slate-100" title="Thay ảnh khác, giữ nguyên vị trí và cỡ" onClick={() => { setReplaceId(one.id); setPanel('uploads'); addNotification('Chọn ảnh ở mục Tải lên hoặc Thư viện để thay.', 'info'); }}><Replace className="h-4 w-4" /> Thay ảnh</button>
+                <button className={one.flipX ? tbOn : tb} title="Lật ngang" onClick={() => updateEls([one.id], { flipX: !one.flipX })}><FlipHorizontal2 className="h-4 w-4" /></button>
+                <button className={one.flipY ? tbOn : tb} title="Lật dọc" onClick={() => updateEls([one.id], { flipY: !one.flipY })}><FlipVertical2 className="h-4 w-4" /></button>
                 <button className={tb} title={one.fit === 'contain' ? 'Lấp đầy khung' : 'Hiện trọn ảnh'} onClick={() => updateEls([one.id], { fit: one.fit === 'contain' ? 'cover' : 'contain' })}><Maximize className="h-4 w-4" /></button>
                 <select value={one.radius || 0} onChange={e => updateEls([one.id], { radius: Number(e.target.value) })} className="h-9 rounded-lg border border-slate-200 px-2 text-sm" title="Bo góc">
                   {[0, 8, 16, 24, 40, 999].map(n => <option key={n} value={n}>{n === 999 ? 'Tròn' : n ? `Bo ${n}` : 'Không bo'}</option>)}
                 </select>
-                <button className={tb} title="Dùng làm ảnh nền trang" onClick={() => { setBg({ image: one.src }); commit(mapSlide(s => ({ ...s, bg: { image: one.src }, els: s.els.filter(e => e.id !== one.id) }))); setSel([]); }}><PaintBucket className="h-4 w-4" /></button>
+                <button className={tb} title="Dùng làm ảnh nền trang" onClick={() => { commit(mapSlide(s => ({ ...s, bg: { image: one.src }, els: s.els.filter(e => e.id !== one.id) }))); setSel([]); }}><PaintBucket className="h-4 w-4" /></button>
                 <Sep />
               </>}
               {selected.length > 0 ? <>
-                <label className="flex items-center gap-1 text-xs text-slate-500" title="Độ trong suốt"><Eye className="h-4 w-4" />
-                  <input type="range" min={10} max={100} value={Math.round((one?.opacity ?? 1) * 100)} onChange={e => updateEls(sel, { opacity: Number(e.target.value) / 100 }, false)} className="w-20 accent-brand" />
-                </label>
-                <button className={tb} title="Đưa lên trên" onClick={() => layer('up')}><ArrowUpToLine className="h-4 w-4" /></button>
-                <button className={tb} title="Đưa xuống dưới" onClick={() => layer('down')}><ArrowDownToLine className="h-4 w-4" /></button>
-                <button className={tb} title="Nhân bản (Ctrl D)" onClick={duplicateSel}><Copy className="h-4 w-4" /></button>
-                <button className={tb} title={selected.every(s => s.locked) ? 'Mở khoá' : 'Khoá vị trí'} onClick={() => updateEls(sel, { locked: !selected.every(s => s.locked) })}>{selected.every(s => s.locked) ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}</button>
-                <button className={`${tb} hover:text-rose-600`} title="Xoá (Delete)" onClick={removeSel}><Trash2 className="h-4 w-4" /></button>
+                <TextBtn on={panel === 'effects'} onClick={() => setPanel(panel === 'effects' ? null : 'effects')} icon={<Sparkles className="h-4 w-4" />}>Hiệu ứng</TextBtn>
+                <TextBtn on={panel === 'animate'} onClick={() => setPanel(panel === 'animate' ? null : 'animate')} icon={<Wand2 className="h-4 w-4" />}>Chuyển động</TextBtn>
+                <TextBtn on={panel === 'position'} onClick={() => setPanel(panel === 'position' ? null : 'position')} icon={<Move className="h-4 w-4" />}>Vị trí</TextBtn>
+                <Popover title="Độ trong suốt" icon={<Blend className="h-4 w-4" />}>
+                  <SliderRow label="Độ trong suốt" min={0} max={100} step={1} value={Math.round((one?.opacity ?? selected[0].opacity ?? 1) * 100)} onChange={v => updateEls(sel, { opacity: v / 100 }, false)} />
+                </Popover>
+                {one && <button className={painter ? tbOn : tb} title="Sao chép kiểu: bấm rồi chọn khối khác để dán kiểu" onClick={() => { if (painter) setPainter(null); else { setPainter(styleOf(one)); addNotification('Bấm vào khối khác để dán kiểu.', 'info'); } }}><Paintbrush className="h-4 w-4" /></button>}
               </> : (
-                <div className="flex items-center gap-2 text-sm text-slate-500">
+                <div className="flex flex-wrap items-center gap-1 text-sm text-slate-500">
                   <ColorButton title="Màu nền trang" value={slide.bg?.color} onChange={c => setBg({ color: c })} icon={<PaintBucket className="h-4 w-4" />} />
-                  <span>Bấm vào một khối để chỉnh. Kéo thả ảnh vào trang hoặc dán ảnh bằng Ctrl V.</span>
+                  <TextBtn on={panel === 'transition'} onClick={() => setPanel(panel === 'transition' ? null : 'transition')} icon={<PlayCircle className="h-4 w-4" />}>Chuyển tiếp{slide.transition && slide.transition.type !== 'none' ? ` · ${TRANSITION_LABELS.find(t => t[0] === slide.transition!.type)?.[1]}` : ''}</TextBtn>
+                  <TextBtn on={panel === 'animate'} onClick={() => setPanel(panel === 'animate' ? null : 'animate')} icon={<Wand2 className="h-4 w-4" />}>Chuyển động</TextBtn>
+                  <TextBtn on={panel === 'templates'} onClick={() => { setTplMode('replace'); setPanel('templates'); }} icon={<LayoutTemplate className="h-4 w-4" />}>Áp mẫu cho trang này</TextBtn>
+                  <span className="ml-2 hidden xl:inline">Bấm vào một khối để chỉnh. Kéo thả hoặc dán ảnh bằng Ctrl V.</span>
                 </div>
               )}
+              {painter && <span className="ml-2 rounded-full bg-brand-light px-2 py-1 text-xs font-semibold text-brand">Đang sao chép kiểu, bấm vào khối cần dán</span>}
+              {replaceId && <button onClick={() => setReplaceId(null)} className="ml-2 rounded-full bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">Đang chọn ảnh để thay · Huỷ</button>}
               {busyUpload > 0 && <span className="ml-auto flex items-center gap-1.5 text-xs text-brand"><Loader2 className="h-4 w-4 animate-spin" /> Đang tải ảnh...</span>}
             </div>
           )}
@@ -605,7 +837,8 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
             onDrop={e => { if (readOnly) return; e.preventDefault(); uploadFiles(Array.from(e.dataTransfer.files || [])); }}>
             <div className="flex min-h-full min-w-full items-center justify-center p-6" onPointerDown={e => { if (e.target === e.currentTarget) { setSel([]); stopEditing(); } }}>
               <div ref={slideBoxRef} className="relative shrink-0 shadow-lg" style={{ width, height: SLIDE_H * scale }}>
-                <SlideRenderer slide={slide} width={width} editingId={editingId}>
+                <SlideRenderer key={`tr_${transKey}`} slide={slide} width={width} editingId={editingId} phases={preview?.phases} loops={!!preview} playKey={preview?.key}
+                  style={transKey && slide.transition && slide.transition.type !== 'none' && panel === 'transition' ? { animation: `st-${slide.transition.type}-in ${slide.transition.dur ?? 0.7}s cubic-bezier(.3,.7,.2,1) both` } : undefined}>
                   {/* Lớp tương tác */}
                   <div className="absolute inset-0" onPointerDown={e => { if (e.target === e.currentTarget) { setSel([]); stopEditing(); } }}>
                     {slide.els.map(el => (
@@ -627,6 +860,28 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                         </>}
                       </div>
                     ))}
+                    {/* Số thứ tự xuất hiện khi bấm */}
+                    {panel === 'animate' && slide.els.filter(e => e.anim?.in && e.anim.in !== 'none').map(e => {
+                      const clicks = slide.els.filter(x => x.anim?.in && x.anim.in !== 'none' && x.anim.trigger === 'click');
+                      const n = e.anim?.trigger === 'click' ? clicks.indexOf(e) + 1 : 0;
+                      return <span key={`n_${e.id}`} style={{ position: 'absolute', left: e.x - 14 / scale, top: e.y - 14 / scale, minWidth: 26 / scale, height: 26 / scale, fontSize: 13 / scale, borderRadius: 13 / scale, padding: `0 ${6 / scale}px`, pointerEvents: 'none' }}
+                        className="grid place-items-center bg-brand font-bold text-white shadow">{n || 'A'}</span>;
+                    })}
+                    {/* Thanh nhỏ nổi trên khối đang chọn */}
+                    {!readOnly && selected.length > 0 && !editingId && !dragging.current && (() => {
+                      const top = Math.min(...selected.map(e => e.y)), left = Math.min(...selected.map(e => e.x)), right = Math.max(...selected.map(e => e.x + e.w));
+                      const above = top > 90;
+                      const bottom = Math.max(...selected.map(e => e.y + e.h));
+                      return (
+                        <div onPointerDown={e => e.stopPropagation()} style={{ position: 'absolute', left: (left + right) / 2, top: above ? top - 70 / scale : bottom + 22 / scale, transform: `translateX(-50%) scale(${1 / scale})`, transformOrigin: 'top center' }}
+                          className="flex items-center gap-0.5 whitespace-nowrap rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+                          <button title={selected.every(x => x.locked) ? 'Mở khoá' : 'Khoá'} onClick={() => updateEls(sel, { locked: !selected.every(x => x.locked) })} className="grid h-8 w-8 place-items-center rounded-lg text-slate-600 hover:bg-slate-100">{selected.every(x => x.locked) ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}</button>
+                          <button title="Nhân bản (Ctrl D)" onClick={duplicateSel} className="grid h-8 w-8 place-items-center rounded-lg text-slate-600 hover:bg-slate-100"><Copy className="h-4 w-4" /></button>
+                          <button title="Xoá (Delete)" onClick={removeSel} className="grid h-8 w-8 place-items-center rounded-lg text-slate-600 hover:bg-rose-50 hover:text-rose-600"><Trash2 className="h-4 w-4" /></button>
+                          <button title="Vị trí, lớp, căn chỉnh" onClick={() => setPanel('position')} className="grid h-8 w-8 place-items-center rounded-lg text-slate-600 hover:bg-slate-100"><MoreHorizontal className="h-4 w-4" /></button>
+                        </div>
+                      );
+                    })()}
                     {guides.x.map(x => <div key={`gx${x}`} style={{ position: 'absolute', left: x, top: 0, width: 1 / scale, height: SLIDE_H, background: 'var(--color-brand)', pointerEvents: 'none' }} />)}
                     {guides.y.map(y => <div key={`gy${y}`} style={{ position: 'absolute', top: y, left: 0, height: 1 / scale, width: SLIDE_W, background: 'var(--color-brand)', pointerEvents: 'none' }} />)}
                     {editingEl && (
@@ -727,10 +982,38 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
 }
 
 function Sep() { return <span className="mx-1 h-6 w-px shrink-0 bg-slate-200" />; }
+function TextBtn({ on, onClick, icon, children }: { on?: boolean; onClick: () => void; icon?: React.ReactNode; children: React.ReactNode }) {
+  return <button onClick={onClick} className={`flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium ${on ? 'bg-brand-light text-brand' : 'text-slate-700 hover:bg-slate-100'}`}>{icon}{children}</button>;
+}
+function Popover({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    window.addEventListener('mousedown', close);
+    return () => window.removeEventListener('mousedown', close);
+  }, [open]);
+  return (
+    <div ref={ref} className="relative">
+      <button title={title} onClick={() => setOpen(v => !v)} className={`grid h-9 w-9 place-items-center rounded-lg ${open ? 'bg-brand-light text-brand' : 'text-slate-600 hover:bg-slate-100'}`}>{icon}</button>
+      {open && <div className="absolute left-0 top-11 z-50 w-72 space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-xl"><p className="text-sm font-semibold text-slate-800">{title}</p>{children}</div>}
+    </div>
+  );
+}
+function SliderRow({ label, min, max, step, value, onChange, suffix }: { label: string; min: number; max: number; step: number; value: number; onChange: (v: number) => void; suffix?: string }) {
+  return (
+    <label className="block space-y-1">
+      <span className="flex items-center justify-between text-xs text-slate-600">{label}<input type="number" min={min} max={max} step={step} value={value} onChange={e => onChange(Math.max(min, Math.min(max, Number(e.target.value) || 0)))} className="w-16 rounded-md border border-slate-200 px-1.5 py-0.5 text-right text-xs" /></span>
+      <input type="range" min={min} max={max} step={step} value={value} onChange={e => onChange(Number(e.target.value))} className="w-full accent-brand" />
+      {suffix && <span className="text-[11px] text-slate-400">{suffix}</span>}
+    </label>
+  );
+}
 
 // ===== Bảng bên trái =====
-function LeftPanel({ panel, slide, onLayout, onText, onShape, onImage, onRemoteImage, onUpload, busy, onBg, onClose }: {
-  panel: Exclude<Panel, null>; slide: Slide; onLayout: (l: LayoutId) => void; onText: (k: 'h1' | 'h2' | 'body' | 'list') => void; onShape: (k: ShapeKind) => void;
+function LeftPanel({ panel, slide, onLayout, tplMode, onTplMode, onText, onShape, onImage, onRemoteImage, onUpload, busy, onBg, onClose }: {
+  panel: Exclude<Panel, null>; slide: Slide; onLayout: (l: LayoutId) => void; tplMode: 'add' | 'replace'; onTplMode: (m: 'add' | 'replace') => void; onText: (k: 'h1' | 'h2' | 'body' | 'list') => void; onShape: (k: ShapeKind) => void;
   onImage: (url: string) => void; onRemoteImage: (url: string) => void; onUpload: (files: File[]) => void; busy: number; onBg: (bg: Slide['bg'], all?: boolean) => void; onClose: () => void;
 }) {
   const [media, setMedia] = useState<MediaItem[] | null>(null);
@@ -763,7 +1046,11 @@ function LeftPanel({ panel, slide, onLayout, onText, onShape, onImage, onRemoteI
 
   if (panel === 'templates') return (
     <div>{head('Mẫu trang')}
-      <p className="mb-3 text-xs text-slate-500">Bấm một mẫu để thêm trang mới ngay sau trang đang mở.</p>
+      <div className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 text-xs font-semibold">
+        <button onClick={() => onTplMode('add')} className={`rounded-lg py-1.5 ${tplMode === 'add' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Thêm trang mới</button>
+        <button onClick={() => onTplMode('replace')} className={`rounded-lg py-1.5 ${tplMode === 'replace' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Áp vào trang này</button>
+      </div>
+      <p className="mb-3 text-xs text-slate-500">{tplMode === 'add' ? 'Bấm một mẫu để thêm trang mới ngay sau trang đang mở.' : 'Bấm một mẫu để thay toàn bộ nội dung trang đang mở (chọn Trang trống để xoá sạch). Ctrl Z để lấy lại.'}</p>
       <div className="grid grid-cols-2 gap-3">
         {previews.map(p => (
           <button key={p.id} onClick={() => onLayout(p.id)} className="text-left">

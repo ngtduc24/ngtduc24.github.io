@@ -39,10 +39,46 @@ export interface SlideEl {
   fill?: string;
   stroke?: string;
   strokeWidth?: number;
+  // Chữ nâng cao
+  strike?: boolean;
+  upper?: boolean;
+  letterSpacing?: number;   // đơn vị phần nghìn em, ví dụ 50 = 0.05em
+  // Hiệu ứng hình ảnh của khối (bóng đổ, viền chữ, phát sáng...)
+  effect?: EffectKind;
+  effectColor?: string;
+  effectSize?: number;      // 0 đến 100
+  // Ảnh
+  flipX?: boolean;
+  flipY?: boolean;
+  filter?: ImgFilter;
+  // Chuyển động
+  anim?: ElAnim;
 }
 
+export type EffectKind = 'none' | 'shadow' | 'lift' | 'hollow' | 'outline' | 'glow' | 'neon' | 'echo' | 'splice';
+export interface ImgFilter { brightness?: number; contrast?: number; saturate?: number; blur?: number; grayscale?: number; sepia?: number; hue?: number }
+export type AnimIn = 'none' | 'fade' | 'rise' | 'up' | 'down' | 'left' | 'right' | 'zoom' | 'pop' | 'wipe' | 'blur' | 'spin' | 'bounce' | 'drop';
+export type AnimLoop = 'none' | 'pulse' | 'float' | 'spin' | 'wiggle' | 'blink' | 'shake' | 'swing';
+export interface ElAnim { in?: AnimIn; dur?: number; delay?: number; trigger?: 'auto' | 'click'; loop?: AnimLoop; loopDur?: number }
+export type TransitionKind = 'none' | 'fade' | 'slide' | 'push' | 'zoom' | 'flip' | 'dissolve' | 'cover' | 'wipe';
+export interface SlideTransition { type: TransitionKind; dur?: number }
+
+export const ANIM_IN_LABELS: Array<[AnimIn, string]> = [
+  ['none', 'Không'], ['fade', 'Mờ dần'], ['rise', 'Nổi lên'], ['up', 'Trượt lên'], ['down', 'Trượt xuống'], ['left', 'Trượt từ phải'], ['right', 'Trượt từ trái'],
+  ['zoom', 'Phóng to'], ['pop', 'Bật ra'], ['wipe', 'Quét ngang'], ['blur', 'Rõ dần'], ['spin', 'Xoay vào'], ['bounce', 'Nảy xuống'], ['drop', 'Rơi xuống'],
+];
+export const ANIM_LOOP_LABELS: Array<[AnimLoop, string]> = [
+  ['none', 'Không'], ['pulse', 'Nhịp đập'], ['float', 'Lơ lửng'], ['spin', 'Xoay tròn'], ['wiggle', 'Lắc nhẹ'], ['blink', 'Nhấp nháy'], ['shake', 'Rung'], ['swing', 'Đung đưa'],
+];
+export const TRANSITION_LABELS: Array<[TransitionKind, string]> = [
+  ['none', 'Không'], ['fade', 'Mờ dần'], ['dissolve', 'Hoà tan'], ['slide', 'Trượt'], ['push', 'Đẩy'], ['cover', 'Phủ lên'], ['zoom', 'Thu phóng'], ['flip', 'Lật'], ['wipe', 'Quét'],
+];
+export const EFFECT_LABELS: Array<[EffectKind, string]> = [
+  ['none', 'Không'], ['shadow', 'Bóng đổ'], ['lift', 'Nâng lên'], ['hollow', 'Rỗng ruột'], ['outline', 'Viền ngoài'], ['glow', 'Phát sáng'], ['neon', 'Đèn neon'], ['echo', 'Tiếng vọng'], ['splice', 'Cắt ghép'],
+];
+
 export interface SlideBg { color?: string; gradient?: string; image?: string }
-export interface Slide { id: string; bg: SlideBg; els: SlideEl[]; notes?: string }
+export interface Slide { id: string; bg: SlideBg; els: SlideEl[]; notes?: string; transition?: SlideTransition }
 
 export interface Deck {
   id: string;
