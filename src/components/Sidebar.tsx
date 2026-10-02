@@ -13,6 +13,8 @@ import NotificationBell from './NotificationBell';
 import { useSidebarTools } from '../lib/sidebarTools';
 import { usePerson } from '../lib/people';
 import { AvatarImg } from './ui/People';
+import { openProfile } from '../lib/people';
+import { Camera, ChevronRight, Trash2 } from 'lucide-react';
 
 interface SidebarProps {
   currentTab: string;
@@ -112,30 +114,57 @@ export default function Sidebar({
         {compact && primaryItems.map(renderItem)}
         <NotificationBell currentUser={currentUser} settings={settings} setCurrentTab={setCurrentTab} />
 
-        <button
-          type="button"
-          onClick={() => onOpenProfile && onOpenProfile()}
-          aria-label="Trang cá nhân"
-          className={`group flex w-full flex-col items-center gap-1 rounded-2xl ${compact ? 'py-1.5' : 'py-2.5'} text-slate-500 transition hover:text-brand`}
-        >
-          <span className={`grid ${compact ? 'h-9 w-9' : 'h-10 w-10'} place-items-center rounded-full ring-2 ring-transparent transition ${currentTab === 'profile' ? 'ring-brand' : 'group-hover:ring-slate-200'}`}>
-            {myAvatar ? <AvatarImg person={myAvatar} size={compact ? 30 : 34} /> : <UserCircle className="h-5 w-5" />}
-          </span>
-          <span className="text-[10px] font-bold leading-none">Cá nhân</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => confirm('Xác nhận đăng xuất', 'Bạn có chắc chắn muốn đăng xuất không?', onLogout)}
-          aria-label="Đăng xuất tài khoản"
-          className={`group flex w-full flex-col items-center gap-1 rounded-2xl ${compact ? 'py-1.5' : 'py-2.5'} text-slate-500 transition hover:text-rose-500`}
-        >
-          <span className={`grid ${compact ? 'h-9 w-9' : 'h-10 w-10'} place-items-center rounded-xl transition group-hover:bg-rose-50`}>
-            <LogOut className="h-5 w-5" />
-          </span>
-          <span className="text-[10px] font-bold leading-none">Đăng xuất</span>
-        </button>
+        <AccountMenu currentUser={currentUser} avatar={myAvatar} compact={compact} active={currentTab === 'profile' || currentTab === 'user_profile'}
+          onSettings={() => onOpenProfile && onOpenProfile()} onLogout={() => confirm('Xác nhận đăng xuất', 'Bạn có chắc chắn muốn đăng xuất không?', onLogout)} />
       </div>
     </aside>
+  );
+}
+
+// Nút ảnh đại diện ở đáy thanh bên trái: bấm mở menu tài khoản (giống Canva).
+// Trang cá nhân: hồ sơ công khai (ảnh bìa, ảnh đại diện, nội dung đã tạo). Cài đặt: sửa thông tin, mật khẩu, mục Đã xoá.
+function AccountMenu({ currentUser, avatar, compact, active, onSettings, onLogout }: { currentUser: UserAccount; avatar: any; compact: boolean; active: boolean; onSettings: () => void; onLogout: () => void }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const d = (e: MouseEvent | TouchEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', d); document.addEventListener('touchstart', d); window.addEventListener('keydown', k);
+    return () => { document.removeEventListener('mousedown', d); document.removeEventListener('touchstart', d); window.removeEventListener('keydown', k); };
+  }, [open]);
+  const go = (fn: () => void) => { setOpen(false); fn(); };
+  const myPage = () => openProfile(currentUser.id);
+  const item = 'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50';
+  return (
+    <div ref={ref} className="relative mt-1 w-full">
+      <button type="button" onClick={() => setOpen(v => !v)} aria-label="Tài khoản" aria-expanded={open}
+        className="mx-auto grid place-items-center rounded-full p-1 transition hover:bg-slate-100">
+        <span className={`grid place-items-center rounded-full ring-2 ${open || active ? 'ring-brand' : 'ring-transparent'}`}>
+          {avatar ? <AvatarImg person={avatar} size={compact ? 36 : 40} /> : <UserCircle className="h-8 w-8 text-slate-500" />}
+        </span>
+      </button>
+      {open && (
+        <div className="fixed bottom-3 left-[88px] z-[300] w-[320px] max-w-[calc(100vw-100px)] rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl">
+          <p className="px-3 pb-1 pt-2 text-xs font-semibold text-slate-500">Tài khoản</p>
+          <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-slate-50">
+            <button type="button" onClick={() => go(onSettings)} title="Đổi ảnh đại diện, ảnh bìa" className="relative shrink-0">
+              {avatar ? <AvatarImg person={avatar} size={56} /> : <UserCircle className="h-14 w-14 text-slate-400" />}
+              <span className="absolute -bottom-0.5 -right-0.5 grid h-6 w-6 place-items-center rounded-full bg-white text-slate-600 shadow ring-1 ring-slate-200"><Camera className="h-3.5 w-3.5" /></span>
+            </button>
+            <button type="button" onClick={() => go(myPage)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+              <span className="min-w-0 flex-1"><span className="block truncate text-base font-bold text-slate-900">{currentUser.fullName || currentUser.username}</span><span className="block truncate text-xs text-slate-500">{currentUser.email}</span></span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+            </button>
+          </div>
+          <div className="my-1 border-t border-slate-100" />
+          <button type="button" onClick={() => go(myPage)} className={item}><UserCircle className="h-5 w-5 text-slate-500" /> Trang cá nhân</button>
+          <button type="button" onClick={() => go(onSettings)} className={item}><Settings className="h-5 w-5 text-slate-500" /> Cài đặt tài khoản</button>
+          <button type="button" onClick={() => go(() => { try { sessionStorage.setItem('open_hint:profile', 'trash'); } catch { /* bỏ qua */ } onSettings(); })} className={item}><Trash2 className="h-5 w-5 text-slate-500" /> Đã xoá</button>
+          <div className="my-1 border-t border-slate-100" />
+          <button type="button" onClick={() => go(onLogout)} className={`${item} hover:text-rose-600`}><LogOut className="h-5 w-5 text-slate-500" /> Đăng xuất</button>
+        </div>
+      )}
+    </div>
   );
 }
