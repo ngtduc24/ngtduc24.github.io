@@ -12,7 +12,7 @@ import { EduSubject, EduClass } from '../../types/edu';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import LibraryHero, { ViewToggle } from '../ui/LibraryHero';
-import { getSubjects, getSubjectsByIds, saveSubject, getClasses, getClassUsers, setEduAuthContext } from '../../lib/edu';
+import { getSubjects, getSubjectsByIds, getSystemSubjects, isSystemSubject, saveSubject, getClasses, getClassUsers, setEduAuthContext } from '../../lib/edu';
 import {
   ELLesson, ELSection, ELResource,
   syncOwnerName, getMyLessons, getPublicLessons, getPublicSubjectCounts, getLesson, getOwnLesson, createLesson, updateLesson,
@@ -230,7 +230,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
         placeholder="Tìm theo tên bài giảng, môn học..."
         chips={[
           { id: '', label: 'Tất cả', count: all.length },
-          ...subjects.filter(su => (subjectCounts[su.id] || 0) > 0 || su.ownerId === currentUser.id).map(su => ({ id: su.id, label: su.name, count: subjectCounts[su.id] || 0 })),
+          ...subjects.filter(su => (subjectCounts[su.id] || 0) > 0 || su.ownerId === currentUser.id || isSystemSubject(su)).map(su => ({ id: su.id, label: su.name, count: subjectCounts[su.id] || 0 })),
           ...((subjectCounts.__none || 0) > 0 ? [{ id: '__none', label: 'Chưa chọn môn', count: subjectCounts.__none }] : []),
         ]}
         activeChip={subjectId}
@@ -657,7 +657,14 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
   const [counts, setCounts] = useState<Record<string, number>>({});
   // Môn học của kho chung lấy theo các môn có bài công khai (môn của nhiều người khác nhau).
   const [subjects, setPubSubjects] = useState<EduSubject[]>([]);
-  useEffect(() => { getSubjectsByIds(Object.keys(counts)).then(setPubSubjects).catch(() => {}); }, [counts]);
+  // Môn của kho chung: các môn đang có bài công khai, cộng với môn chung của hệ thống (do quản trị cao nhất tạo).
+  useEffect(() => {
+    Promise.all([getSubjectsByIds(Object.keys(counts)).catch(() => []), getSystemSubjects().catch(() => [])]).then(([withLessons, system]) => {
+      const m = new Map<string, EduSubject>();
+      [...system, ...withLessons].forEach(su => m.set(su.id, su));
+      setPubSubjects(Array.from(m.values()).sort((a, b) => a.name.localeCompare(b.name)));
+    });
+  }, [counts]);
   const [subjectId, setSubjectId] = useState('');
   const [sort, setSort] = useState<'new' | 'views' | 'copies'>('new');
   const [all, setAll] = useState<ELLesson[]>([]);

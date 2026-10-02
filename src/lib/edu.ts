@@ -427,10 +427,23 @@ export async function deleteAssignment(id: string) {
 // ===== Môn học =====
 // Môn học là dữ liệu riêng của từng người. Kho dùng chung (bài giảng, bài tập, đề công khai) chỉ
 // cần tên môn của người khác để hiển thị, dùng getSubjectsByIds.
+// Tài khoản quản trị cao nhất. Môn học do tài khoản này tạo là môn chung của hệ thống:
+// mọi người đều thấy và dùng được (xếp bài tập, bài giảng, đề vào môn), nhưng chỉ tài khoản này sửa, xoá.
+export const SYSTEM_SUBJECT_OWNER = 'QDaOMwea6MV3XkFnv9uguv4M0Zr1';
+export const isSystemSubject = (s?: { ownerId?: string | null } | null) => !!s && s.ownerId === SYSTEM_SUBJECT_OWNER;
+
+// Môn của chính mình cộng với môn chung của hệ thống.
 export async function getSubjects(): Promise<EduSubject[]> {
   const me = getCtx().userId;
   if (!me) return [];
-  const { data, error } = await supabase.from(SUBJECTS_TABLE).select('*').eq('owner_id', me).order('name');
+  const { data, error } = await supabase.from(SUBJECTS_TABLE).select('*').or(`owner_id.eq.${me},owner_id.eq.${SYSTEM_SUBJECT_OWNER}`).order('name');
+  if (error) throw error;
+  return (data || []).map(mapSubject);
+}
+
+// Chỉ các môn chung của hệ thống (do tài khoản quản trị cao nhất tạo).
+export async function getSystemSubjects(): Promise<EduSubject[]> {
+  const { data, error } = await supabase.from(SUBJECTS_TABLE).select('*').eq('owner_id', SYSTEM_SUBJECT_OWNER).order('name');
   if (error) throw error;
   return (data || []).map(mapSubject);
 }
@@ -444,6 +457,14 @@ export async function getSubjectsByIds(ids: (string | null | undefined)[]): Prom
 }
 
 export async function saveSubject(subject: Partial<EduSubject>) {
+  // Sửa môn có sẵn: chỉ chủ môn sửa được và không đổi chủ (môn chung của hệ thống giữ nguyên chủ).
+  if (subject.id) {
+    const patch: any = { name: subject.name, description: subject.description };
+    Object.keys(patch).forEach(key => patch[key] === undefined && delete patch[key]);
+    const { data, error } = await supabase.from(SUBJECTS_TABLE).update(patch).eq('id', subject.id).eq('owner_id', getCtx().userId || '-').select().single();
+    if (error) throw error;
+    return mapSubject(data);
+  }
   const dbData: any = {
     id: subject.id,
     name: subject.name,

@@ -433,7 +433,9 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   const total = scoped.length;
   const chips: HeroChip[] = [
     { id: '', label: 'Tất cả', count: total },
-    ...subjects.map(su => ({ id: su.id, label: su.name, count: counts[su.id] || 0, onRename: (n: string) => handleRenameSubject(su, n), onDelete: () => handleDeleteSubject(su) })),
+    ...subjects.map(su => (su.ownerId === currentUser.id
+      ? { id: su.id, label: su.name, count: counts[su.id] || 0, onRename: (n: string) => handleRenameSubject(su, n), onDelete: () => handleDeleteSubject(su) }
+      : { id: su.id, label: su.name, count: counts[su.id] || 0 })),
     ...otherSubjects.filter(su => (counts[su.id] || 0) > 0).map(su => ({ id: su.id, label: su.name, count: counts[su.id] || 0 })),
     ...((counts.__none || 0) > 0 ? [{ id: '__none', label: 'Chưa chọn môn', count: counts.__none }] : []),
   ];
