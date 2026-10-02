@@ -1,7 +1,7 @@
 import CategoryManagerModal from './CategoryManagerModal';
 import { PortfolioCategory, getPortfolioProjectCategories, savePortfolioProjectCategories, getPortfolioCourseCategories, savePortfolioCourseCategories } from '../../lib/portfolioData';
 import React, { useState, useEffect } from 'react';
-import { 
+import { GraduationCap, ArrowLeft, 
   Plus, Trash2, Edit3, Eye, Copy, Pin, Star, Folder, BookOpen,
   ArrowUp, ArrowDown, ChevronDown, ChevronRight, Play, Users, Mail, ShieldAlert, FileText, Sparkles, LayoutGrid, Award, Lock, DollarSign, Calendar, Settings
 , Image, Type, PlayCircle, Code, Box, PenTool, Film, Link as LinkIcon, X, ChevronLeft} from 'lucide-react';
@@ -541,7 +541,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-xs font-semibold text-slate-500 uppercase tracking-widest">Đang tải phân hệ quản lý Dự án & Khóa học...</div>;
+    return <div className="p-8 text-center text-xs font-semibold text-slate-500 ">Đang tải phân hệ quản lý Dự án & Khóa học...</div>;
   }
 
   // Filters projects
@@ -589,11 +589,11 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                 setShowProjSettings(false);
                 setShowCourseSettings(false);
               }}
-              className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer ${
-                activeSubTab === tab.id
-                  ? 'bg-brand text-white shadow-md shadow-brand/20'
-                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
-              }`}
+              className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+ activeSubTab === tab.id
+ ? 'bg-brand text-white shadow-md shadow-brand/20'
+ : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+ }`}
             >
               <IconComp className="w-4 h-4" />
               <span>{tab.label}</span>
@@ -640,7 +640,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
           {/* Danh sách dự án — đồng nhất với bảng quản lý Tạp chí */}
           <div className="overflow-x-auto rounded-2xl bg-white shadow-sm scrollbar-thin">
             <div className="min-w-[980px]">
-              <div className="grid grid-cols-[40px_50px_minmax(330px,1.8fr)_150px_120px_100px_120px] items-center gap-3 bg-slate-50/80 px-5 py-4 text-[10px] font-black uppercase tracking-wider text-slate-500">
+              <div className="grid grid-cols-[40px_50px_minmax(330px,1.8fr)_150px_120px_100px_120px] items-center gap-3 bg-slate-50/80 px-5 py-4 text-xs font-black text-slate-500">
                 <input
                   type="checkbox"
                   aria-label="Chọn tất cả dự án"
@@ -682,16 +682,16 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                           {proj.isFeatured && <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />}
                           {proj.isPinned && <Pin className="h-3.5 w-3.5 shrink-0 text-brand" />}
                         </div>
-                        <p className="mt-1 line-clamp-1 text-[10px] leading-5 text-slate-400">{proj.briefDescription}</p>
+                        <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-400">{proj.briefDescription}</p>
                         <div className="mt-1 flex gap-1">{proj.tools.slice(0, 3).map(tool => <span key={tool} className="rounded bg-slate-100 px-1.5 py-0.5 text-[8px] font-bold text-slate-500">{tool}</span>)}</div>
                       </div>
                     </div>
 
-                    <span className="w-fit rounded-full bg-brand-light px-2.5 py-1 text-[9px] font-bold text-brand">{proj.category}</span>
-                    <span className={`w-fit rounded-full px-2.5 py-1 text-[9px] font-bold ${proj.status === 'published' || proj.status === 'completed' ? 'bg-brand-light text-brand' : proj.status === 'ongoing' ? 'bg-brand-light text-brand' : proj.status === 'hidden' ? 'bg-slate-100 text-slate-500' : 'bg-amber-50 text-amber-600'}`}>
+                    <span className="w-fit rounded-full bg-brand-light px-2.5 py-1 text-xs font-bold text-brand">{proj.category}</span>
+                    <span className={`w-fit rounded-full px-2.5 py-1 text-xs font-bold ${proj.status === 'published' || proj.status === 'completed' ? 'bg-brand-light text-brand' : proj.status === 'ongoing' ? 'bg-brand-light text-brand' : proj.status === 'hidden' ? 'bg-slate-100 text-slate-500' : 'bg-amber-50 text-amber-600'}`}>
                       {proj.status === 'published' ? 'Đã xuất bản' : proj.status === 'completed' ? 'Hoàn thành' : proj.status === 'ongoing' ? 'Đang thực hiện' : proj.status === 'hidden' ? 'Đã ẩn' : 'Bản nháp'}
                     </span>
-                    <span className="text-[10px] font-bold text-slate-400">{proj.viewCount.toLocaleString('vi-VN')}</span>
+                    <span className="text-xs font-bold text-slate-400">{proj.viewCount.toLocaleString('vi-VN')}</span>
 
                     <div className="flex justify-end gap-1">
                       <button onClick={() => handleTogglePinProj(proj)} className={`rounded-lg p-2 ${proj.isPinned ? 'bg-brand text-white' : 'bg-slate-50 text-slate-500 hover:text-brand'}`} title={proj.isPinned ? 'Gỡ ghim' : 'Ghim lên trang chủ'}><Pin className="h-3.5 w-3.5" /></button>
@@ -744,17 +744,17 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                 <div className="space-y-8">
                   {/* Basic Settings */}
                   <div>
-                    <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-4">Cài đặt chung</h4>
+                    <h4 className="text-sm font-black text-slate-900 mb-4">Cài đặt chung</h4>
                     <div className="grid gap-6 sm:grid-cols-2">
                       <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Dạng hiển thị bài viết</label>
+                        <label className="text-[11px] font-bold text-slate-500">Dạng hiển thị bài viết</label>
                         <select value={projectsSettings.layoutStyle || 'grid'} onChange={e => setProjectsSettings({...projectsSettings, layoutStyle: e.target.value as 'grid' | 'list'})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20 transition-all cursor-pointer">
                            <option value="grid">Dạng lưới (Grid)</option>
                            <option value="list">Dạng danh sách (List)</option>
                         </select>
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Số bài viết mỗi chuyên mục</label>
+                        <label className="text-[11px] font-bold text-slate-500">Số bài viết mỗi chuyên mục</label>
                         <input type="number" min="1" max="20" required value={projectsSettings.postsPerCategory} onChange={e => setProjectsSettings({...projectsSettings, postsPerCategory: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20 transition-all" />
                       </div>
                     </div>
@@ -764,7 +764,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
 
                   {/* Banner Settings */}
                   <div>
-                    <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-4">Cài đặt Ảnh bìa (Banner)</h4>
+                    <h4 className="text-sm font-black text-slate-900 mb-4">Cài đặt Ảnh bìa (Banner)</h4>
                     
                     <div className="space-y-6">
                       <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
@@ -779,28 +779,28 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                       
                       <div className="grid gap-6 sm:grid-cols-2">
                         <div className="space-y-1.5">
-                          <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Tiêu đề Banner</label>
+                          <label className="text-[11px] font-bold text-slate-500">Tiêu đề Banner</label>
                           <input required value={projectsSettings.banner.title} onChange={e => setProjectsSettings({...projectsSettings, banner: {...projectsSettings.banner, title: e.target.value}})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20 transition-all" />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Mô tả Banner</label>
+                          <label className="text-[11px] font-bold text-slate-500">Mô tả Banner</label>
                           <input required value={projectsSettings.banner.description} onChange={e => setProjectsSettings({...projectsSettings, banner: {...projectsSettings.banner, description: e.target.value}})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20 transition-all" />
                         </div>
                       </div>
 
 {/* Banner Media Selection UI */}
 <div className="mt-8 space-y-4">
-  <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-4">Hình nền / Video nền Banner</h4>
+  <h4 className="text-[11px] font-black text-slate-500 mb-4">Hình nền / Video nền Banner</h4>
   
   <div className="flex gap-4">
     <button
       type="button"
       onClick={() => setProjectsSettings({...projectsSettings, banner: {...projectsSettings.banner, mediaType: 'image'}})}
       className={`flex-1 rounded-2xl flex items-center justify-center gap-2 py-4 text-sm font-bold border-2 transition-all ${
-        projectsSettings.banner.mediaType !== 'video' 
-          ? 'border-brand text-brand bg-white' 
-          : 'border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100'
-      }`}
+ projectsSettings.banner.mediaType !== 'video' 
+ ? 'border-brand text-brand bg-white' 
+ : 'border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100'
+ }`}
     >
       <Image className="h-5 w-5" /> Sử dụng Hình ảnh
     </button>
@@ -808,10 +808,10 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
       type="button"
        onClick={() => setProjectsSettings({...projectsSettings, banner: {...projectsSettings.banner, mediaType: 'video'}})}
        className={`flex-1 rounded-2xl flex items-center justify-center gap-2 py-4 text-sm font-bold transition-all ${
-        projectsSettings.banner.mediaType === 'video' 
-          ? 'bg-brand border-2 border-brand text-white shadow-sm shadow-brand/20' 
-          : 'border-2 border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100'
-      }`}
+ projectsSettings.banner.mediaType === 'video' 
+ ? 'bg-brand border-2 border-brand text-white shadow-sm shadow-brand/20' 
+ : 'border-2 border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100'
+ }`}
     >
       <Film className="h-5 w-5" /> Sử dụng Video
     </button>
@@ -821,7 +821,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
     {projectsSettings.banner.mediaType === 'video' ? (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Video nền (.MP4, .WEBM)</label>
+          <label className="text-[11px] font-black text-slate-500">Video nền (.MP4, .WEBM)</label>
           <button type="button" className="text-[11px] font-bold text-brand flex items-center gap-1 hover:text-brand-hover">
             <LinkIcon className="h-3.5 w-3.5" /> Sửa URL thủ công
           </button>
@@ -891,7 +891,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
     ) : (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Hình nền (.JPG, .PNG, .WEBP)</label>
+          <label className="text-[11px] font-black text-slate-500">Hình nền (.JPG, .PNG, .WEBP)</label>
           <button type="button" className="text-[11px] font-bold text-brand flex items-center gap-1 hover:text-brand-hover">
             <LinkIcon className="h-3.5 w-3.5" /> Sửa URL thủ công
           </button>
@@ -952,7 +952,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                       <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 space-y-6">
                         <div className="grid gap-6 sm:grid-cols-3">
                            <div className="space-y-2">
-                              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Căn lề chữ</label>
+                              <label className="text-[11px] font-bold text-slate-500">Căn lề chữ</label>
                               <select value={projectsSettings.banner.alignment} onChange={e => setProjectsSettings({...projectsSettings, banner: {...projectsSettings.banner, alignment: e.target.value as any}})} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all">
                                  <option value="left">Căn trái</option>
                                  <option value="center">Căn giữa</option>
@@ -961,7 +961,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                            </div>
 
                            <div className="space-y-2">
-                              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Bật/Tắt và Màu màn phủ</label>
+                              <label className="text-[11px] font-bold text-slate-500">Bật/Tắt và Màu màn phủ</label>
                               <div className="flex items-center gap-3">
                                  <div className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 cursor-pointer" style={{ backgroundColor: projectsSettings.banner.enableOverlay !== false ? '#10b981' : '#cbd5e1' }} onClick={() => setProjectsSettings({...projectsSettings, banner: {...projectsSettings.banner, enableOverlay: projectsSettings.banner.enableOverlay === false ? true : false}})}>
                                     <span className={"inline-block h-4 w-4 transform rounded-full bg-white transition-transform " + (projectsSettings.banner.enableOverlay !== false ? "translate-x-6" : "translate-x-1")} />
@@ -970,7 +970,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                               </div>
                            </div>
                            <div className="space-y-2">
-                              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex justify-between">Độ mờ màn phủ ({(projectsSettings.banner.overlayOpacity * 100).toFixed(0)}%)</label>
+                              <label className="text-[11px] font-bold text-slate-500 flex justify-between">Độ mờ màn phủ ({(projectsSettings.banner.overlayOpacity * 100).toFixed(0)}%)</label>
                               <div className="pt-2">
                                 <input type="range" min="0" max="1" step="0.05" value={projectsSettings.banner.overlayOpacity} onChange={e => setProjectsSettings({...projectsSettings, banner: {...projectsSettings.banner, overlayOpacity: Number(e.target.value)}})} className="w-full accent-brand cursor-pointer" />
                               </div>
@@ -979,7 +979,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                         
                         <div className="grid gap-6 sm:grid-cols-2 items-center">
                            <div className="space-y-2">
-                              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex justify-between">Mức sáng ảnh ({(projectsSettings.banner.brightness).toFixed(0)}%)</label>
+                              <label className="text-[11px] font-bold text-slate-500 flex justify-between">Mức sáng ảnh ({(projectsSettings.banner.brightness).toFixed(0)}%)</label>
                               <div className="pt-2">
                                 <input type="range" min="50" max="150" step="1" value={projectsSettings.banner.brightness} onChange={e => setProjectsSettings({...projectsSettings, banner: {...projectsSettings.banner, brightness: Number(e.target.value)}})} className="w-full accent-brand cursor-pointer" />
                               </div>
@@ -1034,17 +1034,17 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                 <div className="space-y-8">
                   {/* Basic Settings */}
                   <div>
-                    <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-4">Cài đặt chung</h4>
+                    <h4 className="text-sm font-black text-slate-900 mb-4">Cài đặt chung</h4>
                     <div className="grid gap-6 sm:grid-cols-2">
                       <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Dạng hiển thị khóa học</label>
+                        <label className="text-[11px] font-bold text-slate-500">Dạng hiển thị khóa học</label>
                         <select value={coursesSettings.layoutStyle || 'grid'} onChange={e => setCoursesSettings({...coursesSettings, layoutStyle: e.target.value as 'grid' | 'list'})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20 transition-all cursor-pointer">
                            <option value="grid">Dạng lưới (Grid)</option>
                            <option value="list">Dạng danh sách (List)</option>
                         </select>
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Số khóa học hiển thị tối đa</label>
+                        <label className="text-[11px] font-bold text-slate-500">Số khóa học hiển thị tối đa</label>
                         <input type="number" min="1" max="50" required value={coursesSettings.postsPerCategory} onChange={e => setCoursesSettings({...coursesSettings, postsPerCategory: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20 transition-all" />
                       </div>
                     </div>
@@ -1054,7 +1054,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
 
                   {/* Banner Settings */}
                   <div>
-                    <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-4">Cài đặt Ảnh bìa (Banner)</h4>
+                    <h4 className="text-sm font-black text-slate-900 mb-4">Cài đặt Ảnh bìa (Banner)</h4>
                     
                     <div className="space-y-6">
                       <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
@@ -1069,28 +1069,28 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                       
                       <div className="grid gap-6 sm:grid-cols-2">
                         <div className="space-y-1.5">
-                          <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Tiêu đề Banner</label>
+                          <label className="text-[11px] font-bold text-slate-500">Tiêu đề Banner</label>
                           <input required value={coursesSettings.banner.title} onChange={e => setCoursesSettings({...coursesSettings, banner: {...coursesSettings.banner, title: e.target.value}})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20 transition-all" />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Mô tả Banner</label>
+                          <label className="text-[11px] font-bold text-slate-500">Mô tả Banner</label>
                           <input required value={coursesSettings.banner.description} onChange={e => setCoursesSettings({...coursesSettings, banner: {...coursesSettings.banner, description: e.target.value}})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20 transition-all" />
                         </div>
                       </div>
 
                       {/* Banner Media Selection UI */}
                       <div className="mt-8 space-y-4">
-                        <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-4">Hình nền / Video nền Banner</h4>
+                        <h4 className="text-[11px] font-black text-slate-500 mb-4">Hình nền / Video nền Banner</h4>
                         
                         <div className="flex gap-4">
                           <button
                             type="button"
                             onClick={() => setCoursesSettings({...coursesSettings, banner: {...coursesSettings.banner, mediaType: 'image'}})}
                             className={`flex-1 rounded-2xl flex items-center justify-center gap-2 py-4 text-sm font-bold border-2 transition-all ${
-                              coursesSettings.banner.mediaType !== 'video' 
-                                ? 'border-brand text-brand bg-white' 
-                                : 'border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100'
-                            }`}
+ coursesSettings.banner.mediaType !== 'video' 
+ ? 'border-brand text-brand bg-white' 
+ : 'border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100'
+ }`}
                           >
                             <Image className="h-5 w-5" /> Sử dụng Hình ảnh
                           </button>
@@ -1098,10 +1098,10 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                             type="button"
                              onClick={() => setCoursesSettings({...coursesSettings, banner: {...coursesSettings.banner, mediaType: 'video'}})}
                              className={`flex-1 rounded-2xl flex items-center justify-center gap-2 py-4 text-sm font-bold transition-all ${
-                              coursesSettings.banner.mediaType === 'video' 
-                                ? 'bg-brand border-2 border-brand text-white shadow-sm shadow-brand/20' 
-                                : 'border-2 border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100'
-                            }`}
+ coursesSettings.banner.mediaType === 'video' 
+ ? 'bg-brand border-2 border-brand text-white shadow-sm shadow-brand/20' 
+ : 'border-2 border-transparent bg-slate-50 text-slate-500 hover:bg-slate-100'
+ }`}
                           >
                             <Film className="h-5 w-5" /> Sử dụng Video
                           </button>
@@ -1111,7 +1111,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                           {coursesSettings.banner.mediaType === 'video' ? (
                             <div className="space-y-4">
                               <div className="flex justify-between items-center">
-                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Video nền (.MP4, .WEBM)</label>
+                                <label className="text-[11px] font-black text-slate-500">Video nền (.MP4, .WEBM)</label>
                                 <button type="button" className="text-[11px] font-bold text-brand flex items-center gap-1 hover:text-brand-hover">
                                   <LinkIcon className="h-3.5 w-3.5" /> Sửa URL thủ công
                                 </button>
@@ -1181,7 +1181,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                           ) : (
                             <div className="space-y-4">
                               <div className="flex justify-between items-center">
-                                <label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Hình nền (.JPG, .PNG, .WEBP)</label>
+                                <label className="text-[11px] font-black text-slate-500">Hình nền (.JPG, .PNG, .WEBP)</label>
                                 <button type="button" className="text-[11px] font-bold text-brand flex items-center gap-1 hover:text-brand-hover">
                                   <LinkIcon className="h-3.5 w-3.5" /> Sửa URL thủ công
                                 </button>
@@ -1242,7 +1242,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                       <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 space-y-6">
                         <div className="grid gap-6 sm:grid-cols-3">
                            <div className="space-y-2">
-                              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Căn lề chữ</label>
+                              <label className="text-[11px] font-bold text-slate-500">Căn lề chữ</label>
                               <select value={coursesSettings.banner.alignment} onChange={e => setCoursesSettings({...coursesSettings, banner: {...coursesSettings.banner, alignment: e.target.value as any}})} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all">
                                  <option value="left">Căn trái</option>
                                  <option value="center">Căn giữa</option>
@@ -1251,7 +1251,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                            </div>
 
                            <div className="space-y-2">
-                              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Bật/Tắt và Màu màn phủ</label>
+                              <label className="text-[11px] font-bold text-slate-500">Bật/Tắt và Màu màn phủ</label>
                               <div className="flex items-center gap-3">
                                  <div className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 cursor-pointer" style={{ backgroundColor: coursesSettings.banner.enableOverlay !== false ? '#10b981' : '#cbd5e1' }} onClick={() => setCoursesSettings({...coursesSettings, banner: {...coursesSettings.banner, enableOverlay: coursesSettings.banner.enableOverlay === false ? true : false}})}>
                                     <span className={"inline-block h-4 w-4 transform rounded-full bg-white transition-transform " + (coursesSettings.banner.enableOverlay !== false ? "translate-x-6" : "translate-x-1")} />
@@ -1260,7 +1260,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                               </div>
                            </div>
                            <div className="space-y-2">
-                              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex justify-between">Độ mờ màn phủ ({(coursesSettings.banner.overlayOpacity * 100).toFixed(0)}%)</label>
+                              <label className="text-[11px] font-bold text-slate-500 flex justify-between">Độ mờ màn phủ ({(coursesSettings.banner.overlayOpacity * 100).toFixed(0)}%)</label>
                               <div className="pt-2">
                                 <input type="range" min="0" max="1" step="0.05" value={coursesSettings.banner.overlayOpacity} onChange={e => setCoursesSettings({...coursesSettings, banner: {...coursesSettings.banner, overlayOpacity: Number(e.target.value)}})} className="w-full accent-brand cursor-pointer" />
                               </div>
@@ -1269,7 +1269,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                         
                         <div className="grid gap-6 sm:grid-cols-2 items-center">
                            <div className="space-y-2">
-                              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex justify-between">Mức sáng ảnh ({(coursesSettings.banner.brightness).toFixed(0)}%)</label>
+                              <label className="text-[11px] font-bold text-slate-500 flex justify-between">Mức sáng ảnh ({(coursesSettings.banner.brightness).toFixed(0)}%)</label>
                               <div className="pt-2">
                                 <input type="range" min="50" max="150" step="1" value={coursesSettings.banner.brightness} onChange={e => setCoursesSettings({...coursesSettings, banner: {...coursesSettings.banner, brightness: Number(e.target.value)}})} className="w-full accent-brand cursor-pointer" />
                               </div>
@@ -1319,7 +1319,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
           <div className="space-y-6">
             {/* Row 1: Setup Information (Moved to top) */}
             <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-slate-100">
-              <h3 className="mb-6 text-sm font-black uppercase tracking-widest text-slate-800 flex items-center gap-2">
+              <h3 className="mb-6 text-sm font-black text-slate-800 flex items-center gap-2">
                 <Settings className="w-4 h-4 text-brand" /> Cài đặt Thông tin Dự án
               </h3>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -1341,7 +1341,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-[11px] font-bold text-slate-700">Thể loại dự án</label>
-                    <button type="button" onClick={() => setCategoryModalType('project')} className="text-[10px] text-brand hover:underline font-bold">Quản lý</button>
+                    <button type="button" onClick={() => setCategoryModalType('project')} className="text-xs text-brand hover:underline font-bold">Quản lý</button>
                   </div>
                   <select
                     value={editingProj.category}
@@ -1383,13 +1383,13 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
 
             {/* Row 2: Design Content (Middle) */}
             <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-slate-100">
-              <h3 className="mb-6 text-sm font-black uppercase tracking-widest text-slate-800 flex items-center gap-2">
+              <h3 className="mb-6 text-sm font-black text-slate-800 flex items-center gap-2">
                 <LayoutGrid className="w-4 h-4 text-brand" /> Thiết kế Nội dung Chi tiết
               </h3>
               
               <div className="space-y-8">
                 <div className="space-y-3">
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Bài viết chi tiết (Rich Text)</label>
+                  <label className="text-[13px] font-semibold text-slate-600">Bài viết chi tiết (Rich Text)</label>
                   <RichTextEditor 
                     value={editingProj.detailedContent} 
                     onChange={val => setEditingProj({...editingProj, detailedContent: val})} 
@@ -1398,12 +1398,12 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                 </div>
 
                 <div className="space-y-3 pt-6 border-t border-slate-100">
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Lưới Ảnh (Photo Grid)</label>
+                  <label className="text-[13px] font-semibold text-slate-600">Lưới Ảnh (Photo Grid)</label>
                   <CloudinaryUploadField label="" value={editingProj.gallery.join('\n')} onChange={value => setEditingProj({ ...editingProj, gallery: value.split('\n').filter(Boolean) })} accept="image/*" resourceType="image" folder="portfolio/projects/gallery" multiple onMultiple={urls => setEditingProj({ ...editingProj, gallery: [...editingProj.gallery, ...urls] })} hint="Tải lên hoặc dán URL nhiều ảnh (mỗi URL 1 dòng)" />
                 </div>
 
                 <div className="space-y-3 pt-6 border-t border-slate-100">
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Video giới thiệu</label>
+                  <label className="text-[13px] font-semibold text-slate-600">Video giới thiệu</label>
                   <CloudinaryUploadField label="" value={editingProj.introVideo || ''} onChange={url => setEditingProj({ ...editingProj, introVideo: url })} accept="video/*" resourceType="video" folder="portfolio/projects/videos" hint="Tải video mp4 hoặc dán URL (YouTube, Vimeo...)" />
                 </div>
               </div>
@@ -1411,7 +1411,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
 
             {/* Row 3: Cover Image (Moved to bottom!) */}
             <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-slate-100">
-              <h3 className="mb-6 text-sm font-black uppercase tracking-widest text-slate-800 flex items-center gap-2">
+              <h3 className="mb-6 text-sm font-black text-slate-800 flex items-center gap-2">
                 <Image className="w-4 h-4 text-brand" /> Ảnh bìa dự án (Cover Image / Video)
               </h3>
               <div className="grid gap-6 md:grid-cols-2 items-start">
@@ -1427,7 +1427,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                 </div>
                 {editingProj.coverImage && (
                   <div className="space-y-2">
-                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Xem trước ảnh bìa</label>
+                    <label className="text-[13px] font-semibold text-slate-600">Xem trước ảnh bìa</label>
                     <div className="aspect-[16/9] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
                       <img src={editingProj.coverImage} className="w-full h-full object-cover" alt="Cover Preview" />
                     </div>
@@ -1476,7 +1476,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
 
           <div className="overflow-x-auto rounded-2xl bg-white shadow-sm">
             <div className="min-w-[940px]">
-              <div className="grid grid-cols-[40px_54px_minmax(340px,1.8fr)_140px_130px_150px_100px] items-center gap-4 bg-slate-50 px-5 py-4 text-[10px] font-black uppercase tracking-wider text-slate-500">
+              <div className="grid grid-cols-[40px_54px_minmax(340px,1.8fr)_140px_130px_150px_100px] items-center gap-4 bg-slate-50 px-5 py-4 text-xs font-black text-slate-500">
                 <input type="checkbox" aria-label="Chọn tất cả khóa học" checked={filteredCourses.length > 0 && filteredCourses.every(item => selectedCourseIds.includes(item.id))} onChange={event => setSelectedCourseIds(event.target.checked ? filteredCourses.map(item => item.id) : [])} className="h-4 w-4 rounded text-brand" /><span>TT</span><span>Khóa học</span><span>Danh mục</span><span>Trạng thái</span><span>Học viên / Bài học</span><span className="text-center">Thao tác</span>
               </div>
               <div className="divide-y divide-slate-100">
@@ -1488,13 +1488,13 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                       <img src={course.coverImage} alt={course.title} className="h-14 w-20 shrink-0 rounded-xl object-cover" referrerPolicy="no-referrer" />
                       <div className="min-w-0">
                         <h3 className="truncate text-xs font-bold text-slate-800">{course.title || 'Khóa học chưa đặt tên'}</h3>
-                        <p className="mt-1 line-clamp-1 text-[10px] text-slate-500">{course.briefDescription || `Giảng viên: ${course.instructor}`}</p>
-                        <span className="mt-1 inline-block text-[9px] font-bold uppercase text-slate-400">{course.level} · {course.price > 0 ? `${course.price.toLocaleString('vi-VN')} đ` : 'Miễn phí'}</span>
+                        <p className="mt-1 line-clamp-1 text-xs text-slate-500">{course.briefDescription || `Giảng viên: ${course.instructor}`}</p>
+                        <span className="mt-1 inline-block text-xs font-bold text-slate-400">{course.level} · {course.price > 0 ? `${course.price.toLocaleString('vi-VN')} đ` : 'Miễn phí'}</span>
                       </div>
                     </div>
-                    <span className="w-fit rounded-lg bg-brand-light px-2.5 py-1 text-[10px] font-bold text-brand">{course.category}</span>
-                    <span className={`w-fit rounded-full px-2.5 py-1 text-[10px] font-bold ${course.status === 'published' ? 'bg-brand-light text-brand' : 'bg-slate-100 text-slate-500'}`}>{course.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}</span>
-                    <div className="text-[10px] font-semibold text-slate-600"><p>{course.studentsCount || course.students?.length || 0} học viên</p><p className="mt-1 text-slate-400">{course.lessonsCount || 0} bài học</p></div>
+                    <span className="w-fit rounded-lg bg-brand-light px-2.5 py-1 text-xs font-bold text-brand">{course.category}</span>
+                    <span className={`w-fit rounded-full px-2.5 py-1 text-xs font-bold ${course.status === 'published' ? 'bg-brand-light text-brand' : 'bg-slate-100 text-slate-500'}`}>{course.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}</span>
+                    <div className="text-xs font-semibold text-slate-600"><p>{course.studentsCount || course.students?.length || 0} học viên</p><p className="mt-1 text-slate-400">{course.lessonsCount || 0} bài học</p></div>
                     <div className="flex justify-center gap-1.5">
                       <button onClick={() => { setEditingCourse(course); setActiveCourseEditorTab('info'); }} className="rounded-xl bg-brand-light p-2 text-brand hover:bg-brand/15" title="Quản lý"><Edit3 className="h-3.5 w-3.5" /></button>
                       <button onClick={() => handleDeleteCourse(course.id)} className="rounded-xl bg-rose-50 p-2 text-rose-500 hover:bg-rose-100" title="Xóa"><Trash2 className="h-3.5 w-3.5" /></button>
@@ -1510,45 +1510,48 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
 
       {/* COMPREHENSIVE COURSE BUILDER / EDITOR MODULE */}
       {activeSubTab === 'courses' && editingCourse && (
-        <div className="bg-slate-50 rounded-2xl overflow-hidden max-w-5xl">
-          {/* Top Panel Bar */}
-          <div className="bg-slate-900 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-950">
-            <div className="space-y-1">
-              <span className="text-[10px] font-bold text-brand uppercase tracking-wider">PHÂN HỆ QUẢN TRỊ KHÓA HỌC</span>
-              <h3 className="text-sm font-black text-white">{editingCourse.title || 'KHÓA HỌC MỚI'}</h3>
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          {/* Đầu trang soạn khoá học */}
+          <div className="px-6 py-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-light text-brand"><GraduationCap className="h-5 w-5" /></span>
+              <div className="min-w-0">
+                <p className="text-[13px] text-slate-500">Soạn khoá học</p>
+                <h3 className="truncate text-lg font-bold text-slate-800">{editingCourse.title || 'Khoá học mới'}</h3>
+              </div>
             </div>
-            
             <button
               onClick={() => setEditingCourse(null)}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase tracking-widest py-2 px-4 rounded-xl"
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:border-brand/40 hover:text-brand"
             >
-              Đóng và Quay lại
+              <ArrowLeft className="h-4 w-4" /> Quay lại danh sách
             </button>
           </div>
 
-          {/* Subtabs for course management */}
-          <div className="flex border-b border-slate-200 px-6 bg-slate-50">
-            {[
-              { id: 'info', label: 'Thông tin cơ bản', icon: FileText },
-              { id: 'curriculum', label: 'Đề cương & Bài giảng', icon: PlayCircle },
-              { id: 'students', label: 'Danh sách học viên', icon: Users },
-            ].map(tab => {
-              const TabIcon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveCourseEditorTab(tab.id as any)}
-                  className={`flex items-center gap-2 py-3 px-4 border-b-2 font-bold text-xs uppercase tracking-wider transition-colors ${
-                    activeCourseEditorTab === tab.id
-                      ? 'border-brand text-brand bg-white'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <TabIcon className="w-4 h-4" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
+          {/* Thanh mục, cùng kiểu với các trang khác */}
+          <div className="px-6 pt-5">
+            <div className="overflow-x-auto scrollbar-thin">
+              <div className="flex w-max gap-1 rounded-2xl bg-slate-100 p-1">
+                {[
+                  { id: 'info', label: 'Thông tin cơ bản', icon: FileText },
+                  { id: 'curriculum', label: 'Đề cương và bài giảng', icon: PlayCircle },
+                  { id: 'students', label: 'Học viên', icon: Users },
+                ].map(tab => {
+                  const TabIcon = tab.icon;
+                  const on = activeCourseEditorTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveCourseEditorTab(tab.id as any)}
+                      className={`inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-[13px] font-semibold transition-all ${on ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      <TabIcon className={`w-4 h-4 ${on ? 'text-brand' : ''}`} />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           <div className="p-6 sm:p-8">
@@ -1558,34 +1561,34 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-500 uppercase">Tiêu đề khóa học *</label>
+                      <label className="text-[13px] font-semibold text-slate-600">Tiêu đề khóa học *</label>
                       <input
                         type="text"
                         required
                         placeholder="Ví dụ: Kỹ thuật dựng Motion Graphics chuyên sâu"
                         value={editingCourse.title}
                         onChange={(e) => setEditingCourse({ ...editingCourse, title: e.target.value })}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs focus:outline-none"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm focus:outline-none"
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-500 uppercase">Thời lượng tổng quát</label>
+                        <label className="text-[13px] font-semibold text-slate-600">Thời lượng tổng quát</label>
                         <input
                           type="text"
                           placeholder="Ví dụ: 12 giờ (24 bài giảng)"
                           value={editingCourse.duration}
                           onChange={(e) => setEditingCourse({ ...editingCourse, duration: e.target.value })}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm"
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-500 uppercase">Cấp độ học viên</label>
+                        <label className="text-[13px] font-semibold text-slate-600">Cấp độ học viên</label>
                         <select
                           value={editingCourse.level}
                           onChange={(e) => setEditingCourse({ ...editingCourse, level: e.target.value as any })}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm"
                         >
                           <option value="basic">Cơ bản (Beginner)</option>
                           <option value="intermediate">Trung cấp (Intermediate)</option>
@@ -1596,13 +1599,13 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
 
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-[10px] font-black text-slate-500 uppercase">Lĩnh vực chuyên đề</label>
-                        <button type="button" onClick={() => setCategoryModalType('course')} className="text-[10px] text-brand hover:underline font-bold">Quản lý</button>
+                        <label className="text-[13px] font-semibold text-slate-600">Lĩnh vực chuyên đề</label>
+                        <button type="button" onClick={() => setCategoryModalType('course')} className="text-xs text-brand hover:underline font-bold">Quản lý</button>
                       </div>
                       <select
                         value={editingCourse.category}
                         onChange={(e) => setEditingCourse({ ...editingCourse, category: e.target.value })}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-semibold text-slate-900 outline-none focus:bg-white focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm font-semibold text-slate-900 outline-none focus:bg-white focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all"
                       >
                         <option value="">Chọn danh mục</option>
                         {courseCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
@@ -1617,37 +1620,37 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-500 uppercase">Học phí gốc (VND, 0 là Miễn phí)</label>
+                        <label className="text-[13px] font-semibold text-slate-600">Học phí gốc (VND, 0 là Miễn phí)</label>
                         <input
                           type="number"
                           value={editingCourse.price}
                           onChange={(e) => setEditingCourse({ ...editingCourse, price: parseInt(e.target.value) || 0 })}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm"
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-500 uppercase">Học phí ưu đãi (VND)</label>
+                        <label className="text-[13px] font-semibold text-slate-600">Học phí ưu đãi (VND)</label>
                         <input
                           type="number"
                           value={editingCourse.salePrice}
                           onChange={(e) => setEditingCourse({ ...editingCourse, salePrice: parseInt(e.target.value) || 0 })}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-500 uppercase">Mô tả ngắn khóa học</label>
+                      <label className="text-[13px] font-semibold text-slate-600">Mô tả ngắn khóa học</label>
                       <textarea
                         rows={2}
                         value={editingCourse.briefDescription}
                         onChange={(e) => setEditingCourse({ ...editingCourse, briefDescription: e.target.value })}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs resize-none"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm resize-none"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-500 uppercase">Nội dung thuyết minh khóa học</label>
+                      <label className="text-[13px] font-semibold text-slate-600">Nội dung thuyết minh khóa học</label>
                       <RichTextEditor 
                         value={editingCourse.detailedDescription} 
                         onChange={val => setEditingCourse({...editingCourse, detailedDescription: val})} 
@@ -1659,7 +1662,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                     {/* Requirements / Outcomes line-breaks */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-500 uppercase">Yêu cầu đầu vào (Xuống dòng)</label>
+                        <label className="text-[13px] font-semibold text-slate-600">Yêu cầu đầu vào (Xuống dòng)</label>
                         <textarea
                           rows={2}
                           value={editingCourse.requirements.join('\n')}
@@ -1668,7 +1671,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-500 uppercase">Cam kết đầu ra (Xuống dòng)</label>
+                        <label className="text-[13px] font-semibold text-slate-600">Cam kết đầu ra (Xuống dòng)</label>
                         <textarea
                           rows={2}
                           value={editingCourse.learningOutcomes.join('\n')}
@@ -1696,7 +1699,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                 <div className="flex justify-end gap-3 border-t border-slate-100 pt-5">
                   <button
                     type="submit"
-                    className="inline-flex items-center gap-2 bg-brand hover:bg-brand-hover text-white font-bold text-xs uppercase tracking-widest py-3 px-6 rounded-xl transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-2 bg-brand hover:bg-brand-hover text-white font-bold text-xs py-3 px-6 rounded-xl transition-colors cursor-pointer"
                   >
                     Lưu thông tin khóa học
                   </button>
@@ -1725,7 +1728,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                         chapters: [...currentChapters, newChapter]
                       });
                     }}
-                    className="inline-flex items-center gap-1.5 bg-brand hover:bg-brand-hover text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 bg-brand hover:bg-brand-hover text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Thêm Chương mới</span>
@@ -1813,7 +1816,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                 setEditingCourse({ ...editingCourse, chapters: updatedChapters });
                                 setExpandedChapterId(chapter.id);
                               }}
-                              className="bg-brand/15 hover:bg-brand/20 text-brand-hover px-2.5 py-1 rounded text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer"
+                              className="bg-brand/15 hover:bg-brand/20 text-brand-hover px-2.5 py-1 rounded text-xs font-black flex items-center gap-1 cursor-pointer"
                             >
                               <Plus className="w-3.5 h-3.5" />
                               <span>Thêm Bài</span>
@@ -1839,7 +1842,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                         {expandedChapterId === chapter.id && (
                           <div className="p-4 bg-white border-b border-slate-100 space-y-3">
                             <div className="space-y-1">
-                              <label className="text-[9px] font-black text-slate-400">Tiêu đề chương *</label>
+                              <label className="text-xs font-black text-slate-400">Tiêu đề chương *</label>
                               <input
                                 type="text"
                                 value={chapter.title}
@@ -1863,7 +1866,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                               chapter.lessons.map((lesson, lesIdx) => (
                                 <div key={lesson.id} className="p-4 bg-white rounded-xl space-y-4 shadow-xs">
                                   <div className="flex items-center justify-between gap-4 border-b border-slate-50 pb-2">
-                                    <span className="text-[10px] font-bold text-slate-500">Bài {lesIdx + 1}: {lesson.title || 'Mới'}</span>
+                                    <span className="text-xs font-bold text-slate-500">Bài {lesIdx + 1}: {lesson.title || 'Mới'}</span>
                                     <button
                                       type="button"
                                       onClick={() => {
@@ -1889,7 +1892,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
 
                                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div className="space-y-1">
-                                      <label className="text-[9px] font-black text-slate-400">Tiêu đề bài học</label>
+                                      <label className="text-xs font-black text-slate-400">Tiêu đề bài học</label>
                                       <input
                                         type="text"
                                         required
@@ -1927,7 +1930,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                     />
 
                                     <div className="space-y-1">
-                                      <label className="text-[9px] font-black text-slate-400">Thời lượng bài học</label>
+                                      <label className="text-xs font-black text-slate-400">Thời lượng bài học</label>
                                       <div className="relative flex items-center">
                                         <input
                                           type="text"
@@ -1950,7 +1953,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                             type="button"
                                             onClick={() => handleAutoDetectDuration(lesson.id, lesson.videoUrl || '', chapter.id)}
                                             disabled={fetchingLessons[lesson.id]}
-                                            className="absolute right-1.5 bg-slate-200 hover:bg-slate-300 disabled:opacity-50 text-[10px] font-bold text-slate-700 px-2 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                                            className="absolute right-1.5 bg-slate-200 hover:bg-slate-300 disabled:opacity-50 text-xs font-bold text-slate-700 px-2 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
                                           >
                                             {fetchingLessons[lesson.id] ? (
                                               <span className="w-3 h-3 border-2 border-slate-600 border-t-transparent rounded-full animate-spin"></span>
@@ -1965,7 +1968,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
 
                                   {/* Lesson textual summary */}
                                   <div className="space-y-1">
-                                    <label className="text-[9px] font-black text-slate-400">Nội dung thuyết minh bài học (Văn bản / Hướng dẫn)</label>
+                                    <label className="text-xs font-black text-slate-400">Nội dung thuyết minh bài học (Văn bản / Hướng dẫn)</label>
                                     <textarea
                                       rows={2}
                                       value={lesson.textContent}
@@ -1986,7 +1989,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                   {/* Gắn bài giảng E-Learning và đề trắc nghiệm */}
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div className="space-y-1">
-                                      <label className="text-[9px] font-black text-slate-400">Bài giảng E-Learning (nội dung hiện dưới video)</label>
+                                      <label className="text-xs font-black text-slate-400">Bài giảng E-Learning (nội dung hiện dưới video)</label>
                                       <select
                                         value={lesson.elLessonId || ''}
                                         onChange={(e) => {
@@ -2002,7 +2005,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                       </select>
                                     </div>
                                     <div className="space-y-1">
-                                      <label className="text-[9px] font-black text-slate-400">Đề trắc nghiệm (nút làm bài góc trên phải)</label>
+                                      <label className="text-xs font-black text-slate-400">Đề trắc nghiệm (nút làm bài góc trên phải)</label>
                                       <select
                                         value={lesson.quizId || ''}
                                         onChange={async (e) => {
@@ -2091,7 +2094,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                       await savePortfolioCourse(finalCourse);
                       triggerSuccess('Lưu kết cấu giáo trình thành công!');
                     }}
-                    className="bg-brand hover:bg-brand-hover text-white font-bold text-xs uppercase tracking-widest py-3 px-6 rounded-xl transition-colors cursor-pointer"
+                    className="bg-brand hover:bg-brand-hover text-white font-bold text-xs py-3 px-6 rounded-xl transition-colors cursor-pointer"
                   >
                     Lưu kết cấu giáo trình
                   </button>
@@ -2109,7 +2112,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                       <option value="">Chọn tài khoản Member...</option>
                       {eligibleStudentAccounts.map(account => <option key={account.id} value={account.id}>{account.fullName} — {account.email}</option>)}
                     </select>
-                    <button type="button" onClick={handleAddStudentFromAccount} className="rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold uppercase text-white hover:bg-slate-800">+ Thêm học viên</button>
+                    <button type="button" onClick={handleAddStudentFromAccount} className="rounded-xl bg-brand px-3.5 py-2 text-sm font-semibold text-white hover:bg-brand-hover">+ Thêm học viên</button>
                   </div>
                 </div>
 
@@ -2120,7 +2123,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                 ) : (
                   <div className="border border-slate-150 rounded-2xl overflow-hidden">
                     <table className="w-full border-collapse text-left text-xs text-slate-600">
-                      <thead className="bg-slate-50 border-b border-slate-150 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                      <thead className="bg-slate-50 border-b border-slate-150 text-[13px] font-semibold text-slate-600">
                         <tr>
                           <th className="p-4">Học viên</th>
                           <th className="p-4">Tiến trình học</th>
@@ -2134,30 +2137,30 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                           <tr key={st.id} className="hover:bg-slate-50/50 transition-colors">
                             <td className="p-4">
                               <div className="font-bold text-slate-800">{st.name}</div>
-                              <div className="text-[10px] text-slate-400 font-medium">{st.email}</div>
+                              <div className="text-xs text-slate-400 font-medium">{st.email}</div>
                             </td>
                             <td className="p-4">
                               <div className="flex items-center gap-2">
                                 <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                                   <div className="h-full bg-brand" style={{ width: `${st.progress}%` }} />
                                 </div>
-                                <span className="font-bold text-[10px] text-slate-500">{st.progress}%</span>
+                                <span className="font-bold text-xs text-slate-500">{st.progress}%</span>
                               </div>
                             </td>
                             <td className="p-4">
-                              <span className={`inline-flex items-center text-[9px] font-black px-2 py-0.5 rounded uppercase ${
-                                st.paymentStatus === 'paid' ? 'bg-brand-light text-brand border border-brand-light' : 'bg-amber-50 text-amber-600 border border-amber-100'
-                              }`}>
+                              <span className={`inline-flex items-center text-xs font-black px-2 py-0.5 rounded ${
+ st.paymentStatus === 'paid' ? 'bg-brand-light text-brand border border-brand-light' : 'bg-amber-50 text-amber-600 border border-amber-100'
+ }`}>
                                 {st.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chờ kiểm duyệt'}
                               </span>
                             </td>
-                            <td className="p-4 text-[10px] text-slate-400">{st.registerDate}</td>
+                            <td className="p-4 text-xs text-slate-400">{st.registerDate}</td>
                             <td className="p-4 text-right space-x-1.5">
                               {st.progress >= 100 && (
                                 <button
                                   type="button"
                                   onClick={() => triggerSuccess(`Đã phê duyệt & cấp Chứng chỉ thành công cho ${st.name}!`)}
-                                  className="bg-amber-100 hover:bg-amber-200 text-amber-800 px-2 py-1 rounded text-[9px] font-black uppercase"
+                                  className="bg-amber-100 hover:bg-amber-200 text-amber-800 px-2 py-1 rounded text-xs font-black "
                                 >
                                   Cấp Chứng Chỉ
                                 </button>
@@ -2165,7 +2168,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                               <button
                                 type="button"
                                 onClick={() => handleRemoveStudent(st)}
-                                className="text-rose-500 hover:bg-rose-50 px-2 py-1 rounded text-[9px] font-black"
+                                className="text-rose-500 hover:bg-rose-50 px-2 py-1 rounded text-xs font-black"
                               >
                                 Xóa
                               </button>
