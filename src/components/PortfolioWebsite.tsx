@@ -91,7 +91,8 @@ import {
   DEFAULT_ABOUT,
   DEFAULT_GLOBAL_SETTINGS,
   DEFAULT_PROJECTS_SETTINGS,
-  DEFAULT_COURSES_SETTINGS
+  DEFAULT_COURSES_SETTINGS,
+  SiteRecord,
 } from '../lib/portfolioData';
 import { UserAccount } from '../types';
 import { setCustomPageSEO } from '../lib/seoConfig';
@@ -151,6 +152,8 @@ interface PortfolioWebsiteProps {
   onLogout?: () => void;
   // Địa chỉ Website của người dùng (ngtduc24.github.io/<địa chỉ>). Trống là trang cũ của quản trị viên.
   siteSlug?: string;
+  // Thông tin cơ bản và SEO của Website (tên, mô tả, biểu tượng, ảnh chia sẻ, từ khoá).
+  site?: SiteRecord | null;
 }
 
 export type DetailItem =
@@ -2134,7 +2137,7 @@ function prettyDetailPath(type: string, id?: string): string | null {
   return def && id && /^[A-Za-z0-9_-]{1,120}$/.test(id) ? `/${def.folder}/${id}/` : null;
 }
 
-export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthenticated = false, currentUser = null, onUpdateUser, onLogout, siteSlug }: PortfolioWebsiteProps) {
+export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthenticated = false, currentUser = null, onUpdateUser, onLogout, siteSlug, site = null }: PortfolioWebsiteProps) {
   // Gốc đường dẫn của trang đang xem: trang người dùng dùng ?site=<địa chỉ>, trang cũ dùng ?portfolio=true.
   const qBase = siteSlug ? `/?site=${siteSlug}` : '/?portfolio=true';
   const [banner, setBanner] = useState<PortfolioBanner | null>(() => {
@@ -2543,7 +2546,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
   }, [projects, courses, research, lectures, posts]);
 
   useEffect(() => {
-    const owner = about?.artistName || about?.fullName || 'Multimedia Portfolio';
+    const owner = site?.title || about?.artistName || about?.fullName || 'Multimedia Portfolio';
     const collectionTitles: Record<CollectionPage, string> = {
       projects: 'Dự án',
       courses: 'Khóa học',
@@ -2565,8 +2568,8 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
     };
 
     let pageTitle = generatedMenuItem?.label || (collectionPage ? (collectionPage === 'projects' && projectsSettings?.pageTitle ? projectsSettings.pageTitle : collectionPage === 'courses' && coursesSettings?.pageTitle ? coursesSettings.pageTitle : collectionTitles[collectionPage]) : sectionTitles[activeSection] || 'Trang chủ');
-    let pageDesc = about?.briefBio || banner?.description || 'Hồ sơ năng lực, dự án thiết kế, khóa học trực tuyến và công trình nghiên cứu khoa học.';
-    let pageImage: string | undefined = about?.avatarUrl || banner?.backgroundImage || undefined;
+    let pageDesc = site?.description || about?.briefBio || banner?.description || 'Hồ sơ năng lực, dự án thiết kế, khóa học trực tuyến và công trình nghiên cứu khoa học.';
+    let pageImage: string | undefined = site?.ogImage || about?.avatarUrl || banner?.backgroundImage || undefined;
 
     if (detail) {
       if (detail.type === 'research') {
@@ -2594,15 +2597,26 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
       pageDesc = collectionPageMeta[collectionPage]?.description || pageDesc;
     }
 
-    const fullTitle = `${pageTitle} | ${owner}`;
+    const isHome = !detail && !collectionPage && !generatedMenuItem && (activeSection === 'banner' || !activeSection);
+    const fullTitle = isHome && site?.title ? site.title : `${pageTitle} | ${owner}`;
     setCustomPageSEO({
       title: fullTitle,
       description: pageDesc,
-      keywords: `portfolio, ${owner}, ${pageTitle}, thiết kế đa phương tiện, nghiên cứu khoa học, khóa học`,
+      keywords: site?.keywords ? `${site.keywords}, ${pageTitle}` : `portfolio, ${owner}, ${pageTitle}, thiết kế đa phương tiện, nghiên cứu khoa học, khóa học`,
       ogImage: pageImage,
       canonicalUrl: window.location.href
     });
-  }, [about?.artistName, about?.fullName, about?.briefBio, about?.avatarUrl, banner?.description, banner?.backgroundImage, activeSection, collectionPage, detail, generatedMenuItem?.label, projectsSettings?.pageTitle, coursesSettings?.pageTitle]);
+  }, [site, about?.artistName, about?.fullName, about?.briefBio, about?.avatarUrl, banner?.description, banner?.backgroundImage, activeSection, collectionPage, detail, generatedMenuItem?.label, projectsSettings?.pageTitle, coursesSettings?.pageTitle]);
+
+  // Biểu tượng trên thẻ trình duyệt lấy theo Website đang xem, trả lại biểu tượng EduGo khi rời trang.
+  useEffect(() => {
+    if (!site?.icon) return;
+    const links = Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"], link[rel="apple-touch-icon"]'));
+    const old = links.map(l => l.href);
+    if (!links.length) { const l = document.createElement('link'); l.rel = 'icon'; document.head.appendChild(l); links.push(l); old.push(''); }
+    links.forEach(l => { l.href = site.icon as string; });
+    return () => { links.forEach((l, i) => { if (old[i]) l.href = old[i]; else l.remove(); }); };
+  }, [site?.icon]);
 
   const glassStyle = globalSettings?.menuGlassEffect ? 'backdrop-blur-xl' : '';
   const opacityHex = globalSettings ? Math.round((globalSettings.menuOpacity / 100) * 255).toString(16).padStart(2, '0') : 'f2';
@@ -2660,9 +2674,9 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
             aria-label="Về đầu trang"
             style={{ backgroundColor: isScrolled && !isNavHovered ? 'transparent' : bgColor }}
           >
-            {banner.logoImage ? (
+            {(banner.logoImage || site?.icon) ? (
               <motion.img 
-                src={banner.logoImage} 
+                src={banner.logoImage || site?.icon} 
                 alt="Logo" 
                 animate={{
                   width: isScrolled && !isNavHovered ? 34 : 40,
@@ -2692,9 +2706,9 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
               className="hidden min-w-0 xl:block overflow-hidden whitespace-nowrap text-left"
             >
               <strong className="block truncate text-base font-black tracking-tight text-slate-950">
-                {banner.logoText || about.artistName}
+                {banner.logoText || site?.title || about.artistName}
               </strong>
-              <span className="block truncate text-[10px] font-bold uppercase tracking-[0.14em] text-brand">Multimedia Portfolio</span>
+              <span className="block truncate text-[10px] font-bold uppercase tracking-[0.14em] text-brand">{siteSlug ? 'Website' : 'Multimedia Portfolio'}</span>
             </motion.span>
           </motion.button>
 

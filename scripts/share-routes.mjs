@@ -96,7 +96,8 @@ export async function loadShareRoutes(supabaseUrl, key) {
     const prefix = site.owner === LEGACY_OWNER ? '' : `${site.owner}:`;
     const banner = (await settingRow(`${prefix}banner`)) || {};
     routes.push({ folder: '', id: site.slug, title: plain(site.title || banner.title || site.slug, 110),
-      image: banner.backgroundImage || '', description: plain(banner.description || '', 200), target: `/?site=${site.slug}` });
+      image: site.ogImage || banner.backgroundImage || '', description: plain(site.description || banner.description || '', 200),
+      icon: site.icon || '', keywords: plain(site.keywords || '', 300), siteName: plain(site.title || '', 80), target: `/?site=${site.slug}` });
   }
 
   // Nội dung trang: khoá học /c/ (ứng dụng Khoá học), dự án /p/, nghiên cứu /r/, bài viết /b/.

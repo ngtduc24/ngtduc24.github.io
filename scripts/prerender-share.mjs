@@ -165,7 +165,7 @@ async function ogImage(raw, folder, id) {
   return localOg(url, folder, id);
 }
 
-function buildSharePage({ title, description, image, targetUrl, shareUrl }) {
+function buildSharePage({ title, description, image, targetUrl, shareUrl, icon = '', keywords = '', siteName = '' }) {
   const safeTitle = escapeHtml(title);
   const safeDescription = escapeHtml(description);
   const safeTarget = escapeHtml(targetUrl);
@@ -190,10 +190,13 @@ function buildSharePage({ title, description, image, targetUrl, shareUrl }) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${safeTitle}</title>
     <meta name="description" content="${safeDescription}" />
-    <link rel="canonical" href="${escapeHtml(shareUrl)}" />
+    <link rel="canonical" href="${escapeHtml(shareUrl)}" />${icon ? `
+    <link rel="icon" href="${escapeHtml(icon)}" />
+    <link rel="apple-touch-icon" href="${escapeHtml(icon)}" />` : ''}${keywords ? `
+    <meta name="keywords" content="${escapeHtml(keywords)}" />` : ''}
 
-    <meta property="og:type" content="article" />
-    <meta property="og:site_name" content="EduGo" />
+    <meta property="og:type" content="${siteName ? 'website' : 'article'}" />
+    <meta property="og:site_name" content="${escapeHtml(siteName || 'EduGo')}" />
     <meta property="og:locale" content="vi_VN" />
     <meta property="og:url" content="${escapeHtml(shareUrl)}" />
     <meta property="og:title" content="${safeTitle}" />
@@ -278,6 +281,7 @@ async function run() {
         image,
         targetUrl: `${SITE_ORIGIN}${r.target}`,
         shareUrl: `${SITE_ORIGIN}/${[r.folder, r.id].filter(Boolean).join('/')}/`,
+        icon: r.icon || '', keywords: r.keywords || '', siteName: r.siteName || '',
       }), 'utf8');
       counts[r.folder] = (counts[r.folder] || 0) + 1;
     } catch (error) {

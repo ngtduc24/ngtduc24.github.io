@@ -61,7 +61,12 @@ const siteLocalKey = (key: string) => (isLegacySite() ? key : `${SITE_OWNER}_${k
 const SITE_TABLES = new Set(['portfolio_education', 'portfolio_experience', 'portfolio_skills', 'portfolio_projects', 'portfolio_research', 'portfolio_lectures']);
 
 // ----- Sổ địa chỉ trang: ngtduc24.github.io/<địa chỉ> -----
-export interface SiteRecord { owner: string; slug: string; title?: string; published?: boolean; updatedAt?: string }
+// Thông tin cơ bản của Website, cũng dùng làm thẻ SEO (tiêu đề, mô tả, biểu tượng, ảnh chia sẻ, từ khoá).
+export interface SiteRecord {
+  owner: string; slug: string; title?: string; published?: boolean; updatedAt?: string;
+  description?: string; icon?: string; ogImage?: string; keywords?: string; createdAt?: string;
+}
+export type SiteInfo = Pick<SiteRecord, 'title' | 'description' | 'icon' | 'ogImage' | 'keywords'>;
 // Địa chỉ không được dùng vì trùng thư mục, trang hệ thống hoặc link chia sẻ.
 export const RESERVED_SLUGS = new Set([
   'bt', 'bg', 'hl', 'tn', 'vr', 'ar', 'nb', 'c', 'p', 'r', 'b', 'og', 'assets', 'models', 'api', 'admin', 'tracuu', 'edu', 'index',
@@ -89,10 +94,33 @@ export async function claimSiteSlug(uid: string, rawSlug: string, title?: string
   const taken = await getSiteBySlug(slug);
   if (taken && taken.owner !== uid) return 'Địa chỉ này đã có người dùng, hãy chọn địa chỉ khác.';
   const old = await getSiteOfOwner(uid);
-  const rec: SiteRecord = { owner: uid, slug, title: title || old?.title || '', published: old?.published ?? true, updatedAt: new Date().toISOString() };
+  const rec: SiteRecord = { ...(old || {}), owner: uid, slug, title: title || old?.title || '', published: old?.published ?? true, updatedAt: new Date().toISOString() };
   const { error } = await supabase.from('portfolio_settings').upsert([{ key: `site:${slug}`, data: rec }, { key: `site_owner:${uid}`, data: { slug } }]);
   if (error) return 'Chưa lưu được địa chỉ, vui lòng thử lại.';
   if (old && old.slug !== slug) await supabase.from('portfolio_settings').delete().eq('key', `site:${old.slug}`);
+  return null;
+}
+// Lưu tên, mô tả, biểu tượng, ảnh chia sẻ, từ khoá của Website.
+export async function updateSiteInfo(uid: string, info: SiteInfo): Promise<boolean> {
+  const rec = await getSiteOfOwner(uid);
+  if (!rec) return false;
+  const { error } = await supabase.from('portfolio_settings').upsert({ key: `site:${rec.slug}`, data: { ...rec, ...info, updatedAt: new Date().toISOString() } });
+  return !error;
+}
+// Tạo Website lần đầu: giữ địa chỉ, lưu thông tin SEO, đưa tên và biểu tượng vào đầu trang.
+// Cần gọi setSiteOwner(uid) trước để phần đầu trang ghi đúng vào Website của người tạo.
+export async function createSite(uid: string, slug: string, info: SiteInfo & { published?: boolean }): Promise<string | null> {
+  const err = await claimSiteSlug(uid, slug, info.title);
+  if (err) return err;
+  const rec = await getSiteOfOwner(uid);
+  if (!rec) return 'Chưa tạo được Website, vui lòng thử lại.';
+  const now = new Date().toISOString();
+  const { error } = await supabase.from('portfolio_settings').upsert({ key: `site:${rec.slug}`, data: { ...rec, ...info, published: info.published !== false, createdAt: rec.createdAt || now, updatedAt: now } });
+  if (error) return 'Chưa lưu được thông tin Website, vui lòng thử lại.';
+  try {
+    const banner = await getPortfolioBanner();
+    await savePortfolioBanner({ ...banner, logoText: info.title || banner.logoText, logoImage: info.icon || banner.logoImage, title: info.title || banner.title, description: info.description || banner.description });
+  } catch { /* bỏ qua, người dùng vẫn sửa được ở mục Hồ sơ */ }
   return null;
 }
 export async function setSitePublished(uid: string, published: boolean): Promise<void> {

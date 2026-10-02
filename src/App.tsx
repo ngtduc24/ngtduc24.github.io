@@ -25,7 +25,7 @@ import MediaLibrary from './components/MediaLibrary';
 import LandingPage from './components/LandingPage';
 import CoursesApp from './components/courses/CoursesApp';
 import { getLandingConfig } from './lib/landing';
-import { getSiteBySlug, setSiteOwner, RESERVED_SLUGS } from './lib/portfolioData';
+import { getSiteBySlug, setSiteOwner, RESERVED_SLUGS, SiteRecord } from './lib/portfolioData';
 import { canUseModule, setDefaultApps } from './lib/moduleAccess';
 import PortfolioWebsite from './components/PortfolioWebsite';
 import PortfolioCMS from './components/PortfolioCMS';
@@ -153,14 +153,14 @@ export default function App() {
   const [loginMode, setLoginMode] = useState<'login' | 'register'>('login');
 
   // Website của người dùng: ngtduc24.github.io/<địa chỉ> hoặc ?site=<địa chỉ>. Không có địa chỉ là trang cũ của admin.
-  const [siteState, setSiteState] = useState<{ slug: string; status: 'loading' | 'ok' | 'missing' }>({ slug: '', status: 'ok' });
+  const [siteState, setSiteState] = useState<{ slug: string; status: 'loading' | 'ok' | 'missing'; rec?: SiteRecord | null }>({ slug: '', status: 'ok' });
   useEffect(() => {
     if (entryView !== 'portfolio') return;
     const slug = (new URLSearchParams(window.location.search).get('site') || siteSlugFromPath() || '').toLowerCase();
     if (!slug) { setSiteOwner(null); setSiteState({ slug: '', status: 'ok' }); return; }
     setSiteState({ slug, status: 'loading' });
     getSiteBySlug(slug).then(rec => {
-      if (rec && rec.published !== false) { setSiteOwner(rec.owner); setSiteState({ slug, status: 'ok' }); }
+      if (rec && rec.published !== false) { setSiteOwner(rec.owner); setSiteState({ slug, status: 'ok', rec }); }
       else setSiteState({ slug, status: 'missing' });
     }).catch(() => setSiteState({ slug, status: 'missing' }));
   }, [entryView]);
@@ -960,6 +960,7 @@ export default function App() {
       <PortfolioWebsite
         key={siteState.slug || 'legacy'}
         siteSlug={siteState.slug || undefined}
+        site={siteState.rec || null}
         currentUser={currentUser}
         isAuthenticated={Boolean(currentUser)}
         onUpdateUser={handleSaveProfile}
