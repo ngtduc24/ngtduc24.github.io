@@ -99,7 +99,10 @@ export function usePeopleVersion() {
 // Mở trang cá nhân của một người (App lắng nghe sự kiện này).
 export function openProfile(uid: string) {
   if (!uid) return;
-  window.dispatchEvent(new CustomEvent('app_open_profile', { detail: uid }));
+  const ev = new CustomEvent('app_open_profile', { detail: uid, cancelable: true });
+  window.dispatchEvent(ev);
+  // Trang đứng riêng (xem giáo trình, link chia sẻ...) không có khung ứng dụng thì mở hẳn trang cá nhân.
+  if (!ev.defaultPrevented) window.location.href = `${window.location.origin}/?tab=nguoi-dung&uid=${encodeURIComponent(uid)}`;
 }
 
 // Màu nền chữ cái đầu cố định theo từng người.

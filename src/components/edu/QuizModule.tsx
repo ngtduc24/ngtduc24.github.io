@@ -28,6 +28,7 @@ import DateTime24, { isoToLocalInput, localInputToIso } from '../ui/DateTime24';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
 import { exportExamToPdf, ExamHeader } from '../../lib/quizPdf';
 import { FileDown } from 'lucide-react';
+import LibraryHero from '../ui/LibraryHero';
 
 interface QuizModuleProps { currentUser: UserAccount; standaloneBank?: boolean; }
 type View = 'list' | 'editor' | 'bank' | 'assign' | 'detail';
@@ -95,8 +96,8 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
       return;
     }
     const fetcher = listTab === 'shared' ? getSharedQuizzes : getQuizzes;
-    fetcher(filterSubject || undefined).then(setQuizzes).catch(e => addNotification('Lỗi tải danh sách đề: ' + e.message, 'error')).finally(() => setLoading(false));
-  }, [filterSubject, listTab, addNotification]);
+    fetcher(undefined).then(setQuizzes).catch(e => addNotification('Lỗi tải danh sách đề: ' + e.message, 'error')).finally(() => setLoading(false));
+  }, [listTab, addNotification]);
   useEffect(() => { if (view === 'list') loadQuizzes(); }, [view, loadQuizzes]);
 
   const subjectName = useSubjectNames(subjects, quizzes.map(q => q.subject_id));
@@ -105,9 +106,22 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
   const [quizSearch, setQuizSearch] = useState('');
   const shownQuizzes = useMemo(() => {
     const q = fold(quizSearch);
-    return q ? quizzes.filter(z => fold(`${z.title} ${subjectName(z.subject_id)} ${z.description || ''} ${z.owner_name || ''}`).includes(q)) : quizzes;
+    const bySubject = filterSubject ? quizzes.filter(z => (filterSubject === '__none' ? !z.subject_id : z.subject_id === filterSubject)) : quizzes;
+    return q ? bySubject.filter(z => fold(`${z.title} ${subjectName(z.subject_id)} ${z.description || ''} ${z.owner_name || ''}`).includes(q)) : bySubject;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quizzes, quizSearch, subjects]);
+  }, [quizzes, quizSearch, subjects, filterSubject]);
+  // Môn học dạng thẻ ở đầu trang (giống Giáo trình, Ngân hàng bài tập), kèm số đề mỗi môn.
+  const subjectChips = useMemo(() => {
+    const counts: Record<string, number> = {};
+    quizzes.forEach(z => { const k = z.subject_id || '__none'; counts[k] = (counts[k] || 0) + 1; });
+    const ids = Object.keys(counts).filter(k => k !== '__none');
+    return [
+      { id: '', label: 'Tất cả', count: quizzes.length },
+      ...ids.map(id => ({ id, label: subjectName(id) || 'Môn khác', count: counts[id] })).sort((a, b) => a.label.localeCompare(b.label)),
+      ...(counts.__none ? [{ id: '__none', label: 'Chưa chọn môn', count: counts.__none }] : []),
+    ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quizzes, subjects]);
   const quizPg = usePaging(shownQuizzes.length, 'quiz_list_size', 12, [quizSearch, filterSubject, listTab]);
   const pageQuizzes = shownQuizzes.slice(quizPg.from, quizPg.to);
 
@@ -142,38 +156,32 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
   if (view === 'list') {
     return (
       <div className="space-y-5 animate-fadeIn">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="flex rounded-xl bg-slate-100 p-1">
-              <button onClick={() => setListTab('shared')} className={`rounded-lg px-4 py-2 text-xs font-bold ${listTab === 'shared' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Thư viện</button>
-              <button onClick={() => setListTab('mine')} className={`rounded-lg px-4 py-2 text-xs font-bold ${listTab === 'mine' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Đề của tôi</button>
-              <button onClick={() => setListTab('collab')} className={`rounded-lg px-4 py-2 text-xs font-bold ${listTab === 'collab' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Được chia sẻ với tôi</button>
-            </div>
-            <select value={filterSubject} onChange={e => setFilterSubject(e.target.value)} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[13px] font-semibold text-slate-700 outline-none focus:border-brand">
-              <option value="">Tất cả môn học</option>
-              {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-            <div className="relative min-w-[200px] flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input value={quizSearch} onChange={e => setQuizSearch(e.target.value)} placeholder={listTab === 'shared' ? 'Tìm đề theo tên, môn, người soạn...' : 'Tìm đề theo tên, môn học...'} className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-9 pr-8 text-[13px] font-semibold text-slate-700 outline-none focus:border-brand" />
-              {quizSearch && <button onClick={() => setQuizSearch('')} title="Xoá tìm kiếm" className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600"><X className="h-3.5 w-3.5" /></button>}
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button onClick={() => { setBankSelectMode(false); setView('bank'); }} className="inline-flex items-center gap-2 rounded-2xl border border-brand bg-white px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-brand hover:bg-brand-light">
-              <Library className="h-4 w-4" /> Ngân hàng câu hỏi
-            </button>
-            <button onClick={openNewQuiz} className="inline-flex items-center gap-2 rounded-2xl bg-brand px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover">
-              <Plus className="h-4 w-4" /> Tạo đề mới
-            </button>
-          </div>
-        </div>
+        <LibraryHero
+          configKey="quiz"
+          canEditBanner={currentUser.role === 'admin'}
+          title="Bạn muốn tìm đề trắc nghiệm nào?"
+          subtitle="Soạn đề, giao cho lớp, chấm tự động. Dùng lại đề hay từ thư viện của đồng nghiệp."
+          tabs={[{ id: 'shared', label: 'Thư viện' }, { id: 'mine', label: 'Đề của tôi' }, { id: 'collab', label: 'Được chia sẻ với tôi' }]}
+          activeTab={listTab}
+          onTab={t => { setListTab(t as any); setFilterSubject(''); }}
+          search={quizSearch}
+          onSearch={setQuizSearch}
+          placeholder={listTab === 'shared' ? 'Tìm đề theo tên, môn, người soạn...' : 'Tìm đề theo tên, môn học...'}
+          chips={subjectChips}
+          activeChip={filterSubject}
+          onChip={setFilterSubject}
+          actions={<>
+            <button onClick={() => { setBankSelectMode(false); setView('bank'); }} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm hover:border-brand hover:text-brand"><Library className="h-4 w-4" /> Ngân hàng câu hỏi</button>
+            <button onClick={openNewQuiz} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-brand px-4 text-sm font-semibold text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Plus className="h-4 w-4" /> Tạo đề mới</button>
+          </>}
+        />
+        <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{shownQuizzes.length}</span> đề trắc nghiệm{filterSubject ? ` trong môn ${filterSubject === '__none' ? 'chưa chọn' : subjectName(filterSubject)}` : ''}</p>
 
         {loading ? (
           <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-brand" /></div>
         ) : quizzes.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center">
-            <p className="text-sm font-bold text-slate-700">{listTab === 'shared' ? 'Kho đề chung chưa có đề nào' : listTab === 'collab' ? 'Chưa có ai thêm bạn vào đề nào' : 'Chưa có đề trắc nghiệm nào'}</p>
+            <p className="text-sm font-bold text-slate-700">{listTab === 'shared' ? 'Thư viện chưa có đề nào' : listTab === 'collab' ? 'Chưa có ai thêm bạn vào đề nào' : 'Chưa có đề trắc nghiệm nào'}</p>
             <p className="mt-1 text-xs text-slate-400">{listTab === 'shared' ? 'Đề được chia sẻ khi người soạn bật "Chia sẻ vào thư viện đề" trong phần Thiết lập của đề.' : 'Bấm "Tạo đề mới" để bắt đầu, hoặc thêm câu hỏi vào ngân hàng trước.'}</p>
           </div>
         ) : shownQuizzes.length === 0 ? (

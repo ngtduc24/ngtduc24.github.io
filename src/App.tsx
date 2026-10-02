@@ -281,7 +281,7 @@ export default function App() {
 
   // Bấm tên, ảnh người dùng ở bất kỳ đâu thì mở trang cá nhân công khai của người đó.
   useEffect(() => {
-    const open = (e: Event) => { const uid = (e as CustomEvent).detail as string; if (!uid) return; setProfileUid(uid); setCurrentTab('user_profile'); };
+    const open = (e: Event) => { const uid = (e as CustomEvent).detail as string; if (!uid) return; e.preventDefault(); setProfileUid(uid); setCurrentTab('user_profile'); };
     window.addEventListener('app_open_profile', open);
     return () => window.removeEventListener('app_open_profile', open);
   }, []);

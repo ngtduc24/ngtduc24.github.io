@@ -486,6 +486,9 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
         subtitle="Lưu, chia sẻ và dùng lại bài tập theo môn cho các lớp."
         onBack={onExit}
         backTitle="Quay lại"
+        tabs={[{ id: 'shared', label: 'Thư viện' }, { id: 'mine', label: 'Bài của tôi' }, { id: 'collab', label: 'Được chia sẻ với tôi' }]}
+        activeTab={scope === 'all' ? 'shared' : scope}
+        onTab={t => { setScope(t as any); setSubjectId(''); setSelected(new Set()); }}
         search={search}
         onSearch={setSearch}
         placeholder="Tìm theo tên bài, môn học, người tạo, nội dung..."
@@ -505,12 +508,6 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{shown.length}</span> bài tập{subjectId ? ` trong môn ${subjectId === '__none' ? 'chưa chọn' : subjName(subjectId)}` : ''}</p>
           <div className="flex flex-wrap items-center gap-2">
-            <select value={scope} onChange={e => setScope(e.target.value as any)} className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-brand">
-              <option value="shared">Thư viện</option>
-              <option value="mine">Bài của tôi</option>
-              <option value="collab">Được chia sẻ với tôi</option>
-              <option value="all">Tất cả</option>
-            </select>
             <select value={sort} onChange={e => setSort(e.target.value as any)} className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-brand">
               <option value="new">Mới nhất</option>
               <option value="name">Tên A đến Z</option>

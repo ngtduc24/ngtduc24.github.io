@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, BookOpen, FileText, CheckCircle2, ArrowLeft, Copy, ExternalLink, ShieldAlert, FileDown } from 'lucide-react';
 import { ELLesson, ELSection, ELResource, getLesson, getSections, getResources, copyPublicLesson } from '../../lib/elearning';
 import { exportLessonToPdf } from '../../lib/lessonPdf';
+import { UserChip } from '../ui/People';
 
 interface Props { lessonId: string; }
 
@@ -78,7 +79,7 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-brand/10 text-brand"><BookOpen className="h-5 w-5" /></div>
             <div>
               <h1 className="font-display text-base font-bold text-slate-900">{lesson.title}</h1>
-              <p className="text-[11px] text-slate-400">{lesson.author_label || lesson.owner_name || 'Ẩn danh'} · {sections.length} phần{lesson.is_public ? '' : ' · Bản nháp'}</p>
+              <p className="flex min-w-0 items-center gap-1.5 text-[11px] text-slate-400">{lesson.owner_id ? <UserChip id={lesson.owner_id} name={lesson.author_label || lesson.owner_name} size={20} nameClass="text-xs font-semibold text-slate-600" /> : <span>{lesson.author_label || lesson.owner_name || 'Ẩn danh'}</span>}<span>· {sections.length} phần{lesson.is_public ? '' : ' · Bản nháp'}</span></p>
             </div>
           </div>
           <div className="flex items-center gap-2">
