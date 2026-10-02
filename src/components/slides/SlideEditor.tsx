@@ -123,7 +123,6 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
   const [replaceId, setReplaceId] = useState<string | null>(null);             // ảnh đang chờ thay
   const [preview, setPreview] = useState<{ phases: Record<string, ElPhase>; key: number } | null>(null);
   const [transKey, setTransKey] = useState(0);
-  const [tplMode, setTplMode] = useState<'add' | 'replace'>('add');
   const [helpOpen, setHelpOpen] = useState(false);
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; kind: 'el' | 'slide'; index?: number } | null>(null);
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -327,6 +326,15 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
     commit(mapSlide(s => ({ ...s, els: t.els, bg: layout === 'section' ? t.bg : s.bg })));
     setSel([]);
     addNotification('Đã áp mẫu lên trang hiện tại. Bấm Ctrl Z nếu muốn lấy lại nội dung cũ.', 'info');
+  };
+  // Áp một mẫu cho mọi trang trong bài giảng (thay nội dung tất cả trang, hỏi lại trước khi làm).
+  const applyLayoutAll = (layout: LayoutId) => {
+    const n = slidesRef.current.length;
+    confirm('Áp mẫu cho tất cả trang', `Nội dung của cả ${n} trang sẽ được thay bằng mẫu này. Có thể bấm Ctrl Z ngay sau đó để lấy lại.`, () => {
+      commit(slidesRef.current.map(s => { const t = makeSlide(layout, layout === 'section' ? undefined : { ...(s.bg || { color: '#fff' }) }); return { ...s, els: t.els, bg: layout === 'section' ? t.bg : s.bg }; }));
+      setSel([]);
+      addNotification(`Đã áp mẫu cho ${n} trang. Bấm Ctrl Z nếu muốn lấy lại.`, 'info');
+    });
   };
   const setTransition = (type: TransitionKind, dur?: number, all = false) => {
     ensureAnimCss();
@@ -977,7 +985,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
           <aside className="w-[300px] shrink-0 overflow-y-auto border-r border-slate-200 bg-white p-4">
             {panel === 'effects' || panel === 'animate' || panel === 'position' || panel === 'transition'
               ? renderPropPanel()
-              : <LeftPanel panel={panel} slide={slide} onLayout={l => (tplMode === 'replace' ? applyLayout(l) : addSlide(l))} tplMode={tplMode} onTplMode={setTplMode} onText={addText} onShape={addShape} onImage={insertImage} onAv={insertAv} onRemoteImage={insertRemote}
+              : <LeftPanel panel={panel} slide={slide} onLayout={(l, m) => (m === 'replace' ? applyLayout(l) : m === 'all' ? applyLayoutAll(l) : addSlide(l))} slideCount={slides.length} onText={addText} onShape={addShape} onImage={insertImage} onAv={insertAv} onRemoteImage={insertRemote}
                   onUpload={uploadFiles} busy={busyUpload} onBg={setBg} onVideo={addVideo} onClose={() => setPanel(null)} />}
           </aside>
         )}
@@ -1059,7 +1067,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                   <ColorButton title="Màu nền trang" value={slide.bg?.color} onChange={c => setBg({ color: c })} icon={<PaintBucket className="h-4 w-4" />} />
                   <TextBtn on={panel === 'transition'} onClick={() => setPanel(panel === 'transition' ? null : 'transition')} icon={<PlayCircle className="h-4 w-4" />}>Chuyển tiếp{slide.transition && slide.transition.type !== 'none' ? ` · ${TRANSITION_LABELS.find(t => t[0] === slide.transition!.type)?.[1]}` : ''}</TextBtn>
                   <TextBtn on={panel === 'animate'} onClick={() => setPanel(panel === 'animate' ? null : 'animate')} icon={<Wand2 className="h-4 w-4" />}>Chuyển động</TextBtn>
-                  <TextBtn on={panel === 'templates'} onClick={() => { setTplMode('replace'); setPanel('templates'); }} icon={<LayoutTemplate className="h-4 w-4" />}>Áp mẫu cho trang này</TextBtn>
+                  <TextBtn on={panel === 'templates'} onClick={() => setPanel('templates')} icon={<LayoutTemplate className="h-4 w-4" />}>Mẫu trang</TextBtn>
                   <span className="ml-2 hidden xl:inline">Bấm vào một khối để chỉnh. Kéo thả hoặc dán ảnh bằng Ctrl V.</span>
                 </div>
               )}
@@ -1165,7 +1173,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
           )}
 
           {/* Dải trang thu nhỏ */}
-          <div ref={stripRef} style={{ WebkitTouchCallout: 'none', userSelect: 'none' } as React.CSSProperties} className="flex h-[112px] shrink-0 items-center gap-3 overflow-x-auto border-t border-slate-200 bg-white px-4">
+          <div ref={stripRef} style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' } as React.CSSProperties} className="flex h-[112px] shrink-0 items-center gap-3 overflow-x-auto border-t border-slate-200 bg-white px-4">
             {slides.map((s, i) => (
               <div key={s.id} draggable={!readOnly && !coarse}
                 onDragStart={e => { e.dataTransfer.setData('text/slide', String(i)); }}
@@ -1180,6 +1188,14 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                 </button>
                 <span className="absolute bottom-1 left-1.5 rounded bg-white/85 px-1 text-[11px] font-semibold text-slate-600">{i + 1}{s.hidden ? ' · ẩn' : ''}</span>
                 {(s.transition && s.transition.type !== 'none' || s.els.some(e => e.anim?.in && e.anim.in !== 'none')) && <span title="Có hiệu ứng" className="absolute bottom-1 right-1.5 rounded bg-white/85 px-1 text-[10px] text-brand">✦</span>}
+                {!readOnly && (
+                  // Nút 3 chấm mở menu trang (như bấm chuột phải), luôn hiện trên iPad, hiện khi rê chuột trên máy tính.
+                  <button onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setCur(i); const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); openCtx({ clientX: r.left, clientY: Math.max(8, r.top - 300) }, 'slide', i); }}
+                    title="Thao tác với trang" aria-label="Thao tác với trang"
+                    className={`absolute left-1 top-1 grid h-7 w-7 place-items-center rounded-md bg-white/95 text-slate-600 shadow ring-1 ring-slate-200 hover:text-brand ${coarse ? '' : 'opacity-0 group-hover:opacity-100'}`}>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                )}
                 {!readOnly && (
                   <div className="absolute right-1 top-1 hidden gap-1 group-hover:flex">
                     <button onClick={() => dupSlide(i)} title="Nhân bản trang" className="grid h-6 w-6 place-items-center rounded-md bg-white/90 text-slate-600 shadow hover:text-brand"><Copy className="h-3.5 w-3.5" /></button>
@@ -1239,7 +1255,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
       )}
       {exporting && createPortal(<div className="fixed bottom-6 left-1/2 z-[260] flex -translate-x-1/2 items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm text-white shadow-xl"><Loader2 className="h-4 w-4 animate-spin" /> {exporting}</div>, document.body)}
       {ctxMenu && createPortal(
-        <div className="fixed inset-0 z-[240]" onPointerDown={() => { if (Date.now() - ctxAt.current > 450) setCtxMenu(null); }} onContextMenu={e => { e.preventDefault(); setCtxMenu(null); }}>
+        <div className="fixed inset-0 z-[240] select-none" style={{ WebkitUserSelect: 'none', WebkitTouchCallout: 'none' } as React.CSSProperties} onPointerDown={() => { if (Date.now() - ctxAt.current > 450) setCtxMenu(null); }} onContextMenu={e => { e.preventDefault(); setCtxMenu(null); }}>
           <div onPointerDown={e => e.stopPropagation()} style={{ left: Math.min(ctxMenu.x, window.innerWidth - 262), top: Math.min(ctxMenu.y, window.innerHeight - 330) }}
             className="absolute w-64 rounded-xl border border-slate-200 bg-white p-1.5 text-sm text-slate-700 shadow-2xl">
             {((ctxMenu.kind === 'el' ? [
@@ -1323,8 +1339,8 @@ function SliderRow({ label, min, max, step, value, onChange, suffix }: { label: 
 }
 
 // ===== Bảng bên trái =====
-function LeftPanel({ panel, slide, onLayout, tplMode, onTplMode, onVideo, onText, onShape, onImage, onAv, onRemoteImage, onUpload, busy, onBg, onClose }: {
-  panel: Exclude<Panel, null>; slide: Slide; onLayout: (l: LayoutId) => void; tplMode: 'add' | 'replace'; onTplMode: (m: 'add' | 'replace') => void; onVideo: () => void; onText: (k: 'h1' | 'h2' | 'body' | 'list') => void; onShape: (k: ShapeKind) => void;
+function LeftPanel({ panel, slide, onLayout, slideCount, onVideo, onText, onShape, onImage, onAv, onRemoteImage, onUpload, busy, onBg, onClose }: {
+  panel: Exclude<Panel, null>; slide: Slide; onLayout: (l: LayoutId, mode: 'add' | 'replace' | 'all') => void; slideCount: number; onVideo: () => void; onText: (k: 'h1' | 'h2' | 'body' | 'list') => void; onShape: (k: ShapeKind) => void;
   onImage: (url: string) => void; onAv?: (url: string, audio: boolean) => void; onRemoteImage: (url: string) => void; onUpload: (files: File[]) => void; busy: number; onBg: (bg: Slide['bg'], all?: boolean) => void; onClose: () => void;
 }) {
   const [media, setMedia] = useState<MediaItem[] | null>(null);
@@ -1332,6 +1348,7 @@ function LeftPanel({ panel, slide, onLayout, tplMode, onTplMode, onVideo, onText
   const [stock, setStock] = useState<Array<{ id: string; url: string; thumb: string; title: string }>>([]);
   const [stockBusy, setStockBusy] = useState(false);
   const [applyAll, setApplyAll] = useState(false);
+  const [tplMenu, setTplMenu] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -1358,17 +1375,26 @@ function LeftPanel({ panel, slide, onLayout, tplMode, onTplMode, onVideo, onText
 
   if (panel === 'templates') return (
     <div>{head('Mẫu trang')}
-      <div className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 text-xs font-semibold">
-        <button onClick={() => onTplMode('add')} className={`rounded-lg py-1.5 ${tplMode === 'add' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Thêm trang mới</button>
-        <button onClick={() => onTplMode('replace')} className={`rounded-lg py-1.5 ${tplMode === 'replace' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Áp vào trang này</button>
-      </div>
-      <p className="mb-3 text-xs text-slate-500">{tplMode === 'add' ? 'Bấm một mẫu để thêm trang mới ngay sau trang đang mở.' : 'Bấm một mẫu để thay toàn bộ nội dung trang đang mở (chọn Trang trống để xoá sạch). Ctrl Z để lấy lại.'}</p>
+      <p className="mb-3 text-xs text-slate-500">Bấm một mẫu để thêm trang mới ngay sau trang đang mở. Bấm dấu 3 chấm ở góc mẫu để áp vào trang này hoặc áp cho tất cả trang.</p>
       <div className="grid grid-cols-2 gap-3">
         {previews.map(p => (
-          <button key={p.id} onClick={() => onLayout(p.id)} className="text-left">
-            <div className="overflow-hidden rounded-lg border border-slate-200 hover:border-brand"><SlideRenderer slide={p.slide} width={124} /></div>
-            <p className="mt-1 text-[11px] text-slate-600">{p.label}</p>
-          </button>
+          <div key={p.id} className="group relative">
+            <button onClick={() => onLayout(p.id, 'add')} className="block w-full text-left">
+              <div className="overflow-hidden rounded-lg border border-slate-200 hover:border-brand"><SlideRenderer slide={p.slide} width={124} /></div>
+              <p className="mt-1 text-[11px] text-slate-600">{p.label}</p>
+            </button>
+            <button onClick={e => { e.stopPropagation(); setTplMenu(m => (m === p.id ? null : p.id)); }} aria-label="Tuỳ chọn mẫu" title="Tuỳ chọn"
+              className={`absolute right-1 top-1 grid h-7 w-7 place-items-center rounded-md bg-white/95 text-slate-600 shadow ring-1 ring-slate-200 hover:text-brand ${tplMenu === p.id ? '' : 'sm:opacity-0 sm:group-hover:opacity-100'}`}>
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+            {tplMenu === p.id && (
+              <div className="absolute right-0 top-9 z-20 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-[13px] shadow-xl">
+                <button onClick={() => { setTplMenu(null); onLayout(p.id, 'add'); }} className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-slate-50"><Plus className="h-4 w-4" /> Thêm thành trang mới</button>
+                <button onClick={() => { setTplMenu(null); onLayout(p.id, 'replace'); }} className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-slate-50"><LayoutTemplate className="h-4 w-4" /> Áp vào trang này</button>
+                <button onClick={() => { setTplMenu(null); onLayout(p.id, 'all'); }} className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-slate-50"><Copy className="h-4 w-4" /> Áp cho tất cả {slideCount} trang</button>
+              </div>
+            )}
+          </div>
         ))}
       </div>
     </div>
