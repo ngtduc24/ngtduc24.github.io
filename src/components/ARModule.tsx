@@ -463,7 +463,9 @@ function AREditModal({ target, onClose, onSaved }: { target: ARTarget; onClose: 
         xr8_target: target.xr8_target ?? null,
         active,
       });
-      const { error } = await supabase.from('ar_targets').update(payload).eq('id', target.id);
+      // Sửa thông tin không được làm mất chủ sở hữu của AR.
+      const { owner_id: _keepOwner, ...patch } = payload as any;
+      const { error } = await supabase.from('ar_targets').update(patch).eq('id', target.id);
       if (error) throw error;
       onSaved();
     } catch (e: any) {

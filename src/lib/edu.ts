@@ -660,6 +660,8 @@ export async function ensureBankShareToken(item: EduAssignmentBankItem, ownerNam
   return token;
 }
 export async function getBankItemByShareToken(token: string): Promise<EduAssignmentBankItem | null> {
+  const r = await supabase.rpc('edu_bank_by_token', { p_token: token });
+  if (!r.error) return r.data ? mapBankItem(r.data) : null;
   const { data, error } = await supabase.from(ASSIGNMENT_BANK_TABLE).select('*').eq('share_token', token).maybeSingle();
   if (error) throw error;
   return data ? mapBankItem(data) : null;
@@ -973,4 +975,65 @@ export async function migrateInlineSubmissions(onProgress: (p: InlineMigrationPr
   prog.current = undefined;
   onProgress({ ...prog });
   return prog;
+}
+
+// ===== Trang nộp bài của sinh viên (không đăng nhập) =====
+// Đi qua hàm RPC kiểm tra mã link và MSSV (xem RLS_2026_10.sql), không đọc thẳng danh sách lớp.
+// Nếu máy chủ chưa có hàm RPC thì dùng cách đọc bảng như trước.
+const rpcMissing = (e: any) => !!e && (e.code === 'PGRST202' || e.code === '42883' || /could not find the function|does not exist/i.test(e.message || ''));
+function mapPubAssignment(data: any) {
+  return {
+    ...mapAssignment(data),
+    edu_classes: data.edu_classes ? { ...mapClass(data.edu_classes), edu_schools: data.edu_classes.edu_schools ? mapSchool(data.edu_classes.edu_schools) : null } : null,
+  } as any;
+}
+export async function pubGetAssignment(linkId: string) {
+  const { data, error } = await supabase.rpc('edu_pub_assignment', { p_link: linkId });
+  if (error) { if (rpcMissing(error)) return getAssignmentByLinkId(linkId); throw error; }
+  if (!data) throw new Error('Không tìm thấy bài tập.');
+  return mapPubAssignment(data);
+}
+export interface PubStudentData {
+  user: EduUser | null;
+  assignments: EduAssignment[];
+  submission: EduSubmission | null;
+  grades: { column: EduGradeColumn; grade?: EduGrade }[];
+  extension: import('../types/edu').EduExtensionRequest | null;
+}
+export async function pubStudent(linkId: string, mssv: string, classId: string, assignmentId: string): Promise<PubStudentData> {
+  const { data, error } = await supabase.rpc('edu_pub_student', { p_link: linkId, p_mssv: mssv.trim(), p_assignment: assignmentId || null });
+  if (!error) {
+    if (!data || !data.user) return { user: null, assignments: [], submission: null, grades: [], extension: null };
+    const cols = (data.columns || []).map(mapGradeColumn) as EduGradeColumn[];
+    const grades = (data.grades || []).map(mapGrade) as EduGrade[];
+    return {
+      user: mapUser(data.user),
+      assignments: (data.assignments || []).map(mapAssignment),
+      submission: data.submission ? mapSubmission(data.submission) : null,
+      grades: cols.map(column => ({ column, grade: grades.find(g => g.gradeColumnId === column.id) })).filter(x => x.grade !== undefined),
+      extension: data.extension ? mapExtension(data.extension) : null,
+    };
+  }
+  if (!rpcMissing(error)) throw error;
+  const [classUsers, allAssignments] = await Promise.all([getClassUsers(classId), getAssignments(classId)]);
+  const user = classUsers.find(u => u.mssv === mssv.trim()) || null;
+  if (!user) return { user: null, assignments: [], submission: null, grades: [], extension: null };
+  const [submission, grades, extension] = await Promise.all([
+    getSubmissionByMssv(assignmentId, user.mssv), getGradesForUser(classId, user.id), getExtensionForUser(assignmentId, user.id).catch(() => null),
+  ]);
+  return { user, assignments: allAssignments, submission, grades, extension };
+}
+export async function pubSubmit(linkId: string, user: EduUser, assignmentId: string, files: EduSubmission['files'], content: string, current?: EduSubmission | null): Promise<EduSubmission | null> {
+  const { data, error } = await supabase.rpc('edu_pub_submit', { p_link: linkId, p_mssv: user.mssv, p_assignment: assignmentId, p_files: files || [], p_content: content || '' });
+  if (!error) return data ? mapSubmission(data) : null;
+  if (!rpcMissing(error)) throw error;
+  const now = new Date().toISOString();
+  await saveSubmission({ id: current?.id, assignmentId, userId: user.id, mssv: user.mssv, files, content, submittedAt: now, updatedAt: now, firstSubmittedAt: current?.firstSubmittedAt || now });
+  return getSubmissionByMssv(assignmentId, user.mssv);
+}
+export async function pubExtension(linkId: string, user: EduUser, assignmentId: string, classId: string) {
+  const { data, error } = await supabase.rpc('edu_pub_extension', { p_link: linkId, p_mssv: user.mssv, p_assignment: assignmentId });
+  if (!error) return mapExtension(data);
+  if (!rpcMissing(error)) throw error;
+  return requestExtension({ assignmentId, classId, userId: user.id, mssv: user.mssv, studentName: user.fullName });
 }

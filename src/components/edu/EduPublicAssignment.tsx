@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Button, IconButton, Input, Select, Textarea, Field, Card, Badge, Spinner, EmptyState, Z, Modal } from '../ui';
 import { EduAssignment, EduClass, EduSchool, EduSubmission, EduUser, EduGrade, EduExtensionRequest } from '../../types/edu';
-import { getAssignmentByLinkId, getSubmissionByMssv, saveSubmission, getGradesForUser, requestExtension, getExtensionForUser } from '../../lib/edu';
+import { pubGetAssignment, pubStudent, pubSubmit, pubExtension } from '../../lib/edu';
 import { eduFileTypeLabel } from '../../lib/eduFileTypes';
 import SwfPlayer, { isSwfFile } from '../SwfPlayer';
 import { EduResourceList } from './EduResources';
@@ -61,7 +61,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
   useEffect(() => {
     async function loadAssignment() {
       try {
-        const data = await getAssignmentByLinkId(shareLinkId);
+        const data = await pubGetAssignment(shareLinkId);
         setAssignment(data);
       } catch (err) {
         console.error(err);
@@ -99,12 +99,10 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
     setTextContent('');
 
     try {
-      const [subData, ext] = await Promise.all([
-        getSubmissionByMssv(newAssignmentId, identifiedUser.mssv),
-        getExtensionForUser(newAssignmentId, identifiedUser.id).catch(() => null),
-      ]);
+      const r = await pubStudent(shareLinkId, identifiedUser.mssv, assignment.classId, newAssignmentId);
+      const subData = r.submission;
       setSubmission(subData);
-      setExtension(ext);
+      setExtension(r.extension);
       if (subData) {
         setFiles(subData.files || []);
         setTextContent(subData.content || '');
@@ -119,15 +117,10 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
     setIsVerifying(true);
     setNotification(null);
     try {
-      // Find user in class
-      const { getClassUsers, getAssignments } = await import('../../lib/edu');
-      const [classUsers, allAssignments] = await Promise.all([
-        getClassUsers(assignment.classId),
-        getAssignments(assignment.classId)
-      ]);
-      
-      const user = classUsers.find(u => u.mssv === mssv.trim());
-      
+      // Kiểm tra MSSV ở máy chủ, chỉ trả về đúng thông tin của sinh viên này (không tải cả danh sách lớp).
+      const r = await pubStudent(shareLinkId, mssv, assignment.classId, assignment.id);
+      const user = r.user;
+
       if (!user) {
         setNotification({
           type: 'danger',
@@ -139,14 +132,8 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
       }
 
       setIdentifiedUser(user);
-      setClassAssignments(allAssignments);
-      
-      // Load submission and grades for THIS specific user
-      const [subData, gradesData, ext] = await Promise.all([
-        getSubmissionByMssv(assignment.id, user.mssv),
-        getGradesForUser(assignment.classId, user.id),
-        getExtensionForUser(assignment.id, user.id).catch(() => null)
-      ]);
+      setClassAssignments(r.assignments);
+      const subData = r.submission, gradesData = r.grades, ext = r.extension;
 
       // Reset current state first to prevent flickering/leakage
       setSubmission(null);
@@ -273,20 +260,8 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
     try {
       const now = new Date().toISOString();
       setUploadProgress(50);
-      await saveSubmission({
-        id: submission?.id,
-        assignmentId: assignment.id,
-        userId: identifiedUser.id,
-        mssv: identifiedUser.mssv,
-        files: files,
-        content: textContent,
-        submittedAt: now,
-        updatedAt: now,
-        firstSubmittedAt: submission?.firstSubmittedAt || now
-      });
-      
+      const newSub = await pubSubmit(shareLinkId, identifiedUser, assignment.id, files, textContent, submission);
       setUploadProgress(80);
-      const newSub = await getSubmissionByMssv(assignment.id, identifiedUser.mssv);
       setSubmission(newSub);
       setUploadProgress(100);
       setNotification({
@@ -315,7 +290,7 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
     setRequesting(true);
     setNotification(null);
     try {
-      const ext = await requestExtension({ assignmentId: assignment.id, classId: assignment.classId, userId: identifiedUser.id, mssv: identifiedUser.mssv, studentName: identifiedUser.fullName });
+      const ext = await pubExtension(shareLinkId, identifiedUser, assignment.id, assignment.classId);
       setExtension(ext);
       setNotification({ type: 'success', title: 'Đã gửi', message: 'Đã gửi yêu cầu gia hạn. Vui lòng chờ giảng viên duyệt rồi quay lại nộp bài.' });
     } catch (e: any) {

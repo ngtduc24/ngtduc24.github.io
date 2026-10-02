@@ -30,18 +30,25 @@ export async function loadShareRoutes(supabaseUrl, key) {
       return Array.isArray(j) ? j : [];
     } catch (e) { console.warn(`Bỏ qua ${path.split('?')[0]}:`, e?.message || e); return []; }
   };
-  const subjects = Object.fromEntries((await get('edu_subjects?select=id,name')).map(x => [x.id, x.name]));
+  // Sau khi bật RLS, khách không đọc thẳng các bảng được nữa, danh sách lấy qua hàm share_catalog.
+  let cat = null;
+  try {
+    const r = await fetch(`${supabaseUrl}/rest/v1/rpc/share_catalog`, { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: '{}' });
+    if (r.ok) cat = await r.json();
+  } catch { cat = null; }
+  const fromCat = (k, path) => (cat && Array.isArray(cat[k]) ? cat[k] : get(path));
+  const subjects = Object.fromEntries((await fromCat('subjects', 'edu_subjects?select=id,name')).map(x => [x.id, x.name]));
   const routes = [];
 
   // Bài tập trong ngân hàng: /bt/<mã>/
-  for (const x of await get('edu_assignment_bank?select=share_token,title,content,subject_id,owner_name&share_token=not.is.null&order=share_token')) {
+  for (const x of await fromCat('bank', 'edu_assignment_bank?select=share_token,title,content,subject_id,owner_name&share_token=not.is.null&order=share_token')) {
     if (!safe(x.share_token)) continue;
     routes.push({ folder: 'bt', id: x.share_token, title: x.title || 'Bài tập', image: firstImg(x.content),
       description: [join(subjects[x.subject_id] && `Bài tập môn ${subjects[x.subject_id]}`, x.owner_name && `Giảng viên ${x.owner_name}`), plain(x.content)].filter(Boolean).join('. '),
       target: `/?bt=${x.share_token}` });
   }
 
-  const lessons = await get('el_lessons?select=id,title,summary,cover_url,subject_id,owner_name,author_label,is_public,status,share_token,deleted_at&deleted_at=is.null&order=id');
+  const lessons = await fromCat('lessons', 'el_lessons?select=id,title,summary,cover_url,subject_id,owner_name,author_label,is_public,status,share_token,deleted_at&deleted_at=is.null&order=id');
   for (const x of lessons) {
     const author = x.author_label || x.owner_name;
     const desc = [join(subjects[x.subject_id] && `Bài giảng môn ${subjects[x.subject_id]}`, author && `Biên soạn ${author}`), plain(x.summary)].filter(Boolean).join('. ');
@@ -52,7 +59,7 @@ export async function loadShareRoutes(supabaseUrl, key) {
   }
 
   // Đề trắc nghiệm: /tn/<slug>/
-  for (const x of await get('quizzes?select=slug,title,description,subject_id,owner_name,duration_minutes&order=slug')) {
+  for (const x of await fromCat('quizzes', 'quizzes?select=slug,title,description,subject_id,owner_name,duration_minutes&order=slug')) {
     if (!safe(x.slug)) continue;
     routes.push({ folder: 'tn', id: x.slug, title: x.title || 'Bài kiểm tra trắc nghiệm', image: '',
       description: [join('Bài kiểm tra trắc nghiệm', subjects[x.subject_id] && `môn ${subjects[x.subject_id]}`, x.duration_minutes && `${x.duration_minutes} phút`, x.owner_name && `Giảng viên ${x.owner_name}`), plain(x.description)].filter(Boolean).join('. '),
@@ -74,7 +81,7 @@ export async function loadShareRoutes(supabaseUrl, key) {
   }
 
   // Link nộp bài tập của lớp: /nb/<mã>/
-  for (const x of await get('edu_assignments?select=share_link_id,title,content,deadline,subject_id,edu_classes(name)&order=share_link_id')) {
+  for (const x of await fromCat('assignments', 'edu_assignments?select=share_link_id,title,content,deadline,subject_id,edu_classes(name)&order=share_link_id')) {
     if (!safe(x.share_link_id)) continue;
     routes.push({ folder: 'nb', id: x.share_link_id, title: x.title || 'Nộp bài tập', image: firstImg(x.content),
       description: [join('Nộp bài tập', x.edu_classes?.name && `Lớp ${x.edu_classes.name}`, x.deadline && `Hạn nộp ${fmtDeadline(x.deadline)}`), plain(x.content, 140)].filter(Boolean).join('. '),

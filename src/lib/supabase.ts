@@ -34,6 +34,9 @@ if (supabaseUrl && !supabaseUrl.startsWith('http')) {
 const getFirebaseAccessToken = async (): Promise<string | null> => {
   try {
     const { auth } = await import('./firebase');
+    // Chờ Firebase khôi phục phiên đăng nhập xong rồi mới gửi truy vấn, nếu không truy vấn đầu tiên
+    // sau khi tải trang sẽ đi dưới quyền khách và bị chính sách RLS trả về rỗng.
+    if (!auth.currentUser && (auth as any).authStateReady) await Promise.race([(auth as any).authStateReady(), new Promise(r => setTimeout(r, 4000))]);
     const user = auth.currentUser;
     if (!user) return null;
     return await user.getIdToken();

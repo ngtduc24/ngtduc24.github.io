@@ -353,6 +353,9 @@ export async function setDeckShare(d: Deck, on: boolean): Promise<Deck> {
   return next;
 }
 export async function getDeckByShareToken(token: string): Promise<Deck | null> {
+  // Máy chủ chỉ trả bài giảng khi chủ đang bật "Bất cứ ai có liên kết" (hàm deck_by_share).
+  const r = await supabase.rpc('deck_by_share', { p_token: token });
+  if (!r.error) { const v = r.data as any; if (!v?.key) return null; const d = fromRow(v.key, v.data || {}); return d.shareOn && !d.deletedAt ? d : null; }
   const { data } = await supabase.from(T).select('data').eq('key', `deck_share:${token}`).maybeSingle();
   const key = (data?.data as any)?.key as string | undefined;
   if (!key) return null;

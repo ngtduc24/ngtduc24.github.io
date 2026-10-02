@@ -782,8 +782,9 @@ async function loadSetting<T>(rawKey: string, rawLocalKey: string, defaultValue:
       return value;
     }
     const seed = getLocalSeed(localKey, defaultValue);
+    // Chỉ chủ trang mới ghi được giá trị mặc định (khách xem trang thì máy chủ từ chối, bỏ qua).
     const { error: seedError } = await supabase.from('portfolio_settings').upsert({ key, data: seed });
-    if (seedError) throw seedError;
+    if (seedError && !/row-level security|42501|401|permission/i.test(`${seedError.code} ${seedError.message}`)) throw seedError;
     setLocalFallback(localKey, seed);
     return seed;
   } catch (error) {
