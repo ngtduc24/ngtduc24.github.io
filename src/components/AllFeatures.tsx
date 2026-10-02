@@ -5,7 +5,7 @@ import {
   Search, ArrowLeft, ArrowRight, LayoutGrid,
   CalendarDays, BookOpen, LayoutTemplate, Image as ImageIcon, BarChart3,
   GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone, Shield, CheckCircle2, ClipboardList, Clapperboard, Sparkles, FileArchive, Globe, FolderOpen
-, FileUser, QrCode , Settings2 } from 'lucide-react';
+, FileUser, QrCode , Settings2, Presentation } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
 import { isModuleHidden, resolveModuleMeta } from '../lib/modules';
 
@@ -51,7 +51,8 @@ const ALL_FEATURES: FeatureItem[] = [
   { id: 'edu_question_bank', label: 'Ngân hàng câu hỏi', desc: 'Kho câu hỏi trắc nghiệm dùng lại và chia sẻ theo môn', icon: Library, color: 'teal', group: 'Giảng dạy và nội dung' },
   { id: 'edu_grade', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường', icon: ClipboardList, color: 'emerald', group: 'Giảng dạy và nội dung' },
   { id: 'courses', label: 'Khoá học', desc: 'Học các khoá trực tuyến do EduGo biên soạn, theo dõi tiến độ học', icon: GraduationCap, color: 'purple', group: 'Giảng dạy và nội dung' },
-  { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ, chia sẻ và giao bài giảng theo môn', icon: BookOpen, color: 'orange', group: 'Giảng dạy và nội dung' },
+  { id: 'slides', label: 'Bài giảng', desc: 'Thiết kế bài giảng trình chiếu, cùng soạn và trình chiếu ngay trên web', icon: Presentation, color: 'violet', group: 'Giảng dạy và nội dung' },
+  { id: 'elearning', label: 'Giáo trình', desc: 'Soạn, lưu trữ, chia sẻ và giao giáo trình theo môn', icon: BookOpen, color: 'orange', group: 'Giảng dạy và nội dung' },
   { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp ngay trên trình duyệt', icon: Clapperboard, color: 'rose', group: 'Công cụ thiết kế' },
   { id: 'qr_codes', label: 'Tạo mã QR', desc: 'Tạo mã QR từ đường link, lưu và quản lý mã của riêng bạn', icon: QrCode, color: 'emerald', group: 'Công cụ thiết kế' },
   { id: 'scientific_cv', label: 'Lý lịch khoa học', desc: 'Tạo lý lịch khoa học cá nhân theo mẫu, xuất PDF và Word', icon: FileUser, color: 'indigo', group: 'Nghiên cứu và phân tích' },

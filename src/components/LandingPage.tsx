@@ -79,7 +79,7 @@ export default function LandingPage({ settings, currentUser, onLogin, onRegister
   const overlay = (cfg.heroOverlay ?? 45) / 100;
   const brand = cfg.heroBrand || 'EduGo';
   const title = cfg.heroTitle || 'Nền tảng học tập và làm việc trực tuyến';
-  const desc = cfg.heroDesc || 'Quản lý lớp học, bài tập, trắc nghiệm, bài giảng E-Learning, dựng phim, AR, VR 360 và nhiều tiện ích khác, gom vào một chỗ.';
+  const desc = cfg.heroDesc || 'Quản lý lớp học, bài tập, trắc nghiệm, giáo trình, bài giảng trình chiếu, dựng phim, AR, VR 360 và nhiều tiện ích khác, gom vào một chỗ.';
   const regText = cfg.registerText || 'Đăng ký miễn phí';
   const loginText = cfg.loginText || 'Đăng nhập';
   const featTitle = cfg.featuresTitle || 'Tiện ích trong EduGo';

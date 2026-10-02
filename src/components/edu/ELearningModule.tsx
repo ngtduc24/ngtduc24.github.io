@@ -33,14 +33,14 @@ interface Props { currentUser: UserAccount; onExit?: () => void; }
 type View = 'list' | 'editor' | 'assign' | 'progress' | 'trash';
 type Tab = 'mine' | 'public';
 
-// Mở trang xem bài giảng ở chế độ riêng (link riêng). Điều hướng ngay trong tab
+// Mở trang xem giáo trình ở chế độ riêng (link riêng). Điều hướng ngay trong tab
 // hiện tại để chạy ổn định trên di động (mở tab mới hay bị trình duyệt chặn).
 const openLessonView = (id: string) => { window.location.href = `${window.location.origin}/?elview=${id}`; };
 
 export default function ELearningModule({ currentUser, onExit }: Props) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
-  // Khôi phục màn hình con (soạn bài giảng, giao bài, tiến độ, thùng rác) và bài giảng đang mở
+  // Khôi phục màn hình con (soạn giáo trình, giao bài, tiến độ, thùng rác) và giáo trình đang mở
   // từ URL để tải lại trang không nhảy về danh sách.
   const sub = readSubRoute();
   const [view, setView] = useState<View>(() => {
@@ -52,11 +52,11 @@ export default function ELearningModule({ currentUser, onExit }: Props) {
   const [subjects, setSubjects] = useState<EduSubject[]>([]);
 
   useEffect(() => { setEduAuthContext(currentUser?.id ?? null, currentUser?.role === 'admin'); }, [currentUser]);
-  // Bài giảng cũ lưu tên cũ của người biên soạn, mở E-Learning là đồng bộ lại theo họ tên hiện tại.
+  // Giáo trình cũ lưu tên cũ của người biên soạn, mở Giáo trình là đồng bộ lại theo họ tên hiện tại.
   useEffect(() => { if (currentUser?.id && currentUser.fullName) syncOwnerName(currentUser.id, currentUser.fullName); }, [currentUser?.id, currentUser?.fullName]);
   useEffect(() => { getSubjects().then(setSubjects).catch(() => {}); }, []);
 
-  // Ghi màn hình con và bài giảng đang mở lên URL.
+  // Ghi màn hình con và giáo trình đang mở lên URL.
   useEffect(() => {
     const needsLesson = ['editor', 'assign', 'progress'].includes(view);
     writeSubRoute({
@@ -89,7 +89,7 @@ export default function ELearningModule({ currentUser, onExit }: Props) {
   );
 }
 
-// Đầu trang chung của E-Learning: hai kho (của tôi, chung) dạng thẻ ngay trên khung tìm kiếm lớn.
+// Đầu trang chung của Giáo trình: hai kho (của tôi, chung) dạng thẻ ngay trên khung tìm kiếm lớn.
 interface ElHero { onExit?: () => void; tab: 'mine' | 'public'; setTab: (t: 'mine' | 'public') => void; onTrash?: () => void; onSubjectAdded?: (s: EduSubject) => void }
 const EL_TABS = [{ id: 'mine', label: 'Kho của tôi' }, { id: 'public', label: 'Kho chung' }];
 
@@ -124,7 +124,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
       const [mine, sh] = await Promise.all([getMyLessons({ status: (status as any) || undefined }), getSharedLessons().catch(() => [])]);
       setAll(mine); setShared(sh);
     }
-    catch (e: any) { addNotification('Lỗi tải bài giảng: ' + (e.message || e), 'error'); }
+    catch (e: any) { addNotification('Lỗi tải giáo trình: ' + (e.message || e), 'error'); }
     finally { setLoading(false); }
   }, [status, addNotification]);
   useEffect(() => { load(); }, [load]);
@@ -162,51 +162,51 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
 
   const bulkDelete = async () => {
     const pub = picked.filter(l => l.is_public).length;
-    const ok = await confirm({ title: 'Xóa nhiều bài giảng', message: `Chuyển ${picked.length} bài giảng vào Thùng rác?${pub ? ` Trong đó có ${pub} bài đang công khai sẽ bị tắt công khai.` : ''} Có thể khôi phục trong 30 ngày.`, confirmText: 'Xóa', cancelText: 'Hủy', danger: true } as any);
+    const ok = await confirm({ title: 'Xóa nhiều giáo trình', message: `Chuyển ${picked.length} giáo trình vào Thùng rác?${pub ? ` Trong đó có ${pub} bài đang công khai sẽ bị tắt công khai.` : ''} Có thể khôi phục trong 30 ngày.`, confirmText: 'Xóa', cancelText: 'Hủy', danger: true } as any);
     if (!ok) return;
-    runBulk(() => bulkSoftDeleteLessons(picked.map(l => l.id)), `Đã chuyển ${picked.length} bài giảng vào Thùng rác.`);
+    runBulk(() => bulkSoftDeleteLessons(picked.map(l => l.id)), `Đã chuyển ${picked.length} giáo trình vào Thùng rác.`);
   };
 
   const bulkChangeSubject = async (sid: string) => {
     setBulkSubject('');
     if (!sid) return;
     const name = sid === '__none' ? 'Chưa chọn môn' : subjName(sid);
-    const ok = await confirm({ title: 'Đổi môn học', message: `Chuyển ${picked.length} bài giảng sang môn ${name}?`, confirmText: 'Đổi môn', cancelText: 'Hủy' });
+    const ok = await confirm({ title: 'Đổi môn học', message: `Chuyển ${picked.length} giáo trình sang môn ${name}?`, confirmText: 'Đổi môn', cancelText: 'Hủy' });
     if (!ok) return;
-    runBulk(() => bulkUpdateLessons(picked.map(l => l.id), { subject_id: sid === '__none' ? null : sid }), `Đã đổi môn cho ${picked.length} bài giảng.`);
+    runBulk(() => bulkUpdateLessons(picked.map(l => l.id), { subject_id: sid === '__none' ? null : sid }), `Đã đổi môn cho ${picked.length} giáo trình.`);
   };
 
   const bulkPublish = async (on: boolean) => {
     const ids = picked.map(l => l.id);
     if (on) {
-      runBulk(() => bulkUpdateLessons(ids, { status: 'published' }), `Đã xuất bản ${ids.length} bài giảng.`);
+      runBulk(() => bulkUpdateLessons(ids, { status: 'published' }), `Đã xuất bản ${ids.length} giáo trình.`);
       return;
     }
     const pub = picked.filter(l => l.is_public).length;
-    const ok = await confirm({ title: 'Chuyển về nháp', message: `Chuyển ${ids.length} bài giảng về nháp?${pub ? ` ${pub} bài đang công khai sẽ bị tắt công khai.` : ''}`, confirmText: 'Chuyển về nháp', cancelText: 'Hủy' });
+    const ok = await confirm({ title: 'Chuyển về nháp', message: `Chuyển ${ids.length} giáo trình về nháp?${pub ? ` ${pub} bài đang công khai sẽ bị tắt công khai.` : ''}`, confirmText: 'Chuyển về nháp', cancelText: 'Hủy' });
     if (!ok) return;
-    runBulk(() => bulkUpdateLessons(ids, { status: 'draft', is_public: false }), `Đã chuyển ${ids.length} bài giảng về nháp.`);
+    runBulk(() => bulkUpdateLessons(ids, { status: 'draft', is_public: false }), `Đã chuyển ${ids.length} giáo trình về nháp.`);
   };
 
   const bulkPublic = async (on: boolean) => {
     if (!mayPublic) { addNotification('Tài khoản chưa được cấp quyền công khai lên kho chung.', 'warning'); return; }
-    if (!on) { runBulk(() => bulkUpdateLessons(picked.map(l => l.id), { is_public: false }), `Đã tắt công khai ${picked.length} bài giảng.`); return; }
+    if (!on) { runBulk(() => bulkUpdateLessons(picked.map(l => l.id), { is_public: false }), `Đã tắt công khai ${picked.length} giáo trình.`); return; }
     const ready = picked.filter(l => l.status === 'published');
     const skip = picked.length - ready.length;
     if (!ready.length) { addNotification('Các bài đã chọn đều chưa xuất bản. Cần xuất bản trước khi công khai.', 'warning'); return; }
-    const ok = await confirm({ title: 'Công khai bài giảng', message: `Công khai ${ready.length} bài giảng lên kho chung, mọi người dùng khác xem và sao chép được.${skip ? ` Bỏ qua ${skip} bài chưa xuất bản.` : ''} Tiếp tục?`, confirmText: 'Công khai', cancelText: 'Hủy' });
+    const ok = await confirm({ title: 'Công khai giáo trình', message: `Công khai ${ready.length} giáo trình lên kho chung, mọi người dùng khác xem và sao chép được.${skip ? ` Bỏ qua ${skip} bài chưa xuất bản.` : ''} Tiếp tục?`, confirmText: 'Công khai', cancelText: 'Hủy' });
     if (!ok) return;
-    runBulk(() => bulkUpdateLessons(ready.map(l => l.id), { is_public: true }), `Đã công khai ${ready.length} bài giảng.${skip ? ` Bỏ qua ${skip} bài chưa xuất bản.` : ''}`);
+    runBulk(() => bulkUpdateLessons(ready.map(l => l.id), { is_public: true }), `Đã công khai ${ready.length} giáo trình.${skip ? ` Bỏ qua ${skip} bài chưa xuất bản.` : ''}`);
   };
 
   const togglePublic = async (l: ELLesson) => {
     if (!mayPublic) { addNotification('Tài khoản chưa được cấp quyền công khai lên kho chung.', 'warning'); return; }
     if (!l.is_public) {
-      if (l.status !== 'published') { addNotification('Cần xuất bản bài giảng trước khi công khai.', 'warning'); return; }
-      const ok = await confirm({ title: 'Công khai bài giảng', message: 'Bài giảng sẽ hiển thị với mọi người dùng khác và họ được sao chép về kho riêng. Tiếp tục?', confirmText: 'Công khai', cancelText: 'Hủy' });
+      if (l.status !== 'published') { addNotification('Cần xuất bản giáo trình trước khi công khai.', 'warning'); return; }
+      const ok = await confirm({ title: 'Công khai giáo trình', message: 'Giáo trình sẽ hiển thị với mọi người dùng khác và họ được sao chép về kho riêng. Tiếp tục?', confirmText: 'Công khai', cancelText: 'Hủy' });
       if (!ok) return;
     }
-    try { await updateLesson(l.id, { is_public: !l.is_public }); load(); addNotification(l.is_public ? 'Đã tắt công khai.' : 'Đã công khai bài giảng.', 'success'); }
+    try { await updateLesson(l.id, { is_public: !l.is_public }); load(); addNotification(l.is_public ? 'Đã tắt công khai.' : 'Đã công khai giáo trình.', 'success'); }
     catch (e: any) { addNotification('Lỗi: ' + (e.message || e), 'error'); }
   };
 
@@ -247,7 +247,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
     ? <span className="shrink-0 rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700">Chia sẻ · {ROLE_LABELS[l.my_role].label}</span> : null;
 
   const remove = async (l: ELLesson) => {
-    const ok = await confirm({ title: 'Xóa bài giảng', message: l.is_public ? `Bài giảng đang công khai và đã có ${l.copy_count} lượt sao chép. Chuyển vào Thùng rác?` : 'Chuyển bài giảng vào Thùng rác? Có thể khôi phục trong 30 ngày.', confirmText: 'Xóa', cancelText: 'Hủy', danger: true } as any);
+    const ok = await confirm({ title: 'Xóa giáo trình', message: l.is_public ? `Giáo trình đang công khai và đã có ${l.copy_count} lượt sao chép. Chuyển vào Thùng rác?` : 'Chuyển giáo trình vào Thùng rác? Có thể khôi phục trong 30 ngày.', confirmText: 'Xóa', cancelText: 'Hủy', danger: true } as any);
     if (!ok) return;
     try { await softDeleteLesson(l.id); load(); addNotification('Đã chuyển vào Thùng rác.', 'success'); }
     catch (e: any) { addNotification('Lỗi xóa: ' + (e.message || e), 'error'); }
@@ -258,8 +258,8 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
       <LibraryHero
         configKey="elearning_mine"
         canEditBanner={currentUser.role === 'admin'}
-        title="Bạn muốn soạn bài giảng nào?"
-        subtitle="Soạn, lưu trữ và chia sẻ bài giảng theo môn cho lớp học."
+        title="Bạn muốn soạn giáo trình nào?"
+        subtitle="Soạn, lưu trữ và chia sẻ giáo trình theo môn cho lớp học."
         onBack={hero.onExit}
         backTitle="Quay lại trang chủ"
         tabs={EL_TABS}
@@ -267,7 +267,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
         onTab={t => hero.setTab(t as 'mine' | 'public')}
         search={search}
         onSearch={setSearch}
-        placeholder="Tìm theo tên bài giảng, môn học..."
+        placeholder="Tìm theo tên giáo trình, môn học..."
         chips={[
           { id: '', label: 'Tất cả', count: all.length },
           ...subjects.filter(su => (subjectCounts[su.id] || 0) > 0 || su.ownerId === currentUser.id || isSystemSubject(su)).map(su => ({ id: su.id, label: su.name, count: subjectCounts[su.id] || 0 })),
@@ -281,12 +281,12 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
         }}
         actions={<>
           {hero.onTrash && <button onClick={hero.onTrash} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 hover:border-brand/30 hover:text-brand"><Trash2 className="h-4 w-4" /> Thùng rác</button>}
-          <button onClick={() => setCreating(true)} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-brand px-4 text-sm font-semibold text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Plus className="h-4 w-4" /> Tạo bài giảng mới</button>
+          <button onClick={() => setCreating(true)} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-brand px-4 text-sm font-semibold text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Plus className="h-4 w-4" /> Tạo giáo trình mới</button>
         </>}
       />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{lessons.length}</span> bài giảng</p>
+        <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{lessons.length}</span> giáo trình</p>
         <div className="flex flex-wrap items-center gap-2">
           <select value={shareScope} onChange={e => { setShareScope(e.target.value as 'mine' | 'shared'); setSelected(new Set()); setSubjectId(''); }} className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-brand">
             <option value="mine">Bài của tôi ({own.length})</option>
@@ -307,15 +307,15 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
       ) : all.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center">
           <BookOpen className="mx-auto mb-3 h-10 w-10 text-slate-300" />
-          <p className="text-sm font-bold text-slate-500">Chưa có bài giảng nào</p>
-          <p className="mt-1 text-xs text-slate-400">Bấm Tạo bài giảng mới để bắt đầu.</p>
+          <p className="text-sm font-bold text-slate-500">Chưa có giáo trình nào</p>
+          <p className="mt-1 text-xs text-slate-400">Bấm Tạo giáo trình mới để bắt đầu.</p>
         </div>
       ) : lessons.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-sm text-slate-400">Không tìm thấy bài giảng phù hợp.</div>
+        <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-sm text-slate-400">Không tìm thấy giáo trình phù hợp.</div>
       ) : mode === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {pageLessons.map(l => (
-            <div key={l.id} onClick={() => openLessonView(l.id)} title="Bấm để xem bài giảng" className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md hover:border-brand/30 transition-all">
+            <div key={l.id} onClick={() => openLessonView(l.id)} title="Bấm để xem giáo trình" className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md hover:border-brand/30 transition-all">
               <div className="h-28 bg-slate-100 bg-cover bg-center" style={l.cover_url ? { backgroundImage: `url(${l.cover_url})` } : undefined}>
                 {!l.cover_url && <div className="flex h-full items-center justify-center text-slate-300"><BookOpen className="h-8 w-8" /></div>}
               </div>
@@ -362,7 +362,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
             <thead className="border-b border-slate-100 bg-slate-50/40 text-[10px] uppercase text-slate-400">
               <tr>
                 <th className="w-10 py-3 pl-4 pr-1"><CheckBox checked={allChecked} indeterminate={someChecked} onChange={toggleAll} title="Chọn tất cả" /></th>
-                <th className="px-4 py-3">Tên bài giảng</th><th className="px-4 py-3">Môn học</th>
+                <th className="px-4 py-3">Tên giáo trình</th><th className="px-4 py-3">Môn học</th>
                 <th className="px-4 py-3 text-center">Phần</th><th className="px-4 py-3 text-center">Tài nguyên</th>
                 <th className="px-4 py-3 text-center">Công khai</th><th className="px-4 py-3 text-center">Lượt sao chép</th>
                 <th className="px-4 py-3">Cập nhật</th><th className="px-4 py-3 text-right">Thao tác</th>
@@ -372,7 +372,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
               {pageLessons.map(l => (
                 <tr key={l.id} className={selected.has(l.id) ? 'bg-brand-light/30' : 'hover:bg-slate-50/40'}>
                   <td className="py-3 pl-4 pr-1">{shareScope === 'mine' && <CheckBox checked={selected.has(l.id)} onChange={() => toggleOne(l.id)} title="Chọn bài này" />}</td>
-                  <td className="px-4 py-3"><button onClick={() => openLessonView(l.id)} title="Bấm để xem bài giảng" className="text-left font-bold text-slate-800 hover:text-brand hover:underline">{l.title}</button></td>
+                  <td className="px-4 py-3"><button onClick={() => openLessonView(l.id)} title="Bấm để xem giáo trình" className="text-left font-bold text-slate-800 hover:text-brand hover:underline">{l.title}</button></td>
                   <td className="px-4 py-3 text-slate-500">{subjName(l.subject_id)}</td>
                   <td className="px-4 py-3 text-center">{l.sectionCount ?? 0}</td>
                   <td className="px-4 py-3 text-center">{l.resourceCount ?? 0}</td>
@@ -391,7 +391,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
         </div>
         </div>
       )}
-      {!loading && lessons.length > 0 && <Pager pg={pg} total={lessons.length} unit="bài giảng" sizes={[12, 24, 48, 96]} />}
+      {!loading && lessons.length > 0 && <Pager pg={pg} total={lessons.length} unit="giáo trình" sizes={[12, 24, 48, 96]} />}
 
       {sharing && <ShareDialog type="el_lesson" resourceId={sharing.id} resourceTitle={sharing.title} ownerId={sharing.owner_id || currentUser.id} ownerName={sharing.owner_name || undefined}
         currentUser={currentUser} canManage={sharing.owner_id === currentUser.id || (sharing as any).my_role === 'manage'} onClose={() => { setSharing(null); load(); }} />}
@@ -412,10 +412,10 @@ function CreateDialog({ subjects, onClose, onCreated, ownerName }: { subjects: E
   const [savingSubject, setSavingSubject] = useState(false);
 
   const submit = async () => {
-    if (!title.trim()) { addNotification('Nhập tên bài giảng.', 'warning'); return; }
+    if (!title.trim()) { addNotification('Nhập tên giáo trình.', 'warning'); return; }
     setSaving(true);
     try { const l = await createLesson({ title: title.trim(), subject_id: subjectId || null, owner_name: ownerName }); onCreated(l.id); }
-    catch (e: any) { addNotification('Lỗi tạo bài giảng: ' + (e.message || e), 'error'); setSaving(false); }
+    catch (e: any) { addNotification('Lỗi tạo giáo trình: ' + (e.message || e), 'error'); setSaving(false); }
   };
 
   const addSubject = async () => {
@@ -437,10 +437,10 @@ function CreateDialog({ subjects, onClose, onCreated, ownerName }: { subjects: E
   };
 
   return (
-    <Modal onClose={onClose} title="Tạo bài giảng mới">
+    <Modal onClose={onClose} title="Tạo giáo trình mới">
       <div className="space-y-3">
         <div>
-          <label className="mb-1 block text-[10px] font-bold uppercase text-slate-500">Tên bài giảng</label>
+          <label className="mb-1 block text-[10px] font-bold uppercase text-slate-500">Tên giáo trình</label>
           <input autoFocus value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-brand" placeholder="Ví dụ: Nhập môn Truyền thông đa phương tiện" />
         </div>
         <div>
@@ -486,8 +486,8 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
 
   const load = useCallback(async () => {
     const [l, secs, res] = await Promise.all([getLesson(lessonId), getSections(lessonId), getResources(lessonId)]);
-    // Chỉ chủ bài giảng mới mở được trang soạn.
-    if (l.owner_id !== currentUser.id) { addNotification('Không tìm thấy bài giảng.', 'error'); onBack(); return; }
+    // Chỉ chủ giáo trình mới mở được trang soạn.
+    if (l.owner_id !== currentUser.id) { addNotification('Không tìm thấy giáo trình.', 'error'); onBack(); return; }
     setLesson(l); setSections(secs); setResources(res);
     setActiveSection(prev => prev && secs.some(s => s.id === prev) ? prev : (secs[0]?.id ?? null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -503,7 +503,7 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
       await Promise.all(entries.map(([id, v]) => updateSection(id, { title: v.title, content: v.content })));
       dirty.current = {};
       setSavedAt(new Date().toLocaleTimeString('vi-VN'));
-      if (!silent) addNotification('Đã lưu bài giảng.', 'success');
+      if (!silent) addNotification('Đã lưu giáo trình.', 'success');
     } catch (e: any) { addNotification('Lỗi lưu: ' + (e.message || e), 'error'); }
     finally { setSaving(false); }
   }, [addNotification]);
@@ -617,7 +617,7 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
           ) : (
             <>
               <input value={sec.title} onChange={e => markDirty(sec.id, { title: e.target.value })} placeholder="Tiêu đề phần" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold outline-none focus:border-brand" />
-              <QuizRichText allowVideo value={sec.content} onChange={html => markDirty(sec.id, { content: html })} placeholder="Soạn nội dung bài giảng..." />
+              <QuizRichText allowVideo value={sec.content} onChange={html => markDirty(sec.id, { content: html })} placeholder="Soạn nội dung giáo trình..." />
 
               {/* Đính kèm tài nguyên */}
               <div>
@@ -647,7 +647,7 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
 
         {/* Cột phải: thông tin chung */}
         <div className="h-fit space-y-3 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
-          <span className="text-[10px] font-black uppercase text-slate-400">Thông tin bài giảng</span>
+          <span className="text-[10px] font-black uppercase text-slate-400">Thông tin giáo trình</span>
           <Field label="Tên"><input value={lesson.title} onChange={e => setLesson({ ...lesson, title: e.target.value })} onBlur={e => patchLesson({ title: e.target.value })} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-brand" /></Field>
           <Field label="Môn học"><select value={lesson.subject_id || ''} onChange={e => patchLesson({ subject_id: e.target.value || null })} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-brand"><option value="">Chọn môn</option>{subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>
           <Field label="Mô tả ngắn"><textarea value={lesson.summary || ''} onChange={e => setLesson({ ...lesson, summary: e.target.value })} onBlur={e => patchLesson({ summary: e.target.value })} rows={2} className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-brand" /></Field>
@@ -656,12 +656,12 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
               <div className="relative overflow-hidden rounded-xl border border-slate-200">
                 <img src={lesson.cover_url} alt="Ảnh bìa" className="h-28 w-full object-cover" />
                 <div className="absolute right-2 top-2 flex gap-1">
-                  <MediaSourcePicker onSelect={(url) => patchLesson({ cover_url: url })} accept="image/*" resourceType="image" folder="elearning-covers" category="E-Learning" label="Đổi" className="rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-600 shadow hover:bg-white" />
+                  <MediaSourcePicker onSelect={(url) => patchLesson({ cover_url: url })} accept="image/*" resourceType="image" folder="elearning-covers" category="Giáo trình" label="Đổi" className="rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold text-slate-600 shadow hover:bg-white" />
                   <button onClick={() => patchLesson({ cover_url: '' })} className="rounded-lg bg-white/90 px-2 py-1 text-[10px] font-bold text-rose-500 shadow hover:bg-white">Xóa</button>
                 </div>
               </div>
             ) : (
-              <MediaSourcePicker onSelect={(url) => patchLesson({ cover_url: url })} accept="image/*" resourceType="image" folder="elearning-covers" category="E-Learning" label="Tải lên hoặc chọn từ thư viện" icon={ImageIconEl} className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-xs font-semibold text-slate-500 hover:border-brand/40 hover:text-brand" />
+              <MediaSourcePicker onSelect={(url) => patchLesson({ cover_url: url })} accept="image/*" resourceType="image" folder="elearning-covers" category="Giáo trình" label="Tải lên hoặc chọn từ thư viện" icon={ImageIconEl} className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-xs font-semibold text-slate-500 hover:border-brand/40 hover:text-brand" />
             )}
           </Field>
           <Field label="Thẻ phân loại (cách nhau dấu phẩy)"><input value={(lesson.tags || []).join(', ')} onChange={e => setLesson({ ...lesson, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} onBlur={e => patchLesson({ tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-brand" /></Field>
@@ -670,7 +670,7 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
           <div className="space-y-2 border-t border-slate-100 pt-3">
             <ToggleRow label="Xuất bản" on={lesson.status === 'published'} onChange={b => patchLesson({ status: b ? 'published' : 'draft', ...(b ? {} : { is_public: false }) })} />
             <ToggleRow label="Công khai kho chung" on={lesson.is_public} disabled={!canPublic} onChange={async b => {
-              if (b) { const ok = await confirm({ title: 'Công khai bài giảng', message: 'Nội dung sẽ hiển thị với mọi người dùng và họ được sao chép về kho riêng. Tiếp tục?', confirmText: 'Công khai', cancelText: 'Hủy' }); if (!ok) return; }
+              if (b) { const ok = await confirm({ title: 'Công khai giáo trình', message: 'Nội dung sẽ hiển thị với mọi người dùng và họ được sao chép về kho riêng. Tiếp tục?', confirmText: 'Công khai', cancelText: 'Hủy' }); if (!ok) return; }
               patchLesson({ is_public: b });
             }} />
             {mayPublic && !canPublic && <p className="text-[10px] text-amber-600">Cần xuất bản và có ít nhất 1 phần nội dung mới công khai được.</p>}
@@ -724,12 +724,12 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
   };
 
   const subjName = (id?: string | null) => subjects.find(s => s.id === id)?.name || 'Khác';
-  // Quản trị cao nhất xếp lại kho chung: chuyển bài giảng công khai sang môn chung (chỉ đổi môn).
+  // Quản trị cao nhất xếp lại kho chung: chuyển giáo trình công khai sang môn chung (chỉ đổi môn).
   const isTopAdmin = currentUser.id === SYSTEM_SUBJECT_OWNER;
   const move = async (l: ELLesson) => {
     const targets = subjects.filter(isSystemSubject);
     if (!targets.length) { addNotification('Chưa có môn chung nào. Hãy tạo môn trước.', 'warning'); return; }
-    const sid = await askChoice({ title: 'Chuyển bài giảng sang môn', label: `${l.title}. Chỉ đổi môn của bài, không sửa nội dung.`, options: targets.map(t => ({ id: t.id, label: t.name })), defaultId: l.subject_id || undefined, okText: 'Chuyển môn' });
+    const sid = await askChoice({ title: 'Chuyển giáo trình sang môn', label: `${l.title}. Chỉ đổi môn của bài, không sửa nội dung.`, options: targets.map(t => ({ id: t.id, label: t.name })), defaultId: l.subject_id || undefined, okText: 'Chuyển môn' });
     if (!sid || sid === l.subject_id) return;
     try {
       await adminMoveLessons([l.id], sid);
@@ -752,8 +752,8 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
       <LibraryHero
         configKey="elearning_public"
         canEditBanner={currentUser.role === 'admin'}
-        title="Bạn muốn tìm bài giảng nào?"
-        subtitle="Bài giảng được chia sẻ công khai, xem trước hoặc sao chép về kho của bạn."
+        title="Bạn muốn tìm giáo trình nào?"
+        subtitle="Giáo trình được chia sẻ công khai, xem trước hoặc sao chép về kho của bạn."
         onBack={hero.onExit}
         backTitle="Quay lại trang chủ"
         tabs={EL_TABS}
@@ -768,7 +768,7 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
       />
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{lessons.length}</span> bài giảng công khai</p>
+          <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{lessons.length}</span> giáo trình công khai</p>
           <div className="flex items-center gap-2">
             <select value={sort} onChange={e => setSort(e.target.value as any)} className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-brand">
               <option value="new">Mới nhất</option><option value="views">Xem nhiều nhất</option><option value="copies">Sao chép nhiều nhất</option>
@@ -779,13 +779,13 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
         {loading ? (
           <div className="py-20 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" /> Đang tải...</div>
         ) : lessons.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-sm text-slate-400">{search ? 'Không tìm thấy bài giảng phù hợp.' : 'Chưa có bài giảng công khai nào trong mục này.'}</div>
+          <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-sm text-slate-400">{search ? 'Không tìm thấy giáo trình phù hợp.' : 'Chưa có giáo trình công khai nào trong mục này.'}</div>
         ) : mode === 'table' ? (
           <>
           <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-white shadow-sm">
             <table className="w-full min-w-[720px] text-left text-[13px]">
               <thead className="bg-slate-50 text-xs font-semibold text-slate-500">
-                <tr><th className="px-4 py-3">Bài giảng</th><th className="px-4 py-3">Môn học</th><th className="px-4 py-3">Tác giả</th><th className="px-4 py-3">Lượt xem</th><th className="px-4 py-3">Sao chép</th><th className="px-4 py-3 text-right">Thao tác</th></tr>
+                <tr><th className="px-4 py-3">Giáo trình</th><th className="px-4 py-3">Môn học</th><th className="px-4 py-3">Tác giả</th><th className="px-4 py-3">Lượt xem</th><th className="px-4 py-3">Sao chép</th><th className="px-4 py-3 text-right">Thao tác</th></tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {pageLessons.map(l => (
@@ -807,13 +807,13 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
               </tbody>
             </table>
           </div>
-          <Pager pg={pg} total={lessons.length} unit="bài giảng" sizes={[12, 24, 48, 96]} />
+          <Pager pg={pg} total={lessons.length} unit="giáo trình" sizes={[12, 24, 48, 96]} />
           </>
         ) : (
           <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
             {pageLessons.map(l => (
-              <div key={l.id} onClick={() => openLessonView(l.id)} title="Bấm để xem bài giảng" className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md hover:border-brand/30 transition-all">
+              <div key={l.id} onClick={() => openLessonView(l.id)} title="Bấm để xem giáo trình" className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md hover:border-brand/30 transition-all">
                 <div className="h-28 bg-slate-100 bg-cover bg-center" style={l.cover_url ? { backgroundImage: `url(${l.cover_url})` } : undefined}>
                   {!l.cover_url && <div className="flex h-full items-center justify-center text-slate-300"><BookOpen className="h-8 w-8" /></div>}
                 </div>
@@ -830,7 +830,7 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
               </div>
             ))}
           </div>
-          <Pager pg={pg} total={lessons.length} unit="bài giảng" sizes={[12, 24, 48, 96]} />
+          <Pager pg={pg} total={lessons.length} unit="giáo trình" sizes={[12, 24, 48, 96]} />
           </>
         )}
       </div>
@@ -876,7 +876,7 @@ function AssignScreen({ lessonId, onBack, onProgress }: { lessonId: string; onBa
       <div className="flex items-center justify-between rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200"><ArrowLeft className="h-4 w-4" /></button>
-          <div><h1 className="font-display text-lg font-bold text-slate-900">Giao bài giảng cho lớp</h1><p className="text-[11px] text-slate-400">{lesson.title}</p></div>
+          <div><h1 className="font-display text-lg font-bold text-slate-900">Giao giáo trình cho lớp</h1><p className="text-[11px] text-slate-400">{lesson.title}</p></div>
         </div>
         <button onClick={onProgress} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><Eye className="h-4 w-4" /> Theo dõi tiến độ</button>
       </div>
@@ -911,7 +911,7 @@ function AssignScreen({ lessonId, onBack, onProgress }: { lessonId: string; onBa
             <span className="min-w-0 flex-1 truncate text-[11px] text-slate-600">{link}</span>
             <button onClick={() => { navigator.clipboard?.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 1500); }} className="inline-flex items-center gap-1 rounded-lg bg-brand px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-brand-hover">{copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}</button>
           </div>
-          <div className="flex justify-center"><img src={qrUrl} alt="QR bài giảng" className="h-40 w-40 rounded-2xl border border-slate-200 bg-white p-2" /></div>
+          <div className="flex justify-center"><img src={qrUrl} alt="QR giáo trình" className="h-40 w-40 rounded-2xl border border-slate-200 bg-white p-2" /></div>
           <p className="text-center text-[10px] text-slate-400">Sinh viên quét mã hoặc mở liên kết, nhập mã số sinh viên để xem.</p>
         </div>
       </div>
@@ -1013,7 +1013,7 @@ function TrashScreen({ onBack }: { onBack: () => void; }) {
     <div className="space-y-4 animate-fadeIn">
       <div className="flex items-center gap-3 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
         <button onClick={onBack} className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200"><ArrowLeft className="h-4 w-4" /></button>
-        <div><h1 className="font-display text-lg font-bold text-slate-900">Thùng rác</h1><p className="text-[11px] text-slate-400">Bài giảng đã xóa còn khôi phục được trong 30 ngày.</p></div>
+        <div><h1 className="font-display text-lg font-bold text-slate-900">Thùng rác</h1><p className="text-[11px] text-slate-400">Giáo trình đã xóa còn khôi phục được trong 30 ngày.</p></div>
       </div>
       {loading ? <div className="py-20 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" /> Đang tải...</div>
         : lessons.length === 0 ? <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-sm text-slate-400">Thùng rác trống.</div>

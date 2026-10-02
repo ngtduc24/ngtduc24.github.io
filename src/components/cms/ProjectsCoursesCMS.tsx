@@ -1858,7 +1858,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                   {/* Gắn bài giảng E-Learning và đề trắc nghiệm */}
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div className="space-y-1">
-                                      <label className="text-xs font-black text-slate-400">Bài giảng E-Learning (nội dung hiện dưới video)</label>
+                                      <label className="text-xs font-black text-slate-400">Giáo trình (nội dung hiện dưới video)</label>
                                       <select
                                         value={lesson.elLessonId || ''}
                                         onChange={(e) => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen, ClipboardList, Clapperboard, FileQuestion, FolderKanban, Globe, Library, ListChecks, Loader2, RotateCcw, Search, Trash2, View } from 'lucide-react';
+import { BookOpen, ClipboardList, Clapperboard, FileQuestion, FolderKanban, Globe, Library, ListChecks, Loader2, Presentation, RotateCcw, Search, Trash2, View } from 'lucide-react';
 import { listMyTrash, restoreTrash, purgeTrash, TrashItem, TrashApp, TRASH_APP_LABELS, TRASH_DAYS } from '../lib/trash';
 import { useNotifications } from './NotificationContext';
 import { useConfirmation } from './ConfirmationContext';
@@ -8,7 +8,7 @@ import { useConfirmation } from './ConfirmationContext';
 
 const ICONS: Record<TrashApp, any> = {
   bank_item: Library, quiz: ListChecks, quiz_question: FileQuestion, qda_project: FolderKanban,
-  vr_tour: View, task: ClipboardList, website: Globe, el_lesson: BookOpen, remier: Clapperboard,
+  vr_tour: View, task: ClipboardList, website: Globe, el_lesson: BookOpen, remier: Clapperboard, slide_deck: Presentation,
 };
 
 const daysLeft = (iso: string) => Math.max(0, TRASH_DAYS - Math.floor((Date.now() - new Date(iso).getTime()) / 86400000));

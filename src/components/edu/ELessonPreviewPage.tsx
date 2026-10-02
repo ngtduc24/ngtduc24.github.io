@@ -5,7 +5,7 @@ import { exportLessonToPdf } from '../../lib/lessonPdf';
 
 interface Props { lessonId: string; }
 
-// Trang xem bài giảng ở chế độ riêng, có link riêng dạng ?elview=<id>.
+// Trang xem giáo trình ở chế độ riêng, có link riêng dạng ?elview=<id>.
 // Ai cũng xem được bài đã công khai. Chủ sở hữu hoặc admin xem được cả bản nháp.
 export default function ELessonPreviewPage({ lessonId }: Props) {
   const [lesson, setLesson] = useState<ELLesson | null>(null);
@@ -19,7 +19,7 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
 
   const me = (() => { try { return JSON.parse(localStorage.getItem('logged_in_user') || 'null'); } catch { return null; } })();
   const goBack = () => {
-    // Luôn quay về trang E-Learning cho chắc, không phụ thuộc lịch sử trình duyệt.
+    // Luôn quay về trang Giáo trình cho chắc, không phụ thuộc lịch sử trình duyệt.
     try { localStorage.setItem('app_last_active_tab', 'elearning'); } catch {}
     window.location.href = `${window.location.origin}/?tab=e-learning`;
   };
@@ -58,8 +58,8 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-sm">
         <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-rose-50 text-rose-500"><ShieldAlert className="h-6 w-6" /></div>
-        <h1 className="font-display text-lg font-bold text-slate-900">Không xem được bài giảng</h1>
-        <p className="mt-1 text-xs text-slate-500">Bài giảng không tồn tại hoặc chưa được công khai.</p>
+        <h1 className="font-display text-lg font-bold text-slate-900">Không xem được giáo trình</h1>
+        <p className="mt-1 text-xs text-slate-500">Giáo trình không tồn tại hoặc chưa được công khai.</p>
         <button onClick={goBack} className="mt-4 inline-block rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200">Quay lại</button>
       </div>
     </div>
@@ -82,7 +82,7 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => exportLessonToPdf(lesson, sections, resources)} title="Tải toàn bộ bài giảng ra PDF" className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand">
+            <button onClick={() => exportLessonToPdf(lesson, sections, resources)} title="Tải toàn bộ giáo trình ra PDF" className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand">
               <FileDown className="h-3.5 w-3.5" /> Tải PDF
             </button>
             {canCopy && <button onClick={doCopy} disabled={copying || copied} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-[11px] font-bold text-white hover:bg-brand-hover disabled:opacity-60">{copying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : copied ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} {copied ? 'Đã sao chép' : 'Sao chép về kho của tôi'}</button>}
@@ -114,7 +114,7 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
                 <button disabled={active >= sections.length - 1} onClick={() => setActive(a => Math.min(sections.length - 1, a + 1))} className="rounded-xl bg-brand px-4 py-2 text-xs font-bold text-white hover:bg-brand-hover disabled:opacity-40">Phần tiếp theo</button>
               </div>
             </>
-          ) : <p className="py-16 text-center text-sm text-slate-400">Bài giảng chưa có nội dung.</p>}
+          ) : <p className="py-16 text-center text-sm text-slate-400">Giáo trình chưa có nội dung.</p>}
         </div>
 
         <div className="h-fit rounded-3xl border border-slate-100 bg-white p-3 shadow-sm lg:sticky lg:top-6">

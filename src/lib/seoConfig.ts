@@ -204,12 +204,19 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
     description: 'Học các khoá trực tuyến do EduGo biên soạn, theo dõi tiến độ và làm bài kiểm tra.',
     keywords: 'khoá học trực tuyến, học online, edugo',
   },
+  slides: {
+    id: 'slides',
+    slug: 'bai-giang',
+    title: 'Bài giảng · Thiết kế bài giảng trình chiếu | EduGo',
+    description: 'Thiết kế bài giảng trình chiếu như Google Slides, Canva, cùng soạn với đồng nghiệp và trình chiếu ngay trên web.',
+    keywords: 'bài giảng, thiết kế bài giảng, trình chiếu, slide, google slides, canva',
+  },
   elearning: {
     id: 'elearning',
     slug: 'e-learning',
-    title: 'E-Learning · Kho Bài giảng & Học liệu | EduGo',
-    description: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn học, công khai lên kho chung và giao bài giảng cho lớp.',
-    keywords: 'e-learning, bài giảng, học liệu, kho bài giảng, giao bài giảng',
+    title: 'Giáo trình · Kho giáo trình và học liệu | EduGo',
+    description: 'Soạn, lưu trữ và chia sẻ giáo trình theo môn học, công khai lên kho chung và giao giáo trình cho lớp.',
+    keywords: 'giáo trình, học liệu, kho giáo trình, e-learning, giao giáo trình',
   },
   qr_codes: {
     id: 'qr_codes',
@@ -393,7 +400,7 @@ export function getTabUrl(tabId: string): string {
 //   ltab : kho bài giảng đang xem (của tôi hay chung)
 //   qv   : màn hình con của trắc nghiệm
 //   qid  : id đề trắc nghiệm
-export const SUBROUTE_PARAMS = ['sv', 'cid', 'aid', 'gcol', 'lid', 'ltab', 'qv', 'qid', 'cvid', 'bid'];
+export const SUBROUTE_PARAMS = ['sv', 'cid', 'aid', 'gcol', 'lid', 'ltab', 'qv', 'qid', 'cvid', 'bid', 'sid'];
 
 // Đọc các tham số màn hình con hiện có trên URL.
 export function readSubRoute(): Record<string, string> {

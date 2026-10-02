@@ -7,7 +7,7 @@ import {
   CalendarDays, BarChart3, GraduationCap, Wrench, FolderKanban, Mail,
   Library, Image as ImageIcon, LayoutGrid, ArrowRight, Bell, ChevronDown,
   Home, FileText, CheckCircle2, ClipboardList, Scan, LayoutTemplate, Megaphone, Minus, Eye, Shield, Plus, Clapperboard, FileArchive, Globe, FolderOpen
-, FileUser, QrCode } from 'lucide-react';
+, FileUser, QrCode, Presentation } from 'lucide-react';
 import {
   getStatsFromSupabase,
   getJournalsFromSupabase,
@@ -265,7 +265,8 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { id: 'edu_question_bank', label: 'Ngân hàng câu hỏi', desc: 'Kho câu hỏi trắc nghiệm dùng lại và chia sẻ theo môn', icon: Library, color: 'teal' },
     { id: 'edu_grade', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường', icon: ClipboardList, color: 'emerald' },
     { id: 'courses', label: 'Khoá học', desc: 'Học các khoá trực tuyến do EduGo biên soạn', icon: GraduationCap, color: 'purple' },
-    { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn', icon: BookOpen, color: 'orange' },
+    { id: 'slides', label: 'Bài giảng', desc: 'Thiết kế bài giảng trình chiếu', icon: Presentation, color: 'violet' },
+    { id: 'elearning', label: 'Giáo trình', desc: 'Soạn, lưu trữ và chia sẻ giáo trình theo môn', icon: BookOpen, color: 'orange' },
     { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp trên trình duyệt', icon: Clapperboard, color: 'rose' },
     { id: 'qr_codes', label: 'Tạo mã QR', desc: 'Tạo và quản lý mã QR từ đường link', icon: QrCode, color: 'emerald' },
     { id: 'scientific_cv', label: 'Lý lịch khoa học', desc: 'Lý lịch khoa học cá nhân theo mẫu, xuất PDF và Word', icon: FileUser, color: 'indigo' },

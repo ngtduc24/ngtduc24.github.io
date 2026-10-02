@@ -45,9 +45,11 @@ import QrCodeModule from './components/qr/QrCodeModule';
 import EduModule from './components/EduModule';
 import { setEduAuthContext } from './lib/edu';
 import { TaskProvider } from './components/TaskContext';
-import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban, GraduationCap, Film, FileUser, QrCode } from 'lucide-react';
+import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban, GraduationCap, Film, FileUser, QrCode, Presentation } from 'lucide-react';
 import { supabase } from "./lib/supabase";
 import { useMyNotifications, resetNotificationStore, notifyAppAccessChange } from './lib/notifications';
+import SlidesModule from './components/slides/SlidesModule';
+import SlidePublicView from './components/slides/SlidePublicView';
 import { saveUser, savePublicProfile, deleteUser, getUsers, getUserById, mapUserFromDB, seedDefaultUsersIfNeeded, getDefaultSettingsFromSupabase, getCachedSettings, saveDefaultSettingsToSupabase, testSupabaseConnection, getNotificationsFromSupabase, subscribeToNotificationChanges, USERS_TABLE } from './lib/data';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -339,7 +341,8 @@ export default function App() {
       media_library: 'Kho lưu trữ',
       settings: 'Cấu hình hệ thống',
       edu: 'Quản lý Giáo dục & Đào tạo',
-      elearning: 'E-Learning · Bài giảng',
+      slides: 'Bài giảng',
+      elearning: 'Giáo trình',
       remier: 'Remier · Dựng phim',
       scientific_cv: 'Lý lịch khoa học',
       qr_codes: 'Tạo mã QR',
@@ -753,6 +756,8 @@ export default function App() {
         return <EduModule key="edu_grade" currentUser={currentUser} settings={settings} initialView="grade_entry" />;
       case 'courses':
         return <CoursesApp currentUser={currentUser} />;
+      case 'slides':
+        return <SlidesModule currentUser={currentUser} />;
       case 'elearning':
         return <ELearningModule currentUser={currentUser} onExit={() => setCurrentTab('dashboard')} />;
       case 'remier':
@@ -842,6 +847,12 @@ export default function App() {
   const bankShareToken = publicParam('bt');
   if (bankShareToken) {
     return <EduBankShareView token={bankShareToken} />;
+  }
+
+  // Bài giảng trình chiếu chia sẻ công khai (?deck=<mã>).
+  const deckToken = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('deck') : null;
+  if (deckToken) {
+    return <SlidePublicView token={deckToken} />;
   }
 
   // Trang xem bài giảng ở chế độ riêng, có link riêng: dùng để xem/chia sẻ bài công khai.
@@ -978,7 +989,8 @@ export default function App() {
       { id: 'qualitative_analysis', label: 'Phân tích định tính', icon: FolderKanban },
       { id: 'quantitative_analysis', label: 'Phân tích số liệu định lượng', icon: Calculator },
       { id: 'edu', label: 'Quản lý Giáo dục', icon: GraduationCap },
-      { id: 'elearning', label: 'E-Learning', icon: BookOpen },
+      { id: 'slides', label: 'Bài giảng', icon: Presentation },
+      { id: 'elearning', label: 'Giáo trình', icon: BookOpen },
       { id: 'remier', label: 'Remier · Dựng phim', icon: Film },
       { id: 'scientific_cv', label: 'Lý lịch khoa học', icon: FileUser },
       { id: 'qr_codes', label: 'Tạo mã QR', icon: QrCode },
