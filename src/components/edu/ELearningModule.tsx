@@ -32,7 +32,7 @@ import { AvatarStack, UserChip } from '../ui/People';
 
 interface Props { currentUser: UserAccount; onExit?: () => void; }
 type View = 'list' | 'editor' | 'assign' | 'progress' | 'trash';
-type Tab = 'mine' | 'public';
+type Tab = 'mine' | 'public' | 'shared';
 
 // Mở trang xem giáo trình ở chế độ riêng (link riêng). Điều hướng ngay trong tab
 // hiện tại để chạy ổn định trên di động (mở tab mới hay bị trình duyệt chặn).
@@ -51,9 +51,8 @@ export default function ELearningModule({ currentUser, onExit }: Props) {
   // Mở Giáo trình là vào Thư viện chung trước, muốn xem của mình thì bấm chuyển sang Giáo trình của tôi.
   // Đi từ thông báo cộng tác (mục Được chia sẻ) hoặc địa chỉ có ltab=mine thì mở thẳng phần của tôi.
   const [tab, setTab] = useState<Tab>(() => {
-    let hinted = false;
-    try { hinted = !!sessionStorage.getItem('open_hint:el_lesson'); } catch { /* bỏ qua */ }
-    return sub.ltab === 'mine' || hinted ? 'mine' : 'public';
+    if (takeOpenHint('el_lesson') === 'shared' || sub.ltab === 'shared') return 'shared';
+    return sub.ltab === 'mine' ? 'mine' : 'public';
   });
   const [activeLessonId, setActiveLessonId] = useState<string | null>(sub.lid || null);
   const [subjects, setSubjects] = useState<EduSubject[]>([]);
@@ -69,7 +68,7 @@ export default function ELearningModule({ currentUser, onExit }: Props) {
     writeSubRoute({
       sv: view === 'list' ? null : view,
       lid: needsLesson ? activeLessonId : null,
-      ltab: view === 'list' && tab === 'mine' ? 'mine' : null,
+      ltab: view === 'list' && tab !== 'public' ? tab : null,
     });
   }, [view, activeLessonId, tab]);
 
@@ -88,7 +87,7 @@ export default function ELearningModule({ currentUser, onExit }: Props) {
 
   return (
     <div className="space-y-5 animate-fadeIn">
-      {tab === 'mine'
+      {tab !== 'public'
         ? <MyLessons subjects={subjects} currentUser={currentUser} onEdit={openEditor} onAssign={openAssign}
             hero={{ onExit, tab, setTab, onTrash: () => setView('trash'), onSubjectAdded: (su: EduSubject) => setSubjects(prev => [...prev, su].sort((a, b) => a.name.localeCompare(b.name))) }} />
         : <PublicLibrary subjects={subjects} currentUser={currentUser} onCopied={openEditor} hero={{ onExit, tab, setTab }} />}
@@ -97,8 +96,8 @@ export default function ELearningModule({ currentUser, onExit }: Props) {
 }
 
 // Đầu trang chung của Giáo trình: hai kho (của tôi, chung) dạng thẻ ngay trên khung tìm kiếm lớn.
-interface ElHero { onExit?: () => void; tab: 'mine' | 'public'; setTab: (t: 'mine' | 'public') => void; onTrash?: () => void; onSubjectAdded?: (s: EduSubject) => void }
-const EL_TABS = [{ id: 'public', label: 'Thư viện' }, { id: 'mine', label: 'Giáo trình của tôi' }];
+interface ElHero { onExit?: () => void; tab: Tab; setTab: (t: Tab) => void; onTrash?: () => void; onSubjectAdded?: (s: EduSubject) => void }
+const EL_TABS = [{ id: 'public', label: 'Thư viện' }, { id: 'mine', label: 'Giáo trình của tôi' }, { id: 'shared', label: 'Được chia sẻ với tôi' }];
 
 // ============================ KHO CỦA TÔI ============================
 function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects: EduSubject[]; currentUser: UserAccount; onEdit: (id: string) => void; onAssign: (id: string) => void; hero: ElHero }) {
@@ -107,7 +106,9 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
   const [own, setAll] = useState<ELLesson[]>([]);
   // Bài người khác đã thêm mình vào cộng tác.
   const [shared, setShared] = useState<Array<ELLesson & { my_role: CollabRole }>>([]);
-  const [shareScope, setShareScope] = useState<'mine' | 'shared'>(() => (takeOpenHint('el_lesson') === 'shared' ? 'shared' : 'mine'));
+  // Thẻ Được chia sẻ với tôi ở đầu trang quyết định đang xem bài của mình hay bài người khác thêm mình vào.
+  const shareScope: 'mine' | 'shared' = hero.tab === 'shared' ? 'shared' : 'mine';
+  useEffect(() => { setSelected(new Set()); setSubjectId(''); }, [shareScope]);
   const all: Array<ELLesson & { my_role?: CollabRole }> = shareScope === 'shared' ? shared : own;
   const [collabMap, setCollabMap] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
   const [sharing, setSharing] = useState<ELLesson | null>(null);
@@ -273,7 +274,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
         backTitle="Quay lại trang chủ"
         tabs={EL_TABS}
         activeTab={hero.tab}
-        onTab={t => hero.setTab(t as 'mine' | 'public')}
+        onTab={t => hero.setTab(t as Tab)}
         search={search}
         onSearch={setSearch}
         placeholder="Tìm theo tên giáo trình, môn học..."
@@ -297,10 +298,6 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{lessons.length}</span> giáo trình</p>
         <div className="flex flex-wrap items-center gap-2">
-          <select value={shareScope} onChange={e => { setShareScope(e.target.value as 'mine' | 'shared'); setSelected(new Set()); setSubjectId(''); }} className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-brand">
-            <option value="mine">Bài của tôi ({own.length})</option>
-            <option value="shared">Được chia sẻ với tôi ({shared.length})</option>
-          </select>
           <select value={status} onChange={e => setStatus(e.target.value)} className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-brand">
             <option value="">Mọi trạng thái</option>
             <option value="draft">Nháp</option>
@@ -770,7 +767,7 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
         backTitle="Quay lại trang chủ"
         tabs={EL_TABS}
         activeTab={hero.tab}
-        onTab={t => hero.setTab(t as 'mine' | 'public')}
+        onTab={t => hero.setTab(t as Tab)}
         search={search}
         onSearch={setSearch}
         placeholder="Tìm theo tên bài, môn học, tác giả..."

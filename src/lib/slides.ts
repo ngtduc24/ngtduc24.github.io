@@ -141,10 +141,11 @@ export interface Deck {
   deletedAt?: string | null;
   shareToken?: string | null;
   shareOn?: boolean;
+  inLibrary?: boolean;   // đưa vào Thư viện chung: mọi tài khoản xem, trình chiếu, sao chép về được
 }
 
 export interface DeckSummary {
-  id: string; ownerId: string; ownerName?: string; title: string; updatedAt: string; first?: Slide; count: number;
+  id: string; ownerId: string; ownerName?: string; title: string; updatedAt: string; first?: Slide; count: number; inLibrary?: boolean;
   role?: 'owner' | 'view' | 'edit' | 'manage';
 }
 
@@ -234,13 +235,13 @@ function fromRow(key: string, d: any): Deck {
     id, ownerId: d.ownerId || owner, ownerName: d.ownerName, title: d.title || 'Bài giảng không tên',
     slides: Array.isArray(d.slides) && d.slides.length ? d.slides : [makeSlide('title')],
     createdAt: d.createdAt || new Date().toISOString(), updatedAt: d.updatedAt || new Date().toISOString(), updatedBy: d.updatedBy,
-    deletedAt: d.deletedAt || null, shareToken: d.shareToken || null, shareOn: !!d.shareOn,
+    deletedAt: d.deletedAt || null, shareToken: d.shareToken || null, shareOn: !!d.shareOn, inLibrary: !!d.inLibrary,
   };
 }
 const toData = (d: Deck) => ({
   ownerId: d.ownerId, ownerName: d.ownerName || '', title: d.title, slides: d.slides, createdAt: d.createdAt,
   updatedAt: d.updatedAt, updatedBy: d.updatedBy || '', deletedAt: d.deletedAt || null, shareToken: d.shareToken || null, shareOn: !!d.shareOn,
-  slideCount: d.slides.length,
+  slideCount: d.slides.length, inLibrary: !!d.inLibrary,
 });
 
 // Danh sách bài giảng của mình (chỉ lấy trang đầu để vẽ ảnh thu nhỏ).
@@ -248,13 +249,26 @@ export async function listMyDecks(): Promise<DeckSummary[]> {
   const owner = me();
   if (!owner) return [];
   const { data, error } = await supabase.from(T)
-    .select('key, title:data->>title, updatedAt:data->>updatedAt, deletedAt:data->>deletedAt, first:data->slides->0, count:data->>slideCount')
+    .select('key, title:data->>title, updatedAt:data->>updatedAt, deletedAt:data->>deletedAt, first:data->slides->0, count:data->>slideCount, lib:data->>inLibrary')
     .like('key', `deck:${owner}:%`);
   if (error) throw error;
   return (data || []).filter((r: any) => !r.deletedAt).map((r: any) => ({
     id: String(r.key).split(':')[2], ownerId: owner, title: r.title || 'Bài giảng không tên', updatedAt: r.updatedAt || '',
-    first: r.first || undefined, count: Number(r.count) || 0, role: 'owner' as const,
+    first: r.first || undefined, count: Number(r.count) || 0, role: 'owner' as const, inLibrary: r.lib === 'true',
   })).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+// Thư viện chung: bài giảng chủ đã bật "Đưa vào thư viện" (của mọi người, kể cả của mình).
+export async function listLibraryDecks(): Promise<DeckSummary[]> {
+  const owner = me();
+  const { data, error } = await supabase.from(T)
+    .select('key, title:data->>title, updatedAt:data->>updatedAt, deletedAt:data->>deletedAt, ownerName:data->>ownerName, first:data->slides->0, count:data->>slideCount')
+    .like('key', 'deck:%').eq('data->>inLibrary', 'true');
+  if (error) throw error;
+  return (data || []).filter((r: any) => !r.deletedAt).map((r: any) => {
+    const [, o, id] = String(r.key).split(':');
+    return { id, ownerId: o, ownerName: r.ownerName || '', title: r.title || 'Bài giảng không tên', updatedAt: r.updatedAt || '', first: r.first || undefined, count: Number(r.count) || 0, inLibrary: true, role: (o === owner ? 'owner' : 'view') as DeckSummary['role'] };
+  }).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
 // Bài giảng người khác thêm mình vào cộng tác.
@@ -288,7 +302,10 @@ export async function findDeckOwner(id: string): Promise<string | null> {
     if (data) return owner;
   }
   const { data: c } = await supabase.from('collaborators').select('owner_id').eq('resource_type', 'slide_deck').eq('resource_id', id).limit(1);
-  return c?.[0]?.owner_id || null;
+  if (c?.[0]?.owner_id) return c[0].owner_id;
+  // Bài giảng trong Thư viện chung.
+  const { data: lib } = await supabase.from(T).select('key').like('key', `deck:%:${id}`).eq('data->>inLibrary', 'true').limit(1);
+  return lib?.[0]?.key ? String(lib[0].key).split(':')[1] : null;
 }
 
 export async function getDeckUpdatedAt(ownerId: string, id: string): Promise<string | null> {

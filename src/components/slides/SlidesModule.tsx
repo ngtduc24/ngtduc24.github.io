@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { FileUp, Plus, Loader2, Presentation, Copy, Trash2, Pencil, Users, LayoutGrid, List as ListIcon, Play } from 'lucide-react';
+import { FileUp, Plus, Loader2, Presentation, Copy, Trash2, Pencil, Users, LayoutGrid, List as ListIcon, Play, Eye, Library } from 'lucide-react';
 import LibraryHero, { ViewToggle } from '../ui/LibraryHero';
 import { AvatarStack } from '../ui/People';
 import { collaboratorsByResource } from '../../lib/collab';
@@ -7,7 +7,7 @@ import SlideRenderer from './SlideRenderer';
 import SlideEditor from './SlideEditor';
 import SlidePresenter from './SlidePresenter';
 import PptxImportDialog from './PptxImportDialog';
-import { createDeck, listMyDecks, listSharedDecks, getDeck, findDeckOwner, duplicateDeck, softDeleteDeck, saveDeck, DeckSummary, Deck, makeSlide } from '../../lib/slides';
+import { createDeck, listMyDecks, listSharedDecks, listLibraryDecks, getDeck, findDeckOwner, duplicateDeck, softDeleteDeck, saveDeck, DeckSummary, Deck, makeSlide } from '../../lib/slides';
 import { setEduAuthContext } from '../../lib/edu';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
 import { takeOpenHint } from '../../lib/notifications';
@@ -22,9 +22,11 @@ const ROLE_TEXT: Record<string, string> = { view: 'Xem', edit: 'Chỉnh sửa', 
 export default function SlidesModule({ currentUser }: { currentUser: UserAccount }) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
-  const [scope, setScope] = useState<'mine' | 'shared'>(() => (takeOpenHint('slide_deck') === 'shared' ? 'shared' : 'mine'));
+  // Mở Bài giảng là vào Thư viện chung trước, bấm chuyển để xem bài của mình hoặc bài được chia sẻ.
+  const [scope, setScope] = useState<'library' | 'mine' | 'shared'>(() => (takeOpenHint('slide_deck') === 'shared' ? 'shared' : 'library'));
   const [mine, setMine] = useState<DeckSummary[] | null>(null);
   const [shared, setShared] = useState<DeckSummary[]>([]);
+  const [library, setLibrary] = useState<DeckSummary[]>([]);
   const [q, setQ] = useState('');
   const [view, setView] = useState<'grid' | 'table'>('grid');
   const [open, setOpen] = useState<{ deck: Deck; role: 'owner' | 'view' | 'edit' | 'manage' } | null>(null);
@@ -37,8 +39,8 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
 
   const load = async () => {
     try {
-      const [a, b] = await Promise.all([listMyDecks(), listSharedDecks().catch(() => [])]);
-      setMine(a); setShared(b);
+      const [a, b, c] = await Promise.all([listMyDecks(), listSharedDecks().catch(() => []), listLibraryDecks().catch(() => [])]);
+      setMine(a); setShared(b); setLibrary(c);
       collaboratorsByResource('slide_deck', [...a, ...b].map(x => x.id)).then(setCollabMap).catch(() => {});
     } catch (e: any) { setMine([]); addNotification('Chưa tải được danh sách bài giảng: ' + (e?.message || e), 'error'); }
   };
@@ -53,7 +55,7 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
       if (!owner) return;
       const d = await getDeck(owner, sid).catch(() => null);
       if (!d || d.deletedAt) return;
-      const role = owner === currentUser.id ? 'owner' : ([...shared, ...(mine || [])].find(x => x.id === sid)?.role || (await import('../../lib/collab')).getMyRole('slide_deck', sid, owner).then(r => r || 'view'));
+      const role = owner === currentUser.id ? 'owner' : (await import('../../lib/collab')).getMyRole('slide_deck', sid, owner).then(r => r || 'view');
       setOpen({ deck: d, role: (await role) as any });
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,7 +85,7 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
   };
   const dup = async (s: DeckSummary) => {
     const d = await getDeck(s.ownerId, s.id); if (!d) return;
-    await duplicateDeck(d, currentUser.fullName); addNotification('Đã tạo bản sao.', 'success'); load();
+    await duplicateDeck(d, currentUser.fullName); addNotification(scope === 'library' ? 'Đã sao chép về Bài giảng của tôi.' : 'Đã tạo bản sao.', 'success'); load();
   };
   const remove = (s: DeckSummary) => confirm('Xoá bài giảng', `Xoá "${s.title}"? Bài giảng sẽ nằm ở mục Đã xoá trong trang Cá nhân 30 ngày.`, async () => {
     const d = await getDeck(s.ownerId, s.id); if (!d) return;
@@ -92,10 +94,10 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
   const present = async (s: DeckSummary) => { const d = await getDeck(s.ownerId, s.id); if (d) setPresenting(d); };
 
   const list = useMemo(() => {
-    const src = scope === 'mine' ? (mine || []) : shared;
+    const src = scope === 'mine' ? (mine || []) : scope === 'shared' ? shared : library;
     const k = q.trim().toLowerCase();
     return k ? src.filter(d => d.title.toLowerCase().includes(k)) : src;
-  }, [scope, mine, shared, q]);
+  }, [scope, mine, shared, library, q]);
 
   if (open) return <SlideEditor initial={open.deck} role={open.role} currentUser={currentUser} onExit={() => { setOpen(null); load(); }} />;
 
@@ -106,7 +108,7 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
       <LibraryHero
         title="Bạn muốn thiết kế bài giảng nào?"
         subtitle="Thiết kế bài giảng trình chiếu, thêm chữ, hình, ảnh, cùng soạn với đồng nghiệp và trình chiếu ngay trên web."
-        tabs={[{ id: 'mine', label: 'Bài giảng của tôi' }, { id: 'shared', label: `Được chia sẻ với tôi${shared.length ? ` (${shared.length})` : ''}` }]}
+        tabs={[{ id: 'library', label: 'Thư viện' }, { id: 'mine', label: 'Bài giảng của tôi' }, { id: 'shared', label: `Được chia sẻ với tôi${shared.length ? ` (${shared.length})` : ''}` }]}
         activeTab={scope} onTab={id => setScope(id as any)}
         search={q} onSearch={setQ} placeholder="Tìm theo tên bài giảng..."
         chips={[]} activeChip="" onChip={() => {}}
@@ -124,7 +126,8 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
       ) : list.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-slate-200 bg-white py-16 text-center">
           <Presentation className="mx-auto mb-3 h-12 w-12 text-slate-200" />
-          <p className="font-semibold text-slate-700">{scope === 'mine' ? 'Chưa có bài giảng nào' : 'Chưa ai chia sẻ bài giảng với bạn'}</p>
+          <p className="font-semibold text-slate-700">{scope === 'mine' ? 'Chưa có bài giảng nào' : scope === 'shared' ? 'Chưa ai chia sẻ bài giảng với bạn' : 'Thư viện chưa có bài giảng nào'}</p>
+          {scope === 'library' && <p className="mt-1 text-sm text-slate-500">Mở bài giảng của bạn, bấm Chia sẻ rồi bật Đưa vào thư viện để mọi người cùng xem.</p>}
           {scope === 'mine' && <button onClick={create} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white"><Plus className="h-4 w-4" /> Tạo bài giảng đầu tiên</button>}
         </div>
       ) : view === 'grid' ? (
@@ -137,18 +140,20 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
               <div className="space-y-1 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <button onClick={() => openDeck(d)} className="line-clamp-2 text-left text-sm font-semibold text-slate-800 hover:text-brand">{d.title}</button>
-                  {d.role && d.role !== 'owner' && <span className="shrink-0 rounded-full bg-brand-light px-2 py-0.5 text-[10px] font-semibold text-brand">{ROLE_TEXT[d.role]}</span>}
+                  {scope === 'shared' && d.role && d.role !== 'owner' && <span className="shrink-0 rounded-full bg-brand-light px-2 py-0.5 text-[10px] font-semibold text-brand">{ROLE_TEXT[d.role]}</span>}
+                  {scope === 'mine' && d.inLibrary && <span title="Đang có trong Thư viện chung" className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700"><Library className="h-3 w-3" /> Thư viện</span>}
                 </div>
                 <p className="text-xs text-slate-500">{d.count} trang · sửa {fmt(d.updatedAt)}</p>
-                {(d.role !== 'owner' || (collabMap[d.id] || []).length > 0) && (
+                {(scope === 'library' || d.role !== 'owner' || (collabMap[d.id] || []).length > 0) && (
                   <div className="pt-1"><AvatarStack people={[{ id: d.ownerId, name: d.ownerName }, ...(collabMap[d.id] || [])]} size="sm" /></div>
                 )}
                 <div className="flex gap-1 pt-2 text-slate-400">
                   <IconBtn title="Trình chiếu" onClick={() => present(d)}><Play className="h-4 w-4" /></IconBtn>
-                  {d.role === 'owner' && <IconBtn title="Đổi tên" onClick={() => rename(d)}><Pencil className="h-4 w-4" /></IconBtn>}
-                  <IconBtn title="Tạo bản sao" onClick={() => dup(d)}><Copy className="h-4 w-4" /></IconBtn>
-                  {d.role === 'owner' && <IconBtn title="Cộng tác" onClick={() => openDeck(d)}><Users className="h-4 w-4" /></IconBtn>}
-                  {d.role === 'owner' && <IconBtn title="Xoá" danger onClick={() => remove(d)}><Trash2 className="h-4 w-4" /></IconBtn>}
+                  {scope === 'library' && <IconBtn title="Xem" onClick={() => openDeck(d)}><Eye className="h-4 w-4" /></IconBtn>}
+                  {d.role === 'owner' && scope !== 'library' && <IconBtn title="Đổi tên" onClick={() => rename(d)}><Pencil className="h-4 w-4" /></IconBtn>}
+                  <IconBtn title={scope === 'library' ? 'Sao chép về bài giảng của tôi' : 'Tạo bản sao'} onClick={() => dup(d)}><Copy className="h-4 w-4" /></IconBtn>
+                  {d.role === 'owner' && scope !== 'library' && <IconBtn title="Cộng tác" onClick={() => openDeck(d)}><Users className="h-4 w-4" /></IconBtn>}
+                  {d.role === 'owner' && scope !== 'library' && <IconBtn title="Xoá" danger onClick={() => remove(d)}><Trash2 className="h-4 w-4" /></IconBtn>}
                 </div>
               </div>
             </div>

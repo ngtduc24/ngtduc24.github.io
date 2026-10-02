@@ -248,6 +248,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
   const present = useDeckPresence(deck.id, currentUser);
   const startPresent = (from: number, opts: PresentOptions = { mode: 'full' }) => { setPresentMenu(false); setShareOpen(false); setPresentOpts(opts); setPresenting(from); };
   const doExportPptx = async () => { setFileMenu(false); setShareOpen(false); setExporting('Đang chuẩn bị...'); try { await exportPptx({ ...deck, slides, title }, (n, t) => setExporting(`Đang xuất trang ${n} / ${t}`)); } catch (e: any) { addNotification('Chưa xuất được tệp PowerPoint: ' + (e?.message || e), 'error'); } finally { setExporting(null); } };
+  const toggleLibrary = async (on: boolean) => { const n = await saveDeck({ ...deckRef.current, slides: slidesRef.current, title, inLibrary: on }); setDeck(n); deckRef.current = n; };
   const toggleShare = async (on: boolean): Promise<Deck | null> => { try { const n = await setDeckShare({ ...deckRef.current, slides: slidesRef.current, title }, on); setDeck(n); deckRef.current = n; return n; } catch { addNotification('Chưa đổi được chế độ chia sẻ.', 'error'); return null; } };
 
   // ===== Lịch sử =====
@@ -965,7 +966,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
           <button data-share-toggle onClick={() => setShareOpen(v => !v)} className="ml-1 flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm font-semibold text-slate-800 hover:bg-white/90"><Share2 className="h-4 w-4" /><span className="hidden sm:inline">Chia sẻ</span></button>
           {shareOpen && (
             <DeckSharePanel deck={deck} title={title} currentUser={currentUser} canManage={canManage} collabs={collabs} onCollabsChange={() => setCollabTick(v => v + 1)}
-              onToggleShare={toggleShare} onPresent={() => startPresent(0)} onPdf={() => { setShareOpen(false); setSel([]); setPrinting(true); }} onPptx={doExportPptx}
+              onToggleShare={toggleShare} onToggleLibrary={toggleLibrary} onPresent={() => startPresent(0)} onPdf={() => { setShareOpen(false); setSel([]); setPrinting(true); }} onPptx={doExportPptx}
               onClose={() => setShareOpen(false)} notify={(m, t) => addNotification(m, t)} />
           )}
         </div>

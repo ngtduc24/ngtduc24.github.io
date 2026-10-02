@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  X, Search, Loader2, Lock, Globe, ChevronDown, Check, Link2, Download, Play, Presentation, FileDown, MoreHorizontal, QrCode, Trash2, Crown, Mail, ArrowLeft, Send,
+  X, Search, Loader2, Lock, Globe, Library, ChevronDown, Check, Link2, Download, Play, Presentation, FileDown, MoreHorizontal, QrCode, Trash2, Crown, Mail, ArrowLeft, Send,
 } from 'lucide-react';
 import { Collaborator, CollabRole, ROLE_LABELS, addCollaborator, updateCollaborator, removeCollaborator, searchUsers } from '../../lib/collab';
 import { Deck, deckShareUrl } from '../../lib/slides';
@@ -33,9 +33,9 @@ const SOCIAL: Array<{ id: string; label: string; color: string; url: (u: string,
   { id: 'mail', label: 'Email', color: '#64748b', glyph: '@', url: (u, t) => `mailto:?subject=${encodeURIComponent(t)}&body=${encodeURIComponent(u)}` },
 ];
 
-export default function DeckSharePanel({ deck, title, currentUser, canManage, collabs, onCollabsChange, onToggleShare, onPresent, onPdf, onPptx, onClose, notify }: {
+export default function DeckSharePanel({ deck, title, currentUser, canManage, collabs, onCollabsChange, onToggleShare, onToggleLibrary, onPresent, onPdf, onPptx, onClose, notify }: {
   deck: Deck; title: string; currentUser: UserAccount; canManage: boolean; collabs: Collaborator[];
-  onCollabsChange: () => void; onToggleShare: (on: boolean) => Promise<Deck | null>; onPresent: () => void; onPdf: () => void; onPptx: () => void; onClose: () => void;
+  onCollabsChange: () => void; onToggleShare: (on: boolean) => Promise<Deck | null>; onToggleLibrary?: (on: boolean) => Promise<void>; onPresent: () => void; onPdf: () => void; onPptx: () => void; onClose: () => void;
   notify: (msg: string, type: 'success' | 'error' | 'info' | 'warning') => void;
 }) {
   const [q, setQ] = useState('');
@@ -225,6 +225,14 @@ export default function DeckSharePanel({ deck, title, currentUser, canManage, co
               )}
             </div>
           </div>
+
+          {deck.ownerId === currentUser.id && onToggleLibrary && (
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-600"><Library className="h-4 w-4" /></span>
+              <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">Đưa vào Thư viện</span><span className="block text-xs text-slate-500">Mọi tài khoản trong EduGo xem, trình chiếu và sao chép về được. Chỉ bạn sửa được bản gốc.</span></span>
+              <input type="checkbox" checked={!!deck.inLibrary} onChange={async e => { const on = e.target.checked; try { await onToggleLibrary(on); notify(on ? 'Đã đưa bài giảng vào Thư viện.' : 'Đã gỡ bài giảng khỏi Thư viện.', 'success'); } catch { notify('Chưa đổi được, vui lòng thử lại.', 'error'); } }} className="h-4 w-4 accent-brand" />
+            </label>
+          )}
 
           <button onClick={copyLink} className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-semibold text-white hover:bg-brand-hover"><Link2 className="h-4 w-4" /> Sao chép liên kết</button>
 

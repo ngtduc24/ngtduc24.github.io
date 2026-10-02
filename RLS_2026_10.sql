@@ -162,6 +162,15 @@ begin
   return true;
 end $$;
 
+-- Bài giảng đã bật "Đưa vào thư viện" thì mọi tài khoản đã đăng nhập đều xem được.
+create or replace function public.ps_can_read(p_key text, p_data jsonb) returns boolean language plpgsql stable security definer set search_path = public as $$
+begin
+  if p_key like 'deck:%' and coalesce((p_data->>'inLibrary')::boolean, false) and p_data->>'deletedAt' is null then
+    return public.rls_uid() is not null;
+  end if;
+  return public.ps_can_read(p_key);
+end $$;
+
 create or replace function public.ps_can_write(p_key text, p_data jsonb) returns boolean language plpgsql stable security definer set search_path = public as $$
 declare u text := public.rls_uid(); pre text;
 begin
@@ -445,7 +454,7 @@ create policy ntf_update on public.system_notifications for update to authentica
 create policy ntf_delete on public.system_notifications for delete to authenticated using (sender_id = rls_uid());
 
 -- Cài đặt dạng khoá
-create policy ps_select on public.portfolio_settings for select to anon, authenticated using (ps_can_read(key));
+create policy ps_select on public.portfolio_settings for select to anon, authenticated using (ps_can_read(key, data));
 create policy ps_insert on public.portfolio_settings for insert to authenticated with check (ps_can_write(key, data));
 create policy ps_update on public.portfolio_settings for update to authenticated using (ps_can_write(key, data)) with check (ps_can_write(key, data));
 create policy ps_delete on public.portfolio_settings for delete to authenticated using (ps_can_write(key, data));
