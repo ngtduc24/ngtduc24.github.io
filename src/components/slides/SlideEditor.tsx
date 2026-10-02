@@ -867,10 +867,10 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                     {/* Thanh nhỏ nổi trên khối đang chọn */}
                     {!readOnly && selected.length > 0 && !editingId && !dragging.current && (() => {
                       const top = Math.min(...selected.map(e => e.y)), left = Math.min(...selected.map(e => e.x)), right = Math.max(...selected.map(e => e.x + e.w));
-                      const above = top > 90;
+                      const above = top > 120;
                       const bottom = Math.max(...selected.map(e => e.y + e.h));
                       return (
-                        <div onPointerDown={e => e.stopPropagation()} style={{ position: 'absolute', left: (left + right) / 2, top: above ? top - 70 / scale : bottom + 22 / scale, transform: `translateX(-50%) scale(${1 / scale})`, transformOrigin: 'top center' }}
+                        <div onPointerDown={e => e.stopPropagation()} style={{ position: 'absolute', left: (left + right) / 2, top: above ? top - 96 / scale : bottom + 22 / scale, transform: `translateX(-50%) scale(${1 / scale})`, transformOrigin: 'top center' }}
                           className="flex items-center gap-0.5 whitespace-nowrap rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
                           <button title={selected.every(x => x.locked) ? 'Mở khoá' : 'Khoá'} onClick={() => updateEls(sel, { locked: !selected.every(x => x.locked) })} className="grid h-8 w-8 place-items-center rounded-lg text-slate-600 hover:bg-slate-100">{selected.every(x => x.locked) ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}</button>
                           <button title="Nhân bản (Ctrl D)" onClick={duplicateSel} className="grid h-8 w-8 place-items-center rounded-lg text-slate-600 hover:bg-slate-100"><Copy className="h-4 w-4" /></button>
