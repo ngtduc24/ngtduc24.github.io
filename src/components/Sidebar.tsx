@@ -11,6 +11,8 @@ import { useConfirmation } from './ConfirmationContext';
 import { getTabUrl } from '../lib/seoConfig';
 import NotificationBell from './NotificationBell';
 import { useSidebarTools } from '../lib/sidebarTools';
+import { usePerson } from '../lib/people';
+import { AvatarImg } from './ui/People';
 
 interface SidebarProps {
   currentTab: string;
@@ -36,6 +38,9 @@ export default function Sidebar({
 }: SidebarProps) {
   const { confirm } = useConfirmation();
   const tools = useSidebarTools();
+  // Ảnh đại diện của tài khoản đang đăng nhập (đồng bộ với hồ sơ, đổi ảnh là cập nhật ngay).
+  const me = usePerson(currentUser.id, currentUser.fullName);
+  const myAvatar = currentUser.avatarUrl ? { ...(me || { id: currentUser.id, name: currentUser.fullName }), avatar: currentUser.avatarUrl } as any : me;
   const compact = tools !== null;
 
   const primaryItems = [
@@ -113,8 +118,8 @@ export default function Sidebar({
           aria-label="Trang cá nhân"
           className={`group flex w-full flex-col items-center gap-1 rounded-2xl ${compact ? 'py-1.5' : 'py-2.5'} text-slate-500 transition hover:text-brand`}
         >
-          <span className={`grid ${compact ? 'h-9 w-9' : 'h-10 w-10'} place-items-center rounded-xl transition group-hover:bg-slate-100`}>
-            <UserCircle className="h-5 w-5" />
+          <span className={`grid ${compact ? 'h-9 w-9' : 'h-10 w-10'} place-items-center rounded-full ring-2 ring-transparent transition ${currentTab === 'profile' ? 'ring-brand' : 'group-hover:ring-slate-200'}`}>
+            {myAvatar ? <AvatarImg person={myAvatar} size={compact ? 30 : 34} /> : <UserCircle className="h-5 w-5" />}
           </span>
           <span className="text-[10px] font-bold leading-none">Cá nhân</span>
         </button>

@@ -5,7 +5,7 @@ import {
   StickyNote, Grid2X2, Maximize, Plus, Copy, Trash2, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List,
   ArrowUpToLine, ArrowDownToLine, Lock, Unlock, Search, X, ChevronDown, Link2, Check, FileDown, Pencil, Minus, Droplet, Eye,
   EyeOff, FileUp, Keyboard, Link as LinkIcon, Crop, Youtube, Presentation,
-  Strikethrough, CaseUpper, MoveVertical, Sparkles, Wand2, Move, Paintbrush, FlipHorizontal2, FlipVertical2, Replace, AlignStartVertical, AlignCenterVertical, AlignEndVertical, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, ChevronsUp, ChevronsDown, ChevronUp, PlayCircle, Blend, MoreHorizontal, Music, Clock3,
+  Strikethrough, CaseUpper, MoveVertical, Sparkles, Wand2, Move, Paintbrush, FlipHorizontal2, FlipVertical2, Replace, AlignStartVertical, AlignCenterVertical, AlignEndVertical, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, ChevronsUp, ChevronsDown, ChevronUp, PlayCircle, Blend, MoreHorizontal, Music, Clock3, Library,
 } from 'lucide-react';
 import {
   Deck, Slide, SlideEl, SLIDE_W, SLIDE_H, LAYOUTS, LayoutId, makeSlide, textEl, uid, saveDeck, getDeck, getDeckUpdatedAt,
@@ -945,6 +945,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
               <button onClick={() => { setFileMenu(false); setSel([]); setPrinting(true); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 hover:bg-slate-50"><FileDown className="h-4 w-4" /> In hoặc lưu PDF</button>
               <button onClick={doExportPptx} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 hover:bg-slate-50"><Presentation className="h-4 w-4" /> Tải xuống PowerPoint (.pptx)</button>
               {!readOnly && <button onClick={() => { setFileMenu(false); setPptxMode('append'); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 hover:bg-slate-50"><FileUp className="h-4 w-4" /> Thêm trang từ tệp PowerPoint</button>}
+              {role === 'owner' && <button onClick={async () => { setFileMenu(false); const on = !deck.inLibrary; try { await toggleLibrary(on); addNotification(on ? 'Đã đưa bài giảng vào Thư viện. Mọi tài khoản xem và sao chép về được.' : 'Đã gỡ bài giảng khỏi Thư viện.', 'success'); } catch { addNotification('Chưa đổi được, vui lòng thử lại.', 'error'); } }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 hover:bg-slate-50"><Library className="h-4 w-4" /> {deck.inLibrary ? 'Gỡ khỏi Thư viện' : 'Đưa vào Thư viện'}</button>}
               {role === 'owner' && <button onClick={() => { setFileMenu(false); confirm('Xoá bài giảng', `Xoá "${title}"? Bài giảng sẽ nằm ở mục Đã xoá trong trang Cá nhân 30 ngày.`, async () => { try { await softDeleteDeck({ ...deck, slides, title }); onExit(); } catch (e: any) { addNotification(e?.message || 'Chưa xoá được.', 'error'); } }); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-rose-600 hover:bg-rose-50"><Trash2 className="h-4 w-4" /> Xoá bài giảng</button>}
             </div>
           )}

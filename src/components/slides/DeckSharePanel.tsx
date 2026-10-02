@@ -230,7 +230,8 @@ export default function DeckSharePanel({ deck, title, currentUser, canManage, co
             <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-600"><Library className="h-4 w-4" /></span>
               <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">Đưa vào Thư viện</span><span className="block text-xs text-slate-500">Mọi tài khoản trong EduGo xem, trình chiếu và sao chép về được. Chỉ bạn sửa được bản gốc.</span></span>
-              <input type="checkbox" checked={!!deck.inLibrary} onChange={async e => { const on = e.target.checked; try { await onToggleLibrary(on); notify(on ? 'Đã đưa bài giảng vào Thư viện.' : 'Đã gỡ bài giảng khỏi Thư viện.', 'success'); } catch { notify('Chưa đổi được, vui lòng thử lại.', 'error'); } }} className="h-4 w-4 accent-brand" />
+              <span role="switch" aria-checked={!!deck.inLibrary} className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${deck.inLibrary ? 'bg-brand' : 'bg-slate-300'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${deck.inLibrary ? 'left-[22px]' : 'left-0.5'}`} /></span>
+              <input type="checkbox" className="sr-only" checked={!!deck.inLibrary} onChange={async e => { const on = e.target.checked; try { await onToggleLibrary(on); notify(on ? 'Đã đưa bài giảng vào Thư viện.' : 'Đã gỡ bài giảng khỏi Thư viện.', 'success'); } catch { notify('Chưa đổi được, vui lòng thử lại.', 'error'); } }} />
             </label>
           )}
 

@@ -91,6 +91,11 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
     const d = await getDeck(s.ownerId, s.id); if (!d) return;
     try { await softDeleteDeck(d); addNotification('Đã chuyển bài giảng vào mục Đã xoá.', 'success'); load(); } catch (e: any) { addNotification(e?.message || 'Chưa xoá được.', 'error'); }
   });
+  const toggleLib = async (s: DeckSummary) => {
+    const d = await getDeck(s.ownerId, s.id); if (!d) return;
+    try { await saveDeck({ ...d, inLibrary: !d.inLibrary }); addNotification(!d.inLibrary ? `Đã đưa "${d.title}" vào Thư viện.` : `Đã gỡ "${d.title}" khỏi Thư viện.`, 'success'); load(); }
+    catch (e: any) { addNotification(e?.message || 'Chưa đổi được.', 'error'); }
+  };
   const present = async (s: DeckSummary) => { const d = await getDeck(s.ownerId, s.id); if (d) setPresenting(d); };
 
   const list = useMemo(() => {
@@ -152,6 +157,7 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
                   {scope === 'library' && <IconBtn title="Xem" onClick={() => openDeck(d)}><Eye className="h-4 w-4" /></IconBtn>}
                   {d.role === 'owner' && scope !== 'library' && <IconBtn title="Đổi tên" onClick={() => rename(d)}><Pencil className="h-4 w-4" /></IconBtn>}
                   <IconBtn title={scope === 'library' ? 'Sao chép về bài giảng của tôi' : 'Tạo bản sao'} onClick={() => dup(d)}><Copy className="h-4 w-4" /></IconBtn>
+                  {d.role === 'owner' && scope === 'mine' && <IconBtn title={d.inLibrary ? 'Gỡ khỏi Thư viện' : 'Đưa vào Thư viện'} onClick={() => toggleLib(d)}><Library className={`h-4 w-4 ${d.inLibrary ? 'text-emerald-600' : ''}`} /></IconBtn>}
                   {d.role === 'owner' && scope !== 'library' && <IconBtn title="Cộng tác" onClick={() => openDeck(d)}><Users className="h-4 w-4" /></IconBtn>}
                   {d.role === 'owner' && scope !== 'library' && <IconBtn title="Xoá" danger onClick={() => remove(d)}><Trash2 className="h-4 w-4" /></IconBtn>}
                 </div>
