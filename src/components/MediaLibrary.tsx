@@ -254,7 +254,8 @@ export default function MediaLibrary({ currentUser, embedded }: MediaLibraryProp
   return (
     <div id="storage-view" className={embedded ? 'space-y-5 text-left' : 'space-y-6 text-left max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'}>
       
-      {/* Đầu mục Kho lưu trữ */}
+      {/* Đầu mục Kho lưu trữ. Nằm trong Cấu hình hệ thống thì bỏ để khung ảnh có thêm chỗ, tổng số tệp hiện ở ô tìm kiếm. */}
+      {!embedded && (
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div>
           <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
@@ -270,6 +271,7 @@ export default function MediaLibrary({ currentUser, embedded }: MediaLibraryProp
           Tổng số: <span className="font-extrabold text-brand ml-1">{images.length} tệp tin</span>
         </div>
       </div>
+      )}
 
       {/* Grid of upload & filters */}
       <div ref={frameRef} style={frameH ? { height: frameH } : undefined} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -425,6 +427,11 @@ export default function MediaLibrary({ currentUser, embedded }: MediaLibraryProp
                 />
               </div>
               
+              {embedded && (
+                <span className="inline-flex shrink-0 items-center gap-1.5 self-center whitespace-nowrap rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
+                  <span className="h-2 w-2 rounded-full bg-brand" /> {images.length} tệp
+                </span>
+              )}
               {/* Media Type filter */}
               <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100 w-fit shrink-0">
                 <button
