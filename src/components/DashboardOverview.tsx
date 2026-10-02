@@ -592,7 +592,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
       )}
 
       {/* ===== Tính năng nổi bật ===== */}
-      {(filteredCards.length > 0 || (!q && (cardSortMode || featuredCards.length === 0))) && (
+      {!q && (filteredCards.length > 0 || cardSortMode || featuredCards.length === 0) && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
