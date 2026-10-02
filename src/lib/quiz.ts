@@ -88,6 +88,43 @@ function isAdmin(): boolean { return getEduCtx().isAdmin; }
 
 // --------------------------- Ngân hàng câu hỏi ---------------------------
 
+// ----- Cộng tác -----
+// Chủ đề, chủ câu hỏi thêm người khác vào với quyền Xem, Chỉnh sửa, Quản lý (xem lib/collab.ts).
+// Người có quyền Chỉnh sửa, Quản lý sửa được nội dung, nhưng không xoá, không bật tắt công khai.
+async function collabRoleOf(type: 'quiz' | 'quiz_question', id: string, ownerId: string) {
+  const { getMyRole } = await import('./collab');
+  return getMyRole(type, id, ownerId);
+}
+async function assertCanEditAsCollab(type: 'quiz' | 'quiz_question', table: string, id: string): Promise<boolean> {
+  const me = getEduCtx().userId;
+  const { data: cur } = await supabase.from(table).select('owner_id').eq('id', id).maybeSingle();
+  if (!cur) throw new Error('Không tìm thấy.');
+  if (cur.owner_id === me) return false; // là chủ
+  const r = await collabRoleOf(type, id, cur.owner_id);
+  if (r !== 'edit' && r !== 'manage') throw new Error('Bạn không có quyền sửa.');
+  return true; // người cộng tác
+}
+export async function getCollabQuizzes(): Promise<{ quizzes: Quiz[]; roles: Record<string, 'view' | 'edit' | 'manage'> }> {
+  const { getMyShares } = await import('./collab');
+  const shares = await getMyShares('quiz').catch(() => []);
+  if (!shares.length) return { quizzes: [], roles: {} };
+  const { data, error } = await supabase.from(QUIZ_TABLE).select('*').in('id', shares.map(x => x.resourceId)).order('updated_at', { ascending: false });
+  if (error) throw error;
+  const roles: Record<string, 'view' | 'edit' | 'manage'> = {};
+  shares.forEach(x => { roles[x.resourceId] = x.role; });
+  return { quizzes: (data || []) as Quiz[], roles };
+}
+export async function getCollabQuestions(): Promise<{ questions: QuizQuestion[]; roles: Record<string, 'view' | 'edit' | 'manage'> }> {
+  const { getMyShares } = await import('./collab');
+  const shares = await getMyShares('quiz_question').catch(() => []);
+  if (!shares.length) return { questions: [], roles: {} };
+  const { data, error } = await supabase.from(Q_TABLE).select('*, quiz_bank_options(*)').in('id', shares.map(x => x.resourceId)).order('created_at', { ascending: false });
+  if (error) throw error;
+  const roles: Record<string, 'view' | 'edit' | 'manage'> = {};
+  shares.forEach(x => { roles[x.resourceId] = x.role; });
+  return { questions: (data || []).map(mapQuestion), roles };
+}
+
 export async function getBankQuestions(opts?: { subjectId?: string; scope?: 'mine' | 'shared'; type?: QuestionType; search?: string }): Promise<QuizQuestion[]> {
   const ctx = getEduCtx();
   let query = supabase.from(Q_TABLE).select('*, quiz_bank_options(*)').order('created_at', { ascending: false });
@@ -139,7 +176,12 @@ export async function saveQuestion(q: Partial<QuizQuestion>, options: QuizOption
 
   let data: any, error: any;
   if (q.id) {
-    ({ data, error } = await supabase.from(Q_TABLE).update(payload).eq('id', q.id).eq('owner_id', getEduCtx().userId || '-').select('*').single());
+    if (await assertCanEditAsCollab('quiz_question', Q_TABLE, q.id)) {
+      delete payload.is_public; delete payload.owner_name;
+      ({ data, error } = await supabase.from(Q_TABLE).update(payload).eq('id', q.id).select('*').single());
+    } else {
+      ({ data, error } = await supabase.from(Q_TABLE).update(payload).eq('id', q.id).eq('owner_id', getEduCtx().userId || '-').select('*').single());
+    }
   } else {
     payload.owner_id = q.owner_id ?? ctx.userId;
     ({ data, error } = await supabase.from(Q_TABLE).insert(payload).select('*').single());
@@ -245,8 +287,10 @@ export async function copyQuizToMine(source: Quiz, ownerId: string, ownerName?: 
 export async function getQuizById(id: string): Promise<Quiz> {
   const { data, error } = await supabase.from(QUIZ_TABLE).select('*').eq('id', id).single();
   if (error) throw error;
-  // Mở đề theo id (màn chi tiết, sửa, giao đề) chỉ dành cho chủ đề.
-  if (!getEduCtx().userId || (data as any).owner_id !== getEduCtx().userId) throw new Error('Không tìm thấy đề.');
+  // Mở đề theo id (màn chi tiết, sửa, giao đề) dành cho chủ đề và người được thêm cộng tác.
+  const me = getEduCtx().userId;
+  if (!me) throw new Error('Không tìm thấy đề.');
+  if ((data as any).owner_id !== me && !(await collabRoleOf('quiz', id, (data as any).owner_id))) throw new Error('Không tìm thấy đề.');
   return data as Quiz;
 }
 
@@ -255,7 +299,7 @@ export async function getQuestionById(id: string): Promise<QuizQuestion> {
   const { data, error } = await supabase.from(Q_TABLE).select('*, quiz_bank_options(*)').eq('id', id).single();
   if (error) throw error;
   const me = getEduCtx().userId;
-  if ((data as any).owner_id !== me && !(data as any).is_public) throw new Error('Không tìm thấy câu hỏi.');
+  if ((data as any).owner_id !== me && !(data as any).is_public && !(await collabRoleOf('quiz_question', id, (data as any).owner_id))) throw new Error('Không tìm thấy câu hỏi.');
   return mapQuestion(data);
 }
 
@@ -282,7 +326,12 @@ export async function saveQuiz(q: Partial<Quiz>): Promise<Quiz> {
   };
   let data: any, error: any;
   if (q.id) {
-    ({ data, error } = await supabase.from(QUIZ_TABLE).update(payload).eq('id', q.id).eq('owner_id', getEduCtx().userId || '-').select('*').single());
+    if (await assertCanEditAsCollab('quiz', QUIZ_TABLE, q.id)) {
+      delete payload.is_public;
+      ({ data, error } = await supabase.from(QUIZ_TABLE).update(payload).eq('id', q.id).select('*').single());
+    } else {
+      ({ data, error } = await supabase.from(QUIZ_TABLE).update(payload).eq('id', q.id).eq('owner_id', getEduCtx().userId || '-').select('*').single());
+    }
   } else {
     payload.owner_id = q.owner_id ?? ctx.userId;
     payload.owner_name = q.owner_name ?? undefined;
@@ -298,7 +347,10 @@ export async function deleteQuiz(id: string): Promise<void> {
 }
 
 export async function publishQuiz(id: string, publish: boolean): Promise<Quiz> {
-  const { data, error } = await supabase.from(QUIZ_TABLE).update({ status: publish ? 'published' : 'draft' }).eq('id', id).eq('owner_id', getEduCtx().userId || '-').select('*').single();
+  const asCollab = await assertCanEditAsCollab('quiz', QUIZ_TABLE, id);
+  let req: any = supabase.from(QUIZ_TABLE).update({ status: publish ? 'published' : 'draft' }).eq('id', id);
+  if (!asCollab) req = req.eq('owner_id', getEduCtx().userId || '-');
+  const { data, error } = await req.select('*').single();
   if (error) throw error;
   return data as Quiz;
 }

@@ -13,11 +13,13 @@ import { EduSubject, EduClass, EduGradeColumn } from '../../types/edu';
 import {
   QuizQuestion, QuizOption, Quiz, QuizItem, QuestionType,
   getBankQuestions, saveQuestion, deleteQuestion, copyQuestionToMine, toggleQuestionPublic,
-  getQuizzes, getSharedQuizzes, copyQuizToMine, toggleQuizPublic, getQuizById, getQuestionById, saveQuiz, deleteQuiz, publishQuiz, getQuizItems, addQuestionsToQuiz,
+  getQuizzes, getSharedQuizzes, getCollabQuizzes, getCollabQuestions, copyQuizToMine, toggleQuizPublic, getQuizById, getQuestionById, saveQuiz, deleteQuiz, publishQuiz, getQuizItems, addQuestionsToQuiz,
   removeQuizItem, updateQuizItem, reorderQuizItems, getQuizAssignments, assignQuizToClass, unassignQuizFromClass,
   stripHtml,
 } from '../../lib/quiz';
 import QuizRichText from './QuizRichText';
+import ShareDialog from '../ui/ShareDialog';
+import { CollabRole, MyRole, ROLE_LABELS, getMyRole, canEditRole, canManageRole } from '../../lib/collab';
 import { fold, usePaging, Pager } from './ListPager';
 import DateTime24, { isoToLocalInput, localInputToIso } from '../ui/DateTime24';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
@@ -50,7 +52,8 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [filterSubject, setFilterSubject] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  const [listTab, setListTab] = useState<'mine' | 'shared'>('mine'); // đề của tôi hoặc kho đề chung
+  const [listTab, setListTab] = useState<'mine' | 'collab' | 'shared'>('mine'); // đề của tôi, được chia sẻ với tôi, kho đề chung
+  const [quizRoles, setQuizRoles] = useState<Record<string, CollabRole>>({});
   const [copyingId, setCopyingId] = useState<string | null>(null);
 
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
@@ -81,6 +84,11 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
   useEffect(() => () => { writeSubRoute({ qv: null, qid: null }); }, []);
   const loadQuizzes = useCallback(() => {
     setLoading(true);
+    if (listTab === 'collab') {
+      getCollabQuizzes().then(r => { setQuizRoles(r.roles); setQuizzes(filterSubject ? r.quizzes.filter(z => z.subject_id === filterSubject) : r.quizzes); })
+        .catch(e => addNotification('Lỗi tải đề được chia sẻ: ' + e.message, 'error')).finally(() => setLoading(false));
+      return;
+    }
     const fetcher = listTab === 'shared' ? getSharedQuizzes : getQuizzes;
     fetcher(filterSubject || undefined).then(setQuizzes).catch(e => addNotification('Lỗi tải danh sách đề: ' + e.message, 'error')).finally(() => setLoading(false));
   }, [filterSubject, listTab, addNotification]);
@@ -133,6 +141,7 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
           <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
             <div className="flex rounded-xl bg-slate-100 p-1">
               <button onClick={() => setListTab('mine')} className={`rounded-lg px-4 py-2 text-xs font-bold ${listTab === 'mine' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Đề của tôi</button>
+              <button onClick={() => setListTab('collab')} className={`rounded-lg px-4 py-2 text-xs font-bold ${listTab === 'collab' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Được chia sẻ với tôi</button>
               <button onClick={() => setListTab('shared')} className={`rounded-lg px-4 py-2 text-xs font-bold ${listTab === 'shared' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Kho đề chung</button>
             </div>
             <select value={filterSubject} onChange={e => setFilterSubject(e.target.value)} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[13px] font-semibold text-slate-700 outline-none focus:border-brand">
@@ -159,7 +168,7 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
           <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-brand" /></div>
         ) : quizzes.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center">
-            <p className="text-sm font-bold text-slate-700">{listTab === 'shared' ? 'Kho đề chung chưa có đề nào' : 'Chưa có đề trắc nghiệm nào'}</p>
+            <p className="text-sm font-bold text-slate-700">{listTab === 'shared' ? 'Kho đề chung chưa có đề nào' : listTab === 'collab' ? 'Chưa có ai thêm bạn vào đề nào' : 'Chưa có đề trắc nghiệm nào'}</p>
             <p className="mt-1 text-xs text-slate-400">{listTab === 'shared' ? 'Đề được chia sẻ khi người soạn bật "Chia sẻ vào kho đề chung" trong phần Thiết lập của đề.' : 'Bấm "Tạo đề mới" để bắt đầu, hoặc thêm câu hỏi vào ngân hàng trước.'}</p>
           </div>
         ) : shownQuizzes.length === 0 ? (
@@ -206,7 +215,8 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
                       {q.status === 'published' ? 'Đã phát hành' : 'Lưu trữ'}
                     </span>
                   )}
-                  {q.is_public && <span className="ml-auto inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600"><Globe className="h-3 w-3" /> Công khai</span>}
+                  {listTab === 'collab' && quizRoles[q.id] && <span className="ml-auto rounded-lg bg-sky-50 px-2 py-1 text-[10px] font-bold text-sky-700">Chia sẻ · {ROLE_LABELS[quizRoles[q.id]].label}</span>}
+                  {listTab !== 'collab' && q.is_public && <span className="ml-auto inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-600"><Globe className="h-3 w-3" /> Công khai</span>}
                 </div>
                 <h3 className="mt-3 text-sm font-black text-slate-800 group-hover:text-brand">{q.title}</h3>
                 {q.subject_id && <p className="mt-0.5 text-[11px] font-semibold text-brand">{subjectName(q.subject_id)}</p>}
@@ -232,7 +242,7 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
   }
 
   if (view === 'detail' && activeQuiz) {
-    return <QuizDetail quiz={activeQuiz} subjects={subjects}
+    return <QuizDetail quiz={activeQuiz} subjects={subjects} currentUser={currentUser}
       onQuizChange={setActiveQuiz}
       onEdit={() => setView('editor')}
       onAssign={() => setView('assign')}
@@ -339,7 +349,9 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
 }) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
-  const [tab, setTab] = useState<'mine' | 'shared'>('mine');
+  const [tab, setTab] = useState<'mine' | 'collab' | 'shared'>('mine');
+  const [qRoles, setQRoles] = useState<Record<string, CollabRole>>({});
+  const [sharingQ, setSharingQ] = useState<QuizQuestion | null>(null);
   const [subjectId, setSubjectId] = useState('');
   const [type, setType] = useState<QuestionType | ''>('');
   const [search, setSearch] = useState('');
@@ -352,6 +364,14 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
 
   const load = useCallback(() => {
     setLoading(true);
+    if (tab === 'collab') {
+      getCollabQuestions().then(r => {
+        setQRoles(r.roles);
+        const k = search.trim().toLowerCase();
+        setItems(r.questions.filter(q => (!subjectId || q.subject_id === subjectId) && (!type || q.question_type === type) && (!k || stripHtml(q.content).toLowerCase().includes(k))));
+      }).catch(e => addNotification('Lỗi tải câu được chia sẻ: ' + e.message, 'error')).finally(() => setLoading(false));
+      return;
+    }
     getBankQuestions({ scope: tab, subjectId: subjectId || undefined, type: type || undefined, search })
       .then(setItems).catch(e => addNotification('Lỗi tải ngân hàng: ' + e.message, 'error')).finally(() => setLoading(false));
   }, [tab, subjectId, type, search, addNotification]);
@@ -403,7 +423,7 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
       question={q}
       defaultSubject={subjectId}
       onCancel={() => setEditing(null)}
-      onDelete={q ? () => remove(q) : undefined}
+      onDelete={q && q.owner_id === currentUser.id ? () => remove(q) : undefined}
       onSaved={() => { setEditing(null); load(); }} />;
   }
 
@@ -411,7 +431,7 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
     return <QuestionView
       question={viewing}
       subjectName={subjectName(viewing.subject_id)}
-      canEdit={tab === 'mine'}
+      canEdit={tab === 'mine' || qRoles[viewing.id] === 'edit' || qRoles[viewing.id] === 'manage'}
       onBack={() => setViewing(null)}
       onEdit={() => { setEditing(viewing); setViewing(null); }}
       onCopyToMine={tab === 'shared' ? () => copyToMine(viewing) : undefined}
@@ -465,6 +485,7 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
         {!selectMode && (
           <div className="flex rounded-xl bg-slate-100 p-1">
             <button onClick={() => setTab('mine')} className={`rounded-lg px-4 py-2 text-xs font-bold ${tab === 'mine' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Ngân hàng của tôi</button>
+            <button onClick={() => setTab('collab')} className={`rounded-lg px-4 py-2 text-xs font-bold ${tab === 'collab' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Được chia sẻ với tôi</button>
             <button onClick={() => setTab('shared')} className={`rounded-lg px-4 py-2 text-xs font-bold ${tab === 'shared' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Ngân hàng dùng chung</button>
           </div>
         )}
@@ -508,9 +529,15 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
                     {(q.tags || []).length > 0 && <div className="mt-1.5 flex flex-wrap gap-1">{q.tags.map(t => <span key={t} className="rounded bg-slate-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-400">#{t}</span>)}</div>}
                   </button>
                   <div className="flex shrink-0 items-center gap-1.5">
-                    {tab === 'shared' && q.owner_id !== currentUser.id
+                    {tab === 'collab' ? <>
+                      {qRoles[q.id] && <span className="rounded-md bg-sky-50 px-2 py-1 text-[10px] font-bold text-sky-700">Chia sẻ · {ROLE_LABELS[qRoles[q.id]].label}</span>}
+                      <button onClick={() => setSharingQ(q)} title="Người cộng tác" className="rounded-lg bg-slate-100 p-2 text-slate-500 hover:bg-slate-200"><Users className="h-4 w-4" /></button>
+                    </> : tab === 'shared' && q.owner_id !== currentUser.id
                       ? <button onClick={() => copyToMine(q)} className="rounded-lg bg-brand-light px-3 py-2 text-[11px] font-bold text-brand hover:bg-brand/15">Sao chép về của tôi</button>
-                      : <button onClick={() => togglePublic(q)} title={q.is_public ? 'Tắt chia sẻ' : 'Chia sẻ công khai'} className={`rounded-lg p-2 ${q.is_public ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}><Share2 className="h-4 w-4" /></button>
+                      : <>
+                        <button onClick={() => setSharingQ(q)} title="Cộng tác: thêm người cùng sửa câu hỏi" className="rounded-lg bg-slate-100 p-2 text-slate-500 hover:bg-slate-200"><Users className="h-4 w-4" /></button>
+                        <button onClick={() => togglePublic(q)} title={q.is_public ? 'Tắt chia sẻ' : 'Chia sẻ công khai'} className={`rounded-lg p-2 ${q.is_public ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}><Share2 className="h-4 w-4" /></button>
+                      </>
                     }
                   </div>
                 </div>
@@ -519,6 +546,8 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
           })}
         </div>
       )}
+      {sharingQ && <ShareDialog type="quiz_question" resourceId={sharingQ.id} resourceTitle={stripHtml(sharingQ.content).slice(0, 80) || 'Câu hỏi'} ownerId={sharingQ.owner_id} ownerName={sharingQ.owner_name || undefined}
+        currentUser={currentUser} canManage={sharingQ.owner_id === currentUser.id || qRoles[sharingQ.id] === 'manage'} onClose={() => setSharingQ(null)} />}
     </div>
   );
 }
@@ -864,10 +893,15 @@ function QuizEditor({ quiz, subjects, currentUser, onQuizChange, onOpenBankSelec
 // =====================================================================
 // XEM CHI TIẾT ĐỀ (chỉ đọc), có nút Sửa để chuyển sang chế độ sửa
 // =====================================================================
-function QuizDetail({ quiz, subjects, onEdit, onAssign, onDelete, onBack, onQuizChange }: {
-  quiz: Quiz; subjects: EduSubject[]; onEdit: () => void; onAssign: () => void; onDelete: () => void; onBack: () => void; onQuizChange: (q: Quiz) => void;
+function QuizDetail({ quiz, subjects, currentUser, onEdit, onAssign, onDelete, onBack, onQuizChange }: {
+  quiz: Quiz; subjects: EduSubject[]; currentUser: UserAccount; onEdit: () => void; onAssign: () => void; onDelete: () => void; onBack: () => void; onQuizChange: (q: Quiz) => void;
 }) {
   const { addNotification } = useNotifications();
+  // Quyền của mình với đề: chủ đề, hoặc quyền cộng tác chủ đề cấp.
+  const isOwner = quiz.owner_id === currentUser.id;
+  const [role, setRole] = useState<MyRole>(isOwner ? 'owner' : null);
+  const [sharing, setSharing] = useState(false);
+  useEffect(() => { if (!isOwner) getMyRole('quiz', quiz.id, quiz.owner_id).then(setRole).catch(() => {}); }, [quiz.id, quiz.owner_id, isOwner]);
   const [items, setItems] = useState<QuizItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showExport, setShowExport] = useState(false);
@@ -902,15 +936,18 @@ function QuizDetail({ quiz, subjects, onEdit, onAssign, onDelete, onBack, onQuiz
         <button onClick={onBack} className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><ChevronLeft className="h-4 w-4" /> Danh sách đề</button>
         <div className="flex flex-wrap items-center gap-2">
           <button onClick={() => setShowExport(true)} disabled={exportQuestions.length === 0} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand disabled:opacity-50" title="Xuất đề ra PDF để in"><FileDown className="h-4 w-4" /> Xuất PDF</button>
-          <button onClick={togglePublic} disabled={togglingPublic} title={quiz.is_public ? 'Tắt chia sẻ vào kho đề chung' : 'Chia sẻ vào kho đề chung'} className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-[11px] font-bold disabled:opacity-50 ${quiz.is_public ? 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100' : 'border-slate-200 bg-white text-slate-600 hover:border-brand/30 hover:text-brand'}`}>
+          <button onClick={() => setSharing(true)} title="Cộng tác: thêm người cùng sửa đề" className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand"><Users className="h-4 w-4" /> Cộng tác</button>
+          {isOwner && <button onClick={togglePublic} disabled={togglingPublic} title={quiz.is_public ? 'Tắt chia sẻ vào kho đề chung' : 'Chia sẻ vào kho đề chung'} className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-[11px] font-bold disabled:opacity-50 ${quiz.is_public ? 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100' : 'border-slate-200 bg-white text-slate-600 hover:border-brand/30 hover:text-brand'}`}>
             {togglingPublic ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />} {quiz.is_public ? 'Đang chia sẻ' : 'Chia sẻ'}
-          </button>
-          <button onClick={onEdit} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Edit2 className="h-4 w-4" /> Sửa</button>
-          <button onClick={onAssign} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><Send className="h-4 w-4" /> Giao lớp</button>
-          <button onClick={onDelete} className="inline-flex items-center justify-center rounded-xl bg-rose-50 px-3 py-2.5 text-rose-500 hover:bg-rose-100" title="Xóa"><Trash2 className="h-4 w-4" /></button>
+          </button>}
+          {canEditRole(role) && <button onClick={onEdit} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Edit2 className="h-4 w-4" /> Sửa</button>}
+          {isOwner && <button onClick={onAssign} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><Send className="h-4 w-4" /> Giao lớp</button>}
+          {isOwner && <button onClick={onDelete} className="inline-flex items-center justify-center rounded-xl bg-rose-50 px-3 py-2.5 text-rose-500 hover:bg-rose-100" title="Xóa"><Trash2 className="h-4 w-4" /></button>}
         </div>
       </div>
 
+      {sharing && <ShareDialog type="quiz" resourceId={quiz.id} resourceTitle={quiz.title} ownerId={quiz.owner_id} ownerName={quiz.owner_name || undefined}
+        currentUser={currentUser} canManage={canManageRole(role)} onClose={() => setSharing(false)} />}
       {showExport && (
         <ExamExportDialog
           count={exportQuestions.length}
