@@ -234,7 +234,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   };
 
   const handleDeleteItem = async (item: EduAssignmentBankItem) => {
-    const ok = await confirm({ title: 'Xóa bài tập', message: `Xóa bài tập "${item.title}" khỏi ngân hàng?`, confirmText: 'Xóa' });
+    const ok = await confirm({ title: 'Xóa bài tập', message: `Xóa bài tập "${item.title}" khỏi ngân hàng? Bài sẽ nằm ở mục Đã xoá trong trang Cá nhân 30 ngày.`, confirmText: 'Xóa' });
     if (!ok) return;
     try {
       await deleteAssignmentBankItem(item.id);
@@ -282,7 +282,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   const bulkDelete = async () => {
     if (!needOwn()) return;
     const skip = picked.length - pickedOwn.length;
-    const ok = await confirm({ title: 'Xóa nhiều bài tập', message: `Xóa ${pickedOwn.length} bài tập khỏi ngân hàng? Không thể hoàn tác.${skipNote(skip)}`, confirmText: 'Xóa', danger: true } as any);
+    const ok = await confirm({ title: 'Xóa nhiều bài tập', message: `Xóa ${pickedOwn.length} bài tập khỏi ngân hàng? Bài sẽ nằm ở mục Đã xoá trong trang Cá nhân 30 ngày.${skipNote(skip)}`, confirmText: 'Xóa', danger: true } as any);
     if (!ok) return;
     runBulk(() => bulkDeleteAssignmentBank(pickedOwn.map(i => i.id)), `Đã xóa ${pickedOwn.length} bài tập.${skipNote(skip)}`);
   };

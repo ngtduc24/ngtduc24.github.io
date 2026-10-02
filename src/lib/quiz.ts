@@ -201,6 +201,17 @@ export async function saveQuestion(q: Partial<QuizQuestion>, options: QuizOption
 }
 
 export async function deleteQuestion(id: string): Promise<void> {
+  {
+    const { putInTrash, rowsOf } = await import('./trash');
+    const q = (await rowsOf(Q_TABLE, 'id', [id])).filter((r: any) => r.owner_id === getEduCtx().userId);
+    if (q.length) {
+      const [opts, items, collab] = await Promise.all([rowsOf(OPT_TABLE, 'question_id', [id]), rowsOf(ITEM_TABLE, 'question_id', [id]), rowsOf('collaborators', 'resource_id', [id])]);
+      await putInTrash('quiz_question', q[0].content || 'Câu hỏi', [
+        { table: Q_TABLE, rows: q }, { table: OPT_TABLE, rows: opts }, { table: ITEM_TABLE, rows: items },
+        { table: 'collaborators', rows: collab.filter((c: any) => c.resource_type === 'quiz_question') },
+      ], items.length ? `Nằm trong ${items.length} đề` : undefined);
+    }
+  }
   const { error } = await supabase.from(Q_TABLE).delete().eq('id', id).eq('owner_id', getEduCtx().userId || '-');
   if (error) throw error;
 }
@@ -342,6 +353,21 @@ export async function saveQuiz(q: Partial<Quiz>): Promise<Quiz> {
 }
 
 export async function deleteQuiz(id: string): Promise<void> {
+  {
+    // Giữ đủ đề, câu trong đề, lượt giao lớp, bài làm của sinh viên để khôi phục nguyên vẹn.
+    const { putInTrash, rowsOf } = await import('./trash');
+    const qz = (await rowsOf(QUIZ_TABLE, 'id', [id])).filter((r: any) => r.owner_id === getEduCtx().userId);
+    if (qz.length) {
+      const [items, assigns, attempts, collab] = await Promise.all([rowsOf(ITEM_TABLE, 'quiz_id', [id]), rowsOf(ASSIGN_TABLE, 'quiz_id', [id]), rowsOf(ATTEMPT_TABLE, 'quiz_id', [id]), rowsOf('collaborators', 'resource_id', [id])]);
+      const aids = attempts.map((a: any) => a.id);
+      const [answers, logs] = await Promise.all([rowsOf(ANSWER_TABLE, 'attempt_id', aids), rowsOf(LOG_TABLE, 'attempt_id', aids)]);
+      await putInTrash('quiz', qz[0].title || 'Đề trắc nghiệm', [
+        { table: QUIZ_TABLE, rows: qz }, { table: ITEM_TABLE, rows: items }, { table: ASSIGN_TABLE, rows: assigns },
+        { table: ATTEMPT_TABLE, rows: attempts }, { table: ANSWER_TABLE, rows: answers }, { table: LOG_TABLE, rows: logs },
+        { table: 'collaborators', rows: collab.filter((c: any) => c.resource_type === 'quiz') },
+      ], attempts.length ? `Kèm ${attempts.length} bài làm của sinh viên` : undefined);
+    }
+  }
   const { error } = await supabase.from(QUIZ_TABLE).delete().eq('id', id).eq('owner_id', getEduCtx().userId || '-');
   if (error) throw error;
 }

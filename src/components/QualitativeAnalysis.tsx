@@ -540,7 +540,7 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
   };
 
   const handleDeleteProject = async (id: string, name: string) => {
-    if (await confirm('Xác nhận xóa dự án', `Bạn có chắc chắn muốn xóa dự án "${name}"? Tất cả dữ liệu tệp tin, mã hóa, ghi chú của dự án sẽ bị xóa sạch!`)) {
+    if (await confirm('Xác nhận xóa dự án', `Bạn có chắc chắn muốn xóa dự án "${name}"? Dự án cùng tài liệu, mã hoá, ghi chú sẽ nằm ở mục Đã xoá trong trang Cá nhân 30 ngày, khôi phục được.`)) {
       try {
         const nextProjs = projects.filter(p => p.id !== id);
         setProjects(nextProjs);

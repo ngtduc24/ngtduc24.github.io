@@ -1005,6 +1005,29 @@ export async function saveQDAProject(project: any) {
 
 export async function deleteQDAProject(projectId: string) {
   try {
+    // Giữ bản sao đủ tài liệu, mã, chú thích, ghi chú vào mục Đã xoá ở trang Cá nhân.
+    {
+      const { putInTrash, rowsOf } = await import('./trash');
+      const uid = qdaMe() || QDA_NONE;
+      const proj = (await rowsOf(QDA_PROJECTS_TABLE, 'id', [projectId])).filter((r: any) => r.owner_id === uid);
+      if (proj.length) {
+        const docs = await rowsOf(QDA_DOCUMENTS_TABLE, 'project_id', [projectId]);
+        const [codes, memos, anns, collab] = await Promise.all([
+          rowsOf(QDA_CODES_TABLE, 'project_id', [projectId]),
+          rowsOf(QDA_MEMOS_TABLE, 'project_id', [projectId]),
+          rowsOf(QDA_ANNOTATIONS_TABLE, 'doc_id', docs.map((d: any) => d.id)),
+          rowsOf('collaborators', 'resource_id', [projectId]),
+        ]);
+        await putInTrash('qda_project', proj[0].name || 'Dự án định tính', [
+          { table: QDA_PROJECTS_TABLE, rows: proj },
+          { table: QDA_DOCUMENTS_TABLE, rows: docs },
+          { table: QDA_CODES_TABLE, rows: codes },
+          { table: QDA_ANNOTATIONS_TABLE, rows: anns },
+          { table: QDA_MEMOS_TABLE, rows: memos },
+          { table: 'collaborators', rows: collab.filter((c: any) => c.resource_type === 'qda_project') },
+        ], `${docs.length} tài liệu, ${codes.length} mã`);
+      }
+    }
     const { error } = await supabase.from(QDA_PROJECTS_TABLE).delete().eq('id', projectId).eq('owner_id', qdaMe() || QDA_NONE);
     if (error) throw error;
     await supabase.from('collaborators').delete().eq('resource_type', 'qda_project').eq('resource_id', projectId);

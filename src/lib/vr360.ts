@@ -72,6 +72,11 @@ export async function saveTour(t: Partial<VRTour>): Promise<VRTour> {
 }
 
 export async function deleteTour(id: string): Promise<void> {
+  {
+    const { putInTrash, rowsOf } = await import('./trash');
+    const rows = (await rowsOf(VR_TABLE, 'id', [id])).filter((r: any) => r.owner_id === getEduCtx().userId);
+    if (rows.length) await putInTrash('vr_tour', rows[0].title || rows[0].name || 'Tour VR 360', [{ table: VR_TABLE, rows }]);
+  }
   const { error } = await supabase.from(VR_TABLE).delete().eq('id', id).eq('owner_id', getEduCtx().userId || '-');
   if (error) throw error;
 }

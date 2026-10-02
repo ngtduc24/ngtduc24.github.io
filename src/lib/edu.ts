@@ -677,11 +677,27 @@ export async function bulkUpdateAssignmentBank(ids: string[], patch: { subjectId
 }
 export async function bulkDeleteAssignmentBank(ids: string[]) {
   if (!ids.length) return;
+  await trashBankItems(ids);
   const { error } = await supabase.from(ASSIGNMENT_BANK_TABLE).delete().in('id', ids).eq('owner_id', getCtx().userId || '-');
   if (error) throw error;
 }
 
+// Giữ bản sao bài tập vào mục Đã xoá ở trang Cá nhân trước khi xoá.
+async function trashBankItems(ids: string[]) {
+  const { putInTrash, rowsOf } = await import('./trash');
+  const uid = getCtx().userId;
+  const rows = (await rowsOf(ASSIGNMENT_BANK_TABLE, 'id', ids)).filter((r: any) => r.owner_id === uid);
+  const collab = (await rowsOf('collaborators', 'resource_id', ids)).filter((r: any) => r.resource_type === 'bank_item');
+  for (const r of rows) {
+    await putInTrash('bank_item', r.title || 'Bài tập', [
+      { table: ASSIGNMENT_BANK_TABLE, rows: [r] },
+      { table: 'collaborators', rows: collab.filter((c: any) => c.resource_id === r.id) },
+    ]);
+  }
+}
+
 export async function deleteAssignmentBankItem(id: string) {
+  await trashBankItems([id]);
   const { error } = await supabase.from(ASSIGNMENT_BANK_TABLE).delete().eq('id', id).eq('owner_id', getCtx().userId || '-');
   if (error) throw error;
 }

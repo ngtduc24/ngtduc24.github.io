@@ -116,7 +116,7 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
   };
 
   const removeQuiz = (q: Quiz, onDone?: () => void) => {
-    confirm('Xóa đề trắc nghiệm', `Xóa đề "${q.title}"? Toàn bộ câu trong đề và kết quả liên quan sẽ bị xóa. Không thể hoàn tác.`, async () => {
+    confirm('Xóa đề trắc nghiệm', `Xóa đề "${q.title}"? Đề cùng kết quả làm bài sẽ nằm ở mục Đã xoá trong trang Cá nhân 30 ngày, khôi phục được.`, async () => {
       try { await deleteQuiz(q.id); addNotification('Đã xóa đề.', 'success'); if (onDone) onDone(); else loadQuizzes(); }
       catch (e: any) { addNotification('Lỗi xóa đề: ' + e.message, 'error'); }
     });
@@ -381,7 +381,7 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
   const subjectName = useSubjectNames(subjects, items.map(q => q.subject_id));
 
   const remove = (q: QuizQuestion) => {
-    confirm('Xóa câu hỏi', 'Xóa câu hỏi này khỏi ngân hàng? Không thể hoàn tác.', async () => {
+    confirm('Xóa câu hỏi', 'Xóa câu hỏi này khỏi ngân hàng? Câu hỏi sẽ nằm ở mục Đã xoá trong trang Cá nhân 30 ngày.', async () => {
       try { await deleteQuestion(q.id); addNotification('Đã xóa câu hỏi.', 'success'); setEditing(null); load(); }
       catch (e: any) { addNotification('Không xóa được (có thể câu đang nằm trong đề đã phát hành): ' + e.message, 'error'); }
     });
@@ -389,7 +389,7 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
   // Xóa hàng loạt các câu đã tích chọn.
   const bulkDelete = () => {
     if (selected.size === 0) return;
-    confirm('Xóa các câu đã chọn', `Xóa ${selected.size} câu hỏi đã chọn khỏi ngân hàng? Không thể hoàn tác.`, async () => {
+    confirm('Xóa các câu đã chọn', `Xóa ${selected.size} câu hỏi đã chọn khỏi ngân hàng? Các câu sẽ nằm ở mục Đã xoá trong trang Cá nhân 30 ngày.`, async () => {
       let ok = 0, fail = 0;
       for (const id of Array.from(selected)) {
         try { await deleteQuestion(id); ok += 1; } catch { fail += 1; }

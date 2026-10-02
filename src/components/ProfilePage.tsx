@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { UserCircle, ShieldCheck, Bell as BellIcon, Camera, Check, X, Loader2, ArrowLeft, Move } from 'lucide-react';
+import { UserCircle, ShieldCheck, Bell as BellIcon, Camera, Check, X, Loader2, ArrowLeft, Move, Trash2 } from 'lucide-react';
+import TrashPanel from './TrashPanel';
 import { UserAccount } from '../types';
 import { auth } from '../lib/firebase';
 import { updatePassword } from 'firebase/auth';
@@ -11,10 +12,10 @@ interface ProfilePageProps {
   onBack?: () => void;
 }
 
-type Section = 'profile' | 'security' | 'notifications';
+type Section = 'profile' | 'security' | 'notifications' | 'trash';
 
 export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePageProps) {
-  const [section, setSection] = useState<Section>('profile');
+  const [section, setSection] = useState<Section>(() => { try { const v = sessionStorage.getItem('open_hint:profile'); if (v) { sessionStorage.removeItem('open_hint:profile'); if (v === 'trash') return 'trash'; } } catch { /* bỏ qua */ } return 'profile'; });
   const [fullName, setFullName] = useState(user.fullName || '');
   const [email, setEmail] = useState(user.email || '');
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl || '');
@@ -122,6 +123,7 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
     { id: 'profile', label: 'Hồ sơ của bạn', icon: UserCircle },
     { id: 'security', label: 'Tài khoản và bảo mật', icon: ShieldCheck },
     { id: 'notifications', label: 'Tùy chọn thông báo', icon: BellIcon },
+    { id: 'trash', label: 'Đã xoá', icon: Trash2 },
   ];
 
   const roleLabel = user.role === 'admin' ? 'Quản trị viên' : user.role === 'member' ? 'Học viên' : 'Thành viên';
@@ -156,6 +158,7 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
 
         {/* Nội dung */}
         <div className="space-y-6">
+          {section !== 'trash' && (<>
           {/* Ảnh bìa cá nhân với ảnh đại diện đặt chồng lên */}
           <div className="relative overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
             <div
@@ -209,6 +212,7 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
             <h1 className="font-display text-2xl font-black tracking-tight text-slate-900">Hồ sơ của bạn</h1>
             <p className="mt-1 text-sm text-slate-500">Xem và cập nhật thông tin tài khoản của bạn.</p>
           </div>
+          </>)}
 
           {(success || error) && (
             <div className={`rounded-2xl border px-4 py-3 text-xs font-semibold ${success ? 'border-brand-light bg-brand-light text-brand' : 'border-rose-100 bg-rose-50 text-rose-600'}`}>
@@ -343,6 +347,8 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
               </div>
             </div>
           )}
+
+          {section === 'trash' && <TrashPanel />}
 
           {section === 'notifications' && (
             <div className="space-y-5">
