@@ -12,7 +12,8 @@ import {
   getJournalsFromSupabase,
   getNotificationsFromSupabase, isNotificationForUser,
   saveDefaultSettingsToSupabase,
-  saveUser
+  saveUser,
+  shareLocalDashboardBannerOnce,
 } from '../lib/data';
 import { useTasks } from './TaskContext';
 import { isModuleHidden, resolveModuleMeta } from '../lib/modules';
@@ -56,6 +57,12 @@ function timeAgo(ts?: string) {
 }
 
 export default function DashboardOverview({ onSwitchTab, settings, users, currentUser, onRefreshSettings }: DashboardProps) {
+  // Ảnh nền đầu trang admin đặt trước đây chỉ lưu trên máy admin: đẩy lên máy chủ một lần cho mọi người thấy.
+  useEffect(() => {
+    if (currentUser?.role !== 'admin') return;
+    shareLocalDashboardBannerOnce().then(done => { if (done && onRefreshSettings) onRefreshSettings(); }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.role]);
   const { addNotification } = useNotifications();
   const { tasks } = useTasks();
 

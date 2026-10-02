@@ -70,6 +70,31 @@ function cacheSettings(s: AppSettings) {
   try { localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(s)); } catch { /* bỏ qua khi bị chặn */ }
 }
 
+// ----- Ảnh nền đầu trang Thư viện dùng chung -----
+// Lưu ở portfolio_settings khoá edugo_dashboard_banner (bảng app_settings không có cột cho ảnh này,
+// trước đây ảnh chỉ nằm trong localStorage nên máy khác, tài khoản khác không thấy).
+const DASHBOARD_BANNER_KEY = 'edugo_dashboard_banner';
+export async function getSharedDashboardBanner(): Promise<{ image: string; position: string } | null> {
+  try {
+    const { data } = await supabase.from('portfolio_settings').select('data').eq('key', DASHBOARD_BANNER_KEY).maybeSingle();
+    const d = data?.data as any;
+    return d && typeof d === 'object' ? { image: String(d.image || ''), position: String(d.position || '') } : null;
+  } catch { return null; }
+}
+export async function saveSharedDashboardBanner(image: string, position: string): Promise<boolean> {
+  const { error } = await supabase.from('portfolio_settings').upsert({ key: DASHBOARD_BANNER_KEY, data: { image, position, updatedAt: new Date().toISOString() } });
+  return !error;
+}
+// Lần đầu sau khi chuyển: ảnh admin đã đặt trước đây chỉ nằm trên máy admin, đẩy lên máy chủ cho mọi người thấy.
+export async function shareLocalDashboardBannerOnce(): Promise<boolean> {
+  try {
+    const local = localStorage.getItem('dashboard_banner_image') || '';
+    if (!local) return false;
+    if (await getSharedDashboardBanner()) return false;
+    return saveSharedDashboardBanner(local, localStorage.getItem('dashboard_banner_position') || '');
+  } catch { return false; }
+}
+
 export async function getDefaultSettingsFromSupabase(): Promise<AppSettings> {
   const defaultSettings: AppSettings = {
     id: 'general_config',
@@ -98,6 +123,8 @@ export async function getDefaultSettingsFromSupabase(): Promise<AppSettings> {
       throw error;
     }
     
+    // Ảnh nền đầu trang Thư viện dùng chung cho mọi tài khoản (bảng app_settings chưa có cột riêng).
+    const sharedBanner = await getSharedDashboardBanner();
     const resolved: AppSettings = {
       ...defaultSettings,
       id: data.id,
@@ -111,8 +138,12 @@ export async function getDefaultSettingsFromSupabase(): Promise<AppSettings> {
       systemDescription: data.system_description || defaultSettings.systemDescription,
       dashboardBannerTitle: data.dashboard_banner_title || defaultSettings.dashboardBannerTitle,
       dashboardBannerDescription: data.dashboard_banner_description || defaultSettings.dashboardBannerDescription,
-      dashboardBannerImage: data.dashboard_banner_image_url || (typeof localStorage !== 'undefined' ? (localStorage.getItem('dashboard_banner_image') || undefined) : undefined) || defaultSettings.dashboardBannerImage,
-      dashboardBannerPosition: data.dashboard_banner_position || (typeof localStorage !== 'undefined' ? (localStorage.getItem('dashboard_banner_position') || undefined) : undefined),
+      dashboardBannerImage: sharedBanner
+        ? (sharedBanner.image || undefined)
+        : (data.dashboard_banner_image_url || (typeof localStorage !== 'undefined' ? (localStorage.getItem('dashboard_banner_image') || undefined) : undefined) || defaultSettings.dashboardBannerImage),
+      dashboardBannerPosition: sharedBanner
+        ? (sharedBanner.position || undefined)
+        : (data.dashboard_banner_position || (typeof localStorage !== 'undefined' ? (localStorage.getItem('dashboard_banner_position') || undefined) : undefined)),
       initialSeedDone: data.initial_seed_done ?? false,
       taskTypes: data.task_types || defaultSettings.taskTypes,
       notificationBannerTitle: data.notification_banner_title || defaultSettings.notificationBannerTitle,
@@ -214,14 +245,12 @@ export async function saveDefaultSettingsToSupabase(settings: AppSettings): Prom
       if (settings.assistantFloating !== undefined) extraCols.assistant_floating = settings.assistantFloating;
       if (settings.assistantAi !== undefined) extraCols.assistant_ai = settings.assistantAi;
       if (settings.assistantKnowledge !== undefined) extraCols.assistant_knowledge = settings.assistantKnowledge;
-      // Ảnh nền và vị trí đầu trang dashboard: lưu localStorage để hiển thị ngay, và best-effort lên DB.
-      if (settings.dashboardBannerImage !== undefined) {
-        extraCols.dashboard_banner_image_url = settings.dashboardBannerImage;
+      // Ảnh nền và vị trí đầu trang Thư viện: lưu chung lên máy chủ để mọi tài khoản, mọi máy đều thấy.
+      if (settings.dashboardBannerImage !== undefined || settings.dashboardBannerPosition !== undefined) {
         try { localStorage.setItem('dashboard_banner_image', settings.dashboardBannerImage || ''); } catch {}
-      }
-      if (settings.dashboardBannerPosition !== undefined) {
-        extraCols.dashboard_banner_position = settings.dashboardBannerPosition;
         try { localStorage.setItem('dashboard_banner_position', settings.dashboardBannerPosition || ''); } catch {}
+        const ok = await saveSharedDashboardBanner(settings.dashboardBannerImage || '', settings.dashboardBannerPosition || '');
+        if (!ok) failedCols.push('dashboard_banner');
       }
       if (Object.keys(extraCols).length > 1) {
         const { error: extraError } = await supabase.from(SETTINGS_TABLE).upsert(extraCols);
