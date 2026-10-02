@@ -1,6 +1,7 @@
 import { uploadImageToCloudinary } from '../lib/upload';
 import MediaSourcePicker from './MediaSourcePicker';
 import { PageHeader, Badge, IconButton, Button } from './ui';
+import { fetchSentNotifications } from '../lib/notifications';
 import React, { useState, useEffect } from 'react';
 import { 
   Bell, 
@@ -31,7 +32,8 @@ import {
   deleteNotificationFromSupabase, 
   saveDefaultSettingsToSupabase,
   getNotificationsFromSupabase,
-  subscribeToNotifications
+  subscribeToNotifications,
+  subscribeToNotificationChanges
 } from '../lib/data';
 import { AppSettings, UserAccount, AppNotification } from '../types';
 
@@ -102,10 +104,13 @@ export default function AdminNotifications({ currentUser, users, settings, onRef
     setLoading(true);
     
     // Trang quản lý chỉ hiện các thông báo do chính tài khoản này gửi đi.
-    const unsubscribe = subscribeToNotifications((notifications) => {
-      setSentNotifications(notifications.filter(n => n.senderId === currentUser.id));
-      setLoading(false);
-    });
+    // Chỉ tải thông báo do chính tài khoản này gửi, không tải cả bảng.
+    const load = () => fetchSentNotifications(currentUser.id)
+      .then(list => setSentNotifications(list))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+    load();
+    const unsubscribe = subscribeToNotificationChanges(load);
 
     return () => {
       unsubscribe();

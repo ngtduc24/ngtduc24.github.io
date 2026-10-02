@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { takeOpenHint } from '../../lib/notifications';
 import { prettyShareUrl } from '../../lib/shareLinks';
 import { useSubjectNames } from './useSubjectNames';
 import {
@@ -52,7 +53,7 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [filterSubject, setFilterSubject] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  const [listTab, setListTab] = useState<'mine' | 'collab' | 'shared'>('mine'); // đề của tôi, được chia sẻ với tôi, kho đề chung
+  const [listTab, setListTab] = useState<'mine' | 'collab' | 'shared'>(() => (takeOpenHint('quiz') === 'collab' ? 'collab' : 'mine')); // đề của tôi, được chia sẻ với tôi, kho đề chung
   const [quizRoles, setQuizRoles] = useState<Record<string, CollabRole>>({});
   const [copyingId, setCopyingId] = useState<string | null>(null);
 
@@ -349,7 +350,7 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
 }) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
-  const [tab, setTab] = useState<'mine' | 'collab' | 'shared'>('mine');
+  const [tab, setTab] = useState<'mine' | 'collab' | 'shared'>(() => (takeOpenHint('quiz_question') === 'collab' ? 'collab' : 'mine'));
   const [qRoles, setQRoles] = useState<Record<string, CollabRole>>({});
   const [sharingQ, setSharingQ] = useState<QuizQuestion | null>(null);
   const [subjectId, setSubjectId] = useState('');

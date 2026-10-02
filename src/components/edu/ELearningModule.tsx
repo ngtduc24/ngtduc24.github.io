@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { takeOpenHint } from '../../lib/notifications';
 import { prettyShareUrl } from '../../lib/shareLinks';
 import { copyText, askChoice } from '../ui/Dialogs';
 import {
@@ -99,7 +100,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
   const [own, setAll] = useState<ELLesson[]>([]);
   // Bài người khác đã thêm mình vào cộng tác.
   const [shared, setShared] = useState<Array<ELLesson & { my_role: CollabRole }>>([]);
-  const [shareScope, setShareScope] = useState<'mine' | 'shared'>('mine');
+  const [shareScope, setShareScope] = useState<'mine' | 'shared'>(() => (takeOpenHint('el_lesson') === 'shared' ? 'shared' : 'mine'));
   const all: Array<ELLesson & { my_role?: CollabRole }> = shareScope === 'shared' ? shared : own;
   const [sharing, setSharing] = useState<ELLesson | null>(null);
   const [loading, setLoading] = useState(true);

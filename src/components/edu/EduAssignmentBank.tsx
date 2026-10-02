@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { takeOpenHint } from '../../lib/notifications';
 import type { Editor } from '@tiptap/react';
 import RichTextEditor from '../cms/RichTextEditor';
 import LibraryHero, { HeroChip, ViewToggle } from '../ui/LibraryHero';
@@ -64,7 +65,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   // Bộ lọc và cách hiển thị
   const [subjectId, setSubjectId] = useState('');
   const [search, setSearch] = useState('');
-  const [scope, setScope] = useState<'all' | 'mine' | 'shared' | 'collab'>('mine');
+  const [scope, setScope] = useState<'all' | 'mine' | 'shared' | 'collab'>(() => (takeOpenHint('bank_item') === 'collab' ? 'collab' : 'mine'));
   const [sort, setSort] = useState<'new' | 'name'>('new');
   // Mặc định luôn mở dạng lưới, người dùng tự đổi sang danh sách khi cần.
   const [mode, setMode] = useState<'grid' | 'table'>('grid');

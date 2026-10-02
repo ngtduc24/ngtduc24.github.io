@@ -17,8 +17,8 @@ import {
   X
 } from 'lucide-react';
 import { UserAccount, Task, AppSettings, AppNotification } from '../types';
-import { getNotificationsFromSupabase, subscribeToNotifications } from '../lib/data';
-import { subscribeToTasks, isTaskRelevantToUser } from '../lib/tasks';
+import { isTaskRelevantToUser } from '../lib/tasks';
+import { useMyNotifications, openNotificationTarget } from '../lib/notifications';
 import { useConfirmation } from './ConfirmationContext';
 
 interface UserNotificationsProps {
@@ -30,231 +30,24 @@ interface UserNotificationsProps {
 
 export default function UserNotifications({ currentUser, settings, setCurrentTab, onUnreadCountChange }: UserNotificationsProps) {
   const { confirm } = useConfirmation();
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'task' | 'system'>('all');
   const [selectedSystemNotification, setSelectedSystemNotification] = useState<AppNotification | null>(null);
-
-  // Load from LocalStorage & Subscribe
-  useEffect(() => {
-    const key = `notifications_${currentUser.id}`;
-    const stored = localStorage.getItem(key);
-    let initialNotifs: AppNotification[] = [];
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        initialNotifs = parsed.filter((n: any) => !n.id.startsWith("system-welcome-") && !n.id.startsWith("journal-sync-") && !n.id.startsWith("task-tip-") && localStorage.getItem(`notif_deleted_${currentUser.id}_${n.id}`) !== 'true');
-        if (initialNotifs.length !== parsed.length) localStorage.setItem(key, JSON.stringify(initialNotifs));
-      } catch (e) {
-        initialNotifs = [];
-      }
-    } else {
-      initialNotifs = [];
-      localStorage.setItem(key, JSON.stringify(initialNotifs));
-    }
-    setNotifications(initialNotifs);
-
-    // Subscribe to Firestore System Notifications
-    const unsubscribeNotifs = subscribeToNotifications((firestoreNotifs) => {
-      const mapped: AppNotification[] = firestoreNotifs
-        .filter(fn => {
-          // Filter by audience
-          let isTarget = false;
-          if (fn.targetAudience === 'all') {
-            // Thông báo công việc (task): chỉ admin nhận broadcast chung, user thường chỉ nhận khi được chỉ định
-            isTarget = fn.type !== 'task' || currentUser.role === 'admin';
-          }
-          else if (fn.targetAudience === 'all_admins' && currentUser.role === 'admin') isTarget = true;
-          else if (fn.targetAudience === 'custom_admins' && currentUser.role === 'admin' && (fn.targetUserIds?.includes(currentUser.id) || fn.targetUserIds?.includes(currentUser.username))) isTarget = true;
-          else if (fn.targetAudience === 'custom_users' && (fn.targetUserIds?.includes(currentUser.id) || fn.targetUserIds?.includes(currentUser.username))) isTarget = true;
-          
-          if (!isTarget) return false;
-          return localStorage.getItem(`notif_deleted_${currentUser.id}_${fn.id}`) !== 'true';
-        })
-        .map(fn => {
-          const readKey = `notif_read_${currentUser.id}_${fn.id}`;
-          const isRead = localStorage.getItem(readKey) === 'true';
-          return {
-            id: fn.id,
-            title: fn.title,
-            description: fn.description,
-            timestamp: fn.timestamp,
-            type: fn.type,
-            unread: !isRead,
-            actionUrl: fn.type === 'task' ? 'tasks' : (fn.type === 'journal' ? 'scientific_journals' : undefined),
-            metadata: fn.metadata,
-            senderName: fn.senderName
-          };
-        });
-
-      setNotifications(prev => {
-        const localOnly = prev.filter(n => n.id.startsWith('task-'));
-        const systemIds = new Set(mapped.map(n => n.id));
-        const combined = [...mapped, ...localOnly.filter(n => !systemIds.has(n.id))];
-        combined.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-        return combined;
-      });
-    });
-
-  
-    // Subscribe to tasks for assignments and deadlines
-    const unsubscribeTasks = subscribeToTasks((tasks) => {
-      setAllTasks(tasks);
-      setNotifications(prev => {
-        let updated = [...prev];
-        let hasChanges = false;
-
-        tasks.forEach(task => {
-          if (task.isDeleted) return;
-          if (!isTaskRelevantToUser(task, currentUser)) return;
-
-          // 1. Cảnh báo hạn chót trong vòng 24 giờ cho người liên quan
-          const deadline = new Date(task.deadline);
-          const diffMs = deadline.getTime() - Date.now();
-          const isUrgent = diffMs > 0 && diffMs <= 24 * 60 * 60 * 1000;
-          const isPending = task.status !== 'Completed' && task.status !== 'Cancelled';
-
-          if (isUrgent && isPending) {
-            const expId = `task-expiring-${task.id}-${currentUser.id}`;
-            const exists = updated.some(n => n.id === expId);
-            const isDeleted = localStorage.getItem(`notif_deleted_${currentUser.id}_${expId}`) === 'true';
-            if (!exists && !isDeleted) {
-              updated.unshift({
-                id: expId,
-                title: 'Hạn chót công việc sắp tới!',
-                description: `Nhiệm vụ "${task.name}" sắp hết hạn trong vòng 24 giờ tới.`,
-                timestamp: new Date().toISOString(),
-                type: 'warning',
-                unread: true,
-                actionUrl: 'tasks',
-                metadata: { taskId: task.id }
-              });
-              hasChanges = true;
-            }
-          }
-
-          // 2. Thông báo khi task được giao cho chính người dùng này
-          const isAssignedToMe = task.assignedTo === currentUser.id || (Boolean(task.assignedTo) && Boolean(currentUser.username) && task.assignedTo === currentUser.username);
-          if (isAssignedToMe) {
-            const assignId = `task-assigned-${task.id}-${currentUser.id}`;
-            const exists = updated.some(n => n.id === assignId);
-            const isDeleted = localStorage.getItem(`notif_deleted_${currentUser.id}_${assignId}`) === 'true';
-            if (!exists && !isDeleted) {
-              updated.unshift({
-                id: assignId,
-                title: 'Nhiệm vụ mới được giao',
-                description: `Bạn đã được giao nhiệm vụ mới: "${task.name}".`,
-                timestamp: new Date().toISOString(),
-                type: 'task',
-                unread: true,
-                actionUrl: 'tasks',
-                metadata: { taskId: task.id }
-              });
-              hasChanges = true;
-            }
-          }
-        });
-
-        // Dọn sạch các thông báo local (task-expiring-*, task-assigned-*) nếu task đó không thuộc quyền sở hữu của user hoặc đã xóa
-        const originalLength = updated.length;
-        updated = updated.filter(n => {
-          if (n.id.startsWith('task-expiring-') || n.id.startsWith('task-assigned-')) {
-            const taskId = n.metadata?.taskId;
-            if (taskId) {
-              const foundTask = tasks.find(t => t.id === taskId);
-              if (!foundTask || foundTask.isDeleted || !isTaskRelevantToUser(foundTask, currentUser)) {
-                return false;
-              }
-            }
-          }
-          return true;
-        });
-        if (updated.length !== originalLength) {
-          hasChanges = true;
-        }
-
-        if (hasChanges) {
-          const localOnly = updated.filter(n => n.id.startsWith('task-'));
-          setTimeout(() => {
-            localStorage.setItem(key, JSON.stringify(localOnly));
-            window.dispatchEvent(new Event('app_notifications_changed'));
-          }, 0);
-          return updated;
-        }
-        return prev;
-      });
-    });
-
-    return () => {
-      unsubscribeNotifs();
-      unsubscribeTasks();
-    };
-  }, [currentUser.id, currentUser.role]);
-
-  useEffect(() => {
-    const handleNotifChange = () => {
-      const key = `notifications_${currentUser.id}`;
-      const stored = localStorage.getItem(key);
-      let localNotifs = [];
-      if (stored) {
-        try {
-          localNotifs = JSON.parse(stored);
-        } catch (e) {}
-      }
-      
-      setNotifications(prev => {
-        const systemNotifs = prev.filter(n => !n.id.startsWith('task-') && localStorage.getItem(`notif_deleted_${currentUser.id}_${n.id}`) !== 'true')
-                                 .map(n => ({ ...n, unread: localStorage.getItem(`notif_read_${currentUser.id}_${n.id}`) !== 'true' }));
-        const combined = [...systemNotifs, ...localNotifs];
-        combined.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-        return combined;
-      });
-    };
-    window.addEventListener('app_notifications_changed', handleNotifChange);
-    return () => window.removeEventListener('app_notifications_changed', handleNotifChange);
-  }, [currentUser.id]);
-
-  const saveAndSync = (newNotifications: AppNotification[]) => {
-    setNotifications(newNotifications);
-    const key = `notifications_${currentUser.id}`;
-    localStorage.setItem(key, JSON.stringify(newNotifications));
-    window.dispatchEvent(new Event('app_notifications_changed'));
-  };
-
-  const handleMarkAsRead = (id: string) => {
-    const readKey = `notif_read_${currentUser.id}_${id}`;
-    localStorage.setItem(readKey, 'true');
-    const updated = notifications.map(n => n.id === id ? { ...n, unread: false } : n);
-    saveAndSync(updated);
-  };
-
-  const handleDeleteNotification = (id: string) => {
-    localStorage.setItem(`notif_deleted_${currentUser.id}_${id}`, 'true');
-    const updated = notifications.filter(n => n.id !== id);
-    saveAndSync(updated);
-  };
-
-  const handleMarkAllRead = () => {
-    notifications.forEach(n => {
-      const readKey = `notif_read_${currentUser.id}_${n.id}`;
-      localStorage.setItem(readKey, 'true');
-    });
-    const updated = notifications.map(n => ({ ...n, unread: false }));
-    saveAndSync(updated);
-  };
-
+  // Danh sách, trạng thái đọc và xoá dùng chung, đồng bộ giữa các thiết bị.
+  const notif = useMyNotifications(currentUser);
+  const notifications = notif.items;
+  const allTasks: Task[] = notif.tasks;
+  const handleMarkAsRead = (id: string) => notif.markRead(id);
+  const handleDeleteNotification = (id: string) => notif.remove(id);
+  const handleMarkAllRead = () => notif.markAllRead();
   const handleClearAll = () => {
-    confirm('Xác nhận xóa toàn bộ thông báo', 'Bạn có chắc chắn muốn xóa toàn bộ thông báo không?', () => {
-      notifications.forEach(n => {
-        localStorage.setItem(`notif_deleted_${currentUser.id}_${n.id}`, 'true');
-      });
-      saveAndSync([]);
-    });
+    confirm('Xác nhận xóa toàn bộ thông báo', 'Bạn có chắc chắn muốn xóa toàn bộ thông báo không?', () => notif.clearAll());
   };
 
   const handleNotificationClick = (n: AppNotification) => {
     handleMarkAsRead(n.id);
+    // Thông báo cộng tác, cấp quyền ứng dụng: mở thẳng nơi liên quan.
+    if (openNotificationTarget(n, setCurrentTab)) return;
     
     // Check if it's a task/warning notification
     if (n.type === 'task' || n.type === 'warning') {
@@ -405,7 +198,7 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
     // Type Filter
     if (activeFilter === 'unread' && !n.unread) return false;
     if (activeFilter === 'task' && n.type !== 'task' && n.type !== 'warning') return false;
-    if (activeFilter === 'system' && n.type !== 'system' && n.type !== 'journal') return false;
+    if (activeFilter === 'system' && !['system', 'journal', 'collab', 'access', 'info', 'success', 'error'].includes(n.type)) return false;
 
     // Search filter
     const matchesSearch = n.title.toLowerCase().includes(search.toLowerCase()) || 
@@ -415,7 +208,7 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
 
   const unreadCount = uniqueNotifications.filter(n => n.unread).length;
   const taskCount = uniqueNotifications.filter(n => n.type === 'task' || n.type === 'warning').length;
-  const systemCount = uniqueNotifications.filter(n => n.type === 'system' || n.type === 'journal').length;
+  const systemCount = uniqueNotifications.filter(n => ['system', 'journal', 'collab', 'access', 'info', 'success', 'error'].includes(n.type)).length;
 
   // Sync back to parent state immediately
   useEffect(() => {
@@ -590,7 +383,7 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
                         ? 'bg-rose-50 text-rose-600 border border-rose-100/60' 
                         : (n.type === 'journal' ? 'bg-brand-light text-brand border border-brand-light/60' : 'bg-brand-light text-brand border border-brand-light/60')
                     }`}>
-                      {n.type === 'warning' ? 'Cảnh báo' : (n.type === 'task' ? 'Công việc' : (n.type === 'journal' ? 'Tạp chí' : 'Hệ thống'))}
+                      {n.type === 'warning' ? 'Cảnh báo' : (n.type === 'task' ? 'Công việc' : (n.type === 'journal' ? 'Tạp chí' : n.type === 'collab' ? 'Cộng tác' : n.type === 'access' ? 'Quyền sử dụng' : 'Hệ thống'))}
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 max-w-2xl leading-relaxed">
@@ -605,7 +398,7 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
 
               {/* Action and delete buttons */}
               <div className="flex items-center gap-2 self-end sm:self-center w-full sm:w-auto justify-end">
-                {n.actionUrl && (
+                {(n.actionUrl || (n.metadata?.collabType && !n.metadata?.removed) || (n.type === 'access' && n.metadata?.appId)) && (
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();

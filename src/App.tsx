@@ -47,6 +47,7 @@ import { setEduAuthContext } from './lib/edu';
 import { TaskProvider } from './components/TaskContext';
 import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban, GraduationCap, Film, FileUser, QrCode } from 'lucide-react';
 import { supabase } from "./lib/supabase";
+import { useMyNotifications, resetNotificationStore, notifyAppAccessChange } from './lib/notifications';
 import { saveUser, savePublicProfile, deleteUser, getUsers, getUserById, mapUserFromDB, seedDefaultUsersIfNeeded, getDefaultSettingsFromSupabase, getCachedSettings, saveDefaultSettingsToSupabase, testSupabaseConnection, getNotificationsFromSupabase, subscribeToNotificationChanges, USERS_TABLE } from './lib/data';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -269,64 +270,10 @@ export default function App() {
     };
   }, [currentUser]);
 
-  // Real-time listener for unread notifications count
-  useEffect(() => {
-    if (!currentUser) {
-      setUnreadNotificationsCount(0);
-      return;
-    }
-    
-    let currentSupabaseNotifs: any[] = [];
-    
-    const updateCounts = () => {
-      const newUnreadSupabase = currentSupabaseNotifs.filter(fn => {
-        if (localStorage.getItem(`notif_deleted_${currentUser.id}_${fn.id}`) === 'true') return false;
-        const readKey = `notif_read_${currentUser.id}_${fn.id}`;
-        return localStorage.getItem(readKey) !== 'true';
-      }).length;
-      
-      let newUnreadLocal = 0;
-      const stored = localStorage.getItem(`notifications_${currentUser.id}`);
-      if (stored) {
-        try {
-          const localNotifs = JSON.parse(stored);
-          const filteredLocal = localNotifs.filter((n: any) => !n.id.startsWith("system-welcome-") && !n.id.startsWith("journal-sync-") && !n.id.startsWith("task-tip-"));
-          newUnreadLocal = filteredLocal.filter((n: any) => n.unread).length;
-        } catch (e) {}
-      } else {
-        newUnreadLocal = 0;
-      }
-      setUnreadNotificationsCount(newUnreadSupabase + newUnreadLocal);
-    };
-
-    const unsubscribeFirestore = subscribeToNotificationChanges(() => {
-      loadNotifs();
-    });
-
-    async function loadNotifs() {
-      const notifs = await getNotificationsFromSupabase();
-      currentSupabaseNotifs = notifs.filter(fn => {
-        let isTarget = false;
-        if (fn.targetAudience === 'all') {
-          // Thông báo task chỉ admin nhận broadcast chung, user thường chỉ nhận khi được chỉ định
-          isTarget = fn.type !== 'task' || currentUser.role === 'admin';
-        }
-        else if (fn.targetAudience === 'all_admins' && currentUser.role === 'admin') isTarget = true;
-        else if (fn.targetAudience === 'custom_admins' && currentUser.role === 'admin' && (fn.targetUserIds?.includes(currentUser.id) || fn.targetUserIds?.includes(currentUser.username))) isTarget = true;
-        else if (fn.targetAudience === 'custom_users' && (fn.targetUserIds?.includes(currentUser.id) || fn.targetUserIds?.includes(currentUser.username))) isTarget = true;
-        return isTarget;
-      });
-      updateCounts();
-    }
-    
-    loadNotifs();
-    window.addEventListener('app_notifications_changed', updateCounts);
-
-    return () => {
-      unsubscribeFirestore();
-      window.removeEventListener('app_notifications_changed', updateCounts);
-    };
-  }, [currentUser]);
+  // Số thông báo chưa đọc lấy từ kho thông báo dùng chung (đồng bộ giữa các thiết bị).
+  const myNotifs = useMyNotifications(currentUser);
+  useEffect(() => { setUnreadNotificationsCount(currentUser ? myNotifs.unread : 0); }, [myNotifs.unread, currentUser]);
+  useEffect(() => { if (!currentUser) resetNotificationStore(); }, [currentUser]);
   
   // Nạp cấu hình từ cache trình duyệt ngay từ lần vẽ đầu tiên, để tên chức năng, ảnh, tiêu đề,
   // font hiện đúng liền, không còn cảnh hiện giá trị mặc định rồi mới nhảy sang giá trị đúng.
@@ -541,8 +488,11 @@ export default function App() {
 
   // Save or update the user profile in Firebase Firestore.
   const handleSaveUser = async (user: UserAccount) => {
+    const prevUser = users.find(u => u.id === user.id);
     try {
       await saveUser(user);
+      // Báo cho người được cấp hoặc thu hồi quyền dùng ứng dụng.
+      notifyAppAccessChange(prevUser, user, currentUser).catch(() => {});
     } catch (e: any) {
       console.warn("Firebase error on saveUser:", e);
       throw new Error(e.message || 'Lỗi khi lưu thông tin vào database.');

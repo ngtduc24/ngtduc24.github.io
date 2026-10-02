@@ -278,7 +278,7 @@ export interface AppNotification {
   title: string;
   description: string;
   timestamp: string;
-  type: 'system' | 'task' | 'journal' | 'info' | 'warning' | 'error' | 'success';
+  type: 'system' | 'task' | 'journal' | 'info' | 'warning' | 'error' | 'success' | 'collab' | 'access';
   targetAudience?: 'all' | 'all_admins' | 'custom_admins' | 'custom_users';
   targetUserIds?: string[];
   priority?: 'low' | 'normal' | 'high' | 'urgent';

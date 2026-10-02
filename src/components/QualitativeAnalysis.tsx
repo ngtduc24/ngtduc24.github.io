@@ -1,4 +1,5 @@
 import { PageHeader, Badge, IconButton } from './ui';
+import { takeOpenHint } from '../lib/notifications';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   FolderKanban,
@@ -396,6 +397,10 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
         setIsProjectsLoading(true);
         const projs = await getQDAProjects();
         if (projs && projs.length > 0) {
+          // Mở từ thông báo cộng tác thì chọn sẵn đúng dự án được chia sẻ.
+          const hinted = takeOpenHint('qda_project');
+          const first = projs.find((p: any) => p.id === hinted);
+          if (first) { projs.splice(projs.indexOf(first), 1); projs.unshift(first); }
           setProjects(projs);
           setSelectedProjectId(projs[0].id);
           

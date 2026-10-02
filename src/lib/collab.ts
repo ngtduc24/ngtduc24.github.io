@@ -129,17 +129,10 @@ export async function addCollaborator(input: {
     if (missingTable(error)) throw new Error('Chưa tạo bảng cộng tác. Hãy chạy tệp COLLABORATORS.sql trong Supabase.');
     throw error;
   }
-  // Báo cho người được thêm.
-  pushNotificationToSupabase({
-    title: 'Bạn được thêm vào cộng tác',
-    description: `${input.senderName || 'Một người dùng'} đã thêm bạn vào ${TYPE_LABELS[input.type]} "${input.resourceTitle || ''}"${input.role ? ` với quyền ${ROLE_LABELS[input.role].label.toLowerCase()}` : ''}.`,
-    type: 'system',
-    targetAudience: 'custom_users',
-    targetUserIds: [input.user.id],
-    senderId: me() || undefined,
-    senderName: input.senderName,
-    metadata: { collabType: input.type, resourceId: input.resourceId },
-  } as any).catch(() => {});
+  // Báo cho người được thêm, bấm vào thông báo là mở thẳng tài nguyên.
+  notifyCollab(input.user.id, input.type, input.resourceId, 'Bạn được thêm vào cộng tác',
+    `${input.senderName || await myName()} đã thêm bạn vào ${TYPE_LABELS[input.type]} "${input.resourceTitle || ''}" ${rightsText(input.type, input.role || 'view', input.perms)}.`,
+    { role: input.role || 'view', perms: input.perms || {} });
   return map(data);
 }
 
@@ -147,13 +140,57 @@ export async function updateCollaborator(c: Collaborator, patch: { role?: Collab
   await assertCanManage(c.resourceType, c.resourceId, c.ownerId);
   const { error } = await supabase.from(T).update({ ...patch, updated_at: new Date().toISOString() }).eq('id', c.id);
   if (error) throw error;
+  // Báo cho người được đổi quyền (gom các lần tích chọn liên tiếp thành 1 thông báo).
+  const key = `${c.resourceType}:${c.resourceId}:${c.userId}`;
+  const prev = pendingUpdates.get(key);
+  if (prev) clearTimeout(prev);
+  const role = patch.role || c.role;
+  const perms = patch.perms || c.perms;
+  pendingUpdates.set(key, setTimeout(async () => {
+    pendingUpdates.delete(key);
+    notifyCollab(c.userId, c.resourceType, c.resourceId, 'Quyền cộng tác của bạn đã thay đổi',
+      `${await myName()} đã đổi quyền của bạn ở ${TYPE_LABELS[c.resourceType]} "${c.resourceTitle || ''}", nay ${rightsText(c.resourceType, role, perms)}.`,
+      { role, perms });
+  }, 3000));
 }
+const pendingUpdates = new Map<string, ReturnType<typeof setTimeout>>();
 
 export async function removeCollaborator(c: Collaborator): Promise<void> {
   // Tự rời khỏi cộng tác thì luôn được.
-  if (c.userId !== me()) await assertCanManage(c.resourceType, c.resourceId, c.ownerId);
+  const self = c.userId === me();
+  if (!self) await assertCanManage(c.resourceType, c.resourceId, c.ownerId);
   const { error } = await supabase.from(T).delete().eq('id', c.id);
   if (error) throw error;
+  if (!self) {
+    notifyCollab(c.userId, c.resourceType, c.resourceId, 'Bạn đã được rời khỏi cộng tác',
+      `${await myName()} đã bỏ bạn khỏi ${TYPE_LABELS[c.resourceType]} "${c.resourceTitle || ''}". Bạn không còn xem hay sửa được nội dung này.`,
+      { removed: true });
+  }
+}
+
+// Tên người đang thao tác, lấy từ danh bạ tài khoản.
+async function myName(): Promise<string> {
+  const uid = me();
+  if (!userCache) userCache = await getUsers().catch(() => []);
+  return userCache?.find(u => u.id === uid)?.fullName || 'Một người dùng';
+}
+
+// Mô tả quyền: 3 mức cho nội dung, danh sách quyền đã tích cho lớp, trường.
+function rightsText(type: CollabType, role: CollabRole, perms?: ClassPerms): string {
+  if (type === 'edu_class' || type === 'edu_school') {
+    const on = CLASS_PERM_LABELS.filter(([k]) => perms?.[k]).map(([, l]) => l.toLowerCase());
+    return on.length ? `với quyền ${on.join(', ')}` : 'với quyền xem';
+  }
+  return `với quyền ${ROLE_LABELS[role].label.toLowerCase()}`;
+}
+
+function notifyCollab(userId: string, type: CollabType, resourceId: string, title: string, description: string, extra: Record<string, any>) {
+  pushNotificationToSupabase({
+    title, description, type: 'collab',
+    targetAudience: 'custom_users', targetUserIds: [userId],
+    senderId: me() || undefined,
+    metadata: { collabType: type, resourceId, ...extra },
+  } as any).catch(() => {});
 }
 
 // Xoá hết người cộng tác khi chủ xoá tài nguyên.

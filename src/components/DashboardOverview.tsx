@@ -1,3 +1,4 @@
+import { useMyNotifications } from '../lib/notifications';
 import React, { useState, useEffect, useRef } from 'react';
 import { canUseModule } from '../lib/moduleAccess';
 import MediaSourcePicker from './MediaSourcePicker';
@@ -86,7 +87,9 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const [statsData, setStatsData] = useState<Record<string, number>>({ calculator: 0, public_search: 0 });
   const [journals, setJournals] = useState<ScientificJournal[]>([]);
   const [journalsCount, setJournalsCount] = useState<number>(0);
-  const [notifs, setNotifs] = useState<AppNotification[]>([]);
+  // Thông báo của tài khoản này, đã bỏ các thông báo đã xoá, trạng thái đọc đồng bộ giữa các thiết bị.
+  const myNotifs = useMyNotifications(currentUser);
+  const notifs = myNotifs.items;
   const [search, setSearch] = useState('');
 
   // Thứ tự hàng biểu tượng chức năng do người dùng tự kéo thả sắp xếp, lưu theo tài khoản
@@ -203,10 +206,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   useEffect(() => {
     getStatsFromSupabase().then(setStatsData).catch(() => {});
     getJournalsFromSupabase().then(j => { setJournals(j); setJournalsCount(j.length); }).catch(() => {});
-    // Chỉ hiện thông báo gửi tới chính tài khoản này, bỏ các thông báo đã xoá.
-    getNotificationsFromSupabase()
-      .then(list => setNotifs(list.filter((n: any) => isNotificationForUser(n, currentUser) && localStorage.getItem(`notif_deleted_${currentUser.id}_${n.id}`) !== 'true')))
-      .catch(() => {});
+
   }, []);
 
   const handleSaveDbConfig = (e: React.FormEvent) => {
@@ -424,7 +424,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   const runningTasks = visibleTasks.filter(t => t.status !== 'Completed' && t.status !== 'Cancelled');
   const completedCount = visibleTasks.filter(t => t.status === 'Completed').length;
   const recentTasks = [...visibleTasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3);
-  const unreadCount = notifs.filter(n => localStorage.getItem(`notif_read_${currentUser.id}_${n.id}`) !== 'true').length;
+  const unreadCount = myNotifs.unread;
 
   const statusBadge = (status: string) => {
     if (status === 'Completed') return { label: 'Hoàn thành', cls: 'bg-emerald-50 text-emerald-600 border-emerald-200' };
