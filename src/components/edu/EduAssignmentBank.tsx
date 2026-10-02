@@ -1,10 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
-import Link from '@tiptap/extension-link';
-import TextAlign from '@tiptap/extension-text-align';
-import Placeholder from '@tiptap/extension-placeholder';
+import type { Editor } from '@tiptap/react';
+import RichTextEditor from '../cms/RichTextEditor';
 import {
   BookMarked, Plus, Trash2, Edit3, X, Save, FileText, Search, LayoutGrid, List as ListIcon, Globe, Lock,
   Bold, Italic, List, ListOrdered, Heading1, Heading2, FileDown, Eye, ArrowLeft, Loader2, FolderInput, Check,
@@ -26,8 +22,6 @@ import { askText, copyText } from '../ui/Dialogs';
 import { useConfirmation } from '../ConfirmationContext';
 import { fold, usePaging, Pager } from './ListPager';
 import MediaSourcePicker from '../MediaSourcePicker';
-import { VideoNode } from '../../lib/tiptapVideo';
-import VideoInsertButtons from './VideoInsertButtons';
 
 const FORMAT_OPTIONS = [
   { id: 'any', label: 'Mọi loại tệp' },
@@ -83,17 +77,9 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkSubject, setBulkSubject] = useState('');
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Image,
-      VideoNode,
-      Link.configure({ openOnClick: false }),
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      Placeholder.configure({ placeholder: 'Nhập yêu cầu và hướng dẫn bài tập...' }),
-    ],
-    content: '',
-  });
+  // Trình soạn thảo chuẩn dùng chung của EduGo (RichTextEditor). Nội dung giữ trong state, editor chỉ dùng khi cần gọi trực tiếp.
+  const [editor, setEditor] = useState<Editor | null>(null);
+  const [contentHtml, setContentHtml] = useState('');
 
   // Tên người tạo lấy từ chính bài tập (bài dùng chung của người khác có lưu tên tác giả).
   const userNames: Record<string, string> = {};
@@ -147,7 +133,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   const openEditor = (item: Partial<EduAssignmentBankItem>) => {
     setExpandedId('');
     setEditing(item);
-    editor?.commands.setContent(item.content || '');
+    setContentHtml(item.content || '');
   };
 
   const downloadPdf = (it: EduAssignmentBankItem) => exportAssignmentToPdf({
@@ -215,7 +201,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
         id: editing.id,
         subjectId: editing.subjectId || '',
         title: editing.title,
-        content: editor?.getHTML() || '',
+        content: contentHtml,
         allowedFileTypes: editing.allowedFileTypes && editing.allowedFileTypes.length ? editing.allowedFileTypes : ['pdf'],
         resources: editing.resources || [],
         ownerId: editing.ownerId,
@@ -344,32 +330,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-slate-400 uppercase">Yêu cầu và hướng dẫn</label>
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
-                <div className="p-2 bg-slate-50 border-b border-slate-100 flex flex-wrap gap-1">
-                  <button onClick={() => editor?.chain().focus().toggleBold().run()} className={tbBtn(!!editor?.isActive('bold'))}><Bold className="w-4 h-4" /></button>
-                  <button onClick={() => editor?.chain().focus().toggleItalic().run()} className={tbBtn(!!editor?.isActive('italic'))}><Italic className="w-4 h-4" /></button>
-                  <div className="w-px h-6 bg-slate-200 mx-1 self-center" />
-                  <button onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()} className={tbBtn(!!editor?.isActive('heading', { level: 1 }))}><Heading1 className="w-4 h-4" /></button>
-                  <button onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()} className={tbBtn(!!editor?.isActive('heading', { level: 2 }))}><Heading2 className="w-4 h-4" /></button>
-                  <div className="w-px h-6 bg-slate-200 mx-1 self-center" />
-                  <button onClick={() => editor?.chain().focus().toggleBulletList().run()} className={tbBtn(!!editor?.isActive('bulletList'))}><List className="w-4 h-4" /></button>
-                  <button onClick={() => editor?.chain().focus().toggleOrderedList().run()} className={tbBtn(!!editor?.isActive('orderedList'))}><ListOrdered className="w-4 h-4" /></button>
-                  <div className="w-px h-6 bg-slate-200 mx-1 self-center" />
-                  <button onClick={() => editor?.chain().focus().setTextAlign('left').run()} className={tbBtn(!!editor?.isActive({ textAlign: 'left' }))}><AlignLeft className="w-4 h-4" /></button>
-                  <button onClick={() => editor?.chain().focus().setTextAlign('center').run()} className={tbBtn(!!editor?.isActive({ textAlign: 'center' }))}><AlignCenter className="w-4 h-4" /></button>
-                  <button onClick={() => editor?.chain().focus().setTextAlign('right').run()} className={tbBtn(!!editor?.isActive({ textAlign: 'right' }))}><AlignRight className="w-4 h-4" /></button>
-                  <div className="w-px h-6 bg-slate-200 mx-1 self-center" />
-                  <span title="Chèn ảnh từ thư viện hoặc tải lên" className="inline-flex">
-                    <MediaSourcePicker onSelect={url => editor?.chain().focus().setImage({ src: url }).run()} accept="image/*" resourceType="image" folder="edu-assignments" icon={ImageIcon} label="" className="p-2 rounded-lg text-slate-500 hover:bg-slate-200 flex items-center" />
-                  </span>
-                  <VideoInsertButtons editor={editor} folder="edu-assignments" />
-                  <button onClick={async () => { const url = await askText({ title: 'Chèn liên kết', placeholder: 'https://...', okText: 'Chèn', defaultValue: editor?.getAttributes('link').href || '' }); if (url) editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run(); }} className={tbBtn(!!editor?.isActive('link'))}><LinkIcon className="w-4 h-4" /></button>
-                  <div className="flex-1" />
-                  <button onClick={() => editor?.chain().focus().undo().run()} className="p-2 rounded-lg hover:bg-slate-200 text-slate-500"><Undo className="w-4 h-4" /></button>
-                  <button onClick={() => editor?.chain().focus().redo().run()} className="p-2 rounded-lg hover:bg-slate-200 text-slate-500"><Redo className="w-4 h-4" /></button>
-                </div>
-                <EditorContent editor={editor} className="prose prose-slate max-w-none text-sm p-4 min-h-[320px] max-h-[560px] overflow-y-auto focus:outline-none" />
-              </div>
+              <RichTextEditor value={contentHtml} onChange={setContentHtml} onReady={setEditor} placeholder="Nhập yêu cầu và hướng dẫn bài tập..." minHeight="360px" maxHeight="70vh" folder="edu-assignments" />
             </div>
           </div>
 

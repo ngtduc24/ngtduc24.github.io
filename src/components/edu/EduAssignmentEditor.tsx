@@ -1,12 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { askText } from '../ui/Dialogs';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
-import Link from '@tiptap/extension-link';
-import TextAlign from '@tiptap/extension-text-align';
-import Placeholder from '@tiptap/extension-placeholder';
+import type { Editor } from '@tiptap/react';
+import RichTextEditor from '../cms/RichTextEditor';
 import { 
   Bold, 
   Italic, 
@@ -38,8 +34,6 @@ import { EduAssignment, EduGradeColumn } from '../../types/edu';
 import { getGradeColumns, saveAssignment, getAssignments, getSubjects, saveSubject, getAssignmentBank, saveAssignmentBankItem } from '../../lib/edu';
 import { EduSubject, EduAssignmentBankItem, EduResource } from '../../types/edu';
 import { EduResourceEditor } from './EduResources';
-import { VideoNode } from '../../lib/tiptapVideo';
-import VideoInsertButtons from './VideoInsertButtons';
 import DateTime24, { isoToLocalInput, localInputToIso } from '../ui/DateTime24';
 import { useNotifications } from '../NotificationContext';
 import { uploadImageToCloudinary } from '../../lib/upload';
@@ -113,17 +107,9 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
     }
   };
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Image,
-      VideoNode,
-      Link.configure({ openOnClick: false }),
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      Placeholder.configure({ placeholder: 'Nhập nội dung bài tập tại đây...' }),
-    ],
-    content: '',
-  });
+  // Trình soạn thảo chuẩn dùng chung của EduGo (RichTextEditor). Nội dung giữ trong state, editor chỉ dùng khi cần gọi trực tiếp.
+  const [editor, setEditor] = useState<Editor | null>(null);
+  const [contentHtml, setContentHtml] = useState('');
 
   // Nạp danh sách môn học (bỏ qua nếu bảng chưa tạo).
   useEffect(() => {
@@ -144,7 +130,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
     setTitle(item.title);
     setAllowedTypes(item.allowedFileTypes || ['pdf']);
     setResources(item.resources || []);
-    editor?.commands.setContent(item.content || '');
+    setContentHtml(item.content || '');
   };
 
   const handleAddSubject = async () => {
@@ -189,7 +175,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
             setAllowLate(!!assignment.allowLate);
             setAllowSupplement(assignment.allowSupplement !== false);
             setResources(assignment.resources || []);
-            editor?.commands.setContent(assignment.content || '');
+            setContentHtml(assignment.content || '');
           }
         } else if (filteredColumns.length > 0) {
           setGradeColumnId(filteredColumns[0].id);
@@ -199,7 +185,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
       }
     }
     loadData();
-  }, [classId, assignmentId, editor]);
+  }, [classId, assignmentId]);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -220,7 +206,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
         subjectId: subjectId || undefined,
         bankId: selectedBankId || undefined,
         title,
-        content: editor?.getHTML(),
+        content: contentHtml,
         allowedFileTypes: allowedTypes,
         deadline: localInputToIso(deadline) ?? undefined,
         allowLate,
@@ -234,7 +220,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
           await saveAssignmentBankItem({
             subjectId: subjectId || undefined,
             title,
-            content: editor?.getHTML(),
+            content: contentHtml,
             allowedFileTypes: allowedTypes,
             resources,
           });
@@ -275,44 +261,7 @@ export default function EduAssignmentEditor({ classId, assignmentId, onSuccess }
         </div>
 
         {/* Khung nội dung soạn thảo riêng */}
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-[520px]">
-          <div className="p-4 bg-slate-50 border-b border-slate-100 flex flex-wrap gap-1">
-            <button onClick={() => editor?.chain().focus().toggleBold().run()} className={`p-2 rounded-lg transition-all ${editor?.isActive('bold') ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><Bold className="w-4 h-4" /></button>
-            <button onClick={() => editor?.chain().focus().toggleItalic().run()} className={`p-2 rounded-lg transition-all ${editor?.isActive('italic') ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><Italic className="w-4 h-4" /></button>
-            <div className="w-px h-6 bg-slate-200 mx-1 self-center" />
-            <button onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()} className={`p-2 rounded-lg transition-all ${editor?.isActive('heading', { level: 1 }) ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><Heading1 className="w-4 h-4" /></button>
-            <button onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()} className={`p-2 rounded-lg transition-all ${editor?.isActive('heading', { level: 2 }) ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><Heading2 className="w-4 h-4" /></button>
-            <div className="w-px h-6 bg-slate-200 mx-1 self-center" />
-            <button onClick={() => editor?.chain().focus().toggleBulletList().run()} className={`p-2 rounded-lg transition-all ${editor?.isActive('bulletList') ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><List className="w-4 h-4" /></button>
-            <button onClick={() => editor?.chain().focus().toggleOrderedList().run()} className={`p-2 rounded-lg transition-all ${editor?.isActive('orderedList') ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><ListOrdered className="w-4 h-4" /></button>
-            <div className="w-px h-6 bg-slate-200 mx-1 self-center" />
-            <button onClick={() => editor?.chain().focus().setTextAlign('left').run()} className={`p-2 rounded-lg transition-all ${editor?.isActive({ textAlign: 'left' }) ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><AlignLeft className="w-4 h-4" /></button>
-            <button onClick={() => editor?.chain().focus().setTextAlign('center').run()} className={`p-2 rounded-lg transition-all ${editor?.isActive({ textAlign: 'center' }) ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><AlignCenter className="w-4 h-4" /></button>
-            <button onClick={() => editor?.chain().focus().setTextAlign('right').run()} className={`p-2 rounded-lg transition-all ${editor?.isActive({ textAlign: 'right' }) ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><AlignRight className="w-4 h-4" /></button>
-            <div className="w-px h-6 bg-slate-200 mx-1 self-center" />
-            <MediaSourcePicker
-              onSelect={(url) => editor?.chain().focus().setImage({ src: url }).run()}
-              accept="image/*"
-              resourceType="image"
-              folder="edu-assignments"
-              icon={ImageIcon}
-              label=""
-              className="p-2 rounded-lg text-slate-500 hover:bg-slate-200 flex items-center"
-            />
-            <VideoInsertButtons editor={editor} folder="edu-assignments" />
-            <button onClick={async () => {
-              const url = await askText({ title: 'Chèn liên kết', placeholder: 'https://...', okText: 'Chèn', defaultValue: editor?.getAttributes('link').href || '' });
-              if (url) editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-            }} className={`p-2 rounded-lg transition-all ${editor?.isActive('link') ? 'bg-brand text-white shadow-sm' : 'hover:bg-slate-200 text-slate-500'}`}><LinkIcon className="w-4 h-4" /></button>
-            <div className="flex-1" />
-            <button onClick={() => editor?.chain().focus().undo().run()} className="p-2 rounded-lg hover:bg-slate-200 text-slate-500"><Undo className="w-4 h-4" /></button>
-            <button onClick={() => editor?.chain().focus().redo().run()} className="p-2 rounded-lg hover:bg-slate-200 text-slate-500"><Redo className="w-4 h-4" /></button>
-          </div>
-          
-          <div className="flex-1 p-6 overflow-y-auto">
-            <EditorContent editor={editor} className="prose prose-slate max-w-none min-h-[400px] text-sm focus:outline-none" />
-          </div>
-        </div>
+        <RichTextEditor value={contentHtml} onChange={setContentHtml} onReady={setEditor} placeholder="Nhập nội dung bài tập tại đây..." minHeight="480px" autoHeight folder="edu-assignments" />
       </div>
 
       {/* Config Side */}

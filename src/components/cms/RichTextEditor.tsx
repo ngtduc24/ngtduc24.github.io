@@ -202,6 +202,8 @@ interface RichTextEditorProps {
   folder?: string;
   // true: khung soạn cao theo nội dung, thanh công cụ bám đầu trang khi cuộn (dùng cho trang soạn bài).
   autoHeight?: boolean;
+  // Trả về đối tượng editor cho nơi cần gọi trực tiếp (nạp nội dung, lấy HTML).
+  onReady?: (editor: Editor) => void;
 }
 
 // Ảnh đã nằm trong kho Cloudinary của EduGo thì không cần chép lại.
@@ -209,12 +211,14 @@ const OWN_CLOUD = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'sjpkbenx').tri
 const isOwnMedia = (src: string) => src.includes(`res.cloudinary.com/${OWN_CLOUD}/`);
 const isImportable = (src: string) => !!src && !isOwnMedia(src) && (/^https?:\/\//i.test(src) || /^data:image\//i.test(src));
 
-export default function RichTextEditor({ value, onChange, placeholder = 'Nhập nội dung...', minHeight = '320px', maxHeight = '600px', folder = 'portfolio/posts', autoHeight = false }: RichTextEditorProps) {
+export default function RichTextEditor({ value, onChange, placeholder = 'Nhập nội dung...', minHeight = '320px', maxHeight = '600px', folder = 'portfolio/posts', autoHeight = false, onReady }: RichTextEditorProps) {
   const [, force] = useState(0);
   const [full, setFull] = useState(false);
   const [source, setSource] = useState<string | null>(null);
   const [uploading, setUploading] = useState(0);
   const editorRef = useRef<Editor | null>(null);
+  const lastEmitted = useRef<string>(value || '');
+  const onChangeRef = useRef(onChange); onChangeRef.current = onChange;
 
   // Dán hoặc kéo thả ảnh từ máy: tải lên Kho lưu trữ rồi chèn vào đúng chỗ.
   const uploadFiles = async (files: File[], pos?: number) => {
@@ -286,7 +290,7 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Nhập 
       Placeholder.configure({ placeholder }),
     ],
     content: toInitialHtml(value),
-    onUpdate: ({ editor }) => onChange(editor.isEmpty ? '' : editor.getHTML()),
+    onUpdate: ({ editor }) => { const html = editor.isEmpty ? '' : editor.getHTML(); lastEmitted.current = html; onChangeRef.current(html); },
     onSelectionUpdate: () => force(n => n + 1),
     onTransaction: () => force(n => n + 1),
     editorProps: {
@@ -314,6 +318,16 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Nhập 
     },
   });
   editorRef.current = editor;
+
+  // Nội dung đổi từ bên ngoài (mở bài khác, nạp từ ngân hàng đề) thì nạp lại vào khung soạn.
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    if ((value || '') === lastEmitted.current) return;
+    const next = toInitialHtml(value || '');
+    if (next !== editor.getHTML()) editor.commands.setContent(next, { emitUpdate: false });
+    lastEmitted.current = value || '';
+  }, [value, editor]);
+  useEffect(() => { if (editor && onReady) onReady(editor); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [editor]);
 
   // Thoát toàn màn hình bằng phím Esc.
   useEffect(() => {
