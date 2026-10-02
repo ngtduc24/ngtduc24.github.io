@@ -36,7 +36,7 @@ export default function SlidePublicView({ token }: { token: string }) {
   );
   return (
     <div className="min-h-[100dvh] bg-slate-100">
-      <header className="flex h-14 items-center gap-3 bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-600 px-4 text-white">
+      <header className="flex h-14 items-center gap-3 bg-gradient-to-r from-brand to-brand-hover px-4 text-white">
         <a href="/" className="font-display text-lg font-bold">EduGo</a>
         <span className="min-w-0 flex-1 truncate text-center text-sm font-semibold">{deck.title}</span>
         <button onClick={() => setPresent(true)} className="flex h-9 items-center gap-2 rounded-lg bg-white px-3 text-sm font-semibold text-slate-800"><Play className="h-4 w-4" /> Trình chiếu</button>
@@ -49,7 +49,7 @@ export default function SlidePublicView({ token }: { token: string }) {
           <button onClick={() => setI(v => Math.min(deck.slides.length - 1, v + 1))} className="grid h-9 w-9 place-items-center rounded-full bg-white shadow hover:bg-slate-50" aria-label="Trang sau"><ChevronRight className="h-5 w-5" /></button>
         </div>
         <div className="flex max-w-full gap-2 overflow-x-auto pb-2">
-          {deck.slides.map((s, k) => <button key={s.id} onClick={() => setI(k)} className={`shrink-0 overflow-hidden rounded-md border-2 ${k === i ? 'border-violet-500' : 'border-transparent'}`}><SlideRenderer slide={s} width={120} /></button>)}
+          {deck.slides.map((s, k) => <button key={s.id} onClick={() => setI(k)} className={`shrink-0 overflow-hidden rounded-md border-2 ${k === i ? 'border-brand' : 'border-transparent'}`}><SlideRenderer slide={s} width={120} /></button>)}
         </div>
       </main>
       {present && <SlidePresenter slides={deck.slides} start={i} onClose={() => setPresent(false)} />}

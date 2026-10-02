@@ -25,7 +25,7 @@ type Role = 'owner' | 'view' | 'edit' | 'manage';
 type Panel = 'templates' | 'elements' | 'text' | 'uploads' | 'library' | 'background' | null;
 type Handle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
-const COLORS = ['#0f172a', '#334155', '#64748b', '#ffffff', '#ef4444', '#f97316', '#f59e0b', '#eab308', '#22c55e', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e'];
+const COLORS = ['#0f172a', '#334155', '#64748b', '#ffffff', '#ef4444', '#f97316', '#f59e0b', '#eab308', '#22c55e', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', 'var(--color-brand)', '#ec4899', '#f43f5e'];
 const SHAPES: Array<{ k: ShapeKind; label: string }> = [
   { k: 'rect', label: 'Hình chữ nhật' }, { k: 'round', label: 'Bo góc' }, { k: 'ellipse', label: 'Hình tròn' }, { k: 'triangle', label: 'Tam giác' },
   { k: 'diamond', label: 'Hình thoi' }, { k: 'pentagon', label: 'Ngũ giác' }, { k: 'hexagon', label: 'Lục giác' }, { k: 'star', label: 'Ngôi sao' },
@@ -70,7 +70,7 @@ function ColorButton({ value, onChange, title, icon }: { value?: string; onChang
       {open && (
         <div className="absolute left-0 top-11 z-50 w-56 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
           <div className="grid grid-cols-8 gap-1.5">
-            {COLORS.map(c => <button key={c} onClick={() => { onChange(c); setOpen(false); }} className={`h-5 w-5 rounded-md border ${value === c ? 'ring-2 ring-violet-500 ring-offset-1' : 'border-slate-200'}`} style={{ background: c }} />)}
+            {COLORS.map(c => <button key={c} onClick={() => { onChange(c); setOpen(false); }} className={`h-5 w-5 rounded-md border ${value === c ? 'ring-2 ring-brand ring-offset-1' : 'border-slate-200'}`} style={{ background: c }} />)}
           </div>
           <label className="mt-3 flex items-center gap-2 text-xs text-slate-600">Màu khác
             <input type="color" value={value && value.startsWith('#') && value.length === 7 ? value : '#000000'} onChange={e => onChange(e.target.value)} className="h-7 w-10 cursor-pointer rounded border border-slate-200" />
@@ -411,7 +411,9 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
   };
   const addShape = (k: ShapeKind) => {
     const line = k === 'line' || k === 'arrow';
-    addEl({ id: uid(), type: 'shape', shape: k, x: line ? 440 : 540, y: line ? 350 : 260, w: line ? 400 : 200, h: line ? 20 : 200, fill: '#6366f1', stroke: line ? '#6366f1' : undefined, strokeWidth: line ? 6 : 0 });
+    // Hình mới lấy màu chủ đạo của hệ thống.
+    const brand = (getComputedStyle(document.documentElement).getPropertyValue('--brand') || '').trim() || '#10b981';
+    addEl({ id: uid(), type: 'shape', shape: k, x: line ? 440 : 540, y: line ? 350 : 260, w: line ? 400 : 200, h: line ? 20 : 200, fill: brand, stroke: line ? brand : undefined, strokeWidth: line ? 6 : 0 });
   };
 
   // ===== Xuất PDF (in) =====
@@ -433,7 +435,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
     { id: 'background', label: 'Nền', icon: PaintBucket },
   ];
   const tb = 'grid h-9 w-9 place-items-center rounded-lg text-slate-600 hover:bg-slate-100';
-  const tbOn = 'grid h-9 w-9 place-items-center rounded-lg bg-violet-100 text-violet-700';
+  const tbOn = 'grid h-9 w-9 place-items-center rounded-lg bg-brand-light text-brand';
   const handles: Handle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
   const hpos: Record<Handle, React.CSSProperties> = {
     nw: { left: 0, top: 0, cursor: 'nwse-resize' }, n: { left: '50%', top: 0, cursor: 'ns-resize' }, ne: { left: '100%', top: 0, cursor: 'nesw-resize' },
@@ -455,7 +457,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
   return (
     <div className="fixed inset-0 z-[120] flex flex-col bg-slate-100 text-slate-800">
       {/* Thanh trên */}
-      <header className="flex h-14 shrink-0 items-center gap-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-600 px-2 text-white sm:px-3">
+      <header className="flex h-14 shrink-0 items-center gap-1 bg-gradient-to-r from-brand to-brand-hover px-2 text-white sm:px-3">
         <button onClick={async () => { if (status === 'dirty') await save(); onExit(); }} title="Về danh sách bài giảng" className="grid h-10 w-10 place-items-center rounded-lg hover:bg-white/15"><Home className="h-5 w-5" /></button>
         <div className="relative">
           <button onClick={() => setFileMenu(v => !v)} className="flex h-10 items-center gap-1 rounded-lg px-3 text-sm font-semibold hover:bg-white/15">Tệp <ChevronDown className="h-4 w-4" /></button>
@@ -484,7 +486,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
           {[{ userId: deck.ownerId, userName: deck.ownerName }, ...collabs].slice(0, 4).map(c => (
             userAvatar(c.userId)
               ? <img key={c.userId} src={userAvatar(c.userId)} title={c.userName || ''} className="h-8 w-8 rounded-full border-2 border-white object-cover" alt="" />
-              : <span key={c.userId} title={c.userName || ''} className="grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-violet-700 text-xs font-bold">{(c.userName || '?').trim().charAt(0).toUpperCase()}</span>
+              : <span key={c.userId} title={c.userName || ''} className="grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-brand-hover text-xs font-bold">{(c.userName || '?').trim().charAt(0).toUpperCase()}</span>
           ))}
         </div>
         {canManage && <button onClick={() => setCollabOpen(true)} title="Thêm người cùng chỉnh sửa" className="ml-1 flex h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold hover:bg-white/15"><UserPlus className="h-5 w-5" /><span className="hidden lg:inline">Cộng tác</span></button>}
@@ -495,17 +497,17 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
             <div className="absolute right-0 top-12 z-50 w-80 space-y-3 rounded-2xl border border-slate-200 bg-white p-4 text-slate-700 shadow-2xl">
               <div className="flex items-center justify-between"><p className="text-sm font-semibold">Chia sẻ bài giảng</p><button onClick={() => setShareOpen(false)} className="grid h-7 w-7 place-items-center rounded-lg hover:bg-slate-100"><X className="h-4 w-4" /></button></div>
               {canManage && (
-                <button onClick={() => { setShareOpen(false); setCollabOpen(true); }} className="flex w-full items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm hover:bg-slate-50"><UserPlus className="h-4 w-4 text-violet-600" /> Thêm người cùng xem, cùng chỉnh sửa</button>
+                <button onClick={() => { setShareOpen(false); setCollabOpen(true); }} className="flex w-full items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm hover:bg-slate-50"><UserPlus className="h-4 w-4 text-brand" /> Thêm người cùng xem, cùng chỉnh sửa</button>
               )}
               <div className="rounded-xl border border-slate-200 p-3">
                 <label className="flex items-center justify-between gap-3 text-sm">
                   <span className="flex items-center gap-2"><Link2 className="h-4 w-4 text-slate-500" /> Ai có link đều xem được</span>
-                  <input type="checkbox" disabled={!canManage} checked={!!deck.shareOn} onChange={async e => { try { const n = await setDeckShare({ ...deck, slides, title }, e.target.checked); setDeck(n); deckRef.current = n; } catch { addNotification('Chưa đổi được chế độ chia sẻ.', 'error'); } }} className="h-4 w-4 accent-violet-600" />
+                  <input type="checkbox" disabled={!canManage} checked={!!deck.shareOn} onChange={async e => { try { const n = await setDeckShare({ ...deck, slides, title }, e.target.checked); setDeck(n); deckRef.current = n; } catch { addNotification('Chưa đổi được chế độ chia sẻ.', 'error'); } }} className="h-4 w-4 accent-brand" />
                 </label>
                 {deck.shareOn && deck.shareToken && (
                   <div className="mt-3 flex gap-2">
                     <input readOnly value={deckShareUrl(deck.shareToken)} className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs" />
-                    <button onClick={async () => { await copyText(deckShareUrl(deck.shareToken!)); addNotification('Đã chép link xem bài giảng.', 'success'); }} className="rounded-lg bg-violet-600 px-3 text-xs font-semibold text-white">Chép</button>
+                    <button onClick={async () => { await copyText(deckShareUrl(deck.shareToken!)); addNotification('Đã chép link xem bài giảng.', 'success'); }} className="rounded-lg bg-brand px-3 text-xs font-semibold text-white">Chép</button>
                   </div>
                 )}
                 {!canManage && <p className="mt-2 text-xs text-slate-400">Chỉ chủ bài giảng hoặc người có quyền quản lý đổi được chế độ này.</p>}
@@ -523,7 +525,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
             {rail.map(r => {
               const I = r.icon; const on = panel === r.id;
               return (
-                <button key={r.id} onClick={() => setPanel(on ? null : r.id)} className={`flex w-16 flex-col items-center gap-1 rounded-xl py-2 text-[11px] font-medium ${on ? 'bg-violet-50 text-violet-700' : 'text-slate-600 hover:bg-slate-50'}`}>
+                <button key={r.id} onClick={() => setPanel(on ? null : r.id)} className={`flex w-16 flex-col items-center gap-1 rounded-xl py-2 text-[11px] font-medium ${on ? 'bg-brand-light text-brand' : 'text-slate-600 hover:bg-slate-50'}`}>
                   <I className="h-5 w-5" />{r.label}
                 </button>
               );
@@ -580,7 +582,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
               </>}
               {selected.length > 0 ? <>
                 <label className="flex items-center gap-1 text-xs text-slate-500" title="Độ trong suốt"><Eye className="h-4 w-4" />
-                  <input type="range" min={10} max={100} value={Math.round((one?.opacity ?? 1) * 100)} onChange={e => updateEls(sel, { opacity: Number(e.target.value) / 100 }, false)} className="w-20 accent-violet-600" />
+                  <input type="range" min={10} max={100} value={Math.round((one?.opacity ?? 1) * 100)} onChange={e => updateEls(sel, { opacity: Number(e.target.value) / 100 }, false)} className="w-20 accent-brand" />
                 </label>
                 <button className={tb} title="Đưa lên trên" onClick={() => layer('up')}><ArrowUpToLine className="h-4 w-4" /></button>
                 <button className={tb} title="Đưa xuống dưới" onClick={() => layer('down')}><ArrowDownToLine className="h-4 w-4" /></button>
@@ -593,7 +595,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                   <span>Bấm vào một khối để chỉnh. Kéo thả ảnh vào trang hoặc dán ảnh bằng Ctrl V.</span>
                 </div>
               )}
-              {busyUpload > 0 && <span className="ml-auto flex items-center gap-1.5 text-xs text-violet-600"><Loader2 className="h-4 w-4 animate-spin" /> Đang tải ảnh...</span>}
+              {busyUpload > 0 && <span className="ml-auto flex items-center gap-1.5 text-xs text-brand"><Loader2 className="h-4 w-4 animate-spin" /> Đang tải ảnh...</span>}
             </div>
           )}
 
@@ -611,22 +613,22 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                         onPointerDown={e => startDrag(e, el, 'move')}
                         onDoubleClick={() => { if (!readOnly && el.type === 'text') setEditingId(el.id); }}
                         style={{ position: 'absolute', left: el.x, top: el.y, width: el.w, height: el.h, transform: el.rot ? `rotate(${el.rot}deg)` : undefined, cursor: readOnly ? 'default' : el.locked ? 'not-allowed' : 'move' }}
-                        className={!readOnly && !sel.includes(el.id) ? 'hover:outline hover:outline-2 hover:outline-violet-300' : ''} />
+                        className={!readOnly && !sel.includes(el.id) ? 'hover:outline hover:outline-2 hover:outline-brand/40' : ''} />
                     ))}
                     {!readOnly && selected.map(el => (
-                      <div key={`s_${el.id}`} style={{ position: 'absolute', left: el.x, top: el.y, width: el.w, height: el.h, transform: el.rot ? `rotate(${el.rot}deg)` : undefined, outline: `${2 / scale}px solid #8b5cf6`, pointerEvents: 'none' }}>
+                      <div key={`s_${el.id}`} style={{ position: 'absolute', left: el.x, top: el.y, width: el.w, height: el.h, transform: el.rot ? `rotate(${el.rot}deg)` : undefined, outline: `${2 / scale}px solid var(--color-brand)`, pointerEvents: 'none' }}>
                         {one && !el.locked && editingId !== el.id && <>
                           {handles.filter(h => !(el.type === 'text' && (h === 'n' || h === 's'))).map(h => (
                             <span key={h} onPointerDown={e => startDrag(e, el, 'resize', h)}
-                              style={{ ...hpos[h], position: 'absolute', width: 14 / scale, height: 14 / scale, transform: 'translate(-50%,-50%)', background: '#fff', border: `${2 / scale}px solid #8b5cf6`, borderRadius: h.length === 2 ? '50%' : 4 / scale, pointerEvents: 'auto' }} />
+                              style={{ ...hpos[h], position: 'absolute', width: 14 / scale, height: 14 / scale, transform: 'translate(-50%,-50%)', background: '#fff', border: `${2 / scale}px solid var(--color-brand)`, borderRadius: h.length === 2 ? '50%' : 4 / scale, pointerEvents: 'auto' }} />
                           ))}
                           <span onPointerDown={e => startDrag(e, el, 'rotate')} title="Xoay"
-                            style={{ position: 'absolute', left: '50%', top: -36 / scale, width: 22 / scale, height: 22 / scale, transform: 'translate(-50%,-50%)', background: '#fff', border: `${2 / scale}px solid #8b5cf6`, borderRadius: '50%', cursor: 'grab', pointerEvents: 'auto' }} />
+                            style={{ position: 'absolute', left: '50%', top: -36 / scale, width: 22 / scale, height: 22 / scale, transform: 'translate(-50%,-50%)', background: '#fff', border: `${2 / scale}px solid var(--color-brand)`, borderRadius: '50%', cursor: 'grab', pointerEvents: 'auto' }} />
                         </>}
                       </div>
                     ))}
-                    {guides.x.map(x => <div key={`gx${x}`} style={{ position: 'absolute', left: x, top: 0, width: 1 / scale, height: SLIDE_H, background: '#a855f7', pointerEvents: 'none' }} />)}
-                    {guides.y.map(y => <div key={`gy${y}`} style={{ position: 'absolute', top: y, left: 0, height: 1 / scale, width: SLIDE_W, background: '#a855f7', pointerEvents: 'none' }} />)}
+                    {guides.x.map(x => <div key={`gx${x}`} style={{ position: 'absolute', left: x, top: 0, width: 1 / scale, height: SLIDE_H, background: 'var(--color-brand)', pointerEvents: 'none' }} />)}
+                    {guides.y.map(y => <div key={`gy${y}`} style={{ position: 'absolute', top: y, left: 0, height: 1 / scale, width: SLIDE_W, background: 'var(--color-brand)', pointerEvents: 'none' }} />)}
                     {editingEl && (
                       <textarea ref={editRef} rows={1} autoFocus defaultValue={editingEl.text || ''}
                         onFocus={e => { const ta = e.currentTarget; ta.select(); ta.style.height = 'auto'; ta.style.height = `${ta.scrollHeight}px`; }}
@@ -638,7 +640,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                           position: 'absolute', left: editingEl.x, top: editingEl.y, width: editingEl.w, minHeight: editingEl.h, transform: editingEl.rot ? `rotate(${editingEl.rot}deg)` : undefined,
                           fontFamily: `'${editingEl.fontFamily || 'Inter'}', sans-serif`, fontSize: editingEl.fontSize, color: editingEl.color, fontWeight: editingEl.bold ? 700 : 400,
                           fontStyle: editingEl.italic ? 'italic' : 'normal', textAlign: editingEl.align, lineHeight: editingEl.lineHeight || 1.3, background: editingEl.bg || 'rgba(255,255,255,0.0)',
-                          outline: `${2 / scale}px solid #8b5cf6`, border: 'none', resize: 'none', overflow: 'hidden', padding: editingEl.bg ? '0.2em 0.4em' : 0, margin: 0, whiteSpace: 'pre-wrap',
+                          outline: `${2 / scale}px solid var(--color-brand)`, border: 'none', resize: 'none', overflow: 'hidden', padding: editingEl.bg ? '0.2em 0.4em' : 0, margin: 0, whiteSpace: 'pre-wrap',
                         }} />
                     )}
                   </div>
@@ -650,7 +652,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
           {showNotes && (
             <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-2">
               <textarea value={slide.notes || ''} readOnly={readOnly} onChange={e => { const v = e.target.value; setSlides(prev => prev.map((s, i) => (i === cur ? { ...s, notes: v } : s))); markDirty(); }}
-                placeholder="Ghi chú cho người trình bày ở trang này..." rows={3} className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:bg-white" />
+                placeholder="Ghi chú cho người trình bày ở trang này..." rows={3} className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-brand focus:bg-white" />
             </div>
           )}
 
@@ -662,28 +664,28 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                 onDragOver={e => { if (e.dataTransfer.types.includes('text/slide')) e.preventDefault(); }}
                 onDrop={e => { const from = Number(e.dataTransfer.getData('text/slide')); if (!Number.isNaN(from)) moveSlide(from, i); }}
                 className="group relative shrink-0">
-                <button onClick={() => { stopEditing(); setCur(i); setSel([]); }} className={`block overflow-hidden rounded-lg border-2 ${i === cur ? 'border-violet-500' : 'border-slate-200 hover:border-slate-300'}`}>
+                <button onClick={() => { stopEditing(); setCur(i); setSel([]); }} className={`block overflow-hidden rounded-lg border-2 ${i === cur ? 'border-brand' : 'border-slate-200 hover:border-slate-300'}`}>
                   <SlideRenderer slide={s} width={140} />
                 </button>
                 <span className="absolute bottom-1 left-1.5 rounded bg-white/85 px-1 text-[11px] font-semibold text-slate-600">{i + 1}</span>
                 {!readOnly && (
                   <div className="absolute right-1 top-1 hidden gap-1 group-hover:flex">
-                    <button onClick={() => dupSlide(i)} title="Nhân bản trang" className="grid h-6 w-6 place-items-center rounded-md bg-white/90 text-slate-600 shadow hover:text-violet-600"><Copy className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => dupSlide(i)} title="Nhân bản trang" className="grid h-6 w-6 place-items-center rounded-md bg-white/90 text-slate-600 shadow hover:text-brand"><Copy className="h-3.5 w-3.5" /></button>
                     <button onClick={() => delSlide(i)} title="Xoá trang" className="grid h-6 w-6 place-items-center rounded-md bg-white/90 text-slate-600 shadow hover:text-rose-600"><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>
                 )}
               </div>
             ))}
             {!readOnly && (
-              <button onClick={() => addSlide('title_content', slides.length)} title="Thêm trang" className="grid h-[79px] w-[60px] shrink-0 place-items-center rounded-lg border-2 border-dashed border-slate-300 text-slate-400 hover:border-violet-400 hover:text-violet-600"><Plus className="h-6 w-6" /></button>
+              <button onClick={() => addSlide('title_content', slides.length)} title="Thêm trang" className="grid h-[79px] w-[60px] shrink-0 place-items-center rounded-lg border-2 border-dashed border-slate-300 text-slate-400 hover:border-brand hover:text-brand"><Plus className="h-6 w-6" /></button>
             )}
           </div>
 
           {/* Thanh dưới */}
           <div className="flex h-11 shrink-0 items-center gap-3 border-t border-slate-200 bg-white px-4 text-sm text-slate-600">
-            <button onClick={() => setShowNotes(v => !v)} className={`flex items-center gap-1.5 rounded-lg px-2 py-1 ${showNotes ? 'bg-violet-50 text-violet-700' : 'hover:bg-slate-100'}`}><StickyNote className="h-4 w-4" /> Ghi chú</button>
+            <button onClick={() => setShowNotes(v => !v)} className={`flex items-center gap-1.5 rounded-lg px-2 py-1 ${showNotes ? 'bg-brand-light text-brand' : 'hover:bg-slate-100'}`}><StickyNote className="h-4 w-4" /> Ghi chú</button>
             <div className="ml-auto flex items-center gap-2">
-              <input type="range" min={25} max={200} step={5} value={Math.round(scale * 100)} onChange={e => setZoom(Number(e.target.value) / 100)} className="hidden w-32 accent-violet-600 sm:block" />
+              <input type="range" min={25} max={200} step={5} value={Math.round(scale * 100)} onChange={e => setZoom(Number(e.target.value) / 100)} className="hidden w-32 accent-brand sm:block" />
               <button onClick={() => setZoom('fit')} title="Vừa khung" className="w-12 rounded-lg px-1 py-1 text-center tabular-nums hover:bg-slate-100">{Math.round(scale * 100)}%</button>
               <span className="tabular-nums">{cur + 1} / {slides.length}</span>
               <button onClick={() => setGrid(true)} title="Xem tất cả trang" className="grid h-8 w-8 place-items-center rounded-lg hover:bg-slate-100"><Grid2X2 className="h-4 w-4" /></button>
@@ -702,7 +704,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
               {slides.map((s, i) => (
                 <div key={s.id} draggable={!readOnly} onDragStart={e => e.dataTransfer.setData('text/slide', String(i))} onDragOver={e => e.preventDefault()}
                   onDrop={e => { const from = Number(e.dataTransfer.getData('text/slide')); if (!Number.isNaN(from)) moveSlide(from, i); }}>
-                  <button onClick={() => { setCur(i); setGrid(false); }} className={`block w-full overflow-hidden rounded-lg border-2 ${i === cur ? 'border-violet-500' : 'border-slate-200'}`}><SlideRenderer slide={s} width={250} /></button>
+                  <button onClick={() => { setCur(i); setGrid(false); }} className={`block w-full overflow-hidden rounded-lg border-2 ${i === cur ? 'border-brand' : 'border-slate-200'}`}><SlideRenderer slide={s} width={250} /></button>
                   <p className="mt-1 text-center text-xs text-slate-500">{i + 1}</p>
                 </div>
               ))}
@@ -765,7 +767,7 @@ function LeftPanel({ panel, slide, onLayout, onText, onShape, onImage, onRemoteI
       <div className="grid grid-cols-2 gap-3">
         {previews.map(p => (
           <button key={p.id} onClick={() => onLayout(p.id)} className="text-left">
-            <div className="overflow-hidden rounded-lg border border-slate-200 hover:border-violet-400"><SlideRenderer slide={p.slide} width={124} /></div>
+            <div className="overflow-hidden rounded-lg border border-slate-200 hover:border-brand"><SlideRenderer slide={p.slide} width={124} /></div>
             <p className="mt-1 text-[11px] text-slate-600">{p.label}</p>
           </button>
         ))}
@@ -778,9 +780,9 @@ function LeftPanel({ panel, slide, onLayout, onText, onShape, onImage, onRemoteI
       <p className="mb-2 text-xs font-semibold text-slate-500">Hình khối và đường kẻ</p>
       <div className="grid grid-cols-4 gap-2">
         {SHAPES.map(s => (
-          <button key={s.k} title={s.label} onClick={() => onShape(s.k)} className="grid aspect-square place-items-center rounded-lg bg-slate-50 p-2 hover:bg-violet-50">
+          <button key={s.k} title={s.label} onClick={() => onShape(s.k)} className="grid aspect-square place-items-center rounded-lg bg-slate-50 p-2 hover:bg-brand-light">
             <div style={{ position: 'relative', width: 44, height: s.k === 'line' || s.k === 'arrow' ? 10 : 44 }}>
-              <ElementView el={{ id: 'p', type: 'shape', shape: s.k, x: 0, y: 0, w: 44, h: s.k === 'line' || s.k === 'arrow' ? 10 : 44, fill: '#6366f1', stroke: '#6366f1', strokeWidth: s.k === 'line' || s.k === 'arrow' ? 3 : 0 }} />
+              <ElementView el={{ id: 'p', type: 'shape', shape: s.k, x: 0, y: 0, w: 44, h: s.k === 'line' || s.k === 'arrow' ? 10 : 44, fill: 'var(--color-brand)', stroke: 'var(--color-brand)', strokeWidth: s.k === 'line' || s.k === 'arrow' ? 3 : 0 }} />
             </div>
           </button>
         ))}
@@ -790,10 +792,10 @@ function LeftPanel({ panel, slide, onLayout, onText, onShape, onImage, onRemoteI
 
   if (panel === 'text') return (
     <div className="space-y-3">{head('Văn bản')}
-      <button onClick={() => onText('h1')} className="w-full rounded-xl bg-slate-100 px-4 py-3 text-left text-2xl font-bold hover:bg-violet-50">Thêm tiêu đề</button>
-      <button onClick={() => onText('h2')} className="w-full rounded-xl bg-slate-100 px-4 py-3 text-left text-lg font-semibold hover:bg-violet-50">Thêm tiêu đề phụ</button>
-      <button onClick={() => onText('body')} className="w-full rounded-xl bg-slate-100 px-4 py-3 text-left text-sm hover:bg-violet-50">Thêm một đoạn văn bản</button>
-      <button onClick={() => onText('list')} className="w-full rounded-xl bg-slate-100 px-4 py-3 text-left text-sm hover:bg-violet-50">• Danh sách gạch đầu dòng</button>
+      <button onClick={() => onText('h1')} className="w-full rounded-xl bg-slate-100 px-4 py-3 text-left text-2xl font-bold hover:bg-brand-light">Thêm tiêu đề</button>
+      <button onClick={() => onText('h2')} className="w-full rounded-xl bg-slate-100 px-4 py-3 text-left text-lg font-semibold hover:bg-brand-light">Thêm tiêu đề phụ</button>
+      <button onClick={() => onText('body')} className="w-full rounded-xl bg-slate-100 px-4 py-3 text-left text-sm hover:bg-brand-light">Thêm một đoạn văn bản</button>
+      <button onClick={() => onText('list')} className="w-full rounded-xl bg-slate-100 px-4 py-3 text-left text-sm hover:bg-brand-light">• Danh sách gạch đầu dòng</button>
       <p className="pt-2 text-xs text-slate-500">Nhấn đúp vào khối chữ trên trang để sửa nội dung. Kéo góc khối để phóng to chữ.</p>
     </div>
   );
@@ -801,14 +803,14 @@ function LeftPanel({ panel, slide, onLayout, onText, onShape, onImage, onRemoteI
   if (panel === 'uploads') return (
     <div>{head('Tải lên')}
       <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={e => { onUpload(Array.from(e.target.files || [])); e.target.value = ''; }} />
-      <button onClick={() => fileRef.current?.click()} className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 py-2.5 text-sm font-semibold text-white hover:bg-violet-700">
+      <button onClick={() => fileRef.current?.click()} className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-2.5 text-sm font-semibold text-white hover:bg-brand-hover">
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Tải ảnh lên
       </button>
       <p className="mb-2 text-xs text-slate-500">Ảnh đã tải lên trước đây trong kho của bạn. Bấm để chèn vào trang.</p>
       {media === null ? <div className="py-8 text-center text-slate-400"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></div> :
         media.length === 0 ? <p className="py-6 text-center text-xs text-slate-400">Chưa có ảnh nào.</p> : (
           <div className="columns-2 gap-2">
-            {media.map(m => <button key={m.url} onClick={() => onImage(m.url)} className="mb-2 block w-full overflow-hidden rounded-lg hover:ring-2 hover:ring-violet-400"><img src={m.url.replace('/upload/', '/upload/w_300,q_auto,f_auto/')} alt="" loading="lazy" className="w-full" /></button>)}
+            {media.map(m => <button key={m.url} onClick={() => onImage(m.url)} className="mb-2 block w-full overflow-hidden rounded-lg hover:ring-2 hover:ring-brand"><img src={m.url.replace('/upload/', '/upload/w_300,q_auto,f_auto/')} alt="" loading="lazy" className="w-full" /></button>)}
           </div>
         )}
     </div>
@@ -818,12 +820,12 @@ function LeftPanel({ panel, slide, onLayout, onText, onShape, onImage, onRemoteI
     <div>{head('Thư viện ảnh')}
       <form onSubmit={e => { e.preventDefault(); searchStock(q); }} className="relative mb-3">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Tìm ảnh (tiếng Anh cho nhiều kết quả)" className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-violet-400 focus:bg-white" />
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Tìm ảnh (tiếng Anh cho nhiều kết quả)" className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand focus:bg-white" />
       </form>
       <p className="mb-2 text-[11px] text-slate-400">Ảnh miễn phí từ Openverse, giấy phép Creative Commons. Ảnh chèn vào sẽ được chép về kho của bạn.</p>
       {stockBusy ? <div className="py-8 text-center text-slate-400"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></div> : (
         <div className="columns-2 gap-2">
-          {stock.map(s => <button key={s.id} title={s.title} onClick={() => onRemoteImage(s.url)} className="mb-2 block w-full overflow-hidden rounded-lg hover:ring-2 hover:ring-violet-400"><img src={s.thumb} alt={s.title} loading="lazy" className="w-full" /></button>)}
+          {stock.map(s => <button key={s.id} title={s.title} onClick={() => onRemoteImage(s.url)} className="mb-2 block w-full overflow-hidden rounded-lg hover:ring-2 hover:ring-brand"><img src={s.thumb} alt={s.title} loading="lazy" className="w-full" /></button>)}
           {!stock.length && <p className="py-6 text-center text-xs text-slate-400">Không tìm thấy ảnh.</p>}
         </div>
       )}
@@ -833,11 +835,11 @@ function LeftPanel({ panel, slide, onLayout, onText, onShape, onImage, onRemoteI
   // Nền
   return (
     <div className="space-y-4">{head('Nền trang')}
-      <label className="flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" checked={applyAll} onChange={e => setApplyAll(e.target.checked)} className="accent-violet-600" /> Áp dụng cho mọi trang</label>
+      <label className="flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" checked={applyAll} onChange={e => setApplyAll(e.target.checked)} className="accent-brand" /> Áp dụng cho mọi trang</label>
       <div>
         <p className="mb-2 text-xs font-semibold text-slate-500">Màu đơn</p>
         <div className="grid grid-cols-6 gap-2">
-          {BG_SWATCHES.map(c => <button key={c} onClick={() => onBg({ color: c }, applyAll)} className={`aspect-square rounded-lg border ${slide.bg?.color === c && !slide.bg?.gradient && !slide.bg?.image ? 'ring-2 ring-violet-500' : 'border-slate-200'}`} style={{ background: c }} />)}
+          {BG_SWATCHES.map(c => <button key={c} onClick={() => onBg({ color: c }, applyAll)} className={`aspect-square rounded-lg border ${slide.bg?.color === c && !slide.bg?.gradient && !slide.bg?.image ? 'ring-2 ring-brand' : 'border-slate-200'}`} style={{ background: c }} />)}
           <label className="grid aspect-square cursor-pointer place-items-center rounded-lg border border-dashed border-slate-300 text-slate-400" title="Chọn màu khác">
             <Plus className="h-4 w-4" /><input type="color" className="hidden" onChange={e => onBg({ color: e.target.value }, applyAll)} />
           </label>
@@ -846,14 +848,14 @@ function LeftPanel({ panel, slide, onLayout, onText, onShape, onImage, onRemoteI
       <div>
         <p className="mb-2 text-xs font-semibold text-slate-500">Chuyển màu</p>
         <div className="grid grid-cols-4 gap-2">
-          {GRADIENTS.map(g => <button key={g} onClick={() => onBg({ gradient: g }, applyAll)} className={`aspect-video rounded-lg ${slide.bg?.gradient === g ? 'ring-2 ring-violet-500' : ''}`} style={{ background: g }} />)}
+          {GRADIENTS.map(g => <button key={g} onClick={() => onBg({ gradient: g }, applyAll)} className={`aspect-video rounded-lg ${slide.bg?.gradient === g ? 'ring-2 ring-brand' : ''}`} style={{ background: g }} />)}
         </div>
       </div>
       <div>
         <p className="mb-2 text-xs font-semibold text-slate-500">Ảnh nền từ kho của bạn</p>
         {media === null ? <Loader2 className="h-4 w-4 animate-spin text-slate-400" /> : media.length === 0 ? <p className="text-xs text-slate-400">Chưa có ảnh, hãy dùng mục Tải lên.</p> : (
           <div className="grid grid-cols-3 gap-2">
-            {media.slice(0, 30).map(m => <button key={m.url} onClick={() => onBg({ image: m.url }, applyAll)} className="aspect-video overflow-hidden rounded-lg hover:ring-2 hover:ring-violet-400" style={{ ...bgStyle({ image: m.url.replace('/upload/', '/upload/w_200,q_auto,f_auto/') }) }} />)}
+            {media.slice(0, 30).map(m => <button key={m.url} onClick={() => onBg({ image: m.url }, applyAll)} className="aspect-video overflow-hidden rounded-lg hover:ring-2 hover:ring-brand" style={{ ...bgStyle({ image: m.url.replace('/upload/', '/upload/w_200,q_auto,f_auto/') }) }} />)}
           </div>
         )}
       </div>

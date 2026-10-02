@@ -131,7 +131,7 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
               <div className="space-y-1 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <button onClick={() => openDeck(d)} className="line-clamp-2 text-left text-sm font-semibold text-slate-800 hover:text-brand">{d.title}</button>
-                  {d.role && d.role !== 'owner' && <span className="shrink-0 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700">{ROLE_TEXT[d.role]}</span>}
+                  {d.role && d.role !== 'owner' && <span className="shrink-0 rounded-full bg-brand-light px-2 py-0.5 text-[10px] font-semibold text-brand">{ROLE_TEXT[d.role]}</span>}
                 </div>
                 <p className="text-xs text-slate-500">{d.count} trang · sửa {fmt(d.updatedAt)}{d.ownerName && d.role !== 'owner' ? ` · ${d.ownerName}` : ''}</p>
                 <div className="flex gap-1 pt-2 text-slate-400">
