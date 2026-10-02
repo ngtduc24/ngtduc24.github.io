@@ -11,6 +11,7 @@ import { UserAccount } from '../../types';
 import { EduSubject, EduClass } from '../../types/edu';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
+import LibraryHero, { ViewToggle } from '../ui/LibraryHero';
 import { getSubjects, getSubjectsByIds, saveSubject, getClasses, getClassUsers, setEduAuthContext } from '../../lib/edu';
 import {
   ELLesson, ELSection, ELResource,
@@ -77,41 +78,20 @@ export default function ELearningModule({ currentUser, onExit }: Props) {
 
   return (
     <div className="space-y-5 animate-fadeIn">
-      {/* Banner đầu trang có nút quay ra, bố cục chữ giống banner Tạo AR */}
-      <div className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
-        {onExit && (
-          <button onClick={onExit} title="Quay lại trang chủ" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 transition-colors hover:bg-brand-light hover:text-brand">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-        )}
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand"><BookOpen className="h-6 w-6" /></span>
-        <div className="min-w-0">
-          <h1 className="truncate text-xl font-black tracking-tight text-slate-900 sm:text-2xl">E-Learning</h1>
-          <p className="text-sm font-medium text-slate-500">Soạn, lưu trữ và chia sẻ bài giảng theo môn cho lớp học.</p>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-2xl bg-slate-100 p-1">
-          <button onClick={() => setTab('mine')} className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${tab === 'mine' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Kho của tôi</button>
-          <button onClick={() => setTab('public')} className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${tab === 'public' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Kho chung</button>
-        </div>
-        {tab === 'mine' && (
-          <button onClick={() => setView('trash')} className="inline-flex items-center gap-1.5 rounded-xl bg-white border border-slate-200 px-3 py-2 text-[11px] font-bold text-slate-500 hover:text-brand hover:border-brand/30">
-            <Trash2 className="w-3.5 h-3.5" /> Thùng rác
-          </button>
-        )}
-      </div>
-
       {tab === 'mine'
-        ? <MyLessons subjects={subjects} currentUser={currentUser} onEdit={openEditor} onAssign={openAssign} />
-        : <PublicLibrary subjects={subjects} currentUser={currentUser} onCopied={openEditor} />}
+        ? <MyLessons subjects={subjects} currentUser={currentUser} onEdit={openEditor} onAssign={openAssign}
+            hero={{ onExit, tab, setTab, onTrash: () => setView('trash'), onSubjectAdded: (su: EduSubject) => setSubjects(prev => [...prev, su].sort((a, b) => a.name.localeCompare(b.name))) }} />
+        : <PublicLibrary subjects={subjects} currentUser={currentUser} onCopied={openEditor} hero={{ onExit, tab, setTab }} />}
     </div>
   );
 }
 
+// Đầu trang chung của E-Learning: hai kho (của tôi, chung) dạng thẻ ngay trên khung tìm kiếm lớn.
+interface ElHero { onExit?: () => void; tab: 'mine' | 'public'; setTab: (t: 'mine' | 'public') => void; onTrash?: () => void; onSubjectAdded?: (s: EduSubject) => void }
+const EL_TABS = [{ id: 'mine', label: 'Kho của tôi' }, { id: 'public', label: 'Kho chung' }];
+
 // ============================ KHO CỦA TÔI ============================
-function MyLessons({ subjects, currentUser, onEdit, onAssign }: { subjects: EduSubject[]; currentUser: UserAccount; onEdit: (id: string) => void; onAssign: (id: string) => void; }) {
+function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects: EduSubject[]; currentUser: UserAccount; onEdit: (id: string) => void; onAssign: (id: string) => void; hero: ElHero }) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
   const [all, setAll] = useState<ELLesson[]>([]);
@@ -119,8 +99,8 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign }: { subjects: EduS
   const [subjectId, setSubjectId] = useState('');
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
-  const [mode, setModeState] = useState<'grid' | 'table'>(() => { try { return localStorage.getItem('el_view') === 'table' ? 'table' : 'grid'; } catch { return 'grid'; } });
-  const setMode = (m: 'grid' | 'table') => { setModeState(m); try { localStorage.setItem('el_view', m); } catch { /* bỏ qua */ } };
+  // Mặc định luôn mở dạng lưới, người dùng tự đổi sang danh sách khi cần.
+  const [mode, setMode] = useState<'grid' | 'table'>('grid');
   const [creating, setCreating] = useState(false);
   // Chọn nhiều bài ở dạng danh sách để thao tác cùng lúc
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -132,16 +112,22 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign }: { subjects: EduS
 
   const load = useCallback(async () => {
     setLoading(true);
-    try { setAll(await getMyLessons({ subjectId: subjectId || undefined, status: (status as any) || undefined })); }
+    try { setAll(await getMyLessons({ status: (status as any) || undefined })); }
     catch (e: any) { addNotification('Lỗi tải bài giảng: ' + (e.message || e), 'error'); }
     finally { setLoading(false); }
-  }, [subjectId, status, addNotification]);
+  }, [status, addNotification]);
   useEffect(() => { load(); }, [load]);
   // Tìm kiếm lọc ngay trên máy (không dấu vẫn tìm được), rồi chia trang
   const lessons = useMemo(() => {
     const q = fold(search);
-    return q ? all.filter(l => fold(`${l.title} ${subjects.find(s => s.id === l.subject_id)?.name || ''}`).includes(q)) : all;
-  }, [all, search, subjects]);
+    const bySubject = subjectId ? all.filter(l => (subjectId === '__none' ? !l.subject_id : l.subject_id === subjectId)) : all;
+    return q ? bySubject.filter(l => fold(`${l.title} ${subjects.find(s => s.id === l.subject_id)?.name || ''}`).includes(q)) : bySubject;
+  }, [all, search, subjects, subjectId]);
+  const subjectCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    all.forEach(l => { const k = l.subject_id || '__none'; m[k] = (m[k] || 0) + 1; });
+    return m;
+  }, [all]);
   const pg = usePaging(lessons.length, 'el_mine_size', 12, [search, subjectId, status]);
   const pageLessons = lessons.slice(pg.from, pg.to);
   // Danh sách thay đổi (lọc, tải lại) thì bỏ các mục chọn không còn hiển thị
@@ -231,29 +217,45 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign }: { subjects: EduS
 
   return (
     <div className="space-y-4">
-      {/* Thanh lọc */}
-      <div className="flex flex-col lg:flex-row lg:items-center gap-3 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
-        <div className="relative flex-1 min-w-[180px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm theo tên bài giảng..." className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-xs outline-none focus:border-brand" />
+      <LibraryHero
+        title="Bạn muốn soạn bài giảng nào?"
+        subtitle="Soạn, lưu trữ và chia sẻ bài giảng theo môn cho lớp học."
+        onBack={hero.onExit}
+        backTitle="Quay lại trang chủ"
+        tabs={EL_TABS}
+        activeTab={hero.tab}
+        onTab={t => hero.setTab(t as 'mine' | 'public')}
+        search={search}
+        onSearch={setSearch}
+        placeholder="Tìm theo tên bài giảng, môn học..."
+        chips={[
+          { id: '', label: 'Tất cả', count: all.length },
+          ...subjects.filter(su => (subjectCounts[su.id] || 0) > 0 || su.ownerId === currentUser.id).map(su => ({ id: su.id, label: su.name, count: subjectCounts[su.id] || 0 })),
+          ...((subjectCounts.__none || 0) > 0 ? [{ id: '__none', label: 'Chưa chọn môn', count: subjectCounts.__none }] : []),
+        ]}
+        activeChip={subjectId}
+        onChip={setSubjectId}
+        onAddChip={async name => {
+          try { const saved = await saveSubject({ name }); hero.onSubjectAdded?.(saved); setSubjectId(saved.id); addNotification('Đã thêm môn học.', 'success'); }
+          catch { addNotification('Lỗi thêm môn học.', 'error'); }
+        }}
+        actions={<>
+          {hero.onTrash && <button onClick={hero.onTrash} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 hover:border-brand/30 hover:text-brand"><Trash2 className="h-4 w-4" /> Thùng rác</button>}
+          <button onClick={() => setCreating(true)} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-brand px-4 text-sm font-semibold text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Plus className="h-4 w-4" /> Tạo bài giảng mới</button>
+        </>}
+      />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{lessons.length}</span> bài giảng</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <select value={status} onChange={e => setStatus(e.target.value)} className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-brand">
+            <option value="">Mọi trạng thái</option>
+            <option value="draft">Nháp</option>
+            <option value="published">Đã xuất bản</option>
+            <option value="public">Đã công khai</option>
+          </select>
+          <ViewToggle mode={mode} onChange={setMode} gridIcon={<LayoutGrid className="h-4 w-4" />} listIcon={<ListIcon className="h-4 w-4" />} />
         </div>
-        <select value={subjectId} onChange={e => setSubjectId(e.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-brand">
-          <option value="">Tất cả môn học</option>
-          {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-        <select value={status} onChange={e => setStatus(e.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-brand">
-          <option value="">Mọi trạng thái</option>
-          <option value="draft">Nháp</option>
-          <option value="published">Đã xuất bản</option>
-          <option value="public">Đã công khai</option>
-        </select>
-        <div className="inline-flex rounded-xl bg-slate-100 p-1">
-          <button onClick={() => setMode('grid')} className={`rounded-lg p-1.5 ${mode === 'grid' ? 'bg-white text-brand shadow-sm' : 'text-slate-400'}`}><LayoutGrid className="w-4 h-4" /></button>
-          <button onClick={() => setMode('table')} className={`rounded-lg p-1.5 ${mode === 'table' ? 'bg-white text-brand shadow-sm' : 'text-slate-400'}`}><ListIcon className="w-4 h-4" /></button>
-        </div>
-        <button onClick={() => setCreating(true)} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover">
-          <Plus className="w-4 h-4" /> Tạo bài giảng mới
-        </button>
       </div>
 
       {loading ? (
@@ -649,7 +651,8 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
 }
 
 // ============================ KHO CHUNG ============================
-function PublicLibrary({ currentUser, onCopied }: { subjects?: EduSubject[]; currentUser: UserAccount; onCopied: (id: string) => void; }) {
+function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[]; currentUser: UserAccount; onCopied: (id: string) => void; hero: ElHero }) {
+  const [mode, setMode] = useState<'grid' | 'table'>('grid');
   const { addNotification } = useNotifications();
   const [counts, setCounts] = useState<Record<string, number>>({});
   // Môn học của kho chung lấy theo các môn có bài công khai (môn của nhiều người khác nhau).
@@ -689,39 +692,67 @@ function PublicLibrary({ currentUser, onCopied }: { subjects?: EduSubject[]; cur
   const pageLessons = lessons.slice(pg.from, pg.to);
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[240px_1fr]">
-      <div className="h-fit rounded-3xl border border-slate-100 bg-white p-3 shadow-sm">
-        <span className="mb-2 block px-2 text-[10px] font-black uppercase text-slate-400">Môn học</span>
-        <button onClick={() => setSubjectId('')} className={`mb-1 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-bold ${!subjectId ? 'bg-brand-light text-brand' : 'text-slate-600 hover:bg-slate-50'}`}>
-          <span>Tất cả</span><span className="text-[10px] text-slate-400">{Object.values(counts).reduce((a, b) => a + b, 0)}</span>
-        </button>
-        {subjects.map(s => (
-          <button key={s.id} onClick={() => setSubjectId(s.id)} className={`mb-1 flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-bold ${subjectId === s.id ? 'bg-brand-light text-brand' : 'text-slate-600 hover:bg-slate-50'}`}>
-            <span className="truncate">{s.name}</span><span className="text-[10px] text-slate-400">{counts[s.id] || 0}</span>
-          </button>
-        ))}
-      </div>
+    <div className="space-y-4">
+      <LibraryHero
+        title="Bạn muốn tìm bài giảng nào?"
+        subtitle="Bài giảng được chia sẻ công khai, xem trước hoặc sao chép về kho của bạn."
+        onBack={hero.onExit}
+        backTitle="Quay lại trang chủ"
+        tabs={EL_TABS}
+        activeTab={hero.tab}
+        onTab={t => hero.setTab(t as 'mine' | 'public')}
+        search={search}
+        onSearch={setSearch}
+        placeholder="Tìm theo tên bài, môn học, tác giả..."
+        chips={[{ id: '', label: 'Tất cả', count: Object.values(counts).reduce((a, b) => a + b, 0) }, ...subjects.map(su => ({ id: su.id, label: su.name, count: counts[su.id] || 0 }))]}
+        activeChip={subjectId}
+        onChip={setSubjectId}
+      />
       <div className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative flex-1 min-w-[180px]">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm theo tên bài, môn học, tác giả..." className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-xs outline-none focus:border-brand" />
-            {search && <button onClick={() => setSearch('')} title="Xoá tìm kiếm" className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600"><X className="h-3.5 w-3.5" /></button>}
-          </div>
-          <div className="flex items-center justify-end gap-2">
-          <span className="text-[11px] font-semibold text-slate-400">Sắp xếp</span>
-          <select value={sort} onChange={e => setSort(e.target.value as any)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-brand">
-            <option value="new">Mới nhất</option><option value="views">Xem nhiều nhất</option><option value="copies">Sao chép nhiều nhất</option>
-          </select>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{lessons.length}</span> bài giảng công khai</p>
+          <div className="flex items-center gap-2">
+            <select value={sort} onChange={e => setSort(e.target.value as any)} className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-brand">
+              <option value="new">Mới nhất</option><option value="views">Xem nhiều nhất</option><option value="copies">Sao chép nhiều nhất</option>
+            </select>
+            <ViewToggle mode={mode} onChange={setMode} gridIcon={<LayoutGrid className="h-4 w-4" />} listIcon={<ListIcon className="h-4 w-4" />} />
           </div>
         </div>
         {loading ? (
           <div className="py-20 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" /> Đang tải...</div>
         ) : lessons.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-sm text-slate-400">{search ? 'Không tìm thấy bài giảng phù hợp.' : 'Chưa có bài giảng công khai nào trong mục này.'}</div>
+        ) : mode === 'table' ? (
+          <>
+          <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-white shadow-sm">
+            <table className="w-full min-w-[720px] text-left text-[13px]">
+              <thead className="bg-slate-50 text-xs font-semibold text-slate-500">
+                <tr><th className="px-4 py-3">Bài giảng</th><th className="px-4 py-3">Môn học</th><th className="px-4 py-3">Tác giả</th><th className="px-4 py-3">Lượt xem</th><th className="px-4 py-3">Sao chép</th><th className="px-4 py-3 text-right">Thao tác</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {pageLessons.map(l => (
+                  <tr key={l.id} className="hover:bg-slate-50/70">
+                    <td className="px-4 py-3"><button onClick={() => openLessonView(l.id)} className="flex items-center gap-3 text-left font-semibold text-slate-800 hover:text-brand">
+                      <span className="h-10 w-14 shrink-0 rounded-lg bg-slate-100 bg-cover bg-center" style={l.cover_url ? { backgroundImage: `url(${l.cover_url})` } : undefined} />
+                      <span className="line-clamp-2">{l.title}</span></button></td>
+                    <td className="px-4 py-3 text-slate-500">{subjName(l.subject_id)}</td>
+                    <td className="px-4 py-3 text-slate-500">{l.author_label || l.owner_name || 'Ẩn danh'}</td>
+                    <td className="px-4 py-3 text-slate-500">{l.view_count}</td>
+                    <td className="px-4 py-3 text-slate-500">{l.copy_count}</td>
+                    <td className="px-4 py-3"><div className="flex justify-end gap-1.5">
+                      <button onClick={() => openLessonView(l.id)} className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200">Xem</button>
+                      {l.allow_copy && <button onClick={() => copy(l)} disabled={copyingId === l.id} className="inline-flex items-center gap-1 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-hover disabled:opacity-50">{copyingId === l.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Copy className="h-3 w-3" />} Sao chép</button>}
+                    </div></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pager pg={pg} total={lessons.length} unit="bài giảng" sizes={[12, 24, 48, 96]} />
+          </>
         ) : (
           <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
             {pageLessons.map(l => (
               <div key={l.id} onClick={() => openLessonView(l.id)} title="Bấm để xem bài giảng" className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md hover:border-brand/30 transition-all">
                 <div className="h-28 bg-slate-100 bg-cover bg-center" style={l.cover_url ? { backgroundImage: `url(${l.cover_url})` } : undefined}>

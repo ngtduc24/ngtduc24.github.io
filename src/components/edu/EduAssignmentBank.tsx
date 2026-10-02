@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { Editor } from '@tiptap/react';
 import RichTextEditor from '../cms/RichTextEditor';
+import LibraryHero, { HeroChip, ViewToggle } from '../ui/LibraryHero';
 import {
   BookMarked, Plus, Trash2, Edit3, X, Save, FileText, Search, LayoutGrid, List as ListIcon, Globe, Lock,
   Bold, Italic, List, ListOrdered, Heading1, Heading2, FileDown, Eye, ArrowLeft, Loader2, FolderInput, Check,
@@ -56,8 +57,8 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   const [search, setSearch] = useState('');
   const [scope, setScope] = useState<'all' | 'mine' | 'shared'>('mine');
   const [sort, setSort] = useState<'new' | 'name'>('new');
-  const [mode, setModeState] = useState<'grid' | 'table'>(() => { try { return localStorage.getItem('bank_view') === 'table' ? 'table' : 'grid'; } catch { return 'grid'; } });
-  const setMode = (m: 'grid' | 'table') => { setModeState(m); try { localStorage.setItem('bank_view', m); } catch { /* bỏ qua */ } };
+  // Mặc định luôn mở dạng lưới, người dùng tự đổi sang danh sách khi cần.
+  const [mode, setMode] = useState<'grid' | 'table'>('grid');
 
   // Quản lý môn ở cột trái
   const [addingSubject, setAddingSubject] = useState(false);
@@ -159,18 +160,19 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   const canShare = (it: EduAssignmentBankItem) => canEdit(it) || !!it.shareToken;
 
   // ---------------- Môn học ----------------
-  const handleAddSubject = async () => {
-    if (!newSubjectName.trim()) return;
+  const handleAddSubject = async (nameArg?: string) => {
+    const name = (nameArg ?? newSubjectName).trim();
+    if (!name) return;
     try {
-      const saved = await saveSubject({ name: newSubjectName.trim() });
+      const saved = await saveSubject({ name });
       setSubjects(prev => [...prev, saved].sort((a, b) => a.name.localeCompare(b.name)));
       setSubjectId(saved.id);
       setNewSubjectName(''); setAddingSubject(false);
       addNotification('Đã thêm môn học', 'success');
     } catch { addNotification('Lỗi thêm môn học', 'error'); }
   };
-  const handleRenameSubject = async (s: EduSubject) => {
-    const name = editSubjectName.trim();
+  const handleRenameSubject = async (s: EduSubject, nameArg?: string) => {
+    const name = (nameArg ?? editSubjectName).trim();
     if (!name || name === s.name) { setEditingSubjectId(''); return; }
     try {
       const saved = await saveSubject({ id: s.id, name });
@@ -429,62 +431,48 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   );
 
   const total = scoped.length;
+  const chips: HeroChip[] = [
+    { id: '', label: 'Tất cả', count: total },
+    ...subjects.map(su => ({ id: su.id, label: su.name, count: counts[su.id] || 0, onRename: (n: string) => handleRenameSubject(su, n), onDelete: () => handleDeleteSubject(su) })),
+    ...otherSubjects.filter(su => (counts[su.id] || 0) > 0).map(su => ({ id: su.id, label: su.name, count: counts[su.id] || 0 })),
+    ...((counts.__none || 0) > 0 ? [{ id: '__none', label: 'Chưa chọn môn', count: counts.__none }] : []),
+  ];
   return (
     <div className="space-y-5 animate-fadeIn">
-    <Banner onBack={onExit} backTitle="Quay lại" icon={<BookMarked className="h-6 w-6" />} title="Ngân hàng bài tập" subtitle="Lưu, chia sẻ và dùng lại bài tập theo môn cho các lớp." />
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[240px_1fr]">
-      {/* Cột môn học */}
-      <div className="h-fit rounded-3xl border border-slate-100 bg-white p-3 shadow-sm">
-        <div className="mb-2 flex items-center justify-between px-2">
-          <span className="text-[10px] font-black uppercase text-slate-400">Môn học</span>
-          <button onClick={() => setAddingSubject(v => !v)} title="Thêm môn" className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-brand"><Plus className="h-3.5 w-3.5" /></button>
-        </div>
-        {addingSubject && (
-          <div className="mb-2 flex items-center gap-1.5 px-1">
-            <input autoFocus value={newSubjectName} onChange={e => setNewSubjectName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleAddSubject(); if (e.key === 'Escape') setAddingSubject(false); }} placeholder="Tên môn mới" className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs outline-none focus:border-brand" />
-            <button onClick={handleAddSubject} className="rounded-lg bg-brand p-1.5 text-white"><Check className="h-3.5 w-3.5" /></button>
-          </div>
-        )}
-        <SubjectBtn active={!subjectId} label="Tất cả" count={total} onClick={() => setSubjectId('')} />
-        {subjects.map(s => editingSubjectId === s.id ? (
-          <input key={s.id} autoFocus value={editSubjectName} onChange={e => setEditSubjectName(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleRenameSubject(s); if (e.key === 'Escape') setEditingSubjectId(''); }}
-            onBlur={() => handleRenameSubject(s)} className="mb-1 w-full rounded-xl border border-brand bg-white px-3 py-2 text-xs font-bold text-slate-700 outline-none" />
-        ) : (
-          <SubjectBtn key={s.id} active={subjectId === s.id} label={s.name} count={counts[s.id] || 0} onClick={() => setSubjectId(s.id)}
-            onRename={() => { setEditingSubjectId(s.id); setEditSubjectName(s.name); }} onDelete={() => handleDeleteSubject(s)} />
-        ))}
-        {otherSubjects.filter(s => (counts[s.id] || 0) > 0).map(s => (
-          <SubjectBtn key={s.id} active={subjectId === s.id} label={s.name} count={counts[s.id] || 0} onClick={() => setSubjectId(s.id)} />
-        ))}
-        {(counts.__none || 0) > 0 && <SubjectBtn active={subjectId === '__none'} label="Chưa chọn môn" count={counts.__none} onClick={() => setSubjectId('__none')} />}
-      </div>
+      <LibraryHero
+        title="Bạn muốn tìm bài tập nào?"
+        subtitle="Lưu, chia sẻ và dùng lại bài tập theo môn cho các lớp."
+        onBack={onExit}
+        backTitle="Quay lại"
+        search={search}
+        onSearch={setSearch}
+        placeholder="Tìm theo tên bài, môn học, người tạo, nội dung..."
+        chips={chips}
+        activeChip={subjectId}
+        onChip={setSubjectId}
+        onAddChip={name => handleAddSubject(name)}
+        actions={
+          <button onClick={() => openEditor(emptyItem(subjectId && subjectId !== '__none' ? subjectId : undefined))} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-brand px-4 text-sm font-semibold text-white shadow-lg shadow-brand/20 hover:bg-brand-hover">
+            <Plus className="h-4 w-4" /> Thêm bài tập
+          </button>
+        }
+      />
 
       <div className="min-w-0 space-y-4">
-        {/* Thanh công cụ */}
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-          <div className="relative min-w-[200px] flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm theo tên bài, môn học, người tạo, nội dung..." className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-xs outline-none focus:border-brand" />
-            {search && <button onClick={() => setSearch('')} title="Xoá tìm kiếm" className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600"><X className="h-3.5 w-3.5" /></button>}
-          </div>
+        {/* Thanh lọc phụ */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{shown.length}</span> bài tập{subjectId ? ` trong môn ${subjectId === '__none' ? 'chưa chọn' : subjName(subjectId)}` : ''}</p>
           <div className="flex flex-wrap items-center gap-2">
-            <select value={scope} onChange={e => setScope(e.target.value as any)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-brand">
+            <select value={scope} onChange={e => setScope(e.target.value as any)} className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-brand">
               <option value="mine">Bài của tôi</option>
               <option value="shared">Bài dùng chung</option>
               <option value="all">Tất cả</option>
             </select>
-            <select value={sort} onChange={e => setSort(e.target.value as any)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-brand">
+            <select value={sort} onChange={e => setSort(e.target.value as any)} className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-brand">
               <option value="new">Mới nhất</option>
               <option value="name">Tên A đến Z</option>
             </select>
-            <div className="inline-flex rounded-xl bg-slate-100 p-1">
-              <button onClick={() => setMode('grid')} title="Dạng lưới" className={`rounded-lg p-1.5 ${mode === 'grid' ? 'bg-white text-brand shadow-sm' : 'text-slate-400'}`}><LayoutGrid className="w-4 h-4" /></button>
-              <button onClick={() => setMode('table')} title="Dạng danh sách" className={`rounded-lg p-1.5 ${mode === 'table' ? 'bg-white text-brand shadow-sm' : 'text-slate-400'}`}><ListIcon className="w-4 h-4" /></button>
-            </div>
-            <button onClick={() => openEditor(emptyItem(subjectId && subjectId !== '__none' ? subjectId : undefined))} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover">
-              <Plus className="w-4 h-4" /> Thêm bài tập
-            </button>
+            <ViewToggle mode={mode} onChange={setMode} gridIcon={<LayoutGrid className="h-4 w-4" />} listIcon={<ListIcon className="h-4 w-4" />} />
           </div>
         </div>
 
@@ -495,7 +483,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
             {!search && <p className="mt-1 text-xs text-slate-400">Bấm Thêm bài tập để tạo.</p>}
           </div>
         ) : mode === 'grid' ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {pageItems.map(it => {
               const img = firstImage(it.content);
               return (
@@ -598,7 +586,6 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
         )}
         {shown.length > 0 && <Pager pg={pg} total={shown.length} unit="bài tập" sizes={[12, 24, 48, 96]} />}
       </div>
-    </div>
     </div>
   );
 }
