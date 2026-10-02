@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { prettyShareUrl } from '../../lib/shareLinks';
-import { copyText } from '../ui/Dialogs';
+import { copyText, askChoice } from '../ui/Dialogs';
 import {
   Plus, Search, LayoutGrid, List as ListIcon, Edit2, Eye, Copy, Send, Trash2, Globe, Lock,
   ArrowLeft, ArrowUp, ArrowDown, Loader2, X, Check, BookOpen, Users, Link2, QrCode, FileText,
@@ -12,14 +12,14 @@ import { EduSubject, EduClass } from '../../types/edu';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import LibraryHero, { ViewToggle } from '../ui/LibraryHero';
-import { getSubjects, getSubjectsByIds, getSystemSubjects, isSystemSubject, saveSubject, getClasses, getClassUsers, setEduAuthContext } from '../../lib/edu';
+import { getSubjects, getSubjectsByIds, getSystemSubjects, isSystemSubject, SYSTEM_SUBJECT_OWNER, saveSubject, getClasses, getClassUsers, setEduAuthContext } from '../../lib/edu';
 import {
   ELLesson, ELSection, ELResource,
   syncOwnerName, getMyLessons, getPublicLessons, getPublicSubjectCounts, getLesson, getOwnLesson, createLesson, updateLesson,
   softDeleteLesson, bulkSoftDeleteLessons, bulkUpdateLessons, restoreLesson, purgeLesson, getTrashLessons,
   getSections, createSection, updateSection, deleteSection, reorderSections,
   getResources, addResource, uploadResource, updateResource, deleteResource,
-  copyPublicLesson, getLessonClasses, setLessonClasses, getSectionViews, stripHtml,
+  copyPublicLesson, getLessonClasses, setLessonClasses, getSectionViews, stripHtml, adminMoveLessons,
 } from '../../lib/elearning';
 import QuizRichText from './QuizRichText';
 import MediaSourcePicker from '../MediaSourcePicker';
@@ -689,6 +689,20 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
   };
 
   const subjName = (id?: string | null) => subjects.find(s => s.id === id)?.name || 'Khác';
+  // Quản trị cao nhất xếp lại kho chung: chuyển bài giảng công khai sang môn chung (chỉ đổi môn).
+  const isTopAdmin = currentUser.id === SYSTEM_SUBJECT_OWNER;
+  const move = async (l: ELLesson) => {
+    const targets = subjects.filter(isSystemSubject);
+    if (!targets.length) { addNotification('Chưa có môn chung nào. Hãy tạo môn trước.', 'warning'); return; }
+    const sid = await askChoice({ title: 'Chuyển bài giảng sang môn', label: `${l.title}. Chỉ đổi môn của bài, không sửa nội dung.`, options: targets.map(t => ({ id: t.id, label: t.name })), defaultId: l.subject_id || undefined, okText: 'Chuyển môn' });
+    if (!sid || sid === l.subject_id) return;
+    try {
+      await adminMoveLessons([l.id], sid);
+      addNotification(`Đã chuyển sang môn ${subjName(sid)}.`, 'success');
+      getPublicSubjectCounts().then(setCounts).catch(() => {});
+      load();
+    } catch (e: any) { addNotification('Lỗi: ' + (e?.message || e), 'error'); }
+  };
   // Tìm theo tên bài, môn, tác giả (gõ không dấu vẫn tìm được), rồi chia trang
   const lessons = useMemo(() => {
     const q = fold(search);
@@ -749,6 +763,7 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
                     <td className="px-4 py-3"><div className="flex justify-end gap-1.5">
                       <button onClick={() => openLessonView(l.id)} className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200">Xem</button>
                       {l.allow_copy && <button onClick={() => copy(l)} disabled={copyingId === l.id} className="inline-flex items-center gap-1 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-hover disabled:opacity-50">{copyingId === l.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Copy className="h-3 w-3" />} Sao chép</button>}
+                      {isTopAdmin && <button onClick={() => move(l)} className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-brand-light hover:text-brand"><FolderInput className="h-3 w-3" /> Chuyển môn</button>}
                     </div></td>
                   </tr>
                 ))}
@@ -772,6 +787,7 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
                   <div onClick={e => e.stopPropagation()} className="mt-auto flex gap-1.5 border-t border-slate-50 pt-3 cursor-default">
                     <button onClick={() => openLessonView(l.id)} className="flex-1 rounded-lg bg-slate-100 px-2 py-1.5 text-center text-[10px] font-bold text-slate-600 hover:bg-slate-200">Xem</button>
                     {l.allow_copy && <button onClick={() => copy(l)} disabled={copyingId === l.id} className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-brand px-2 py-1.5 text-[10px] font-bold text-white hover:bg-brand-hover disabled:opacity-50">{copyingId === l.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Copy className="h-3 w-3" />} Sao chép</button>}
+                    {isTopAdmin && <button onClick={() => move(l)} title="Chuyển sang môn chung" className="inline-flex items-center justify-center rounded-lg bg-slate-100 px-2 py-1.5 text-slate-600 hover:bg-brand-light hover:text-brand"><FolderInput className="h-3.5 w-3.5" /></button>}
                   </div>
                 </div>
               </div>

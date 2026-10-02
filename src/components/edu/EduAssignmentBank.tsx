@@ -13,13 +13,13 @@ import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
 import { UserAccount } from '../../types';
 import {
   getSubjects, getSubjectsByIds, saveSubject, deleteSubject, getAssignmentBank, saveAssignmentBankItem, deleteAssignmentBankItem,
-  bulkUpdateAssignmentBank, bulkDeleteAssignmentBank, ensureBankShareToken, bankShareUrl, newShareToken,
+  bulkUpdateAssignmentBank, bulkDeleteAssignmentBank, adminMoveBankItems, SYSTEM_SUBJECT_OWNER, isSystemSubject, ensureBankShareToken, bankShareUrl, newShareToken,
 } from '../../lib/edu';
 import { uploadImageToCloudinary } from '../../lib/upload';
 import { exportAssignmentToPdf } from '../../lib/assignmentPdf';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
 import { useNotifications } from '../NotificationContext';
-import { askText, copyText } from '../ui/Dialogs';
+import { askText, copyText, askChoice } from '../ui/Dialogs';
 import { useConfirmation } from '../ConfirmationContext';
 import { fold, usePaging, Pager } from './ListPager';
 import MediaSourcePicker from '../MediaSourcePicker';
@@ -46,6 +46,9 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   const { confirm } = useConfirmation();
   // Chỉ người tạo ra bài mới được sửa, xóa và bật chia sẻ công khai.
   const canEdit = (item?: { ownerId?: string } | null) => !!item && item.ownerId === currentUser?.id;
+  // Quản trị cao nhất được chuyển bài công khai của người khác sang môn chung để xếp gọn kho chung.
+  const isTopAdmin = currentUser?.id === SYSTEM_SUBJECT_OWNER;
+  const canAdminMove = (it: EduAssignmentBankItem) => isTopAdmin && !canEdit(it) && !!it.isPublic;
 
   const [subjects, setSubjects] = useState<EduSubject[]>([]);
   const [items, setItems] = useState<EduAssignmentBankItem[]>([]);
@@ -248,6 +251,14 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   const toggleOne = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const toggleAll = () => setSelected(prev => { const n = new Set(prev); pageItems.forEach(i => allChecked ? n.delete(i.id) : n.add(i.id)); return n; });
 
+  const adminMove = async (list: EduAssignmentBankItem[]) => {
+    const targets = subjects.filter(isSystemSubject);
+    if (!targets.length) { addNotification('Chưa có môn chung nào. Hãy tạo môn trước.', 'warning'); return; }
+    const sid = await askChoice({ title: list.length > 1 ? `Chuyển ${list.length} bài tập sang môn` : 'Chuyển bài tập sang môn', label: 'Chỉ đổi môn của bài, không sửa nội dung bài của người khác.', options: targets.map(t => ({ id: t.id, label: t.name })), okText: 'Chuyển môn' });
+    if (!sid) return;
+    try { await adminMoveBankItems(list.map(i => i.id), sid); addNotification(`Đã chuyển ${list.length} bài tập sang môn ${subjName(sid)}.`, 'success'); await reloadItems(); }
+    catch (e: any) { addNotification('Lỗi: ' + (e?.message || e), 'error'); }
+  };
   const runBulk = async (fn: () => Promise<void>, done: string) => {
     setBulkBusy(true);
     try { await fn(); addNotification(done, 'success'); setSelected(new Set()); await reloadItems(); }
@@ -265,12 +276,19 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   };
   const bulkChangeSubject = async (sid: string) => {
     setBulkSubject('');
-    if (!sid || !needOwn()) return;
-    const skip = picked.length - pickedOwn.length;
+    if (!sid) return;
+    // Quản trị cao nhất chuyển được cả bài công khai của người khác sang môn chung.
+    const pickedOthers = isTopAdmin && sid !== '__none' && isSystemSubject(subjects.find(x => x.id === sid)) ? picked.filter(canAdminMove) : [];
+    if (!pickedOthers.length && !needOwn()) return;
+    const moved = pickedOwn.length + pickedOthers.length;
+    const skip = picked.length - moved;
     const name = sid === '__none' ? 'Chưa chọn môn' : subjName(sid);
-    const ok = await confirm({ title: 'Đổi môn học', message: `Chuyển ${pickedOwn.length} bài tập sang môn ${name}?${skipNote(skip)}`, confirmText: 'Đổi môn', cancelText: 'Hủy' });
+    const ok = await confirm({ title: 'Đổi môn học', message: `Chuyển ${moved} bài tập sang môn ${name}?${skipNote(skip)}`, confirmText: 'Đổi môn', cancelText: 'Hủy' });
     if (!ok) return;
-    runBulk(() => bulkUpdateAssignmentBank(pickedOwn.map(i => i.id), { subjectId: sid === '__none' ? null : sid }), `Đã đổi môn cho ${pickedOwn.length} bài tập.${skipNote(skip)}`);
+    runBulk(async () => {
+      if (pickedOwn.length) await bulkUpdateAssignmentBank(pickedOwn.map(i => i.id), { subjectId: sid === '__none' ? null : sid });
+      if (pickedOthers.length) await adminMoveBankItems(pickedOthers.map(i => i.id), sid);
+    }, `Đã đổi môn cho ${moved} bài tập.${skipNote(skip)}`);
   };
   const bulkPublic = async (on: boolean) => {
     if (!needOwn()) return;
@@ -427,6 +445,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
       {canShare(it) && <IconBtn title="Sao chép link xem bài (không cần MSSV)" onClick={() => copyShareLink(it)}><Link2 className="w-3.5 h-3.5" /></IconBtn>}
       {canEdit(it) && <IconBtn title={it.isPublic ? 'Tắt công khai' : 'Chia sẻ công khai'} onClick={() => handleTogglePublic(it)}>{it.isPublic ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}</IconBtn>}
       {canEdit(it) && <IconBtn title="Xóa" danger onClick={() => handleDeleteItem(it)}><Trash2 className="w-3.5 h-3.5" /></IconBtn>}
+      {canAdminMove(it) && <IconBtn title="Chuyển sang môn chung" onClick={() => adminMove([it])}><FolderInput className="w-3.5 h-3.5" /></IconBtn>}
     </>
   );
 

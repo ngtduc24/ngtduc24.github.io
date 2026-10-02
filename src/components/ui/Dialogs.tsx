@@ -50,6 +50,33 @@ function AskText({ title, label, defaultValue, placeholder, okText, done }: { ti
   );
 }
 
+// Chọn 1 mục trong danh sách (ví dụ chọn môn học). Trả về id mục đã chọn, hoặc null nếu bấm Hủy.
+export function askChoice(opts: { title: string; label?: string; options: Array<{ id: string; label: string }>; okText?: string; defaultId?: string }): Promise<string | null> {
+  return mount<string | null>(done => <AskChoice {...opts} done={done} />);
+}
+function AskChoice({ title, label, options, okText, defaultId, done }: { title: string; label?: string; options: Array<{ id: string; label: string }>; okText?: string; defaultId?: string; done: (v: string | null) => void }) {
+  const [v, setV] = useState(defaultId ?? options[0]?.id ?? '');
+  return (
+    <Shell onClose={() => done(null)}>
+      <p className="text-sm font-bold text-slate-800">{title}</p>
+      {label && <p className="mt-1 text-xs text-slate-500">{label}</p>}
+      <div className="mt-3 max-h-72 space-y-1 overflow-y-auto">
+        {options.map(o => (
+          <button key={o.id} type="button" onClick={() => setV(o.id)} onDoubleClick={() => done(o.id)}
+            className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-sm ${v === o.id ? 'border-brand bg-brand-light font-semibold text-brand' : 'border-slate-100 text-slate-700 hover:bg-slate-50'}`}>
+            {o.label}
+          </button>
+        ))}
+        {!options.length && <p className="py-4 text-center text-sm text-slate-400">Chưa có lựa chọn nào.</p>}
+      </div>
+      <div className="mt-4 flex justify-end gap-2">
+        <button onClick={() => done(null)} className="rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200">Hủy</button>
+        <button disabled={!options.length} onClick={() => done(v)} className="rounded-xl bg-brand px-4 py-2 text-xs font-bold text-white hover:bg-brand-hover disabled:opacity-50">{okText || 'Chọn'}</button>
+      </div>
+    </Shell>
+  );
+}
+
 // Sao chép chữ vào bộ nhớ tạm. Gọi ngay trong lúc bấm (chưa await gì trước đó) để trình duyệt cho phép.
 export function copyText(text: string): Promise<boolean> {
   const fallback = () => {

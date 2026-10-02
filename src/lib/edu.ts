@@ -508,9 +508,32 @@ export async function saveAssignmentBankItem(item: Partial<EduAssignmentBankItem
     is_public: item.isPublic === true
   };
   Object.keys(dbData).forEach(key => dbData[key] === undefined && delete dbData[key]);
-  const { data, error } = await supabase.from(ASSIGNMENT_BANK_TABLE).upsert(dbData).select().single();
+  const me = getCtx().userId;
+  // Bài đã có: chỉ chủ bài được sửa, không đổi được chủ bài. Bài mới thì tạo với chủ là người đang đăng nhập.
+  if (item.id) {
+    const { data: cur } = await supabase.from(ASSIGNMENT_BANK_TABLE).select('owner_id').eq('id', item.id).maybeSingle();
+    if (cur) {
+      if (!me || cur.owner_id !== me) throw new Error('Bạn chỉ sửa được bài tập của chính mình.');
+      const { owner_id: _o, id: _i, ...patch } = dbData;
+      const { data, error } = await supabase.from(ASSIGNMENT_BANK_TABLE).update(patch).eq('id', item.id).eq('owner_id', me).select().single();
+      if (error) throw error;
+      return mapBankItem(data);
+    }
+  }
+  if (!me) throw new Error('Bạn cần đăng nhập để lưu bài tập.');
+  dbData.owner_id = me;
+  const { data, error } = await supabase.from(ASSIGNMENT_BANK_TABLE).insert(dbData).select().single();
   if (error) throw error;
   return mapBankItem(data);
+}
+
+// Quản trị cao nhất xếp lại kho chung: chuyển bài tập đã công khai (của bất kỳ ai) sang một môn chung.
+// Chỉ đổi môn, không sửa nội dung, không xoá. Chỉ áp dụng cho bài đang công khai.
+export async function adminMoveBankItems(ids: string[], subjectId: string | null) {
+  if (getCtx().userId !== SYSTEM_SUBJECT_OWNER) throw new Error('Chỉ quản trị cao nhất được chuyển môn bài của người khác.');
+  if (!ids.length) return;
+  const { error } = await supabase.from(ASSIGNMENT_BANK_TABLE).update({ subject_id: subjectId }).in('id', ids).eq('is_public', true);
+  if (error) throw error;
 }
 
 // Link xem bài tập trong ngân hàng, ai có link thì xem được, không cần MSSV (khác link nộp bài của lớp).

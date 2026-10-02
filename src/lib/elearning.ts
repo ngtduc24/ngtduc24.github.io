@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { getEduCtx } from './edu';
+import { getEduCtx, SYSTEM_SUBJECT_OWNER } from './edu';
 import { uploadFileToSupabase } from './upload';
 
 // =====================================================================
@@ -161,6 +161,15 @@ export async function bulkUpdateLessons(ids: string[], patch: Partial<Pick<ELLes
   const { error } = await supabase.from(L_TABLE).update(allowed).in('id', ids).eq('owner_id', ctx().userId || '-');
   if (error) throw error;
 }
+// Quản trị cao nhất xếp lại kho chung: chuyển bài giảng đã công khai (của bất kỳ ai) sang một môn chung.
+// Chỉ đổi môn, không sửa nội dung, không xoá.
+export async function adminMoveLessons(ids: string[], subjectId: string | null): Promise<void> {
+  if (ctx().userId !== SYSTEM_SUBJECT_OWNER) throw new Error('Chỉ quản trị cao nhất được chuyển môn bài của người khác.');
+  if (!ids.length) return;
+  const { error } = await supabase.from(L_TABLE).update({ subject_id: subjectId }).in('id', ids).eq('is_public', true).is('deleted_at', null);
+  if (error) throw error;
+}
+
 export async function bulkSoftDeleteLessons(ids: string[]): Promise<void> {
   if (!ids.length) return;
   const { error } = await supabase.from(L_TABLE).update({ deleted_at: new Date().toISOString(), is_public: false }).in('id', ids).eq('owner_id', ctx().userId || '-');
