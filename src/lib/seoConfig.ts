@@ -222,7 +222,7 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
     id: 'elearning',
     slug: 'e-learning',
     title: 'Giáo trình · Kho giáo trình và học liệu | EduGo',
-    description: 'Soạn, lưu trữ và chia sẻ giáo trình theo môn học, công khai lên kho chung và giao giáo trình cho lớp.',
+    description: 'Soạn, lưu trữ và chia sẻ giáo trình theo môn học, công khai lên thư viện và giao giáo trình cho lớp.',
     keywords: 'giáo trình, học liệu, kho giáo trình, e-learning, giao giáo trình',
   },
   qr_codes: {

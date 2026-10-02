@@ -66,7 +66,8 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   // Bộ lọc và cách hiển thị
   const [subjectId, setSubjectId] = useState('');
   const [search, setSearch] = useState('');
-  const [scope, setScope] = useState<'all' | 'mine' | 'shared' | 'collab'>(() => (takeOpenHint('bank_item') === 'collab' ? 'collab' : 'mine'));
+  // Mở Ngân hàng bài tập là vào Thư viện chung trước, muốn xem bài của mình thì chọn Bài của tôi.
+  const [scope, setScope] = useState<'all' | 'mine' | 'shared' | 'collab'>(() => (takeOpenHint('bank_item') === 'collab' ? 'collab' : 'shared'));
   const [sort, setSort] = useState<'new' | 'name'>('new');
   // Mặc định luôn mở dạng lưới, người dùng tự đổi sang danh sách khi cần.
   const [mode, setMode] = useState<'grid' | 'table'>('grid');
@@ -129,7 +130,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   useEffect(() => () => { writeSubRoute({ bid: null }); }, []);
 
   // Đếm số bài theo môn (sau khi lọc phạm vi), để hiện ở cột trái
-  const scoped = useMemo(() => items.filter(it => scope === 'all' ? true : scope === 'mine' ? it.ownerId === currentUser.id : scope === 'collab' ? !!roles[it.id] : (it.isPublic && it.ownerId !== currentUser.id)), [items, scope, currentUser.id, roles]);
+  const scoped = useMemo(() => items.filter(it => scope === 'all' ? true : scope === 'mine' ? it.ownerId === currentUser.id : scope === 'collab' ? !!roles[it.id] : it.isPublic), [items, scope, currentUser.id, roles]);
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
     scoped.forEach(it => { const k = it.subjectId || '__none'; m[k] = (m[k] || 0) + 1; });
@@ -505,8 +506,8 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
           <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{shown.length}</span> bài tập{subjectId ? ` trong môn ${subjectId === '__none' ? 'chưa chọn' : subjName(subjectId)}` : ''}</p>
           <div className="flex flex-wrap items-center gap-2">
             <select value={scope} onChange={e => setScope(e.target.value as any)} className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-brand">
+              <option value="shared">Thư viện</option>
               <option value="mine">Bài của tôi</option>
-              <option value="shared">Bài dùng chung</option>
               <option value="collab">Được chia sẻ với tôi</option>
               <option value="all">Tất cả</option>
             </select>

@@ -55,7 +55,7 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [filterSubject, setFilterSubject] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  const [listTab, setListTab] = useState<'mine' | 'collab' | 'shared'>(() => (takeOpenHint('quiz') === 'collab' ? 'collab' : 'mine')); // đề của tôi, được chia sẻ với tôi, kho đề chung
+  const [listTab, setListTab] = useState<'mine' | 'collab' | 'shared'>(() => (takeOpenHint('quiz') === 'collab' ? 'collab' : 'shared')); // đề của tôi, được chia sẻ với tôi, thư viện đề
   const [quizRoles, setQuizRoles] = useState<Record<string, CollabRole>>({});
   const [quizCollabs, setQuizCollabs] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
   useEffect(() => { if (quizzes.length) collaboratorsByResource('quiz', quizzes.map(z => z.id)).then(setQuizCollabs).catch(() => {}); }, [quizzes]);
@@ -128,7 +128,7 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
 
   // Chọn một đề trong kho chung: chép đề và toàn bộ câu hỏi về tài khoản của mình rồi mở ra sửa.
   const takeSharedQuiz = (q: Quiz) => {
-    confirm('Chọn đề từ kho chung', `Sao chép đề "${q.title}" cùng toàn bộ câu hỏi về tài khoản của bạn? Bản sao ở trạng thái nháp, bạn có thể sửa tự do mà không ảnh hưởng đề gốc.`, async () => {
+    confirm('Chọn đề từ thư viện', `Sao chép đề "${q.title}" cùng toàn bộ câu hỏi về tài khoản của bạn? Bản sao ở trạng thái nháp, bạn có thể sửa tự do mà không ảnh hưởng đề gốc.`, async () => {
       setCopyingId(q.id);
       try {
         const copied = await copyQuizToMine(q, currentUser.id, currentUser.fullName);
@@ -145,9 +145,9 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
             <div className="flex rounded-xl bg-slate-100 p-1">
+              <button onClick={() => setListTab('shared')} className={`rounded-lg px-4 py-2 text-xs font-bold ${listTab === 'shared' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Thư viện</button>
               <button onClick={() => setListTab('mine')} className={`rounded-lg px-4 py-2 text-xs font-bold ${listTab === 'mine' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Đề của tôi</button>
               <button onClick={() => setListTab('collab')} className={`rounded-lg px-4 py-2 text-xs font-bold ${listTab === 'collab' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Được chia sẻ với tôi</button>
-              <button onClick={() => setListTab('shared')} className={`rounded-lg px-4 py-2 text-xs font-bold ${listTab === 'shared' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Kho đề chung</button>
             </div>
             <select value={filterSubject} onChange={e => setFilterSubject(e.target.value)} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[13px] font-semibold text-slate-700 outline-none focus:border-brand">
               <option value="">Tất cả môn học</option>
@@ -174,7 +174,7 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
         ) : quizzes.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center">
             <p className="text-sm font-bold text-slate-700">{listTab === 'shared' ? 'Kho đề chung chưa có đề nào' : listTab === 'collab' ? 'Chưa có ai thêm bạn vào đề nào' : 'Chưa có đề trắc nghiệm nào'}</p>
-            <p className="mt-1 text-xs text-slate-400">{listTab === 'shared' ? 'Đề được chia sẻ khi người soạn bật "Chia sẻ vào kho đề chung" trong phần Thiết lập của đề.' : 'Bấm "Tạo đề mới" để bắt đầu, hoặc thêm câu hỏi vào ngân hàng trước.'}</p>
+            <p className="mt-1 text-xs text-slate-400">{listTab === 'shared' ? 'Đề được chia sẻ khi người soạn bật "Chia sẻ vào thư viện đề" trong phần Thiết lập của đề.' : 'Bấm "Tạo đề mới" để bắt đầu, hoặc thêm câu hỏi vào ngân hàng trước.'}</p>
           </div>
         ) : shownQuizzes.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-sm text-slate-400">Không tìm thấy đề phù hợp.</div>
@@ -354,7 +354,7 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
 }) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
-  const [tab, setTab] = useState<'mine' | 'collab' | 'shared'>(() => (takeOpenHint('quiz_question') === 'collab' ? 'collab' : 'mine'));
+  const [tab, setTab] = useState<'mine' | 'collab' | 'shared'>(() => (takeOpenHint('quiz_question') === 'collab' ? 'collab' : 'shared'));
   const [qRoles, setQRoles] = useState<Record<string, CollabRole>>({});
   const [sharingQ, setSharingQ] = useState<QuizQuestion | null>(null);
   const [subjectId, setSubjectId] = useState('');
@@ -489,9 +489,9 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
       <div className="flex flex-wrap items-center gap-2">
         {!selectMode && (
           <div className="flex rounded-xl bg-slate-100 p-1">
-            <button onClick={() => setTab('mine')} className={`rounded-lg px-4 py-2 text-xs font-bold ${tab === 'mine' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Ngân hàng của tôi</button>
+            <button onClick={() => setTab('shared')} className={`rounded-lg px-4 py-2 text-xs font-bold ${tab === 'shared' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Thư viện</button>
+            <button onClick={() => setTab('mine')} className={`rounded-lg px-4 py-2 text-xs font-bold ${tab === 'mine' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Câu hỏi của tôi</button>
             <button onClick={() => setTab('collab')} className={`rounded-lg px-4 py-2 text-xs font-bold ${tab === 'collab' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Được chia sẻ với tôi</button>
-            <button onClick={() => setTab('shared')} className={`rounded-lg px-4 py-2 text-xs font-bold ${tab === 'shared' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>Ngân hàng dùng chung</button>
           </div>
         )}
         <select value={subjectId} onChange={e => setSubjectId(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-brand">
@@ -911,13 +911,13 @@ function QuizDetail({ quiz, subjects, currentUser, onEdit, onAssign, onDelete, o
   const [loading, setLoading] = useState(true);
   const [showExport, setShowExport] = useState(false);
   const [togglingPublic, setTogglingPublic] = useState(false);
-  // Bật tắt chia sẻ đề vào kho đề chung ngay tại màn chi tiết.
+  // Bật tắt chia sẻ đề vào thư viện đề ngay tại màn chi tiết.
   const togglePublic = async () => {
     setTogglingPublic(true);
     try {
       const saved = await toggleQuizPublic(quiz.id, !quiz.is_public);
       onQuizChange(saved);
-      addNotification(saved.is_public ? 'Đã chia sẻ đề vào kho đề chung.' : 'Đã tắt chia sẻ đề.', 'success');
+      addNotification(saved.is_public ? 'Đã chia sẻ đề vào thư viện đề.' : 'Đã tắt chia sẻ đề.', 'success');
     } catch (e: any) { addNotification('Lỗi cập nhật chia sẻ: ' + e.message, 'error'); }
     finally { setTogglingPublic(false); }
   };
@@ -942,7 +942,7 @@ function QuizDetail({ quiz, subjects, currentUser, onEdit, onAssign, onDelete, o
         <div className="flex flex-wrap items-center gap-2">
           <button onClick={() => setShowExport(true)} disabled={exportQuestions.length === 0} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand disabled:opacity-50" title="Xuất đề ra PDF để in"><FileDown className="h-4 w-4" /> Xuất PDF</button>
           <button onClick={() => setSharing(true)} title="Cộng tác: thêm người cùng sửa đề" className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand"><Users className="h-4 w-4" /> Cộng tác</button>
-          {isOwner && <button onClick={togglePublic} disabled={togglingPublic} title={quiz.is_public ? 'Tắt chia sẻ vào kho đề chung' : 'Chia sẻ vào kho đề chung'} className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-[11px] font-bold disabled:opacity-50 ${quiz.is_public ? 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100' : 'border-slate-200 bg-white text-slate-600 hover:border-brand/30 hover:text-brand'}`}>
+          {isOwner && <button onClick={togglePublic} disabled={togglingPublic} title={quiz.is_public ? 'Tắt chia sẻ vào thư viện đề' : 'Chia sẻ vào thư viện đề'} className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-[11px] font-bold disabled:opacity-50 ${quiz.is_public ? 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100' : 'border-slate-200 bg-white text-slate-600 hover:border-brand/30 hover:text-brand'}`}>
             {togglingPublic ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />} {quiz.is_public ? 'Đang chia sẻ' : 'Chia sẻ'}
           </button>}
           {canEditRole(role) && <button onClick={onEdit} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Edit2 className="h-4 w-4" /> Sửa</button>}
@@ -1044,7 +1044,7 @@ function QuizSettings({ form, patch, totalQuestions, onSave, saving }: { form: Q
         <Toggle v={form.shuffle_options} on={b => patch({ shuffle_options: b })} label="Đảo thứ tự phương án" desc="Xáo trộn phương án trong từng câu" />
         <Toggle v={form.proctor_fullscreen} on={b => patch({ proctor_fullscreen: b })} label="Giám sát toàn màn hình" desc="Ghi nhận khi sinh viên rời màn hình" />
         <Toggle v={form.scale_to_10} on={b => patch({ scale_to_10: b })} label="Quy đổi về thang 10" desc="Hiển thị thêm điểm theo thang 10" />
-        <Toggle v={form.is_public} on={b => patch({ is_public: b })} label="Chia sẻ vào kho đề chung" desc="Giảng viên khác có thể xem và sao chép đề này về dùng" />
+        <Toggle v={form.is_public} on={b => patch({ is_public: b })} label="Chia sẻ vào thư viện đề" desc="Giảng viên khác có thể xem và sao chép đề này về dùng" />
       </div>
 
       <div className="grid gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:grid-cols-2">

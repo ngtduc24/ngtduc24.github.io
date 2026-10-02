@@ -48,7 +48,13 @@ export default function ELearningModule({ currentUser, onExit }: Props) {
     const valid = ['editor', 'assign', 'progress', 'trash'];
     return sub.sv && valid.includes(sub.sv) ? (sub.sv as View) : 'list';
   });
-  const [tab, setTab] = useState<Tab>(sub.ltab === 'public' ? 'public' : 'mine');
+  // Mở Giáo trình là vào Thư viện chung trước, muốn xem của mình thì bấm chuyển sang Giáo trình của tôi.
+  // Đi từ thông báo cộng tác (mục Được chia sẻ) hoặc địa chỉ có ltab=mine thì mở thẳng phần của tôi.
+  const [tab, setTab] = useState<Tab>(() => {
+    let hinted = false;
+    try { hinted = !!sessionStorage.getItem('open_hint:el_lesson'); } catch { /* bỏ qua */ }
+    return sub.ltab === 'mine' || hinted ? 'mine' : 'public';
+  });
   const [activeLessonId, setActiveLessonId] = useState<string | null>(sub.lid || null);
   const [subjects, setSubjects] = useState<EduSubject[]>([]);
 
@@ -63,7 +69,7 @@ export default function ELearningModule({ currentUser, onExit }: Props) {
     writeSubRoute({
       sv: view === 'list' ? null : view,
       lid: needsLesson ? activeLessonId : null,
-      ltab: view === 'list' && tab === 'public' ? 'public' : null,
+      ltab: view === 'list' && tab === 'mine' ? 'mine' : null,
     });
   }, [view, activeLessonId, tab]);
 
@@ -92,7 +98,7 @@ export default function ELearningModule({ currentUser, onExit }: Props) {
 
 // Đầu trang chung của Giáo trình: hai kho (của tôi, chung) dạng thẻ ngay trên khung tìm kiếm lớn.
 interface ElHero { onExit?: () => void; tab: 'mine' | 'public'; setTab: (t: 'mine' | 'public') => void; onTrash?: () => void; onSubjectAdded?: (s: EduSubject) => void }
-const EL_TABS = [{ id: 'mine', label: 'Kho của tôi' }, { id: 'public', label: 'Kho chung' }];
+const EL_TABS = [{ id: 'public', label: 'Thư viện' }, { id: 'mine', label: 'Giáo trình của tôi' }];
 
 // ============================ KHO CỦA TÔI ============================
 function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects: EduSubject[]; currentUser: UserAccount; onEdit: (id: string) => void; onAssign: (id: string) => void; hero: ElHero }) {
@@ -192,18 +198,18 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
   };
 
   const bulkPublic = async (on: boolean) => {
-    if (!mayPublic) { addNotification('Tài khoản chưa được cấp quyền công khai lên kho chung.', 'warning'); return; }
+    if (!mayPublic) { addNotification('Tài khoản chưa được cấp quyền công khai lên thư viện.', 'warning'); return; }
     if (!on) { runBulk(() => bulkUpdateLessons(picked.map(l => l.id), { is_public: false }), `Đã tắt công khai ${picked.length} giáo trình.`); return; }
     const ready = picked.filter(l => l.status === 'published');
     const skip = picked.length - ready.length;
     if (!ready.length) { addNotification('Các bài đã chọn đều chưa xuất bản. Cần xuất bản trước khi công khai.', 'warning'); return; }
-    const ok = await confirm({ title: 'Công khai giáo trình', message: `Công khai ${ready.length} giáo trình lên kho chung, mọi người dùng khác xem và sao chép được.${skip ? ` Bỏ qua ${skip} bài chưa xuất bản.` : ''} Tiếp tục?`, confirmText: 'Công khai', cancelText: 'Hủy' });
+    const ok = await confirm({ title: 'Công khai giáo trình', message: `Công khai ${ready.length} giáo trình lên thư viện, mọi người dùng khác xem và sao chép được.${skip ? ` Bỏ qua ${skip} bài chưa xuất bản.` : ''} Tiếp tục?`, confirmText: 'Công khai', cancelText: 'Hủy' });
     if (!ok) return;
     runBulk(() => bulkUpdateLessons(ready.map(l => l.id), { is_public: true }), `Đã công khai ${ready.length} giáo trình.${skip ? ` Bỏ qua ${skip} bài chưa xuất bản.` : ''}`);
   };
 
   const togglePublic = async (l: ELLesson) => {
-    if (!mayPublic) { addNotification('Tài khoản chưa được cấp quyền công khai lên kho chung.', 'warning'); return; }
+    if (!mayPublic) { addNotification('Tài khoản chưa được cấp quyền công khai lên thư viện.', 'warning'); return; }
     if (!l.is_public) {
       if (l.status !== 'published') { addNotification('Cần xuất bản giáo trình trước khi công khai.', 'warning'); return; }
       const ok = await confirm({ title: 'Công khai giáo trình', message: 'Giáo trình sẽ hiển thị với mọi người dùng khác và họ được sao chép về kho riêng. Tiếp tục?', confirmText: 'Công khai', cancelText: 'Hủy' });
@@ -675,12 +681,12 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
 
           <div className="space-y-2 border-t border-slate-100 pt-3">
             <ToggleRow label="Xuất bản" on={lesson.status === 'published'} onChange={b => patchLesson({ status: b ? 'published' : 'draft', ...(b ? {} : { is_public: false }) })} />
-            <ToggleRow label="Công khai kho chung" on={lesson.is_public} disabled={!canPublic} onChange={async b => {
+            <ToggleRow label="Công khai lên thư viện" on={lesson.is_public} disabled={!canPublic} onChange={async b => {
               if (b) { const ok = await confirm({ title: 'Công khai giáo trình', message: 'Nội dung sẽ hiển thị với mọi người dùng và họ được sao chép về kho riêng. Tiếp tục?', confirmText: 'Công khai', cancelText: 'Hủy' }); if (!ok) return; }
               patchLesson({ is_public: b });
             }} />
             {mayPublic && !canPublic && <p className="text-[10px] text-amber-600">Cần xuất bản và có ít nhất 1 phần nội dung mới công khai được.</p>}
-            {!mayPublic && <p className="text-[10px] text-slate-400">Tài khoản chưa được cấp quyền công khai lên kho chung.</p>}
+            {!mayPublic && <p className="text-[10px] text-slate-400">Tài khoản chưa được cấp quyền công khai lên thư viện.</p>}
             <ToggleRow label="Cho phép sao chép" on={lesson.allow_copy} onChange={b => patchLesson({ allow_copy: b })} />
             {mayAssign && <ToggleRow label="Giao cho lớp (link + QR)" on={lesson.share_enabled} onChange={b => patchLesson({ share_enabled: b })} />}
           </div>
@@ -717,7 +723,7 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
   const load = useCallback(async () => {
     setLoading(true);
     try { setAll(await getPublicLessons({ subjectId: subjectId || undefined, sort })); }
-    catch (e: any) { addNotification('Lỗi tải kho chung: ' + (e.message || e), 'error'); }
+    catch (e: any) { addNotification('Lỗi tải thư viện: ' + (e.message || e), 'error'); }
     finally { setLoading(false); }
   }, [subjectId, sort, addNotification]);
   useEffect(() => { load(); }, [load]);

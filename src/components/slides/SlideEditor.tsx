@@ -20,6 +20,7 @@ import SlideRenderer, { ElementView, bgStyle, ensureFont, ensureAnimCss, ElPhase
 import SlidePresenter, { PresentOptions } from './SlidePresenter';
 import DeckSharePanel from './DeckSharePanel';
 import { useDeckPresence } from '../../lib/deckPresence';
+import { setSidebarTools } from '../../lib/sidebarTools';
 import ShareDialog from '../ui/ShareDialog';
 import { AvatarStack } from '../ui/People';
 import PptxImportDialog from './PptxImportDialog';
@@ -731,9 +732,15 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
     { id: 'elements', label: 'Thành phần', icon: Shapes },
     { id: 'text', label: 'Văn bản', icon: Type },
     { id: 'uploads', label: 'Tải lên', icon: Upload },
-    { id: 'library', label: 'Thư viện', icon: Images },
+    { id: 'library', label: 'Thư viện ảnh', icon: Images },
     { id: 'background', label: 'Nền', icon: PaintBucket },
   ];
+  // Công cụ thiết kế gắn lên đầu thanh bên trái của hệ thống (các mục chung dồn xuống cuối thanh).
+  useEffect(() => {
+    setSidebarTools(readOnly ? [] : rail.map(r => ({ id: r.id, label: r.label, icon: r.icon, active: panel === r.id, onClick: () => setPanel(p => (p === r.id ? null : r.id)) })));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [panel, readOnly]);
+  useEffect(() => () => setSidebarTools(null), []);
   const tb = 'grid h-9 w-9 place-items-center rounded-lg text-slate-600 hover:bg-slate-100';
   const tbOn = 'grid h-9 w-9 place-items-center rounded-lg bg-brand-light text-brand';
   const handles: Handle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
@@ -916,7 +923,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex flex-col bg-slate-100 text-slate-800">
+    <div className="fixed inset-y-0 left-20 right-0 z-[120] flex flex-col bg-slate-100 text-slate-800">
       {/* Thanh trên */}
       <header className="flex h-14 shrink-0 items-center gap-1 bg-gradient-to-r from-brand to-brand-hover px-2 text-white sm:px-3">
         <button onClick={async () => { if (status === 'dirty') await save(); onExit(); }} title="Về danh sách bài giảng" className="grid h-10 w-10 place-items-center rounded-lg hover:bg-white/15"><Home className="h-5 w-5" /></button>
@@ -965,19 +972,6 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
       </header>
 
       <div className="flex min-h-0 flex-1">
-        {/* Thanh công cụ bên trái */}
-        {!readOnly && (
-          <nav className="flex w-[72px] shrink-0 flex-col items-center gap-1 overflow-y-auto border-r border-slate-200 bg-white py-2">
-            {rail.map(r => {
-              const I = r.icon; const on = panel === r.id;
-              return (
-                <button key={r.id} onClick={() => setPanel(on ? null : r.id)} className={`flex w-16 flex-col items-center gap-1 rounded-xl py-2 text-[11px] font-medium ${on ? 'bg-brand-light text-brand' : 'text-slate-600 hover:bg-slate-50'}`}>
-                  <I className="h-5 w-5" />{r.label}
-                </button>
-              );
-            })}
-          </nav>
-        )}
         {!readOnly && panel && (
           <aside className="w-[300px] shrink-0 overflow-y-auto border-r border-slate-200 bg-white p-4">
             {panel === 'effects' || panel === 'animate' || panel === 'position' || panel === 'transition'

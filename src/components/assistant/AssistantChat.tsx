@@ -66,7 +66,7 @@ type Msg = { role: 'user'; text: string } | { role: 'bot'; result: BotResult };
 const FEATURE_GUIDE: Record<string, { whatIs: string; howTo: string[] }> = {
   remier: { whatIs: 'Remier là công cụ dựng video nhiều lớp chạy ngay trên trình duyệt, không cần cài phần mềm.', howTo: ['Mở Remier từ trang tổng quan.', 'Thêm ảnh, video, âm thanh vào kho tư liệu rồi kéo xuống dòng thời gian.', 'Cắt ghép, thêm chữ, hiệu ứng, chuyển tiếp cho từng lớp.', 'Bấm Xuất để lưu video ra file.'] },
   edu: { whatIs: 'Quản lý Giáo dục là nơi quản lý trường, lớp, danh sách sinh viên, bài tập và bảng điểm.', howTo: ['Mở Quản lý Giáo dục.', 'Tạo hoặc chọn lớp rồi nhập danh sách sinh viên.', 'Tạo bài tập, cột điểm, giao bài và chấm điểm.', 'Xem cột Trung bình môn tính theo trọng số từng cột.'] },
-  elearning: { whatIs: 'Giáo trình là nơi soạn, lưu trữ và chia sẻ giáo trình theo môn, giao giáo trình cho lớp.', howTo: ['Vào Giáo trình rồi bấm Tạo giáo trình mới.', 'Đặt tên và chọn môn, nếu chưa có môn thì bấm dấu cộng thêm nhanh.', 'Soạn nội dung theo từng phần, đính kèm tài nguyên.', 'Công khai lên kho chung hoặc giao cho lớp bằng liên kết.'] },
+  elearning: { whatIs: 'Giáo trình là nơi soạn, lưu trữ và chia sẻ giáo trình theo môn, giao giáo trình cho lớp.', howTo: ['Vào Giáo trình rồi bấm Tạo giáo trình mới.', 'Đặt tên và chọn môn, nếu chưa có môn thì bấm dấu cộng thêm nhanh.', 'Soạn nội dung theo từng phần, đính kèm tài nguyên.', 'Công khai lên thư viện hoặc giao cho lớp bằng liên kết.'] },
   edu_bank: { whatIs: 'Ngân hàng bài tập lưu các bài tập để dùng lại và chia sẻ theo môn.', howTo: ['Mở Ngân hàng bài tập.', 'Tạo bài tập mới hoặc chọn từ kho có sẵn.', 'Gán bài tập vào lớp khi cần giao.'] },
   edu_exam: { whatIs: 'Trắc nghiệm là nơi soạn câu hỏi, tạo đề, giao đề cho lớp và chấm tự động.', howTo: ['Mở Trắc nghiệm.', 'Soạn câu hỏi trong Ngân hàng câu hỏi.', 'Bấm Tạo đề mới rồi thêm câu hỏi vào đề.', 'Bấm Phát hành đề rồi giao cho lớp.', 'Có thể xuất đề ra PDF để in.'] },
   edu_grade: { whatIs: 'Nhập điểm giúp nhập điểm vào file của phần mềm trường.', howTo: ['Mở Nhập điểm.', 'Chọn lớp và cột điểm.', 'Nhập điểm rồi xuất file.'] },
@@ -145,7 +145,7 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
         const subs = await getSubjects().catch(() => []);
         setSubjects(subs);
         if (knowledgeMode) {
-          // Trang trợ lý kiến thức chỉ dùng nội dung công khai: bài giảng kho chung và
+          // Trang trợ lý kiến thức chỉ dùng nội dung công khai: bài giảng thư viện và
           // ngân hàng bài tập được chia sẻ công khai.
           const [pub, bank] = await Promise.all([
             getPublicLessons({}).catch(() => []),

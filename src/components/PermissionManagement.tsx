@@ -37,7 +37,7 @@ const MODULES: ModuleDef[] = [
   { id: 'edu_question_bank', group: 'Giảng dạy và nội dung', label: 'Ngân hàng câu hỏi', desc: 'Kho câu hỏi trắc nghiệm theo môn' },
   { id: 'edu_grade', group: 'Giảng dạy và nội dung', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường' },
   { id: 'slides', group: 'Giảng dạy và nội dung', label: 'Bài giảng', desc: 'Thiết kế bài giảng trình chiếu như Google Slides, Canva' },
-  { id: 'elearning', group: 'Giảng dạy và nội dung', label: 'Giáo trình', desc: 'Soạn, lưu trữ và chia sẻ giáo trình theo môn', flags: [['canElearningPublic', 'Công khai kho chung'], ['canElearningAssign', 'Giao cho lớp']] },
+  { id: 'elearning', group: 'Giảng dạy và nội dung', label: 'Giáo trình', desc: 'Soạn, lưu trữ và chia sẻ giáo trình theo môn', flags: [['canElearningPublic', 'Công khai lên thư viện'], ['canElearningAssign', 'Giao cho lớp']] },
   { id: 'remier', group: 'Công cụ thiết kế', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp trên trình duyệt', flags: [['canRemierShared', 'Quản lý thư viện chung']] },
   { id: 'qr_codes', group: 'Công cụ thiết kế', label: 'Tạo mã QR', desc: 'Tạo, sửa, xoá, tải mã QR từ đường link' },
   { id: 'scientific_cv', group: 'Nghiên cứu và phân tích', label: 'Lý lịch khoa học', desc: 'Tạo, sửa, xoá, xuất PDF hoặc Word lý lịch khoa học theo mẫu' },
