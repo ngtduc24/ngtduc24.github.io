@@ -1,7 +1,7 @@
 // Đọc tệp PowerPoint (.pptx) ngay trên trình duyệt và đổi thành bài giảng sửa được trong ứng dụng Bài giảng.
 // Mỗi trang PowerPoint thành 1 trang, chữ thành khối chữ, hình thành khối hình, ảnh được tải lên kho của người dùng,
 // bảng thành các ô chữ có viền, ghi chú người trình bày giữ nguyên. Biểu đồ, SmartArt, video chưa đọc được thì bỏ qua và báo lại.
-import type { Slide, SlideEl, SlideBg, ShapeKind } from './slides';
+import type { Slide, SlideEl, SlideBg, ShapeKind, TextRun, TextLine } from './slides';
 import { SLIDE_W, SLIDE_H, uid } from './slides';
 
 type El = Element;
@@ -233,65 +233,115 @@ function fixSymbols(t: string, font?: string | null): string {
   });
 }
 
-// Khối chữ từ txBody.
+// Phông PowerPoint không có trên web thì đổi sang phông web gần giống nhất (đều có tiếng Việt).
+const FONT_MAP: Array<[RegExp, string]> = [
+  [/gilroy|gotham|avenir|futura|circular|product ?sans|sf ?pro|proxima|poppins|jakarta|manrope|urbanist|lexend|sofia/i, 'Plus Jakarta Sans'],
+  [/montserrat/i, 'Montserrat'], [/be ?vietnam/i, 'Be Vietnam Pro'], [/roboto/i, 'Roboto'], [/open ?sans/i, 'Open Sans'], [/nunito ?sans/i, 'Nunito Sans'], [/nunito/i, 'Nunito'],
+  [/mulish|muli/i, 'Mulish'], [/quicksand/i, 'Quicksand'], [/inter\b/i, 'Inter'], [/space ?grotesk/i, 'Space Grotesk'], [/playfair/i, 'Playfair Display'], [/merriweather/i, 'Merriweather'], [/lora/i, 'Lora'],
+  [/times|cambria|georgia|garamond|book ?antiqua|palatino|serif/i, 'Tinos'],
+  [/arial|helvetica|calibri|segoe|tahoma|verdana|aptos|candara|corbel|trebuchet|century gothic|noto ?sans|source ?sans/i, 'Arimo'],
+];
+export function webFont(name?: string | null): string | undefined {
+  if (!name || /^\+/.test(name)) return undefined;
+  const n = name.replace(/^(SVN|UTM|VNI|iCiel|FS|MTD)[- ]+/i, '').trim();
+  for (const [re, f] of FONT_MAP) if (re.test(n)) return f;
+  return 'Be Vietnam Pro';
+}
+
+type RunStyle = { sz?: number; color?: string; bold?: boolean; italic?: boolean; underline?: boolean; strike?: boolean; font?: string; caps?: boolean };
+// Khối chữ từ txBody: giữ màu, đậm, nghiêng, cỡ, phông của từng đoạn chạy, gạch đầu dòng và căn lề của từng đoạn.
 function textFrom(sp: El, txBody: El, box: Xf, ctx: Ctx, ph: PhKey | null, extra: Partial<SlideEl> = {}, defColor?: string): SlideEl | null {
   const paras = kids(txBody, 'p');
-  const lines: string[] = [];
-  let first: { sz?: number; color?: string; bold?: boolean; italic?: boolean; underline?: boolean; strike?: boolean; font?: string; algn?: string; bullet?: boolean; caps?: boolean } | null = null;
-  let anyBullet = false;
+  const bodyPr = kid(txBody, 'bodyPr');
+  const autofit = path(txBody, 'bodyPr', 'normAutofit');
+  const scaleFont = num(attr(autofit, 'fontScale'), 100000) / 100000;
+  const isTitle = ph && sameKind(ph.type) === 'title';
+  const ptToPx = (pt: number) => Math.max(6, Math.round(pt * scaleFont * EMU_PER_PT * ctx.scale));
+  type RLine = { runs: Array<{ t: string; st: RunStyle }>; bullet: boolean; algn?: string; before?: number; lvl: number };
+  const lines: RLine[] = [];
+  let lnPct: number | null = null;
   for (const p of paras) {
     const pPr = kid(p, 'pPr');
     const lvl = num(attr(pPr, 'lvl'));
     const inh = inheritedText(ctx, ph, lvl);
-    let text = '';
+    if (lnPct == null) { const pc = attr(path(pPr, 'lnSpc', 'spcPct'), 'val'); if (pc) lnPct = num(pc) / 100000; }
+    const bullet = kid(pPr, 'buNone') ? false : (kid(pPr, 'buChar') || kid(pPr, 'buAutoNum')) ? true : !!inh.bullet;
+    const algn = attr(pPr, 'algn') || inh.algn;
+    const bPts = attr(path(pPr, 'spcBef', 'spcPts'), 'val');
+    const before = bPts ? Math.round(num(bPts) / 100 * EMU_PER_PT * ctx.scale) : undefined;
+    let cur: RLine = { runs: lvl > 0 ? [{ t: '   '.repeat(lvl), st: {} }] : [], bullet, algn, before, lvl };
+    const styleOf = (rPr: El | null): RunStyle => ({
+      sz: attr(rPr, 'sz') ? num(attr(rPr, 'sz')) / 100 : inh.sz,
+      color: firstColor(kid(rPr, 'solidFill'), ctx.theme) || defColor || inh.color,
+      bold: attr(rPr, 'b') != null ? attr(rPr, 'b') === '1' : inh.bold,
+      italic: attr(rPr, 'i') === '1', underline: !!attr(rPr, 'u') && attr(rPr, 'u') !== 'none', strike: !!attr(rPr, 'strike') && attr(rPr, 'strike') !== 'noStrike',
+      font: themeFont(attr(kid(rPr, 'latin'), 'typeface') || inh.font, ctx.theme), caps: attr(rPr, 'cap') === 'all',
+    });
     for (const r of kids(p)) {
       if (r.localName === 'r' || r.localName === 'fld') {
-        const symFont = attr(kid(kid(r, 'rPr'), 'sym'), 'typeface') || attr(kid(kid(r, 'rPr'), 'latin'), 'typeface');
-        const t = fixSymbols(kid(r, 't')?.textContent || '', symFont);
-        text += t;
-        if (!first && t.trim()) {
-          const rPr = kid(r, 'rPr');
-          first = {
-            sz: attr(rPr, 'sz') ? num(attr(rPr, 'sz')) / 100 : inh.sz,
-            color: firstColor(kid(rPr, 'solidFill'), ctx.theme) || defColor || inh.color,
-            bold: attr(rPr, 'b') != null ? attr(rPr, 'b') === '1' : inh.bold,
-            italic: attr(rPr, 'i') === '1', underline: !!attr(rPr, 'u') && attr(rPr, 'u') !== 'none', strike: !!attr(rPr, 'strike') && attr(rPr, 'strike') !== 'noStrike',
-            font: themeFont(attr(kid(rPr, 'latin'), 'typeface') || inh.font, ctx.theme), algn: attr(pPr, 'algn') || inh.algn,
-            caps: attr(rPr, 'cap') === 'all',
-          };
-        }
-      } else if (r.localName === 'br') text += '\n';
+        const rPr = kid(r, 'rPr');
+        const symFont = attr(kid(rPr, 'sym'), 'typeface') || attr(kid(rPr, 'latin'), 'typeface');
+        const t = fixSymbols((kid(r, 't')?.textContent || '').replace(/[\r\n\v]/g, ' '), symFont);
+        if (t) cur.runs.push({ t, st: styleOf(rPr) });
+      } else if (r.localName === 'br') { lines.push(cur); cur = { runs: [], bullet: false, algn, lvl: 0 }; }
     }
-    const bullet = kid(pPr, 'buNone') ? false : (kid(pPr, 'buChar') || kid(pPr, 'buAutoNum')) ? true : !!inh.bullet;
-    if (bullet && text.trim()) anyBullet = true;
-    lines.push((lvl > 0 ? '   '.repeat(lvl) : '') + text);
+    lines.push(cur);
   }
-  while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
-  if (!lines.join('').trim()) return null;
-  const f = first || {};
-  const scaleFont = num(attr(path(txBody, 'bodyPr', 'normAutofit'), 'fontScale'), 100000) / 100000;
-  const isTitle = ph && sameKind(ph.type) === 'title';
-  const sizePt = (f.sz || (isTitle ? 44 : ph ? 28 : 18)) * scaleFont;
-  const fontPx = Math.max(8, Math.round(sizePt * EMU_PER_PT * ctx.scale));
-  const bodyPr = kid(txBody, 'bodyPr');
+  const txt = (l: RLine) => l.runs.map(r => r.t).join('');
+  while (lines.length && !txt(lines[lines.length - 1]).trim()) lines.pop();
+  if (!lines.some(l => txt(l).trim())) return null;
+  // Kiểu chung của khối lấy theo đoạn chạy có chữ đầu tiên, đoạn nào khác thì ghi riêng.
+  const firstRun = lines.flatMap(l => l.runs).find(r => r.t.trim());
+  const f: RunStyle = firstRun?.st || {};
+  const baseSz = f.sz || (isTitle ? 44 : ph ? 28 : 18);
+  const fontPx = ptToPx(baseSz);
+  const baseFont = webFont(f.font);
+  const baseColor = f.color || defColor || '#1e293b';
+  const firstLine = lines.find(l => txt(l).trim());
+  const baseAlgn = firstLine?.algn;
+  const anyBullet = lines.some(l => l.bullet && txt(l).trim());
+  const rich: TextLine[] = lines.map((l, i) => {
+    const runs: TextRun[] = l.runs.map(r => {
+      const o: TextRun = { t: r.t };
+      if (!r.t.trim()) return o;
+      const st = r.st;
+      if ((st.color || baseColor) !== baseColor) o.color = st.color;
+      if (!!st.bold !== !!f.bold) o.bold = !!st.bold;
+      if (!!st.italic !== !!f.italic) o.italic = !!st.italic;
+      if (!!st.underline !== !!f.underline) o.underline = !!st.underline;
+      if (!!st.strike !== !!f.strike) o.strike = !!st.strike;
+      if (!!st.caps !== !!f.caps) o.upper = !!st.caps;
+      const px = ptToPx(st.sz || baseSz); if (px !== fontPx) o.size = px;
+      const wf = webFont(st.font); if (wf && wf !== baseFont) o.font = wf;
+      return o;
+    });
+    // Gộp các đoạn chạy liền nhau cùng kiểu cho gọn.
+    const merged: TextRun[] = [];
+    for (const r of runs) { const last = merged[merged.length - 1]; const { t: _a, ...ka } = last || { t: '' }; const { t: _b, ...kb } = r; if (last && JSON.stringify(ka) === JSON.stringify(kb)) last.t += r.t; else merged.push({ ...r }); }
+    const line: TextLine = { runs: merged.length ? merged : [{ t: '' }] };
+    if (anyBullet && !(l.bullet && txt(l).trim())) line.bullet = false;
+    if (l.algn !== baseAlgn) line.align = l.algn === 'ctr' ? 'center' : l.algn === 'r' ? 'right' : 'left';
+    if (i > 0 && l.before) line.before = l.before;
+    return line;
+  });
+  const plain = rich.every(l => l.bullet === undefined && !l.align && !l.before && l.runs.every(r => Object.keys(r).length === 1));
+  const textLines = rich.map(l => l.runs.map(r => r.t).join(''));
   const insL = num(attr(bodyPr, 'lIns'), 91440) * ctx.scale, insT = num(attr(bodyPr, 'tIns'), 45720) * ctx.scale;
   const insR = num(attr(bodyPr, 'rIns'), 91440) * ctx.scale;
   let x = ctx.ox + box.x * ctx.scale + insL, y = ctx.oy + box.y * ctx.scale + insT;
   const w = Math.max(20, box.w * ctx.scale - insL - insR), h = Math.max(20, box.h * ctx.scale - insT * 2);
+  const lineHeight = Math.round(1.2 * (lnPct || 1) * (1 - num(attr(autofit, 'lnSpcReduction'), 0) / 100000) * 100) / 100;
   // Chữ căn giữa hay căn dưới theo chiều dọc: ước lượng chiều cao chữ để đặt đúng chỗ.
   const anchor = attr(bodyPr, 'anchor') || (isTitle ? 'ctr' : 't');
-  if (anchor === 'ctr' || anchor === 'b') {
-    const perLine = Math.max(1, Math.floor(w / (fontPx * 0.52)));
-    const rows = lines.reduce((n, l) => n + Math.max(1, Math.ceil(l.length / perLine)), 0);
-    const est = rows * fontPx * 1.25;
-    if (est < h) y += anchor === 'ctr' ? (h - est) / 2 : h - est;
-  }
-  const algn = f.algn === 'ctr' ? 'center' : f.algn === 'r' ? 'right' : 'left';
-  const fontName = f.font && !/^\+/.test(f.font) ? f.font : undefined;
+  const perLine = Math.max(1, Math.floor(w / (fontPx * 0.52)));
+  const rows = textLines.reduce((n, l) => n + Math.max(1, Math.ceil(l.length / perLine)), 0);
+  const est = rows * fontPx * lineHeight + rich.reduce((n, l) => n + (l.before || 0), 0);
+  if ((anchor === 'ctr' || anchor === 'b') && est < h) y += anchor === 'ctr' ? (h - est) / 2 : h - est;
+  const algn = baseAlgn === 'ctr' ? 'center' : baseAlgn === 'r' ? 'right' : baseAlgn === 'just' ? 'left' : 'left';
   return {
-    id: uid(), type: 'text', x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(Math.min(h, fontPx * 1.3 * lines.length + 4)),
-    text: lines.join('\n'), fontSize: fontPx, color: f.color || defColor || '#1e293b', bold: !!f.bold, italic: !!f.italic, underline: !!f.underline, strike: !!f.strike, upper: !!f.caps,
-    fontFamily: fontName, align: algn, lineHeight: 1.2, list: anyBullet, rot: box.rot || undefined, ...extra,
+    id: uid(), type: 'text', x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(Math.max(fontPx, Math.min(h, est + 4))),
+    text: textLines.join('\n'), rich: plain ? undefined : rich, fontSize: fontPx, color: baseColor, bold: !!f.bold, italic: !!f.italic, underline: !!f.underline, strike: !!f.strike, upper: !!f.caps,
+    fontFamily: baseFont, align: algn, lineHeight, list: anyBullet, rot: box.rot || undefined, ...extra,
   };
 }
 
@@ -308,14 +358,37 @@ async function mediaUrl(ctx: Ctx, rid: string | null): Promise<string | null> {
   if (!ctx.mediaCache.has(rel.target)) {
     ctx.mediaCache.set(rel.target, (async () => {
       const ext = (rel.target.split('.').pop() || '').toLowerCase();
-      if (!['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) { ctx.skipped['ảnh định dạng EMF, WMF, TIFF'] = (ctx.skipped['ảnh định dạng EMF, WMF, TIFF'] || 0) + 1; return null; }
+      if (!['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'tif', 'tiff'].includes(ext)) { ctx.skipped['ảnh định dạng EMF, WMF'] = (ctx.skipped['ảnh định dạng EMF, WMF'] || 0) + 1; return null; }
       const f = ctx.zip.file(rel.target); if (!f) return null;
       const data: Uint8Array = await f.async('uint8array');
-      const type = ext === 'svg' ? 'image/svg+xml' : ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
-      return ctx.upload(new Blob([data], { type }), rel.target.split('/').pop() || `anh.${ext}`);
+      const type = ext === 'svg' ? 'image/svg+xml' : ext === 'jpg' ? 'image/jpeg' : ext === 'tif' || ext === 'tiff' ? 'image/tiff' : `image/${ext}`;
+      const url = await ctx.upload(new Blob([data], { type }), rel.target.split('/').pop() || `anh.${ext}`);
+      // Trình duyệt không hiện được TIFF, kho ảnh đổi sang PNG theo đuôi tệp.
+      return url && (ext === 'tif' || ext === 'tiff') && /res\.cloudinary\.com/.test(url) ? url.replace(/\.tiff?(\?|$)/i, '.png$1') : url;
     })());
   }
   return ctx.mediaCache.get(rel.target)!;
+}
+
+// Tệp video, âm thanh nhúng: tải lên kho (Cloudinary tự đổi sang mp4, mp3 khi trình duyệt không phát được định dạng gốc).
+const AV_TYPE: Record<string, string> = { mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm', wmv: 'video/x-ms-wmv', avi: 'video/x-msvideo', mpg: 'video/mpeg', mpeg: 'video/mpeg', mkv: 'video/x-matroska',
+  mp3: 'audio/mpeg', m4a: 'audio/mp4', wav: 'audio/wav', wma: 'audio/x-ms-wma', aac: 'audio/aac', ogg: 'audio/ogg', mid: 'audio/midi', aiff: 'audio/aiff', aif: 'audio/aiff' };
+const MAX_AV = 100 * 1024 * 1024;
+async function avUrl(ctx: Ctx, target: string, audio: boolean): Promise<string | null> {
+  if (!ctx.mediaCache.has(target)) {
+    ctx.mediaCache.set(target, (async () => {
+      const f = ctx.zip.file(target); if (!f) return null;
+      const ext = (target.split('.').pop() || '').toLowerCase();
+      const data: Uint8Array = await f.async('uint8array');
+      if (data.byteLength > MAX_AV) { ctx.skipped['video lớn hơn 100MB (hãy đưa lên YouTube rồi chèn link)'] = (ctx.skipped['video lớn hơn 100MB (hãy đưa lên YouTube rồi chèn link)'] || 0) + 1; return null; }
+      const type = AV_TYPE[ext] || (audio ? 'audio/mpeg' : 'video/mp4');
+      const url = await ctx.upload(new Blob([data], { type }), target.split('/').pop() || `media.${ext}`);
+      if (!url) { ctx.skipped['video, âm thanh tải lên lỗi'] = (ctx.skipped['video, âm thanh tải lên lỗi'] || 0) + 1; return null; }
+      const playable = audio ? ['mp3', 'm4a', 'wav', 'ogg', 'aac'] : ['mp4', 'm4v', 'webm'];
+      return /res\.cloudinary\.com/.test(url) && !playable.includes(ext) ? url.replace(/\.[a-z0-9]+(\?|$)/i, `.${audio ? 'mp3' : 'mp4'}$1`) : url;
+    })());
+  }
+  return ctx.mediaCache.get(target)!;
 }
 
 // Đọc các khối trên một cây (trang, nhóm).
@@ -363,16 +436,23 @@ async function readTree(tree: El | null, ctx: Ctx, tf: Tf, out: SlideEl[]) {
       const xf = xfrmOf(spPr) || (phOf(node) ? xfrmOf(kid(findPh(ctx.layout, phOf(node)!), 'spPr')) : null);
       if (!xf) continue;
       const box = tf(xf);
-      // Video gắn link ngoài (YouTube...) thì thành khối video, video nhúng trong tệp thì bỏ qua.
-      const vf = find(node, 'videoFile');
-      if (vf) {
-        const link = ctx.rels[Array.from(vf.attributes).find(a => a.localName === 'link')?.value || '']?.target || '';
-        if (/^https?:/i.test(link)) {
-          out.push({ id: uid(), type: 'video', video: link, x: Math.round(ctx.ox + box.x * ctx.scale), y: Math.round(ctx.oy + box.y * ctx.scale), w: Math.max(40, Math.round(box.w * ctx.scale)), h: Math.max(30, Math.round(box.h * ctx.scale)) });
+      // Video, âm thanh: link ngoài (YouTube...) dùng thẳng, tệp nhúng trong pptx thì tải lên kho rồi phát được khi trình chiếu.
+      const vf = find(node, 'videoFile'), af = find(node, 'audioFile');
+      if (vf || af) {
+        const rel = ctx.rels[attr(vf || af, 'link') || ''] || ctx.rels[attr(find(node, 'media'), 'embed') || ''];
+        const px = { x: Math.round(ctx.ox + box.x * ctx.scale), y: Math.round(ctx.oy + box.y * ctx.scale), w: Math.max(af ? 24 : 40, Math.round(box.w * ctx.scale)), h: Math.max(af ? 24 : 30, Math.round(box.h * ctx.scale)) };
+        const el: SlideEl = { id: uid(), type: 'video', video: '', audio: af ? true : undefined, ...px, rot: box.rot || undefined };
+        const poster = attr(find(kid(node, 'blipFill'), 'blip'), 'embed');
+        if (poster) ctx.pending.push(mediaUrl(ctx, poster).then(u => { if (u) el.src = u; }));
+        if (rel && /^https?:/i.test(rel.target)) { el.video = rel.target; out.push(el); continue; }
+        if (rel) {
+          ctx.pending.push(avUrl(ctx, rel.target, !!af).then(u => { el.video = u || ''; }));
+          out.push(el);
           continue;
         }
-        ctx.skipped['video, âm thanh nhúng trong tệp'] = (ctx.skipped['video, âm thanh nhúng trong tệp'] || 0) + 1;
-      } else if (find(node, 'audioFile')) ctx.skipped['video, âm thanh nhúng trong tệp'] = (ctx.skipped['video, âm thanh nhúng trong tệp'] || 0) + 1;
+        ctx.skipped['video, âm thanh không tìm thấy tệp'] = (ctx.skipped['video, âm thanh không tìm thấy tệp'] || 0) + 1;
+        continue;
+      }
       const rid = attr(find(kid(node, 'blipFill'), 'blip'), 'embed');
       if (!rid) continue;
       const geom = attr(kid(spPr, 'prstGeom'), 'prst');
@@ -535,7 +615,7 @@ export async function importPptx(file: File, opts: { upload: (blob: Blob, name: 
   const title = coreTitle && coreTitle.length <= 90 ? coreTitle : file.name.replace(/\.pptx$/i, '');
   await Promise.all(pending);
   // Bỏ khối ảnh không tải được.
-  for (const sl of slides) sl.els = sl.els.filter(e => e.type !== 'image' || !!e.src);
+  for (const sl of slides) sl.els = sl.els.filter(e => (e.type !== 'image' || !!e.src) && (e.type !== 'video' || !!e.video));
   let images = 0;
   for (const p of mediaCache.values()) if (await p) images++;
   return { title, slides, skipped, images };

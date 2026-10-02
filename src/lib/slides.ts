@@ -57,11 +57,51 @@ export interface SlideEl {
   filter?: ImgFilter;
   // Cắt ảnh: phần bỏ đi ở mỗi cạnh, tỉ lệ 0 đến 1 (giống PowerPoint)
   crop?: { l: number; t: number; r: number; b: number };
-  // Video (YouTube hoặc tệp mp4) và liên kết khi bấm lúc trình chiếu
+  // Chữ nhiều kiểu trong 1 khối (nhập từ PowerPoint): mỗi dòng của text là 1 phần tử,
+  // mỗi dòng gồm các đoạn chạy có màu, đậm, cỡ riêng. Chỉ ghi những gì khác kiểu chung của khối.
+  rich?: TextLine[];
+  // Video (YouTube hoặc tệp mp4), âm thanh (audio = true) và liên kết khi bấm lúc trình chiếu
   video?: string;
+  audio?: boolean;
   link?: string;
   // Chuyển động
   anim?: ElAnim;
+}
+
+export interface TextRun { t: string; color?: string; bold?: boolean; italic?: boolean; underline?: boolean; strike?: boolean; size?: number; font?: string; upper?: boolean }
+export interface TextLine { runs: TextRun[]; bullet?: boolean; align?: 'left' | 'center' | 'right'; before?: number }
+
+export const lineText = (l: TextLine) => l.runs.map(r => r.t).join('');
+export const richText = (rich: TextLine[]) => rich.map(lineText).join('\n');
+// Kiểu nhiều màu chỉ dùng khi còn khớp đúng nội dung chữ của khối.
+export const richOf = (el: SlideEl): TextLine[] | null => (el.rich && el.rich.length && richText(el.rich) === (el.text || '') ? el.rich : null);
+
+const RUN_KEY: Record<string, keyof TextRun> = { color: 'color', bold: 'bold', italic: 'italic', underline: 'underline', strike: 'strike', fontFamily: 'font', upper: 'upper' };
+// Giữ kiểu nhiều màu khi khối chữ thay đổi: đổi kiểu chung (màu, đậm, phông) thì áp cho cả khối,
+// đổi cỡ chữ thì phóng to thu nhỏ theo tỉ lệ, sửa nội dung thì dòng nào giữ nguyên vẫn giữ kiểu,
+// dòng sửa lấy kiểu của dòng cũ cùng vị trí.
+export function syncRich(prev: SlideEl, next: SlideEl): SlideEl {
+  if (next.type !== 'text' || !next.rich || !prev.rich) return next;
+  let rich = next.rich;
+  const strip = Object.keys(RUN_KEY).filter(k => (prev as any)[k] !== (next as any)[k]).map(k => RUN_KEY[k]);
+  if (strip.length) rich = rich.map(l => ({ ...l, runs: l.runs.map(r => { const c: any = { ...r }; strip.forEach(k => delete c[k]); return c; }) }));
+  const a = prev.fontSize || 32, b = next.fontSize || 32;
+  if (a !== b) rich = rich.map(l => ({ ...l, runs: l.runs.map(r => (r.size ? { ...r, size: Math.max(6, Math.round(r.size * b / a)) } : r)) }));
+  if (prev.align !== next.align) rich = rich.map(l => ({ ...l, align: undefined }));
+  if (prev.list !== next.list) rich = rich.map(l => ({ ...l, bullet: undefined }));
+  const text = next.text || '';
+  if (richText(rich) !== text) {
+    const old = rich, oldT = old.map(lineText);
+    rich = text.split('\n').map((t, i) => {
+      if (oldT[i] === t) return old[i];
+      const base = old[Math.min(i, old.length - 1)];
+      const style = base?.runs.find(r => r.t.trim()) || base?.runs[0];
+      const { t: _drop, ...rest } = style || { t: '' };
+      return { bullet: base?.bullet, align: base?.align, before: base?.before, runs: [{ ...rest, t }] };
+    });
+  }
+  const plain = rich.every(l => l.bullet === undefined && !l.align && !l.before && l.runs.every(r => Object.keys(r).length === 1));
+  return { ...next, rich: plain ? undefined : rich };
 }
 
 export type EffectKind = 'none' | 'shadow' | 'lift' | 'hollow' | 'outline' | 'glow' | 'neon' | 'echo' | 'splice';

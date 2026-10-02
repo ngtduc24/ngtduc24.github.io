@@ -5,19 +5,21 @@ import {
   StickyNote, Grid2X2, Maximize, Plus, Copy, Trash2, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List,
   ArrowUpToLine, ArrowDownToLine, Lock, Unlock, Search, X, ChevronDown, Link2, Check, FileDown, Pencil, Minus, Droplet, Eye,
   EyeOff, FileUp, Keyboard, Link as LinkIcon, Crop, Youtube, Presentation,
-  Strikethrough, CaseUpper, MoveVertical, Sparkles, Wand2, Move, Paintbrush, FlipHorizontal2, FlipVertical2, Replace, AlignStartVertical, AlignCenterVertical, AlignEndVertical, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, ChevronsUp, ChevronsDown, ChevronUp, PlayCircle, Blend, MoreHorizontal,
+  Strikethrough, CaseUpper, MoveVertical, Sparkles, Wand2, Move, Paintbrush, FlipHorizontal2, FlipVertical2, Replace, AlignStartVertical, AlignCenterVertical, AlignEndVertical, AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal, ChevronsUp, ChevronsDown, ChevronUp, PlayCircle, Blend, MoreHorizontal, Music, Clock3,
 } from 'lucide-react';
 import {
   Deck, Slide, SlideEl, SLIDE_W, SLIDE_H, LAYOUTS, LayoutId, makeSlide, textEl, uid, saveDeck, getDeck, getDeckUpdatedAt,
   BG_SWATCHES, GRADIENTS, ShapeKind, setDeckShare, deckShareUrl, DEFAULT_FONT, duplicateDeck, softDeleteDeck,
-  ANIM_IN_LABELS, ANIM_LOOP_LABELS, TRANSITION_LABELS, EFFECT_LABELS, AnimIn, AnimLoop, TransitionKind, EffectKind, ImgFilter,
+  ANIM_IN_LABELS, ANIM_LOOP_LABELS, TRANSITION_LABELS, EFFECT_LABELS, AnimIn, AnimLoop, TransitionKind, EffectKind, ImgFilter, syncRich,
 } from '../../lib/slides';
 import { FONT_OPTIONS } from '../../lib/fonts';
 import { listMyMedia, MediaItem } from '../../lib/mediaItems';
 import { uploadMediaToCloudinary } from '../../lib/upload';
 import { listCollaborators, Collaborator, userAvatar } from '../../lib/collab';
-import SlideRenderer, { ElementView, bgStyle, ensureFont, ensureAnimCss, ElPhase, youtubeId } from './SlideRenderer';
-import SlidePresenter from './SlidePresenter';
+import SlideRenderer, { ElementView, bgStyle, ensureFont, ensureAnimCss, ElPhase, youtubeId, textContentDom } from './SlideRenderer';
+import SlidePresenter, { PresentOptions } from './SlidePresenter';
+import DeckSharePanel from './DeckSharePanel';
+import { useDeckPresence } from '../../lib/deckPresence';
 import ShareDialog from '../ui/ShareDialog';
 import { AvatarStack } from '../ui/People';
 import PptxImportDialog from './PptxImportDialog';
@@ -50,11 +52,7 @@ function measureText(el: SlideEl): number {
     lineHeight: String(el.lineHeight || 1.3), whiteSpace: 'pre-wrap', wordBreak: 'break-word', padding: el.bg ? '0.2em 0.4em' : '0',
     letterSpacing: el.letterSpacing ? `${el.letterSpacing / 1000}em` : 'normal', textTransform: el.upper ? 'uppercase' : 'none',
   } as CSSStyleDeclaration);
-  if (el.list) {
-    const ul = document.createElement('ul'); ul.style.margin = '0'; ul.style.paddingLeft = '1.2em';
-    (el.text || '').split('\n').forEach(l => { const li = document.createElement('li'); li.textContent = l.trim() ? l.replace(/^\s+/, '') : ' '; const ind = Math.floor((l.match(/^\s*/)?.[0].length || 0) / 3); if (ind) li.style.marginLeft = `${ind * 1.2}em`; ul.appendChild(li); });
-    d.appendChild(ul);
-  } else d.textContent = el.text || ' ';
+  textContentDom(el, d);
   document.body.appendChild(d);
   const h = d.scrollHeight;
   d.remove();
@@ -109,6 +107,9 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
   const [showNotes, setShowNotes] = useState(false);
   const [grid, setGrid] = useState(false);
   const [presenting, setPresenting] = useState<number | null>(null);
+  const [presentOpts, setPresentOpts] = useState<PresentOptions>({ mode: 'full' });
+  const [presentMenu, setPresentMenu] = useState(false);
+  const [collabTick, setCollabTick] = useState(0);
   const [shareOpen, setShareOpen] = useState(false);
   const [collabOpen, setCollabOpen] = useState(false);
   const [fileMenu, setFileMenu] = useState(false);
@@ -177,11 +178,21 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
       setZoom(z => { const cur = z === 'fit' ? width / SLIDE_W : z; return Math.max(0.25, Math.min(3, Math.round(cur * (e.deltaY < 0 ? 1.1 : 0.9) * 100) / 100)); });
     };
     el.addEventListener('wheel', onWheel, { passive: false });
-    return () => el.removeEventListener('wheel', onWheel);
+    // Chụm, mở 2 ngón trên iPad để thu phóng khung soạn.
+    let d0 = 0, z0 = 1;
+    const dist = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    const onTS = (e: TouchEvent) => { if (e.touches.length === 2) { pinching.current = true; d0 = dist(e.touches); z0 = scaleRef.current; } };
+    const onTM = (e: TouchEvent) => { if (e.touches.length === 2 && d0) { e.preventDefault(); const z = Math.max(0.25, Math.min(3, Math.round(z0 * dist(e.touches) / d0 * 100) / 100)); setZoom(z); } };
+    const onTE = (e: TouchEvent) => { if (e.touches.length < 2) { d0 = 0; if (!e.touches.length) setTimeout(() => { pinching.current = false; }, 50); } };
+    el.addEventListener('touchstart', onTS, { passive: true });
+    el.addEventListener('touchmove', onTM, { passive: false });
+    el.addEventListener('touchend', onTE); el.addEventListener('touchcancel', onTE);
+    return () => { el.removeEventListener('wheel', onWheel); el.removeEventListener('touchstart', onTS); el.removeEventListener('touchmove', onTM); el.removeEventListener('touchend', onTE); el.removeEventListener('touchcancel', onTE); };
   });
   const fitWidth = Math.max(240, Math.min(stage.w - 64, (stage.h - 48) * (SLIDE_W / SLIDE_H)));
   const width = zoom === 'fit' ? fitWidth : SLIDE_W * zoom;
   const scale = width / SLIDE_W;
+  const scaleRef = useRef(scale); scaleRef.current = scale;
 
   // ===== Lưu tự động =====
   const save = useCallback(async () => {
@@ -209,6 +220,10 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
 
   // Nhận thay đổi của người cùng chỉnh sửa (8 giây kiểm tra 1 lần khi mình không đang sửa).
   const dragging = useRef(false);
+  const pinching = useRef(false);
+  const lastTap = useRef<{ id: string; t: number }>({ id: '', t: 0 });
+  const ctxAt = useRef(0);
+  const coarse = typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches;
   useEffect(() => {
     lastSeen.current = `${initial.updatedAt}|${initial.updatedBy || ''}`;
     const t = setInterval(async () => {
@@ -227,7 +242,12 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
     return () => clearInterval(t);
   }, [editingId, status, currentUser.id, addNotification, initial]);
 
-  useEffect(() => { listCollaborators('slide_deck' as any, deck.id).then(setCollabs).catch(() => {}); }, [deck.id, collabOpen]);
+  useEffect(() => { listCollaborators('slide_deck' as any, deck.id).then(setCollabs).catch(() => {}); }, [deck.id, collabOpen, collabTick]);
+  // Chỉ hiện ảnh đại diện của người đang mở cùng bài giảng này.
+  const present = useDeckPresence(deck.id, currentUser);
+  const startPresent = (from: number, opts: PresentOptions = { mode: 'full' }) => { setPresentMenu(false); setShareOpen(false); setPresentOpts(opts); setPresenting(from); };
+  const doExportPptx = async () => { setFileMenu(false); setShareOpen(false); setExporting('Đang chuẩn bị...'); try { await exportPptx({ ...deck, slides, title }, (n, t) => setExporting(`Đang xuất trang ${n} / ${t}`)); } catch (e: any) { addNotification('Chưa xuất được tệp PowerPoint: ' + (e?.message || e), 'error'); } finally { setExporting(null); } };
+  const toggleShare = async (on: boolean): Promise<Deck | null> => { try { const n = await setDeckShare({ ...deckRef.current, slides: slidesRef.current, title }, on); setDeck(n); deckRef.current = n; return n; } catch { addNotification('Chưa đổi được chế độ chia sẻ.', 'error'); return null; } };
 
   // ===== Lịch sử =====
   // histTick để nút Hoàn tác, Làm lại cập nhật đúng trạng thái (lịch sử nằm trong ref).
@@ -247,7 +267,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
 
   const mapSlide = (fn: (s: Slide) => Slide, idx = cur) => slidesRef.current.map((s, i) => (i === idx ? fn(s) : s));
   const updateEls = (ids: string[], patch: Partial<SlideEl> | ((e: SlideEl) => Partial<SlideEl>), record = true) => {
-    const next = mapSlide(s => ({ ...s, els: s.els.map(e => (ids.includes(e.id) ? fitText({ ...e, ...(typeof patch === 'function' ? patch(e) : patch) }) : e)) }));
+    const next = mapSlide(s => ({ ...s, els: s.els.map(e => (ids.includes(e.id) ? fitText(syncRich(e, { ...e, ...(typeof patch === 'function' ? patch(e) : patch) })) : e)) }));
     if (record) commit(next);
     else {
       // Kéo thanh trượt liên tục: gom thành 1 bước hoàn tác.
@@ -401,13 +421,24 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
     const w = Math.round(size.w * k), h = Math.round(size.h * k);
     addEl({ id: uid(), type: 'image', src, x: (SLIDE_W - w) / 2, y: (SLIDE_H - h) / 2, w, h, fit: 'cover' });
   };
+  // Chèn video hoặc âm thanh đã có link (tệp tải lên hoặc trong kho).
+  const insertAv = (url: string, audio: boolean) => {
+    if (audio) addEl({ id: uid(), type: 'video', audio: true, video: url, x: (SLIDE_W - 96) / 2, y: (SLIDE_H - 96) / 2, w: 96, h: 96 });
+    else addEl({ id: uid(), type: 'video', video: url, src: /res\.cloudinary\.com\/.+\/video\/upload\//.test(url) ? url.replace(/\.[a-z0-9]+(\?|$)/i, '.jpg$1') : undefined, x: 320, y: 140, w: 640, h: 360 });
+  };
   const uploadFiles = async (files: File[]) => {
-    const imgs = files.filter(f => f.type.startsWith('image/'));
-    if (!imgs.length) return;
-    setBusyUpload(n => n + imgs.length);
-    for (const f of imgs) {
-      try { const url = await uploadMediaToCloudinary(f, { resourceType: 'image', folder: 'slides', category: 'Bài giảng' } as any); await insertImage(url); }
-      catch (e: any) { addNotification('Chưa tải được ảnh: ' + (e?.message || e), 'error'); }
+    const okFiles = files.filter(f => /^(image|video|audio)\//.test(f.type) || /\.(mp4|mov|webm|m4v|mp3|wav|m4a|aac|ogg)$/i.test(f.name));
+    if (!okFiles.length) { if (files.length) addNotification('Chỉ tải lên được ảnh, video hoặc âm thanh.', 'warning'); return; }
+    setBusyUpload(n => n + okFiles.length);
+    for (const f of okFiles) {
+      const audio = f.type.startsWith('audio/') || /\.(mp3|wav|m4a|aac|ogg)$/i.test(f.name);
+      const video = !audio && (f.type.startsWith('video/') || /\.(mp4|mov|webm|m4v)$/i.test(f.name));
+      try {
+        if (f.size > 100 * 1024 * 1024 && (audio || video)) throw new Error('Tệp lớn hơn 100MB, hãy đưa video lên YouTube rồi chèn link.');
+        const url = await uploadMediaToCloudinary(f, { resourceType: audio || video ? 'video' : 'image', folder: 'slides', category: 'Bài giảng' } as any);
+        if (audio || video) insertAv(url, audio); else await insertImage(url);
+      }
+      catch (e: any) { addNotification('Chưa tải được tệp: ' + (e?.message || e), 'error'); }
       finally { setBusyUpload(n => n - 1); }
     }
   };
@@ -499,7 +530,8 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
     setCtxMenu(null);
     stopEditing();
     if (!e.shiftKey) setSel([]);
-    if (readOnly || !slideBoxRef.current) return;
+    // Chạm ngón tay vào vùng trống: chỉ bỏ chọn, để ngón tay kéo cuộn khung soạn.
+    if (readOnly || !slideBoxRef.current || e.pointerType === 'touch') return;
     const p0 = toSlide(e.clientX, e.clientY);
     const base = e.shiftKey ? sel : [];
     let active = false;
@@ -516,9 +548,10 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
   };
-  const openCtx = (e: React.MouseEvent, kind: 'el' | 'slide', index?: number) => {
+  const openCtx = (e: React.MouseEvent | { clientX: number; clientY: number; preventDefault?: () => void; stopPropagation?: () => void }, kind: 'el' | 'slide', index?: number) => {
     if (readOnly) return;
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault?.(); e.stopPropagation?.();
+    ctxAt.current = Date.now();
     setCtxMenu({ x: e.clientX, y: e.clientY, kind, index });
   };
   const toggleHidden = (i: number) => commit(slidesRef.current.map((x, k) => (k === i ? { ...x, hidden: !x.hidden } : x)));
@@ -534,10 +567,22 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
       setPainter(null); setSel([el.id]);
       return;
     }
+    const touch = e.pointerType === 'touch' || e.pointerType === 'pen';
+    let longTimer: any = null;
     if (mode === 'move') {
       if (e.shiftKey) { ids = sel.includes(el.id) ? sel.filter(i => i !== el.id) : [...sel, el.id]; setSel(ids); return; }
+      // Chạm 2 lần liên tiếp vào khối chữ để sửa chữ (iPad).
+      if (touch) {
+        const now = Date.now();
+        if (lastTap.current.id === el.id && now - lastTap.current.t < 350 && el.type === 'text') { lastTap.current = { id: '', t: 0 }; setSel([el.id]); setEditingId(el.id); return; }
+        lastTap.current = { id: el.id, t: now };
+      }
       if (!sel.includes(el.id)) { ids = [el.id]; setSel(ids); }
-      if (el.locked) return;
+      if (el.locked) {
+        // Khối đã khoá: nhấn giữ vẫn mở menu (để mở khoá).
+        if (touch) { const cx = e.clientX, cy = e.clientY; const t = setTimeout(() => openCtx({ clientX: cx, clientY: cy }, 'el'), 520); const off = () => { clearTimeout(t); window.removeEventListener('pointerup', off); }; window.addEventListener('pointerup', off); }
+        return;
+      }
     } else ids = [el.id];
     const start = toSlide(e.clientX, e.clientY);
     const before = slidesRef.current;
@@ -546,11 +591,14 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
     const T = 6 / scale;
     let moved = false;
     dragging.current = true;
+    const pid = e.pointerId;
     const onMove = (ev: PointerEvent) => {
+      if (ev.pointerId !== pid || pinching.current) return;
       const p = toSlide(ev.clientX, ev.clientY);
       let dx = p.x - start.x, dy = p.y - start.y;
-      if (!moved && Math.abs(dx) + Math.abs(dy) < 2) return;
+      if (!moved && Math.abs(dx) + Math.abs(dy) < (touch ? 8 / scale : 2)) return;
       moved = true;
+      clearTimeout(longTimer);
       const next = new Map<string, Partial<SlideEl>>();
       if (mode === 'move') {
         // Bám mép, bám giữa trang và các khối khác (đường gióng tím).
@@ -598,16 +646,57 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
       }
       setSlides(prev => prev.map((s, i) => (i !== cur ? s : { ...s, els: s.els.map(x => (next.has(x.id) ? (x.type === 'text' && mode === 'resize' ? fitText({ ...x, ...next.get(x.id) }) : { ...x, ...next.get(x.id) }) : x)) })));
     };
-    const onUp = () => {
+    function cleanup() {
+      clearTimeout(longTimer);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
       dragging.current = false;
       setGuides({ x: [], y: [] });
+    }
+    function onUp(ev: PointerEvent) {
+      if (ev.pointerId !== pid) return;
+      cleanup();
       if (moved) { past.current.push(before); future.current = []; bumpHist(); markDirty(); }
-    };
+    }
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    // Nhấn giữ (iPad) mở menu như bấm chuột phải.
+    if (touch && mode === 'move') { const cx = e.clientX, cy = e.clientY; longTimer = setTimeout(() => { if (!moved) { cleanup(); openCtx({ clientX: cx, clientY: cy }, 'el'); } }, 520); }
   };
+
+  // Dải trang trên iPad: nhấn giữ rồi kéo để đổi thứ tự, nhấn giữ rồi thả tay để mở menu trang.
+  const [thumbDrag, setThumbDrag] = useState<{ from: number; to: number } | null>(null);
+  const thumbArmed = useRef(false);
+  const thumbPointerDown = (e: React.PointerEvent, i: number) => {
+    if (readOnly || e.pointerType === 'mouse') return;
+    const pid = e.pointerId, x0 = e.clientX, y0 = e.clientY;
+    let armed = false, to = i, cancelled = false;
+    const timer = setTimeout(() => { armed = true; thumbArmed.current = true; setThumbDrag({ from: i, to: i }); try { navigator.vibrate?.(15); } catch { /* bỏ qua */ } }, 420);
+    const move = (ev: PointerEvent) => {
+      if (ev.pointerId !== pid) return;
+      if (!armed) { if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) > 10) { cancelled = true; clearTimeout(timer); done(); } return; }
+      const t = (document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement | null)?.closest('[data-thumb]') as HTMLElement | null;
+      if (t) { to = Number(t.dataset.thumb); setThumbDrag({ from: i, to }); }
+    };
+    const up = (ev: PointerEvent) => {
+      if (ev.pointerId !== pid) return;
+      clearTimeout(timer); done();
+      if (!armed || cancelled) return;
+      if (to !== i) moveSlide(i, to); else { setCur(i); openCtx({ clientX: ev.clientX, clientY: ev.clientY }, 'slide', i); }
+    };
+    function done() { thumbArmed.current = false; setThumbDrag(null); window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); }
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
+  };
+  // Khi đang kéo trang thì không cho dải trang cuộn theo ngón tay.
+  const stripRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = stripRef.current; if (!el) return;
+    const tm = (ev: TouchEvent) => { if (thumbArmed.current) ev.preventDefault(); };
+    el.addEventListener('touchmove', tm, { passive: false });
+    return () => el.removeEventListener('touchmove', tm);
+  }, []);
 
   // ===== Thêm nhanh =====
   const addText = (kind: 'h1' | 'h2' | 'body' | 'list') => {
@@ -838,7 +927,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
               {!readOnly && <button onClick={async () => { setFileMenu(false); const v = await askText({ title: 'Đổi tên bài giảng', defaultValue: title }); if (v != null) { setTitle(v); markDirty(); } }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 hover:bg-slate-50"><Pencil className="h-4 w-4" /> Đổi tên</button>}
               <button onClick={async () => { setFileMenu(false); try { const c = await duplicateDeck({ ...deck, slides, title }, currentUser.fullName); addNotification(`Đã tạo bản sao "${c.title}" trong danh sách của bạn.`, 'success'); } catch (e: any) { addNotification(e?.message || 'Chưa tạo được bản sao.', 'error'); } }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 hover:bg-slate-50"><Copy className="h-4 w-4" /> Tạo bản sao</button>
               <button onClick={() => { setFileMenu(false); setSel([]); setPrinting(true); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 hover:bg-slate-50"><FileDown className="h-4 w-4" /> In hoặc lưu PDF</button>
-              <button onClick={async () => { setFileMenu(false); setExporting('Đang chuẩn bị...'); try { await exportPptx({ ...deck, slides, title }, (n, t) => setExporting(`Đang xuất trang ${n} / ${t}`)); } catch (e: any) { addNotification('Chưa xuất được tệp PowerPoint: ' + (e?.message || e), 'error'); } finally { setExporting(null); } }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 hover:bg-slate-50"><Presentation className="h-4 w-4" /> Tải xuống PowerPoint (.pptx)</button>
+              <button onClick={doExportPptx} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 hover:bg-slate-50"><Presentation className="h-4 w-4" /> Tải xuống PowerPoint (.pptx)</button>
               {!readOnly && <button onClick={() => { setFileMenu(false); setPptxMode('append'); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 hover:bg-slate-50"><FileUp className="h-4 w-4" /> Thêm trang từ tệp PowerPoint</button>}
               {role === 'owner' && <button onClick={() => { setFileMenu(false); confirm('Xoá bài giảng', `Xoá "${title}"? Bài giảng sẽ nằm ở mục Đã xoá trong trang Cá nhân 30 ngày.`, async () => { try { await softDeleteDeck({ ...deck, slides, title }); onExit(); } catch (e: any) { addNotification(e?.message || 'Chưa xoá được.', 'error'); } }); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-rose-600 hover:bg-rose-50"><Trash2 className="h-4 w-4" /> Xoá bài giảng</button>}
             </div>
@@ -856,34 +945,21 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
             ? <span className="truncate text-sm font-semibold">{title} <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-xs">Chỉ xem</span></span>
             : <input value={title} onChange={e => { setTitle(e.target.value); markDirty(); }} className="w-full max-w-md truncate rounded-lg bg-transparent px-2 py-1 text-center text-sm font-semibold outline-none placeholder:text-white/60 hover:bg-white/10 focus:bg-white/15" placeholder="Bài giảng không tên" />}
         </div>
-        <div className="hidden items-center md:flex">
-          <AvatarStack people={[{ id: deck.ownerId, name: deck.ownerName }, ...collabs.map(c => ({ id: c.userId, name: c.userName }))]} size="md" max={5} singleWithName={false} />
+        <div className="hidden items-center md:flex" title={present.length ? 'Đang cùng mở bài giảng này' : undefined}>
+          {present.length > 0 && <AvatarStack people={present.map(p => ({ id: p.id, name: p.name }))} size="md" max={5} singleWithName={false} />}
         </div>
-        {canManage && <button onClick={() => setCollabOpen(true)} title="Thêm người cùng chỉnh sửa" className="ml-1 flex h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold hover:bg-white/15"><UserPlus className="h-5 w-5" /><span className="hidden lg:inline">Cộng tác</span></button>}
-        <button onClick={() => setPresenting(cur)} className="ml-1 flex h-10 items-center gap-2 rounded-lg border border-white/50 px-3 text-sm font-semibold hover:bg-white/15"><Play className="h-4 w-4" /><span className="hidden sm:inline">Trình chiếu</span></button>
+        {canManage && <button onClick={() => setShareOpen(true)} data-share-toggle title="Thêm người cùng xem, cùng chỉnh sửa" className="ml-1 flex h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold hover:bg-white/15"><UserPlus className="h-5 w-5" /><span className="hidden lg:inline">Cộng tác</span></button>}
+        <div className="relative ml-1 flex h-10 items-stretch rounded-lg border border-white/50">
+          <button onClick={() => startPresent(cur)} className="flex items-center gap-2 rounded-l-lg px-3 text-sm font-semibold hover:bg-white/15"><Play className="h-4 w-4" /><span className="hidden sm:inline">Trình chiếu</span></button>
+          <button onClick={() => setPresentMenu(v => !v)} aria-label="Tuỳ chọn trình chiếu" className="grid w-8 place-items-center rounded-r-lg border-l border-white/40 hover:bg-white/15"><ChevronDown className={`h-4 w-4 transition-transform ${presentMenu ? 'rotate-180' : ''}`} /></button>
+          {presentMenu && <PresentMenu onPick={(opts, fromStart) => startPresent(fromStart ? 0 : cur, opts)} onClose={() => setPresentMenu(false)} />}
+        </div>
         <div className="relative">
-          <button onClick={() => setShareOpen(v => !v)} className="ml-1 flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm font-semibold text-slate-800 hover:bg-white/90"><Share2 className="h-4 w-4" /><span className="hidden sm:inline">Chia sẻ</span></button>
+          <button data-share-toggle onClick={() => setShareOpen(v => !v)} className="ml-1 flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm font-semibold text-slate-800 hover:bg-white/90"><Share2 className="h-4 w-4" /><span className="hidden sm:inline">Chia sẻ</span></button>
           {shareOpen && (
-            <div className="absolute right-0 top-12 z-50 w-80 space-y-3 rounded-2xl border border-slate-200 bg-white p-4 text-slate-700 shadow-2xl">
-              <div className="flex items-center justify-between"><p className="text-sm font-semibold">Chia sẻ bài giảng</p><button onClick={() => setShareOpen(false)} className="grid h-7 w-7 place-items-center rounded-lg hover:bg-slate-100"><X className="h-4 w-4" /></button></div>
-              {canManage && (
-                <button onClick={() => { setShareOpen(false); setCollabOpen(true); }} className="flex w-full items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm hover:bg-slate-50"><UserPlus className="h-4 w-4 text-brand" /> Thêm người cùng xem, cùng chỉnh sửa</button>
-              )}
-              <div className="rounded-xl border border-slate-200 p-3">
-                <label className="flex items-center justify-between gap-3 text-sm">
-                  <span className="flex items-center gap-2"><Link2 className="h-4 w-4 text-slate-500" /> Ai có link đều xem được</span>
-                  <input type="checkbox" disabled={!canManage} checked={!!deck.shareOn} onChange={async e => { try { const n = await setDeckShare({ ...deck, slides, title }, e.target.checked); setDeck(n); deckRef.current = n; } catch { addNotification('Chưa đổi được chế độ chia sẻ.', 'error'); } }} className="h-4 w-4 accent-brand" />
-                </label>
-                {deck.shareOn && deck.shareToken && (
-                  <div className="mt-3 flex gap-2">
-                    <input readOnly value={deckShareUrl(deck.shareToken)} className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs" />
-                    <button onClick={async () => { await copyText(deckShareUrl(deck.shareToken!)); addNotification('Đã chép link xem bài giảng.', 'success'); }} className="rounded-lg bg-brand px-3 text-xs font-semibold text-white">Chép</button>
-                  </div>
-                )}
-                {!canManage && <p className="mt-2 text-xs text-slate-400">Chỉ chủ bài giảng hoặc người có quyền quản lý đổi được chế độ này.</p>}
-              </div>
-              <button onClick={() => { setShareOpen(false); setPresenting(0); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-slate-50"><Play className="h-4 w-4" /> Trình chiếu từ đầu</button>
-            </div>
+            <DeckSharePanel deck={deck} title={title} currentUser={currentUser} canManage={canManage} collabs={collabs} onCollabsChange={() => setCollabTick(v => v + 1)}
+              onToggleShare={toggleShare} onPresent={() => startPresent(0)} onPdf={() => { setShareOpen(false); setSel([]); setPrinting(true); }} onPptx={doExportPptx}
+              onClose={() => setShareOpen(false)} notify={(m, t) => addNotification(m, t)} />
           )}
         </div>
       </header>
@@ -906,7 +982,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
           <aside className="w-[300px] shrink-0 overflow-y-auto border-r border-slate-200 bg-white p-4">
             {panel === 'effects' || panel === 'animate' || panel === 'position' || panel === 'transition'
               ? renderPropPanel()
-              : <LeftPanel panel={panel} slide={slide} onLayout={l => (tplMode === 'replace' ? applyLayout(l) : addSlide(l))} tplMode={tplMode} onTplMode={setTplMode} onText={addText} onShape={addShape} onImage={insertImage} onRemoteImage={insertRemote}
+              : <LeftPanel panel={panel} slide={slide} onLayout={l => (tplMode === 'replace' ? applyLayout(l) : addSlide(l))} tplMode={tplMode} onTplMode={setTplMode} onText={addText} onShape={addShape} onImage={insertImage} onAv={insertAv} onRemoteImage={insertRemote}
                   onUpload={uploadFiles} busy={busyUpload} onBg={setBg} onVideo={addVideo} onClose={() => setPanel(null)} />}
           </aside>
         )}
@@ -951,8 +1027,8 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                 <Sep />
               </>}
               {one?.type === 'video' && <>
-                <button className="flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm hover:bg-slate-100" onClick={async () => { const v = await askText({ title: 'Đổi link video', defaultValue: one.video || '' }); if (v?.trim()) updateEls([one.id], { video: v.trim() }); }}><Youtube className="h-4 w-4" /> Đổi link video</button>
-                <span className="text-xs text-slate-400">Video phát được khi trình chiếu và ở link xem</span>
+                <button className="flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm hover:bg-slate-100" onClick={async () => { const v = await askText({ title: one.audio ? 'Đổi link âm thanh' : 'Đổi link video', defaultValue: one.video || '' }); if (v?.trim()) updateEls([one.id], { video: v.trim() }); }}>{one.audio ? <Music className="h-4 w-4" /> : <Youtube className="h-4 w-4" />} {one.audio ? 'Đổi link âm thanh' : 'Đổi link video'}</button>
+                <span className="text-xs text-slate-400">{one.audio ? 'Bấm biểu tượng loa khi trình chiếu để phát' : 'Video phát được khi trình chiếu và ở link xem'}</span>
                 <Sep />
               </>}
               {one?.type === 'image' && <>
@@ -998,7 +1074,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
             </div>
           )}
 
-          <div ref={stageRef} className="relative min-h-0 flex-1 overflow-auto"
+          <div ref={stageRef} style={{ WebkitTouchCallout: 'none', WebkitUserSelect: editingId ? undefined : 'none', userSelect: editingId ? undefined : 'none' } as React.CSSProperties} className="relative min-h-0 flex-1 overflow-auto"
             onPointerDown={e => { if (e.target === e.currentTarget) startMarquee(e); }}
             onDragOver={e => { if (!readOnly) e.preventDefault(); }}
             onDrop={e => { if (readOnly) return; e.preventDefault(); const fs = Array.from(e.dataTransfer.files || []); const ppt = fs.find(f => /\.pptx?$/i.test(f.name)); if (ppt) { setPptxFile(ppt); setPptxMode('append'); return; } uploadFiles(fs); }}>
@@ -1013,7 +1089,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                         onPointerDown={e => startDrag(e, el, 'move')}
                         onDoubleClick={() => { if (!readOnly && el.type === 'text') setEditingId(el.id); }}
                         onContextMenu={e => { if (!sel.includes(el.id)) setSel([el.id]); openCtx(e, 'el'); }}
-                        style={{ position: 'absolute', left: el.x, top: el.y, width: el.w, height: el.h, transform: el.rot ? `rotate(${el.rot}deg)` : undefined, cursor: readOnly ? 'default' : el.locked ? 'not-allowed' : 'move' }}
+                        style={{ position: 'absolute', left: el.x, top: el.y, width: el.w, height: el.h, transform: el.rot ? `rotate(${el.rot}deg)` : undefined, cursor: readOnly ? 'default' : el.locked ? 'not-allowed' : 'move', touchAction: readOnly ? 'auto' : 'none' }}
                         className={!readOnly && !sel.includes(el.id) ? 'hover:outline hover:outline-2 hover:outline-brand/40' : ''} />
                     ))}
                     {!readOnly && selected.map(el => (
@@ -1021,10 +1097,10 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                         {one && !el.locked && editingId !== el.id && <>
                           {handles.filter(h => !(el.type === 'text' && (h === 'n' || h === 's'))).map(h => (
                             <span key={h} onPointerDown={e => startDrag(e, el, 'resize', h)}
-                              style={{ ...hpos[h], position: 'absolute', width: 14 / scale, height: 14 / scale, transform: 'translate(-50%,-50%)', background: '#fff', border: `${2 / scale}px solid var(--color-brand)`, borderRadius: h.length === 2 ? '50%' : 4 / scale, pointerEvents: 'auto' }} />
+                              style={{ ...hpos[h], position: 'absolute', width: (coarse ? 24 : 14) / scale, height: (coarse ? 24 : 14) / scale, touchAction: 'none', transform: 'translate(-50%,-50%)', background: '#fff', border: `${2 / scale}px solid var(--color-brand)`, borderRadius: h.length === 2 ? '50%' : 4 / scale, pointerEvents: 'auto' }} />
                           ))}
                           <span onPointerDown={e => startDrag(e, el, 'rotate')} title="Xoay"
-                            style={{ position: 'absolute', left: '50%', top: -36 / scale, width: 22 / scale, height: 22 / scale, transform: 'translate(-50%,-50%)', background: '#fff', border: `${2 / scale}px solid var(--color-brand)`, borderRadius: '50%', cursor: 'grab', pointerEvents: 'auto' }} />
+                            style={{ position: 'absolute', left: '50%', top: -(coarse ? 44 : 36) / scale, width: (coarse ? 30 : 22) / scale, height: (coarse ? 30 : 22) / scale, touchAction: 'none', transform: 'translate(-50%,-50%)', background: '#fff', border: `${2 / scale}px solid var(--color-brand)`, borderRadius: '50%', cursor: 'grab', pointerEvents: 'auto' }} />
                         </>}
                       </div>
                     ))}
@@ -1046,7 +1122,8 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                           <button title={selected.every(x => x.locked) ? 'Mở khoá' : 'Khoá'} onClick={() => updateEls(sel, { locked: !selected.every(x => x.locked) })} className="grid h-8 w-8 place-items-center rounded-lg text-slate-600 hover:bg-slate-100">{selected.every(x => x.locked) ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}</button>
                           <button title="Nhân bản (Ctrl D)" onClick={duplicateSel} className="grid h-8 w-8 place-items-center rounded-lg text-slate-600 hover:bg-slate-100"><Copy className="h-4 w-4" /></button>
                           <button title="Xoá (Delete)" onClick={removeSel} className="grid h-8 w-8 place-items-center rounded-lg text-slate-600 hover:bg-rose-50 hover:text-rose-600"><Trash2 className="h-4 w-4" /></button>
-                          <button title="Vị trí, lớp, căn chỉnh" onClick={() => setPanel('position')} className="grid h-8 w-8 place-items-center rounded-lg text-slate-600 hover:bg-slate-100"><MoreHorizontal className="h-4 w-4" /></button>
+                          {one?.type === 'text' && <button title="Sửa chữ (nhấn đúp hoặc chạm 2 lần)" onClick={() => setEditingId(one.id)} className="grid h-8 w-8 place-items-center rounded-lg text-slate-600 hover:bg-slate-100"><Pencil className="h-4 w-4" /></button>}
+                          <button title="Thêm thao tác (như bấm chuột phải)" onClick={e => openCtx(e, 'el')} className="grid h-8 w-8 place-items-center rounded-lg text-slate-600 hover:bg-slate-100"><MoreHorizontal className="h-4 w-4" /></button>
                         </div>
                       );
                     })()}
@@ -1093,15 +1170,16 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
           )}
 
           {/* Dải trang thu nhỏ */}
-          <div className="flex h-[112px] shrink-0 items-center gap-3 overflow-x-auto border-t border-slate-200 bg-white px-4">
+          <div ref={stripRef} style={{ WebkitTouchCallout: 'none', userSelect: 'none' } as React.CSSProperties} className="flex h-[112px] shrink-0 items-center gap-3 overflow-x-auto border-t border-slate-200 bg-white px-4">
             {slides.map((s, i) => (
-              <div key={s.id} draggable={!readOnly}
+              <div key={s.id} draggable={!readOnly && !coarse}
                 onDragStart={e => { e.dataTransfer.setData('text/slide', String(i)); }}
                 onDragOver={e => { if (e.dataTransfer.types.includes('text/slide')) e.preventDefault(); }}
                 onDrop={e => { const from = Number(e.dataTransfer.getData('text/slide')); if (!Number.isNaN(from)) moveSlide(from, i); }}
                 onContextMenu={e => { setCur(i); openCtx(e, 'slide', i); }}
+                onPointerDown={e => thumbPointerDown(e, i)}
                 data-thumb={i}
-                className="group relative shrink-0">
+                className={`group relative shrink-0 transition-transform ${thumbDrag?.from === i ? 'scale-105 opacity-70' : ''} ${thumbDrag && thumbDrag.to === i && thumbDrag.from !== i ? (thumbDrag.from < i ? 'after:absolute after:-right-2 after:top-0 after:h-full after:w-1 after:rounded after:bg-brand' : 'before:absolute before:-left-2 before:top-0 before:h-full before:w-1 before:rounded before:bg-brand') : ''}`}>
                 <button onClick={() => { stopEditing(); setCur(i); setSel([]); }} className={`block overflow-hidden rounded-lg border-2 ${i === cur ? 'border-brand' : 'border-slate-200 hover:border-slate-300'} ${s.hidden ? 'opacity-40' : ''}`}>
                   <SlideRenderer slide={s} width={140} />
                 </button>
@@ -1143,7 +1221,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
             <div className="mb-4 flex items-center justify-between"><p className="font-semibold">Tất cả {slides.length} trang</p><button onClick={() => setGrid(false)} className="grid h-8 w-8 place-items-center rounded-lg hover:bg-slate-100"><X className="h-4 w-4" /></button></div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {slides.map((s, i) => (
-                <div key={s.id} draggable={!readOnly} onDragStart={e => e.dataTransfer.setData('text/slide', String(i))} onDragOver={e => e.preventDefault()}
+                <div key={s.id} draggable={!readOnly && !coarse} onDragStart={e => e.dataTransfer.setData('text/slide', String(i))} onDragOver={e => e.preventDefault()}
                   onDrop={e => { const from = Number(e.dataTransfer.getData('text/slide')); if (!Number.isNaN(from)) moveSlide(from, i); }}>
                   <button onClick={() => { setCur(i); setGrid(false); }} className={`block w-full overflow-hidden rounded-lg border-2 ${i === cur ? 'border-brand' : 'border-slate-200'}`}><SlideRenderer slide={s} width={250} /></button>
                   <p className="mt-1 text-center text-xs text-slate-500">{i + 1}</p>
@@ -1153,7 +1231,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
           </div>
         </div>, document.body)}
 
-      {presenting !== null && <SlidePresenter slides={slides} start={presenting} onClose={() => setPresenting(null)} />}
+      {presenting !== null && <SlidePresenter slides={slides} start={presenting} {...presentOpts} onClose={() => setPresenting(null)} />}
       {collabOpen && <ShareDialog type={'slide_deck' as any} resourceId={deck.id} resourceTitle={title} ownerId={deck.ownerId} ownerName={deck.ownerName} currentUser={currentUser} canManage={canManage} onClose={() => setCollabOpen(false)} />}
 
       {pptxMode && (
@@ -1166,8 +1244,8 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
       )}
       {exporting && createPortal(<div className="fixed bottom-6 left-1/2 z-[260] flex -translate-x-1/2 items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm text-white shadow-xl"><Loader2 className="h-4 w-4 animate-spin" /> {exporting}</div>, document.body)}
       {ctxMenu && createPortal(
-        <div className="fixed inset-0 z-[240]" onMouseDown={() => setCtxMenu(null)} onContextMenu={e => { e.preventDefault(); setCtxMenu(null); }}>
-          <div onMouseDown={e => e.stopPropagation()} style={{ left: Math.min(ctxMenu.x, window.innerWidth - 262), top: Math.min(ctxMenu.y, window.innerHeight - 330) }}
+        <div className="fixed inset-0 z-[240]" onPointerDown={() => { if (Date.now() - ctxAt.current > 450) setCtxMenu(null); }} onContextMenu={e => { e.preventDefault(); setCtxMenu(null); }}>
+          <div onPointerDown={e => e.stopPropagation()} style={{ left: Math.min(ctxMenu.x, window.innerWidth - 262), top: Math.min(ctxMenu.y, window.innerHeight - 330) }}
             className="absolute w-64 rounded-xl border border-slate-200 bg-white p-1.5 text-sm text-slate-700 shadow-2xl">
             {((ctxMenu.kind === 'el' ? [
               ['Sao chép', 'Ctrl C', () => document.execCommand('copy')],
@@ -1250,9 +1328,9 @@ function SliderRow({ label, min, max, step, value, onChange, suffix }: { label: 
 }
 
 // ===== Bảng bên trái =====
-function LeftPanel({ panel, slide, onLayout, tplMode, onTplMode, onVideo, onText, onShape, onImage, onRemoteImage, onUpload, busy, onBg, onClose }: {
+function LeftPanel({ panel, slide, onLayout, tplMode, onTplMode, onVideo, onText, onShape, onImage, onAv, onRemoteImage, onUpload, busy, onBg, onClose }: {
   panel: Exclude<Panel, null>; slide: Slide; onLayout: (l: LayoutId) => void; tplMode: 'add' | 'replace'; onTplMode: (m: 'add' | 'replace') => void; onVideo: () => void; onText: (k: 'h1' | 'h2' | 'body' | 'list') => void; onShape: (k: ShapeKind) => void;
-  onImage: (url: string) => void; onRemoteImage: (url: string) => void; onUpload: (files: File[]) => void; busy: number; onBg: (bg: Slide['bg'], all?: boolean) => void; onClose: () => void;
+  onImage: (url: string) => void; onAv?: (url: string, audio: boolean) => void; onRemoteImage: (url: string) => void; onUpload: (files: File[]) => void; busy: number; onBg: (bg: Slide['bg'], all?: boolean) => void; onClose: () => void;
 }) {
   const [media, setMedia] = useState<MediaItem[] | null>(null);
   const [q, setQ] = useState('');
@@ -1262,9 +1340,10 @@ function LeftPanel({ panel, slide, onLayout, tplMode, onTplMode, onVideo, onText
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if ((panel === 'uploads' || panel === 'background') && media === null) listMyMedia().then(m => setMedia(m.filter(x => x.type === 'image'))).catch(() => setMedia([]));
+    if ((panel === 'uploads' || panel === 'background') && media === null) listMyMedia().then(m => setMedia(m.filter(x => x.type === 'image' || x.type === 'video' || x.type === 'audio'))).catch(() => setMedia([]));
   }, [panel, media]);
-  useEffect(() => { if (busy === 0 && panel === 'uploads') listMyMedia().then(m => setMedia(m.filter(x => x.type === 'image'))).catch(() => {}); }, [busy, panel]);
+  useEffect(() => { if (busy === 0 && panel === 'uploads') listMyMedia().then(m => setMedia(m.filter(x => x.type === 'image' || x.type === 'video' || x.type === 'audio'))).catch(() => {}); }, [busy, panel]);
+  const isAudioUrl = (m: MediaItem) => m.type === 'audio' || /\.(mp3|wav|m4a|aac|ogg|wma)(\?|$)/i.test(m.url);
 
   const searchStock = async (term: string) => {
     setStockBusy(true);
@@ -1329,15 +1408,19 @@ function LeftPanel({ panel, slide, onLayout, tplMode, onTplMode, onVideo, onText
 
   if (panel === 'uploads') return (
     <div>{head('Tải lên')}
-      <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={e => { onUpload(Array.from(e.target.files || [])); e.target.value = ''; }} />
+      <input ref={fileRef} type="file" accept="image/*,video/*,audio/*" multiple hidden onChange={e => { onUpload(Array.from(e.target.files || [])); e.target.value = ''; }} />
       <button onClick={() => fileRef.current?.click()} className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-2.5 text-sm font-semibold text-white hover:bg-brand-hover">
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Tải ảnh lên
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Tải lên ảnh, video, âm thanh
       </button>
-      <p className="mb-2 text-xs text-slate-500">Ảnh đã tải lên trước đây trong kho của bạn. Bấm để chèn vào trang.</p>
+      <p className="mb-2 text-xs text-slate-500">Tệp đã tải lên trước đây trong kho của bạn. Bấm để chèn vào trang. Video, âm thanh tối đa 100MB.</p>
       {media === null ? <div className="py-8 text-center text-slate-400"><Loader2 className="mx-auto h-5 w-5 animate-spin" /></div> :
-        media.length === 0 ? <p className="py-6 text-center text-xs text-slate-400">Chưa có ảnh nào.</p> : (
+        media.length === 0 ? <p className="py-6 text-center text-xs text-slate-400">Chưa có tệp nào.</p> : (
           <div className="columns-2 gap-2">
-            {media.map(m => <button key={m.url} onClick={() => onImage(m.url)} className="mb-2 block w-full overflow-hidden rounded-lg hover:ring-2 hover:ring-brand"><img src={m.url.replace('/upload/', '/upload/w_300,q_auto,f_auto/')} alt="" loading="lazy" className="w-full" /></button>)}
+            {media.map(m => m.type === 'image'
+              ? <button key={m.url} onClick={() => onImage(m.url)} className="mb-2 block w-full overflow-hidden rounded-lg hover:ring-2 hover:ring-brand"><img src={m.url.replace('/upload/', '/upload/w_300,q_auto,f_auto/')} alt="" loading="lazy" className="w-full" /></button>
+              : isAudioUrl(m)
+                ? <button key={m.url} onClick={() => onAv?.(m.url, true)} title={m.originalFilename || 'Âm thanh'} className="mb-2 flex w-full flex-col items-center gap-1 rounded-lg bg-slate-100 px-2 py-4 text-[11px] text-slate-600 hover:ring-2 hover:ring-brand"><Music className="h-6 w-6 text-brand" /><span className="line-clamp-1 break-all">{m.originalFilename || 'Âm thanh'}</span></button>
+                : <button key={m.url} onClick={() => onAv?.(m.url, false)} title={m.originalFilename || 'Video'} className="relative mb-2 block w-full overflow-hidden rounded-lg bg-slate-900 hover:ring-2 hover:ring-brand"><img src={m.url.replace('/upload/', '/upload/w_300,so_1/').replace(/\.[a-z0-9]+(\?|$)/i, '.jpg$1')} alt="" loading="lazy" className="w-full opacity-80" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} /><span className="absolute inset-0 grid place-items-center"><Play className="h-6 w-6 text-white" /></span><span className="block px-2 py-1 text-left text-[10px] text-white/80 line-clamp-1">{m.originalFilename || 'Video'}</span></button>)}
           </div>
         )}
     </div>
@@ -1388,6 +1471,42 @@ function LeftPanel({ panel, slide, onLayout, tplMode, onTplMode, onVideo, onText
       </div>
       {slide.bg?.image && <button onClick={() => onBg({ color: '#ffffff' }, applyAll)} className="flex items-center gap-1.5 text-xs text-rose-600"><X className="h-3.5 w-3.5" /> Bỏ ảnh nền</button>}
       <p className="flex items-center gap-1 text-[11px] text-slate-400"><Check className="h-3.5 w-3.5" /> Mẹo: chọn một ảnh trên trang rồi bấm biểu tượng nền để biến ảnh đó thành nền.</p>
+    </div>
+  );
+}
+
+// Tuỳ chọn trình chiếu: toàn màn hình, người thuyết trình, tự động phát.
+function PresentMenu({ onPick, onClose }: { onPick: (o: PresentOptions, fromStart?: boolean) => void; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [autoOpen, setAutoOpen] = useState(false);
+  const [sec, setSec] = useState(5);
+  const [loop, setLoop] = useState(true);
+  useEffect(() => {
+    const d = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
+    document.addEventListener('mousedown', d); return () => document.removeEventListener('mousedown', d);
+  }, [onClose]);
+  const item = (icon: React.ReactNode, t: string, sub: string, onClick: () => void, right?: React.ReactNode) => (
+    <button onClick={onClick} className="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-slate-50">
+      <span className="mt-0.5 text-slate-600">{icon}</span>
+      <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-slate-800">{t}</span><span className="block text-xs text-slate-500">{sub}</span></span>{right}
+    </button>
+  );
+  return (
+    <div ref={ref} className="absolute right-0 top-12 z-50 w-80 rounded-2xl border border-slate-200 bg-white p-2 text-slate-700 shadow-2xl">
+      {item(<Presentation className="h-5 w-5" />, 'Toàn màn hình', 'Trình chiếu toàn màn hình từ trang đang mở', () => onPick({ mode: 'full' }))}
+      {item(<PlayCircle className="h-5 w-5" />, 'Trình chiếu từ đầu', 'Bắt đầu từ trang 1', () => onPick({ mode: 'full' }, true))}
+      {item(<StickyNote className="h-5 w-5" />, 'Chế độ người thuyết trình', 'Xem ghi chú, trang sắp tới, đồng hồ. Mở thêm màn hình khán giả cho máy chiếu', () => onPick({ mode: 'presenter' }))}
+      {item(<Clock3 className="h-5 w-5" />, 'Tự động phát', 'Tự chuyển trang theo thời gian định sẵn', () => setAutoOpen(v => !v), <ChevronDown className={`mt-1 h-4 w-4 text-slate-400 transition-transform ${autoOpen ? 'rotate-180' : ''}`} />)}
+      {autoOpen && (
+        <div className="mx-3 mb-2 space-y-3 rounded-xl bg-slate-50 p-3">
+          <div className="flex flex-wrap gap-1.5">
+            {[2, 3, 5, 8, 10, 15, 30].map(v => <button key={v} onClick={() => setSec(v)} className={`rounded-lg px-2.5 py-1 text-xs font-semibold ${sec === v ? 'bg-brand text-white' : 'bg-white text-slate-600 hover:bg-slate-100'}`}>{v} giây</button>)}
+          </div>
+          <label className="flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" checked={loop} onChange={e => setLoop(e.target.checked)} className="h-4 w-4 accent-brand" /> Hết bài thì quay lại từ đầu</label>
+          <button onClick={() => onPick({ mode: 'full', auto: sec, loop }, true)} className="w-full rounded-lg bg-brand py-2 text-sm font-semibold text-white hover:bg-brand-hover">Bắt đầu tự động phát</button>
+          <p className="text-[11px] text-slate-400">Khi đang chiếu, bấm phím P để tạm dừng hoặc chạy tiếp.</p>
+        </div>
+      )}
     </div>
   );
 }

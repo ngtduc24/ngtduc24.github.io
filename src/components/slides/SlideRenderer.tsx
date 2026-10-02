@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Slide, SlideEl, SLIDE_W, SLIDE_H } from '../../lib/slides';
+import { Slide, SlideEl, SLIDE_W, SLIDE_H, TextRun, TextLine, richOf } from '../../lib/slides';
 import { FONT_OPTIONS } from '../../lib/fonts';
 
 // Vẽ một trang trình chiếu ở khung 1280x720 rồi thu phóng theo chiều rộng cần hiện.
@@ -129,12 +129,79 @@ export function youtubeId(url: string): string | null {
   return m ? m[1] : null;
 }
 
+
+// ===== Nội dung khối chữ (một kiểu hoặc nhiều kiểu theo từng đoạn chạy) =====
+const indentOf = (l: string) => Math.floor((l.match(/^\s*/)?.[0].length || 0) / 3);
+function runCss(r: TextRun): Record<string, string | number | undefined> {
+  const deco = r.underline === undefined && r.strike === undefined ? undefined : [r.underline ? 'underline' : '', r.strike ? 'line-through' : ''].filter(Boolean).join(' ') || 'none';
+  return {
+    color: r.color, fontWeight: r.bold === undefined ? undefined : r.bold ? 700 : 400, fontStyle: r.italic === undefined ? undefined : r.italic ? 'italic' : 'normal',
+    textDecoration: deco, fontSize: r.size, fontFamily: r.font ? `'${r.font}', sans-serif` : undefined, textTransform: r.upper === undefined ? undefined : r.upper ? 'uppercase' : 'none',
+  };
+}
+// Bỏ khoảng trắng đầu dòng (dùng làm thụt lề) khỏi các đoạn chạy.
+function trimRuns(runs: TextRun[]): TextRun[] {
+  const out: TextRun[] = []; let lead = true;
+  for (const r of runs) {
+    if (lead) { const t = r.t.replace(/^\s+/, ''); if (!t) continue; lead = false; out.push({ ...r, t }); } else out.push(r);
+  }
+  return out;
+}
+const firstColorOf = (l?: TextLine) => l?.runs.find(r => r.t.trim() && r.color)?.color;
+const Runs = ({ runs }: { runs: TextRun[] }) => <>{runs.map((r, i) => <span key={i} style={runCss(r) as React.CSSProperties}>{r.t}</span>)}</>;
+
+export function TextContent({ el }: { el: SlideEl }) {
+  const lines = (el.text || '').split('\n');
+  const rich = richOf(el);
+  if (el.list) {
+    return (
+      <ul style={{ margin: 0, paddingLeft: '1.2em', listStyle: 'disc' }}>
+        {lines.map((l, i) => {
+          const ln = rich?.[i]; const lvl = indentOf(l);
+          const noBullet = !l.trim() || ln?.bullet === false;
+          const runs = ln ? trimRuns(ln.runs) : null;
+          return (
+            <li key={i} style={{ listStyle: noBullet ? 'none' : lvl ? 'circle' : undefined, marginLeft: lvl ? `${lvl * 1.2}em` : ln?.bullet === false ? '-1.2em' : undefined, textAlign: ln?.align, marginTop: ln?.before || undefined, color: firstColorOf(ln) }}>
+              {runs && runs.length ? <Runs runs={runs} /> : (l.trim() ? l.replace(/^\s+/, '') : ' ')}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
+  if (!rich) return <>{el.text || ' '}</>;
+  return <>{rich.map((ln, i) => <div key={i} style={{ textAlign: ln.align, marginTop: ln.before || undefined }}>{ln.runs.some(r => r.t) ? <Runs runs={ln.runs} /> : ' '}</div>)}</>;
+}
+
+// Bản dựng DOM giống hệt TextContent để đo chiều cao khối chữ trong khung soạn.
+export function textContentDom(el: SlideEl, host: HTMLElement) {
+  const lines = (el.text || '').split('\n');
+  const rich = richOf(el);
+  const addRuns = (parent: HTMLElement, runs: TextRun[]) => runs.forEach(r => { const sp = document.createElement('span'); Object.entries(runCss(r)).forEach(([k, v]) => { if (v !== undefined) (sp.style as any)[k] = typeof v === 'number' ? `${v}px` : v; }); sp.textContent = r.t; parent.appendChild(sp); });
+  if (el.list) {
+    const ul = document.createElement('ul'); ul.style.margin = '0'; ul.style.paddingLeft = '1.2em';
+    lines.forEach((l, i) => {
+      const ln = rich?.[i]; const lvl = indentOf(l);
+      const li = document.createElement('li');
+      if (lvl) li.style.marginLeft = `${lvl * 1.2}em`; else if (ln?.bullet === false) li.style.marginLeft = '-1.2em';
+      if (ln?.before) li.style.marginTop = `${ln.before}px`;
+      const runs = ln ? trimRuns(ln.runs) : null;
+      if (runs && runs.length) addRuns(li, runs); else li.textContent = l.trim() ? l.replace(/^\s+/, '') : ' ';
+      ul.appendChild(li);
+    });
+    host.appendChild(ul);
+    return;
+  }
+  if (!rich) { host.textContent = el.text || ' '; return; }
+  rich.forEach(ln => { const d = document.createElement('div'); if (ln.before) d.style.marginTop = `${ln.before}px`; if (ln.runs.some(r => r.t)) addRuns(d, ln.runs); else d.textContent = ' '; host.appendChild(d); });
+}
+
 // phase: static (không chạy hiệu ứng), hidden (chưa xuất hiện), play (chạy hiệu ứng xuất hiện).
 // loops: cho chạy chuyển động lặp (khi trình chiếu, xem trước).
 export type ElPhase = 'static' | 'hidden' | 'play';
 
 export function ElementView({ el, editingText, phase = 'static', loops = false, playKey, live = false }: { el: SlideEl; editingText?: boolean; phase?: ElPhase; loops?: boolean; playKey?: number | string; live?: boolean }) {
-  useEffect(() => { if (el.type === 'text') ensureFont(el.fontFamily); }, [el.type, el.fontFamily]);
+  useEffect(() => { if (el.type === 'text') { ensureFont(el.fontFamily); el.rich?.forEach(l => l.runs.forEach(r => ensureFont(r.font))); } }, [el.type, el.fontFamily, el.rich]);
   useEffect(() => { if (phase !== 'static' || loops) ensureAnimCss(); }, [phase, loops]);
   const anim = el.anim || {};
   const inK = anim.in && anim.in !== 'none' ? anim.in : null;
@@ -152,7 +219,6 @@ export function ElementView({ el, editingText, phase = 'static', loops = false, 
 
   let body: React.ReactNode;
   if (el.type === 'text') {
-    const lines = (el.text || '').split('\n');
     const deco = [el.underline ? 'underline' : '', el.strike ? 'line-through' : ''].filter(Boolean).join(' ') || 'none';
     body = (
       <div style={{
@@ -162,9 +228,7 @@ export function ElementView({ el, editingText, phase = 'static', loops = false, 
         textTransform: el.upper ? 'uppercase' : undefined, whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: el.bg || 'transparent',
         visibility: editingText ? 'hidden' : 'visible', padding: el.bg ? '0.2em 0.4em' : 0, borderRadius: el.bg ? 12 : 0, ...textEffect(el),
       }}>
-        {el.list
-          ? <ul style={{ margin: 0, paddingLeft: '1.2em', listStyle: 'disc' }}>{lines.map((l, i) => <li key={i} style={!l.trim() ? { listStyle: 'none' } : /^\s{3,}/.test(l) ? { marginLeft: `${Math.floor(l.match(/^\s*/)![0].length / 3) * 1.2}em`, listStyle: 'circle' } : undefined}>{l.trim() ? l.replace(/^\s+/, '') : ' '}</li>)}</ul>
-          : (el.text || ' ')}
+        <TextContent el={el} />
       </div>
     );
   } else if (el.type === 'image') {
@@ -176,15 +240,19 @@ export function ElementView({ el, editingText, phase = 'static', loops = false, 
           : <img src={el.src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: el.fit || 'cover', display: 'block', pointerEvents: 'none', transform: flip, filter: imgFilter(el), borderRadius: el.radius || 0 }} />)}
       </div>
     );
+  } else if (el.type === 'video' && el.audio) {
+    body = <AudioView el={el} live={live} fill={fill} />;
   } else if (el.type === 'video') {
     const yt = youtubeId(el.video || '');
+    const poster = yt ? `https://i.ytimg.com/vi/${yt}/hqdefault.jpg` : el.src;
     body = live && el.video ? (
       yt
         ? <iframe src={`https://www.youtube.com/embed/${yt}?rel=0`} title="Video" style={{ ...fill, border: 0, borderRadius: el.radius || 0, display: 'block' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-        : <video src={el.video} controls style={{ ...fill, objectFit: 'contain', background: '#000', borderRadius: el.radius || 0, display: 'block' }} />
+        : <video src={el.video} poster={el.src || undefined} controls playsInline preload="metadata" style={{ ...fill, objectFit: 'contain', background: '#000', borderRadius: el.radius || 0, display: 'block' }} />
     ) : (
       <div style={{ ...fill, position: 'relative', overflow: 'hidden', borderRadius: el.radius || 0, background: '#0f172a' }}>
-        {yt && <img src={`https://i.ytimg.com/vi/${yt}/hqdefault.jpg`} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85, pointerEvents: 'none' }} />}
+        {poster && <img src={poster} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85, pointerEvents: 'none' }} />}
+        {!el.video && <div style={{ position: 'absolute', left: 8, bottom: 6, color: '#fff', fontSize: 14, opacity: 0.8 }}>Đang tải video...</div>}
         <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
           <div style={{ width: Math.min(el.w, el.h) * 0.22, height: Math.min(el.w, el.h) * 0.22, borderRadius: '50%', background: 'rgba(0,0,0,.6)', display: 'grid', placeItems: 'center' }}>
             <div style={{ width: 0, height: 0, borderTop: `${Math.min(el.w, el.h) * 0.06}px solid transparent`, borderBottom: `${Math.min(el.w, el.h) * 0.06}px solid transparent`, borderLeft: `${Math.min(el.w, el.h) * 0.09}px solid #fff`, marginLeft: Math.min(el.w, el.h) * 0.02 }} />
@@ -228,6 +296,28 @@ export function ElementView({ el, editingText, phase = 'static', loops = false, 
       <div key={playKey} style={{ ...fill, ...enter }}>
         <div style={{ ...fill, ...loop, transformOrigin: 'center' }}>{body}</div>
       </div>
+    </div>
+  );
+}
+
+
+// Khối âm thanh: trên khung soạn là biểu tượng loa, khi trình chiếu bấm để phát hoặc dừng.
+function AudioView({ el, live, fill }: { el: SlideEl; live: boolean; fill: React.CSSProperties }) {
+  const ref = React.useRef<HTMLAudioElement>(null);
+  const [on, setOn] = React.useState(false);
+  const d = Math.max(16, Math.min(el.w, el.h));
+  const toggle = (e: React.MouseEvent) => { if (!live) return; e.stopPropagation(); const a = ref.current; if (!a) return; if (a.paused) a.play().catch(() => {}); else a.pause(); };
+  return (
+    <div style={{ ...fill, position: 'relative', display: 'grid', placeItems: 'center' }} onClick={toggle}>
+      {el.src
+        ? <img src={el.src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', opacity: on ? 0.6 : 1 }} />
+        : <div style={{ width: d, height: d, borderRadius: '50%', background: 'rgba(15,23,42,.75)', display: 'grid', placeItems: 'center' }}>
+            <svg viewBox="0 0 24 24" width={d * 0.55} height={d * 0.55} fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              {on ? <><rect x="6" y="5" width="4" height="14" fill="#fff" /><rect x="14" y="5" width="4" height="14" fill="#fff" /></>
+                : <><path d="M11 5 6 9H2v6h4l5 4V5z" fill="#fff" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M19 5a10 10 0 0 1 0 14" /></>}
+            </svg>
+          </div>}
+      {live && el.video && <audio ref={ref} src={el.video} preload="none" onPlay={() => setOn(true)} onPause={() => setOn(false)} onEnded={() => setOn(false)} />}
     </div>
   );
 }

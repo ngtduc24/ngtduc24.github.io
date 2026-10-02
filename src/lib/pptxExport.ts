@@ -1,6 +1,9 @@
 // Xuất bài giảng ra tệp PowerPoint (.pptx) để mở, sửa tiếp bằng PowerPoint, Google Slides, Keynote.
-// Chữ, hình, ảnh, nền, ghi chú người trình bày giữ được, hiệu ứng chuyển động không chuyển sang được.
-import type { Deck, SlideEl, Slide } from './slides';
+// Chữ (cả màu, cỡ từng đoạn), hình, ảnh, video, âm thanh, nền, ghi chú người trình bày giữ được, hiệu ứng chuyển động không chuyển sang được.
+import type { Deck, SlideEl, Slide, TextRun } from './slides';
+import { richOf } from './slides';
+
+const trimLead = (runs: TextRun[]) => { const out: TextRun[] = []; let lead = true; for (const r of runs) { if (lead) { const t = r.t.replace(/^\s+/, ''); if (!t) continue; lead = false; out.push({ ...r, t }); } else out.push(r); } return out; };
 
 const IN = (px: number) => px / 96;              // 1280 px = 13,333 inch (khổ rộng 16:9)
 const PT = (px: number) => Math.max(1, Math.round(px * 0.75 * 10) / 10);
@@ -74,15 +77,39 @@ async function addEl(pres: any, slide: any, el: SlideEl, ST: any, shapeMap: Reco
       fontFace: el.fontFamily || 'Arial', fontSize: PT(el.fontSize || 32), color: hex(el.color) || '1E293B', bold: !!el.bold, italic: !!el.italic,
       underline: el.underline ? { style: 'sng' } : undefined, strike: el.strike ? 'sngStrike' : undefined, charSpacing: el.letterSpacing ? PT((el.fontSize || 32) * el.letterSpacing / 1000) : undefined,
     };
-    const runs = lines.map((l, i) => {
+    const rich = richOf(el);
+    const runs: any[] = [];
+    lines.forEach((l, i) => {
       const lvl = Math.floor((l.match(/^\s*/)?.[0].length || 0) / 3);
-      const t = el.upper ? l.trim().toUpperCase() : l.trim();
-      return { text: t || ' ', options: { ...base, breakLine: i < lines.length - 1, bullet: el.list && t ? (lvl ? { indent: 18 } : true) : false, indentLevel: el.list ? lvl : 0 } };
+      const ln = rich?.[i];
+      const para = { breakLine: false, bullet: el.list && l.trim() && ln?.bullet !== false ? (lvl ? { indent: 18 } : true) : false, indentLevel: el.list ? lvl : 0, align: ln?.align, paraSpaceBefore: ln?.before ? PT(ln.before) : undefined };
+      const parts: TextRun[] = ln ? trimLead(ln.runs) : [{ t: l.trim() }];
+      if (!parts.length) parts.push({ t: ' ' });
+      parts.forEach((r, k) => {
+        const up = r.upper ?? el.upper;
+        runs.push({ text: (up ? r.t.toUpperCase() : r.t) || ' ', options: {
+          ...base, ...(k === 0 ? para : {}),
+          ...(r.color ? { color: hex(r.color) } : {}), ...(r.bold !== undefined ? { bold: r.bold } : {}), ...(r.italic !== undefined ? { italic: r.italic } : {}),
+          ...(r.underline !== undefined ? { underline: r.underline ? { style: 'sng' } : undefined } : {}), ...(r.strike !== undefined ? { strike: r.strike ? 'sngStrike' : undefined } : {}),
+          ...(r.size ? { fontSize: PT(r.size) } : {}), ...(r.font ? { fontFace: r.font } : {}),
+          breakLine: k === parts.length - 1 && i < lines.length - 1,
+        } });
+      });
     });
     slide.addText(runs, {
       ...box, h: Math.max(box.h, IN((el.fontSize || 32) * (el.lineHeight || 1.3) * lines.length)), align: el.align || 'left', valign: 'top', margin: 0,
       lineSpacingMultiple: el.lineHeight || 1.2, fill: el.bg ? { color: hex(el.bg) } : undefined, transparency,
     });
+    return;
+  }
+  if (el.type === 'video') {
+    if (!el.video) return;
+    if (/youtu/.test(el.video)) { const id = (el.video.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{6,})/) || [])[1]; if (id) slide.addMedia({ type: 'online', link: `https://www.youtube.com/embed/${id}`, ...box }); return; }
+    const data = await toDataUrl(el.video);
+    if (!data) return;
+    const ext = (el.video.split('?')[0].split('.').pop() || (el.audio ? 'mp3' : 'mp4')).toLowerCase();
+    const cover = el.src ? await toDataUrl(el.src) : null;
+    slide.addMedia({ type: el.audio ? 'audio' : 'video', data, extn: ext, ...box, ...(cover ? { cover } : {}) });
     return;
   }
   if (el.type === 'image') {

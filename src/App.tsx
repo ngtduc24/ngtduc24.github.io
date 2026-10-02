@@ -53,6 +53,7 @@ import UserProfileView from './components/UserProfileView';
 import { readSubRoute, writeSubRoute } from './lib/seoConfig';
 import { rememberUsers, rememberMe, loadPeople } from './lib/people';
 import SlidePublicView from './components/slides/SlidePublicView';
+import { SlideAudience } from './components/slides/SlidePresenter';
 import { syncPublicName } from './lib/data';
 import { saveUser, savePublicProfile, deleteUser, getUsers, getUserById, mapUserFromDB, seedDefaultUsersIfNeeded, getDefaultSettingsFromSupabase, getCachedSettings, saveDefaultSettingsToSupabase, testSupabaseConnection, getNotificationsFromSupabase, subscribeToNotificationChanges, USERS_TABLE } from './lib/data';
 import { auth, db } from './lib/firebase';
@@ -879,6 +880,11 @@ export default function App() {
   const deckToken = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('deck') : null;
   if (deckToken) {
     return <SlidePublicView token={deckToken} />;
+  }
+  // Cửa sổ khán giả khi trình chiếu ở chế độ người thuyết trình (?audience=<mã>).
+  const audienceId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('audience') : null;
+  if (audienceId) {
+    return <SlideAudience channel={audienceId} />;
   }
 
   // Trang xem bài giảng ở chế độ riêng, có link riêng: dùng để xem/chia sẻ bài công khai.

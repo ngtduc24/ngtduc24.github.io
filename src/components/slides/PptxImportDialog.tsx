@@ -27,7 +27,7 @@ export default function PptxImportDialog({ title, onClose, onResult, initialFile
     try {
       const r = await importPptx(file, {
         upload: async (blob, name) => {
-          try { return await uploadMediaToCloudinary(new File([blob], name, { type: blob.type }), { resourceType: 'image', folder: 'slides/pptx', category: 'Bài giảng' } as any); }
+          try { const av = /^(video|audio)\//.test(blob.type); return await uploadMediaToCloudinary(new File([blob], name, { type: blob.type }), { resourceType: av ? 'video' : 'image', folder: 'slides/pptx', category: 'Bài giảng' } as any); }
           catch { return null; }
         },
         onProgress: (n, t) => setSlidesDone({ n, t }),
@@ -56,7 +56,7 @@ export default function PptxImportDialog({ title, onClose, onResult, initialFile
             className={`flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed px-6 py-10 text-center ${drag ? 'border-brand bg-brand-light' : 'border-slate-200 hover:border-brand'}`}>
             <FileUp className="h-10 w-10 text-brand" />
             <span className="text-sm font-semibold text-slate-700">Chọn hoặc kéo thả tệp PowerPoint (.pptx)</span>
-            <span className="text-xs text-slate-500">Chữ, hình, ảnh, bảng, nền, ghi chú được đổi thành nội dung sửa được. Ảnh tự tải lên kho của bạn.</span>
+            <span className="text-xs text-slate-500">Chữ (giữ màu, cỡ, đậm từng đoạn), hình, ảnh, bảng, nền, video, âm thanh, ghi chú được đổi thành nội dung sửa được. Ảnh, video tự tải lên kho của bạn.</span>
             <input ref={fileRef} type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" hidden onChange={e => run(e.target.files?.[0])} />
           </label>
         )}
@@ -64,8 +64,8 @@ export default function PptxImportDialog({ title, onClose, onResult, initialFile
           <div className="space-y-3 py-2">
             <p className="flex items-center gap-2 text-sm text-slate-700"><Loader2 className="h-4 w-4 animate-spin text-brand" /> Đang đọc trang {slidesDone.n} / {slidesDone.t || '...'}</p>
             <div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-brand transition-all" style={{ width: `${slidesDone.t ? (slidesDone.n / slidesDone.t) * 100 : 5}%` }} /></div>
-            {imgs.t > 0 && <p className="text-xs text-slate-500">Đã tải lên {imgs.n} / {imgs.t} ảnh</p>}
-            <p className="text-[11px] text-slate-400">Tệp nhiều ảnh có thể mất 1 đến 2 phút, vui lòng không đóng trang.</p>
+            {imgs.t > 0 && <p className="text-xs text-slate-500">Đã tải lên {imgs.n} / {imgs.t} ảnh, video, âm thanh</p>}
+            <p className="text-[11px] text-slate-400">Tệp nhiều ảnh hoặc có video có thể mất vài phút, vui lòng không đóng trang.</p>
           </div>
         )}
         {stage === 'done' && (
