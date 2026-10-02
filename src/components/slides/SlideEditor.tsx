@@ -319,6 +319,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
   };
   const startDrag = (e: React.PointerEvent, el: SlideEl, mode: 'move' | 'resize' | 'rotate', handle?: Handle) => {
     if (readOnly) return;
+    if (editingId && editingId !== el.id) stopEditing();
     e.stopPropagation();
     e.preventDefault();
     let ids = sel;
@@ -441,6 +442,15 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
   };
 
   const editingEl = slide.els.find(e => e.id === editingId) || null;
+  // Kết thúc sửa chữ: lấy nội dung ô đang gõ rồi lưu, gọi trước mọi thao tác làm ô gõ biến mất.
+  const editRef = useRef<HTMLTextAreaElement | null>(null);
+  const stopEditing = () => {
+    const ta = editRef.current;
+    const el = editingEl;
+    setEditingId(null);
+    if (ta && el && ta.value !== el.text) updateEls([el.id], { text: ta.value });
+    editRef.current = null;
+  };
 
   return (
     <div className="fixed inset-0 z-[120] flex flex-col bg-slate-100 text-slate-800">
@@ -588,14 +598,14 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
           )}
 
           <div ref={stageRef} className="relative min-h-0 flex-1 overflow-auto"
-            onPointerDown={e => { if (e.target === e.currentTarget) { setSel([]); setEditingId(null); } }}
+            onPointerDown={e => { if (e.target === e.currentTarget) { setSel([]); stopEditing(); } }}
             onDragOver={e => { if (!readOnly) e.preventDefault(); }}
             onDrop={e => { if (readOnly) return; e.preventDefault(); uploadFiles(Array.from(e.dataTransfer.files || [])); }}>
-            <div className="flex min-h-full min-w-full items-center justify-center p-6" onPointerDown={e => { if (e.target === e.currentTarget) { setSel([]); setEditingId(null); } }}>
+            <div className="flex min-h-full min-w-full items-center justify-center p-6" onPointerDown={e => { if (e.target === e.currentTarget) { setSel([]); stopEditing(); } }}>
               <div ref={slideBoxRef} className="relative shrink-0 shadow-lg" style={{ width, height: SLIDE_H * scale }}>
                 <SlideRenderer slide={slide} width={width} editingId={editingId}>
                   {/* Lớp tương tác */}
-                  <div className="absolute inset-0" onPointerDown={e => { if (e.target === e.currentTarget) { setSel([]); setEditingId(null); } }}>
+                  <div className="absolute inset-0" onPointerDown={e => { if (e.target === e.currentTarget) { setSel([]); stopEditing(); } }}>
                     {slide.els.map(el => (
                       <div key={el.id}
                         onPointerDown={e => startDrag(e, el, 'move')}
@@ -618,12 +628,12 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                     {guides.x.map(x => <div key={`gx${x}`} style={{ position: 'absolute', left: x, top: 0, width: 1 / scale, height: SLIDE_H, background: '#a855f7', pointerEvents: 'none' }} />)}
                     {guides.y.map(y => <div key={`gy${y}`} style={{ position: 'absolute', top: y, left: 0, height: 1 / scale, width: SLIDE_W, background: '#a855f7', pointerEvents: 'none' }} />)}
                     {editingEl && (
-                      <textarea autoFocus defaultValue={editingEl.text || ''}
-                        onFocus={e => e.currentTarget.select()}
+                      <textarea ref={editRef} rows={1} autoFocus defaultValue={editingEl.text || ''}
+                        onFocus={e => { const ta = e.currentTarget; ta.select(); ta.style.height = 'auto'; ta.style.height = `${ta.scrollHeight}px`; }}
                         onPointerDown={e => e.stopPropagation()}
                         onKeyDown={e => { if (e.key === 'Escape') (e.target as HTMLTextAreaElement).blur(); e.stopPropagation(); }}
                         onInput={e => { const ta = e.currentTarget; ta.style.height = 'auto'; ta.style.height = `${ta.scrollHeight}px`; }}
-                        onBlur={e => { const v = e.currentTarget.value; setEditingId(null); if (v !== editingEl.text) updateEls([editingEl.id], { text: v }); }}
+                        onBlur={() => stopEditing()}
                         style={{
                           position: 'absolute', left: editingEl.x, top: editingEl.y, width: editingEl.w, minHeight: editingEl.h, transform: editingEl.rot ? `rotate(${editingEl.rot}deg)` : undefined,
                           fontFamily: `'${editingEl.fontFamily || 'Inter'}', sans-serif`, fontSize: editingEl.fontSize, color: editingEl.color, fontWeight: editingEl.bold ? 700 : 400,
@@ -652,7 +662,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
                 onDragOver={e => { if (e.dataTransfer.types.includes('text/slide')) e.preventDefault(); }}
                 onDrop={e => { const from = Number(e.dataTransfer.getData('text/slide')); if (!Number.isNaN(from)) moveSlide(from, i); }}
                 className="group relative shrink-0">
-                <button onClick={() => { setCur(i); setSel([]); setEditingId(null); }} className={`block overflow-hidden rounded-lg border-2 ${i === cur ? 'border-violet-500' : 'border-slate-200 hover:border-slate-300'}`}>
+                <button onClick={() => { stopEditing(); setCur(i); setSel([]); }} className={`block overflow-hidden rounded-lg border-2 ${i === cur ? 'border-violet-500' : 'border-slate-200 hover:border-slate-300'}`}>
                   <SlideRenderer slide={s} width={140} />
                 </button>
                 <span className="absolute bottom-1 left-1.5 rounded bg-white/85 px-1 text-[11px] font-semibold text-slate-600">{i + 1}</span>
