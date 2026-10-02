@@ -1167,8 +1167,8 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
       {exporting && createPortal(<div className="fixed bottom-6 left-1/2 z-[260] flex -translate-x-1/2 items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm text-white shadow-xl"><Loader2 className="h-4 w-4 animate-spin" /> {exporting}</div>, document.body)}
       {ctxMenu && createPortal(
         <div className="fixed inset-0 z-[240]" onMouseDown={() => setCtxMenu(null)} onContextMenu={e => { e.preventDefault(); setCtxMenu(null); }}>
-          <div onMouseDown={e => e.stopPropagation()} style={{ left: Math.min(ctxMenu.x, window.innerWidth - 230), top: Math.min(ctxMenu.y, window.innerHeight - 330) }}
-            className="absolute w-56 rounded-xl border border-slate-200 bg-white p-1.5 text-sm text-slate-700 shadow-2xl">
+          <div onMouseDown={e => e.stopPropagation()} style={{ left: Math.min(ctxMenu.x, window.innerWidth - 262), top: Math.min(ctxMenu.y, window.innerHeight - 330) }}
+            className="absolute w-64 rounded-xl border border-slate-200 bg-white p-1.5 text-sm text-slate-700 shadow-2xl">
             {((ctxMenu.kind === 'el' ? [
               ['Sao chép', 'Ctrl C', () => document.execCommand('copy')],
               ['Cắt', 'Ctrl X', () => document.execCommand('cut')],
