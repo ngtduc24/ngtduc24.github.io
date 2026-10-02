@@ -289,7 +289,6 @@ export const HOME_SECTION_LABELS: Array<{ key: HomeSectionKey; label: string; hi
   { key: 'experience', label: 'Kinh nghiệm', hint: 'Cột bên phải trong khối học vấn và kinh nghiệm.' },
   { key: 'skills', label: 'Kỹ năng và dịch vụ', hint: 'Lưới thẻ kỹ năng kèm thanh phần trăm thành thạo.' },
   { key: 'projects', label: 'Dự án tuyển chọn', hint: 'Khối nền tối giới thiệu các dự án nổi bật.' },
-  { key: 'courses', label: 'Khóa học trực tuyến', hint: 'Lưới thẻ khóa học kèm giá và số học viên.' },
   { key: 'research', label: 'Nghiên cứu khoa học', hint: 'Lưới thẻ công trình và bài báo học thuật.' },
   { key: 'contact', label: 'Liên hệ hợp tác', hint: 'Khối cuối trang gồm email, điện thoại, địa điểm và mạng xã hội.' }
 ];

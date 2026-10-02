@@ -576,7 +576,6 @@ export const DEFAULT_PORTFOLIO_NAVIGATION: PortfolioNavigation[] = [
   { id: 'nav_education', label: 'Học vấn', link: '#education', target: '_self', icon: 'GraduationCap', parentId: 'nav_about', sortOrder: 2, visible: true, kind: 'scroll', locked: true },
   { id: 'nav_experience', label: 'Kinh nghiệm', link: '#experience', target: '_self', icon: 'Briefcase', parentId: 'nav_about', sortOrder: 3, visible: true, kind: 'scroll', locked: true },
   { id: 'nav_projects', label: 'Dự án', link: '#projects', target: '_self', icon: 'FolderGit2', parentId: null, sortOrder: 3, visible: true, kind: 'scroll', locked: true },
-  { id: 'nav_courses', label: 'Khóa học', link: '#courses', target: '_self', icon: 'BookOpen', parentId: null, sortOrder: 4, visible: true, kind: 'scroll', locked: true },
   { id: 'nav_research', label: 'Nghiên cứu', link: '#research', target: '_self', icon: 'FileText', parentId: null, sortOrder: 5, visible: true, kind: 'scroll', locked: true },
   { id: 'nav_contact', label: 'Liên hệ', link: '#contact', target: '_self', icon: 'Mail', parentId: null, sortOrder: 7, visible: true, kind: 'scroll', locked: true }
 ];
