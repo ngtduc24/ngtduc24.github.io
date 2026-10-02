@@ -332,7 +332,7 @@ export default function WorkflowEditor({ initial, currentUser, onExit }: { initi
         <WorkflowIcon size={18} className="hidden text-brand sm:block" />
         <input value={wf.name} onChange={e => setWf(w => ({ ...w, name: e.target.value }))} className="min-w-0 max-w-[340px] flex-1 rounded-lg border border-transparent px-2 py-1 text-[15px] font-bold outline-none hover:border-slate-200 focus:border-brand" />
         <span className="hidden items-center gap-1 text-[12px] text-slate-400 md:inline-flex" title={saveErr}>
-          {save === 'saving' ? <><Loader2 size={13} className="animate-spin" />Đang lưu</> : save === 'dirty' ? <><PenSquare size={13} />Chưa lưu</> : save === 'error' ? <span className="inline-flex items-center gap-1 text-rose-600"><CloudOff size={13} />Lỗi lưu</span> : <><Check size={13} className="text-emerald-500" />Đã lưu</>}
+          {save === 'saving' ? <><Loader2 size={13} className="animate-spin" />Đang lưu</> : save === 'dirty' ? <><PenSquare size={13} />Chưa lưu</> : save === 'error' ? <span className="inline-flex items-center gap-1 text-rose-600"><CloudOff size={13} />Lỗi lưu</span> : <><Check size={13} className="text-brand" />Đã lưu</>}
         </span>
         <div className="mx-auto hidden rounded-lg bg-slate-100 p-0.5 sm:inline-flex">
           {(['editor', 'executions'] as const).map(t => (
@@ -396,7 +396,7 @@ export default function WorkflowEditor({ initial, currentUser, onExit }: { initi
                 <button type="button" onClick={stop} className="inline-flex h-11 items-center gap-2 rounded-xl bg-slate-800 px-5 text-[14px] font-semibold text-white shadow-lg hover:bg-slate-900"><Square size={15} className="fill-white" />Dừng chạy</button>
               ) : (
                 <div className="relative flex">
-                  <button type="button" onClick={() => (triggers.length > 1 ? setTrigPick(v => !v) : execute())} disabled={!wf.nodes.length} className="inline-flex h-11 items-center gap-2 rounded-xl bg-orange-500 px-5 text-[14px] font-semibold text-white shadow-lg hover:bg-orange-600 disabled:opacity-50">
+                  <button type="button" onClick={() => (triggers.length > 1 ? setTrigPick(v => !v) : execute())} disabled={!wf.nodes.length} className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-[14px] font-semibold text-white shadow-lg hover:bg-brand-hover disabled:opacity-50">
                     <Play size={16} className="fill-white" />Chạy thử quy trình
                   </button>
                   {trigPick && (
@@ -413,7 +413,7 @@ export default function WorkflowEditor({ initial, currentUser, onExit }: { initi
             </div>
 
             {wf.active && next && (
-              <div className="absolute left-4 top-4 z-10 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[12px] text-emerald-800 shadow-sm">
+              <div className="absolute left-4 top-4 z-10 rounded-xl border border-brand/30 bg-brand-light px-3 py-2 text-[12px] text-brand-hover shadow-sm">
                 Lần chạy kế tiếp {next.setLocale('vi').toFormat('HH:mm dd/MM/yyyy')}
               </div>
             )}

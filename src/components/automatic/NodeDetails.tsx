@@ -175,7 +175,7 @@ export default function NodeDetails({ wf, node, runData, nodeState, busy, onChan
         ) : (
           <div className="flex flex-col items-center gap-3 p-8 text-center text-[13px] text-slate-500">
             Chưa có dữ liệu ra.
-            <button type="button" disabled={busy} onClick={() => onExecute(node.name)} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-orange-500 px-3 text-[13px] font-semibold text-white hover:bg-orange-600 disabled:opacity-50"><Play size={14} />Thực thi bước</button>
+            <button type="button" disabled={busy} onClick={() => onExecute(node.name)} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-brand px-3 text-[13px] font-semibold text-white hover:bg-brand-hover disabled:opacity-50"><Play size={14} />Thực thi bước</button>
           </div>
         )}
       </div>
@@ -190,8 +190,8 @@ export default function NodeDetails({ wf, node, runData, nodeState, busy, onChan
           <NodeIcon type={type} size={18} boxed />
           <input value={name} onChange={e => setName(e.target.value)} onBlur={commitName} onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} className="min-w-0 flex-1 rounded-lg border border-transparent px-2 py-1 text-[15px] font-bold text-slate-800 outline-none hover:border-slate-200 focus:border-brand" />
           {node.disabled && <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500"><Power size={11} />Đang tắt</span>}
-          {run && !run.error && <CheckCircle2 size={18} className="text-emerald-500" />}
-          <button type="button" disabled={busy} onClick={() => onExecute(node.name)} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-orange-500 px-3 text-[13px] font-semibold text-white hover:bg-orange-600 disabled:opacity-50">
+          {run && !run.error && <CheckCircle2 size={18} className="text-brand" />}
+          <button type="button" disabled={busy} onClick={() => onExecute(node.name)} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-brand px-3 text-[13px] font-semibold text-white hover:bg-brand-hover disabled:opacity-50">
             {busy ? <Loader2 size={15} className="animate-spin" /> : <Play size={15} />}{type?.trigger ? 'Chạy thử bước kích hoạt' : 'Thực thi bước'}
           </button>
         </header>

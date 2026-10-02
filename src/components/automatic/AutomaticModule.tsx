@@ -143,7 +143,7 @@ export default function AutomaticModule({ currentUser }: { currentUser: UserAcco
                         {sched.length > 0 && <span className="inline-flex items-center gap-1"><Clock size={12} />{sched.join(' · ')}</span>}
                         {w.lastExec && (
                           <span className="inline-flex items-center gap-1">
-                            {w.lastExec.status === 'success' ? <CheckCircle2 size={12} className="text-emerald-500" /> : w.lastExec.status === 'error' ? <XCircle size={12} className="text-rose-500" /> : <Loader2 size={12} className="animate-spin" />}
+                            {w.lastExec.status === 'success' ? <CheckCircle2 size={12} className="text-brand" /> : w.lastExec.status === 'error' ? <XCircle size={12} className="text-rose-500" /> : <Loader2 size={12} className="animate-spin" />}
                             Chạy {fmtAgo(w.lastExec.startedAt)}{w.lastExec.mode === 'schedule' ? ' theo lịch' : ''}
                           </span>
                         )}

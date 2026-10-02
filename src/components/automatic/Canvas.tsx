@@ -301,15 +301,15 @@ const Canvas = forwardRef<CanvasHandle, Props>(function Canvas(p, ref) {
               const hasData = e.count != null;
               return (
                 <g key={e.key}>
-                  <path d={e.d} fill="none" stroke={on ? '#f97316' : hasData ? '#10b981' : '#94a3b8'} strokeWidth={on ? 3 : 2} />
+                  <path d={e.d} fill="none" style={{ stroke: on ? 'var(--brand-hover)' : hasData ? 'var(--brand)' : '#94a3b8' }} strokeWidth={on ? 3 : 2} />
                   <path d={e.d} fill="none" stroke="transparent" strokeWidth={18} style={{ pointerEvents: 'stroke', cursor: 'pointer' }}
                     onPointerEnter={() => showEdgeBtns(e.key)} onPointerLeave={hideEdgeBtns}
                     onPointerDown={ev => { ev.stopPropagation(); setSelEdge(e.key); }} />
-                  <path d={`M${e.pb[0] - 8},${e.pb[1] - 5} L${e.pb[0]},${e.pb[1]} L${e.pb[0] - 8},${e.pb[1] + 5}`} fill="none" stroke={on ? '#f97316' : hasData ? '#10b981' : '#94a3b8'} strokeWidth={2} />
+                  <path d={`M${e.pb[0] - 8},${e.pb[1] - 5} L${e.pb[0]},${e.pb[1]} L${e.pb[0] - 8},${e.pb[1] + 5}`} fill="none" style={{ stroke: on ? 'var(--brand-hover)' : hasData ? 'var(--brand)' : '#94a3b8' }} strokeWidth={2} />
                 </g>
               );
             })}
-            {dragLine && <path d={dragLine} fill="none" stroke="#f97316" strokeWidth={2} strokeDasharray="6 4" />}
+            {dragLine && <path d={dragLine} fill="none" style={{ stroke: 'var(--brand)' }} strokeWidth={2} strokeDasharray="6 4" />}
             {/* Đường chờ ở cổng ra chưa nối */}
             {wf.nodes.flatMap(n => Array.from({ length: outputCount(n) }, (_, i) => {
               if (readOnly || wf.connections.some(c => c.from === n.name && c.fromOutput === i)) return null;
@@ -323,7 +323,7 @@ const Canvas = forwardRef<CanvasHandle, Props>(function Canvas(p, ref) {
         {edges.map(e => (
           <React.Fragment key={'l' + e.key}>
             {e.count != null && hoverEdge !== e.key && selEdge !== e.key && (
-              <div className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-white px-1.5 text-[11px] font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-200" style={{ left: e.m[0], top: e.m[1] - 12 }}>
+              <div className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-white px-1.5 text-[11px] font-semibold text-brand shadow-sm ring-1 ring-brand/30" style={{ left: e.m[0], top: e.m[1] - 12 }}>
                 {e.count} item
               </div>
             )}
@@ -346,7 +346,7 @@ const Canvas = forwardRef<CanvasHandle, Props>(function Canvas(p, ref) {
           const nIn = t?.inputs ?? 1, nOut = outputCount(n);
           const outNames = t?.outputNames?.({ ...t.defaults, ...n.parameters }) || [];
           const sub = (() => { try { return t?.subtitle?.({ ...t.defaults, ...n.parameters }) || ''; } catch { return ''; } })();
-          const ring = st === 'error' || run?.error ? 'border-rose-500' : st === 'running' ? 'border-orange-400' : run ? 'border-emerald-500' : sel ? 'border-brand' : 'border-slate-300';
+          const ring = st === 'error' || run?.error ? 'border-rose-500' : st === 'running' ? 'border-brand' : run ? 'border-brand' : sel ? 'border-brand' : 'border-slate-300';
           return (
             <div key={n.id} data-node={n.name} className="group absolute" style={{ left: n.position[0], top: n.position[1], width: NODE, height: h }}>
               {/* Thanh công cụ nhanh khi rê chuột hoặc khi đang chọn */}
@@ -363,12 +363,12 @@ const Canvas = forwardRef<CanvasHandle, Props>(function Canvas(p, ref) {
                 onContextMenu={e => { e.preventDefault(); e.stopPropagation(); p.onMenu(n.name, e.clientX, e.clientY); }}
                 className={`relative flex h-full w-full cursor-pointer items-center justify-center border-2 bg-white shadow-sm transition-shadow hover:shadow-md ${ring} ${sel ? 'ring-4 ring-brand/25' : ''} ${t?.trigger ? 'rounded-l-[44px] rounded-r-xl' : 'rounded-xl'} ${n.disabled ? 'opacity-50 grayscale' : ''}`}>
                 <NodeIcon type={t} size={38} />
-                {t?.trigger && <Zap size={14} className="absolute -left-5 top-1/2 -translate-y-1/2 fill-orange-400 text-orange-400" />}
+                {t?.trigger && <Zap size={14} className="absolute -left-5 top-1/2 -translate-y-1/2 fill-brand text-brand" />}
                 {n.notes && <StickyNote size={12} className="absolute left-2 top-2 text-amber-500" />}
                 <div className="absolute bottom-1.5 right-1.5">
-                  {st === 'running' ? <Loader2 size={15} className="animate-spin text-orange-500" />
+                  {st === 'running' ? <Loader2 size={15} className="animate-spin text-brand" />
                     : run?.error || st === 'error' ? <AlertTriangle size={15} className="text-rose-500" />
-                    : run ? <span className="flex items-center gap-0.5 text-[11px] font-bold text-emerald-600"><Check size={14} strokeWidth={3} />{total > 1 ? total : ''}</span> : null}
+                    : run ? <span className="flex items-center gap-0.5 text-[11px] font-bold text-brand"><Check size={14} strokeWidth={3} />{total > 1 ? total : ''}</span> : null}
                 </div>
               </div>
               {/* Cổng vào */}

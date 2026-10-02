@@ -8,9 +8,9 @@ import { NodeIcon, fmtDuration, fmtTime, nodeTypeOf } from './shared';
 import { useConfirmation } from '../ConfirmationContext';
 
 function StatusIcon({ s }: { s: string }) {
-  if (s === 'success') return <CheckCircle2 size={16} className="text-emerald-500" />;
+  if (s === 'success') return <CheckCircle2 size={16} className="text-brand" />;
   if (s === 'error') return <XCircle size={16} className="text-rose-500" />;
-  return <Loader2 size={16} className="animate-spin text-orange-500" />;
+  return <Loader2 size={16} className="animate-spin text-brand" />;
 }
 
 export default function ExecutionsPanel({ wf, onLoad }: { wf: Workflow; onLoad: (e: Execution) => void }) {

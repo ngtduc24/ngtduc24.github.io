@@ -38,7 +38,7 @@ function Preview({ value }: { value: any }) {
   if (!expr) return <div className="mt-1 text-[11px] text-slate-400">Chạy các bước trước để xem kết quả biểu thức</div>;
   const r = previewExpression(value, expr);
   return (
-    <div className={`mt-1 max-h-24 overflow-auto whitespace-pre-wrap break-words rounded-md px-2 py-1 font-mono text-[11px] ${r.ok ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-700'}`}>
+    <div className={`mt-1 max-h-24 overflow-auto whitespace-pre-wrap break-words rounded-md px-2 py-1 font-mono text-[11px] ${r.ok ? 'bg-brand-light text-brand-hover' : 'bg-rose-50 text-rose-700'}`}>
       {r.ok ? (r.text === '' ? '(rỗng)' : r.text) : r.text}
     </div>
   );
@@ -48,7 +48,7 @@ export function TextInput({ value, onChange, placeholder, multiline, rows = 3, m
   const { register } = useContext(Ctx);
   const v = value == null ? '' : typeof value === 'object' ? JSON.stringify(value) : String(value);
   const isExpr = !noExpr && hasExpression(v);
-  const cls = `${inputCls} ${mono || isExpr ? 'font-mono text-[12px]' : ''} ${isExpr ? 'border-emerald-300 bg-emerald-50/40 pr-8' : ''}`;
+  const cls = `${inputCls} ${mono || isExpr ? 'font-mono text-[12px]' : ''} ${isExpr ? 'border-brand/40 bg-brand-light/50 pr-8' : ''}`;
   const common = {
     value: v, placeholder,
     onFocus: (e: React.FocusEvent<any>) => register(e.target, onChange),
@@ -66,7 +66,7 @@ export function TextInput({ value, onChange, placeholder, multiline, rows = 3, m
   return (
     <div className="relative">
       {multiline || v.includes('\n') ? <textarea {...common} rows={rows} className={cls + ' resize-y leading-5'} /> : <input {...common} className={cls} />}
-      {isExpr && <span className="pointer-events-none absolute right-1.5 top-1.5 rounded bg-emerald-600 px-1 text-[10px] font-bold italic text-white">fx</span>}
+      {isExpr && <span className="pointer-events-none absolute right-1.5 top-1.5 rounded bg-brand px-1 text-[10px] font-bold italic text-white">fx</span>}
       {!noExpr && <Preview value={v} />}
     </div>
   );
