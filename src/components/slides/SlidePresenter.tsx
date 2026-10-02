@@ -1,13 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronLeft, ChevronRight, X, Maximize2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Maximize2, StickyNote } from 'lucide-react';
 import { Slide, SLIDE_W, SLIDE_H } from '../../lib/slides';
 import SlideRenderer, { ElPhase, ensureAnimCss } from './SlideRenderer';
 
 // Chế độ trình chiếu toàn màn hình.
 // Khối có hiệu ứng "khi bấm" xuất hiện lần lượt mỗi lần bấm, hết khối thì sang trang (có hiệu ứng chuyển trang).
 // Phím mũi tên, phím cách, bấm chuột để đi tiếp, Esc để thoát.
-export default function SlidePresenter({ slides, start = 0, onClose }: { slides: Slide[]; start?: number; onClose: () => void }) {
+export default function SlidePresenter({ slides: all, start = 0, onClose }: { slides: Slide[]; start?: number; onClose: () => void }) {
+  // Trang ẩn không trình chiếu (trừ khi bắt đầu ngay từ trang ẩn).
+  const startId = all[Math.min(start, all.length - 1)]?.id;
+  const slides = useMemo(() => { const v = all.filter(s => !s.hidden || s.id === startId); return v.length ? v : all; }, [all, startId]);
+  start = Math.max(0, slides.findIndex(s => s.id === startId));
+  const [notesOn, setNotesOn] = useState(false);
+  const [black, setBlack] = useState(false);
+  const [t0] = useState(() => Date.now());
+  const [, tick] = useState(0);
+  useEffect(() => { const t = setInterval(() => tick(v => v + 1), 1000); return () => clearInterval(t); }, []);
   const [i, setI] = useState(Math.min(start, slides.length - 1));
   const [step, setStep] = useState(0);
   const [dir, setDir] = useState<'fwd' | 'back'>('fwd');
@@ -62,6 +71,8 @@ export default function SlidePresenter({ slides, start = 0, onClose }: { slides:
       else if (e.key === 'Home') goTo(0, 'back');
       else if (e.key === 'End') goTo(slides.length - 1, 'fwd');
       else if (e.key === 'Escape') onClose();
+      else if (e.key.toLowerCase() === 'n') setNotesOn(v => !v);
+      else if (e.key.toLowerCase() === 'b' || e.key === '.') setBlack(v => !v);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -98,16 +109,25 @@ export default function SlidePresenter({ slides, start = 0, onClose }: { slides:
 
   return createPortal(
     <div className="fixed inset-0 z-[300] flex items-center justify-center overflow-hidden bg-black" style={{ cursor: showUi ? 'default' : 'none' }}
-      onClick={e => { if ((e.target as HTMLElement).closest('button')) return; next(); }}>
+      onClick={e => { const t = e.target as HTMLElement; if (t.closest('button') || t.closest('[data-live]') || t.closest('[data-notes]')) return; if (black) { setBlack(false); return; } next(); }}>
       <div style={{ position: 'relative', width, height: width * SLIDE_H / SLIDE_W }}>
         {prev !== null && <SlideRenderer slide={slides[prev]} width={width} style={{ position: 'absolute', inset: 0, ...outAnim }} />}
-        <SlideRenderer key={`${i}_${entry}`} slide={slides[i]} width={width} phases={phases} loops playKey={entry} style={{ position: 'absolute', inset: 0, ...inAnim }} />
+        <SlideRenderer key={`${i}_${entry}`} slide={slides[i]} width={width} phases={phases} loops live playKey={entry} style={{ position: 'absolute', inset: 0, ...inAnim }} />
+        {black && <div style={{ position: 'absolute', inset: 0, background: '#000' }} />}
       </div>
+      {notesOn && (
+        <div data-notes className="fixed bottom-20 left-1/2 w-[min(760px,92vw)] -translate-x-1/2 rounded-2xl bg-black/80 p-4 text-white shadow-2xl">
+          <div className="mb-2 flex items-center justify-between text-xs text-white/60"><span>Ghi chú trang {i + 1}</span><span className="tabular-nums">Đã trình bày {String(Math.floor((Date.now() - t0) / 60000)).padStart(2, '0')}:{String(Math.floor((Date.now() - t0) / 1000) % 60).padStart(2, '0')}</span></div>
+          <p className="max-h-40 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed">{slides[i]?.notes || 'Trang này chưa có ghi chú.'}</p>
+          {slides[i + 1] && <p className="mt-2 text-xs text-white/50">Trang sau: {(slides[i + 1].els.find(e => e.type === 'text')?.text || '').split('\n')[0].slice(0, 80)}</p>}
+        </div>
+      )}
       <div className={`fixed bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-sm text-white transition-opacity ${showUi ? 'opacity-100' : 'opacity-0'}`}>
         <button onClick={back} className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/15" aria-label="Trang trước"><ChevronLeft className="h-5 w-5" /></button>
         <span className="min-w-[64px] text-center tabular-nums">{i + 1} / {slides.length}</span>
         <button onClick={next} className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/15" aria-label="Tiếp theo"><ChevronRight className="h-5 w-5" /></button>
         <button onClick={() => document.documentElement.requestFullscreen?.().catch(() => {})} className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/15" aria-label="Toàn màn hình"><Maximize2 className="h-4 w-4" /></button>
+        <button onClick={() => setNotesOn(v => !v)} title="Ghi chú và đồng hồ (phím N)" className={`grid h-8 w-8 place-items-center rounded-full hover:bg-white/15 ${notesOn ? 'bg-white/20' : ''}`} aria-label="Ghi chú"><StickyNote className="h-4 w-4" /></button>
         <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/15" aria-label="Thoát trình chiếu"><X className="h-5 w-5" /></button>
       </div>
     </div>,

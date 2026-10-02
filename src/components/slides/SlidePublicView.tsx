@@ -11,7 +11,8 @@ export default function SlidePublicView({ token }: { token: string }) {
   const [present, setPresent] = useState(false);
   const [w, setW] = useState(Math.min(window.innerWidth - 32, 1100));
 
-  useEffect(() => { getDeckByShareToken(token).then(d => { setDeck(d); if (d) document.title = `${d.title} | EduGo`; }).catch(() => setDeck(null)); }, [token]);
+  // Trang ẩn không hiện ở link xem công khai.
+  useEffect(() => { getDeckByShareToken(token).then(d => { setDeck(d ? { ...d, slides: d.slides.filter(x => !x.hidden).length ? d.slides.filter(x => !x.hidden) : d.slides } : d); if (d) document.title = `${d.title} | EduGo`; }).catch(() => setDeck(null)); }, [token]);
   useEffect(() => {
     const r = () => setW(Math.min(window.innerWidth - 32, 1100, (window.innerHeight - 220) * (SLIDE_W / SLIDE_H)));
     r(); window.addEventListener('resize', r); return () => window.removeEventListener('resize', r);
@@ -42,7 +43,7 @@ export default function SlidePublicView({ token }: { token: string }) {
         <button onClick={() => setPresent(true)} className="flex h-9 items-center gap-2 rounded-lg bg-white px-3 text-sm font-semibold text-slate-800"><Play className="h-4 w-4" /> Trình chiếu</button>
       </header>
       <main className="flex flex-col items-center gap-4 p-4">
-        <div className="overflow-hidden rounded-xl shadow-xl"><SlideRenderer slide={deck.slides[i]} width={w} /></div>
+        <div className="overflow-hidden rounded-xl shadow-xl"><SlideRenderer slide={deck.slides[i]} width={w} live /></div>
         <div className="flex items-center gap-3 text-sm text-slate-600">
           <button onClick={() => setI(v => Math.max(0, v - 1))} className="grid h-9 w-9 place-items-center rounded-full bg-white shadow hover:bg-slate-50" aria-label="Trang trước"><ChevronLeft className="h-5 w-5" /></button>
           <span className="tabular-nums">{i + 1} / {deck.slides.length}</span>

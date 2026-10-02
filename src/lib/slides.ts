@@ -9,11 +9,11 @@ import { getEduCtx } from './edu';
 export const SLIDE_W = 1280;
 export const SLIDE_H = 720;
 
-export type ShapeKind = 'rect' | 'round' | 'ellipse' | 'triangle' | 'diamond' | 'star' | 'line' | 'arrow' | 'pentagon' | 'hexagon';
+export type ShapeKind = 'rect' | 'round' | 'ellipse' | 'triangle' | 'diamond' | 'star' | 'line' | 'arrow' | 'pentagon' | 'hexagon' | 'path';
 
 export interface SlideEl {
   id: string;
-  type: 'text' | 'image' | 'shape';
+  type: 'text' | 'image' | 'shape' | 'video';
   x: number; y: number; w: number; h: number;
   rot?: number;
   opacity?: number;
@@ -39,6 +39,10 @@ export interface SlideEl {
   fill?: string;
   stroke?: string;
   strokeWidth?: number;
+  // Hình vẽ tự do (nhập từ PowerPoint): đường SVG trong khung pathW x pathH
+  path?: string;
+  pathW?: number;
+  pathH?: number;
   // Chữ nâng cao
   strike?: boolean;
   upper?: boolean;
@@ -51,6 +55,11 @@ export interface SlideEl {
   flipX?: boolean;
   flipY?: boolean;
   filter?: ImgFilter;
+  // Cắt ảnh: phần bỏ đi ở mỗi cạnh, tỉ lệ 0 đến 1 (giống PowerPoint)
+  crop?: { l: number; t: number; r: number; b: number };
+  // Video (YouTube hoặc tệp mp4) và liên kết khi bấm lúc trình chiếu
+  video?: string;
+  link?: string;
   // Chuyển động
   anim?: ElAnim;
 }
@@ -78,7 +87,7 @@ export const EFFECT_LABELS: Array<[EffectKind, string]> = [
 ];
 
 export interface SlideBg { color?: string; gradient?: string; image?: string }
-export interface Slide { id: string; bg: SlideBg; els: SlideEl[]; notes?: string; transition?: SlideTransition }
+export interface Slide { id: string; bg: SlideBg; els: SlideEl[]; notes?: string; transition?: SlideTransition; hidden?: boolean }
 
 export interface Deck {
   id: string;
@@ -191,6 +200,7 @@ function fromRow(key: string, d: any): Deck {
 const toData = (d: Deck) => ({
   ownerId: d.ownerId, ownerName: d.ownerName || '', title: d.title, slides: d.slides, createdAt: d.createdAt,
   updatedAt: d.updatedAt, updatedBy: d.updatedBy || '', deletedAt: d.deletedAt || null, shareToken: d.shareToken || null, shareOn: !!d.shareOn,
+  slideCount: d.slides.length,
 });
 
 // Danh sách bài giảng của mình (chỉ lấy trang đầu để vẽ ảnh thu nhỏ).
@@ -198,12 +208,12 @@ export async function listMyDecks(): Promise<DeckSummary[]> {
   const owner = me();
   if (!owner) return [];
   const { data, error } = await supabase.from(T)
-    .select('key, title:data->>title, updatedAt:data->>updatedAt, deletedAt:data->>deletedAt, first:data->slides->0, count:data->slides')
+    .select('key, title:data->>title, updatedAt:data->>updatedAt, deletedAt:data->>deletedAt, first:data->slides->0, count:data->>slideCount')
     .like('key', `deck:${owner}:%`);
   if (error) throw error;
   return (data || []).filter((r: any) => !r.deletedAt).map((r: any) => ({
     id: String(r.key).split(':')[2], ownerId: owner, title: r.title || 'Bài giảng không tên', updatedAt: r.updatedAt || '',
-    first: r.first || undefined, count: Array.isArray(r.count) ? r.count.length : 0, role: 'owner' as const,
+    first: r.first || undefined, count: Number(r.count) || 0, role: 'owner' as const,
   })).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
@@ -214,13 +224,13 @@ export async function listSharedDecks(): Promise<DeckSummary[]> {
   if (!shares.length) return [];
   const keys = shares.map(s => deckKey(s.ownerId, s.resourceId));
   const { data, error } = await supabase.from(T)
-    .select('key, title:data->>title, updatedAt:data->>updatedAt, deletedAt:data->>deletedAt, ownerName:data->>ownerName, first:data->slides->0, count:data->slides')
+    .select('key, title:data->>title, updatedAt:data->>updatedAt, deletedAt:data->>deletedAt, ownerName:data->>ownerName, first:data->slides->0, count:data->>slideCount')
     .in('key', keys);
   if (error) throw error;
   const roleOf = new Map(shares.map(s => [s.resourceId, s.role]));
   return (data || []).filter((r: any) => !r.deletedAt).map((r: any) => {
     const [, owner, id] = String(r.key).split(':');
-    return { id, ownerId: owner, ownerName: r.ownerName || '', title: r.title || 'Bài giảng không tên', updatedAt: r.updatedAt || '', first: r.first || undefined, count: Array.isArray(r.count) ? r.count.length : 0, role: roleOf.get(id) as any };
+    return { id, ownerId: owner, ownerName: r.ownerName || '', title: r.title || 'Bài giảng không tên', updatedAt: r.updatedAt || '', first: r.first || undefined, count: Number(r.count) || 0, role: roleOf.get(id) as any };
   }).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 

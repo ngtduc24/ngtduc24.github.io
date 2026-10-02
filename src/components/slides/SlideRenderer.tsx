@@ -123,11 +123,17 @@ function imgFilter(el: SlideEl): string | undefined {
   return parts.length ? parts.join(' ') : undefined;
 }
 
+// Mã video YouTube từ link (watch, youtu.be, shorts, embed).
+export function youtubeId(url: string): string | null {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{6,})/i);
+  return m ? m[1] : null;
+}
+
 // phase: static (không chạy hiệu ứng), hidden (chưa xuất hiện), play (chạy hiệu ứng xuất hiện).
 // loops: cho chạy chuyển động lặp (khi trình chiếu, xem trước).
 export type ElPhase = 'static' | 'hidden' | 'play';
 
-export function ElementView({ el, editingText, phase = 'static', loops = false, playKey }: { el: SlideEl; editingText?: boolean; phase?: ElPhase; loops?: boolean; playKey?: number | string }) {
+export function ElementView({ el, editingText, phase = 'static', loops = false, playKey, live = false }: { el: SlideEl; editingText?: boolean; phase?: ElPhase; loops?: boolean; playKey?: number | string; live?: boolean }) {
   useEffect(() => { if (el.type === 'text') ensureFont(el.fontFamily); }, [el.type, el.fontFamily]);
   useEffect(() => { if (phase !== 'static' || loops) ensureAnimCss(); }, [phase, loops]);
   const anim = el.anim || {};
@@ -136,7 +142,7 @@ export function ElementView({ el, editingText, phase = 'static', loops = false, 
   const delay = anim.delay ?? 0;
   const outer: React.CSSProperties = {
     position: 'absolute', left: el.x, top: el.y, width: el.w, height: el.type === 'text' ? 'auto' : el.h, minHeight: el.type === 'text' ? el.h : undefined,
-    transform: el.rot ? `rotate(${el.rot}deg)` : undefined, opacity: el.opacity ?? 1,
+    transform: [el.rot ? `rotate(${el.rot}deg)` : '', el.type === 'shape' && (el.flipX || el.flipY) ? `scale(${el.flipX ? -1 : 1},${el.flipY ? -1 : 1})` : ''].filter(Boolean).join(' ') || undefined, opacity: el.opacity ?? 1,
     visibility: phase === 'hidden' ? 'hidden' : undefined,
   };
   const enter: React.CSSProperties = phase === 'play' && inK ? { animation: `sa-${inK} ${dur}s cubic-bezier(.2,.7,.2,1) ${delay}s both` } : {};
@@ -157,7 +163,7 @@ export function ElementView({ el, editingText, phase = 'static', loops = false, 
         visibility: editingText ? 'hidden' : 'visible', padding: el.bg ? '0.2em 0.4em' : 0, borderRadius: el.bg ? 12 : 0, ...textEffect(el),
       }}>
         {el.list
-          ? <ul style={{ margin: 0, paddingLeft: '1.2em', listStyle: 'disc' }}>{lines.map((l, i) => <li key={i}>{l || ' '}</li>)}</ul>
+          ? <ul style={{ margin: 0, paddingLeft: '1.2em', listStyle: 'disc' }}>{lines.map((l, i) => <li key={i} style={!l.trim() ? { listStyle: 'none' } : /^\s{3,}/.test(l) ? { marginLeft: `${Math.floor(l.match(/^\s*/)![0].length / 3) * 1.2}em`, listStyle: 'circle' } : undefined}>{l.trim() ? l.replace(/^\s+/, '') : ' '}</li>)}</ul>
           : (el.text || ' ')}
       </div>
     );
@@ -165,7 +171,25 @@ export function ElementView({ el, editingText, phase = 'static', loops = false, 
     const flip = el.flipX || el.flipY ? `scale(${el.flipX ? -1 : 1},${el.flipY ? -1 : 1})` : undefined;
     body = (
       <div style={{ ...fill, overflow: 'hidden', borderRadius: el.radius || 0, background: el.src ? 'transparent' : '#e2e8f0', filter: boxEffect(el) }}>
-        {el.src && <img src={el.src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: el.fit || 'cover', display: 'block', pointerEvents: 'none', transform: flip, filter: imgFilter(el), borderRadius: el.radius || 0 }} />}
+        {el.src && (el.crop
+          ? <img src={el.src} alt="" draggable={false} style={{ position: 'absolute', maxWidth: 'none', width: `${100 / Math.max(0.02, 1 - el.crop.l - el.crop.r)}%`, height: `${100 / Math.max(0.02, 1 - el.crop.t - el.crop.b)}%`, left: `${-el.crop.l * 100 / Math.max(0.02, 1 - el.crop.l - el.crop.r)}%`, top: `${-el.crop.t * 100 / Math.max(0.02, 1 - el.crop.t - el.crop.b)}%`, pointerEvents: 'none', transform: flip, filter: imgFilter(el) }} />
+          : <img src={el.src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: el.fit || 'cover', display: 'block', pointerEvents: 'none', transform: flip, filter: imgFilter(el), borderRadius: el.radius || 0 }} />)}
+      </div>
+    );
+  } else if (el.type === 'video') {
+    const yt = youtubeId(el.video || '');
+    body = live && el.video ? (
+      yt
+        ? <iframe src={`https://www.youtube.com/embed/${yt}?rel=0`} title="Video" style={{ ...fill, border: 0, borderRadius: el.radius || 0, display: 'block' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+        : <video src={el.video} controls style={{ ...fill, objectFit: 'contain', background: '#000', borderRadius: el.radius || 0, display: 'block' }} />
+    ) : (
+      <div style={{ ...fill, position: 'relative', overflow: 'hidden', borderRadius: el.radius || 0, background: '#0f172a' }}>
+        {yt && <img src={`https://i.ytimg.com/vi/${yt}/hqdefault.jpg`} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85, pointerEvents: 'none' }} />}
+        <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
+          <div style={{ width: Math.min(el.w, el.h) * 0.22, height: Math.min(el.w, el.h) * 0.22, borderRadius: '50%', background: 'rgba(0,0,0,.6)', display: 'grid', placeItems: 'center' }}>
+            <div style={{ width: 0, height: 0, borderTop: `${Math.min(el.w, el.h) * 0.06}px solid transparent`, borderBottom: `${Math.min(el.w, el.h) * 0.06}px solid transparent`, borderLeft: `${Math.min(el.w, el.h) * 0.09}px solid #fff`, marginLeft: Math.min(el.w, el.h) * 0.02 }} />
+          </div>
+        </div>
       </div>
     );
   } else {
@@ -176,6 +200,12 @@ export function ElementView({ el, editingText, phase = 'static', loops = false, 
     const fx = boxEffect(el);
     if (k === 'rect' || k === 'round' || k === 'ellipse') {
       body = <div style={{ ...fill, background: fillC, border: sw ? `${sw}px solid ${stroke}` : undefined, borderRadius: k === 'ellipse' ? '50%' : k === 'round' ? Math.min(el.w, el.h) * 0.18 : 0, boxSizing: 'border-box', filter: fx }} />;
+    } else if (k === 'path' && el.path) {
+      body = (
+        <svg style={{ ...fill, display: 'block', overflow: 'visible', filter: fx }} viewBox={`0 0 ${el.pathW || el.w} ${el.pathH || el.h}`} preserveAspectRatio="none">
+          <path d={el.path} fill={fillC} fillRule="evenodd" stroke={sw ? stroke : 'none'} strokeWidth={sw} vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+        </svg>
+      );
     } else if (k === 'line' || k === 'arrow') {
       const t = Math.max(2, sw || 6);
       body = (
@@ -192,8 +222,9 @@ export function ElementView({ el, editingText, phase = 'static', loops = false, 
       );
     }
   }
+  const openLink = live && el.link ? (e: React.MouseEvent) => { e.stopPropagation(); window.open(/^https?:\/\//i.test(el.link!) ? el.link : `https://${el.link}`, '_blank', 'noopener'); } : undefined;
   return (
-    <div style={outer}>
+    <div style={{ ...outer, cursor: openLink ? 'pointer' : undefined }} onClick={openLink} data-live={live && (el.type === 'video' || el.link) ? '1' : undefined}>
       <div key={playKey} style={{ ...fill, ...enter }}>
         <div style={{ ...fill, ...loop, transformOrigin: 'center' }}>{body}</div>
       </div>
@@ -203,15 +234,15 @@ export function ElementView({ el, editingText, phase = 'static', loops = false, 
 
 // Trang thu phóng theo chiều rộng width (px).
 // phases: trạng thái hiệu ứng từng khối (khi trình chiếu), loops: chạy chuyển động lặp.
-export default function SlideRenderer({ slide, width, className, children, editingId, phases, loops, playKey, style }: {
+export default function SlideRenderer({ slide, width, className, children, editingId, phases, loops, playKey, style, live }: {
   slide?: Slide; width: number; className?: string; children?: React.ReactNode; editingId?: string | null;
-  phases?: Record<string, ElPhase>; loops?: boolean; playKey?: number | string; style?: React.CSSProperties;
+  phases?: Record<string, ElPhase>; loops?: boolean; playKey?: number | string; style?: React.CSSProperties; live?: boolean;
 }) {
   const scale = width / SLIDE_W;
   return (
     <div className={className} style={{ width, height: SLIDE_H * scale, position: 'relative', overflow: 'hidden', ...style }}>
       <div style={{ width: SLIDE_W, height: SLIDE_H, transform: `scale(${scale})`, transformOrigin: '0 0', position: 'absolute', left: 0, top: 0, ...(slide ? bgStyle(slide.bg) : { background: '#fff' }) }}>
-        {slide?.els.map(el => <ElementView key={el.id} el={el} editingText={editingId === el.id} phase={phases?.[el.id] || 'static'} loops={loops} playKey={phases?.[el.id] === 'play' ? playKey : undefined} />)}
+        {slide?.els.map(el => <ElementView key={el.id} el={el} editingText={editingId === el.id} phase={phases?.[el.id] || 'static'} loops={loops} live={live} playKey={phases?.[el.id] === 'play' ? playKey : undefined} />)}
         {children}
       </div>
     </div>

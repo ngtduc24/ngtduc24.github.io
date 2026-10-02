@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Plus, Loader2, Presentation, Copy, Trash2, Pencil, Users, LayoutGrid, List as ListIcon, Play } from 'lucide-react';
+import { FileUp, Plus, Loader2, Presentation, Copy, Trash2, Pencil, Users, LayoutGrid, List as ListIcon, Play } from 'lucide-react';
 import LibraryHero, { ViewToggle } from '../ui/LibraryHero';
 import { AvatarStack } from '../ui/People';
 import { collaboratorsByResource } from '../../lib/collab';
 import SlideRenderer from './SlideRenderer';
 import SlideEditor from './SlideEditor';
 import SlidePresenter from './SlidePresenter';
+import PptxImportDialog from './PptxImportDialog';
 import { createDeck, listMyDecks, listSharedDecks, getDeck, findDeckOwner, duplicateDeck, softDeleteDeck, saveDeck, DeckSummary, Deck, makeSlide } from '../../lib/slides';
 import { setEduAuthContext } from '../../lib/edu';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
@@ -29,6 +30,7 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
   const [open, setOpen] = useState<{ deck: Deck; role: 'owner' | 'view' | 'edit' | 'manage' } | null>(null);
   const [presenting, setPresenting] = useState<Deck | null>(null);
   const [busy, setBusy] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [collabMap, setCollabMap] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
 
   useEffect(() => { setEduAuthContext(currentUser.id, currentUser.role === 'admin'); }, [currentUser]);
@@ -109,7 +111,7 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
         search={q} onSearch={setQ} placeholder="Tìm theo tên bài giảng..."
         chips={[]} activeChip="" onChip={() => {}}
         configKey="slides" canEditBanner={currentUser.role === 'admin'}
-        actions={<button onClick={create} disabled={busy} className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Tạo bài giảng mới</button>}
+        actions={<><button onClick={() => setImporting(true)} className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm hover:border-brand hover:text-brand"><FileUp className="h-4 w-4" /> Tải lên PowerPoint</button><button onClick={create} disabled={busy} className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Tạo bài giảng mới</button></>}
       />
 
       <div className="flex items-center justify-between">
@@ -171,6 +173,14 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
             </tbody>
           </table>
         </div>
+      )}
+      {importing && (
+        <PptxImportDialog title="Tải lên PowerPoint thành bài giảng" onClose={() => setImporting(false)} onResult={async r => {
+          const d = await createDeck(r.title || 'Bài giảng từ PowerPoint', currentUser.fullName, r.slides);
+          addNotification(`Đã tạo bài giảng "${d.title}" với ${r.slides.length} trang. Mọi chữ, hình, ảnh đều sửa được.`, 'success');
+          load();
+          if (!Object.keys(r.skipped).length) setOpen({ deck: d, role: 'owner' });
+        }} />
       )}
       {presenting && <SlidePresenter slides={presenting.slides} onClose={() => setPresenting(null)} />}
     </div>
