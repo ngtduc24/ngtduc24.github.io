@@ -485,6 +485,15 @@ begin
   end loop;
 end $$;
 
+-- Thêm mới rồi đọc lại ngay (insert ... returning): hàm kiểm tra quyền chưa thấy dòng vừa thêm,
+-- nên chính sách đọc phải xét thẳng cột chủ sở hữu trước.
+alter policy sch_select on public.edu_schools using (public.rls_uid() is not null and (owner_id = public.rls_uid() or public.can_edu_school(id::text)));
+alter policy cls_select on public.edu_classes using (public.rls_uid() is not null and (owner_id = public.rls_uid() or public.can_edu_class(id::text)));
+alter policy el_select on public.el_lessons using (owner_id = public.rls_uid() or public.el_readable(id::text));
+alter policy qz_select on public.quizzes using (public.rls_uid() is not null and (owner_id = public.rls_uid() or public.quiz_readable(id::text)));
+alter policy qbq_select on public.quiz_bank_questions using (public.rls_uid() is not null and (owner_id = public.rls_uid() or public.question_readable(id::text)));
+alter policy qdp_select on public.qda_projects using (public.rls_uid() is not null and (owner_id = public.rls_uid() or public.can_qda(id::text)));
+
 -- Báo PostgREST nạp lại cấu trúc mới.
 notify pgrst, 'reload schema';
 

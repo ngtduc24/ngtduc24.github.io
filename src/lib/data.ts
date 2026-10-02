@@ -1387,14 +1387,13 @@ export async function pushNotificationToSupabase(notif: Partial<AppNotification>
       priority: notif.priority || 'medium'
     };
     
-    const { data, error } = await supabase
+    // Không đọc lại dòng vừa gửi: thông báo gửi cho người khác thì người gửi không có quyền đọc (RLS).
+    const { error } = await supabase
       .from('system_notifications')
-      .insert(dbData)
-      .select('id')
-      .single();
-      
+      .insert(dbData);
+
     if (error) throw error;
-    return data?.id;
+    return (dbData as any).id;
   } catch (error) {
     console.error("Lỗi gửi thông báo đến Supabase:", error);
     throw error;

@@ -30,7 +30,7 @@ import { exportExamToPdf, ExamHeader } from '../../lib/quizPdf';
 import { FileDown } from 'lucide-react';
 import LibraryHero from '../ui/LibraryHero';
 
-interface QuizModuleProps { currentUser: UserAccount; standaloneBank?: boolean; }
+interface QuizModuleProps { currentUser: UserAccount; standaloneBank?: boolean; onExit?: () => void }
 type View = 'list' | 'editor' | 'bank' | 'assign' | 'detail';
 
 const emptyOptions = (): QuizOption[] => [
@@ -40,7 +40,7 @@ const emptyOptions = (): QuizOption[] => [
   { content: '', is_correct: false, order_index: 3 },
 ];
 
-export default function QuizModule({ currentUser, standaloneBank }: QuizModuleProps) {
+export default function QuizModule({ currentUser, standaloneBank, onExit }: QuizModuleProps) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
 
@@ -159,6 +159,9 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
         <LibraryHero
           configKey="quiz"
           canEditBanner={currentUser.role === 'admin'}
+          onBack={onExit}
+          backTitle="Quay lại"
+
           title="Bạn muốn tìm đề trắc nghiệm nào?"
           subtitle="Soạn đề, giao cho lớp, chấm tự động. Dùng lại đề hay từ thư viện của đồng nghiệp."
           tabs={[{ id: 'shared', label: 'Thư viện' }, { id: 'mine', label: 'Đề của tôi' }, { id: 'collab', label: 'Được chia sẻ với tôi' }]}
