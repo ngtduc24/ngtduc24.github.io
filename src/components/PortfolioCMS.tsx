@@ -19,14 +19,16 @@ import {
   Loader2,
   Check,
   Copy,
-  EyeOff
+  EyeOff,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import BannerAboutCMS from './cms/BannerAboutCMS';
 import ProjectsCoursesCMS from './cms/ProjectsCoursesCMS';
 import PortfolioNavigationManager from './cms/PortfolioNavigationManager';
 import PortfolioContentManager from './cms/PortfolioContentManager';
 import PortfolioResearchCMS from './cms/PortfolioResearchCMS';
-import { setSiteOwner, getSiteOfOwner, claimSiteSlug, setSitePublished, normalizeSlug, SiteRecord } from '../lib/portfolioData';
+import { setSiteOwner, getSiteOfOwner, claimSiteSlug, setSitePublished, normalizeSlug, SiteRecord, deleteMyWebsite } from '../lib/portfolioData';
 import { copyText } from './ui/Dialogs';
 
 type PortfolioDivision = 'address' | 'profile' | 'content' | 'projects' | 'research' | 'navigation';
@@ -120,7 +122,7 @@ function SiteAddressPanel({ uid, defaultTitle, onSlug }: { uid: string; defaultT
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} {site ? 'Đổi địa chỉ' : 'Tạo địa chỉ'}
           </button>
         </div>
-        <p className="text-xs text-slate-500">3 đến 40 ký tự, chữ thường không dấu, số và dấu gạch nối. Địa chỉ sẽ là {window.location.host}/{preview || 'ten-cua-ban'}</p>
+        <p className="text-xs text-slate-500">Mỗi tài khoản có 1 Website. Địa chỉ gồm 3 đến 40 ký tự, chữ thường không dấu, số và dấu gạch nối, sẽ là {window.location.host}/{preview || 'ten-cua-ban'}</p>
         {msg && <p className={`text-[13px] font-semibold ${msg.tone === 'ok' ? 'text-brand' : 'text-rose-600'}`}>{msg.text}</p>}
       </div>
       {site && (
@@ -135,6 +137,72 @@ function SiteAddressPanel({ uid, defaultTitle, onSlug }: { uid: string; defaultT
               className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-600 hover:text-brand"><Copy className="h-4 w-4" /> Chép link</button>
             <button type="button" onClick={togglePublish}
               className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-600 hover:text-brand">{site.published === false ? <><Eye className="h-4 w-4" /> Hiện trang</> : <><EyeOff className="h-4 w-4" /> Tạm ẩn trang</>}</button>
+          </div>
+        </div>
+      )}
+      <DeleteSiteZone uid={uid} site={site} onDeleted={(text) => { setSite(null); setDraft(normalizeSlug(defaultTitle)); onSlug(''); setMsg({ tone: 'ok', text }); }} />
+    </div>
+  );
+}
+
+// Vùng xoá Website: gõ đúng địa chỉ trang mới bấm xoá được, chọn xoá kèm ảnh và video để giải phóng dung lượng.
+function DeleteSiteZone({ uid, site, onDeleted }: { uid: string; site: SiteRecord | null; onDeleted: (msg: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState('');
+  const [withMedia, setWithMedia] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const word = site?.slug || 'xoa website';
+  const run = async () => {
+    setBusy(true); setErr('');
+    try {
+      const r = await deleteMyWebsite(uid, { withMedia });
+      let text = 'Đã xoá Website và toàn bộ nội dung của trang.';
+      if (withMedia) {
+        if (r.mediaError) text += ` Chưa xoá được ảnh, video (${r.mediaError}). Bạn có thể xoá trong Cài đặt, Kho lưu trữ.`;
+        else if (r.media) text += ` Đã xoá ${r.media} tệp ảnh, video trên kho lưu trữ.`;
+        if (!r.mediaError && r.mediaKept) text += ` ${r.mediaKept} tệp không phải do bạn tải lên nên được giữ lại.`;
+      }
+      setOpen(false); setTyped('');
+      onDeleted(text + ' Bạn có thể tạo Website mới bất cứ lúc nào.');
+    } catch (e: any) {
+      setErr(e?.message || 'Chưa xoá được Website, vui lòng thử lại.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="rounded-2xl border border-rose-100 bg-rose-50/40 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 text-sm font-semibold text-rose-700"><Trash2 className="h-4 w-4" /> Xoá Website</p>
+          <p className="mt-1 text-xs text-slate-500">Xoá địa chỉ trang, hồ sơ, bài viết, dự án, nghiên cứu, menu và có thể xoá luôn ảnh, video của trang để giải phóng dung lượng.</p>
+        </div>
+        {!open && (
+          <button type="button" onClick={() => { setOpen(true); setErr(''); }}
+            className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3 text-[13px] font-semibold text-rose-600 hover:bg-rose-50"><Trash2 className="h-4 w-4" /> Xoá Website</button>
+        )}
+      </div>
+      {open && (
+        <div className="mt-4 space-y-3 border-t border-rose-100 pt-4">
+          <p className="flex items-start gap-2 text-[13px] text-rose-700"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> Thao tác này không hoàn tác được. Link trang sẽ ngừng hoạt động và mọi nội dung của trang bị xoá.</p>
+          <label className="flex cursor-pointer items-start gap-2.5 text-[13px] text-slate-700">
+            <input type="checkbox" checked={withMedia} onChange={e => setWithMedia(e.target.checked)} className="mt-0.5 h-4 w-4 accent-rose-600" />
+            <span>Xoá luôn ảnh, video do bạn tải lên đang dùng trong trang. Nếu một ảnh cũng đang dùng ở bài giảng, bài tập hay nơi khác thì ở đó cũng mất ảnh.</span>
+          </label>
+          <div className="space-y-1.5">
+            <p className="text-xs text-slate-500">Gõ <span className="font-semibold text-slate-700">{word}</span> để xác nhận</p>
+            <input value={typed} onChange={e => setTyped(e.target.value)} placeholder={word}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-rose-400" />
+          </div>
+          {err && <p className="text-[13px] font-semibold text-rose-600">{err}</p>}
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => { setOpen(false); setTyped(''); setErr(''); }} disabled={busy}
+              className="inline-flex h-9 items-center rounded-xl bg-slate-100 px-4 text-[13px] font-semibold text-slate-600 hover:bg-slate-200 disabled:opacity-50">Huỷ</button>
+            <button type="button" onClick={run} disabled={busy || typed.trim().toLowerCase() !== word}
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-rose-600 px-4 text-[13px] font-semibold text-white hover:bg-rose-700 disabled:opacity-50">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} {busy ? 'Đang xoá...' : 'Xoá vĩnh viễn'}
+            </button>
           </div>
         </div>
       )}

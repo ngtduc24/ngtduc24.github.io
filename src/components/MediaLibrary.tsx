@@ -152,7 +152,7 @@ export default function MediaLibrary({ currentUser, embedded }: MediaLibraryProp
   const handleDeleteImage = (img: UploadedImage) => {
     confirm(
       'Xác nhận xóa tệp tin',
-      'Bạn có chắc chắn muốn xóa tệp tin này khỏi thư viện không? Hành động này không thể hoàn tác.',
+      'Tệp sẽ bị xoá hẳn khỏi kho lưu trữ để giải phóng dung lượng. Nơi nào đang dùng tệp này cũng sẽ mất tệp. Hành động này không thể hoàn tác.',
       async () => {
         try {
           const item = mediaById[img.id];

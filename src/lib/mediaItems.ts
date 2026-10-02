@@ -96,9 +96,42 @@ export async function listMyMedia(): Promise<MediaItem[]> {
   return Array.from(out.values()).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 }
 
+// Xoá hẳn tệp trên Cloudinary (giải phóng dung lượng) qua Edge Function media-delete.
+// Hàm chỉ xoá tệp do chính người gọi tải lên. Trả về các link đã xoá được.
+export async function destroyMedia(urls: string[]): Promise<{ deleted: string[]; skipped: string[] }> {
+  const list = Array.from(new Set(urls.filter(u => /^https?:\/\/res\.cloudinary\.com\//.test(u || ''))));
+  const out = { deleted: [] as string[], skipped: [] as string[] };
+  if (!list.length) return out;
+  try { await auth.authStateReady(); } catch { /* bỏ qua */ }
+  const user = auth.currentUser;
+  if (!user) throw new Error('Phiên đăng nhập đã hết hạn. Hãy đăng xuất rồi đăng nhập lại.');
+  const base = (import.meta.env.VITE_SUPABASE_URL || '').trim().replace(/\/$/, '');
+  for (let i = 0; i < list.length; i += 100) {
+    const token = await user.getIdToken();
+    const r = await fetch(`${base}/functions/v1/media-delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ urls: list.slice(i, i + 100) }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j?.error || `Lỗi máy chủ (${r.status})`);
+    out.deleted.push(...(j.deleted || []));
+    out.skipped.push(...(j.skipped || []));
+  }
+  try { window.dispatchEvent(new Event(MEDIA_CHANGED_EVENT)); } catch { /* bỏ qua */ }
+  return out;
+}
+
 export async function deleteMyMedia(item: MediaItem): Promise<void> {
   const owner = await readyUid();
   if (!owner) return;
+  // Ưu tiên xoá hẳn tệp trên Cloudinary, hàm sẽ dọn luôn bản ghi.
+  try {
+    const r = await destroyMedia([item.url]);
+    if (r.deleted.includes(item.url)) return;
+  } catch (e) {
+    console.warn('Chưa xoá được tệp trên Cloudinary, chỉ xoá bản ghi:', e);
+  }
   if (item.source === 'sb') {
     const { error } = await supabase.from(MEDIA_TABLE).delete().eq('id', item.id).eq('owner_id', owner);
     if (error) throw error;

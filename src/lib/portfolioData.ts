@@ -1,3 +1,4 @@
+import { destroyMedia } from './mediaItems';
 import { supabase } from './supabase';
 import { 
   PortfolioBanner, 
@@ -98,6 +99,88 @@ export async function setSitePublished(uid: string, published: boolean): Promise
   const rec = await getSiteOfOwner(uid);
   if (!rec) return;
   await supabase.from('portfolio_settings').upsert({ key: `site:${rec.slug}`, data: { ...rec, published, updatedAt: new Date().toISOString() } });
+}
+
+// ----- Xoá Website -----
+// Mỗi tài khoản có tối đa 1 Website. Xoá Website gồm: địa chỉ trang, mọi cài đặt và nội dung của trang,
+// và (nếu chọn) xoá hẳn trên Cloudinary các ảnh, video do chính chủ trang tải lên đang dùng trong trang.
+const LEGACY_SETTING_KEYS = ['banner', 'about', 'navigation', 'global_settings', 'posts', 'post_categories', 'project_categories', 'projects_settings'];
+const CLOUDINARY_URL_RE = /https?:\/\/res\.cloudinary\.com\/[^\s"'()<>\\]+/g;
+const collectUrls = (value: unknown, into: Set<string>) => {
+  (JSON.stringify(value ?? '').match(CLOUDINARY_URL_RE) || []).forEach(u => into.add(u));
+};
+export interface DeleteSiteResult { media: number; mediaKept: number; mediaError?: string }
+export async function deleteMyWebsite(uid: string, opts: { withMedia: boolean }): Promise<DeleteSiteResult> {
+  if (!uid) throw new Error('Chưa đăng nhập.');
+  const legacy = uid === LEGACY_OWNER;
+  const settingRows: Array<{ key: string; data: unknown }> = [];
+  if (legacy) {
+    const { data, error } = await supabase.from('portfolio_settings').select('key,data').in('key', LEGACY_SETTING_KEYS);
+    if (error) throw error;
+    settingRows.push(...(data || []));
+  } else {
+    const { data, error } = await supabase.from('portfolio_settings').select('key,data').like('key', `${uid}:%`);
+    if (error) throw error;
+    settingRows.push(...(data || []));
+  }
+  const tableRows: Array<{ table: string; ids: string[]; data: unknown[] }> = [];
+  for (const table of SITE_TABLES) {
+    let q: any = supabase.from(table).select('id,data');
+    q = legacy ? q.or(`data->>ownerId.is.null,data->>ownerId.eq.${LEGACY_OWNER}`) : q.eq('data->>ownerId', uid);
+    const { data, error } = await q;
+    if (error) throw error;
+    tableRows.push({ table, ids: (data || []).map((r: any) => r.id), data: (data || []).map((r: any) => r.data) });
+  }
+
+  // 1. Xoá ảnh, video của trang trước, khi còn đọc được link trong dữ liệu.
+  const result: DeleteSiteResult = { media: 0, mediaKept: 0 };
+  if (opts.withMedia) {
+    const urls = new Set<string>();
+    settingRows.forEach(r => collectUrls(r.data, urls));
+    tableRows.forEach(t => collectUrls(t.data, urls));
+    if (legacy) {
+      // Trang cũ của admin dùng chung kho ảnh với Khoá học và Trang đầu, giữ lại các ảnh đó.
+      const keep = new Set<string>();
+      const [courses, sys] = await Promise.all([
+        supabase.from('portfolio_courses').select('data'),
+        supabase.from('portfolio_settings').select('data').in('key', ['courses_settings', 'course_categories', 'edugo_landing']),
+      ]);
+      (courses.data || []).forEach((r: any) => collectUrls(r.data, keep));
+      (sys.data || []).forEach((r: any) => collectUrls(r.data, keep));
+      keep.forEach(u => urls.delete(u));
+    }
+    if (urls.size) {
+      try {
+        const r = await destroyMedia(Array.from(urls));
+        result.media = r.deleted.length;
+        result.mediaKept = r.skipped.length;
+      } catch (e: any) {
+        result.mediaKept = urls.size;
+        result.mediaError = e?.message || 'Không gọi được hàm xoá tệp.';
+      }
+    }
+  }
+
+  // 2. Xoá nội dung, cài đặt và địa chỉ trang.
+  for (const t of tableRows) {
+    for (let i = 0; i < t.ids.length; i += 100) {
+      const { error } = await supabase.from(t.table).delete().in('id', t.ids.slice(i, i + 100));
+      if (error) throw error;
+    }
+  }
+  const site = await getSiteOfOwner(uid).catch(() => null);
+  const keys = [...settingRows.map(r => r.key), `site_owner:${uid}`, ...(site ? [`site:${site.slug}`] : [])];
+  const { error } = await supabase.from('portfolio_settings').delete().in('key', keys);
+  if (error) throw error;
+
+  // 3. Dọn bản lưu tạm trên máy.
+  try {
+    const prefix = legacy ? null : `${STORAGE_PREFIX}${uid}_`;
+    Object.keys(localStorage).forEach(k => {
+      if (prefix ? k.startsWith(prefix) : LEGACY_SETTING_KEYS.concat(['education', 'experience', 'skills', 'projects', 'research', 'lectures']).some(x => k === STORAGE_PREFIX + x)) localStorage.removeItem(k);
+    });
+  } catch { /* bỏ qua */ }
+  return result;
 }
 
 // Default Seed Data
