@@ -40,6 +40,66 @@ function setLocalFallback<T>(key: string, value: T): void {
   }
 }
 
+// ============================================================
+// WEBSITE THEO TỪNG NGƯỜI DÙNG
+// Mỗi tài khoản có 1 trang Website riêng. Trang Portfolio cũ của tài khoản quản trị (LEGACY_OWNER)
+// giữ nguyên dữ liệu đang có: khoá cài đặt không tiền tố, các dòng chưa ghi chủ. Trang của người
+// khác dùng khoá cài đặt "<uid>:<khoá>" và ghi ownerId ngay trong cột data của các bảng nội dung.
+// Khoá học là ứng dụng riêng của hệ thống, không thuộc trang của ai.
+// ============================================================
+export const LEGACY_OWNER = 'QDaOMwea6MV3XkFnv9uguv4M0Zr1';
+let SITE_OWNER: string | null = null;
+export function setSiteOwner(uid: string | null) { SITE_OWNER = uid || null; }
+export function getSiteOwner(): string { return SITE_OWNER || LEGACY_OWNER; }
+const isLegacySite = () => !SITE_OWNER || SITE_OWNER === LEGACY_OWNER;
+// Khoá cài đặt của trang đang mở. Cài đặt khoá học là của hệ thống nên giữ khoá chung.
+const SYSTEM_KEYS = new Set(['courses_settings', 'course_categories']);
+const siteKey = (key: string) => (SYSTEM_KEYS.has(key) || isLegacySite() ? key : `${SITE_OWNER}:${key}`);
+// Bản lưu trên máy cũng tách theo trang để máy dùng chung không lẫn trang của người khác.
+const siteLocalKey = (key: string) => (isLegacySite() ? key : `${SITE_OWNER}_${key}`);
+const SITE_TABLES = new Set(['portfolio_education', 'portfolio_experience', 'portfolio_skills', 'portfolio_projects', 'portfolio_research', 'portfolio_lectures']);
+
+// ----- Sổ địa chỉ trang: ngtduc24.github.io/<địa chỉ> -----
+export interface SiteRecord { owner: string; slug: string; title?: string; published?: boolean; updatedAt?: string }
+// Địa chỉ không được dùng vì trùng thư mục, trang hệ thống hoặc link chia sẻ.
+export const RESERVED_SLUGS = new Set([
+  'bt', 'bg', 'hl', 'tn', 'vr', 'ar', 'nb', 'c', 'p', 'r', 'b', 'og', 'assets', 'models', 'api', 'admin', 'tracuu', 'edu', 'index',
+  'login', 'dang-nhap', 'dang-ky', 'register', 'settings', 'khoa-hoc', 'website', 'portfolio', 'edugo', 'static', 'public', '404',
+]);
+export const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/;
+export function normalizeSlug(v: string): string {
+  return (v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd')
+    .toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+}
+export async function getSiteBySlug(slug: string): Promise<SiteRecord | null> {
+  const { data } = await supabase.from('portfolio_settings').select('data').eq('key', `site:${slug}`).maybeSingle();
+  return (data?.data as SiteRecord) || null;
+}
+export async function getSiteOfOwner(uid: string): Promise<SiteRecord | null> {
+  const { data } = await supabase.from('portfolio_settings').select('data').eq('key', `site_owner:${uid}`).maybeSingle();
+  const slug = (data?.data as any)?.slug as string | undefined;
+  return slug ? getSiteBySlug(slug) : null;
+}
+// Đặt hoặc đổi địa chỉ trang. Trả về lỗi dạng chữ nếu không đặt được.
+export async function claimSiteSlug(uid: string, rawSlug: string, title?: string): Promise<string | null> {
+  const slug = normalizeSlug(rawSlug);
+  if (!SLUG_RE.test(slug)) return 'Địa chỉ cần 3 đến 40 ký tự, chỉ gồm chữ thường không dấu, số và dấu gạch nối.';
+  if (RESERVED_SLUGS.has(slug)) return 'Địa chỉ này đã được hệ thống dùng, hãy chọn địa chỉ khác.';
+  const taken = await getSiteBySlug(slug);
+  if (taken && taken.owner !== uid) return 'Địa chỉ này đã có người dùng, hãy chọn địa chỉ khác.';
+  const old = await getSiteOfOwner(uid);
+  const rec: SiteRecord = { owner: uid, slug, title: title || old?.title || '', published: old?.published ?? true, updatedAt: new Date().toISOString() };
+  const { error } = await supabase.from('portfolio_settings').upsert([{ key: `site:${slug}`, data: rec }, { key: `site_owner:${uid}`, data: { slug } }]);
+  if (error) return 'Chưa lưu được địa chỉ, vui lòng thử lại.';
+  if (old && old.slug !== slug) await supabase.from('portfolio_settings').delete().eq('key', `site:${old.slug}`);
+  return null;
+}
+export async function setSitePublished(uid: string, published: boolean): Promise<void> {
+  const rec = await getSiteOfOwner(uid);
+  if (!rec) return;
+  await supabase.from('portfolio_settings').upsert({ key: `site:${rec.slug}`, data: { ...rec, published, updatedAt: new Date().toISOString() } });
+}
+
 // Default Seed Data
 export const DEFAULT_BANNER: PortfolioBanner = {
   backgroundImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=80',
@@ -547,7 +607,14 @@ function getLocalSeed<T>(key: string, defaultValue: T): T {
   }
 }
 
-async function loadSetting<T>(key: string, localKey: string, defaultValue: T): Promise<T> {
+// Ghi chủ trang vào nội dung trước khi lưu (trang cũ của admin để nguyên như trước).
+function stampOwner<T>(item: T): T {
+  return isLegacySite() ? item : ({ ...(item as any), ownerId: SITE_OWNER } as T);
+}
+
+async function loadSetting<T>(rawKey: string, rawLocalKey: string, defaultValue: T): Promise<T> {
+  const key = siteKey(rawKey);
+  const localKey = SYSTEM_KEYS.has(rawKey) ? rawLocalKey : siteLocalKey(rawLocalKey);
   try {
     const { data, error } = await supabase
       .from('portfolio_settings')
@@ -571,7 +638,9 @@ async function loadSetting<T>(key: string, localKey: string, defaultValue: T): P
   }
 }
 
-async function saveSetting<T>(key: string, localKey: string, value: T): Promise<boolean> {
+async function saveSetting<T>(rawKey: string, rawLocalKey: string, value: T): Promise<boolean> {
+  const key = siteKey(rawKey);
+  const localKey = SYSTEM_KEYS.has(rawKey) ? rawLocalKey : siteLocalKey(rawLocalKey);
   setLocalFallback(localKey, value);
   const { error } = await supabase.from('portfolio_settings').upsert({ key, data: value });
   if (error) {
@@ -587,9 +656,15 @@ async function loadCollection<T extends { id: string }>(
   defaultValue: T[],
   options?: { filter?: [string, string]; orderBy?: string; row?: (item: T) => Record<string, unknown>; seed?: boolean }
 ): Promise<T[]> {
+  const scoped = SITE_TABLES.has(table);
+  if (scoped) localKey = siteLocalKey(localKey);
   try {
     let request: any = supabase.from(table).select('data');
     if (options?.filter) request = request.eq(options.filter[0], options.filter[1]);
+    // Bảng nội dung Website: chỉ lấy dòng của chủ trang đang mở. Trang cũ của admin gồm cả dòng chưa ghi chủ.
+    if (scoped) request = isLegacySite()
+      ? request.or(`data->>ownerId.is.null,data->>ownerId.eq.${LEGACY_OWNER}`)
+      : request.eq('data->>ownerId', SITE_OWNER);
     if (options?.orderBy) request = request.order(options.orderBy, { ascending: true });
     const { data, error } = await request;
     if (error) throw error;
@@ -613,6 +688,7 @@ async function saveCollection<T extends { id: string }>(
   items: T[],
   row?: (item: T) => Record<string, unknown>
 ): Promise<boolean> {
+  if (SITE_TABLES.has(table)) { localKey = siteLocalKey(localKey); items = items.map(item => stampOwner(item)); }
   setLocalFallback(localKey, items);
   if (!items.length) return true;
   const rows = items.map(item => ({ id: item.id, data: item, ...(row?.(item) || {}) }));
@@ -631,6 +707,7 @@ async function saveOne<T extends { id: string }>(
   defaultValue: T[],
   row?: (item: T) => Record<string, unknown>
 ): Promise<boolean> {
+  if (SITE_TABLES.has(table)) { localKey = siteLocalKey(localKey); item = stampOwner(item); }
   const current = getLocalSeed<T[]>(localKey, []);
   const index = current.findIndex(value => value.id === item.id);
   if (index >= 0) current[index] = item;
@@ -645,7 +722,13 @@ async function saveOne<T extends { id: string }>(
 }
 
 async function deleteOne(table: PortfolioTable, id: string, localKey?: string): Promise<boolean> {
-  const { error } = await supabase.from(table).delete().eq('id', id);
+  let del: any = supabase.from(table).delete().eq('id', id);
+  if (SITE_TABLES.has(table)) {
+    if (localKey) localKey = siteLocalKey(localKey);
+    // Chỉ xoá được nội dung của chính trang đang mở.
+    del = isLegacySite() ? del.or(`data->>ownerId.is.null,data->>ownerId.eq.${LEGACY_OWNER}`) : del.eq('data->>ownerId', SITE_OWNER);
+  }
+  const { error } = await del;
   if (localKey) {
     const current = getLocalSeed<Array<{ id: string }>>(localKey, []);
     setLocalFallback(localKey, current.filter(item => item.id !== id));

@@ -143,9 +143,9 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
   },
   portfolio_cms: {
     id: 'portfolio_cms',
-    slug: 'portfolio-cms',
-    title: 'Quản trị Nội dung Portfolio & Hồ sơ Năng lực | EduGo',
-    description: 'Hệ thống quản trị hồ sơ khoa học, công trình nghiên cứu, khóa học và dự án truyền thông đa phương tiện.',
+    slug: 'website',
+    title: 'Website | EduGo',
+    description: 'Tạo trang giới thiệu bản thân với địa chỉ riêng trên EduGo.',
     keywords: 'quản trị portfolio, hồ sơ năng lực, cms nghiên cứu, khóa học trực tuyến',
   },
   notifications: {

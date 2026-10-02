@@ -9,9 +9,13 @@
   // chuyển thẳng vào trang tương ứng để người mở link vẫn xem được ngay.
   (function () {
     var map = { bt: '/?bt=', bg: '/?elview=', hl: '/?elesson=', tn: '/?quiz=', vr: '/?vr=', ar: '/?ar=', nb: '/tracuu.html?edu=',
-                c: '/?portfolio=true&page=courses&course=', p: '/?portfolio=true&page=projects&project=', r: '/?portfolio=true&page=research&research=', b: '/?portfolio=true&post=' };
+                c: '/?tab=khoa-hoc&course=', p: '/?portfolio=true&page=projects&project=', r: '/?portfolio=true&page=research&research=', b: '/?portfolio=true&post=' };
     var m = location.pathname.match(/^\/([a-z]{1,2})\/([A-Za-z0-9_-]{1,120})\/?$/);
-    location.replace(m && map[m[1]] ? map[m[1]] + m[2] : '/');
+    if (m && map[m[1]]) { location.replace(map[m[1]] + m[2]); return; }
+    // Website của người dùng: ngtduc24.github.io/<địa chỉ> (có thể kèm #mục).
+    var s = location.pathname.match(/^\/([A-Za-z0-9][A-Za-z0-9-]{1,38}[A-Za-z0-9])\/?$/);
+    if (s) { location.replace('/?site=' + s[1].toLowerCase() + location.hash); return; }
+    location.replace('/');
   })();
 </script>
 </head>

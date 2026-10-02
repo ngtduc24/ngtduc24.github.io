@@ -149,6 +149,8 @@ interface PortfolioWebsiteProps {
   currentUser?: UserAccount | null;
   onUpdateUser?: (user: UserAccount) => Promise<void>;
   onLogout?: () => void;
+  // Địa chỉ Website của người dùng (ngtduc24.github.io/<địa chỉ>). Trống là trang cũ của quản trị viên.
+  siteSlug?: string;
 }
 
 export type DetailItem =
@@ -2132,7 +2134,9 @@ function prettyDetailPath(type: string, id?: string): string | null {
   return def && id && /^[A-Za-z0-9_-]{1,120}$/.test(id) ? `/${def.folder}/${id}/` : null;
 }
 
-export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthenticated = false, currentUser = null, onUpdateUser, onLogout }: PortfolioWebsiteProps) {
+export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthenticated = false, currentUser = null, onUpdateUser, onLogout, siteSlug }: PortfolioWebsiteProps) {
+  // Gốc đường dẫn của trang đang xem: trang người dùng dùng ?site=<địa chỉ>, trang cũ dùng ?portfolio=true.
+  const qBase = siteSlug ? `/?site=${siteSlug}` : '/?portfolio=true';
   const [banner, setBanner] = useState<PortfolioBanner | null>(() => {
     try {
       const cached = localStorage.getItem('portfolio_banner');
@@ -2218,7 +2222,8 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
     } catch { return DEFAULT_GLOBAL_SETTINGS; }
   });
   // Bật tắt hiển thị từng khối trên trang chủ theo cấu hình trong trang quản trị.
-  const showSection = (key: HomeSectionKey) => isHomeSectionVisible(globalSettings, key);
+  // Khoá học là ứng dụng riêng của EduGo, Website không hiện khối khoá học.
+  const showSection = (key: HomeSectionKey) => (key as string) !== 'courses' && isHomeSectionVisible(globalSettings, key);
 
   const [loading, setLoading] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -2301,7 +2306,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
   }, []);
 
   const isMember = currentUser?.role === 'member';
-  const accountActionLabel = isMember ? 'My Coursera' : isAuthenticated ? 'Quản trị' : 'Đăng nhập';
+  const accountActionLabel = isAuthenticated ? 'Vào EduGo' : 'Đăng nhập';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -2356,7 +2361,11 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
       if (requestedLecture) setDetail({ type: 'lecture', data: requestedLecture });
       // Mở từ link chia sẻ (?portfolio=true&course=...) thì đổi thanh địa chỉ về đường dẫn gọn /c/<id>/.
       const opened = requestedProject ? ['project', requestedProject.id] : requestedCourse ? ['course', requestedCourse.id] : requestedPost ? ['article', requestedPost.id] : requestedResearch ? ['research', requestedResearch.id] : null;
-      const pretty = opened && !params.get('menu') ? prettyDetailPath(opened[0], opened[1]) : null;
+      const pretty = siteSlug ? null : opened && !params.get('menu') ? prettyDetailPath(opened[0], opened[1]) : null;
+      // Trang Website của người dùng: mở trang chủ thì thanh địa chỉ hiện gọn ngtduc24.github.io/<địa chỉ>.
+      if (siteSlug && !opened && !params.get('page') && !params.get('menu')) {
+        try { window.history.replaceState({}, '', `/${siteSlug}${window.location.hash}`); } catch { /* bỏ qua */ }
+      }
       if (pretty && window.location.pathname !== pretty) {
         const extra = new URLSearchParams(window.location.search);
         ['portfolio', 'page', 'project', 'course', 'post', 'research'].forEach(k => extra.delete(k));
@@ -2373,7 +2382,8 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
     return () => observer.disconnect();
   }, [loading]);
 
-  const menuItems = navigation.filter(item => item.visible && item.id !== 'nav_lectures' && item.label !== 'Bài giảng' && (!item.parentId || navigation.some(parent => parent.id === item.parentId && parent.visible)));
+  const isCourseLink = (item: PortfolioNavigation) => item.kind === 'course' || /#(my-)?courses$/.test(item.link || '') || item.id === 'nav_courses';
+  const menuItems = navigation.filter(item => item.visible && !isCourseLink(item) && item.id !== 'nav_lectures' && item.label !== 'Bài giảng' && (!item.parentId || navigation.some(parent => parent.id === item.parentId && parent.visible)));
   const generatedMenuItem = navigation.find(item => item.id === generatedMenuId && (item.kind === 'article' || item.kind === 'course' || item.kind === 'project')) || null;
   const desktopMenuItems = menuItems.filter(item => !item.parentId && item.deviceVisibility !== 'mobile').sort((a, b) => a.sortOrder - b.sortOrder);
   const menuChildren = (parentId: string) => menuItems.filter(item => item.parentId === parentId).sort((a, b) => a.sortOrder - b.sortOrder);
@@ -2390,7 +2400,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
     setDetail(null);
     setGeneratedMenuId(null);
     setCollectionPage(page);
-    const url = `/?portfolio=true&page=${page}`;
+    const url = `${qBase}&page=${page}`;
     window.history[replace ? 'replaceState' : 'pushState']({}, '', url);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -2398,7 +2408,7 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
     setDetail(null);
     setGeneratedMenuId(null);
     setCollectionPage(null);
-    window.history.pushState({}, '', `/?portfolio=true${link}`);
+    window.history.pushState({}, '', siteSlug ? `/${siteSlug}${link}` : `/?portfolio=true${link}`);
     window.setTimeout(() => scrollToLink(link), 0);
   };
   const showDetail = (item: DetailItem, replace = false) => {
@@ -2408,15 +2418,15 @@ export default function PortfolioWebsite({ onEnterSystem = () => {}, isAuthentic
     setDetail(item);
     const parentQuery = generatedMenuId ? `menu=${generatedMenuId}` : `page=${page}`;
     // Khoá học, dự án, nghiên cứu, bài viết dùng đường dẫn gọn để chép từ thanh địa chỉ vẫn có khung xem trước.
-    const pretty = prettyDetailPath(item.type, item.data.id);
-    window.history[replace ? 'replaceState' : 'pushState']({}, '', pretty || `/?portfolio=true&${parentQuery}&${queryKey}=${item.data.id}`);
+    const pretty = siteSlug ? null : prettyDetailPath(item.type, item.data.id);
+    window.history[replace ? 'replaceState' : 'pushState']({}, '', pretty || `${qBase}&${parentQuery}&${queryKey}=${item.data.id}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const showGeneratedMenuPage = (item: PortfolioNavigation, replace = false) => {
     setDetail(null);
     setCollectionPage(null);
     setGeneratedMenuId(item.id);
-    window.history[replace ? 'replaceState' : 'pushState']({}, '', `/?portfolio=true&menu=${item.id}`);
+    window.history[replace ? 'replaceState' : 'pushState']({}, '', `${qBase}&menu=${item.id}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const openMenuItem = (item: PortfolioNavigation) => {

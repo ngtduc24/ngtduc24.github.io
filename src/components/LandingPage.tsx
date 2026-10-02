@@ -22,7 +22,7 @@ const COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 // Các mục quản trị không giới thiệu ở trang đầu.
-const HIDDEN_ON_LANDING = new Set(['users', 'permissions', 'settings', 'notifications', 'notifications_admin', 'portfolio_cms']);
+const HIDDEN_ON_LANDING = new Set(['users', 'permissions', 'settings', 'notifications', 'notifications_admin']);
 
 const SIZE_CLASS: Record<string, string> = {
   normal: '',

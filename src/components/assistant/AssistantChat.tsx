@@ -78,7 +78,7 @@ const FEATURE_GUIDE: Record<string, { whatIs: string; howTo: string[] }> = {
   ar_module: { whatIs: 'Tạo AR để tạo điểm ảnh nhận diện kèm mã QR quét bằng điện thoại.', howTo: ['Mở Tạo AR.', 'Tải ảnh mục tiêu và nội dung hiển thị.', 'Lấy mã QR để người xem quét.'] },
   utility_image_resize: { whatIs: 'Phóng to ảnh để tăng độ phân giải và làm rõ chi tiết ảnh.', howTo: ['Mở Phóng to ảnh.', 'Tải ảnh lên và chọn tỉ lệ.', 'Tải ảnh kết quả về.'] },
   utility_social_design: { whatIs: 'Thiết kế ảnh để tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu.', howTo: ['Mở Thiết kế ảnh.', 'Chọn khung mẫu.', 'Đổi nội dung và ảnh rồi tải về.'] },
-  portfolio_cms: { whatIs: 'Quản trị Portfolio để quản lý hồ sơ cá nhân, dự án và khóa học.', howTo: ['Mở Quản trị Portfolio.', 'Thêm hoặc sửa dự án, khóa học, bài viết.', 'Công khai lên trang portfolio.'] },
+  portfolio_cms: { whatIs: 'Website để tạo trang giới thiệu bản thân với địa chỉ riêng.', howTo: ['Mở Website, đặt địa chỉ trang ở mục Địa chỉ trang.', 'Thêm hoặc sửa dự án, khóa học, bài viết.', 'Công khai lên trang portfolio.'] },
   media_library: { whatIs: 'Kho lưu trữ ảnh và video bạn đã tải lên, nằm trong Cấu hình hệ thống.', howTo: ['Mở Cấu hình hệ thống, chọn Kho lưu trữ.', 'Tải tệp lên theo danh mục.', 'Chọn tệp để dùng lại ở các chức năng khác.'] },
   notifications_admin: { whatIs: 'Trung tâm thông báo để soạn và phát thông báo tới người dùng.', howTo: ['Mở Trung tâm thông báo.', 'Soạn nội dung và chọn người nhận.', 'Gửi thông báo.'] },
   notifications: { whatIs: 'Thông báo là hộp thư xem các thông báo hệ thống.', howTo: ['Mở Thông báo để xem tin mới.'] },

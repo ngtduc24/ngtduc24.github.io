@@ -81,24 +81,48 @@ export async function loadShareRoutes(supabaseUrl, key) {
       target: `/tracuu.html?edu=${x.share_link_id}` });
   }
 
-  // Nội dung trang portfolio: khoá học /c/, dự án /p/, nghiên cứu /r/, bài viết /b/.
+  // Website của người dùng: sổ địa chỉ nằm trong portfolio_settings với khoá site:<địa chỉ>.
+  // Trang cũ của quản trị viên dùng khoá cài đặt không tiền tố và các dòng chưa ghi chủ.
+  const LEGACY_OWNER = 'QDaOMwea6MV3XkFnv9uguv4M0Zr1';
+  const siteRows = (await get('portfolio_settings?select=key,data&key=like.site:*')).map(r => r.data).filter(r => r && r.owner && r.slug);
+  const slugOf = Object.fromEntries(siteRows.filter(r => r.published !== false).map(r => [r.owner, r.slug]));
+  const ownerOf = x => x?.ownerId || LEGACY_OWNER;
+  const base = x => { const slug = slugOf[ownerOf(x)]; return slug ? `/?site=${slug}` : (ownerOf(x) === LEGACY_OWNER ? '/?portfolio=true' : null); };
+  const settingRow = async key => (await get(`portfolio_settings?select=data&key=eq.${encodeURIComponent(key)}`))[0]?.data;
+
+  // Trang chủ Website: /<địa chỉ>/ có tên, mô tả, ảnh bìa lấy từ banner của trang đó.
+  for (const site of siteRows) {
+    if (site.published === false || !safe(site.slug)) continue;
+    const prefix = site.owner === LEGACY_OWNER ? '' : `${site.owner}:`;
+    const banner = (await settingRow(`${prefix}banner`)) || {};
+    routes.push({ folder: '', id: site.slug, title: plain(site.title || banner.title || site.slug, 110),
+      image: banner.backgroundImage || '', description: plain(banner.description || '', 200), target: `/?site=${site.slug}` });
+  }
+
+  // Nội dung trang: khoá học /c/ (ứng dụng Khoá học), dự án /p/, nghiên cứu /r/, bài viết /b/.
   const dataOf = rows => rows.map(r => r?.data).filter(Boolean);
   const portfolio = [
     { folder: 'c', items: dataOf(await get('portfolio_courses?select=data')), keep: x => x.status === 'published',
       title: x => x.title, desc: x => x.briefDescription || x.detailedDescription, image: x => x.coverImage,
-      target: x => `/?portfolio=true&page=courses&course=${x.id}` },
-    { folder: 'p', items: dataOf(await get('portfolio_projects?select=data')), keep: x => ['published', 'completed', 'ongoing'].includes(x.status),
+      target: x => `/?tab=khoa-hoc&course=${x.id}` },
+    { folder: 'p', items: dataOf(await get('portfolio_projects?select=data')), keep: x => ['published', 'completed', 'ongoing'].includes(x.status) && base(x),
       title: x => x.title, desc: x => x.briefDescription || x.detailedContent, image: x => x.coverImage || x.gallery?.[0],
-      target: x => `/?portfolio=true&page=projects&project=${x.id}` },
-    { folder: 'r', items: dataOf(await get('portfolio_research?select=data')), keep: () => true,
+      target: x => `${base(x)}&page=projects&project=${x.id}` },
+    { folder: 'r', items: dataOf(await get('portfolio_research?select=data')), keep: x => !!base(x),
       title: x => x.titleVi || x.titleEn, desc: x => x.abstractVi || x.abstractEn, image: x => x.coverImage,
-      target: x => `/?portfolio=true&page=research&research=${x.id}` },
-    { folder: 'b', items: (() => [])(), keep: x => x.status === 'published',
+      target: x => `${base(x)}&page=research&research=${x.id}` },
+    { folder: 'b', items: [], keep: x => x.status === 'published' && base(x),
       title: x => x.title, desc: x => x.excerpt || x.content, image: x => x.coverImage,
-      target: x => `/?portfolio=true&post=${x.id}` },
+      target: x => `${base(x)}&post=${x.id}` },
   ];
-  const postsRow = (await get('portfolio_settings?select=data&key=eq.posts'))[0]?.data;
-  portfolio[3].items = Array.isArray(postsRow) ? postsRow : [];
+  // Bài viết nằm trong cài đặt posts của từng trang.
+  const legacyPosts = await settingRow('posts');
+  portfolio[3].items.push(...(Array.isArray(legacyPosts) ? legacyPosts : []));
+  for (const site of siteRows) {
+    if (site.owner === LEGACY_OWNER) continue;
+    const posts = await settingRow(`${site.owner}:posts`);
+    if (Array.isArray(posts)) portfolio[3].items.push(...posts.map(p => ({ ...p, ownerId: site.owner })));
+  }
   for (const t of portfolio) {
     for (const x of t.items) {
       if (!x || !safe(x.id) || !t.keep(x)) continue;

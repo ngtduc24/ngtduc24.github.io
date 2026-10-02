@@ -267,7 +267,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn', icon: ImageIcon, color: 'blue' },
     { id: 'utility_file_compress', label: 'Giảm dung lượng file', desc: 'Nén PDF, JPG, PNG mà vẫn giữ chất lượng tốt', icon: FileArchive, color: 'emerald' },
     { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn', icon: LayoutTemplate, color: 'violet' },
-    { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Lưu trữ và quản lý hồ sơ cá nhân, dự án', icon: FolderKanban, color: 'teal' },
+    { id: 'portfolio_cms', label: 'Website', desc: 'Tạo trang giới thiệu bản thân với địa chỉ riêng ngtduc24.github.io/tên', icon: Globe, color: 'teal' },
     { id: 'assistant', label: 'Trợ lý giáo dục', desc: 'Hỏi đáp kiến thức bài học từ nội dung công khai', icon: Sparkles, color: 'violet' },
     { id: 'notifications', label: 'Thông báo', desc: 'Tài liệu, mẫu biểu, dữ liệu tham khảo', icon: Mail, color: 'amber' },
     { id: 'users', label: 'Quản lý người dùng', desc: 'Tạo, chỉnh sửa tài khoản trên hệ thống', icon: Users, color: 'indigo' },

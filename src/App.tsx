@@ -25,6 +25,7 @@ import MediaLibrary from './components/MediaLibrary';
 import LandingPage from './components/LandingPage';
 import CoursesApp from './components/courses/CoursesApp';
 import { getLandingConfig } from './lib/landing';
+import { getSiteBySlug, setSiteOwner, RESERVED_SLUGS } from './lib/portfolioData';
 import { canUseModule, setDefaultApps } from './lib/moduleAccess';
 import PortfolioWebsite from './components/PortfolioWebsite';
 import PortfolioCMS from './components/PortfolioCMS';
@@ -62,6 +63,15 @@ import { trackUserPresence, untrackUserPresence } from './lib/presence';
 
 // Khóa lưu khu vực đang mở (portfolio công khai hay trang quản trị) để tải lại trang không bị nhảy ra ngoài.
 const ENTRY_VIEW_STORAGE_KEY = 'app_entry_view';
+
+// Đường dẫn 1 đoạn /<địa chỉ> là Website của người dùng (trừ các thư mục hệ thống).
+function siteSlugFromPath(): string | null {
+  if (typeof window === 'undefined') return null;
+  const m = window.location.pathname.match(/^\/([a-z0-9][a-z0-9-]{1,38}[a-z0-9])\/?$/i);
+  if (!m) return null;
+  const slug = m[1].toLowerCase();
+  return RESERVED_SLUGS.has(slug) || /\.html?$/.test(slug) ? null : slug;
+}
 
 export default function App() {
   const [users, setUsers] = useState<UserAccount[]>([]);
@@ -120,7 +130,7 @@ export default function App() {
     if (params.has('tab')) {
       return 'admin';
     }
-    if (params.get('portfolio') === 'true' || /^\/(c|p|r|b)\/[^/]+\/?$/.test(window.location.pathname)) {
+    if (params.get('portfolio') === 'true' || params.get('site') || /^\/(c|p|r|b)\/[^/]+\/?$/.test(window.location.pathname) || siteSlugFromPath()) {
       return 'portfolio';
     }
     const shouldResumeAdmin = sessionStorage.getItem('resume_admin_after_refresh') === 'true';
@@ -141,6 +151,19 @@ export default function App() {
     return 'landing';
   });
   const [loginMode, setLoginMode] = useState<'login' | 'register'>('login');
+
+  // Website của người dùng: ngtduc24.github.io/<địa chỉ> hoặc ?site=<địa chỉ>. Không có địa chỉ là trang cũ của admin.
+  const [siteState, setSiteState] = useState<{ slug: string; status: 'loading' | 'ok' | 'missing' }>({ slug: '', status: 'ok' });
+  useEffect(() => {
+    if (entryView !== 'portfolio') return;
+    const slug = (new URLSearchParams(window.location.search).get('site') || siteSlugFromPath() || '').toLowerCase();
+    if (!slug) { setSiteOwner(null); setSiteState({ slug: '', status: 'ok' }); return; }
+    setSiteState({ slug, status: 'loading' });
+    getSiteBySlug(slug).then(rec => {
+      if (rec && rec.published !== false) { setSiteOwner(rec.owner); setSiteState({ slug, status: 'ok' }); }
+      else setSiteState({ slug, status: 'missing' });
+    }).catch(() => setSiteState({ slug, status: 'missing' }));
+  }, [entryView]);
 
   // Đồng bộ tiêu đề trang (SEO), OpenGraph và URL hai chiều
   useEffect(() => {
@@ -361,7 +384,7 @@ export default function App() {
       edu_question_bank: 'Ngân hàng câu hỏi',
       edu_grade: 'Nhập điểm',
       stats: 'Thống kê',
-      portfolio_cms: 'Quản trị Portfolio',
+      portfolio_cms: 'Website',
       notifications: 'Thông báo hệ thống',
       notifications_admin: 'Quản trị thông báo',
       users: 'Quản lý người dùng',
@@ -913,10 +936,30 @@ export default function App() {
     );
   }
 
-  // Trang Website công khai (mở từ link chia sẻ).
+  // Trang Website công khai (mở từ link chia sẻ hoặc địa chỉ riêng của người dùng).
+  if (entryView === 'portfolio' && siteState.status === 'loading') {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-4 border-slate-200 border-t-brand animate-spin" />
+      </div>
+    );
+  }
+  if (entryView === 'portfolio' && siteState.status === 'missing') {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6 text-center">
+        <div className="max-w-sm space-y-3">
+          <p className="text-xl font-bold text-slate-800">Không tìm thấy trang</p>
+          <p className="text-[13px] text-slate-500">Địa chỉ ngtduc24.github.io/{siteState.slug} chưa có ai dùng hoặc trang đang tạm ẩn.</p>
+          <a href="/" className="inline-flex h-10 items-center rounded-xl bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-hover">Về trang chủ EduGo</a>
+        </div>
+      </div>
+    );
+  }
   if (entryView === 'portfolio') {
     return (
       <PortfolioWebsite
+        key={siteState.slug || 'legacy'}
+        siteSlug={siteState.slug || undefined}
         currentUser={currentUser}
         isAuthenticated={Boolean(currentUser)}
         onUpdateUser={handleSaveProfile}
@@ -986,7 +1029,7 @@ export default function App() {
       { id: 'scientific_cv', label: 'Lý lịch khoa học', icon: FileUser },
       { id: 'qr_codes', label: 'Tạo mã QR', icon: QrCode },
       { id: 'utilities', label: 'Tiện ích', icon: Wrench },
-      { id: 'portfolio_cms', label: 'Quản trị Portfolio', icon: Shield },
+      { id: 'portfolio_cms', label: 'Website', icon: Shield },
       { id: 'notifications', icon: Bell, label: 'Thông báo' },
     ];
     

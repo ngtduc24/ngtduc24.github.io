@@ -54,7 +54,7 @@ const ALL_FEATURES: FeatureItem[] = [
   { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp ngay trên trình duyệt', icon: Clapperboard, color: 'rose', group: 'Công cụ thiết kế' },
   { id: 'qr_codes', label: 'Tạo mã QR', desc: 'Tạo mã QR từ đường link, lưu và quản lý mã của riêng bạn', icon: QrCode, color: 'emerald', group: 'Công cụ thiết kế' },
   { id: 'scientific_cv', label: 'Lý lịch khoa học', desc: 'Tạo lý lịch khoa học cá nhân theo mẫu, xuất PDF và Word', icon: FileUser, color: 'indigo', group: 'Nghiên cứu và phân tích' },
-  { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Lưu trữ và quản lý hồ sơ cá nhân, dự án', icon: FolderKanban, color: 'teal', group: 'Giảng dạy và nội dung' },
+  { id: 'portfolio_cms', label: 'Website', desc: 'Tạo trang giới thiệu bản thân với địa chỉ riêng ngtduc24.github.io/tên', icon: Globe, color: 'teal', group: 'Giảng dạy và nội dung' },
 
   { id: 'ar_module', label: 'Tạo AR', desc: 'Tạo điểm ảnh AR kèm mã QR để quét bằng điện thoại', icon: Scan, color: 'red', group: 'Công cụ thiết kế' },
   { id: 'vr360', label: 'VR 360', desc: 'Ghép ảnh thành không gian 360 độ, xem bằng kính VR hoặc xoay điện thoại', icon: Globe, color: 'indigo', group: 'Công cụ thiết kế' },

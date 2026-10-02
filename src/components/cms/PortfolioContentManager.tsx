@@ -15,7 +15,6 @@ type SelectedContentType = 'article' | 'project' | 'course' | 'research' | null;
 const contentTypes = [
   { id: 'article', label: 'Bài viết bình thường', description: 'Bài báo, tin tức hoặc nội dung dài với ảnh bìa, chuyên mục và thẻ.', icon: Newspaper },
   { id: 'project', label: 'Bài dự án Design', description: 'Case study dạng Behance: bối cảnh, quy trình, giải pháp và bộ ảnh.', icon: FolderGit2 },
-  { id: 'course', label: 'Khóa học online', description: 'Chương, bài học, video, tài liệu, tiến trình và học viên.', icon: GraduationCap },
   { id: 'research', label: 'Bài nghiên cứu', description: 'Bài học thuật, tóm tắt, trích dẫn, DOI và tệp PDF.', icon: Award },
 ] as const;
 

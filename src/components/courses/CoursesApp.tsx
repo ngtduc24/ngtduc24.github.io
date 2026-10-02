@@ -53,6 +53,15 @@ export default function CoursesApp({ currentUser }: { currentUser: UserAccount }
   }, [isAdmin]);
   useEffect(() => { if (tab !== 'manage') load(); }, [tab, load]);
 
+  // Mở thẳng một khoá từ link chia sẻ (?course=<mã>).
+  const [pendingCourse, setPendingCourse] = useState<string | null>(() => new URLSearchParams(window.location.search).get('course'));
+  useEffect(() => {
+    if (!pendingCourse || !courses.length) return;
+    const c = courses.find(x => x.id === pendingCourse);
+    if (c) setDetail({ type: 'course', data: c });
+    setPendingCourse(null);
+  }, [pendingCourse, courses]);
+
   const toCard = (c: PortfolioCourse): CollectionCard => ({
     id: c.id, type: 'course', title: c.title, description: c.briefDescription, image: c.coverImage, video: c.introVideo,
     category: c.category || 'Khoá học', date: c.publishDate, views: c.viewCount || 0, featured: false,

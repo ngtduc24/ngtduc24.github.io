@@ -13,16 +13,23 @@ import {
   RefreshCw,
   Shield,
   User,
-  Compass
+  Compass,
+  Globe,
+  Link2,
+  Loader2,
+  Check,
+  Copy,
+  EyeOff
 } from 'lucide-react';
 import BannerAboutCMS from './cms/BannerAboutCMS';
 import ProjectsCoursesCMS from './cms/ProjectsCoursesCMS';
 import PortfolioNavigationManager from './cms/PortfolioNavigationManager';
 import PortfolioContentManager from './cms/PortfolioContentManager';
 import PortfolioResearchCMS from './cms/PortfolioResearchCMS';
-import { getPortfolioCourses, getPortfolioLectures, getPortfolioProjects, getPortfolioResearch } from '../lib/portfolioData';
+import { setSiteOwner, getSiteOfOwner, claimSiteSlug, setSitePublished, normalizeSlug, SiteRecord } from '../lib/portfolioData';
+import { copyText } from './ui/Dialogs';
 
-type PortfolioDivision = 'profile' | 'content' | 'projects' | 'courses' | 'research' | 'navigation';
+type PortfolioDivision = 'address' | 'profile' | 'content' | 'projects' | 'research' | 'navigation';
 
 const DIVISIONS: Array<{
   id: PortfolioDivision;
@@ -31,8 +38,14 @@ const DIVISIONS: Array<{
   icon: React.ComponentType<{ className?: string }>;
 }> = [
   {
+    id: 'address',
+    title: 'Địa chỉ trang',
+    description: 'Đặt địa chỉ riêng cho Website, bật tắt hiển thị và chép link chia sẻ',
+    icon: Link2
+  },
+  {
     id: 'content',
-    title: 'Thêm bài viết mới',
+    title: 'Bài viết',
     description: 'Chọn dạng nội dung và mở trực tiếp form tạo mới tương ứng',
     icon: Newspaper
   },
@@ -50,172 +63,138 @@ const DIVISIONS: Array<{
   },
   {
     id: 'navigation',
-    title: 'Menu chính Portfolio',
-    description: 'Quản lý menu chính, menu con và liên kết điều hướng toàn trang chủ',
+    title: 'Menu',
+    description: 'Menu chính, menu con và liên kết điều hướng của Website',
     icon: Compass
   },
   {
     id: 'profile',
-    title: 'Hồ Sơ',
+    title: 'Hồ sơ',
     description: 'Banner, giới thiệu, học vấn, kinh nghiệm và kỹ năng',
     icon: User
   },
 ];
 
 interface PortfolioCMSProps {
-  currentUser?: { role?: string;
-    canPortfolioContent?: boolean; canPortfolioProjects?: boolean; canPortfolioCourses?: boolean;
-    canPortfolioResearch?: boolean; canPortfolioNavigation?: boolean; canPortfolioProfile?: boolean;
-  } | null;
+  currentUser?: { id?: string; role?: string; fullName?: string } | null;
 }
 
-// Map mỗi phân hệ Portfolio sang cờ quyền tương ứng.
-const DIVISION_FLAG: Record<PortfolioDivision, 'canPortfolioContent' | 'canPortfolioProjects' | 'canPortfolioCourses' | 'canPortfolioResearch' | 'canPortfolioNavigation' | 'canPortfolioProfile'> = {
-  content: 'canPortfolioContent',
-  projects: 'canPortfolioProjects',
-  courses: 'canPortfolioCourses',
-  research: 'canPortfolioResearch',
-  navigation: 'canPortfolioNavigation',
-  profile: 'canPortfolioProfile',
-};
+// Mục đặt địa chỉ trang: ngtduc24.github.io/<địa chỉ>, bật tắt hiển thị, chép link.
+function SiteAddressPanel({ uid, defaultTitle, onSlug }: { uid: string; defaultTitle: string; onSlug: (slug: string) => void }) {
+  const [site, setSite] = useState<SiteRecord | null>(null);
+  const [draft, setDraft] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
+  const load = async () => {
+    const rec = await getSiteOfOwner(uid).catch(() => null);
+    setSite(rec); setDraft(rec?.slug || normalizeSlug(defaultTitle)); onSlug(rec?.slug || ''); setLoading(false);
+  };
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [uid]);
+  const preview = normalizeSlug(draft);
+  const save = async () => {
+    setSaving(true); setMsg(null);
+    const err = await claimSiteSlug(uid, preview, defaultTitle);
+    if (err) setMsg({ tone: 'err', text: err });
+    else { setMsg({ tone: 'ok', text: 'Đã lưu địa chỉ trang.' }); await load(); }
+    setSaving(false);
+  };
+  const togglePublish = async () => {
+    if (!site) return;
+    await setSitePublished(uid, site.published === false);
+    await load();
+  };
+  const url = site ? `${window.location.origin}/${site.slug}` : '';
+  if (loading) return <div className="py-10 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" /> Đang tải...</div>;
+  return (
+    <div className="space-y-5">
+      <div className="space-y-2">
+        <label className="text-[13px] font-semibold text-slate-600">Địa chỉ trang của bạn</label>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex min-w-0 flex-1 items-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 focus-within:border-brand focus-within:bg-white">
+            <span className="shrink-0 pl-3.5 text-sm text-slate-500">{window.location.host}/</span>
+            <input value={draft} onChange={e => setDraft(e.target.value)} placeholder="ten-cua-ban" className="min-w-0 flex-1 bg-transparent py-2.5 pr-3.5 text-sm text-slate-800 outline-none" />
+          </div>
+          <button type="button" onClick={save} disabled={saving || !preview || preview === site?.slug}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-hover disabled:opacity-50">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} {site ? 'Đổi địa chỉ' : 'Tạo địa chỉ'}
+          </button>
+        </div>
+        <p className="text-xs text-slate-500">3 đến 40 ký tự, chữ thường không dấu, số và dấu gạch nối. Địa chỉ sẽ là {window.location.host}/{preview || 'ten-cua-ban'}</p>
+        {msg && <p className={`text-[13px] font-semibold ${msg.tone === 'ok' ? 'text-brand' : 'text-rose-600'}`}>{msg.text}</p>}
+      </div>
+      {site && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[13px] text-slate-500">Trang của bạn</p>
+            <a href={url} target="_blank" rel="noreferrer" className="block truncate text-sm font-semibold text-brand hover:underline">{url}</a>
+            <p className="mt-1 text-xs text-slate-500">{site.published === false ? 'Đang tạm ẩn, người khác mở link sẽ không xem được.' : 'Đang hiển thị, ai có link đều xem được.'}</p>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <button type="button" onClick={() => copyText(url).then(ok => setMsg(ok ? { tone: 'ok', text: 'Đã chép link trang.' } : { tone: 'err', text: 'Không chép được link.' }))}
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-600 hover:text-brand"><Copy className="h-4 w-4" /> Chép link</button>
+            <button type="button" onClick={togglePublish}
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-600 hover:text-brand">{site.published === false ? <><Eye className="h-4 w-4" /> Hiện trang</> : <><EyeOff className="h-4 w-4" /> Tạm ẩn trang</>}</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function PortfolioCMS({ currentUser }: PortfolioCMSProps = {}) {
-  const isPortfolioAdmin = currentUser?.role === 'admin';
-  // Nguyên tắc chặt: quản trị viên xem tất cả. Tài khoản khác chỉ thấy phân hệ con
-  // đã được cấp quyền. Không cấp mục con nào thì không thấy mục nào.
-  const canDivision = (id: PortfolioDivision) => isPortfolioAdmin || !!(currentUser as any)?.[DIVISION_FLAG[id]];
-  const visibleDivisions = DIVISIONS.filter(d => canDivision(d.id));
-  const [activeDivision, setActiveDivision] = useState<PortfolioDivision>(visibleDivisions[0]?.id ?? 'content');
-
-  // Nếu phân hệ đang mở không còn được phép (khi quyền thay đổi), chuyển về mục đầu tiên được phép.
-  useEffect(() => {
-    if (!canDivision(activeDivision) && visibleDivisions[0]) {
-      setActiveDivision(visibleDivisions[0].id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, isPortfolioAdmin]);
-  const [syncing, setSyncing] = useState(false);
-  const [overviewStats, setOverviewStats] = useState([
-    { label: 'Dự án', value: 0, detail: '0 đã xuất bản', icon: FolderKanban },
-    { label: 'Khóa học', value: 0, detail: '0 học viên', icon: GraduationCap },
-    { label: 'Nghiên cứu', value: 0, detail: '0 lượt xem', icon: Award },
-  ]);
-
-  useEffect(() => {
-    Promise.all([getPortfolioProjects(), getPortfolioCourses(), getPortfolioResearch()]).then(([projects, courses, research]) => setOverviewStats([
-      { label: 'Dự án', value: projects.length, detail: `${projects.filter(item => item.status === 'published').length} đã xuất bản`, icon: FolderKanban },
-      { label: 'Khóa học', value: courses.length, detail: `${courses.reduce((sum, item) => sum + item.studentsCount, 0).toLocaleString('vi-VN')} học viên`, icon: GraduationCap },
-      { label: 'Nghiên cứu', value: research.length, detail: `${research.reduce((sum, item) => sum + item.viewCount, 0).toLocaleString('vi-VN')} lượt xem`, icon: Award },
-    ])).catch(error => console.error('Không thể tải thống kê Portfolio:', error));
-  }, []);
-
-  const handleTriggerSync = () => {
-    setSyncing(true);
-    window.setTimeout(() => setSyncing(false), 1200);
-  };
-
+  const uid = currentUser?.id || '';
+  // Mọi nội dung soạn ở đây thuộc Website của chính tài khoản đang đăng nhập.
+  const [ready] = useState(() => { setSiteOwner(uid || null); return true; });
+  useEffect(() => { setSiteOwner(uid || null); return () => setSiteOwner(null); }, [uid]);
+  const [activeDivision, setActiveDivision] = useState<PortfolioDivision>('address');
+  const [slug, setSlug] = useState('');
   const activeDivisionInfo = DIVISIONS.find(item => item.id === activeDivision) ?? DIVISIONS[0];
-  const isContentListDivision = ['projects', 'courses', 'research'].includes(activeDivision);
+  const isContentListDivision = ['projects', 'research'].includes(activeDivision);
+  if (!ready) return null;
 
   return (
-    <div className="space-y-6 animate-fadeIn pb-12 text-slate-800">
+    <div className="space-y-5 animate-fadeIn pb-12 text-slate-800">
       <PageHeader
-        icon={<Shield size={22} />}
-        title="Quản trị Portfolio"
-        description="Biên tập nội dung hồ sơ, dự án, chương trình đào tạo và học thuật hiển thị trên trang Portfolio công khai."
-        actions={<Button variant="outline" icon={<Eye size={16} />} onClick={() => window.open('/?portfolio=true', '_blank', 'noopener,noreferrer')}>Xem trang Portfolio</Button>}
+        icon={<Globe size={22} />}
+        title="Website"
+        description="Tạo trang giới thiệu bản thân với địa chỉ riêng: hồ sơ, dự án, nghiên cứu, bài viết và menu theo ý bạn."
+        actions={slug ? <Button variant="outline" icon={<Eye size={16} />} onClick={() => window.open(`/${slug}`, '_blank', 'noopener,noreferrer')}>Xem trang</Button> : undefined}
       />
 
-      {/* Trạng thái và thao tác nhanh */}
-      <section className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="bg-white rounded-2xl p-5 shadow-xs flex items-center justify-between gap-4">
-          <div className="space-y-1 text-left">
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Phân hệ đang mở</span>
-            <span className="text-base font-extrabold text-slate-900 block">{activeDivisionInfo.title}</span>
-            <span className="text-[11px] text-slate-500 font-medium block">{activeDivisionInfo.description}</span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
-            <activeDivisionInfo.icon className="w-6 h-6" />
-          </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-5 shadow-xs flex items-center justify-between gap-4">
-          <div className="space-y-1 text-left">
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block">Cơ sở dữ liệu Portfolio</span>
-            <span className="text-base font-extrabold text-slate-900 flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-brand" />
-              Sẵn sàng đồng bộ
-            </span>
-            <span className="text-[11px] text-slate-500 font-medium block">Nội dung được lưu và đồng bộ trên Supabase</span>
-          </div>
-          <button
-            type="button"
-            onClick={handleTriggerSync}
-            disabled={syncing}
-            className="w-12 h-12 rounded-xl bg-brand-light text-brand hover:bg-brand-light flex items-center justify-center shrink-0 transition-colors cursor-pointer disabled:opacity-60"
-            title="Kiểm tra kết nối dữ liệu"
-          >
-            {syncing ? <RefreshCw className="w-6 h-6 animate-spin" /> : <Database className="w-6 h-6" />}
-          </button>
-          </div>
+      {/* Thanh mục, cùng kiểu với các trang khác */}
+      <div className="overflow-x-auto scrollbar-thin">
+        <div className="flex w-max gap-1 rounded-2xl bg-slate-100 p-1">
+          {DIVISIONS.map(item => {
+            const Icon = item.icon;
+            const on = activeDivision === item.id;
+            return (
+              <button key={item.id} type="button" onClick={() => setActiveDivision(item.id)}
+                className={`inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-[13px] font-semibold transition-all ${on ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                <Icon className={`h-4 w-4 ${on ? 'text-brand' : ''}`} /> {item.title}
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {overviewStats.map(item => <div key={item.label} className="flex items-center justify-between gap-4 rounded-2xl bg-white p-4 shadow-xs"><div className="min-w-0 text-left"><span className="block text-[10px] font-extrabold uppercase tracking-widest text-slate-400">{item.label}</span><strong className="mt-1 block text-2xl font-black leading-none text-slate-900">{item.value}</strong><span className="mt-2 block truncate text-[11px] font-medium text-slate-500">{item.detail}</span></div><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand"><item.icon className="h-5 w-5" /></span></div>)}
-        </div>
-      </section>
-
-      {/* Thanh tab ngang — đồng nhất với module Báo khoa học */}
-      <nav
-        className="flex flex-nowrap border-b border-slate-200 overflow-x-auto scrollbar-none gap-2 bg-slate-50 p-1.5 rounded-2xl select-none"
-        onWheel={(e) => {
-          if (e.currentTarget.scrollWidth > e.currentTarget.clientWidth && e.deltaY !== 0) {
-            e.preventDefault();
-            e.currentTarget.scrollLeft += e.deltaY * 1.2;
-          }
-        }}
-      >
-        {visibleDivisions.map(item => {
-          const Icon = item.icon;
-          const isActive = activeDivision === item.id;
-
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setActiveDivision(item.id)}
-              className={`flex shrink-0 items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                isActive
-                  ? 'bg-white text-brand shadow-xs border border-slate-200/60'
-                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{item.title}</span>
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* Nội dung phân hệ */}
-      <section className={isContentListDivision ? 'min-h-[440px]' : 'min-h-[440px] rounded-3xl bg-white p-5 shadow-sm sm:p-6'}>
+      <section className={isContentListDivision ? 'min-h-[440px]' : 'min-h-[440px] rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6'}>
         {!isContentListDivision && (
-          <div className="border-b border-slate-100 pb-4 mb-6 text-left">
-            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <activeDivisionInfo.icon className="w-5 h-5 text-brand" />
+          <div className="mb-6 border-b border-slate-100 pb-4 text-left">
+            <h2 className="flex items-center gap-2 text-base font-semibold text-slate-800">
+              <activeDivisionInfo.icon className="h-4 w-4 text-brand" />
               <span>{activeDivisionInfo.title}</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-1">{activeDivisionInfo.description}</p>
+            <p className="mt-1 text-[13px] text-slate-500">{activeDivisionInfo.description}</p>
           </div>
         )}
 
-        {activeDivision === 'profile' && canDivision('profile') && <BannerAboutCMS />}
-        {activeDivision === 'content' && canDivision('content') && <PortfolioContentManager />}
-        {activeDivision === 'projects' && canDivision('projects') && <ProjectsCoursesCMS initialSubTab="projects" showSubTabs={false} />}
-        {activeDivision === 'courses' && canDivision('courses') && <ProjectsCoursesCMS initialSubTab="courses" showSubTabs={false} />}
-        {activeDivision === 'research' && canDivision('research') && <PortfolioResearchCMS />}
-        {activeDivision === 'navigation' && canDivision('navigation') && <PortfolioNavigationManager />}
+        {activeDivision === 'address' && uid && <SiteAddressPanel uid={uid} defaultTitle={currentUser?.fullName || ''} onSlug={setSlug} />}
+        {activeDivision === 'profile' && <BannerAboutCMS />}
+        {activeDivision === 'content' && <PortfolioContentManager />}
+        {activeDivision === 'projects' && <ProjectsCoursesCMS initialSubTab="projects" showSubTabs={false} />}
+        {activeDivision === 'research' && <PortfolioResearchCMS />}
+        {activeDivision === 'navigation' && <PortfolioNavigationManager />}
       </section>
     </div>
   );

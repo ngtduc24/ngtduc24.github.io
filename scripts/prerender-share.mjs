@@ -146,7 +146,7 @@ async function localOg(url, folder, id) {
       const dir = path.join(DIST_DIR, folder, id);
       await mkdir(dir, { recursive: true });
       await writeFile(path.join(dir, 'og.jpg'), out);
-      return `${SITE_ORIGIN}/${folder}/${id}/og.jpg`;
+      return `${SITE_ORIGIN}/${[folder, id].filter(Boolean).join('/')}/og.jpg`;
     } catch (e) {
       console.warn(`Không tạo được ảnh xem trước cho /${folder}/${id}/:`, e?.message || e);
       return '';
@@ -277,7 +277,7 @@ async function run() {
         description: toPlainSummary(r.description, 220) || 'Xem chi tiết trên EduGo.',
         image,
         targetUrl: `${SITE_ORIGIN}${r.target}`,
-        shareUrl: `${SITE_ORIGIN}/${r.folder}/${r.id}/`,
+        shareUrl: `${SITE_ORIGIN}/${[r.folder, r.id].filter(Boolean).join('/')}/`,
       }), 'utf8');
       counts[r.folder] = (counts[r.folder] || 0) + 1;
     } catch (error) {

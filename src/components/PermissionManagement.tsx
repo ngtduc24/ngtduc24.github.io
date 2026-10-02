@@ -43,7 +43,7 @@ const MODULES: ModuleDef[] = [
   { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn' },
   { id: 'utility_file_compress', label: 'Giảm dung lượng file', desc: 'Nén PDF, JPG, PNG ngay trên trình duyệt mà vẫn giữ chất lượng tốt' },
   { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn' },
-  { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Nội dung, dự án, khóa học, nghiên cứu, menu, hồ sơ', flags: [['canPortfolioContent', 'Thêm bài viết'], ['canPortfolioProjects', 'Dự án'], ['canPortfolioCourses', 'Khóa học'], ['canPortfolioResearch', 'Nghiên cứu'], ['canPortfolioNavigation', 'Menu chính'], ['canPortfolioProfile', 'Hồ sơ']] },
+  { id: 'portfolio_cms', label: 'Website', desc: 'Tạo trang giới thiệu bản thân với địa chỉ riêng' },
   { id: 'notifications', label: 'Trung tâm thông báo', desc: 'Quản lý và phát thông báo tới người dùng' },
   { id: 'assistant', label: 'Trợ lý giáo dục', desc: 'Hỏi đáp kiến thức bài học từ bài giảng, câu hỏi và bài tập được chia sẻ công khai' },
   { id: 'settings', label: 'Cấu hình hệ thống', settings: true },
@@ -150,7 +150,7 @@ export default function PermissionManagement({ currentUser, users, onSaveUser }:
                 </span>
               </div>
 
-              {isMember && <p className="rounded-xl bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-700">Tài khoản học viên chỉ dùng trang Portfolio, không cần phân quyền chức năng quản trị.</p>}
+              {isMember && <p className="rounded-xl bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-700">Tài khoản học viên chỉ dùng Khoá học, không cần phân quyền chức năng quản trị.</p>}
 
               <div className="divide-y divide-slate-100 rounded-3xl border border-slate-100 bg-white shadow-sm">
                 {MODULES.map(m => {
