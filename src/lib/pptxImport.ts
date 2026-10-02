@@ -1,7 +1,7 @@
 // Đọc tệp PowerPoint (.pptx) ngay trên trình duyệt và đổi thành bài giảng sửa được trong ứng dụng Bài giảng.
 // Mỗi trang PowerPoint thành 1 trang, chữ thành khối chữ, hình thành khối hình, ảnh được tải lên kho của người dùng,
 // bảng thành các ô chữ có viền, ghi chú người trình bày giữ nguyên. Biểu đồ, SmartArt, video chưa đọc được thì bỏ qua và báo lại.
-import type { Slide, SlideEl, SlideBg, ShapeKind, TextRun, TextLine } from './slides';
+import type { Slide, SlideEl, SlideBg, ShapeKind, TextRun, TextLine, AnimIn, TransitionKind, SlideTransition } from './slides';
 import { SLIDE_W, SLIDE_H, uid } from './slides';
 
 type El = Element;
@@ -136,6 +136,8 @@ interface Ctx {
   skipped: { [k: string]: number };
   mediaCache: Map<string, Promise<string | null>>;
   pending: Promise<void>[];
+  idMap: Map<string, SlideEl[]>;
+  parse: (s: string) => Document;
 }
 type Xf = { x: number; y: number; w: number; h: number; rot: number; flipH: boolean; flipV: boolean };
 const xfrmOf = (spPr: El | null): Xf | null => {
@@ -394,13 +396,20 @@ async function avUrl(ctx: Ctx, target: string, audio: boolean): Promise<string |
 // Đọc các khối trên một cây (trang, nhóm).
 async function readTree(tree: El | null, ctx: Ctx, tf: Tf, out: SlideEl[]) {
   for (const node of kids(tree)) {
+    const before = out.length;
+    await readOne(node);
+    // Ghi lại khối nào sinh ra từ hình nào (mã cNvPr) để gắn hiệu ứng xuất hiện của PowerPoint.
+    const cid = attr(find(node, 'cNvPr'), 'id');
+    if (cid && out.length > before) ctx.idMap.set(cid, out.slice(before));
+  }
+  async function readOne(node: El) {
     const name = node.localName;
     if (name === 'sp' || name === 'cxnSp') {
       const spPr = kid(node, 'spPr');
       const ph = phOf(node);
       let xf = xfrmOf(spPr);
       if (!xf && ph) xf = xfrmOf(kid(findPh(ctx.layout, ph), 'spPr')) || xfrmOf(kid(findPh(ctx.master, ph), 'spPr'));
-      if (!xf) continue;
+      if (!xf) return;
       const box = tf(xf);
       const geom = attr(kid(spPr, 'prstGeom'), 'prst') || (name === 'cxnSp' ? 'line' : 'rect');
       // Màu tô và viền (kể cả lấy theo kiểu chủ đề p:style).
@@ -414,7 +423,7 @@ async function readTree(tree: El | null, ctx: Ctx, tf: Tf, out: SlideEl[]) {
       const px = { x: Math.round(ctx.ox + box.x * ctx.scale), y: Math.round(ctx.oy + box.y * ctx.scale), w: Math.max(2, Math.round(box.w * ctx.scale)), h: Math.max(2, Math.round(box.h * ctx.scale)) };
       if (kind === 'line') {
         if (stroke || fill?.color) out.push({ id: uid(), type: 'shape', shape: (kid(ln, 'tailEnd') && attr(kid(ln, 'tailEnd'), 'type') !== 'none') ? 'arrow' : 'line', ...px, h: Math.max(px.h, 12), fill: stroke || fill?.color, stroke: stroke || fill?.color, strokeWidth: Math.max(2, sw), rot: box.rot || undefined });
-        continue;
+        return;
       }
       const freeform = custPath(spPr, px.w, px.h);
       if (fill?.blip) {
@@ -428,13 +437,16 @@ async function readTree(tree: El | null, ctx: Ctx, tf: Tf, out: SlideEl[]) {
       if (tx) {
         // Màu chữ mặc định của hình theo kiểu chủ đề (thường là chữ trắng trên hình màu).
         const fontRefColor = firstColor(path(node, 'style', 'fontRef'), ctx.theme);
-        const t = textFrom(node, tx, box, ctx, ph, {}, fontRefColor || undefined);
+        // Hình trong SmartArt có khung chữ riêng (txXfrm).
+        const txx = kid(node, 'txXfrm');
+        const tbox = txx && kid(txx, 'off') && kid(txx, 'ext') ? tf({ x: num(attr(kid(txx, 'off'), 'x')), y: num(attr(kid(txx, 'off'), 'y')), w: num(attr(kid(txx, 'ext'), 'cx')), h: num(attr(kid(txx, 'ext'), 'cy')), rot: num(attr(txx, 'rot')) / 60000, flipH: false, flipV: false }) : box;
+        const t = textFrom(node, tx, tbox, ctx, ph, {}, fontRefColor || undefined);
         if (t) out.push(t);
       }
     } else if (name === 'pic') {
       const spPr = kid(node, 'spPr');
       const xf = xfrmOf(spPr) || (phOf(node) ? xfrmOf(kid(findPh(ctx.layout, phOf(node)!), 'spPr')) : null);
-      if (!xf) continue;
+      if (!xf) return;
       const box = tf(xf);
       // Video, âm thanh: link ngoài (YouTube...) dùng thẳng, tệp nhúng trong pptx thì tải lên kho rồi phát được khi trình chiếu.
       const vf = find(node, 'videoFile'), af = find(node, 'audioFile');
@@ -444,17 +456,17 @@ async function readTree(tree: El | null, ctx: Ctx, tf: Tf, out: SlideEl[]) {
         const el: SlideEl = { id: uid(), type: 'video', video: '', audio: af ? true : undefined, ...px, rot: box.rot || undefined };
         const poster = attr(find(kid(node, 'blipFill'), 'blip'), 'embed');
         if (poster) ctx.pending.push(mediaUrl(ctx, poster).then(u => { if (u) el.src = u; }));
-        if (rel && /^https?:/i.test(rel.target)) { el.video = rel.target; out.push(el); continue; }
+        if (rel && /^https?:/i.test(rel.target)) { el.video = rel.target; out.push(el); return; }
         if (rel) {
           ctx.pending.push(avUrl(ctx, rel.target, !!af).then(u => { el.video = u || ''; }));
           out.push(el);
-          continue;
+          return;
         }
         ctx.skipped['video, âm thanh không tìm thấy tệp'] = (ctx.skipped['video, âm thanh không tìm thấy tệp'] || 0) + 1;
-        continue;
+        return;
       }
       const rid = attr(find(kid(node, 'blipFill'), 'blip'), 'embed');
-      if (!rid) continue;
+      if (!rid) return;
       const geom = attr(kid(spPr, 'prstGeom'), 'prst');
       const el: SlideEl = { id: uid(), type: 'image', src: '', x: Math.round(ctx.ox + box.x * ctx.scale), y: Math.round(ctx.oy + box.y * ctx.scale), w: Math.max(4, Math.round(box.w * ctx.scale)), h: Math.max(4, Math.round(box.h * ctx.scale)), fit: 'cover', rot: box.rot || undefined, flipX: box.flipH || undefined, flipY: box.flipV || undefined, radius: geom === 'ellipse' ? 999 : geom === 'roundRect' ? 16 : 0 };
       // Phần ảnh bị cắt trong PowerPoint.
@@ -466,7 +478,7 @@ async function readTree(tree: El | null, ctx: Ctx, tf: Tf, out: SlideEl[]) {
       deferSrc(ctx, rid, el); out.push(el);
     } else if (name === 'grpSp') {
       const x = kid(kid(node, 'grpSpPr'), 'xfrm');
-      if (!x) { await readTree(node, ctx, tf, out); continue; }
+      if (!x) { await readTree(node, ctx, tf, out); return; }
       const off = kid(x, 'off'), ext = kid(x, 'ext'), cOff = kid(x, 'chOff'), cExt = kid(x, 'chExt');
       const ox = num(attr(off, 'x')), oy = num(attr(off, 'y')), ew = num(attr(ext, 'cx'), 1), eh = num(attr(ext, 'cy'), 1);
       const cx = num(attr(cOff, 'x')), cy = num(attr(cOff, 'y')), cw = num(attr(cExt, 'cx'), ew) || 1, ch = num(attr(cExt, 'cy'), eh) || 1;
@@ -509,8 +521,20 @@ async function readTree(tree: El | null, ctx: Ctx, tf: Tf, out: SlideEl[]) {
           });
           yy += rh;
         }
+      } else if (find(node, 'relIds') && xf) {
+        // SmartArt: PowerPoint lưu sẵn bản vẽ các hình (diagramDrawing), đọc như các hình thường.
+        const dm = ctx.rels[attr(find(node, 'relIds'), 'dm') || '']?.target;
+        let drawPath: string | undefined;
+        if (dm) { const dmx = await readXml(ctx.zip, dm, ctx.parse); const rid = attr(find(dmx, 'dataModelExt'), 'relId'); if (rid) drawPath = ctx.rels[rid]?.target; }
+        const dr = drawPath ? await readXml(ctx.zip, drawPath, ctx.parse) : null;
+        const tree = find(dr, 'spTree');
+        if (tree && drawPath) {
+          const drawRels = await readRels(ctx.zip, drawPath, ctx.parse);
+          const inner: Tf = c => tf({ ...c, x: xf.x + c.x, y: xf.y + c.y });
+          await readTree(tree, { ...ctx, rels: drawRels, idMap: new Map() }, inner, out);
+        } else ctx.skipped['SmartArt'] = (ctx.skipped['SmartArt'] || 0) + 1;
       } else {
-        const what = find(node, 'chart') ? 'biểu đồ' : find(node, 'relIds') ? 'SmartArt' : 'đối tượng nhúng';
+        const what = find(node, 'chart') ? 'biểu đồ' : 'đối tượng nhúng';
         ctx.skipped[what] = (ctx.skipped[what] || 0) + 1;
       }
     }
@@ -529,6 +553,52 @@ async function bgOf(cSld: El | null, ctx: Ctx): Promise<SlideBg | null> {
   const ref = kid(bg, 'bgRef');
   if (ref) { const c = firstColor(ref, ctx.theme); if (c) return { color: c }; }
   return null;
+}
+
+
+// ===== Hiệu ứng xuất hiện và chuyển trang của PowerPoint =====
+const ENTR: Record<number, AnimIn> = {
+  1: 'fade', 9: 'fade', 10: 'fade', 3: 'wipe', 14: 'wipe', 16: 'wipe', 18: 'wipe', 22: 'wipe', 52: 'wipe', 40: 'wipe',
+  4: 'zoom', 6: 'zoom', 8: 'zoom', 17: 'zoom', 23: 'zoom', 50: 'zoom', 53: 'zoom', 55: 'zoom', 13: 'zoom',
+  15: 'spin', 21: 'spin', 31: 'spin', 35: 'spin', 43: 'spin', 49: 'spin', 26: 'bounce', 25: 'pop', 19: 'pop', 45: 'pop', 56: 'pop',
+  29: 'rise', 30: 'rise', 37: 'rise', 54: 'rise', 42: 'up', 47: 'down', 38: 'left', 41: 'left', 48: 'left', 7: 'up', 12: 'up', 28: 'up', 34: 'left',
+};
+function applyTiming(timing: El | null, idMap: Map<string, SlideEl[]>) {
+  if (!timing || !idMap.size) return;
+  let seenClick = false;
+  for (const par of findAll(timing, 'par')) {
+    const cTn = kid(par, 'cTn');
+    if (attr(cTn, 'presetClass') !== 'entr') continue;
+    const spid = attr(find(cTn, 'spTgt'), 'spid');
+    const els = spid ? idMap.get(spid) : undefined;
+    if (!els || !els.length) continue;
+    const id = num(attr(cTn, 'presetID'));
+    const sub = num(attr(cTn, 'presetSubtype'));
+    let kind: AnimIn = ENTR[id] || 'fade';
+    if (id === 2) kind = sub === 4 ? 'up' : sub === 1 ? 'down' : sub === 8 ? 'right' : 'left';
+    const durs = findAll(kid(cTn, 'childTnLst'), 'cTn').map(c => num(attr(c, 'dur'), 0)).filter(v => v > 0);
+    const dur = Math.min(5, Math.max(0.2, (durs.length ? Math.max(...durs) : 500) / 1000));
+    const delay = Math.min(10, num(attr(find(kid(cTn, 'stCondLst'), 'cond'), 'delay'), 0) / 1000) || 0;
+    const nodeType = attr(cTn, 'nodeType');
+    if (nodeType === 'clickEffect') seenClick = true;
+    const trigger: 'click' | 'auto' = nodeType === 'clickEffect' || seenClick ? 'click' : 'auto';
+    for (const el of els) if (!el.anim?.in) el.anim = { in: kind, dur: id === 1 ? 0.2 : dur, delay: trigger === 'auto' ? delay : 0, trigger };
+  }
+}
+const TRANS: Record<string, TransitionKind> = {
+  fade: 'fade', dissolve: 'dissolve', reveal: 'fade', push: 'push', cover: 'cover', pull: 'cover', wipe: 'wipe', split: 'wipe', blinds: 'wipe', checker: 'wipe', strips: 'wipe',
+  randomBar: 'wipe', wheel: 'wipe', circle: 'zoom', zoom: 'zoom', newsflash: 'zoom', warp: 'zoom', flythrough: 'zoom', flip: 'flip', prism: 'flip', switch: 'flip', gallery: 'slide',
+  conveyor: 'slide', pan: 'slide', ferris: 'slide', doors: 'wipe', window: 'wipe', vortex: 'zoom', ripple: 'zoom', shred: 'dissolve', glitter: 'dissolve', honeycomb: 'dissolve',
+};
+function transitionOf(root: El | null): SlideTransition | undefined {
+  const tr = find(root, 'transition');
+  if (!tr) return undefined;
+  const fx = kids(tr).find(k => k.localName !== 'sndAc' && k.localName !== 'extLst');
+  const ms = num(attr(tr, 'dur'), 0);
+  const spd = attr(tr, 'spd');
+  const dur = ms ? Math.min(3, ms / 1000) : spd === 'slow' ? 1 : spd === 'fast' ? 0.5 : 0.75;
+  if (!fx) return { type: 'fade', dur };
+  return { type: TRANS[fx.localName] || 'fade', dur };
 }
 
 export interface PptxResult { title: string; slides: Slide[]; skipped: Record<string, number>; images: number }
@@ -579,7 +649,7 @@ export async function importPptx(file: File, opts: { upload: (blob: Blob, name: 
     const masterPath = Object.values(layoutRels).find(r => /slideMaster/.test(r.type))?.target;
     const master = masterPath ? await cachedXml(masterPath) : null;
     const masterRels = masterPath ? await readRels(zip, masterPath, parse) : {};
-    const ctx: Ctx = { theme, scale, ox, oy, layout, master, rels, zip, upload: limitedUpload, skipped, mediaCache, pending };
+    const ctx: Ctx = { theme, scale, ox, oy, layout, master, rels, zip, upload: limitedUpload, skipped, mediaCache, pending, idMap: new Map(), parse };
     const cSld = kid(root, 'cSld');
     // Nền: trang, rồi trang mẫu, rồi trang chủ.
     const bg = (await bgOf(cSld, ctx)) || (await bgOf(kid(layout, 'cSld'), { ...ctx, rels: layoutRels })) || (await bgOf(kid(master, 'cSld'), { ...ctx, rels: masterRels })) || { color: '#ffffff' };
@@ -590,7 +660,7 @@ export async function importPptx(file: File, opts: { upload: (blob: Blob, name: 
         const t = path(tree, 'cSld', 'spTree'); if (!t) return;
         const clone: El[] = kids(t).filter(n => !phOf(n));
         const tmp = t.cloneNode(false) as El; clone.forEach(n => tmp.appendChild(n.cloneNode(true)));
-        await readTree(tmp, { ...ctx, rels: r }, idTf, els);
+        await readTree(tmp, { ...ctx, rels: r, idMap: new Map() }, idTf, els);
       };
       if (attr(layout, 'showMasterSp') !== '0') await deco(master, masterRels);
       await deco(layout, layoutRels);
@@ -604,10 +674,8 @@ export async function importPptx(file: File, opts: { upload: (blob: Blob, name: 
       const body = findAll(nx, 'sp').find(s => phOf(s)?.type === 'body');
       notes = kids(kid(body, 'txBody'), 'p').map(p => findAll(p, 't').map(t => t.textContent || '').join('')).join('\n').trim();
     }
-    if (find(root, 'transition') && kids(find(root, 'transition')).length) {
-      // Có chuyển trang trong PowerPoint thì dùng hiệu ứng mờ dần tương ứng.
-    }
-    slides.push({ id: uid('s'), bg, els, notes: notes || undefined, transition: find(root, 'transition') ? { type: 'fade', dur: 0.6 } : undefined });
+    applyTiming(kid(root, 'timing'), ctx.idMap);
+    slides.push({ id: uid('s'), bg, els, notes: notes || undefined, transition: transitionOf(root) });
     opts.onProgress?.(++i, slidePaths.length);
   }
   const core = await readXml(zip, 'docProps/core.xml', parse);

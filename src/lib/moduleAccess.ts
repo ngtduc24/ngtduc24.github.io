@@ -5,6 +5,29 @@ import { getCachedLanding } from './landing';
 // tự đăng ký chưa được admin phân quyền riêng, admin phân quyền rồi thì theo công tắc của admin.
 let DEFAULT_APPS: string[] = getCachedLanding().defaultApps;
 export function setDefaultApps(list: string[]) { DEFAULT_APPS = Array.isArray(list) ? list : []; }
+
+// Ứng dụng được cấp sẵn khi tự đăng ký thì được dùng đầy đủ thao tác của ứng dụng đó
+// (tạo, sửa, xoá, nhập, xuất...), không phải chờ admin bật từng quyền con.
+// Riêng danh mục tạp chí là dữ liệu dùng chung của cả hệ thống nên không cấp quyền xoá và quản lý danh mục.
+const EDU_ALL = ['canManageEdu', 'canCreateEdu', 'canEditEdu', 'canDeleteEdu', 'canImportEdu', 'canExportEdu', 'canGradeEdu', 'canGradeImportEdu'];
+const APP_RIGHTS: Record<string, string[]> = {
+  edu: EDU_ALL, edu_bank: EDU_ALL, edu_exam: EDU_ALL, edu_question_bank: EDU_ALL, edu_grade: EDU_ALL,
+  elearning: ['canElearningPublic', 'canElearningAssign'],
+  qualitative_analysis: ['canCreateQualitative', 'canEditQualitative', 'canDeleteQualitative', 'canImportQualitative', 'canExportQualitative'],
+  quantitative_analysis: ['canCreateQuantitative', 'canEditQuantitative', 'canDeleteQuantitative', 'canImportQuantitative', 'canExportQuantitative'],
+  tasks: ['canCreateTask', 'canAssignTask', 'canReceiveTask', 'canRunPauseTask', 'canCompleteTask', 'canDeleteTask'],
+  scientific_journals: ['canCreateJournal', 'canEditJournal', 'canImportJournal'],
+  portfolio_cms: ['canPortfolioContent', 'canPortfolioProjects', 'canPortfolioResearch', 'canPortfolioNavigation', 'canPortfolioProfile'],
+};
+export function withDefaultRights<T extends UserAccount | null | undefined>(user: T): T {
+  if (!user || user.role === 'admin' || user.role === 'member') return user;
+  const p = user.permissions || [];
+  if (!user.selfRegistered || p.includes(PERM_V2)) return user;
+  const apps = Array.from(new Set([...p, ...DEFAULT_APPS]));
+  const add: Record<string, boolean> = {};
+  apps.forEach(a => (APP_RIGHTS[a] || []).forEach(f => { if ((user as any)[f] === undefined || (user as any)[f] === null) add[f] = true; }));
+  return Object.keys(add).length ? ({ ...(user as any), ...add } as T) : user;
+}
 function effectivePerms(user: UserAccount): string[] {
   const p = user.permissions || [];
   if (user.selfRegistered && !p.includes(PERM_V2)) return Array.from(new Set([...p, ...DEFAULT_APPS]));

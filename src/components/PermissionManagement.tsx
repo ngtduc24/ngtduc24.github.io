@@ -99,6 +99,8 @@ export default function PermissionManagement({ currentUser, users, onSaveUser }:
     if (on) set.add(id); else set.delete(id);
     const next: UserAccount = { ...draft, permissions: Array.from(set) };
     if (id === 'settings') next.canManageSettings = on;
+    // Bật một chức năng thì cấp sẵn đủ các quyền thao tác của chức năng đó, admin có thể tắt bớt sau.
+    if (on) (MODULES.find(m => m.id === id)?.flags || []).forEach(([f]) => { (next as any)[f] = true; });
     autoSave(next);
   };
   const flagOn = (f: Flag) => !!draft && !!draft[f];

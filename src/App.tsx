@@ -26,7 +26,7 @@ import LandingPage from './components/LandingPage';
 import CoursesApp from './components/courses/CoursesApp';
 import { getLandingConfig } from './lib/landing';
 import { getSiteBySlug, setSiteOwner, RESERVED_SLUGS, SiteRecord } from './lib/portfolioData';
-import { canUseModule, setDefaultApps } from './lib/moduleAccess';
+import { canUseModule, setDefaultApps, withDefaultRights } from './lib/moduleAccess';
 import PortfolioWebsite from './components/PortfolioWebsite';
 import PortfolioCMS from './components/PortfolioCMS';
 import UtilitiesModule from './components/UtilitiesModule';
@@ -333,7 +333,7 @@ export default function App() {
   useEffect(() => {
     loadConfig();
     // Ứng dụng mặc định cho tài khoản tự đăng ký, admin chọn trong Cấu hình hệ thống.
-    getLandingConfig().then(c => setDefaultApps(c.defaultApps)).catch(() => {});
+    getLandingConfig().then(c => { setDefaultApps(c.defaultApps); setCurrentUser(u => withDefaultRights(u)); }).catch(() => {});
   }, []);
 
   // Keep the browser title in sync with the current administration module.

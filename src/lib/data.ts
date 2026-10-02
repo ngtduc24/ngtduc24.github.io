@@ -1,3 +1,4 @@
+import { withDefaultRights } from './moduleAccess';
 
 import { supabase } from './supabase';
 import { getEduCtx } from './edu';
@@ -425,7 +426,7 @@ export async function deleteUser(userId: string) {
 }
 
 export function mapUserFromDB(u: any): UserAccount {
-  return {
+  return withDefaultRights({
     id: u.id,
     username: u.username,
     fullName: u.full_name,
@@ -483,7 +484,7 @@ export function mapUserFromDB(u: any): UserAccount {
     dashboardIconHidden: u.dashboard_icon_hidden,
     dashboardFeatured: u.dashboard_featured,
     createdAt: u.created_at,
-  } as UserAccount;
+  } as UserAccount);
 }
 
 // ----- Hồ sơ công khai (ảnh đại diện, ảnh bìa) -----

@@ -206,7 +206,7 @@ export default function LandingSettings() {
       <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
         <div>
           <h2 className="flex items-center gap-2 text-base font-semibold text-slate-800"><UserPlus className="h-4 w-4 text-brand" /> Ứng dụng cho tài khoản tự đăng ký</h2>
-          <p className="mt-1 text-[13px] text-slate-500">Người tự đăng ký ở trang đầu được dùng ngay các ứng dụng đang bật. Muốn chỉnh riêng một người thì vào Phân quyền người dùng.</p>
+          <p className="mt-1 text-[13px] text-slate-500">Người tự đăng ký ở trang đầu được dùng ngay các ứng dụng đang bật, với đầy đủ thao tác của ứng dụng đó (tạo, sửa, xoá, nhập, xuất). Riêng Điểm báo khoa học là danh mục chung nên không cấp quyền xoá. Muốn chỉnh riêng một người thì vào Phân quyền người dùng.</p>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {apps.map(m => {
