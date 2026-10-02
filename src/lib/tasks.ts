@@ -26,8 +26,20 @@ const taskListeners: { id: string; callback: TaskListener }[] = [];
 let realtimeChannel: any = null;
 let pollTimer: any = null;
 
+// Người đang đăng nhập (đọc từ bản lưu đăng nhập) để lọc công việc ngay từ phía máy chủ.
+function currentTaskUser(): { id: string; username?: string } | null {
+  try {
+    const raw = localStorage.getItem('logged_in_user');
+    const u = raw ? JSON.parse(raw) : null;
+    return u && u.id ? { id: String(u.id), username: u.username ? String(u.username) : undefined } : null;
+  } catch { return null; }
+}
+// Bản lưu trên máy tách theo từng tài khoản, máy dùng chung không lộ công việc của người khác.
+const cacheKey = () => `local_tasks_cache_${currentTaskUser()?.id || 'guest'}`;
+try { localStorage.removeItem('local_tasks_cache'); } catch { /* bỏ qua */ }
+
 function getLocalTasks(): Task[] {
-  const cached = localStorage.getItem('local_tasks_cache');
+  const cached = localStorage.getItem(cacheKey());
   if (cached) {
     try {
       return JSON.parse(cached) as Task[];
@@ -37,7 +49,7 @@ function getLocalTasks(): Task[] {
 }
 
 function saveLocalTasks(tasks: Task[]) {
-  localStorage.setItem('local_tasks_cache', JSON.stringify(tasks));
+  localStorage.setItem(cacheKey(), JSON.stringify(tasks));
   triggerLocalTasksChange();
 }
 
@@ -158,9 +170,16 @@ export async function deleteTaskFromSupabase(taskId: string) {
 // Fetch all tasks
 export async function getTasksFromSupabase(): Promise<Task[]> {
   try {
+    // Chỉ tải công việc do mình tạo hoặc được giao cho mình.
+    const me = currentTaskUser();
+    if (!me) return [];
+    const safe = (v: string) => v.replace(/[^A-Za-z0-9_.@-]/g, '');
+    const conds = [`creator_id.eq.${safe(me.id)}`, `created_by.eq.${safe(me.id)}`, `assigned_to.eq.${safe(me.id)}`];
+    if (me.username && safe(me.username)) conds.push(`assigned_to.eq.${safe(me.username)}`, `created_by.eq.${safe(me.username)}`);
     const { data, error } = await supabase
       .from(TASKS_TABLE)
       .select('*')
+      .or(conds.join(','))
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -245,21 +264,18 @@ export async function migrateTasksFromFirebase(): Promise<{ moved: number; skipp
 }
 
 /**
- * Kiểm tra xem công việc có thuộc quyền hạn hoặc liên quan đến người dùng hiện tại hay không:
- * - Quản trị viên (admin): Toàn quyền thấy và quản lý toàn bộ task.
- * - Người dùng thông thường: Chỉ thấy task do mình tạo (creatorId/createdBy), hoặc task được giao cho mình (assignedTo).
+ * Công việc liên quan tới người dùng: do mình tạo hoặc được giao cho mình. Áp dụng cho mọi
+ * tài khoản kể cả admin, công việc riêng của người khác không hiện ra.
  */
 export function isTaskRelevantToUser(task: Task | null | undefined, user: UserAccount | null | undefined): boolean {
   if (!task || !user) return false;
-  if (user.role === 'admin') return true;
 
   const isAssigned = task.assignedTo === user.id ||
                     (Boolean(task.assignedTo) && Boolean(user.username) && task.assignedTo === user.username);
 
   const isCreator = task.creatorId === user.id ||
                     task.createdBy === user.id ||
-                    (Boolean(task.createdBy) && Boolean(user.username) && task.createdBy === user.username) ||
-                    (Boolean(user.fullName) && Boolean(task.createdByName) && task.createdByName === user.fullName);
+                    (Boolean(task.createdBy) && Boolean(user.username) && task.createdBy === user.username);
 
   return Boolean(isAssigned || isCreator);
 }

@@ -1,6 +1,6 @@
 import { db, auth } from './firebase';
 import { supabase } from './supabase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { recordMedia } from './mediaItems';
 
 export type CloudinaryResourceType = 'auto' | 'image' | 'video' | 'raw';
 
@@ -167,42 +167,19 @@ export async function uploadMediaToCloudinary(source: File | string, options: Cl
       }
     }
 
-    if (data.publicId) {
-      try {
-        await addDoc(collection(db, 'uploaded_images'), {
-          publicId: data.publicId,
-          url: data.url,
-          type: data.resourceType || options.resourceType || 'auto',
-          format: data.format || null,
-          bytes: data.bytes || null,
-          width: data.width || null,
-          height: data.height || null,
-          duration: data.duration || null,
-          category: options.folder || 'shared_library',
-          originalFilename: typeof source === 'string' ? null : source.name,
-          sourceModule: options.folder?.startsWith('portfolio') ? 'portfolio' : 'shared_library',
-          uploadedAt: serverTimestamp(),
-          uploadedBy: 'system'
-        });
-      } catch (err) {
-        console.error('Không thể lưu metadata vào thư viện chia sẻ (Firestore):', err);
-      }
-    }
-    try {
-      const currentUser = auth.currentUser;
-      await addDoc(collection(db, 'uploaded_images'), {
-        url: data.url,
-        category: options.category || 'Chung',
-        type: data.resourceType || options.resourceType || 'image',
-        bytes: data.bytes || 0,
-        uploadedAt: serverTimestamp(),
-        uploaderId: currentUser?.uid || 'anonymous',
-        uploaderEmail: currentUser?.email || 'anonymous',
-        uploaderName: currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Anonymous'
-      });
-    } catch (firestoreError) {
-      console.warn('Không thể đồng bộ metadata Thư viện Firestore:', firestoreError);
-    }
+    // Ghi tệp vào thư viện riêng của người đang đăng nhập (bảng Supabase media_items).
+    await recordMedia({
+      url: data.url,
+      publicId: data.publicId || null,
+      type: data.resourceType || options.resourceType || 'image',
+      format: data.format || null,
+      bytes: data.bytes || 0,
+      width: data.width || null,
+      height: data.height || null,
+      duration: data.duration || null,
+      category: options.category || 'Chung',
+      originalFilename: typeof source === 'string' ? null : source.name,
+    }).catch(() => {});
     return data.url;
   } catch (error) {
     console.error('Upload error:', error);

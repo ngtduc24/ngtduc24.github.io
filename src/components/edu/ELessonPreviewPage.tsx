@@ -29,7 +29,7 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
       try {
         const l = await getLesson(lessonId);
         const isPublic = l.is_public && l.status === 'published' && !l.deleted_at;
-        const isOwner = me && (me.id === l.owner_id || me.role === 'admin');
+        const isOwner = !!me && me.id === l.owner_id;
         if (!isPublic && !isOwner) { setDenied(true); setLoading(false); return; }
         const [s, r] = await Promise.all([getSections(lessonId), getResources(lessonId)]);
         setLesson(l); setSections(s); setResources(r);

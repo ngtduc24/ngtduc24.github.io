@@ -64,7 +64,8 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
           getJournalsFromSupabase(),
           getDefaultSettingsFromSupabase()
         ]);
-        setJournals(journalData);
+        // Trang tra cứu công khai chỉ hiện báo đã duyệt, báo đang chờ duyệt không lộ ra ngoài.
+        setJournals(journalData.filter((j: any) => j.status === 'approved' || !j.status));
         setSettings(settingsData);
 
         // Khôi phục chi tiết tạp chí nếu URL có id

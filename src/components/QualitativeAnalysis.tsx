@@ -42,6 +42,7 @@ export interface QDAProject {
   settings?: {
     subjectTypes: string[];
     interviewCount: number;
+    codebooks?: QDACodebook[];
   };
 }
 
@@ -89,6 +90,7 @@ export interface QDAMemo {
   linkedEntityId: string;
   content: string;
   createdAt: string;
+  projectId?: string;
 }
 
 // Stop words for Vietnamese frequency analysis
@@ -305,6 +307,20 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
     setTimeout(() => setToast(null), 3000);
   };
 
+  // Danh sách dự án mới nhất, dùng khi đổi dự án để đọc bộ từ điển mã đã lưu.
+  const projectsRef = useRef<QDAProject[]>([]);
+  useEffect(() => { projectsRef.current = projects; }, [projects]);
+  const codebooksOf = (proj: QDAProject): QDACodebook[] => {
+    const def: QDACodebook = {
+      id: `cb-default-${proj.id}`,
+      projectId: proj.id,
+      name: 'Bộ mã mặc định',
+      description: 'Bộ từ điển mã khởi tạo mặc định cho dự án.',
+      createdAt: new Date().toLocaleDateString('vi-VN')
+    };
+    return [def, ...((proj.settings?.codebooks || []).filter(b => b.id !== def.id))];
+  };
+
   // --- Persistence Helpers ---
   const saveProjects = async (list: QDAProject[]) => {
     setProjects(list);
@@ -355,6 +371,8 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
   };
 
   const saveMemos = async (list: QDAMemo[]) => {
+    // Ghi chú gắn với dự án đang mở để khi đổi dự án không lẫn ghi chú của dự án khác.
+    list = list.map(m => (m.projectId ? m : { ...m, projectId: selectedProjectId }));
     setMemos(list);
     try {
       for (const m of list) {
@@ -387,16 +405,10 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
           setAnnotations(anns || []);
           setMemos(memoList || []);
 
-          // Initial codebook setup
-          const defaultCBook: QDACodebook = {
-            id: `cb-default-${projs[0].id}`,
-            projectId: projs[0].id,
-            name: 'Bộ mã mặc định',
-            description: 'Bộ từ điển mã khởi tạo mặc định cho dự án.',
-            createdAt: new Date().toLocaleDateString('vi-VN')
-          };
-          setCodebooks([defaultCBook]);
-          setActiveCodebookId(defaultCBook.id);
+          // Bộ từ điển mã: bộ mặc định cộng các bộ đã lưu trong thiết lập dự án.
+          const books = codebooksOf(projs[0]);
+          setCodebooks(books);
+          setActiveCodebookId(books[0].id);
         } else {
           setProjects([]);
           setDocuments([]);
@@ -431,15 +443,9 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
           setAnnotations(anns || []);
           setMemos(memoList || []);
 
-          const defaultCBook: QDACodebook = {
-            id: `cb-default-${selectedProjectId}`,
-            projectId: selectedProjectId,
-            name: 'Bộ mã mặc định',
-            description: 'Bộ từ điển mã khởi tạo mặc định cho dự án.',
-            createdAt: new Date().toLocaleDateString('vi-VN')
-          };
-          setCodebooks([defaultCBook]);
-          setActiveCodebookId(defaultCBook.id);
+          const books = codebooksOf(projectsRef.current.find(p => p.id === selectedProjectId) || { id: selectedProjectId } as QDAProject);
+          setCodebooks(books);
+          setActiveCodebookId(books[0].id);
         } catch (e) {
           console.warn("Project switch load error:", e);
         }
@@ -524,10 +530,6 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
   };
 
   const handleDeleteProject = async (id: string, name: string) => {
-    if (projects.length <= 1) {
-      showToast('error', 'Hệ thống yêu cầu có ít nhất 1 dự án.');
-      return;
-    }
     if (await confirm('Xác nhận xóa dự án', `Bạn có chắc chắn muốn xóa dự án "${name}"? Tất cả dữ liệu tệp tin, mã hóa, ghi chú của dự án sẽ bị xóa sạch!`)) {
       try {
         const nextProjs = projects.filter(p => p.id !== id);
@@ -757,6 +759,14 @@ export default function QualitativeAnalysis({ users = [], currentUser, onSaveUse
     };
     setCodebooks([...codebooks, newCb]);
     setActiveCodebookId(newCb.id);
+    // Lưu bộ từ điển mã vào thiết lập của dự án để tải lại trang vẫn còn.
+    const proj = projects.find(p => p.id === selectedProjectId);
+    if (proj) {
+      const saved = (proj.settings?.codebooks || []).concat(newCb);
+      const nextProj: QDAProject = { ...proj, settings: { subjectTypes: proj.settings?.subjectTypes || [], interviewCount: proj.settings?.interviewCount || 0, ...proj.settings, codebooks: saved } };
+      setProjects(projects.map(p => (p.id === proj.id ? nextProj : p)));
+      saveQDAProject(nextProj).catch(() => showToast('error', 'Không lưu được bộ từ điển mã.'));
+    }
     setNewCodebookName('');
     setShowNewCodebookModal(false);
     showToast('success', `Đã tạo bộ từ điển mã "${newCb.name}" thành công.`);

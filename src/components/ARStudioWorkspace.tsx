@@ -1120,10 +1120,13 @@ export default function ARStudioWorkspace({
       });
 
       if (isEditing && initialTarget) {
+        // Sửa thì giữ nguyên chủ sở hữu, chỉ chủ mới sửa được.
+        const { owner_id: _keepOwner, ...updatePayload } = payload as any;
         const { error: updateErr } = await supabase
           .from('ar_targets')
-          .update(payload)
-          .eq('id', initialTarget.id);
+          .update(updatePayload)
+          .eq('id', initialTarget.id)
+          .eq('owner_id', currentUser?.id || '-');
         if (updateErr) throw updateErr;
       } else {
         const { error: insertErr } = await supabase.from('ar_targets').insert(payload);

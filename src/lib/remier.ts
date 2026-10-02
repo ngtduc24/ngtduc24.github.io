@@ -62,15 +62,15 @@ function ctx() { return getEduCtx(); }
 
 export async function getProjects(): Promise<MvProject[]> {
   const c = ctx();
-  let q = supabase.from(P_TABLE).select('*').is('deleted_at', null).order('updated_at', { ascending: false });
-  if (!c.isAdmin && c.userId) q = q.eq('owner_id', c.userId);
+  if (!c.userId) return [];
+  const q = supabase.from(P_TABLE).select('*').is('deleted_at', null).order('updated_at', { ascending: false }).eq('owner_id', c.userId);
   const { data, error } = await q;
   if (error) throw error;
   return (data || []) as MvProject[];
 }
 
 export async function getProject(id: string): Promise<MvProject> {
-  const { data, error } = await supabase.from(P_TABLE).select('*').eq('id', id).single();
+  const { data, error } = await supabase.from(P_TABLE).select('*').eq('id', id).eq('owner_id', ctx().userId || '-').single();
   if (error) throw error;
   return data as MvProject;
 }
@@ -92,33 +92,33 @@ export async function updateProject(id: string, patch: Partial<MvProject>): Prom
   const allowed: any = {};
   (['title', 'width', 'height', 'fps', 'duration_ms', 'timeline', 'thumb_url'] as (keyof MvProject)[])
     .forEach(k => { if (k in patch) allowed[k] = (patch as any)[k]; });
-  const { error } = await supabase.from(P_TABLE).update(allowed).eq('id', id);
+  const { error } = await supabase.from(P_TABLE).update(allowed).eq('id', id).eq('owner_id', ctx().userId || '-');
   if (error) throw error;
 }
 
 export async function softDeleteProject(id: string): Promise<void> {
-  const { error } = await supabase.from(P_TABLE).update({ deleted_at: new Date().toISOString() }).eq('id', id);
+  const { error } = await supabase.from(P_TABLE).update({ deleted_at: new Date().toISOString() }).eq('id', id).eq('owner_id', ctx().userId || '-');
   if (error) throw error;
 }
 export async function getTrashProjects(): Promise<MvProject[]> {
   const c = ctx();
-  let q = supabase.from(P_TABLE).select('*').not('deleted_at', 'is', null).order('deleted_at', { ascending: false });
-  if (!c.isAdmin && c.userId) q = q.eq('owner_id', c.userId);
+  if (!c.userId) return [];
+  const q = supabase.from(P_TABLE).select('*').not('deleted_at', 'is', null).order('deleted_at', { ascending: false }).eq('owner_id', c.userId);
   const { data, error } = await q; if (error) throw error; return (data || []) as MvProject[];
 }
 export async function restoreProject(id: string): Promise<void> {
-  const { error } = await supabase.from(P_TABLE).update({ deleted_at: null }).eq('id', id); if (error) throw error;
+  const { error } = await supabase.from(P_TABLE).update({ deleted_at: null }).eq('id', id).eq('owner_id', ctx().userId || '-'); if (error) throw error;
 }
 export async function purgeProject(id: string): Promise<void> {
-  const { error } = await supabase.from(P_TABLE).delete().eq('id', id); if (error) throw error;
+  const { error } = await supabase.from(P_TABLE).delete().eq('id', id).eq('owner_id', ctx().userId || '-'); if (error) throw error;
 }
 
 // --------------------------- Tư liệu ---------------------------
 
 export async function getMyAssets(kind?: MvKind): Promise<MvAsset[]> {
   const c = ctx();
-  let q = supabase.from(A_TABLE).select('*').eq('scope', 'personal').is('deleted_at', null).order('created_at', { ascending: false });
-  if (!c.isAdmin && c.userId) q = q.eq('owner_id', c.userId);
+  if (!c.userId) return [];
+  let q = supabase.from(A_TABLE).select('*').eq('scope', 'personal').is('deleted_at', null).order('created_at', { ascending: false }).eq('owner_id', c.userId);
   if (kind) q = q.eq('kind', kind);
   const { data, error } = await q; if (error) throw error; return (data || []).map(mapAsset);
 }
@@ -157,7 +157,8 @@ export async function addAsset(a: Partial<MvAsset> & { kind: MvKind; title: stri
 }
 
 export async function deleteAsset(id: string): Promise<void> {
-  const { error } = await supabase.from(A_TABLE).update({ deleted_at: new Date().toISOString() }).eq('id', id);
+  // Tư liệu cá nhân chỉ chủ xoá được, tư liệu thư viện chung do người quản lý thư viện xoá.
+  const { error } = await supabase.from(A_TABLE).update({ deleted_at: new Date().toISOString() }).eq('id', id).or(`owner_id.eq.${ctx().userId || '-'},scope.eq.shared`);
   if (error) throw error;
 }
 
@@ -165,7 +166,7 @@ export async function updateAsset(id: string, patch: Partial<MvAsset>): Promise<
   const allowed: any = {};
   (['title', 'description', 'tags', 'category_id', 'is_featured', 'is_hidden', 'license', 'source'] as (keyof MvAsset)[])
     .forEach(k => { if (k in patch) allowed[k] = (patch as any)[k]; });
-  const { error } = await supabase.from(A_TABLE).update(allowed).eq('id', id);
+  const { error } = await supabase.from(A_TABLE).update(allowed).eq('id', id).or(`owner_id.eq.${ctx().userId || '-'},scope.eq.shared`);
   if (error) throw error;
 }
 

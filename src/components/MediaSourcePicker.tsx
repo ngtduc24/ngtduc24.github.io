@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, CloudUpload, File, Image as ImageIcon, Images, Loader2, Search, Upload, Video, X } from 'lucide-react';
-import { db } from '../lib/firebase';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { listMyMedia } from '../lib/mediaItems';
 import { CloudinaryResourceType, uploadMediaToCloudinary } from '../lib/upload';
 
 interface LibraryItem {
@@ -66,28 +65,21 @@ export default function MediaSourcePicker({
     let active = true;
     setLoading(true);
     setError('');
-    Promise.allSettled([
-      getDocs(query(collection(db, 'uploaded_images'), orderBy('uploadedAt', 'desc')))
-    ]).then(results => {
+    // Thư viện chỉ gồm tệp do chính người đang đăng nhập tải lên.
+    listMyMedia().then(list => {
       if (!active) return;
-      const merged = new Map<string, LibraryItem>();
-      const firestoreResult = results[0];
-      if (firestoreResult.status === 'fulfilled') {
-        firestoreResult.value.docs.forEach(snapshot => {
-          const item = snapshot.data();
-          if (!item.url || merged.has(item.url)) return;
-          merged.set(item.url, {
-            public_id: snapshot.id,
-            url: item.url,
-            resource_type: item.type || 'image',
-            original_filename: item.originalFilename || item.category || 'Tệp thư viện',
-            folder: item.category || 'Thư viện chung',
-            created_at: item.uploadedAt?.toDate?.()?.toISOString?.() || null
-          });
-        });
-      }
-      if (!merged.size && firestoreResult.status === 'rejected') setError('Không thể kết nối Thư viện dùng chung.');
-      setItems(Array.from(merged.values()));
+      setItems(list.map(m => ({
+        public_id: m.id,
+        url: m.url,
+        resource_type: m.type,
+        original_filename: m.originalFilename || m.category || 'Tệp thư viện',
+        folder: m.category || 'Thư viện',
+        created_at: m.createdAt,
+      })));
+      setLoading(false);
+    }).catch(() => {
+      if (!active) return;
+      setError('Không tải được thư viện.');
       setLoading(false);
     });
     return () => { active = false; };
@@ -172,12 +164,12 @@ export default function MediaSourcePicker({
                 <button type="button" onClick={() => setMode('library')} className="group flex min-h-44 flex-col items-center justify-center rounded-2xl bg-brand-light p-6 text-center transition hover:bg-brand/15">
                   <span className="grid h-14 w-14 place-items-center rounded-2xl bg-white text-brand shadow-sm"><Images className="h-7 w-7" /></span>
                   <strong className="mt-4 text-sm text-slate-800">Chọn từ Thư viện</strong>
-                  <span className="mt-1 text-xs leading-5 text-slate-500">Dùng lại ảnh, video hoặc tài liệu đã có trên hệ thống.</span>
+                  <span className="mt-1 text-xs leading-5 text-slate-500">Dùng lại ảnh, video hoặc tài liệu bạn đã tải lên.</span>
                 </button>
                 <button type="button" onClick={() => setMode('upload')} className="group flex min-h-44 flex-col items-center justify-center rounded-2xl bg-slate-50 p-6 text-center transition hover:bg-slate-100">
                   <span className="grid h-14 w-14 place-items-center rounded-2xl bg-white text-slate-700 shadow-sm"><CloudUpload className="h-7 w-7" /></span>
                   <strong className="mt-4 text-sm text-slate-800">Tải tệp mới</strong>
-                  <span className="mt-1 text-xs leading-5 text-slate-500">Chọn tệp từ máy và tải lên Cloudinary dùng chung.</span>
+                  <span className="mt-1 text-xs leading-5 text-slate-500">Chọn tệp từ máy và tải lên thư viện của bạn.</span>
                 </button>
               </div>
             )}

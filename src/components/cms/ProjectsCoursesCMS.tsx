@@ -92,8 +92,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
         [...mine, ...pub].forEach(l => { if (!seen.has(l.id)) { seen.add(l.id); merged.push(l); } });
         setElLessons(merged);
         const uid = getEduCtx().userId;
-        const isAdmin = getEduCtx().isAdmin;
-        setQuizOptions((quizzes as any[]).filter(q => isAdmin || q.owner_id === uid || q.is_public));
+        setQuizOptions((quizzes as any[]).filter(q => q.owner_id === uid || q.is_public));
       } catch { /* bỏ qua */ }
     })();
   }, [editingCourse, sourcesLoaded]);
@@ -2010,7 +2009,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                           const q = quizOptions.find(x => x.id === e.target.value);
                                           patchLesson(chapter.id, lesson.id, { quizId: q?.id || '', quizSlug: q?.slug || '', quizTitle: q?.title || '' });
                                           // Học viên khoá học không thuộc lớp nào nên đề cần mở cho mã người học bên ngoài.
-                                          if (q && !q.open_access && (q.owner_id === getEduCtx().userId || getEduCtx().isAdmin)) {
+                                          if (q && !q.open_access && q.owner_id === getEduCtx().userId) {
                                             try {
                                               await setQuizOpenAccess(q.id, true);
                                               setQuizOptions(prev => prev.map(x => x.id === q.id ? { ...x, open_access: true } : x));

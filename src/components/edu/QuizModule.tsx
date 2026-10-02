@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { prettyShareUrl } from '../../lib/shareLinks';
+import { useSubjectNames } from './useSubjectNames';
 import {
   Plus, Trash2, Edit2, Save, X, FileCheck2, Clock, ListChecks, Check, ChevronLeft,
   Search, Library, BookOpen, Users, Link2, Copy, QrCode, Send, ArrowUp, ArrowDown, Loader2, Share2, Globe, ChevronRight
@@ -85,7 +86,7 @@ export default function QuizModule({ currentUser, standaloneBank }: QuizModulePr
   }, [filterSubject, listTab, addNotification]);
   useEffect(() => { if (view === 'list') loadQuizzes(); }, [view, loadQuizzes]);
 
-  const subjectName = (id?: string | null) => subjects.find(s => s.id === id)?.name || '';
+  const subjectName = useSubjectNames(subjects, quizzes.map(q => q.subject_id));
 
   // Tìm kiếm (gõ không dấu vẫn tìm được) và chia trang cho Đề của tôi, Kho đề chung
   const [quizSearch, setQuizSearch] = useState('');
@@ -356,7 +357,7 @@ function QuestionBank({ currentUser, subjects, selectMode, targetQuiz, onBack, o
   }, [tab, subjectId, type, search, addNotification]);
   useEffect(() => { load(); }, [load]);
 
-  const subjectName = (id?: string | null) => subjects.find(s => s.id === id)?.name || '';
+  const subjectName = useSubjectNames(subjects, items.map(q => q.subject_id));
 
   const remove = (q: QuizQuestion) => {
     confirm('Xóa câu hỏi', 'Xóa câu hỏi này khỏi ngân hàng? Không thể hoàn tác.', async () => {

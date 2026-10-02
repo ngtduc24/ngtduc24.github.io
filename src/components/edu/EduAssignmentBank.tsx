@@ -15,10 +15,9 @@ import { EduResourceEditor, EduResourceList } from './EduResources';
 import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
 import { UserAccount } from '../../types';
 import {
-  getSubjects, saveSubject, deleteSubject, getAssignmentBank, saveAssignmentBankItem, deleteAssignmentBankItem,
+  getSubjects, getSubjectsByIds, saveSubject, deleteSubject, getAssignmentBank, saveAssignmentBankItem, deleteAssignmentBankItem,
   bulkUpdateAssignmentBank, bulkDeleteAssignmentBank, ensureBankShareToken, bankShareUrl, newShareToken,
 } from '../../lib/edu';
-import { getUsers } from '../../lib/data';
 import { uploadImageToCloudinary } from '../../lib/upload';
 import { exportAssignmentToPdf } from '../../lib/assignmentPdf';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
@@ -50,10 +49,8 @@ const formatsText = (t?: string[]) => (t || []).map(x => FORMAT_OPTIONS.find(f =
 export default function EduAssignmentBank({ currentUser, onExit }: { currentUser: UserAccount; onExit?: () => void }) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
-  const isAdmin = currentUser?.role === 'admin';
-
-  // Chỉ người tạo ra bài hoặc admin mới được sửa, xóa và bật chia sẻ công khai.
-  const canEdit = (item?: { ownerId?: string } | null) => !!item && (item.ownerId === currentUser?.id || isAdmin);
+  // Chỉ người tạo ra bài mới được sửa, xóa và bật chia sẻ công khai.
+  const canEdit = (item?: { ownerId?: string } | null) => !!item && item.ownerId === currentUser?.id;
 
   const [subjects, setSubjects] = useState<EduSubject[]>([]);
   const [items, setItems] = useState<EduAssignmentBankItem[]>([]);
@@ -63,7 +60,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   // Bộ lọc và cách hiển thị
   const [subjectId, setSubjectId] = useState('');
   const [search, setSearch] = useState('');
-  const [scope, setScope] = useState<'all' | 'mine' | 'shared'>('all');
+  const [scope, setScope] = useState<'all' | 'mine' | 'shared'>('mine');
   const [sort, setSort] = useState<'new' | 'name'>('new');
   const [mode, setModeState] = useState<'grid' | 'table'>(() => { try { return localStorage.getItem('bank_view') === 'table' ? 'table' : 'grid'; } catch { return 'grid'; } });
   const setMode = (m: 'grid' | 'table') => { setModeState(m); try { localStorage.setItem('bank_view', m); } catch { /* bỏ qua */ } };
@@ -98,10 +95,18 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
     content: '',
   });
 
-  // Bản đồ uid -> tên người tạo
-  const [userNames, setUserNames] = useState<Record<string, string>>({});
-  const ownerName = (ownerId?: string) => (ownerId ? userNames[ownerId] || items.find(i => i.ownerId === ownerId && i.ownerName)?.ownerName || '' : '');
-  const subjName = (id?: string) => subjects.find(s => s.id === id)?.name || '';
+  // Tên người tạo lấy từ chính bài tập (bài dùng chung của người khác có lưu tên tác giả).
+  const userNames: Record<string, string> = {};
+  const ownerName = (ownerId?: string) => (ownerId ? (ownerId === currentUser.id ? currentUser.fullName : items.find(i => i.ownerId === ownerId && i.ownerName)?.ownerName || '') : '');
+  // Môn của bài dùng chung do người khác tạo: chỉ để hiện tên, không sửa xoá được.
+  const [otherSubjects, setOtherSubjects] = useState<EduSubject[]>([]);
+  useEffect(() => {
+    const mine = new Set(subjects.map(s => s.id));
+    const ids = items.map(i => i.subjectId).filter(id => id && !mine.has(id));
+    if (!ids.length) { setOtherSubjects([]); return; }
+    getSubjectsByIds(ids).then(setOtherSubjects).catch(() => setOtherSubjects([]));
+  }, [items, subjects]);
+  const subjName = (id?: string) => subjects.find(s => s.id === id)?.name || otherSubjects.find(s => s.id === id)?.name || '';
 
   const reloadItems = () => getAssignmentBank().then(setItems).catch(() => setItems([]));
 
@@ -111,11 +116,6 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
       await reloadItems();
       setLoading(false);
     })();
-    getUsers().then(list => {
-      const map: Record<string, string> = {};
-      list.forEach(u => { map[u.id] = u.fullName || u.username || u.email || u.id; });
-      setUserNames(map);
-    }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -123,7 +123,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   useEffect(() => () => { writeSubRoute({ bid: null }); }, []);
 
   // Đếm số bài theo môn (sau khi lọc phạm vi), để hiện ở cột trái
-  const scoped = useMemo(() => items.filter(it => scope === 'all' ? true : scope === 'mine' ? it.ownerId === currentUser.id : it.ownerId !== currentUser.id), [items, scope, currentUser.id]);
+  const scoped = useMemo(() => items.filter(it => scope === 'all' ? true : scope === 'mine' ? it.ownerId === currentUser.id : (it.isPublic && it.ownerId !== currentUser.id)), [items, scope, currentUser.id]);
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
     scoped.forEach(it => { const k = it.subjectId || '__none'; m[k] = (m[k] || 0) + 1; });
@@ -170,7 +170,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
       } catch (e: any) { addNotification('Không tạo được link: ' + (e?.message || e), 'error'); }
     })();
   };
-  const canShare = (it: EduAssignmentBankItem) => canEdit(it) || !!it.shareToken || it.isPublic;
+  const canShare = (it: EduAssignmentBankItem) => canEdit(it) || !!it.shareToken;
 
   // ---------------- Môn học ----------------
   const handleAddSubject = async () => {
@@ -493,6 +493,9 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
           <SubjectBtn key={s.id} active={subjectId === s.id} label={s.name} count={counts[s.id] || 0} onClick={() => setSubjectId(s.id)}
             onRename={() => { setEditingSubjectId(s.id); setEditSubjectName(s.name); }} onDelete={() => handleDeleteSubject(s)} />
         ))}
+        {otherSubjects.filter(s => (counts[s.id] || 0) > 0).map(s => (
+          <SubjectBtn key={s.id} active={subjectId === s.id} label={s.name} count={counts[s.id] || 0} onClick={() => setSubjectId(s.id)} />
+        ))}
         {(counts.__none || 0) > 0 && <SubjectBtn active={subjectId === '__none'} label="Chưa chọn môn" count={counts.__none} onClick={() => setSubjectId('__none')} />}
       </div>
 
@@ -506,9 +509,9 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <select value={scope} onChange={e => setScope(e.target.value as any)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-brand">
-              <option value="all">Mọi bài tập</option>
               <option value="mine">Bài của tôi</option>
               <option value="shared">Bài dùng chung</option>
+              <option value="all">Tất cả</option>
             </select>
             <select value={sort} onChange={e => setSort(e.target.value as any)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-brand">
               <option value="new">Mới nhất</option>

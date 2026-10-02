@@ -19,10 +19,57 @@ service cloud.firestore {
     // Những trường quyết định quyền hạn. Người dùng thường không được tự sửa chúng
     // trên hồ sơ của chính mình, nếu không họ sẽ tự nâng quyền lên ngang admin mà
     // vẫn giữ nguyên vai trò để qua mặt phần kiểm tra ở giao diện.
+    // Cờ quyền thao tác (can_...) cũng là quyền hạn, người dùng không được tự bật cho mình.
+    function flagSame(k) {
+      return (request.resource.data.get(k, false) == true) == (resource.data.get(k, false) == true);
+    }
+
     function privilegeFieldsUnchanged() {
       return request.resource.data.role == resource.data.role
         && request.resource.data.get('permissions', []) == resource.data.get('permissions', [])
-        && request.resource.data.get('isActive', true) == resource.data.get('isActive', true);
+        && request.resource.data.get('isActive', true) == resource.data.get('isActive', true)
+        && flagSame('can_assign_task')
+        && flagSame('can_complete_task')
+        && flagSame('can_create_edu')
+        && flagSame('can_create_journal')
+        && flagSame('can_create_qualitative')
+        && flagSame('can_create_quantitative')
+        && flagSame('can_create_task')
+        && flagSame('can_delete_edu')
+        && flagSame('can_delete_journal')
+        && flagSame('can_delete_qualitative')
+        && flagSame('can_delete_quantitative')
+        && flagSame('can_delete_task')
+        && flagSame('can_edit_edu')
+        && flagSame('can_edit_journal')
+        && flagSame('can_edit_qualitative')
+        && flagSame('can_edit_quantitative')
+        && flagSame('can_elearning_assign')
+        && flagSame('can_elearning_public')
+        && flagSame('can_export_edu')
+        && flagSame('can_export_qualitative')
+        && flagSame('can_export_quantitative')
+        && flagSame('can_grade_edu')
+        && flagSame('can_grade_import_edu')
+        && flagSame('can_import_edu')
+        && flagSame('can_import_journal')
+        && flagSame('can_import_qualitative')
+        && flagSame('can_import_quantitative')
+        && flagSame('can_manage_edu')
+        && flagSame('can_manage_journal_cats')
+        && flagSame('can_manage_journal_settings')
+        && flagSame('can_manage_qualitative_settings')
+        && flagSame('can_manage_quantitative_settings')
+        && flagSame('can_manage_settings')
+        && flagSame('can_portfolio_content')
+        && flagSame('can_portfolio_courses')
+        && flagSame('can_portfolio_navigation')
+        && flagSame('can_portfolio_profile')
+        && flagSame('can_portfolio_projects')
+        && flagSame('can_portfolio_research')
+        && flagSame('can_receive_task')
+        && flagSame('can_remier_shared')
+        && flagSame('can_run_pause_task');
     }
 
     // Quy tắc chung cho mọi tài liệu. Ghi vẫn chỉ dành cho admin.

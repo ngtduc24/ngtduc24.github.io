@@ -51,11 +51,7 @@ export default function TaskCompletionReportModal({
       // Chỉ lấy task đã hoàn thành và chưa bị xóa
       if (t.status !== 'Completed' || t.isDeleted) return false;
 
-      // Phân quyền:
-      // Admin: Xem được tất cả
-      if (isAdmin) return true;
-
-      // User: Chỉ xem được công việc của chính mình (được giao hoặc tự tạo)
+      // Mọi tài khoản chỉ xem công việc của chính mình (được giao hoặc tự tạo).
       return isTaskRelevantToUser(t, currentUser);
     });
   }, [tasks, isAdmin, currentUser]);

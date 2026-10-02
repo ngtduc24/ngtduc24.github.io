@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { canUseModule } from '../lib/moduleAccess';
 import MediaSourcePicker from './MediaSourcePicker';
 import {
   Calculator, Settings, Users, BookOpen, Search, X, Database, Sparkles,
   CalendarDays, BarChart3, GraduationCap, Wrench, FolderKanban, Mail,
   Library, Image as ImageIcon, LayoutGrid, ArrowRight, Bell, ChevronDown,
-  Home, FileText, CheckCircle2, ClipboardList, Scan, LayoutTemplate, Megaphone, Minus, Eye, Shield, Plus, Clapperboard, FileArchive, Globe
+  Home, FileText, CheckCircle2, ClipboardList, Scan, LayoutTemplate, Megaphone, Minus, Eye, Shield, Plus, Clapperboard, FileArchive, Globe, FolderOpen
 , FileUser, QrCode } from 'lucide-react';
 import {
   getStatsFromSupabase,
   getJournalsFromSupabase,
-  getNotificationsFromSupabase,
+  getNotificationsFromSupabase, isNotificationForUser,
   saveDefaultSettingsToSupabase,
   saveUser
 } from '../lib/data';
@@ -195,7 +196,10 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   useEffect(() => {
     getStatsFromSupabase().then(setStatsData).catch(() => {});
     getJournalsFromSupabase().then(j => { setJournals(j); setJournalsCount(j.length); }).catch(() => {});
-    getNotificationsFromSupabase().then(setNotifs).catch(() => {});
+    // Chỉ hiện thông báo gửi tới chính tài khoản này, bỏ các thông báo đã xoá.
+    getNotificationsFromSupabase()
+      .then(list => setNotifs(list.filter((n: any) => isNotificationForUser(n, currentUser) && localStorage.getItem(`notif_deleted_${currentUser.id}_${n.id}`) !== 'true')))
+      .catch(() => {});
   }, []);
 
   const handleSaveDbConfig = (e: React.FormEvent) => {
@@ -239,22 +243,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   // Mở chức năng. Với phím tắt con của Giáo dục thì đặt sẵn màn hình đích rồi vào module edu.
   // Mỗi chức năng là một tab có link riêng (?tab=slug), kể cả các chức năng con của Giáo dục.
   const go = (id: string) => onSwitchTab(id);
-  const can = (id: string) => {
-    if (isUserAdmin) return true;
-    if (id === 'notifications') return true;
-    if (id === 'utilities') return perms.includes('utilities') || perms.includes('ar_module') || perms.includes('utility_image_resize') || perms.includes('utility_social_design');
-    if (id === 'ar_module') return perms.includes('ar_module') || perms.includes('utilities');
-    if (id === 'utility_image_resize') return perms.includes('utility_image_resize') || perms.includes('utilities');
-    if (id === 'utility_file_compress') return perms.includes('utility_file_compress') || perms.includes('utilities');
-    if (id === 'utility_social_design') return perms.includes('utility_social_design') || perms.includes('utilities');
-    // Phím tắt tới chức năng con trong Quản lý Giáo dục.
-    if (id === 'edu_bank') return perms.includes('edu') && !!currentUser?.canCreateEdu;
-    if (id === 'edu_exam') return perms.includes('edu') && !!currentUser?.canGradeEdu;
-    if (id === 'edu_question_bank') return perms.includes('edu') && !!currentUser?.canGradeEdu;
-    if (id === 'edu_grade') return perms.includes('edu') && !!currentUser?.canGradeImportEdu;
-    if (id === 'users' || id === 'permissions') return false;
-    return perms.includes(id);
-  };
+  const can = (id: string) => canUseModule(currentUser, id);
 
   // Danh sách chức năng theo ảnh mẫu, kèm màu và biểu tượng.
   const allModules = [
@@ -277,6 +266,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn', icon: ImageIcon, color: 'blue' },
     { id: 'utility_file_compress', label: 'Giảm dung lượng file', desc: 'Nén PDF, JPG, PNG mà vẫn giữ chất lượng tốt', icon: FileArchive, color: 'emerald' },
     { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn', icon: LayoutTemplate, color: 'violet' },
+    { id: 'media_library', label: 'Thư viện tệp', desc: 'Ảnh, video bạn đã tải lên, sao chép link dùng lại', icon: FolderOpen, color: 'blue' },
     { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Lưu trữ và quản lý hồ sơ cá nhân, dự án', icon: FolderKanban, color: 'teal' },
     { id: 'assistant', label: 'Trợ lý giáo dục', desc: 'Hỏi đáp kiến thức bài học từ nội dung công khai', icon: Sparkles, color: 'violet' },
     { id: 'notifications', label: 'Thông báo', desc: 'Tài liệu, mẫu biểu, dữ liệu tham khảo', icon: Mail, color: 'amber' },
@@ -425,9 +415,9 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
 
   const visibleTasks = tasks.filter(t => !t.isDeleted && isTaskRelevantToUser(t, currentUser));
   const runningTasks = visibleTasks.filter(t => t.status !== 'Completed' && t.status !== 'Cancelled');
-  const completedCount = (isUserAdmin ? tasks.filter(t => !t.isDeleted) : visibleTasks).filter(t => t.status === 'Completed').length;
+  const completedCount = visibleTasks.filter(t => t.status === 'Completed').length;
   const recentTasks = [...visibleTasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3);
-  const unreadCount = notifs.filter(n => !n.isRead).length;
+  const unreadCount = notifs.filter(n => localStorage.getItem(`notif_read_${currentUser.id}_${n.id}`) !== 'true').length;
 
   const statusBadge = (status: string) => {
     if (status === 'Completed') return { label: 'Hoàn thành', cls: 'bg-emerald-50 text-emerald-600 border-emerald-200' };

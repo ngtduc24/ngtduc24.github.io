@@ -606,7 +606,7 @@ export default function ARModule({ currentUser }: { currentUser?: UserAccount | 
     if (!confirmed) return;
 
     try {
-      const { error: delError } = await supabase.from('ar_targets').delete().eq('id', target.id);
+      const { error: delError } = await supabase.from('ar_targets').delete().eq('id', target.id).eq('owner_id', currentUser?.id || '-');
       if (delError) throw delError;
       setTargets(prev => prev.filter(t => t.id !== target.id));
       addNotification(`Đã xóa AR target "${target.name}" thành công`, 'success');
@@ -619,10 +619,9 @@ export default function ARModule({ currentUser }: { currentUser?: UserAccount | 
     setLoading(true);
     setError(null);
     try {
-      let query = supabase.from('ar_targets').select('*').order('created_at', { ascending: false });
-      if (currentUser?.id) {
-        query = query.eq('owner_id', currentUser.id);
-      }
+      // Mỗi người chỉ thấy điểm AR của chính mình.
+      if (!currentUser?.id) { setTargets([]); return; }
+      const query = supabase.from('ar_targets').select('*').order('created_at', { ascending: false }).eq('owner_id', currentUser.id);
       const { data, error: sbError } = await query;
       if (sbError) throw sbError;
       setTargets((data || []).map(unpackARTarget));

@@ -11,10 +11,10 @@ import { UserAccount } from '../../types';
 import { EduSubject, EduClass } from '../../types/edu';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
-import { getSubjects, saveSubject, getClasses, getClassUsers, setEduAuthContext } from '../../lib/edu';
+import { getSubjects, getSubjectsByIds, saveSubject, getClasses, getClassUsers, setEduAuthContext } from '../../lib/edu';
 import {
   ELLesson, ELSection, ELResource,
-  syncOwnerName, getMyLessons, getPublicLessons, getPublicSubjectCounts, getLesson, createLesson, updateLesson,
+  syncOwnerName, getMyLessons, getPublicLessons, getPublicSubjectCounts, getLesson, getOwnLesson, createLesson, updateLesson,
   softDeleteLesson, bulkSoftDeleteLessons, bulkUpdateLessons, restoreLesson, purgeLesson, getTrashLessons,
   getSections, createSection, updateSection, deleteSection, reorderSections,
   getResources, addResource, uploadResource, updateResource, deleteResource,
@@ -449,8 +449,11 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
 
   const load = useCallback(async () => {
     const [l, secs, res] = await Promise.all([getLesson(lessonId), getSections(lessonId), getResources(lessonId)]);
+    // Chỉ chủ bài giảng mới mở được trang soạn.
+    if (l.owner_id !== currentUser.id) { addNotification('Không tìm thấy bài giảng.', 'error'); onBack(); return; }
     setLesson(l); setSections(secs); setResources(res);
     setActiveSection(prev => prev && secs.some(s => s.id === prev) ? prev : (secs[0]?.id ?? null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
   useEffect(() => { load(); }, [load]);
 
@@ -646,9 +649,12 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
 }
 
 // ============================ KHO CHUNG ============================
-function PublicLibrary({ subjects, currentUser, onCopied }: { subjects: EduSubject[]; currentUser: UserAccount; onCopied: (id: string) => void; }) {
+function PublicLibrary({ currentUser, onCopied }: { subjects?: EduSubject[]; currentUser: UserAccount; onCopied: (id: string) => void; }) {
   const { addNotification } = useNotifications();
   const [counts, setCounts] = useState<Record<string, number>>({});
+  // Môn học của kho chung lấy theo các môn có bài công khai (môn của nhiều người khác nhau).
+  const [subjects, setPubSubjects] = useState<EduSubject[]>([]);
+  useEffect(() => { getSubjectsByIds(Object.keys(counts)).then(setPubSubjects).catch(() => {}); }, [counts]);
   const [subjectId, setSubjectId] = useState('');
   const [sort, setSort] = useState<'new' | 'views' | 'copies'>('new');
   const [all, setAll] = useState<ELLesson[]>([]);
@@ -753,7 +759,7 @@ function AssignScreen({ lessonId, onBack, onProgress }: { lessonId: string; onBa
   useEffect(() => {
     (async () => {
       try {
-        const [l, cls, assigned] = await Promise.all([getLesson(lessonId), getClasses(), getLessonClasses(lessonId)]);
+        const [l, cls, assigned] = await Promise.all([getOwnLesson(lessonId), getClasses(), getLessonClasses(lessonId)]);
         setLesson(l);
         const withCount = await Promise.all(cls.map(async c => ({ ...c, count: (await getClassUsers(c.id)).length })));
         setClasses(withCount);
@@ -833,7 +839,7 @@ function ProgressScreen({ lessonId, onBack }: { lessonId: string; onBack: () => 
   useEffect(() => {
     (async () => {
       try {
-        const [l, secs, views, classIds] = await Promise.all([getLesson(lessonId), getSections(lessonId), getSectionViews(lessonId), getLessonClasses(lessonId)]);
+        const [l, secs, views, classIds] = await Promise.all([getOwnLesson(lessonId), getSections(lessonId), getSectionViews(lessonId), getLessonClasses(lessonId)]);
         setLesson(l); setSections(secs);
         const students: { mssv: string; fullName: string }[] = [];
         for (const cid of classIds) { (await getClassUsers(cid)).forEach(u => students.push({ mssv: u.mssv, fullName: u.fullName })); }

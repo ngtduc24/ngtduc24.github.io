@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, BookOpen, LayoutGrid, HelpCircle, ArrowRight, Loader2, FileQuestion, Sparkles, BookMarked } from 'lucide-react';
 import { UserAccount, AppSettings } from '../../types';
 import { MODULE_REGISTRY, resolveModuleMeta, isModuleHidden } from '../../lib/modules';
-import { getSubjects, getAssignmentBank } from '../../lib/edu';
+import { getSubjects, getSubjectsByIds, getAssignmentBank } from '../../lib/edu';
 import { getMyLessons, getPublicLessons, getSections, stripHtml, ELLesson } from '../../lib/elearning';
 import { getBankQuestions, QuizQuestion } from '../../lib/quiz';
 import { EduSubject, EduAssignmentBankItem } from '../../types/edu';
@@ -153,6 +153,9 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
           ]);
           setLessons(pub);
           setBankItems((bank as EduAssignmentBankItem[]).filter(b => b.isPublic === true));
+          // Tên môn của nội dung công khai do người khác soạn (môn học là dữ liệu riêng từng người).
+          const extra = await getSubjectsByIds([...pub.map(l => l.subject_id), ...(bank as EduAssignmentBankItem[]).map(b => b.subjectId)]).catch(() => []);
+          setSubjects([...subs, ...extra.filter(x => !subs.some(y => y.id === x.id))]);
           // Đọc nội dung các phần của bài giảng công khai để trả lời thẳng câu hỏi kiến thức.
           const limited = pub.slice(0, 40);
           const secLists = await Promise.all(limited.map(l =>

@@ -123,6 +123,19 @@ export async function getMediaStats(): Promise<MediaStats> {
     if (!out.byType[type]) out.byType[type] = { bytes: 0, files: 0 };
     out.byType[type].bytes += bytes; out.byType[type].files += 1;
   });
+  // Tệp tải lên từ nay ghi ở bảng media_items (chỉ cộng tổng dung lượng, không đọc nội dung).
+  try {
+    const { data } = await supabase.from('media_items').select('url, bytes, type');
+    (data || []).forEach((v: any) => {
+      if (!v.url || seen.has(v.url)) return;
+      seen.add(v.url);
+      const bytes = Number(v.bytes) || 0;
+      const type = String(v.type || 'khác');
+      out.bytes += bytes; out.files += 1;
+      if (!out.byType[type]) out.byType[type] = { bytes: 0, files: 0 };
+      out.byType[type].bytes += bytes; out.byType[type].files += 1;
+    });
+  } catch { /* bỏ qua */ }
   return out;
 }
 

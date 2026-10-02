@@ -31,9 +31,9 @@ export interface VRTour {
 
 export async function getMyTours(): Promise<VRTour[]> {
   const ctx = getEduCtx();
-  let query = supabase.from(VR_TABLE).select('*').order('created_at', { ascending: false });
-  // Người dùng thường chỉ thấy dự án của chính mình, quản trị viên thấy tất cả.
-  if (!ctx.isAdmin && ctx.userId) query = query.eq('owner_id', ctx.userId);
+  // Mỗi người chỉ thấy dự án của chính mình.
+  if (!ctx.userId) return [];
+  const query = supabase.from(VR_TABLE).select('*').order('created_at', { ascending: false }).eq('owner_id', ctx.userId);
   const { data, error } = await query;
   if (error) throw error;
   return (data || []) as VRTour[];
@@ -61,7 +61,7 @@ export async function saveTour(t: Partial<VRTour>): Promise<VRTour> {
   };
   let data: any, error: any;
   if (t.id) {
-    ({ data, error } = await supabase.from(VR_TABLE).update(payload).eq('id', t.id).select('*').single());
+    ({ data, error } = await supabase.from(VR_TABLE).update(payload).eq('id', t.id).eq('owner_id', getEduCtx().userId || '-').select('*').single());
   } else {
     payload.owner_id = t.owner_id || ctx.userId;
     payload.owner_name = t.owner_name ?? null;
@@ -72,7 +72,7 @@ export async function saveTour(t: Partial<VRTour>): Promise<VRTour> {
 }
 
 export async function deleteTour(id: string): Promise<void> {
-  const { error } = await supabase.from(VR_TABLE).delete().eq('id', id);
+  const { error } = await supabase.from(VR_TABLE).delete().eq('id', id).eq('owner_id', getEduCtx().userId || '-');
   if (error) throw error;
 }
 

@@ -22,6 +22,7 @@ import BackupManager from './components/BackupManager';
 import AdminNotifications from './components/AdminNotifications';
 import UserNotifications from './components/UserNotifications';
 import MediaLibrary from './components/MediaLibrary';
+import { canUseModule } from './lib/moduleAccess';
 import PortfolioWebsite from './components/PortfolioWebsite';
 import PortfolioCMS from './components/PortfolioCMS';
 import UtilitiesModule from './components/UtilitiesModule';
@@ -353,7 +354,7 @@ export default function App() {
       notifications_admin: 'Quản trị thông báo',
       users: 'Quản lý người dùng',
       permissions: 'Phân quyền người dùng',
-      media_library: 'Thư viện hệ thống',
+      media_library: 'Thư viện tệp',
       settings: 'Cấu hình hệ thống',
       edu: 'Quản lý Giáo dục & Đào tạo',
       elearning: 'E-Learning · Bài giảng',
@@ -604,33 +605,7 @@ export default function App() {
     // khi mở bằng đường dẫn trực tiếp. Riêng trang Cấu hình hệ thống luôn mở để admin còn
     // vào lại được mà bật hiện chức năng khác.
     if (tabId !== 'settings' && isModuleHidden(tabId, settings)) return false;
-    if (currentUser.role === 'admin') return true;
-    if (currentUser.role === 'member') return tabId === 'portfolio_website';
-
-    if (tabId === 'notifications') return true; // All registered users have notifications inbox access
-    if (tabId === 'stats') return false; // Trang số liệu chỉ dành cho quản trị viên (admin đã return true ở trên)
-    if (tabId === 'portfolio_website') return true;
-    if (tabId === 'users') return false; // Only admin can ever see users panel
-    if (tabId === 'permissions') return false; // Only admin can ever see permission panel
-    if (tabId === 'settings') return currentUser.permissions.includes('settings');
-    if (tabId === 'notifications_admin') return currentUser.permissions.includes('notifications');
-    if (tabId === 'backup') return false;
-    // Mục Tạo AR nay nằm trong Tiện ích. Tài khoản nào đã được cấp quyền ar_module
-    // từ trước thì vẫn vào được, không cần quản trị viên cấp lại quyền.
-    if (tabId === 'all_features') return true; // Trang tổng hợp tính năng, tự lọc theo quyền của tài khoản
-    if (tabId === 'profile') return true; // Trang cá nhân mở cho mọi tài khoản đã đăng nhập
-    // Tiện ích đã tách thành 3 công cụ độc lập, mỗi công cụ có quyền riêng.
-    // Quyền gộp 'utilities' cũ vẫn cho vào cả 3 để tài khoản cũ không mất quyền.
-    const p = currentUser.permissions;
-    // Chức năng con của Giáo dục: cần quyền edu kèm cờ tương ứng, giống bảng điều khiển.
-    if (tabId === 'edu_bank') return p.includes('edu') && !!currentUser.canCreateEdu;
-    if (tabId === 'edu_exam' || tabId === 'edu_question_bank') return p.includes('edu') && !!currentUser.canGradeEdu;
-    if (tabId === 'edu_grade') return p.includes('edu') && !!currentUser.canGradeImportEdu;
-    if (tabId === 'utilities') return p.includes('utilities') || p.includes('ar_module') || p.includes('utility_image_resize') || p.includes('utility_social_design');
-    if (tabId === 'ar_module') return p.includes('ar_module') || p.includes('utilities');
-    if (tabId === 'utility_image_resize') return p.includes('utility_image_resize') || p.includes('utilities');
-    if (tabId === 'utility_social_design') return p.includes('utility_social_design') || p.includes('utilities');
-    return currentUser.permissions.includes(tabId);
+    return canUseModule(currentUser, tabId);
   };
 
   const renderActiveTab = () => {

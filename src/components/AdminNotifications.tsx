@@ -101,8 +101,9 @@ export default function AdminNotifications({ currentUser, users, settings, onRef
   useEffect(() => {
     setLoading(true);
     
+    // Trang quản lý chỉ hiện các thông báo do chính tài khoản này gửi đi.
     const unsubscribe = subscribeToNotifications((notifications) => {
-      setSentNotifications(notifications);
+      setSentNotifications(notifications.filter(n => n.senderId === currentUser.id));
       setLoading(false);
     });
 

@@ -1,5 +1,6 @@
 
 import { supabase } from './supabase';
+import { getEduCtx } from './edu';
 import { db } from './firebase';
 import { collection, addDoc, getDocs, getDoc, deleteDoc, deleteField, doc, query, orderBy, onSnapshot, setDoc } from 'firebase/firestore';
 import { ScientificJournal, JournalField, JournalType, AppSettings, UserAccount, AppNotification } from '../types';
@@ -837,10 +838,16 @@ export async function deleteJournalTypeFromSupabase(typeId: string) {
 }
 
 // --- QDA (Qualitative Data Analysis) Operations ---
+// Dữ liệu phân tích định tính là dữ liệu riêng của từng người: mọi bảng qda_* có cột owner_id,
+// đọc ghi đều lọc theo người đang đăng nhập. Chưa xác định được người dùng thì không trả gì.
+const qdaOwner = (): string | null => getEduCtx().userId;
+const QDA_NONE = '__none__';
 
 export async function getQDAProjects(): Promise<any[]> {
   try {
-    const { data, error } = await supabase.from(QDA_PROJECTS_TABLE).select('*');
+    const uid = qdaOwner();
+    if (!uid) return [];
+    const { data, error } = await supabase.from(QDA_PROJECTS_TABLE).select('*').eq('owner_id', uid).order('created_at');
     if (error) throw error;
     return (data || []).map(p => ({
       id: p.id,
@@ -862,7 +869,8 @@ export async function saveQDAProject(project: any) {
       name: project.name,
       description: project.description,
       created_at: project.createdAt || new Date().toISOString(),
-      settings: project.settings
+      settings: project.settings,
+      owner_id: qdaOwner()
     };
     const { error } = await supabase.from(QDA_PROJECTS_TABLE).upsert(dbData);
     if (error) throw error;
@@ -874,7 +882,7 @@ export async function saveQDAProject(project: any) {
 
 export async function deleteQDAProject(projectId: string) {
   try {
-    const { error } = await supabase.from(QDA_PROJECTS_TABLE).delete().eq('id', projectId);
+    const { error } = await supabase.from(QDA_PROJECTS_TABLE).delete().eq('id', projectId).eq('owner_id', qdaOwner() || QDA_NONE);
     if (error) throw error;
   } catch (error) {
     console.error("Lỗi xóa dự án QDA:", error);
@@ -884,7 +892,7 @@ export async function deleteQDAProject(projectId: string) {
 
 export async function getQDADocuments(projectId: string): Promise<any[]> {
   try {
-    const { data, error } = await supabase.from(QDA_DOCUMENTS_TABLE).select('*').eq('project_id', projectId);
+    const { data, error } = await supabase.from(QDA_DOCUMENTS_TABLE).select('*').eq('project_id', projectId).eq('owner_id', qdaOwner() || QDA_NONE);
     if (error) throw error;
     return (data || []).map(d => ({
       id: d.id,
@@ -906,7 +914,8 @@ export async function saveQDADocument(doc: any) {
       project_id: doc.projectId,
       name: doc.name,
       plain_text: doc.plainText,
-      metadata: doc.metadata
+      metadata: doc.metadata,
+      owner_id: qdaOwner()
     };
     const { error } = await supabase.from(QDA_DOCUMENTS_TABLE).upsert(dbData);
     if (error) throw error;
@@ -918,7 +927,7 @@ export async function saveQDADocument(doc: any) {
 
 export async function deleteQDADocument(docId: string) {
   try {
-    const { error } = await supabase.from(QDA_DOCUMENTS_TABLE).delete().eq('id', docId);
+    const { error } = await supabase.from(QDA_DOCUMENTS_TABLE).delete().eq('id', docId).eq('owner_id', qdaOwner() || QDA_NONE);
     if (error) throw error;
   } catch (error) {
     console.error("Lỗi xóa tài liệu QDA:", error);
@@ -928,7 +937,7 @@ export async function deleteQDADocument(docId: string) {
 
 export async function getQDACodes(projectId: string): Promise<any[]> {
   try {
-    const { data, error } = await supabase.from(QDA_CODES_TABLE).select('*').eq('project_id', projectId);
+    const { data, error } = await supabase.from(QDA_CODES_TABLE).select('*').eq('project_id', projectId).eq('owner_id', qdaOwner() || QDA_NONE);
     if (error) throw error;
     return (data || []).map(c => ({
       id: c.id,
@@ -936,7 +945,8 @@ export async function getQDACodes(projectId: string): Promise<any[]> {
       name: c.name,
       color: c.color,
       parentCodeId: c.parent_code_id,
-      description: c.description
+      description: c.description,
+      codebookId: c.codebook_id || undefined
     }));
   } catch (error) {
     console.error("Lỗi lấy danh mục mã QDA:", error);
@@ -952,7 +962,9 @@ export async function saveQDACode(code: any) {
       name: code.name,
       color: code.color,
       parent_code_id: code.parentCodeId,
-      description: code.description
+      description: code.description,
+      codebook_id: code.codebookId ?? null,
+      owner_id: qdaOwner()
     };
     const { error } = await supabase.from(QDA_CODES_TABLE).upsert(dbData);
     if (error) throw error;
@@ -964,7 +976,7 @@ export async function saveQDACode(code: any) {
 
 export async function deleteQDACode(codeId: string) {
   try {
-    const { error } = await supabase.from(QDA_CODES_TABLE).delete().eq('id', codeId);
+    const { error } = await supabase.from(QDA_CODES_TABLE).delete().eq('id', codeId).eq('owner_id', qdaOwner() || QDA_NONE);
     if (error) throw error;
   } catch (error) {
     console.error("Lỗi xóa mã QDA:", error);
@@ -974,11 +986,11 @@ export async function deleteQDACode(codeId: string) {
 
 export async function getQDAAnnotations(projectId: string): Promise<any[]> {
   try {
-    const { data: docs } = await supabase.from(QDA_DOCUMENTS_TABLE).select('id').eq('project_id', projectId);
+    const { data: docs } = await supabase.from(QDA_DOCUMENTS_TABLE).select('id').eq('project_id', projectId).eq('owner_id', qdaOwner() || QDA_NONE);
     if (!docs || docs.length === 0) return [];
     
     const docIds = docs.map(d => d.id);
-    const { data, error } = await supabase.from(QDA_ANNOTATIONS_TABLE).select('*').in('doc_id', docIds);
+    const { data, error } = await supabase.from(QDA_ANNOTATIONS_TABLE).select('*').in('doc_id', docIds).eq('owner_id', qdaOwner() || QDA_NONE);
     if (error) throw error;
     return (data || []).map(a => ({
       id: a.id,
@@ -1004,7 +1016,8 @@ export async function saveQDAAnnotation(ann: any) {
       start_index: ann.startIndex !== undefined ? ann.startIndex : ann.startOffset,
       end_index: ann.endIndex !== undefined ? ann.endIndex : ann.endOffset,
       text: ann.text,
-      created_by: ann.createdBy
+      created_by: ann.createdBy,
+      owner_id: qdaOwner()
     };
     const { error } = await supabase.from(QDA_ANNOTATIONS_TABLE).upsert(dbData);
     if (error) throw error;
@@ -1016,7 +1029,7 @@ export async function saveQDAAnnotation(ann: any) {
 
 export async function deleteQDAAnnotation(annId: string) {
   try {
-    const { error } = await supabase.from(QDA_ANNOTATIONS_TABLE).delete().eq('id', annId);
+    const { error } = await supabase.from(QDA_ANNOTATIONS_TABLE).delete().eq('id', annId).eq('owner_id', qdaOwner() || QDA_NONE);
     if (error) throw error;
   } catch (error) {
     console.error("Lỗi xóa annotation QDA:", error);
@@ -1026,14 +1039,15 @@ export async function deleteQDAAnnotation(annId: string) {
 
 export async function getQDAMemos(projectId: string): Promise<any[]> {
   try {
-    const { data, error } = await supabase.from(QDA_MEMOS_TABLE).select('*');
+    const { data, error } = await supabase.from(QDA_MEMOS_TABLE).select('*').eq('project_id', projectId).eq('owner_id', qdaOwner() || QDA_NONE);
     if (error) throw error;
     return (data || []).map(m => ({
       id: m.id,
       linkedEntityType: m.linked_entity_type,
       linkedEntityId: m.linked_entity_id,
       content: m.content,
-      createdAt: m.created_at
+      createdAt: m.created_at,
+      projectId: m.project_id
     }));
   } catch (error) {
     console.error("Lỗi lấy ghi chú QDA:", error);
@@ -1048,7 +1062,9 @@ export async function saveQDAMemo(memo: any) {
       linked_entity_type: memo.linkedEntityType,
       linked_entity_id: memo.linkedEntityId,
       content: memo.content,
-      created_at: memo.createdAt || new Date().toISOString()
+      created_at: memo.createdAt || new Date().toISOString(),
+      project_id: memo.projectId ?? null,
+      owner_id: qdaOwner()
     };
     const { error } = await supabase.from(QDA_MEMOS_TABLE).upsert(dbData);
     if (error) throw error;
@@ -1060,12 +1076,25 @@ export async function saveQDAMemo(memo: any) {
 
 export async function deleteQDAMemo(memoId: string) {
   try {
-    const { error } = await supabase.from(QDA_MEMOS_TABLE).delete().eq('id', memoId);
+    const { error } = await supabase.from(QDA_MEMOS_TABLE).delete().eq('id', memoId).eq('owner_id', qdaOwner() || QDA_NONE);
     if (error) throw error;
   } catch (error) {
     console.error("Lỗi xóa ghi chú QDA:", error);
     throw error;
   }
+}
+
+// Thông báo hệ thống có gửi tới tài khoản này không (theo đối tượng nhận). Dùng chung cho
+// hộp thông báo, chuông thông báo và khung thông báo ở trang Tổng quan.
+export function isNotificationForUser(fn: any, user: { id: string; username?: string; role?: string } | null | undefined): boolean {
+  if (!fn || !user) return false;
+  const ids: string[] = fn.targetUserIds || [];
+  const named = ids.includes(user.id) || (!!user.username && ids.includes(user.username));
+  if (fn.targetAudience === 'all') return fn.type !== 'task' || user.role === 'admin';
+  if (fn.targetAudience === 'all_admins') return user.role === 'admin';
+  if (fn.targetAudience === 'custom_admins') return user.role === 'admin' && named;
+  if (fn.targetAudience === 'custom_users') return named;
+  return false;
 }
 
 export async function getStatsFromSupabase(): Promise<Record<string, number>> {
@@ -1157,8 +1186,10 @@ export function subscribeToNotificationChanges(onChange: () => void) {
 
 export function subscribeToNotifications(callback: (notifications: AppNotification[]) => void) {
   // Use Supabase Realtime
+  // Tải ngay lần đầu, sau đó tải lại mỗi khi bảng thay đổi. Tên kênh riêng cho từng nơi lắng nghe.
+  getNotificationsFromSupabase().then(callback).catch(() => {});
   const channel = supabase
-    .channel('system_notifications_changes')
+    .channel(`system_notifications_changes_${Math.random().toString(36).slice(2, 9)}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'system_notifications' }, () => {
       getNotificationsFromSupabase().then(callback);
     })

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { canUseModule } from '../../lib/moduleAccess';
 import { 
   School, 
   BookOpen, 
@@ -23,7 +24,6 @@ import {
 } from 'lucide-react';
 import { EduClass, EduSchool } from '../../types/edu';
 import { getClasses, getSchools, deleteSchool, deleteClass, saveSchool, saveClass, getClassUsers, getAssignments, getSubmissions } from '../../lib/edu';
-import { getUsers } from '../../lib/data';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import { eduCan } from '../../lib/eduPermissions';
@@ -46,8 +46,6 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
   const canGradeImport = eduCan(currentUser, 'gradeImport');
   const canGrade = eduCan(currentUser, 'grade');
   const [schools, setSchools] = useState<EduSchool[]>([]);
-  const [userNames, setUserNames] = useState<Record<string, string>>({});
-  const ownerName = (ownerId?: string) => (ownerId ? userNames[ownerId] || '' : '');
   const [classes, setClasses] = useState<(EduClass & { edu_schools: { name: string } })[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -129,17 +127,6 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
 
   useEffect(() => {
     loadData();
-
-    // Admin cần thấy trường lớp do ai tạo, nên nạp tên người dùng để hiển thị.
-    if (isAdmin) {
-      getUsers()
-        .then(list => {
-          const map: Record<string, string> = {};
-          list.forEach(u => { map[u.id] = u.fullName || u.username || u.email || u.id; });
-          setUserNames(map);
-        })
-        .catch(() => {});
-    }
 
     const handleClickOutside = () => setActiveDropdownId(null);
     window.addEventListener('click', handleClickOutside);
@@ -293,7 +280,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
             </button>
           )}
 
-          {onOpenBank && canCreate && (
+          {onOpenBank && canUseModule(currentUser, 'edu_bank') && (
             <button
               onClick={onOpenBank}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider"
@@ -303,7 +290,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
             </button>
           )}
 
-          {onOpenGrades && canGradeImport && (
+          {onOpenGrades && canUseModule(currentUser, 'edu_grade') && (
             <button
               onClick={onOpenGrades}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider"
@@ -313,7 +300,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
             </button>
           )}
 
-          {onOpenExams && canGrade && (
+          {onOpenExams && canUseModule(currentUser, 'edu_exam') && (
             <button
               onClick={onOpenExams}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider"
@@ -452,9 +439,6 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                     <School className="w-4 h-4" />
                   </div>
                   <h2 className="text-base font-bold text-slate-800 uppercase tracking-tight">{school.name}</h2>
-                  {isAdmin && ownerName(school.ownerId) && (
-                    <span className="text-[10px] font-bold text-brand bg-brand-light border border-brand/20 px-2 py-0.5 rounded-full normal-case">Tạo bởi {ownerName(school.ownerId)}</span>
-                  )}
 
                   {(canEdit || canDelete) && (
                   <div className="relative">
@@ -545,9 +529,6 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                           </div>
                         );
                       })()}
-                      {isAdmin && ownerName(clazz.ownerId) && (
-                        <p className="text-[11px] font-bold text-brand mt-2">Tạo bởi {ownerName(clazz.ownerId)}</p>
-                      )}
                     </div>
 
                     <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between">

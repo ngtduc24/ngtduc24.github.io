@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { canUseModule } from '../lib/moduleAccess';
 import {
   Search, ArrowLeft, ArrowRight, LayoutGrid,
   CalendarDays, BookOpen, LayoutTemplate, Image as ImageIcon, BarChart3,
-  GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone, Shield, CheckCircle2, ClipboardList, Clapperboard, Sparkles, FileArchive, Globe
+  GraduationCap, Scan, FolderKanban, Mail, Users, Settings, Library, Megaphone, Shield, CheckCircle2, ClipboardList, Clapperboard, Sparkles, FileArchive, Globe, FolderOpen
 , FileUser, QrCode } from 'lucide-react';
 import { UserAccount, AppSettings } from '../types';
 import { isModuleHidden, resolveModuleMeta } from '../lib/modules';
@@ -51,7 +52,8 @@ const ALL_FEATURES: FeatureItem[] = [
   { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ, chia sẻ và giao bài giảng theo môn', icon: BookOpen, color: 'orange', group: 'Giảng dạy và nội dung' },
   { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp ngay trên trình duyệt', icon: Clapperboard, color: 'rose', group: 'Công cụ thiết kế' },
   { id: 'qr_codes', label: 'Tạo mã QR', desc: 'Tạo mã QR từ đường link, lưu và quản lý mã của riêng bạn', icon: QrCode, color: 'emerald', group: 'Công cụ thiết kế' },
-  { id: 'scientific_cv', label: 'Lý lịch khoa học', desc: 'Tạo lý lịch khoa học cá nhân theo mẫu, xuất PDF và Word, chỉ riêng bạn xem được', icon: FileUser, color: 'indigo', group: 'Nghiên cứu và phân tích' },
+  { id: 'scientific_cv', label: 'Lý lịch khoa học', desc: 'Tạo lý lịch khoa học cá nhân theo mẫu, xuất PDF và Word', icon: FileUser, color: 'indigo', group: 'Nghiên cứu và phân tích' },
+  { id: 'media_library', label: 'Thư viện tệp', desc: 'Ảnh, video bạn đã tải lên, sao chép link dùng lại', icon: FolderOpen, color: 'blue', group: 'Công cụ thiết kế' },
   { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Lưu trữ và quản lý hồ sơ cá nhân, dự án', icon: FolderKanban, color: 'teal', group: 'Giảng dạy và nội dung' },
 
   { id: 'ar_module', label: 'Tạo AR', desc: 'Tạo điểm ảnh AR kèm mã QR để quét bằng điện thoại', icon: Scan, color: 'red', group: 'Công cụ thiết kế' },
@@ -75,21 +77,7 @@ export default function AllFeatures({ currentUser, settings, onSwitchTab, onBack
 
   const isUserAdmin = currentUser?.role === 'admin';
   const perms = currentUser?.permissions || [];
-  const can = (id: string) => {
-    if (isUserAdmin) return true;
-    if (id === 'notifications') return true;
-    if (id === 'notifications_admin') return perms.includes('notifications');
-    if (id === 'ar_module') return perms.includes('ar_module') || perms.includes('utilities');
-    if (id === 'utility_image_resize') return perms.includes('utility_image_resize') || perms.includes('utilities');
-    if (id === 'utility_file_compress') return perms.includes('utility_file_compress') || perms.includes('utilities');
-    if (id === 'utility_social_design') return perms.includes('utility_social_design') || perms.includes('utilities');
-    if (id === 'edu_bank') return perms.includes('edu') && !!currentUser?.canCreateEdu;
-    if (id === 'edu_exam') return perms.includes('edu') && !!currentUser?.canGradeEdu;
-    if (id === 'edu_question_bank') return perms.includes('edu') && !!currentUser?.canGradeEdu;
-    if (id === 'edu_grade') return perms.includes('edu') && !!currentUser?.canGradeImportEdu;
-    if (id === 'users' || id === 'permissions') return false;
-    return perms.includes(id);
-  };
+  const can = (id: string) => canUseModule(currentUser, id);
 
   const visible = ALL_FEATURES
     .filter(f => can(f.id))

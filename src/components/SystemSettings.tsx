@@ -278,6 +278,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
           <Wrench className="w-4 h-4" />
           <span>Bảo trì & Tải trang</span>
         </button>
+        {currentUser?.role === 'admin' && (
         <button
           type="button"
           onClick={() => setActiveTab('backup')}
@@ -290,6 +291,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
           <Database className="w-4 h-4" />
           <span>Sao lưu & Phục hồi dữ liệu</span>
         </button>
+        )}
         <button
           type="button"
           onClick={() => setActiveTab('media')}
@@ -906,7 +908,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
 
           {saveBar}
         </form>
-      ) : activeTab === 'backup' ? (
+      ) : activeTab === 'backup' && currentUser?.role === 'admin' ? (
         <BackupManager />
       ) : (
         <div className="space-y-4">

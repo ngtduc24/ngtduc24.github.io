@@ -175,6 +175,7 @@ export default function DesignMode({ currentUser }: DesignModeProps) {
       const { data, error } = await supabase
         .from('social_presets')
         .select('*')
+        .eq('user_id', currentUser.id) // mỗi người chỉ thấy preset của mình, cộng các preset mặc định
         .order('created_at', { ascending: false });
 
       const dbPresets: SocialPreset[] = [];
@@ -368,7 +369,7 @@ export default function DesignMode({ currentUser }: DesignModeProps) {
 
     try {
       if (!presetId.startsWith('preset-default-') && !presetId.startsWith('preset-')) {
-        await supabase.from('social_presets').delete().eq('id', presetId);
+        await supabase.from('social_presets').delete().eq('id', presetId).eq('user_id', currentUser.id);
       }
     } catch (err) {
       console.warn("Xóa từ Supabase có cảnh báo:", err);
@@ -617,7 +618,7 @@ export default function DesignMode({ currentUser }: DesignModeProps) {
                     <option value="">-- Chọn Preset lưu sẵn để áp dụng nhanh --</option>
                     {presets.map(p => (
                       <option key={p.id} value={p.id}>
-                        {p.name} {p.userId === currentUser.id ? '★ (Của bạn)' : ''}
+                        {p.name}
                       </option>
                     ))}
                   </select>

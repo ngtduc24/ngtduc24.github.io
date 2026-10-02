@@ -80,7 +80,9 @@ export async function getMyLessons(opts?: { subjectId?: string; status?: ELStatu
     .select('*, el_sections(count), el_resources(count)')
     .is('deleted_at', null)
     .order('updated_at', { ascending: false });
-  if (!c.isAdmin && c.userId) query = query.eq('owner_id', c.userId);
+  // Kho của tôi: chỉ bài của chính người đang đăng nhập.
+  if (!c.userId) return [];
+  query = query.eq('owner_id', c.userId);
   if (opts?.subjectId) query = query.eq('subject_id', opts.subjectId);
   if (opts?.status === 'public') query = query.eq('is_public', true);
   else if (opts?.status) query = query.eq('status', opts.status);
@@ -94,8 +96,8 @@ export async function getMyLessons(opts?: { subjectId?: string; status?: ELStatu
 
 export async function getTrashLessons(): Promise<ELLesson[]> {
   const c = ctx();
-  let query = supabase.from(L_TABLE).select('*').not('deleted_at', 'is', null).order('deleted_at', { ascending: false });
-  if (!c.isAdmin && c.userId) query = query.eq('owner_id', c.userId);
+  if (!c.userId) return [];
+  const query = supabase.from(L_TABLE).select('*').not('deleted_at', 'is', null).order('deleted_at', { ascending: false }).eq('owner_id', c.userId);
   const { data, error } = await query;
   if (error) throw error;
   return (data || []).map(mapLesson);
@@ -114,6 +116,13 @@ export async function getLesson(id: string): Promise<ELLesson> {
   const { data, error } = await supabase.from(L_TABLE).select('*').eq('id', id).single();
   if (error) throw error;
   return mapLesson(data);
+}
+
+// Bài giảng của chính người đang đăng nhập (trang giao lớp, tiến độ). Bài của người khác coi như không có.
+export async function getOwnLesson(id: string): Promise<ELLesson> {
+  const l = await getLesson(id);
+  if (!ctx().userId || l.owner_id !== ctx().userId) throw new Error('Không tìm thấy bài giảng.');
+  return l;
 }
 
 export async function createLesson(input: { title: string; subject_id?: string | null; owner_name?: string }): Promise<ELLesson> {
@@ -135,13 +144,13 @@ export async function updateLesson(id: string, patch: Partial<ELLesson>): Promis
   const allowed: any = {};
   const keys: (keyof ELLesson)[] = ['title', 'summary', 'cover_url', 'tags', 'subject_id', 'status', 'is_public', 'allow_copy', 'author_label', 'duration_minutes', 'share_enabled'];
   keys.forEach(k => { if (k in patch) allowed[k] = (patch as any)[k]; });
-  const { data, error } = await supabase.from(L_TABLE).update(allowed).eq('id', id).select('*').single();
+  const { data, error } = await supabase.from(L_TABLE).update(allowed).eq('id', id).eq('owner_id', ctx().userId || '-').select('*').single();
   if (error) throw error;
   return mapLesson(data);
 }
 
 export async function softDeleteLesson(id: string): Promise<void> {
-  const { error } = await supabase.from(L_TABLE).update({ deleted_at: new Date().toISOString(), is_public: false }).eq('id', id);
+  const { error } = await supabase.from(L_TABLE).update({ deleted_at: new Date().toISOString(), is_public: false }).eq('id', id).eq('owner_id', ctx().userId || '-');
   if (error) throw error;
 }
 // Thao tác hàng loạt trên nhiều bài giảng (một câu lệnh cho cả nhóm).
@@ -149,20 +158,20 @@ export async function bulkUpdateLessons(ids: string[], patch: Partial<Pick<ELLes
   if (!ids.length) return;
   const allowed: any = {};
   (['subject_id', 'status', 'is_public'] as const).forEach(k => { if (k in patch) allowed[k] = (patch as any)[k]; });
-  const { error } = await supabase.from(L_TABLE).update(allowed).in('id', ids);
+  const { error } = await supabase.from(L_TABLE).update(allowed).in('id', ids).eq('owner_id', ctx().userId || '-');
   if (error) throw error;
 }
 export async function bulkSoftDeleteLessons(ids: string[]): Promise<void> {
   if (!ids.length) return;
-  const { error } = await supabase.from(L_TABLE).update({ deleted_at: new Date().toISOString(), is_public: false }).in('id', ids);
+  const { error } = await supabase.from(L_TABLE).update({ deleted_at: new Date().toISOString(), is_public: false }).in('id', ids).eq('owner_id', ctx().userId || '-');
   if (error) throw error;
 }
 export async function restoreLesson(id: string): Promise<void> {
-  const { error } = await supabase.from(L_TABLE).update({ deleted_at: null }).eq('id', id);
+  const { error } = await supabase.from(L_TABLE).update({ deleted_at: null }).eq('id', id).eq('owner_id', ctx().userId || '-');
   if (error) throw error;
 }
 export async function purgeLesson(id: string): Promise<void> {
-  const { error } = await supabase.from(L_TABLE).delete().eq('id', id);
+  const { error } = await supabase.from(L_TABLE).delete().eq('id', id).eq('owner_id', ctx().userId || '-');
   if (error) throw error;
 }
 

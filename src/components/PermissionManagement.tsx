@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Shield, Check, Loader2, Search, UserCircle } from 'lucide-react';
 import { UserAccount } from '../types';
 import { useNotifications } from './NotificationContext';
+import { migratePermissions } from '../lib/moduleAccess';
 
 interface Props {
   currentUser: UserAccount;
@@ -30,6 +31,10 @@ const MODULES: ModuleDef[] = [
   { id: 'qualitative_analysis', label: 'Phân tích định tính', flags: [['canCreateQualitative', 'Tạo'], ['canEditQualitative', 'Sửa'], ['canDeleteQualitative', 'Xóa'], ['canImportQualitative', 'Nhập'], ['canExportQualitative', 'Xuất'], ['canManageQualitativeSettings', 'Cấu hình']] },
   { id: 'quantitative_analysis', label: 'Phân tích định lượng', flags: [['canCreateQuantitative', 'Tạo'], ['canEditQuantitative', 'Sửa'], ['canDeleteQuantitative', 'Xóa'], ['canImportQuantitative', 'Nhập'], ['canExportQuantitative', 'Xuất'], ['canManageQuantitativeSettings', 'Cấu hình']] },
   { id: 'edu', label: 'Quản lý Giáo dục', desc: 'Trường, lớp, sinh viên, bài tập, bảng điểm', flags: [['canCreateEdu', 'Tạo lớp/trường'], ['canEditEdu', 'Sửa'], ['canDeleteEdu', 'Xóa'], ['canImportEdu', 'Nhập lớp/SV'], ['canExportEdu', 'Xuất bảng điểm'], ['canGradeImportEdu', 'Nhập điểm'], ['canGradeEdu', 'Chấm điểm']] },
+  { id: 'edu_bank', label: 'Ngân hàng bài tập', desc: 'Kho bài tập dùng lại, chia sẻ link xem bài, tải PDF' },
+  { id: 'edu_exam', label: 'Trắc nghiệm', desc: 'Tạo đề, giao đề cho lớp và chấm tự động' },
+  { id: 'edu_question_bank', label: 'Ngân hàng câu hỏi', desc: 'Kho câu hỏi trắc nghiệm theo môn' },
+  { id: 'edu_grade', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường' },
   { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn', flags: [['canElearningPublic', 'Công khai kho chung'], ['canElearningAssign', 'Giao cho lớp']] },
   { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp trên trình duyệt', flags: [['canRemierShared', 'Quản lý thư viện chung']] },
   { id: 'qr_codes', label: 'Tạo mã QR', desc: 'Tạo, sửa, xoá, tải mã QR từ đường link' },
@@ -39,25 +44,16 @@ const MODULES: ModuleDef[] = [
   { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn' },
   { id: 'utility_file_compress', label: 'Giảm dung lượng file', desc: 'Nén PDF, JPG, PNG ngay trên trình duyệt mà vẫn giữ chất lượng tốt' },
   { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn' },
+  { id: 'media_library', label: 'Thư viện tệp', desc: 'Xem, tìm, sao chép link và xoá các ảnh, video đã tải lên' },
   { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Nội dung, dự án, khóa học, nghiên cứu, menu, hồ sơ', flags: [['canPortfolioContent', 'Thêm bài viết'], ['canPortfolioProjects', 'Dự án'], ['canPortfolioCourses', 'Khóa học'], ['canPortfolioResearch', 'Nghiên cứu'], ['canPortfolioNavigation', 'Menu chính'], ['canPortfolioProfile', 'Hồ sơ']] },
   { id: 'notifications', label: 'Trung tâm thông báo', desc: 'Quản lý và phát thông báo tới người dùng' },
   { id: 'assistant', label: 'Trợ lý giáo dục', desc: 'Hỏi đáp kiến thức bài học từ bài giảng, câu hỏi và bài tập được chia sẻ công khai' },
   { id: 'settings', label: 'Cấu hình hệ thống', settings: true },
 ];
 
-// Chuyển quyền gộp cũ 'utilities' thành 3 quyền độc lập một lần khi mở tài khoản.
-// Chỉ 'utilities' mới là quyền gộp cũ. 'ar_module' nay là quyền riêng của công cụ
-// Tạo AR, KHÔNG mở rộng, để 3 công cụ bật/tắt hoàn toàn độc lập nhau khi tải lại.
-const migrate = (perms?: string[]): string[] => {
-  const set = new Set(perms || []);
-  if (set.has('utilities')) {
-    set.delete('utilities');
-    set.add('ar_module');
-    set.add('utility_image_resize');
-    set.add('utility_social_design');
-  }
-  return Array.from(set);
-};
+// Chuyển quyền cũ (quyền gộp Tiện ích, Giáo dục kèm cờ thao tác) sang bộ công tắc riêng của từng
+// chức năng khi mở tài khoản, để công tắc hiện đúng quyền đang có và bật tắt độc lập nhau.
+const migrate = (u: UserAccount): string[] => migratePermissions(u);
 
 function Toggle({ on, onChange, disabled }: { on: boolean; onChange: (b: boolean) => void; disabled?: boolean }) {
   return (
@@ -81,7 +77,7 @@ export default function PermissionManagement({ currentUser, users, onSaveUser }:
 
   useEffect(() => {
     const u = users.find(x => x.id === selectedId);
-    setDraft(u ? { ...u, permissions: migrate(u.permissions) } : null);
+    setDraft(u ? { ...u, permissions: migrate(u) } : null);
   }, [selectedId, users]);
 
   const isMember = draft?.role === 'member';

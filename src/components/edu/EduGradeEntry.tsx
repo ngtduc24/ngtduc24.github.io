@@ -13,7 +13,6 @@ import {
 import { draftGet, draftSet, draftDel } from '../../lib/localDraft';
 
 // Phiên nhập điểm (file .fg đang sửa) được tự lưu trên máy, trang tải lại vẫn khôi phục được.
-const FG_DRAFT_KEY = `fg_session_draft`;
 interface FgDraft { text: string; fileLabel: string; fgClassIdx: number; sysClassId: string; savedAt: number; }
 
 interface Props { currentUser: UserAccount; }
@@ -23,6 +22,8 @@ interface SourceColumn { key: string; label: string; gradedCount: number; lastAt
 const STEPS = ['Tải file .fg', 'Chọn lớp', 'Nguồn điểm', 'Ánh xạ cột', 'Đối chiếu', 'Ghi & xuất'];
 
 export default function EduGradeEntry({ currentUser }: Props) {
+  // Bản nháp phiên nhập điểm lưu theo từng tài khoản, máy dùng chung không lộ điểm của người khác.
+  const FG_DRAFT_KEY = `fg_session_draft_${currentUser.id}`;
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
 

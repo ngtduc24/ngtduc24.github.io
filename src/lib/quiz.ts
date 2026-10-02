@@ -96,7 +96,9 @@ export async function getBankQuestions(opts?: { subjectId?: string; scope?: 'min
     // Ngân hàng dùng chung hiện mọi câu đã bật công khai, kể cả câu của chính người dùng.
     query = query.eq('is_public', true);
   } else {
-    if (!ctx.isAdmin && ctx.userId) query = query.eq('owner_id', ctx.userId);
+    // Câu hỏi của tôi: chỉ câu của chính người đang đăng nhập.
+    if (!ctx.userId) return [];
+    query = query.eq('owner_id', ctx.userId);
   }
   if (opts?.subjectId) query = query.eq('subject_id', opts.subjectId);
   if (opts?.type) query = query.eq('question_type', opts.type);
@@ -137,7 +139,7 @@ export async function saveQuestion(q: Partial<QuizQuestion>, options: QuizOption
 
   let data: any, error: any;
   if (q.id) {
-    ({ data, error } = await supabase.from(Q_TABLE).update(payload).eq('id', q.id).select('*').single());
+    ({ data, error } = await supabase.from(Q_TABLE).update(payload).eq('id', q.id).eq('owner_id', getEduCtx().userId || '-').select('*').single());
   } else {
     payload.owner_id = q.owner_id ?? ctx.userId;
     ({ data, error } = await supabase.from(Q_TABLE).insert(payload).select('*').single());
@@ -157,7 +159,7 @@ export async function saveQuestion(q: Partial<QuizQuestion>, options: QuizOption
 }
 
 export async function deleteQuestion(id: string): Promise<void> {
-  const { error } = await supabase.from(Q_TABLE).delete().eq('id', id);
+  const { error } = await supabase.from(Q_TABLE).delete().eq('id', id).eq('owner_id', getEduCtx().userId || '-');
   if (error) throw error;
 }
 
@@ -171,7 +173,7 @@ export async function copyQuestionToMine(q: QuizQuestion, ownerName?: string): P
 }
 
 export async function toggleQuestionPublic(id: string, isPublic: boolean): Promise<void> {
-  const { error } = await supabase.from(Q_TABLE).update({ is_public: isPublic }).eq('id', id);
+  const { error } = await supabase.from(Q_TABLE).update({ is_public: isPublic }).eq('id', id).eq('owner_id', getEduCtx().userId || '-');
   if (error) throw error;
 }
 
@@ -179,8 +181,8 @@ export async function toggleQuestionPublic(id: string, isPublic: boolean): Promi
 
 export async function getQuizzes(subjectId?: string): Promise<Quiz[]> {
   const ctx = getEduCtx();
-  let query = supabase.from(QUIZ_TABLE).select('*').order('created_at', { ascending: false });
-  if (!ctx.isAdmin && ctx.userId) query = query.eq('owner_id', ctx.userId);
+  if (!ctx.userId) return [];
+  let query = supabase.from(QUIZ_TABLE).select('*').order('created_at', { ascending: false }).eq('owner_id', ctx.userId);
   if (subjectId) query = query.eq('subject_id', subjectId);
   const { data, error } = await query;
   if (error) throw error;
@@ -197,7 +199,7 @@ export async function getSharedQuizzes(subjectId?: string): Promise<Quiz[]> {
 }
 
 export async function toggleQuizPublic(id: string, isPublic: boolean): Promise<Quiz> {
-  const { data, error } = await supabase.from(QUIZ_TABLE).update({ is_public: isPublic }).eq('id', id).select('*').single();
+  const { data, error } = await supabase.from(QUIZ_TABLE).update({ is_public: isPublic }).eq('id', id).eq('owner_id', getEduCtx().userId || '-').select('*').single();
   if (error) throw error;
   return data as Quiz;
 }
@@ -243,6 +245,8 @@ export async function copyQuizToMine(source: Quiz, ownerId: string, ownerName?: 
 export async function getQuizById(id: string): Promise<Quiz> {
   const { data, error } = await supabase.from(QUIZ_TABLE).select('*').eq('id', id).single();
   if (error) throw error;
+  // Mở đề theo id (màn chi tiết, sửa, giao đề) chỉ dành cho chủ đề.
+  if (!getEduCtx().userId || (data as any).owner_id !== getEduCtx().userId) throw new Error('Không tìm thấy đề.');
   return data as Quiz;
 }
 
@@ -250,6 +254,8 @@ export async function getQuizById(id: string): Promise<Quiz> {
 export async function getQuestionById(id: string): Promise<QuizQuestion> {
   const { data, error } = await supabase.from(Q_TABLE).select('*, quiz_bank_options(*)').eq('id', id).single();
   if (error) throw error;
+  const me = getEduCtx().userId;
+  if ((data as any).owner_id !== me && !(data as any).is_public) throw new Error('Không tìm thấy câu hỏi.');
   return mapQuestion(data);
 }
 
@@ -276,7 +282,7 @@ export async function saveQuiz(q: Partial<Quiz>): Promise<Quiz> {
   };
   let data: any, error: any;
   if (q.id) {
-    ({ data, error } = await supabase.from(QUIZ_TABLE).update(payload).eq('id', q.id).select('*').single());
+    ({ data, error } = await supabase.from(QUIZ_TABLE).update(payload).eq('id', q.id).eq('owner_id', getEduCtx().userId || '-').select('*').single());
   } else {
     payload.owner_id = q.owner_id ?? ctx.userId;
     payload.owner_name = q.owner_name ?? undefined;
@@ -287,12 +293,12 @@ export async function saveQuiz(q: Partial<Quiz>): Promise<Quiz> {
 }
 
 export async function deleteQuiz(id: string): Promise<void> {
-  const { error } = await supabase.from(QUIZ_TABLE).delete().eq('id', id);
+  const { error } = await supabase.from(QUIZ_TABLE).delete().eq('id', id).eq('owner_id', getEduCtx().userId || '-');
   if (error) throw error;
 }
 
 export async function publishQuiz(id: string, publish: boolean): Promise<Quiz> {
-  const { data, error } = await supabase.from(QUIZ_TABLE).update({ status: publish ? 'published' : 'draft' }).eq('id', id).select('*').single();
+  const { data, error } = await supabase.from(QUIZ_TABLE).update({ status: publish ? 'published' : 'draft' }).eq('id', id).eq('owner_id', getEduCtx().userId || '-').select('*').single();
   if (error) throw error;
   return data as Quiz;
 }
@@ -393,13 +399,16 @@ export { stripHtml };
 
 // Đề gắn vào khoá học công khai: bật open_access để người học ngoài lớp (học viên khoá học) làm được.
 export async function setQuizOpenAccess(quizId: string, open: boolean) {
-  const { error } = await supabase.from('quizzes').update({ open_access: open }).eq('id', quizId);
+  const { error } = await supabase.from('quizzes').update({ open_access: open }).eq('id', quizId).eq('owner_id', getEduCtx().userId || '-');
   if (error) throw error;
 }
 
 // Danh sách đề để gắn vào bài học của khoá học: đề của tôi và đề công khai, chỉ đề đã phát hành.
 export async function getQuizzesForCourse(): Promise<Pick<Quiz, 'id' | 'title' | 'slug' | 'owner_id' | 'owner_name' | 'status' | 'is_public' | 'open_access' | 'subject_id'>[]> {
-  const { data, error } = await supabase.from('quizzes').select('id, title, slug, owner_id, owner_name, status, is_public, open_access, subject_id').eq('status', 'published').order('updated_at', { ascending: false });
+  const me = getEduCtx().userId;
+  let q = supabase.from('quizzes').select('id, title, slug, owner_id, owner_name, status, is_public, open_access, subject_id').eq('status', 'published').order('updated_at', { ascending: false });
+  q = me ? q.or(`owner_id.eq.${me},is_public.eq.true`) : q.eq('is_public', true);
+  const { data, error } = await q;
   if (error) throw error;
   return (data || []) as any;
 }

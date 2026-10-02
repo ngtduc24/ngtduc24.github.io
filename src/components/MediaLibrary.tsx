@@ -22,8 +22,7 @@ import {
   Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { db, auth } from '../lib/firebase';
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
+import { listMyMedia, deleteMyMedia, MediaItem, MEDIA_CHANGED_EVENT } from '../lib/mediaItems';
 import { uploadImageToCloudinary } from '../lib/upload';
 import { UserAccount } from '../types';
 import { useConfirmation } from './ConfirmationContext';
@@ -71,51 +70,37 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
     'Chung'
   ];
 
+  // Thư viện chỉ gồm tệp do chính người đang đăng nhập tải lên. Tải lại khi có tệp mới hoặc vừa xoá.
+  const [mediaById, setMediaById] = useState<Record<string, MediaItem>>({});
   useEffect(() => {
+    let alive = true;
+    const load = () => {
+      listMyMedia().then(list => {
+        if (!alive) return;
+        const map: Record<string, MediaItem> = {};
+        setImages(list.map(m => {
+          map[m.id] = m;
+          return {
+            id: m.id,
+            url: m.url,
+            category: m.category || 'Chung',
+            type: (m.type === 'video' ? 'video' : m.type === 'raw' ? 'raw' : 'image') as UploadedImage['type'],
+            bytes: m.bytes || (m.type === 'video' ? 4.5 * 1024 * 1024 : 350 * 1024),
+            uploadedAt: m.createdAt,
+            uploaderId: currentUser.id,
+            uploaderEmail: currentUser.email || '',
+            uploaderName: currentUser.fullName || m.uploaderName || '',
+          };
+        }));
+        setMediaById(map);
+        setLoading(false);
+      }).catch(() => { if (alive) setLoading(false); });
+    };
     setLoading(true);
-    const q = query(collection(db, 'uploaded_images'), orderBy('uploadedAt', 'desc'));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedImages: UploadedImage[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        let fileType: 'image' | 'video' | 'raw' = data.type || 'image';
-        
-        // Auto-detect for legacy entries
-        const lowerUrl = (data.url || '').toLowerCase();
-        if (!data.type) {
-          if (lowerUrl.includes('/video/upload/') || lowerUrl.endsWith('.mp4') || lowerUrl.endsWith('.webm') || lowerUrl.endsWith('.mov') || lowerUrl.endsWith('.avi')) {
-            fileType = 'video';
-          }
-        }
-
-        // Estimate bytes for legacy items
-        let fileBytes = data.bytes;
-        if (fileBytes === undefined || fileBytes === null || fileBytes === 0) {
-          fileBytes = fileType === 'video' ? 4.5 * 1024 * 1024 : 350 * 1024;
-        }
-
-        fetchedImages.push({
-          id: doc.id,
-          url: data.url || '',
-          category: data.category || 'Chung',
-          type: fileType,
-          bytes: fileBytes,
-          uploadedAt: data.uploadedAt,
-          uploaderId: data.uploaderId || 'anonymous',
-          uploaderEmail: data.uploaderEmail || 'anonymous',
-          uploaderName: data.uploaderName || 'Anonymous'
-        });
-      });
-      setImages(fetchedImages);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching media library images:", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
+    load();
+    window.addEventListener(MEDIA_CHANGED_EVENT, load);
+    return () => { alive = false; window.removeEventListener(MEDIA_CHANGED_EVENT, load); };
+  }, [currentUser.id, currentUser.email, currentUser.fullName]);
 
   const handleCopyUrl = (url: string) => {
     navigator.clipboard.writeText(url).then(() => {
@@ -146,7 +131,8 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
       'Bạn có chắc chắn muốn xóa tệp tin này khỏi thư viện không? Hành động này không thể hoàn tác.',
       async () => {
         try {
-          await deleteDoc(doc(db, 'uploaded_images', img.id));
+          const item = mediaById[img.id];
+          if (item) await deleteMyMedia(item);
         } catch (error) {
           console.error("Error deleting image doc:", error);
         }
@@ -243,10 +229,10 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
         <div>
           <h1 className="text-xl font-extrabold text-slate-800 flex items-center gap-2.5 font-display">
             <Image className="w-6 h-6 text-brand" />
-            Thư viện Đa phương tiện
+            Thư viện tệp
           </h1>
           <p className="text-slate-500 text-xs mt-1">
-            Quản lý, tìm kiếm và tải lên các tệp tin hình ảnh, video từ Cloudinary được lưu trữ tập trung trên hệ thống.
+            Ảnh và video bạn đã tải lên, tìm kiếm, sao chép link để dùng lại hoặc xoá khi không cần.
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-100 w-fit">
@@ -581,7 +567,7 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
                         )}
                       </button>
                       
-                      {(currentUser.role === 'admin' || currentUser.id === img.uploaderId) && (
+                      {currentUser.id === img.uploaderId && (
                         <button
                           onClick={() => handleDeleteImage(img)}
                           className="p-1.5 bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg border border-slate-200 hover:border-rose-100 transition-colors cursor-pointer"
