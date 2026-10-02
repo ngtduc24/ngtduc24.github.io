@@ -79,8 +79,8 @@ export default function Sidebar({
     const Icon = t.icon;
     return (
       <button key={t.id} type="button" onClick={t.onClick} aria-label={t.label} aria-pressed={!!t.active}
-        className={`group flex w-full flex-col items-center gap-1 rounded-2xl py-1.5 transition-all ${t.active ? 'text-brand' : 'text-slate-500 hover:text-brand'}`}>
-        <span className={`grid h-10 w-10 place-items-center rounded-xl transition-all ${t.active ? 'bg-brand text-white shadow-lg shadow-brand/30' : 'bg-transparent group-hover:bg-slate-100'}`}>
+        className={`group flex w-full flex-col items-center gap-0.5 rounded-2xl py-1 transition-all ${t.active ? 'text-brand' : 'text-slate-500 hover:text-brand'}`}>
+        <span className={`grid h-9 w-9 place-items-center rounded-xl transition-all ${t.active ? 'bg-brand text-white shadow-lg shadow-brand/30' : 'bg-transparent group-hover:bg-slate-100'}`}>
           <Icon className="h-5 w-5" />
         </span>
         <span className="text-center text-[10px] font-bold leading-tight">{t.label}</span>
@@ -91,7 +91,7 @@ export default function Sidebar({
   return (
     <aside
       id="sidebar"
-      className={`relative ${compact ? 'z-[130] overflow-y-auto' : 'z-40'} flex h-screen w-20 shrink-0 flex-col items-center border-r border-slate-200 bg-white py-4`}
+      className={`relative ${compact ? 'z-[130] overflow-y-auto py-2' : 'z-40 py-4'} flex h-screen w-20 shrink-0 flex-col items-center border-r border-slate-200 bg-white`}
     >
       {compact ? (
         <nav className="flex w-full flex-col items-center gap-1 px-2">{tools!.map(renderTool)}</nav>
@@ -103,7 +103,7 @@ export default function Sidebar({
       )}
 
       {/* Đáy cột: (khi có công cụ riêng thì thêm các mục chung), chuông thông báo, trang cá nhân, đăng xuất */}
-      <div className={`mt-auto flex w-full flex-col items-center ${compact ? 'gap-0.5' : 'gap-1'} border-t border-slate-100 px-2 pt-3`}>
+      <div className={`mt-auto flex w-full flex-col items-center ${compact ? 'gap-0 pt-2' : 'gap-1 pt-3'} border-t border-slate-100 px-2`}>
         {compact && primaryItems.map(renderItem)}
         <NotificationBell currentUser={currentUser} settings={settings} setCurrentTab={setCurrentTab} />
 
