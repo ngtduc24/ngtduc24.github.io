@@ -11,7 +11,7 @@ export const TRASH_DAYS = 30;
 const DAY = 24 * 3600 * 1000;
 
 export type TrashApp =
-  | 'bank_item' | 'quiz' | 'quiz_question' | 'qda_project' | 'vr_tour' | 'task' | 'website' | 'el_lesson' | 'remier' | 'slide_deck';
+  | 'bank_item' | 'quiz' | 'quiz_question' | 'qda_project' | 'vr_tour' | 'task' | 'website' | 'el_lesson' | 'remier' | 'slide_deck' | 'quant_project';
 
 export const TRASH_APP_LABELS: Record<TrashApp, string> = {
   bank_item: 'Ngân hàng bài tập',
@@ -24,6 +24,7 @@ export const TRASH_APP_LABELS: Record<TrashApp, string> = {
   el_lesson: 'Giáo trình',
   remier: 'Dự án dựng phim',
   slide_deck: 'Bài giảng',
+  quant_project: 'Dự án định lượng',
 };
 
 export interface TrashTable { table: string; rows: any[] }
@@ -110,6 +111,15 @@ export async function listMyTrash(): Promise<TrashItem[]> {
     }
   } catch { /* bỏ qua */ }
 
+  // Dự án định lượng.
+  try {
+    const { listTrashQuant } = await import('./quant');
+    for (const d of await listTrashQuant()) {
+      const item: TrashItem = { key: `quant:${d.id}`, app: 'quant_project', title: d.title, deletedAt: d.deletedAt };
+      (new Date(d.deletedAt).getTime() < cut ? expired : out).push(item);
+    }
+  } catch { /* bỏ qua */ }
+
   // Công việc dùng cờ isDeleted (thùng rác của Quản lý công việc), chỉ lấy việc do mình tạo.
   try {
     const { getTasksFromSupabase } = await import('./tasks');
@@ -143,6 +153,7 @@ export async function restoreTrash(item: TrashItem): Promise<void> {
   if (item.key.startsWith('el:')) { const { restoreLesson } = await import('./elearning'); await restoreLesson(item.key.slice(3)); return; }
   if (item.key.startsWith('remier:')) { const { restoreProject } = await import('./remier'); await restoreProject(item.key.slice(7)); return; }
   if (item.key.startsWith('deck:')) { const { restoreDeck } = await import('./slides'); await restoreDeck(item.key.slice(5)); return; }
+  if (item.key.startsWith('quant:')) { const { restoreQuant } = await import('./quant'); await restoreQuant(item.key.slice(6)); return; }
   if (item.key.startsWith('task:')) {
     const { getTasksFromSupabase, saveTaskToSupabase, addTaskHistory } = await import('./tasks');
     const t = (await getTasksFromSupabase()).find(x => x.id === item.key.slice(5));
@@ -178,6 +189,7 @@ export async function purgeTrash(item: TrashItem): Promise<void> {
   if (item.key.startsWith('el:')) { const { purgeLesson } = await import('./elearning'); await purgeLesson(item.key.slice(3)); return; }
   if (item.key.startsWith('remier:')) { const { purgeProject } = await import('./remier'); await purgeProject(item.key.slice(7)); return; }
   if (item.key.startsWith('deck:')) { const { purgeDeck } = await import('./slides'); await purgeDeck(item.key.slice(5)); return; }
+  if (item.key.startsWith('quant:')) { const { purgeQuant } = await import('./quant'); await purgeQuant(item.key.slice(6)); return; }
   if (item.key.startsWith('task:')) { const { deleteTaskFromSupabase } = await import('./tasks'); await deleteTaskFromSupabase(item.key.slice(5)); return; }
   const uid = me();
   if (!uid || !item.key.startsWith(`trash:${uid}:`)) throw new Error('Mục này không thuộc tài khoản của bạn.');

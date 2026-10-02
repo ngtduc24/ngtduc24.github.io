@@ -8,6 +8,7 @@ import Analysis from './QuantitativeAnalysis/Analysis';
 import Results from './QuantitativeAnalysis/Results';
 import { QuantitativeProvider } from './QuantitativeAnalysis/QuantitativeContext';
 import SettingsView from './QuantitativeAnalysis/Settings';
+import ProjectBar from './QuantitativeAnalysis/ProjectBar';
 import { AppSettings, UserAccount } from '../types';
 import { saveDefaultSettingsToSupabase } from '../lib/data';
 import { useNotifications } from './NotificationContext';
@@ -173,6 +174,8 @@ export default function QuantitativeAnalysis({ users = [], currentUser, onSaveUs
             {isUserAdmin && <IconButton label="Cài đặt đầu trang" variant="outline" onClick={() => setShowBannerSettings(true)}><Settings size={18} /></IconButton>}
           </>}
         />
+
+        <ProjectBar currentUser={currentUser} />
 
         {/* Tabs */}
         <div ref={tabsScrollRef} className="flex overflow-x-auto scrollbar-none gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-200">

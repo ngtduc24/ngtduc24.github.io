@@ -44,6 +44,7 @@ begin
     when 'edu_school'    then select owner_id into o from public.edu_schools where id::text = p_id;
     when 'qda_project'   then select owner_id into o from public.qda_projects where id::text = p_id;
     when 'slide_deck'    then select split_part(key, ':', 2) into o from public.portfolio_settings where key like 'deck:%' and split_part(key, ':', 3) = p_id limit 1;
+    when 'quant_project' then select split_part(key, ':', 2) into o from public.portfolio_settings where key like 'quant:%' and split_part(key, ':', 3) = p_id limit 1;
     else o := null;
   end case;
   return o;
@@ -155,6 +156,9 @@ begin
   if p_key like 'deck:%' then
     return u is not null and (split_part(p_key, ':', 2) = u or public.collab_role('slide_deck', split_part(p_key, ':', 3)) is not null);
   end if;
+  if p_key like 'quant:%' then
+    return u is not null and (split_part(p_key, ':', 2) = u or public.collab_role('quant_project', split_part(p_key, ':', 3)) is not null);
+  end if;
   return true;
 end $$;
 
@@ -169,6 +173,9 @@ begin
   if p_key like 'site:%' then return coalesce(p_data->>'owner', '') = u; end if;
   if p_key like 'deck:%' then
     return split_part(p_key, ':', 2) = u or public.collab_role('slide_deck', split_part(p_key, ':', 3)) in ('edit', 'manage');
+  end if;
+  if p_key like 'quant:%' then
+    return split_part(p_key, ':', 2) = u or public.collab_role('quant_project', split_part(p_key, ':', 3)) in ('edit', 'manage');
   end if;
   if p_key like 'deck_share:%' then
     return coalesce(p_data->>'key', '') like 'deck:%' and (split_part(p_data->>'key', ':', 2) = u or public.collab_role('slide_deck', split_part(p_data->>'key', ':', 3)) in ('edit', 'manage'));
@@ -326,7 +333,7 @@ create policy collab_select on public.collaborators for select to authenticated
   using (user_id = rls_uid() or owner_id = rls_uid() or added_by = rls_uid() or collab_role(resource_type, resource_id) is not null or can_manage_resource(resource_type, resource_id));
 create policy collab_insert on public.collaborators for insert to authenticated
   with check (can_manage_resource(resource_type, resource_id)
-    or (resource_type not in ('el_lesson','bank_item','quiz','quiz_question','edu_class','edu_school','qda_project','slide_deck') and owner_id = rls_uid()));
+    or (resource_type not in ('el_lesson','bank_item','quiz','quiz_question','edu_class','edu_school','qda_project','slide_deck','quant_project') and owner_id = rls_uid()));
 create policy collab_update on public.collaborators for update to authenticated
   using (can_manage_resource(resource_type, resource_id) or owner_id = rls_uid()) with check (can_manage_resource(resource_type, resource_id) or owner_id = rls_uid());
 create policy collab_delete on public.collaborators for delete to authenticated

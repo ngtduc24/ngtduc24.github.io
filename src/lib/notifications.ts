@@ -275,6 +275,7 @@ const COLLAB_ROUTES: Record<string, (id: string) => { tab: string; sub?: Record<
   edu_school: () => ({ tab: 'edu' }),
   qda_project: id => ({ tab: 'qualitative_analysis', hint: id }),
   slide_deck: id => ({ tab: 'slides', sub: { sid: id }, hint: 'shared' }),
+  quant_project: id => ({ tab: 'quantitative_analysis', hint: id }),
 };
 
 // Gợi ý mở cho chức năng đích (ví dụ mở sẵn mục Được chia sẻ với tôi), dùng 1 lần.
