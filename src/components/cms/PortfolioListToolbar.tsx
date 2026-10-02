@@ -45,7 +45,7 @@ export default function PortfolioListToolbar({
       <div className="flex flex-wrap gap-3">
         {filters.map(filter => (
           <label key={filter.label} className="flex min-w-[210px] items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <span className="shrink-0 text-[10px] font-black uppercase tracking-wider text-slate-400">{filter.label}:</span>
+            <span className="shrink-0 text-xs font-semibold text-slate-500">{filter.label}:</span>
             <select value={filter.value} onChange={event => filter.onChange(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs font-bold text-slate-700 outline-none">
               {filter.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
@@ -63,7 +63,7 @@ export default function PortfolioListToolbar({
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <strong className="text-xs text-slate-500">{resultCount.toLocaleString('vi-VN')} kết quả</strong>
-          <button type="button" onClick={onCreate} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-brand-hover"><Plus className="h-4 w-4" /> {createLabel}</button>
+          <button type="button" onClick={onCreate} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover"><Plus className="h-4 w-4" /> {createLabel}</button>
         </div>
       </div>
     </div>

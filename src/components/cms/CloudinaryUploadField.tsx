@@ -91,7 +91,7 @@ export default function CloudinaryUploadField({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">{label}</label>
+        <label className="text-[13px] font-semibold text-slate-600">{label}</label>
         {value && (
           <button
             type="button"
