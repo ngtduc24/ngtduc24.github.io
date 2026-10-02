@@ -91,7 +91,7 @@ export function Overlay({ onClose, children, className = '' }: { onClose: () => 
     return () => window.removeEventListener('keydown', k, true);
   }, [onClose]);
   return (
-    <div className={`fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/50 p-2 backdrop-blur-[2px] sm:p-4 ${className}`} onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className={`fixed inset-y-0 left-20 right-0 z-[95] flex items-center justify-center bg-slate-900/50 p-2 backdrop-blur-[2px] sm:p-3 ${className}`} onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
       {children}
     </div>
   );

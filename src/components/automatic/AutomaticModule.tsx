@@ -117,7 +117,7 @@ export default function AutomaticModule({ currentUser }: { currentUser: UserAcco
       {error && <Card className="border-rose-200 bg-rose-50 text-[13px] text-rose-700">{error}</Card>}
 
       {!missing && (
-        <Card padding="none" className="overflow-hidden">
+        <Card padding="none">
           <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-5 py-4">
             <h2 className="text-base font-semibold text-slate-800">Quy trình của tôi</h2>
             <span className="text-[13px] text-slate-500">{items?.length ?? 0} quy trình · {(items || []).filter(w => w.active).length} đang chạy theo lịch</span>
@@ -131,7 +131,7 @@ export default function AutomaticModule({ currentUser }: { currentUser: UserAcco
                 const sched = w.nodes.filter(n => n.type === 'scheduleTrigger' && !n.disabled).flatMap(n => (n.parameters?.rules || []).map((r: any) => describeRule(r)));
                 const types = [...new Set(w.nodes.map(n => n.type))].slice(0, 6);
                 return (
-                  <li key={w.id} className="group flex cursor-pointer flex-wrap items-center gap-3 px-5 py-3.5 hover:bg-slate-50" onClick={() => setOpen(w)}>
+                  <li key={w.id} className="group flex cursor-pointer flex-wrap items-center gap-3 px-5 py-3.5 last:rounded-b-2xl hover:bg-slate-50" onClick={() => setOpen(w)}>
                     <div className="flex -space-x-1.5">
                       {types.map(t => <span key={t} className="grid h-8 w-8 place-items-center rounded-lg border-2 border-white bg-slate-50"><NodeIcon type={getNodeType(t)} size={15} /></span>)}
                     </div>
