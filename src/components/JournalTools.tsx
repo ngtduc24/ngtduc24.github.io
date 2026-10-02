@@ -92,7 +92,7 @@ export default function JournalTools({
                     downloadAnchor.setAttribute("href", jsonString);
                     downloadAnchor.setAttribute(
                       "download",
-                      `SmartResearch_Backup_${new Date().toISOString().split("T")[0]}.json`
+                      `EduGo_Backup_${new Date().toISOString().split("T")[0]}.json`
                     );
                     document.body.appendChild(downloadAnchor);
                     downloadAnchor.click();

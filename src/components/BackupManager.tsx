@@ -113,7 +113,7 @@ export default function BackupManager() {
           version: '2.0',
           timestamp: new Date().toISOString(),
           backupBy: 'admin',
-          provider: 'Smart Research VN Hybrid Backup Service'
+          provider: 'EduGo Hybrid Backup Service'
         },
         supabase: {},
         firestore: {}
@@ -154,7 +154,7 @@ export default function BackupManager() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `backup_smart_research_${new Date().toISOString().split('T')[0]}_v2.json`;
+      a.download = `backup_edugo_${new Date().toISOString().split('T')[0]}_v2.json`;
       a.click();
       URL.revokeObjectURL(url);
       

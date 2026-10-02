@@ -24,6 +24,8 @@ import { MODULE_REGISTRY } from "../lib/modules";
 import { FONT_OPTIONS, DEFAULT_HEADING_FONT, DEFAULT_BODY_FONT } from "../lib/fonts";
 import { Type } from "lucide-react";
 import { PageHeader, Badge } from "./ui";
+import LandingSettings from "./LandingSettings";
+import { LayoutGrid } from "lucide-react";
 import BackupManager from './BackupManager';
 import MediaSourcePicker from './MediaSourcePicker';
 import MediaLibrary from './MediaLibrary';
@@ -34,7 +36,7 @@ interface SystemSettingsProps {
   onRefreshSettings: () => void;
   isAdmin: boolean;
   currentUser?: any;
-  initialTab?: 'general' | 'functions' | 'assistant' | 'maintenance' | 'backup' | 'storage';
+  initialTab?: 'general' | 'landing' | 'functions' | 'assistant' | 'maintenance' | 'backup' | 'storage';
 }
 
 export default function SystemSettings({ settings, onRefreshSettings, isAdmin, currentUser, initialTab }: SystemSettingsProps) {
@@ -42,7 +44,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'general' | 'functions' | 'assistant' | 'maintenance' | 'backup' | 'storage'>(initialTab || 'general');
+  const [activeTab, setActiveTab] = useState<'general' | 'landing' | 'functions' | 'assistant' | 'maintenance' | 'backup' | 'storage'>(initialTab || 'general');
 
   // Thư viện kiến thức của trợ lý.
   const knowledge: AssistantKnowledgeItem[] = formState.assistantKnowledge || [];
@@ -226,6 +228,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
         <div className="flex w-max gap-1 rounded-2xl bg-slate-100 p-1">
           {([
             { id: 'general', label: 'Giao diện', icon: Settings },
+            ...(currentUser?.role === 'admin' ? [{ id: 'landing', label: 'Trang đầu', icon: LayoutGrid }] : []),
             { id: 'functions', label: 'Chức năng', icon: Boxes },
             { id: 'assistant', label: 'Trợ lý', icon: Sparkles },
             { id: 'maintenance', label: 'Bảo trì', icon: Wrench },
@@ -336,7 +339,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
                 value={formState.webAppTitle || ""}
                 onChange={(e) => setFormState(prev => ({ ...prev, webAppTitle: e.target.value }))}
                 className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
-                placeholder="Ví dụ: Smart Research VN"
+                placeholder="Ví dụ: EduGo"
               />
               <p className="text-[9px] text-slate-400">Tên hiển thị tại Sidebar, Header, và tiêu đề tab trình duyệt.</p>
             </div>
@@ -846,6 +849,8 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
 
           {saveBar}
         </form>
+      ) : activeTab === 'landing' && currentUser?.role === 'admin' ? (
+        <LandingSettings />
       ) : activeTab === 'backup' && currentUser?.role === 'admin' ? (
         <BackupManager />
       ) : (

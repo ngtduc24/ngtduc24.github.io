@@ -57,7 +57,7 @@ function buildPage(opts: { title: string; description: string; image: string; ta
 <title>${t}</title>
 <meta name="description" content="${d}" />
 <meta property="og:type" content="website" />
-<meta property="og:site_name" content="Smart Research VN" />
+<meta property="og:site_name" content="EduGo" />
 <meta property="og:locale" content="vi_VN" />
 <meta property="og:title" content="${t}" />
 <meta property="og:description" content="${d}" />

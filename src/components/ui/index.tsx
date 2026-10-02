@@ -1,4 +1,4 @@
-// Bộ thành phần giao diện dùng chung cho toàn trang SmartResearch.
+// Bộ thành phần giao diện dùng chung cho toàn trang EduGo.
 // Chuẩn thống nhất (chốt ngày 24/9/2026 sau khi đo 21 màn hình đang chạy):
 //   bo góc nút và ô nhập 12px, thẻ 16px, nhãn tròn
 //   chiều cao nút và ô nhập 40px (md) hoặc 36px (sm), nút biểu tượng 36×36px

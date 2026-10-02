@@ -193,7 +193,7 @@ function buildSharePage({ title, description, image, targetUrl, shareUrl }) {
     <link rel="canonical" href="${escapeHtml(shareUrl)}" />
 
     <meta property="og:type" content="article" />
-    <meta property="og:site_name" content="Andy Nguyễn" />
+    <meta property="og:site_name" content="EduGo" />
     <meta property="og:locale" content="vi_VN" />
     <meta property="og:url" content="${escapeHtml(shareUrl)}" />
     <meta property="og:title" content="${safeTitle}" />
@@ -273,8 +273,8 @@ async function run() {
       const folder = path.join(DIST_DIR, r.folder, r.id);
       await mkdir(folder, { recursive: true });
       await writeFile(path.join(folder, 'index.html'), buildSharePage({
-        title: toPlainSummary(r.title, 110) || 'Andy Nguyễn',
-        description: toPlainSummary(r.description, 220) || 'Xem chi tiết trên trang của Andy Nguyễn.',
+        title: toPlainSummary(r.title, 110) || 'EduGo',
+        description: toPlainSummary(r.description, 220) || 'Xem chi tiết trên EduGo.',
         image,
         targetUrl: `${SITE_ORIGIN}${r.target}`,
         shareUrl: `${SITE_ORIGIN}/${r.folder}/${r.id}/`,

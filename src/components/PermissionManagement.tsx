@@ -24,7 +24,6 @@ interface ModuleDef {
 // hiện có của hệ thống. Mục Tiện ích trước đây đã tách thành 3 module riêng là
 // Tạo AR, Phóng to ảnh và Thiết kế ảnh nên phân quyền cho từng công cụ riêng.
 const MODULES: ModuleDef[] = [
-  { id: 'dashboard', label: 'Trang chủ / Tổng quan', desc: 'Truy cập trang tổng quan Dashboard' },
   { id: 'tasks', label: 'Quản lý công việc', flags: [['canCreateTask', 'Tạo'], ['canRunPauseTask', 'Chạy/Dừng'], ['canCompleteTask', 'Hoàn thành'], ['canDeleteTask', 'Xóa'], ['canAssignTask', 'Giao'], ['canReceiveTask', 'Nhận']] },
   { id: 'scientific_journals', label: 'Điểm báo khoa học', desc: 'Danh sách, thêm, nhập, công cụ AI, ngành loại, thùng rác, cài đặt', flags: [['canCreateJournal', 'Thêm thủ công'], ['canEditJournal', 'Sửa'], ['canDeleteJournal', 'Xóa & Thùng rác'], ['canImportJournal', 'Nhập Excel & Công cụ AI'], ['canManageJournalCats', 'Quản lý Ngành/Loại'], ['canManageJournalSettings', 'Cài đặt']] },
   { id: 'calculator', label: 'Tính cỡ mẫu nghiên cứu' },

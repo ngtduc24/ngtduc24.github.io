@@ -42,10 +42,25 @@ export async function testSupabaseConnection() {
 // tiêu đề, font) thay vì hiện mặc định rồi mới nhảy sang giá trị đúng.
 export const SETTINGS_CACHE_KEY = 'appSettingsCache';
 
+// Tên thương hiệu là EduGo. Cấu hình đã lưu từ trước có thể còn tên cũ trong các ô chữ (tiêu đề,
+// nhãn đầu trang...), đổi ngay khi đọc để không bao giờ hiện tên cũ, kể cả bản lưu trên máy.
+export const BRAND_NAME = 'EduGo';
+const OLD_BRAND_RE = /smart\s*research(\s*vn)?/gi;
+export function rebrand<T>(v: T): T {
+  if (typeof v === 'string') return v.replace(OLD_BRAND_RE, BRAND_NAME) as unknown as T;
+  if (Array.isArray(v)) return v.map(rebrand) as unknown as T;
+  if (v && typeof v === 'object') {
+    const out: any = {};
+    Object.entries(v as any).forEach(([k, x]) => { out[k] = rebrand(x); });
+    return out;
+  }
+  return v;
+}
+
 export function getCachedSettings(): AppSettings | null {
   try {
     const raw = localStorage.getItem(SETTINGS_CACHE_KEY);
-    return raw ? (JSON.parse(raw) as AppSettings) : null;
+    return raw ? rebrand(JSON.parse(raw) as AppSettings) : null;
   } catch {
     return null;
   }
@@ -60,9 +75,9 @@ export async function getDefaultSettingsFromSupabase(): Promise<AppSettings> {
     id: 'general_config',
     defaultCoverImage: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=600&q=80',
     themeColor: 'green-black',
-    webAppTitle: 'Smart Research VN',
+    webAppTitle: 'EduGo',
     webAppIcon: '',
-    footerText: 'Hệ thống hỗ trợ tính toán phương pháp nghiên cứu định lượng toàn diện.',
+    footerText: 'EduGo, nền tảng học tập và làm việc trực tuyến.',
     allowPublicAccess: true,
     systemDescription: 'Hệ thống hỗ trợ tính toán phương pháp nghiên cứu định lượng chuẩn hóa.',
     dashboardBannerTitle: 'Hệ Thống Tính Toán Cỡ Mẫu Toàn Diện',
@@ -133,8 +148,9 @@ export async function getDefaultSettingsFromSupabase(): Promise<AppSettings> {
       assistantAi: data.assistant_ai ?? true,
       assistantKnowledge: Array.isArray(data.assistant_knowledge) ? data.assistant_knowledge : []
     };
-    cacheSettings(resolved);
-    return resolved;
+    const branded = rebrand(resolved);
+    cacheSettings(branded);
+    return branded;
   } catch (error) {
     console.warn("Failed to fetch settings from Supabase, using local fallback:", error);
     // Ưu tiên cache đã lưu để vẫn hiện đúng cấu hình khi mạng lỗi hoặc egress hết mức.
@@ -296,6 +312,7 @@ export async function saveUser(user: UserAccount) {
       email: user.email,
       role: user.role,
       permissions: user.permissions || [],
+      self_registered: user.selfRegistered,
       can_assign_task: user.canAssignTask,
       can_receive_task: user.canReceiveTask,
       can_run_pause_task: user.canRunPauseTask,
@@ -386,6 +403,7 @@ export function mapUserFromDB(u: any): UserAccount {
     email: u.email,
     role: u.role,
     permissions: u.permissions || [],
+    selfRegistered: !!u.self_registered,
     canAssignTask: u.can_assign_task,
     canReceiveTask: u.can_receive_task,
     canRunPauseTask: u.can_run_pause_task,

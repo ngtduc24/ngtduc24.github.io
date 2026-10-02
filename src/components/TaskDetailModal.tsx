@@ -291,7 +291,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate, currentUser, 
       <body>
         <div class="header">
           <h1 class="title">BÁO CÁO NGHIỆM THU CÔNG VIỆC</h1>
-          <div style="font-size: 10pt; color: #64748b;">Hệ thống quản lý công việc Smart Research VN</div>
+          <div style="font-size: 10pt; color: #64748b;">Hệ thống quản lý công việc EduGo</div>
         </div>
 
         <div class="meta-grid">

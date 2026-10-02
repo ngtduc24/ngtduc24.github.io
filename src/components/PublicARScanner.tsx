@@ -17,7 +17,7 @@ export default function PublicARScanner() {
 
   useEffect(() => {
     setCustomPageSEO({
-      title: 'Quét thực tế tăng cường AR 3D | SmartResearch',
+      title: 'Quét thực tế tăng cường AR 3D | EduGo',
       description: 'Trải nghiệm tương tác thực tế tăng cường AR trên nền tảng web không cần cài đặt ứng dụng.',
       canonicalUrl: window.location.href
     });

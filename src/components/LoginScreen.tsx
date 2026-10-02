@@ -5,14 +5,17 @@ import {
   Eye, 
   EyeOff, 
   LogIn, 
-  Calculator,
-  ShieldAlert
+  ShieldAlert,
+  Mail,
+  UserPlus,
+  ArrowLeft,
+  GraduationCap
 } from 'lucide-react';
 import { UserAccount } from '../types';
 import { Button, IconButton, Input, Field, Card } from './ui';
 import { auth, db } from '../lib/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { getUserById, USERS_TABLE, mapUserFromDB } from '../lib/data';
 import { supabase } from '../lib/supabase';
 
@@ -21,9 +24,65 @@ interface LoginScreenProps {
   users: UserAccount[];
   onLoginSuccess: (user: UserAccount) => void;
   onBackToPublic: () => void;
+  initialMode?: 'login' | 'register';
 }
 
-export default function LoginScreen({ users, onLoginSuccess, onBackToPublic }: LoginScreenProps) {
+export default function LoginScreen({ users, onLoginSuccess, onBackToPublic, initialMode = 'login' }: LoginScreenProps) {
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  // Đăng ký
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPass, setRegPass] = useState('');
+  const [regPass2, setRegPass2] = useState('');
+  const [regError, setRegError] = useState('');
+
+  // Tạo tài khoản mới: tài khoản Firebase, rồi hồ sơ vai trò người dùng thường, chưa có quyền riêng.
+  // Ứng dụng được dùng ngay là danh sách mặc định admin chọn trong Cấu hình hệ thống.
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegError('');
+    const name = regName.trim();
+    const email = regEmail.trim().toLowerCase();
+    if (name.length < 2) { setRegError('Vui lòng nhập họ và tên.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setRegError('Email chưa đúng định dạng.'); return; }
+    if (regPass.length < 6) { setRegError('Mật khẩu cần ít nhất 6 ký tự.'); return; }
+    if (regPass !== regPass2) { setRegError('Hai lần nhập mật khẩu chưa khớp nhau.'); return; }
+    setLoading(true);
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, regPass);
+      try { await updateProfile(cred.user, { displayName: name }); } catch { /* bỏ qua */ }
+      // Tên đăng nhập lấy theo phần trước @ của email, trùng thì thêm số phía sau.
+      const base = (email.split('@')[0] || 'user').replace(/[^a-z0-9._-]/g, '').slice(0, 24) || 'user';
+      let username = base;
+      for (let i = 1; i < 50; i++) {
+        const snap = await getDocs(query(collection(db, USERS_TABLE), where('username', '==', username)));
+        if (snap.empty) break;
+        username = `${base}${i + 1}`;
+      }
+      const profile = {
+        id: cred.user.uid,
+        username,
+        full_name: name,
+        email,
+        role: 'user',
+        permissions: [] as string[],
+        self_registered: true,
+        created_at: new Date().toISOString(),
+      };
+      await setDoc(doc(db, USERS_TABLE, cred.user.uid), profile);
+      const created = mapUserFromDB(profile);
+      onLoginSuccess(created);
+    } catch (err: any) {
+      const code = err?.code || '';
+      if (code === 'auth/email-already-in-use') setRegError('Email này đã có tài khoản. Hãy đăng nhập hoặc dùng email khác.');
+      else if (code === 'auth/weak-password') setRegError('Mật khẩu quá yếu, hãy dùng ít nhất 6 ký tự.');
+      else if (code === 'auth/invalid-email') setRegError('Email chưa đúng định dạng.');
+      else if (code === 'auth/operation-not-allowed') setRegError('Hệ thống chưa bật đăng ký bằng email. Vui lòng báo quản trị viên.');
+      else if (code === 'auth/network-request-failed') setRegError('Không kết nối được máy chủ. Vui lòng kiểm tra mạng.');
+      else setRegError('Không tạo được tài khoản. Vui lòng thử lại.');
+    }
+    setLoading(false);
+  };
   // Login Form
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -150,14 +209,67 @@ export default function LoginScreen({ users, onLoginSuccess, onBackToPublic }: L
       <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-brand/10 rounded-full blur-3xl translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
       <Card padding="none" className="w-full max-w-md my-auto p-6 sm:p-8 shadow-xl relative z-10 shrink-0 animate-fadeIn">
-        <div className="text-center mb-7">
+        <button type="button" onClick={onBackToPublic} className="mb-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-slate-500 hover:text-brand">
+          <ArrowLeft size={16} /> Về trang chủ
+        </button>
+        <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-light text-brand mb-3">
-            <Calculator size={28} />
+            <GraduationCap size={28} />
           </div>
-          <h1 className="text-xl font-bold text-slate-800">Smart Research VN</h1>
-          <p className="text-[13px] text-slate-500 mt-1 max-w-xs mx-auto">Hệ thống làm việc cho giảng dạy, nghiên cứu và thiết kế.</p>
+          <h1 className="text-xl font-bold text-slate-800">{mode === 'login' ? 'Đăng nhập EduGo' : 'Tạo tài khoản EduGo'}</h1>
+          <p className="text-[13px] text-slate-500 mt-1 max-w-xs mx-auto">{mode === 'login' ? 'Nền tảng học tập và làm việc trực tuyến.' : 'Miễn phí, chỉ cần email và mật khẩu.'}</p>
         </div>
 
+        <div className="mb-5 grid grid-cols-2 gap-1 rounded-2xl bg-slate-100 p-1">
+          {(['login', 'register'] as const).map(m => (
+            <button key={m} type="button" onClick={() => { setMode(m); setLoginError(''); setRegError(''); }}
+              className={`rounded-xl py-2 text-[13px] font-semibold transition-all ${mode === m ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+              {m === 'login' ? 'Đăng nhập' : 'Đăng ký'}
+            </button>
+          ))}
+        </div>
+
+        {mode === 'register' && (
+          <form onSubmit={handleRegister} className="space-y-4">
+            {regError && (
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-[13px] font-medium flex items-start gap-2.5" role="alert">
+                <ShieldAlert size={16} className="shrink-0 mt-0.5" /><span>{regError}</span>
+              </div>
+            )}
+            <Field label="Họ và tên">
+              <div className="relative">
+                <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <Input type="text" required value={regName} onChange={e => setRegName(e.target.value)} autoComplete="name" placeholder="Ví dụ Nguyễn Văn An" className="pl-9" />
+              </div>
+            </Field>
+            <Field label="Email">
+              <div className="relative">
+                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <Input type="email" required value={regEmail} onChange={e => setRegEmail(e.target.value)} autoComplete="email" placeholder="ban@email.com" className="pl-9" />
+              </div>
+            </Field>
+            <Field label="Mật khẩu">
+              <div className="relative">
+                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <Input type={showLoginPass ? 'text' : 'password'} required value={regPass} onChange={e => setRegPass(e.target.value)} autoComplete="new-password" placeholder="Ít nhất 6 ký tự" className="pl-9 pr-11" />
+                <IconButton label={showLoginPass ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} size="sm" variant="ghost" onClick={() => setShowLoginPass(!showLoginPass)} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400">
+                  {showLoginPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                </IconButton>
+              </div>
+            </Field>
+            <Field label="Nhập lại mật khẩu">
+              <div className="relative">
+                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <Input type={showLoginPass ? 'text' : 'password'} required value={regPass2} onChange={e => setRegPass2(e.target.value)} autoComplete="new-password" placeholder="Nhập lại mật khẩu" className="pl-9" />
+              </div>
+            </Field>
+            <Button type="submit" full loading={loading} iconRight={<UserPlus size={16} />} className="mt-1">
+              {loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
+            </Button>
+          </form>
+        )}
+
+        {mode === 'login' && (
         <form onSubmit={handleLoginSubmit} className="space-y-4">
           {loginError && (
             <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-[13px] font-medium flex flex-col gap-2.5 animate-shake" role="alert">
@@ -179,10 +291,10 @@ export default function LoginScreen({ users, onLoginSuccess, onBackToPublic }: L
             </div>
           )}
 
-          <Field label="Tên đăng nhập">
+          <Field label="Email hoặc tên đăng nhập">
             <div className="relative">
               <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              <Input type="text" required value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} autoComplete="username" placeholder="Nhập tên đăng nhập" className="pl-9" />
+              <Input type="text" required value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} autoComplete="username" placeholder="Nhập email hoặc tên đăng nhập" className="pl-9" />
             </div>
           </Field>
 
@@ -200,10 +312,8 @@ export default function LoginScreen({ users, onLoginSuccess, onBackToPublic }: L
             {loading ? 'Đang xử lý...' : 'Đăng nhập'}
           </Button>
 
-          <div className="pt-4 border-t border-slate-100 text-center">
-            <Button type="button" variant="ghost" size="sm" onClick={() => { window.location.href = '/tracuu.html'; }}>Truy cập trang tra cứu công cộng</Button>
-          </div>
         </form>
+        )}
       </Card>
     </div>
   );

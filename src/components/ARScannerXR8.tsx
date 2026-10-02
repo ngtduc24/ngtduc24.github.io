@@ -62,7 +62,7 @@ export default function ARScannerXR8({ target: rawTarget, onClose }: ARScannerXR
     let resizeObs: ResizeObserver | null = null;
     let restoreGUM: (() => void) | null = null;
     const videoTextures: HTMLVideoElement[] = [];
-    const MODULE_NAME = 'smartresearch-studio-scene';
+    const MODULE_NAME = 'edugo-studio-scene';
 
     // Độ phân giải canvas: engine không tự đặt canvas.width/height, nếu để mặc định (300×150) thì
     // luồng camera bị kéo giãn ra toàn màn hình nên rất mờ. Ta đặt theo kích thước thật của màn hình
@@ -378,7 +378,7 @@ export default function ARScannerXR8({ target: rawTarget, onClose }: ARScannerXR
           XR8.XrController.pipelineModule(),
           XR8.CanvasScreenshot.pipelineModule(),
           {
-            name: 'smartresearch-errors',
+            name: 'edugo-errors',
             onCameraStatusChange: ({ status }: any) => {
               if (status === 'failed') { setError('Không mở được camera. Hãy cho phép truy cập camera rồi tải lại trang.'); setLoading(false); }
             },

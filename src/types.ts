@@ -8,6 +8,7 @@ export interface UserAccount {
   username: string;
   fullName: string;
   email: string;
+  selfRegistered?: boolean; // tài khoản tự đăng ký ở trang đầu
   role: 'admin' | 'user' | 'member';
   permissions: string[]; // Allowed tab IDs: 'dashboard', 'calculator', 'website', 'edu'
   canAssignTask?: boolean; // Can assign tasks

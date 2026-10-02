@@ -22,7 +22,9 @@ import BackupManager from './components/BackupManager';
 import AdminNotifications from './components/AdminNotifications';
 import UserNotifications from './components/UserNotifications';
 import MediaLibrary from './components/MediaLibrary';
-import { canUseModule } from './lib/moduleAccess';
+import LandingPage from './components/LandingPage';
+import { getLandingConfig } from './lib/landing';
+import { canUseModule, setDefaultApps } from './lib/moduleAccess';
 import PortfolioWebsite from './components/PortfolioWebsite';
 import PortfolioCMS from './components/PortfolioCMS';
 import UtilitiesModule from './components/UtilitiesModule';
@@ -109,11 +111,16 @@ export default function App() {
   }, []);
 
   const [dbConnected, setDbConnected] = useState<boolean | null>(null);
-  const [entryView, setEntryView] = useState<'portfolio' | 'login' | 'admin'>(() => {
-    if (typeof window === 'undefined') return 'portfolio';
+  // landing: trang đầu EduGo cho khách. portfolio: trang Website công khai (link chia sẻ khoá học,
+  // dự án, nghiên cứu, bài viết). admin: khu làm việc sau khi đăng nhập.
+  const [entryView, setEntryView] = useState<'landing' | 'portfolio' | 'login' | 'admin'>(() => {
+    if (typeof window === 'undefined') return 'landing';
     const params = new URLSearchParams(window.location.search);
     if (params.has('tab')) {
       return 'admin';
+    }
+    if (params.get('portfolio') === 'true' || /^\/(c|p|r|b)\/[^/]+\/?$/.test(window.location.pathname)) {
+      return 'portfolio';
     }
     const shouldResumeAdmin = sessionStorage.getItem('resume_admin_after_refresh') === 'true';
     if (shouldResumeAdmin) {
@@ -124,14 +131,15 @@ export default function App() {
     // Dùng sessionStorage nên tab mới mở vẫn vào trang portfolio công khai như trước.
     try {
       const saved = sessionStorage.getItem(ENTRY_VIEW_STORAGE_KEY);
-      if (saved === 'admin' || saved === 'portfolio') {
+      if (saved === 'admin') {
         return saved;
       }
     } catch (e) {
       // Trình duyệt chặn sessionStorage thì bỏ qua, quay về mặc định.
     }
-    return 'portfolio';
+    return 'landing';
   });
+  const [loginMode, setLoginMode] = useState<'login' | 'register'>('login');
 
   // Đồng bộ tiêu đề trang (SEO), OpenGraph và URL hai chiều
   useEffect(() => {
@@ -140,7 +148,7 @@ export default function App() {
     const sp = new URLSearchParams(window.location.search);
     if (['bt', 'quiz', 'elesson', 'elview', 'vr', 'ar'].some(k => sp.has(k)) || /^\/(bt|bg|hl|tn|vr|ar|nb)\//.test(window.location.pathname)) return;
 
-    if (entryView === 'portfolio') {
+    if (entryView === 'portfolio' || entryView === 'landing') {
       updateDocumentSEO('portfolio');
       return;
     }
@@ -303,7 +311,7 @@ export default function App() {
     id: "general_config",
     defaultCoverImage: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=600&q=80",
     themeColor: "green-black",
-    webAppTitle: "Smart Research VN",
+    webAppTitle: "EduGo",
     webAppIcon: "",
     footerText: "Hệ thống hỗ trợ tính toán phương pháp nghiên cứu định lượng toàn diện.",
     allowPublicAccess: true,
@@ -328,11 +336,13 @@ export default function App() {
 
   useEffect(() => {
     loadConfig();
+    // Ứng dụng mặc định cho tài khoản tự đăng ký, admin chọn trong Cấu hình hệ thống.
+    getLandingConfig().then(c => setDefaultApps(c.defaultApps)).catch(() => {});
   }, []);
 
   // Keep the browser title in sync with the current administration module.
   useEffect(() => {
-    const baseTitle = settings.webAppTitle || 'Smart Research VN';
+    const baseTitle = settings.webAppTitle || 'EduGo';
     const adminTitles: Record<string, string> = {
       dashboard: 'Tổng quan hệ thống',
       tasks: 'Quản lý dự án',
@@ -473,7 +483,13 @@ export default function App() {
         return;
       }
 
-      const directProfile = await getUserById(firebaseUser.uid);
+      let directProfile = await getUserById(firebaseUser.uid);
+      // Tài khoản vừa đăng ký: hồ sơ được ghi ngay sau khi tạo tài khoản, chờ một chút rồi đọc lại.
+      if (!directProfile) {
+        await new Promise(r => setTimeout(r, 1500));
+        if (!active) return;
+        directProfile = await getUserById(firebaseUser.uid);
+      }
       const profiles = latestUsers.length > 0 ? latestUsers : directProfile ? [directProfile] : await getUsers();
       if (!active) return;
       const verifiedProfile = directProfile || profiles.find(user => user.id === firebaseUser.uid) || null;
@@ -595,7 +611,8 @@ export default function App() {
     setCurrentUser(null);
     localStorage.removeItem('logged_in_user');
     setCurrentTab('dashboard');
-    setEntryView('portfolio');
+    setEntryView('landing');
+    try { window.history.replaceState(null, '', '/'); } catch { /* bỏ qua */ }
   };
 
   // Helper check to verify if currentUser has permission to view a tab
@@ -879,7 +896,20 @@ export default function App() {
     );
   }
 
-  // The public Portfolio is always the entry page, even when a login session exists.
+  // Trang đầu EduGo cho khách: giới thiệu, đăng nhập, đăng ký.
+  if (entryView === 'landing') {
+    return (
+      <LandingPage
+        settings={settings}
+        currentUser={currentUser}
+        onLogin={() => { setLoginMode('login'); setEntryView('login'); }}
+        onRegister={() => { setLoginMode('register'); setEntryView('login'); }}
+        onEnter={() => { setCurrentTab('dashboard'); setEntryView('admin'); }}
+      />
+    );
+  }
+
+  // Trang Website công khai (mở từ link chia sẻ).
   if (entryView === 'portfolio') {
     return (
       <PortfolioWebsite
@@ -914,7 +944,9 @@ export default function App() {
           handleLoginSuccess(user);
           setEntryView(user.role === 'member' ? 'portfolio' : 'admin');
         }} 
-        onBackToPublic={() => setEntryView('portfolio')}
+        initialMode={loginMode}
+        key={loginMode}
+        onBackToPublic={() => setEntryView('landing')}
       />
     );
   }

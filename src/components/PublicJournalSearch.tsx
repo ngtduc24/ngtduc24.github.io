@@ -130,11 +130,11 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
     }
 
     // Dynamic SEO Title & Description
-    let seoTitle = "Tra Cứu Điểm Báo Khoa Học & Tạp Chí ISI/Scopus | SmartResearch";
+    let seoTitle = "Tra Cứu Điểm Báo Khoa Học & Tạp Chí ISI/Scopus | EduGo";
     let seoDesc = "Cổng tra cứu điểm báo khoa học, định danh tạp chí uy tín ISI, Scopus, tính điểm công trình nghiên cứu và cơ sở dữ liệu học thuật toàn diện.";
 
     if (selectedJournal) {
-      seoTitle = `${selectedJournal.name} (${selectedJournal.score ? `Điểm: ${selectedJournal.score}` : selectedJournal.field || 'Tạp chí khoa học'}) | SmartResearch`;
+      seoTitle = `${selectedJournal.name} (${selectedJournal.score ? `Điểm: ${selectedJournal.score}` : selectedJournal.field || 'Tạp chí khoa học'}) | EduGo`;
       seoDesc = `Thông tin chi tiết tạp chí ${selectedJournal.name}, nhà xuất bản: ${selectedJournal.publisher || 'Đang cập nhật'}, mã ISSN: ${selectedJournal.issn || 'Chưa rõ'}, điểm công trình: ${selectedJournal.score || 'N/A'}.`;
     } else if (searchQuery.trim()) {
       seoTitle = `Tìm kiếm: "${searchQuery.trim()}" | Tra Cứu Điểm Báo Khoa Học`;
@@ -274,7 +274,7 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
           {/* Badge */}
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-[10px] font-bold tracking-wider uppercase backdrop-blur-sm mx-auto">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>{settings?.journalBannerLabel || "Smart Research VN"}</span>
+            <span>{settings?.journalBannerLabel || "EduGo"}</span>
           </div>
 
           {/* Heading */}
@@ -505,7 +505,7 @@ export default function PublicJournalSearch({ onLoginClick }: PublicJournalSearc
           <Database className="w-4 h-4 text-brand" />
           <span>Hệ thống cơ sở dữ liệu quốc gia đồng bộ thời gian thực</span>
         </div>
-        <p>© 2026 Smart Research VN. Được xuất bản phục vụ cộng đồng nghiên cứu khoa học.</p>
+        <p>© 2026 EduGo. Được xuất bản phục vụ cộng đồng nghiên cứu khoa học.</p>
       </footer>
       {/* POPUP DETAIL MODAL */}
       {selectedJournal && (
