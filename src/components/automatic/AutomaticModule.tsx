@@ -12,6 +12,8 @@ import { PageHeader, Card, Button, SearchInput, EmptyState, Spinner } from '../u
 import { useConfirmation } from '../ConfirmationContext';
 import { useNotifications } from '../NotificationContext';
 import WorkflowEditor from './WorkflowEditor';
+import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
+import { trackDoc } from '../../lib/personalize';
 import { Icon, NodeIcon, Toggle, fmtAgo } from './shared';
 
 export default function AutomaticModule({ currentUser }: { currentUser: UserAccount }) {
@@ -38,11 +40,16 @@ export default function AutomaticModule({ currentUser }: { currentUser: UserAcco
     return () => window.removeEventListener(AUTOMATIC_EXECUTED, h);
   }, [open]);
   // Mở lại quy trình đang soạn khi tải lại trang
+  // (mã quy trình nằm trên địa chỉ ?awf=, mục Tiếp tục ở Trang chủ cũng mở theo cách này)
   useEffect(() => {
-    let id = ''; try { id = sessionStorage.getItem('automatic_open') || ''; } catch { /* bỏ qua */ }
+    const id = readSubRoute().awf;
     if (id) getWorkflow(id).then(w => { if (w) setOpen(w); }).catch(() => {});
   }, []);
-  useEffect(() => { try { open ? sessionStorage.setItem('automatic_open', open.id) : sessionStorage.removeItem('automatic_open'); } catch { /* bỏ qua */ } }, [open?.id]);
+  useEffect(() => {
+    writeSubRoute({ awf: open?.id || null });
+    if (open) trackDoc({ kind: 'workflow', id: open.id, title: open.name, tab: 'automatic', sub: { awf: open.id } });
+  }, [open?.id]);
+  useEffect(() => () => { writeSubRoute({ awf: null }); }, []);
 
   const filtered = useMemo(() => {
     const k = q.trim().toLowerCase();

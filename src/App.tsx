@@ -44,6 +44,8 @@ import ScientificCvModule from './components/scientificCv/ScientificCvModule';
 import QrCodeModule from './components/qr/QrCodeModule';
 const AutomaticModule = React.lazy(() => import('./components/automatic/AutomaticModule'));
 import { useAutomaticScheduler } from './lib/automatic/scheduler';
+import { trackModule, setUsageUser } from './lib/personalize';
+import { MODULE_REGISTRY } from './lib/modules';
 import EduModule from './components/EduModule';
 import { setEduAuthContext } from './lib/edu';
 import { TaskProvider } from './components/TaskContext';
@@ -621,6 +623,13 @@ export default function App() {
     setEntryView('landing');
     try { window.history.replaceState(null, '', '/'); } catch { /* bỏ qua */ }
   };
+
+  // Ghi nhật ký chức năng đã mở (riêng từng tài khoản) để Trang chủ sắp xếp theo thói quen.
+  useEffect(() => { setUsageUser(currentUser?.id); }, [currentUser?.id]);
+  useEffect(() => {
+    if (!currentUser?.id || entryView !== 'admin') return;
+    if (MODULE_REGISTRY.some(m => m.id === currentTab)) trackModule(currentUser.id, currentTab);
+  }, [currentTab, currentUser?.id, entryView]);
 
   // Quy trình Automatic đang bật lịch chạy nền khi EduGo đang mở
   useAutomaticScheduler(currentUser, !!currentUser && !isModuleHidden('automatic', settings) && canUseModule(currentUser, 'automatic'));

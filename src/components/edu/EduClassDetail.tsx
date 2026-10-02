@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { trackDoc } from '../../lib/personalize';
 import { prettyShareUrl } from '../../lib/shareLinks';
 import { copyText } from '../ui/Dialogs';
 import { 
@@ -174,6 +175,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
         getPendingExtensions(classId)
       ]);
       setClazz(classData);
+      if (classData) trackDoc({ kind: 'class', id: classId, title: (classData as any).name || 'Lớp học', tab: 'edu', sub: { sv: 'class_detail', cid: classId } });
       setUsers(usersData);
       setGradeColumns(columnsData);
       setAssignments(assignmentsData);

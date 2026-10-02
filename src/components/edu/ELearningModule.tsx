@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { trackDoc } from '../../lib/personalize';
 import { takeOpenHint } from '../../lib/notifications';
 import { prettyShareUrl } from '../../lib/shareLinks';
 import { copyText, askChoice } from '../ui/Dialogs';
@@ -498,6 +499,7 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
     // Chỉ chủ giáo trình mới mở được trang soạn.
     if (l.owner_id !== currentUser.id) { addNotification('Không tìm thấy giáo trình.', 'error'); onBack(); return; }
     setLesson(l); setSections(secs); setResources(res);
+    trackDoc({ kind: 'lesson', id: lessonId, title: l.title, tab: 'elearning', sub: { sv: 'editor', lid: lessonId } });
     setActiveSection(prev => prev && secs.some(s => s.id === prev) ? prev : (secs[0]?.id ?? null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);

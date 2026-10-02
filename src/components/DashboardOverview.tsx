@@ -15,6 +15,9 @@ import {
 import { isModuleHidden, resolveModuleMeta } from '../lib/modules';
 import { UserAccount, AppSettings } from '../types';
 import { useNotifications } from './NotificationContext';
+import { useUsage, useScores, personalOrder, suggestNow, rememberOrder, setPins, setAutoSort, forgetDoc, MIN_EVENTS, DocVisit } from '../lib/personalize';
+import { writeSubRoute } from '../lib/seoConfig';
+import { Pin, PinOff, History, Clock as ClockIcon } from 'lucide-react';
 
 interface DashboardProps {
   onSwitchTab: (tab: string) => void;
@@ -38,6 +41,15 @@ const COLORS: Record<string, { bg: string; text: string }> = {
   amber: { bg: 'bg-amber-100', text: 'text-amber-500' },
   indigo: { bg: 'bg-indigo-100', text: 'text-indigo-500' },
 };
+
+function ago(sec: number) {
+  const s = Math.max(0, Math.floor(Date.now() / 1000) - sec);
+  if (s < 60) return 'vừa xong';
+  if (s < 3600) return `${Math.floor(s / 60)} phút trước`;
+  if (s < 86400) return `${Math.floor(s / 3600)} giờ trước`;
+  if (s < 86400 * 30) return `${Math.floor(s / 86400)} ngày trước`;
+  return new Date(sec * 1000).toLocaleDateString('vi-VN');
+}
 
 export default function DashboardOverview({ onSwitchTab, settings, users, currentUser, onRefreshSettings }: DashboardProps) {
   // Ảnh nền đầu trang admin đặt trước đây chỉ lưu trên máy admin: đẩy lên máy chủ một lần cho mọi người thấy.
@@ -257,8 +269,22 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     .filter(m => can(m.id))
     .filter(m => !isModuleHidden(m.id, settings))
     .map(m => resolveModuleMeta(m, settings));
+  // Thói quen sử dụng của riêng tài khoản này (nhật ký mở chức năng, tài liệu vừa mở).
+  const usage = useUsage(currentUser?.id);
+  const scores = useScores(usage);
+  const enoughData = usage.ev.length >= MIN_EVENTS;
+  const autoSort = usage.autoSort !== false;
+  const idsKey = baseIcons.map(m => m.id).join('|');
+  const pinsKey = JSON.stringify(usage.pins || {});
+  // Thứ tự theo thói quen chỉ tính lại khi mở trang hoặc khi dữ liệu thay đổi, không nhảy chỗ lúc đang xem.
+  const personal = React.useMemo(
+    () => (autoSort && enoughData ? personalOrder(baseIcons.map(m => m.id), scores, usage.order, usage.pins || {}) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [idsKey, autoSort, enoughData, pinsKey, scores],
+  );
+  useEffect(() => { if (personal && currentUser?.id) rememberOrder(currentUser.id, personal); }, [personal, currentUser?.id]);
   // Sắp xếp lại theo thứ tự người dùng đã kéo thả, mục chưa có trong thứ tự thì giữ nguyên phía sau.
-  const iconModules = [...baseIcons].sort((a, b) => {
+  const iconModules = personal ? personal.map(id => baseIcons.find(m => m.id === id)!).filter(Boolean) : [...baseIcons].sort((a, b) => {
     const ia = iconOrder.indexOf(a.id); const ib = iconOrder.indexOf(b.id);
     if (ia === -1 && ib === -1) return 0;
     if (ia === -1) return 1;
@@ -273,7 +299,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   // Hàng phím tắt đầu trang chỉ hiện tối đa 12 nút. Khi tìm kiếm thì hiện đủ kết quả khớp.
   const rowIcons = q ? filteredIcons : filteredIcons.slice(0, 12);
   // Thẻ nổi bật: người dùng tự chọn (featuredIds), chưa chọn thì lấy 10 chức năng đầu.
-  const defaultFeatured = cardModules.slice(0, 10).map(m => m.id);
+  const defaultFeatured = cardModules.slice(0, 10).map(m => m.id); // khi bật tự sắp xếp, cardModules đã theo thói quen
   const currentFeatured = featuredIds ?? defaultFeatured;
   const featuredCards = currentFeatured.map(id => cardModules.find(m => m.id === id)).filter(Boolean) as typeof cardModules;
   const filteredCards = q ? cardModules.filter(m => m.label.toLowerCase().includes(q)) : featuredCards;
@@ -298,6 +324,16 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   // Sắp xếp lại theo id nguồn và id đích (dùng cho kéo thả bằng con trỏ).
   const reorder = (sourceId: string, targetId: string) => {
     if (!sourceId || sourceId === targetId) return;
+    // Đang tự sắp xếp: kéo vào vị trí nào thì ghim chức năng đó ở vị trí ấy
+    if (personal && currentUser?.id) {
+      const to = iconModules.findIndex(m => m.id === targetId);
+      if (to === -1) return;
+      const pins = { ...(usage.pins || {}) };
+      Object.keys(pins).forEach(k => { if (pins[k] === to) delete pins[k]; });
+      pins[sourceId] = to;
+      setPins(currentUser.id, pins);
+      return;
+    }
     const ids = iconModules.map(m => m.id);
     const from = ids.indexOf(sourceId); const to = ids.indexOf(targetId);
     if (from === -1 || to === -1) return;
@@ -483,6 +519,13 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                       <Minus className="h-3 w-3" strokeWidth={3} />
                     </button>
                   )}
+                  {personal && usage.pins?.[m.id] !== undefined && (
+                    sortMode && !q ? (
+                      <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); const p = { ...(usage.pins || {}) }; delete p[m.id]; setPins(currentUser.id, p); }}
+                        title={`Bỏ ghim "${m.label}"`} aria-label={`Bỏ ghim ${m.label}`}
+                        className="absolute -top-1 left-2 z-10 grid h-5 w-5 place-items-center rounded-full border border-slate-200 bg-white text-brand shadow-md hover:text-rose-500"><PinOff className="h-3 w-3" /></button>
+                    ) : <span className="pointer-events-none absolute -top-0.5 left-3 z-10 grid h-4 w-4 place-items-center rounded-full bg-white text-brand shadow" title="Đã ghim vị trí"><Pin className="h-2.5 w-2.5" /></span>
+                  )}
                   <span className="relative pointer-events-none">
                     <span className={`w-14 h-14 rounded-2xl ${c.bg} ${c.text} grid place-items-center shadow-sm group-hover:scale-105 transition-transform overflow-hidden`}>
                       {(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="w-full h-full object-cover" /> : <Icon className="w-7 h-7" />}
@@ -506,6 +549,89 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
           </div>
         </div>
       )}
+
+      {/* Thanh tuỳ chọn khi đang sắp xếp phím tắt */}
+      {sortMode && !q && (
+        <div className="-mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[12px] text-slate-500">
+          <label className="flex cursor-pointer items-center gap-2 font-semibold text-slate-600" onPointerDown={e => e.stopPropagation()}>
+            <input type="checkbox" className="h-4 w-4 accent-brand" checked={autoSort} onChange={e => currentUser?.id && setAutoSort(currentUser.id, e.target.checked)} />
+            Tự sắp xếp theo thói quen sử dụng
+          </label>
+          {personal ? <span>Kéo một chức năng vào vị trí nào thì chức năng đó được ghim ở vị trí ấy.</span> : autoSort ? <span>Đang học thói quen của bạn, cần thêm vài lần sử dụng.</span> : <span>Đang dùng thứ tự bạn tự kéo thả.</span>}
+          {personal && Object.keys(usage.pins || {}).length > 0 && (
+            <button type="button" onPointerDown={e => e.stopPropagation()} onClick={() => setPins(currentUser.id, {})} className="font-bold text-brand hover:underline">Bỏ ghim tất cả</button>
+          )}
+        </div>
+      )}
+
+      {/* ===== Dành cho bạn: Tiếp tục tài liệu đang làm và Gợi ý lúc này ===== */}
+      {!q && (() => {
+        const findMod = (id: string) => baseIcons.find(m => m.id === id);
+        const docs = (usage.docs || []).filter(d => findMod(d.tab)).slice(0, 4);
+        const sugg = enoughData ? suggestNow(baseIcons.filter(m => !hiddenIds.includes(m.id)).map(m => m.id), scores) : [];
+        const openDoc = (d: DocVisit) => { writeSubRoute(d.sub); onSwitchTab(d.tab); };
+        if (!docs.length && !sugg.length) {
+          return (
+            <div className="flex items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-white/60 px-5 py-4 text-[12px] text-slate-500">
+              <Sparkles className="h-4 w-4 shrink-0 text-brand" />
+              EduGo đang học thói quen sử dụng của bạn. Sau vài lần dùng, nơi đây sẽ hiện tài liệu đang làm dở và chức năng hợp với thời điểm trong ngày.
+            </div>
+          );
+        }
+        return (
+          <div className={`grid gap-4 ${docs.length && sugg.length ? 'lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]' : ''}`}>
+            {docs.length > 0 && (
+              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
+                <div className="mb-3 flex items-center gap-2">
+                  <History className="h-4 w-4 text-brand" />
+                  <h2 className="text-sm font-black text-slate-800">Tiếp tục</h2>
+                  <span className="text-[11px] text-slate-400">Tài liệu bạn mở gần đây</span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {docs.map(d => {
+                    const m = findMod(d.tab)!; const Icon = m.icon; const c = COLORS[m.color];
+                    return (
+                      <div key={d.key} className="group relative">
+                        <button onClick={() => openDoc(d)} className="flex w-full items-center gap-3 rounded-xl border border-slate-100 px-3 py-2.5 text-left transition-colors hover:border-brand/30 hover:bg-brand-light/40">
+                          <span className={`grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-xl ${c.bg} ${c.text}`}>{(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="h-full w-full object-cover" /> : <Icon className="h-[18px] w-[18px]" />}</span>
+                          <span className="min-w-0 flex-1 pr-5">
+                            <span className="block truncate text-[13px] font-bold text-slate-800 group-hover:text-brand">{d.title}</span>
+                            <span className="block truncate text-[11px] text-slate-400">{m.label} · {ago(d.at)}</span>
+                          </span>
+                        </button>
+                        <button type="button" title="Bỏ khỏi danh sách" onClick={() => currentUser?.id && forgetDoc(currentUser.id, d.key)} className="absolute right-2 top-1/2 hidden h-6 w-6 -translate-y-1/2 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 group-hover:grid"><X className="h-3.5 w-3.5" /></button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {sugg.length > 0 && (
+              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
+                <div className="mb-3 flex items-center gap-2">
+                  <ClockIcon className="h-4 w-4 text-brand" />
+                  <h2 className="text-sm font-black text-slate-800">Gợi ý lúc này</h2>
+                </div>
+                <div className="space-y-2">
+                  {sugg.map(sg => {
+                    const m = findMod(sg.id); if (!m) return null; const Icon = m.icon; const c = COLORS[m.color];
+                    return (
+                      <button key={sg.id} onClick={() => go(sg.id)} className="group flex w-full items-center gap-3 rounded-xl border border-slate-100 px-3 py-2.5 text-left transition-colors hover:border-brand/30 hover:bg-brand-light/40">
+                        <span className={`grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-xl ${c.bg} ${c.text}`}>{(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="h-full w-full object-cover" /> : <Icon className="h-[18px] w-[18px]" />}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[13px] font-bold text-slate-800 group-hover:text-brand">{m.label}</span>
+                          <span className="block truncate text-[11px] text-slate-400">{sg.reason}</span>
+                        </span>
+                        <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 group-hover:text-brand" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Popup chọn chức năng để thêm vào phím tắt đầu trang */}
       {showAddPicker && (

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { trackDoc } from '../../lib/personalize';
 import { FileUp, Plus, Loader2, Presentation, Copy, Trash2, Pencil, Users, LayoutGrid, List as ListIcon, Play, Eye, Library } from 'lucide-react';
 import LibraryHero, { ViewToggle } from '../ui/LibraryHero';
 import { AvatarStack } from '../ui/People';
@@ -61,6 +62,7 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => { writeSubRoute({ sid: open?.deck.id || null }); }, [open]);
+  useEffect(() => { if (open) trackDoc({ kind: 'deck', id: open.deck.id, title: open.deck.title, tab: 'slides', sub: { sid: open.deck.id } }); }, [open?.deck.id]);
   useEffect(() => () => { writeSubRoute({ sid: null }); }, []);
 
   const openDeck = async (s: DeckSummary) => {

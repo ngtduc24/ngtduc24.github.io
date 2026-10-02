@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { trackDoc } from '../../lib/personalize';
 import { takeOpenHint } from '../../lib/notifications';
 import { prettyShareUrl } from '../../lib/shareLinks';
 import { useSubjectNames } from './useSubjectNames';
@@ -85,6 +86,10 @@ export default function QuizModule({ currentUser, standaloneBank, onExit }: Quiz
       qid: needsQuiz ? (activeQuiz?.id || null) : null,
     });
   }, [view, activeQuiz, bankSelectMode]);
+  // Đề đang soạn hoặc đang xem ghi vào mục Tiếp tục ở Trang chủ
+  useEffect(() => {
+    if (activeQuiz && (view === 'editor' || view === 'detail')) trackDoc({ kind: 'quiz', id: activeQuiz.id, title: activeQuiz.title, tab: 'edu_exam', sub: { sv: 'exam_bank', qv: view, qid: activeQuiz.id } });
+  }, [activeQuiz?.id, view]);
 
   // Rời khỏi màn hình trắc nghiệm thì bỏ các tham số của nó khỏi URL.
   useEffect(() => () => { writeSubRoute({ qv: null, qid: null }); }, []);
