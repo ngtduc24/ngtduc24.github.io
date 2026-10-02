@@ -34,14 +34,15 @@ interface SystemSettingsProps {
   onRefreshSettings: () => void;
   isAdmin: boolean;
   currentUser?: any;
+  initialTab?: 'general' | 'functions' | 'assistant' | 'maintenance' | 'backup' | 'storage';
 }
 
-export default function SystemSettings({ settings, onRefreshSettings, isAdmin, currentUser }: SystemSettingsProps) {
+export default function SystemSettings({ settings, onRefreshSettings, isAdmin, currentUser, initialTab }: SystemSettingsProps) {
   const [formState, setFormState] = useState<AppSettings>({ ...settings });
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'general' | 'functions' | 'assistant' | 'maintenance' | 'backup' | 'media'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'functions' | 'assistant' | 'maintenance' | 'backup' | 'storage'>(initialTab || 'general');
 
   // Thư viện kiến thức của trợ lý.
   const knowledge: AssistantKnowledgeItem[] = formState.assistantKnowledge || [];
@@ -216,7 +217,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
       <PageHeader
         icon={<Settings size={22} />}
         title="Cấu hình hệ thống"
-        description="Màu sắc, tên và logo ứng dụng, cài đặt từng chức năng, trợ lý và chế độ bảo trì."
+        description="Màu sắc, tên và logo ứng dụng, cài đặt từng chức năng, trợ lý, bảo trì và kho lưu trữ."
         badge={<Badge tone="brand">{currentUser?.role === 'admin' ? 'Quản trị viên' : 'Được cấp quyền'}</Badge>}
       />
 
@@ -228,6 +229,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
             { id: 'functions', label: 'Chức năng', icon: Boxes },
             { id: 'assistant', label: 'Trợ lý', icon: Sparkles },
             { id: 'maintenance', label: 'Bảo trì', icon: Wrench },
+            { id: 'storage', label: 'Kho lưu trữ', icon: Images },
             ...(currentUser?.role === 'admin' ? [{ id: 'backup', label: 'Sao lưu', icon: Database }] : []),
           ] as { id: typeof activeTab; label: string; icon: any }[]).map(t => {
             const Icon = t.icon;
@@ -847,16 +849,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
       ) : activeTab === 'backup' && currentUser?.role === 'admin' ? (
         <BackupManager />
       ) : (
-        <div className="space-y-4">
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
-            <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
-              <Images className="w-4 h-4 text-brand" />
-              <span>Quản lý tư liệu</span>
-            </h2>
-            <p className="text-[13px] text-slate-500 mt-1">Nơi quản trị viên quản lý toàn bộ hình ảnh và tư liệu đã tải lên hệ thống. Đây là khu vực quản lý dữ liệu, không phải chức năng dành cho người dùng thường.</p>
-          </div>
-          <MediaLibrary currentUser={currentUser} />
-        </div>
+        <MediaLibrary currentUser={currentUser} embedded />
       )}
     </div>
   );

@@ -30,6 +30,7 @@ import { usePaging, Pager } from './edu/ListPager';
 
 interface MediaLibraryProps {
   currentUser: UserAccount;
+  embedded?: boolean; // nằm trong trang Cấu hình hệ thống, không có đầu trang riêng
 }
 
 interface UploadedImage {
@@ -44,7 +45,7 @@ interface UploadedImage {
   uploaderName: string;
 }
 
-export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
+export default function MediaLibrary({ currentUser, embedded }: MediaLibraryProps) {
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -227,16 +228,16 @@ export default function MediaLibrary({ currentUser }: MediaLibraryProps) {
   };
 
   return (
-    <div id="media-library-view" className="space-y-6 text-left max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div id="storage-view" className={embedded ? 'space-y-5 text-left' : 'space-y-6 text-left max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'}>
       
-      {/* Upper header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-xs">
+      {/* Đầu mục Kho lưu trữ */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div>
-          <h1 className="text-xl font-extrabold text-slate-800 flex items-center gap-2.5 font-display">
-            <Image className="w-6 h-6 text-brand" />
-            Thư viện tệp
-          </h1>
-          <p className="text-slate-500 text-xs mt-1">
+          <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
+            <Image className="w-4 h-4 text-brand" />
+            Kho lưu trữ
+          </h2>
+          <p className="text-[13px] text-slate-500 mt-1">
             Ảnh và video bạn đã tải lên, tìm kiếm, sao chép link để dùng lại hoặc xoá khi không cần.
           </p>
         </div>

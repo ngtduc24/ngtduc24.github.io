@@ -354,7 +354,7 @@ export default function App() {
       notifications_admin: 'Quản trị thông báo',
       users: 'Quản lý người dùng',
       permissions: 'Phân quyền người dùng',
-      media_library: 'Thư viện tệp',
+      media_library: 'Kho lưu trữ',
       settings: 'Cấu hình hệ thống',
       edu: 'Quản lý Giáo dục & Đào tạo',
       elearning: 'E-Learning · Bài giảng',
@@ -686,7 +686,16 @@ export default function App() {
       case 'backup':
         return <BackupManager />;
       case 'media_library':
-        return <MediaLibrary currentUser={currentUser} />;
+        // Kho lưu trữ nằm trong Cấu hình hệ thống, đường dẫn cũ mở thẳng mục đó.
+        return (
+          <SystemSettings
+            settings={settings}
+            onRefreshSettings={loadConfig}
+            isAdmin={currentUser.role === 'admin' || currentUser.permissions.includes('settings')}
+            currentUser={currentUser}
+            initialTab="storage"
+          />
+        );
       case 'notifications':
         return (
           <UserNotifications 

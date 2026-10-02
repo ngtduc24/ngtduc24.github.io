@@ -41,6 +41,7 @@ export function canUseModule(user: UserAccount | null | undefined, id: string): 
     case 'backup':
       return false;
     case 'settings':
+    case 'media_library': // Kho lưu trữ nằm trong Cấu hình hệ thống
       return p.includes('settings');
     case 'notifications_admin':
       return p.includes('notifications');

@@ -266,7 +266,6 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn', icon: ImageIcon, color: 'blue' },
     { id: 'utility_file_compress', label: 'Giảm dung lượng file', desc: 'Nén PDF, JPG, PNG mà vẫn giữ chất lượng tốt', icon: FileArchive, color: 'emerald' },
     { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn', icon: LayoutTemplate, color: 'violet' },
-    { id: 'media_library', label: 'Thư viện tệp', desc: 'Ảnh, video bạn đã tải lên, sao chép link dùng lại', icon: FolderOpen, color: 'blue' },
     { id: 'portfolio_cms', label: 'Quản trị Portfolio', desc: 'Lưu trữ và quản lý hồ sơ cá nhân, dự án', icon: FolderKanban, color: 'teal' },
     { id: 'assistant', label: 'Trợ lý giáo dục', desc: 'Hỏi đáp kiến thức bài học từ nội dung công khai', icon: Sparkles, color: 'violet' },
     { id: 'notifications', label: 'Thông báo', desc: 'Tài liệu, mẫu biểu, dữ liệu tham khảo', icon: Mail, color: 'amber' },

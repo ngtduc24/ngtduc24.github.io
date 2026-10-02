@@ -178,10 +178,10 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
   },
   media_library: {
     id: 'media_library',
-    slug: 'media-library',
-    title: 'Thư viện Media & Tệp tin Đa phương tiện | SmartResearch',
-    description: 'Lưu trữ, quản lý và chia sẻ hình ảnh, tài liệu và tệp tin nghiên cứu an toàn trên đám mây.',
-    keywords: 'thư viện media, hình ảnh, tài liệu nghiên cứu, tệp tin',
+    slug: 'kho-luu-tru',
+    title: 'Kho lưu trữ | SmartResearch',
+    description: 'Ảnh và video bạn đã tải lên, tìm kiếm, sao chép link để dùng lại.',
+    keywords: 'kho lưu trữ, hình ảnh, video, tệp tin',
   },
   settings: {
     id: 'settings',
