@@ -18,35 +18,37 @@ interface ModuleDef {
   desc?: string;
   flags?: [Flag, string][];
   settings?: boolean;
+  group: string;
 }
 
 // Danh sách chức năng và các quyền thao tác chi tiết, bám sát các module độc lập
 // hiện có của hệ thống. Mục Tiện ích trước đây đã tách thành 3 module riêng là
 // Tạo AR, Phóng to ảnh và Thiết kế ảnh nên phân quyền cho từng công cụ riêng.
+const GROUPS = ['Nghiên cứu và phân tích', 'Giảng dạy và nội dung', 'Công cụ thiết kế', 'Quản lý và hệ thống'];
 const MODULES: ModuleDef[] = [
-  { id: 'tasks', label: 'Quản lý công việc', flags: [['canCreateTask', 'Tạo'], ['canRunPauseTask', 'Chạy/Dừng'], ['canCompleteTask', 'Hoàn thành'], ['canDeleteTask', 'Xóa'], ['canAssignTask', 'Giao'], ['canReceiveTask', 'Nhận']] },
-  { id: 'scientific_journals', label: 'Điểm báo khoa học', desc: 'Danh sách, thêm, nhập, công cụ AI, ngành loại, thùng rác, cài đặt', flags: [['canCreateJournal', 'Thêm thủ công'], ['canEditJournal', 'Sửa'], ['canDeleteJournal', 'Xóa & Thùng rác'], ['canImportJournal', 'Nhập Excel & Công cụ AI'], ['canManageJournalCats', 'Quản lý Ngành/Loại'], ['canManageJournalSettings', 'Cài đặt']] },
-  { id: 'calculator', label: 'Tính cỡ mẫu nghiên cứu' },
-  { id: 'qualitative_analysis', label: 'Phân tích định tính', flags: [['canCreateQualitative', 'Tạo'], ['canEditQualitative', 'Sửa'], ['canDeleteQualitative', 'Xóa'], ['canImportQualitative', 'Nhập'], ['canExportQualitative', 'Xuất'], ['canManageQualitativeSettings', 'Cấu hình']] },
-  { id: 'quantitative_analysis', label: 'Phân tích định lượng', flags: [['canCreateQuantitative', 'Tạo'], ['canEditQuantitative', 'Sửa'], ['canDeleteQuantitative', 'Xóa'], ['canImportQuantitative', 'Nhập'], ['canExportQuantitative', 'Xuất'], ['canManageQuantitativeSettings', 'Cấu hình']] },
-  { id: 'edu', label: 'Quản lý Giáo dục', desc: 'Trường, lớp, sinh viên, bài tập, bảng điểm', flags: [['canCreateEdu', 'Tạo lớp/trường'], ['canEditEdu', 'Sửa'], ['canDeleteEdu', 'Xóa'], ['canImportEdu', 'Nhập lớp/SV'], ['canExportEdu', 'Xuất bảng điểm'], ['canGradeImportEdu', 'Nhập điểm'], ['canGradeEdu', 'Chấm điểm']] },
-  { id: 'edu_bank', label: 'Ngân hàng bài tập', desc: 'Kho bài tập dùng lại, chia sẻ link xem bài, tải PDF' },
-  { id: 'edu_exam', label: 'Trắc nghiệm', desc: 'Tạo đề, giao đề cho lớp và chấm tự động' },
-  { id: 'edu_question_bank', label: 'Ngân hàng câu hỏi', desc: 'Kho câu hỏi trắc nghiệm theo môn' },
-  { id: 'edu_grade', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường' },
-  { id: 'elearning', label: 'E-Learning', desc: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn', flags: [['canElearningPublic', 'Công khai kho chung'], ['canElearningAssign', 'Giao cho lớp']] },
-  { id: 'remier', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp trên trình duyệt', flags: [['canRemierShared', 'Quản lý thư viện chung']] },
-  { id: 'qr_codes', label: 'Tạo mã QR', desc: 'Tạo, sửa, xoá, tải mã QR từ đường link' },
-  { id: 'scientific_cv', label: 'Lý lịch khoa học', desc: 'Tạo, sửa, xoá, xuất PDF hoặc Word lý lịch khoa học theo mẫu' },
-  { id: 'ar_module', label: 'Tạo AR', desc: 'Tạo điểm ảnh AR kèm mã QR để quét bằng điện thoại' },
-  { id: 'vr360', label: 'VR 360', desc: 'Ghép ảnh thành không gian 360 độ, chia sẻ link xem bằng kính VR' },
-  { id: 'utility_image_resize', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn' },
-  { id: 'utility_file_compress', label: 'Giảm dung lượng file', desc: 'Nén PDF, JPG, PNG ngay trên trình duyệt mà vẫn giữ chất lượng tốt' },
-  { id: 'utility_social_design', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn' },
-  { id: 'portfolio_cms', label: 'Website', desc: 'Tạo trang giới thiệu bản thân với địa chỉ riêng' },
-  { id: 'notifications', label: 'Trung tâm thông báo', desc: 'Quản lý và phát thông báo tới người dùng' },
-  { id: 'assistant', label: 'Trợ lý giáo dục', desc: 'Hỏi đáp kiến thức bài học từ bài giảng, câu hỏi và bài tập được chia sẻ công khai' },
-  { id: 'settings', label: 'Cấu hình hệ thống', settings: true },
+  { id: 'tasks', group: 'Quản lý và hệ thống', label: 'Quản lý công việc', desc: 'Tạo, giao, theo dõi công việc cá nhân và nhóm', flags: [['canCreateTask', 'Tạo'], ['canRunPauseTask', 'Chạy/Dừng'], ['canCompleteTask', 'Hoàn thành'], ['canDeleteTask', 'Xóa'], ['canAssignTask', 'Giao'], ['canReceiveTask', 'Nhận']] },
+  { id: 'scientific_journals', group: 'Nghiên cứu và phân tích', label: 'Điểm báo khoa học', desc: 'Danh sách, thêm, nhập, công cụ AI, ngành loại, thùng rác, cài đặt', flags: [['canCreateJournal', 'Thêm thủ công'], ['canEditJournal', 'Sửa'], ['canDeleteJournal', 'Xóa & Thùng rác'], ['canImportJournal', 'Nhập Excel & Công cụ AI'], ['canManageJournalCats', 'Quản lý Ngành/Loại'], ['canManageJournalSettings', 'Cài đặt']] },
+  { id: 'calculator', group: 'Nghiên cứu và phân tích', label: 'Tính cỡ mẫu nghiên cứu', desc: 'Tính cỡ mẫu cho nghiên cứu định lượng' },
+  { id: 'qualitative_analysis', group: 'Nghiên cứu và phân tích', label: 'Phân tích định tính', desc: 'Mã hoá, phân tích dữ liệu phỏng vấn, thảo luận nhóm', flags: [['canCreateQualitative', 'Tạo'], ['canEditQualitative', 'Sửa'], ['canDeleteQualitative', 'Xóa'], ['canImportQualitative', 'Nhập'], ['canExportQualitative', 'Xuất'], ['canManageQualitativeSettings', 'Cấu hình']] },
+  { id: 'quantitative_analysis', group: 'Nghiên cứu và phân tích', label: 'Phân tích định lượng', desc: 'Phân tích thống kê, vẽ biểu đồ số liệu', flags: [['canCreateQuantitative', 'Tạo'], ['canEditQuantitative', 'Sửa'], ['canDeleteQuantitative', 'Xóa'], ['canImportQuantitative', 'Nhập'], ['canExportQuantitative', 'Xuất'], ['canManageQuantitativeSettings', 'Cấu hình']] },
+  { id: 'edu', group: 'Giảng dạy và nội dung', label: 'Quản lý Giáo dục', desc: 'Trường, lớp, sinh viên, bài tập, bảng điểm', flags: [['canCreateEdu', 'Tạo lớp/trường'], ['canEditEdu', 'Sửa'], ['canDeleteEdu', 'Xóa'], ['canImportEdu', 'Nhập lớp/SV'], ['canExportEdu', 'Xuất bảng điểm'], ['canGradeImportEdu', 'Nhập điểm'], ['canGradeEdu', 'Chấm điểm']] },
+  { id: 'edu_bank', group: 'Giảng dạy và nội dung', label: 'Ngân hàng bài tập', desc: 'Kho bài tập dùng lại, chia sẻ link xem bài, tải PDF' },
+  { id: 'edu_exam', group: 'Giảng dạy và nội dung', label: 'Trắc nghiệm', desc: 'Tạo đề, giao đề cho lớp và chấm tự động' },
+  { id: 'edu_question_bank', group: 'Giảng dạy và nội dung', label: 'Ngân hàng câu hỏi', desc: 'Kho câu hỏi trắc nghiệm theo môn' },
+  { id: 'edu_grade', group: 'Giảng dạy và nội dung', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường' },
+  { id: 'elearning', group: 'Giảng dạy và nội dung', label: 'E-Learning', desc: 'Soạn, lưu trữ và chia sẻ bài giảng theo môn', flags: [['canElearningPublic', 'Công khai kho chung'], ['canElearningAssign', 'Giao cho lớp']] },
+  { id: 'remier', group: 'Công cụ thiết kế', label: 'Remier · Dựng phim', desc: 'Dựng video nhiều lớp trên trình duyệt', flags: [['canRemierShared', 'Quản lý thư viện chung']] },
+  { id: 'qr_codes', group: 'Công cụ thiết kế', label: 'Tạo mã QR', desc: 'Tạo, sửa, xoá, tải mã QR từ đường link' },
+  { id: 'scientific_cv', group: 'Nghiên cứu và phân tích', label: 'Lý lịch khoa học', desc: 'Tạo, sửa, xoá, xuất PDF hoặc Word lý lịch khoa học theo mẫu' },
+  { id: 'ar_module', group: 'Công cụ thiết kế', label: 'Tạo AR', desc: 'Tạo điểm ảnh AR kèm mã QR để quét bằng điện thoại' },
+  { id: 'vr360', group: 'Công cụ thiết kế', label: 'VR 360', desc: 'Ghép ảnh thành không gian 360 độ, chia sẻ link xem bằng kính VR' },
+  { id: 'utility_image_resize', group: 'Công cụ thiết kế', label: 'Phóng to ảnh', desc: 'Phóng to và làm rõ chi tiết ảnh theo tỉ lệ tùy chọn' },
+  { id: 'utility_file_compress', group: 'Công cụ thiết kế', label: 'Giảm dung lượng file', desc: 'Nén PDF, JPG, PNG ngay trên trình duyệt mà vẫn giữ chất lượng tốt' },
+  { id: 'utility_social_design', group: 'Công cụ thiết kế', label: 'Thiết kế ảnh', desc: 'Tạo nhanh ảnh cho bài báo, tin tức từ khung mẫu có sẵn' },
+  { id: 'portfolio_cms', group: 'Công cụ thiết kế', label: 'Website', desc: 'Tạo trang giới thiệu bản thân với địa chỉ riêng' },
+  { id: 'notifications', group: 'Quản lý và hệ thống', label: 'Trung tâm thông báo', desc: 'Quản lý và phát thông báo tới người dùng' },
+  { id: 'assistant', group: 'Giảng dạy và nội dung', label: 'Trợ lý giáo dục', desc: 'Hỏi đáp kiến thức bài học từ bài giảng, câu hỏi và bài tập được chia sẻ công khai' },
+  { id: 'settings', group: 'Quản lý và hệ thống', label: 'Cấu hình hệ thống', desc: 'Giao diện, cài đặt chức năng, trợ lý, bảo trì, kho lưu trữ', settings: true },
 ];
 
 // Chuyển quyền cũ (quyền gộp Tiện ích, Giáo dục kèm cờ thao tác) sang bộ công tắc riêng của từng
@@ -152,8 +154,13 @@ export default function PermissionManagement({ currentUser, users, onSaveUser }:
 
               {isMember && <p className="rounded-xl bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-700">Tài khoản học viên chỉ dùng Khoá học, không cần phân quyền chức năng quản trị.</p>}
 
-              <div className="divide-y divide-slate-100 rounded-3xl border border-slate-100 bg-white shadow-sm">
-                {MODULES.map(m => {
+              <p className="rounded-xl bg-slate-50 px-4 py-2.5 text-[13px] text-slate-600">Trang Thư viện, Khoá học, Thông báo và Hồ sơ cá nhân luôn mở cho mọi tài khoản, không cần cấp quyền.</p>
+
+              {GROUPS.map(g => (
+                <div key={g} className="space-y-2">
+                  <h3 className="px-1 text-[13px] font-semibold text-slate-500">{g}</h3>
+                  <div className="divide-y divide-slate-100 rounded-2xl border border-slate-100 bg-white shadow-sm">
+                {MODULES.filter(m => m.group === g).map(m => {
                   const on = moduleOn(m.id);
                   return (
                     <div key={m.id} className="p-4">
@@ -177,7 +184,9 @@ export default function PermissionManagement({ currentUser, users, onSaveUser }:
                     </div>
                   );
                 })}
-              </div>
+                  </div>
+                </div>
+              ))}
             </>
           )}
         </div>
