@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Khôi phục dữ liệu Website | EduGo</title>
+<style>
+  body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; color: #0f172a; }
+  main { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-top: 16px; }
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  p { font-size: 14px; line-height: 1.6; color: #475569; margin: 6px 0; }
+  ul { padding-left: 18px; font-size: 14px; color: #334155; }
+  button { margin-top: 12px; height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: #059669; color: #fff; font-weight: 600; font-size: 15px; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  .ok { color: #059669; font-weight: 600; }
+  .err { color: #e11d48; font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Khôi phục dữ liệu Website</h1>
+  <p>Trang này chỉ đọc bản lưu tạm của Website còn nằm trong trình duyệt trên máy này, rồi gửi lên để khôi phục. Trang không xoá hay sửa gì trên máy.</p>
+  <div class="card" id="found"><p>Đang tìm bản lưu tạm...</p></div>
+  <div class="card">
+    <button id="send" disabled>Gửi bản lưu lên để khôi phục</button>
+    <p id="status"></p>
+  </div>
+</main>
+<script>
+(function () {
+  var SB = 'https://fjkyozuggbjpdmumyaxf.supabase.co';
+  var KEY = 'sb_publishable_yg8yws1yb5L98x_jD8JsZw_O9yTaieM';
+  var NAMES = { banner: 'Banner', about: 'Giới thiệu', navigation: 'Menu', global_settings: 'Cài đặt giao diện', posts: 'Bài viết', post_categories: 'Chuyên mục bài viết', project_categories: 'Chuyên mục dự án', projects_settings: 'Cài đặt dự án', education: 'Học vấn', experience: 'Kinh nghiệm', skills: 'Kỹ năng', projects: 'Dự án', research: 'Nghiên cứu', lectures: 'Bài giảng' };
+  var items = {};
+  var lines = [];
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (!k || k.indexOf('portfolio_') !== 0) continue;
+      var raw = localStorage.getItem(k) || '';
+      var short = k.slice('portfolio_'.length).replace(/^[A-Za-z0-9]{28}_/, '');
+      if (!NAMES[short] && k.indexOf('edugo_post_draft') !== 0) continue;
+      var val; try { val = JSON.parse(raw); } catch (e) { continue; }
+      var n = Array.isArray(val) ? val.length : (val && typeof val === 'object' ? 1 : 0);
+      if (!n) continue;
+      items[k] = val;
+      lines.push('<li>' + (NAMES[short] || short) + (Array.isArray(val) ? ': ' + n + ' mục' : '') + '</li>');
+    }
+    for (var j = 0; j < localStorage.length; j++) {
+      var d = localStorage.key(j);
+      if (d && d.indexOf('edugo_post_draft:') === 0) { try { items[d] = JSON.parse(localStorage.getItem(d)); lines.push('<li>Bài đang soạn dở</li>'); } catch (e) {} }
+    }
+  } catch (e) {
+    document.getElementById('found').innerHTML = '<p class="err">Trình duyệt này chặn đọc bộ nhớ, không lấy được bản lưu.</p>';
+    return;
+  }
+  var found = document.getElementById('found');
+  if (!lines.length) { found.innerHTML = '<p>Không còn bản lưu tạm nào của Website trên trình duyệt này.</p>'; return; }
+  found.innerHTML = '<p class="ok">Tìm thấy bản lưu tạm:</p><ul>' + lines.join('') + '</ul>';
+  var btn = document.getElementById('send');
+  btn.disabled = false;
+  btn.onclick = function () {
+    btn.disabled = true;
+    var st = document.getElementById('status');
+    st.textContent = 'Đang gửi...';
+    var id = 'recovery:' + new Date().toISOString() + ':' + Math.random().toString(36).slice(2, 8);
+    fetch(SB + '/rest/v1/portfolio_settings', {
+      method: 'POST',
+      headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ key: id, data: { at: new Date().toISOString(), ua: navigator.userAgent, items: items } })
+    }).then(function (r) {
+      if (r.ok) { st.className = 'ok'; st.textContent = 'Đã gửi xong. Hãy báo lại để khôi phục dữ liệu.'; }
+      else { st.className = 'err'; st.textContent = 'Chưa gửi được (lỗi ' + r.status + '), hãy thử lại.'; btn.disabled = false; }
+    }).catch(function () { st.className = 'err'; st.textContent = 'Mất kết nối, hãy thử lại.'; btn.disabled = false; });
+  };
+})();
+</script>
+</body>
+</html>

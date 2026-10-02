@@ -80,7 +80,7 @@ export type SiteInfo = Pick<SiteRecord, 'title' | 'description' | 'icon' | 'ogIm
 // Địa chỉ không được dùng vì trùng thư mục, trang hệ thống hoặc link chia sẻ.
 export const RESERVED_SLUGS = new Set([
   'bt', 'bg', 'hl', 'tn', 'vr', 'ar', 'nb', 'c', 'p', 'r', 'b', 'og', 'assets', 'models', 'api', 'admin', 'tracuu', 'edu', 'index',
-  'login', 'dang-nhap', 'dang-ky', 'register', 'settings', 'khoa-hoc', 'website', 'portfolio', 'edugo', 'static', 'public', '404',
+  'login', 'dang-nhap', 'dang-ky', 'khoiphuc', 'register', 'settings', 'khoa-hoc', 'website', 'portfolio', 'edugo', 'static', 'public', '404',
 ]);
 export const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/;
 export function normalizeSlug(v: string): string {
@@ -188,18 +188,25 @@ export async function deleteMyWebsite(uid: string, opts: { withMedia: boolean })
     if (error) throw error;
     settingRows.push(...(data || []));
   }
-  const tableRows: Array<{ table: string; ids: string[]; data: unknown[] }> = [];
+  const tableRows: Array<{ table: string; ids: string[]; data: unknown[]; rows: unknown[] }> = [];
   for (const table of SITE_TABLES) {
-    let q: any = supabase.from(table).select('id,data');
+    let q: any = supabase.from(table).select('*');
     q = legacy ? q.or(`data->>ownerId.is.null,data->>ownerId.eq.${LEGACY_OWNER}`) : q.eq('data->>ownerId', uid);
     const { data, error } = await q;
     if (error) throw error;
-    tableRows.push({ table, ids: (data || []).map((r: any) => r.id), data: (data || []).map((r: any) => r.data) });
+    tableRows.push({ table, ids: (data || []).map((r: any) => r.id), data: (data || []).map((r: any) => r.data), rows: data || [] });
   }
+
+  // 0. Giữ một bản sao toàn bộ chữ của trang trước khi xoá, để khôi phục được nếu xoá nhầm.
+  const { error: trashError } = await supabase.from('portfolio_settings').upsert({
+    key: `trash:${uid}:${Date.now()}`,
+    data: { at: new Date().toISOString(), owner: uid, site: await getSiteOfOwner(uid).catch(() => null), settings: settingRows, tables: tableRows.map(t => ({ table: t.table, rows: t.rows })) },
+  });
+  if (trashError) throw new Error('Chưa giữ được bản sao trước khi xoá, nên chưa xoá gì. Vui lòng thử lại.');
 
   // 1. Xoá ảnh, video của trang trước, khi còn đọc được link trong dữ liệu.
   const result: DeleteSiteResult = { media: 0, mediaKept: 0 };
-  if (opts.withMedia) {
+  if (opts.withMedia && !legacy) {
     const urls = new Set<string>();
     settingRows.forEach(r => collectUrls(r.data, urls));
     tableRows.forEach(t => collectUrls(t.data, urls));
@@ -819,7 +826,8 @@ async function loadCollection<T extends { id: string }>(
     // là nguồn chuẩn duy nhất (source of truth). Tuyệt đối không tự động nạp lại bài mẫu.
     if (Array.isArray(data)) {
       const values = data.map((row: any) => row.data as T);
-      setLocalFallback(localKey, values);
+      // Không ghi đè bản lưu tạm còn dữ liệu bằng danh sách rỗng, để còn đường khôi phục khi dữ liệu bị xoá nhầm.
+      if (values.length || !getLocalSeed<T[]>(localKey, []).length) setLocalFallback(localKey, values);
       return values;
     }
     return [];
