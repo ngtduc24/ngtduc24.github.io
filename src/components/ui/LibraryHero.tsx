@@ -33,7 +33,7 @@ interface LibraryHeroProps {
 export default function LibraryHero(p: LibraryHeroProps) {
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
-  const [renaming, setRenaming] = useState('');
+  const [renaming, setRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
 
   const submitAdd = async () => {
@@ -44,7 +44,7 @@ export default function LibraryHero(p: LibraryHeroProps) {
   const submitRename = async (chip: HeroChip) => {
     const n = renameValue.trim();
     if (n && n !== chip.label && chip.onRename) await chip.onRename(n);
-    setRenaming('');
+    setRenaming(null);
   };
 
   const chipBase = 'inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors';
@@ -103,11 +103,11 @@ export default function LibraryHero(p: LibraryHeroProps) {
           )}
           {p.chips.map(c => {
             const on = p.activeChip === c.id;
-            if (renaming === c.id) {
+            if (renaming !== null && renaming === c.id) {
               return (
                 <span key={c.id} className={`${chipBase} border-brand bg-white pr-1.5`}>
                   <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') submitRename(c); if (e.key === 'Escape') setRenaming(''); }}
+                    onKeyDown={e => { if (e.key === 'Enter') submitRename(c); if (e.key === 'Escape') setRenaming(null); }}
                     onBlur={() => submitRename(c)} className="w-32 bg-transparent text-sm font-semibold text-slate-800 outline-none" />
                   <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => submitRename(c)} className="grid h-7 w-7 place-items-center rounded-full bg-brand text-white"><Check className="h-3.5 w-3.5" /></button>
                 </span>
