@@ -47,7 +47,7 @@ import { setEduAuthContext } from './lib/edu';
 import { TaskProvider } from './components/TaskContext';
 import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban, GraduationCap, Film, FileUser, QrCode } from 'lucide-react';
 import { supabase } from "./lib/supabase";
-import { saveUser, deleteUser, getUsers, getUserById, mapUserFromDB, seedDefaultUsersIfNeeded, getDefaultSettingsFromSupabase, getCachedSettings, saveDefaultSettingsToSupabase, testSupabaseConnection, getNotificationsFromSupabase, subscribeToNotificationChanges, USERS_TABLE } from './lib/data';
+import { saveUser, savePublicProfile, deleteUser, getUsers, getUserById, mapUserFromDB, seedDefaultUsersIfNeeded, getDefaultSettingsFromSupabase, getCachedSettings, saveDefaultSettingsToSupabase, testSupabaseConnection, getNotificationsFromSupabase, subscribeToNotificationChanges, USERS_TABLE } from './lib/data';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, onSnapshot } from 'firebase/firestore';
@@ -569,10 +569,13 @@ export default function App() {
   };
 
   const handleSaveProfile = async (updatedUser: UserAccount) => {
+    // Ảnh đại diện, ảnh bìa lưu bản công khai trên máy chủ để mọi người, mọi máy đều thấy.
+    const shared = await savePublicProfile(updatedUser).catch(() => false);
     try {
       await saveUser(updatedUser);
     } catch (e) {
-      console.warn("Firebase error on saveProfile, using local cache:", e);
+      console.warn("Firebase error on saveProfile:", e);
+      if (!shared) throw e;
     }
 
     setUsers(prev => {

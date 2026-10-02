@@ -1,5 +1,14 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Check, Edit3, Plus, Search, Trash2, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { ArrowLeft, Check, Edit3, Loader2, Plus, RotateCcw, Search, Settings2, Trash2, X } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import CloudinaryUploadField from '../cms/CloudinaryUploadField';
+
+// Nội dung đầu trang do quản trị chỉnh (tiêu đề, mô tả, ảnh nền), lưu chung trên máy chủ để mọi tài khoản đều thấy.
+interface HeroConfig { title?: string; subtitle?: string; image?: string; position?: string }
+const heroKey = (k: string) => `edugo_hero:${k}`;
+const heroCacheKey = (k: string) => `edugo_hero_cache:${k}`;
+const readHeroCache = (k?: string): HeroConfig => { if (!k) return {}; try { return JSON.parse(localStorage.getItem(heroCacheKey(k)) || '{}'); } catch { return {}; } };
 
 // Đầu trang kiểu kho mẫu (giống trang Mẫu của Canva): câu hỏi lớn, khung tìm kiếm lớn ở giữa,
 // hàng thẻ phân loại theo môn học ngay dưới khung tìm kiếm. Dùng chung cho Ngân hàng bài tập và E-Learning.
@@ -28,9 +37,69 @@ interface LibraryHeroProps {
   onChip: (id: string) => void;
   onAddChip?: (name: string) => void | Promise<void>;
   actions?: React.ReactNode;
+  // Khoá lưu nội dung đầu trang dùng chung (ví dụ 'assignment_bank', 'elearning') và quyền chỉnh (quản trị).
+  configKey?: string;
+  canEditBanner?: boolean;
+}
+
+function HeroEditor({ cfg, defaults, onClose, onSave }: { cfg: HeroConfig; defaults: { title: string; subtitle?: string }; onClose: () => void; onSave: (c: HeroConfig) => Promise<boolean> }) {
+  const [v, setV] = useState<HeroConfig>(cfg);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const save = async (c: HeroConfig) => { setBusy(true); setErr(''); const ok = await onSave(c); setBusy(false); if (ok) onClose(); else setErr('Chưa lưu được, vui lòng thử lại.'); };
+  const field = 'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-brand focus:bg-white';
+  return createPortal(
+    <div className="fixed inset-0 z-[190] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-lg space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-2xl">
+        <div className="flex items-center justify-between">
+          <p className="text-base font-semibold text-slate-800">Chỉnh đầu trang</p>
+          <button type="button" onClick={onClose} aria-label="Đóng" className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"><X className="h-4 w-4" /></button>
+        </div>
+        <p className="text-xs text-slate-500">Thay đổi hiện cho mọi tài khoản sau khi tải lại trang. Để trống ô nào thì dùng nội dung mặc định.</p>
+        <label className="block space-y-1"><span className="text-[13px] font-semibold text-slate-600">Tiêu đề</span><input value={v.title || ''} onChange={e => setV({ ...v, title: e.target.value })} placeholder={defaults.title} className={field} /></label>
+        <label className="block space-y-1"><span className="text-[13px] font-semibold text-slate-600">Mô tả</span><input value={v.subtitle || ''} onChange={e => setV({ ...v, subtitle: e.target.value })} placeholder={defaults.subtitle} className={field} /></label>
+        <CloudinaryUploadField label="Ảnh nền" value={v.image || ''} onChange={image => setV({ ...v, image })} accept="image/*" resourceType="image" folder="module-banners/library" hint="Ảnh ngang, nên dùng ảnh sáng để chữ dễ đọc." compact />
+        {v.image && (
+          <label className="block space-y-1"><span className="text-[13px] font-semibold text-slate-600">Vị trí ảnh</span>
+            <select value={v.position || 'center'} onChange={e => setV({ ...v, position: e.target.value })} className={field}>
+              <option value="center">Giữa</option><option value="top">Trên</option><option value="bottom">Dưới</option><option value="left">Trái</option><option value="right">Phải</option>
+            </select>
+          </label>
+        )}
+        {err && <p className="text-[13px] font-semibold text-rose-600">{err}</p>}
+        <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-4">
+          <button type="button" disabled={busy} onClick={() => save({})} className="inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-[13px] font-semibold text-slate-500 hover:bg-slate-100"><RotateCcw className="h-4 w-4" /> Về mặc định</button>
+          <div className="flex gap-2">
+            <button type="button" onClick={onClose} className="h-9 rounded-xl bg-slate-100 px-4 text-[13px] font-semibold text-slate-600 hover:bg-slate-200">Huỷ</button>
+            <button type="button" disabled={busy} onClick={() => save(v)} className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-brand px-4 text-[13px] font-semibold text-white hover:bg-brand-hover disabled:opacity-50">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Lưu</button>
+          </div>
+        </div>
+      </div>
+    </div>, document.body);
 }
 
 export default function LibraryHero(p: LibraryHeroProps) {
+  const [cfg, setCfg] = useState<HeroConfig>(() => readHeroCache(p.configKey));
+  const [editingHero, setEditingHero] = useState(false);
+  useEffect(() => {
+    if (!p.configKey) return;
+    supabase.from('portfolio_settings').select('data').eq('key', heroKey(p.configKey)).maybeSingle().then(({ data }) => {
+      const c = (data?.data as HeroConfig) || {};
+      setCfg(c);
+      try { localStorage.setItem(heroCacheKey(p.configKey as string), JSON.stringify(c)); } catch { /* bỏ qua */ }
+    }, () => {});
+  }, [p.configKey]);
+  const saveCfg = async (c: HeroConfig) => {
+    if (!p.configKey) return false;
+    const clean: HeroConfig = { title: c.title?.trim() || undefined, subtitle: c.subtitle?.trim() || undefined, image: c.image || undefined, position: c.image ? (c.position || 'center') : undefined };
+    const { error } = await supabase.from('portfolio_settings').upsert({ key: heroKey(p.configKey), data: { ...clean, updatedAt: new Date().toISOString() } });
+    if (error) return false;
+    setCfg(clean);
+    try { localStorage.setItem(heroCacheKey(p.configKey), JSON.stringify(clean)); } catch { /* bỏ qua */ }
+    return true;
+  };
+  const title = cfg.title || p.title;
+  const subtitle = cfg.subtitle || p.subtitle;
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -50,7 +119,11 @@ export default function LibraryHero(p: LibraryHeroProps) {
   const chipBase = 'inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors';
   return (
     <section className="relative overflow-hidden rounded-3xl border border-slate-100 px-4 pb-7 pt-6 sm:px-8 sm:pb-9"
-      style={{ background: 'linear-gradient(135deg, var(--color-brand-light, #ecfdf5) 0%, #f0f9ff 45%, #f5f3ff 100%)' }}>
+      style={cfg.image
+        ? { backgroundImage: `url(${cfg.image})`, backgroundSize: 'cover', backgroundPosition: cfg.position || 'center' }
+        : { background: 'linear-gradient(135deg, var(--color-brand-light, #ecfdf5) 0%, #f0f9ff 45%, #f5f3ff 100%)' }}>
+      {cfg.image && <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/70 via-white/55 to-white/70" />}
+      <div className="relative">
       {/* Hàng trên: quay lại và nút thao tác */}
       <div className="flex items-center justify-between gap-3">
         {p.onBack ? (
@@ -59,12 +132,18 @@ export default function LibraryHero(p: LibraryHeroProps) {
             <ArrowLeft className="h-5 w-5" />
           </button>
         ) : <span />}
-        {p.actions && <div className="flex flex-wrap items-center justify-end gap-2">{p.actions}</div>}
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {p.actions}
+          {p.canEditBanner && p.configKey && (
+            <button type="button" onClick={() => setEditingHero(true)} title="Chỉnh đầu trang (mọi tài khoản đều thấy)" aria-label="Chỉnh đầu trang"
+              className="grid h-10 w-10 place-items-center rounded-xl bg-white/80 text-slate-600 shadow-sm hover:bg-white hover:text-brand"><Settings2 className="h-4 w-4" /></button>
+          )}
+        </div>
       </div>
 
       <div className="mx-auto mt-2 max-w-4xl text-center">
-        <h1 className="bg-gradient-to-r from-brand via-teal-500 to-sky-600 bg-clip-text pb-1 text-3xl font-bold tracking-tight text-transparent sm:text-4xl md:text-5xl">{p.title}</h1>
-        {p.subtitle && <p className="mt-2 text-sm text-slate-500 sm:text-base">{p.subtitle}</p>}
+        <h1 className="bg-gradient-to-r from-brand via-teal-500 to-sky-600 bg-clip-text pb-1 text-3xl font-bold tracking-tight text-transparent sm:text-4xl md:text-5xl">{title}</h1>
+        {subtitle && <p className="mt-2 text-sm text-slate-600 sm:text-base">{subtitle}</p>}
 
         {p.tabs && p.tabs.length > 1 && (
           <div className="mt-5 inline-flex flex-wrap justify-center gap-2">
@@ -145,6 +224,8 @@ export default function LibraryHero(p: LibraryHeroProps) {
           ))}
         </div>
       </div>
+      </div>
+      {editingHero && <HeroEditor cfg={cfg} defaults={{ title: p.title, subtitle: p.subtitle }} onClose={() => setEditingHero(false)} onSave={saveCfg} />}
     </section>
   );
 }

@@ -486,10 +486,43 @@ export function mapUserFromDB(u: any): UserAccount {
   } as UserAccount;
 }
 
+// ----- Hồ sơ công khai (ảnh đại diện, ảnh bìa) -----
+// Giống trang cá nhân mạng xã hội: ảnh đại diện, ảnh bìa người dùng tự đổi thì mọi người đều thấy, trên mọi máy.
+// Ngoài tài liệu users ở Firestore, bản công khai lưu thêm ở portfolio_settings khoá profile:<uid>,
+// vì luật Firestore có thể chặn tài khoản thường tự ghi, khi đó trước đây ảnh chỉ đổi trên máy đang dùng.
+type PublicProfile = { avatarUrl?: string; coverImage?: string; coverImagePosition?: string; avatarPosition?: string; updatedAt?: string };
+const profileKey = (uid: string) => `profile:${uid}`;
+export async function savePublicProfile(user: UserAccount): Promise<boolean> {
+  const data: PublicProfile = { avatarUrl: user.avatarUrl || '', coverImage: user.coverImage || '', coverImagePosition: user.coverImagePosition || '', avatarPosition: user.avatarPosition || '', updatedAt: new Date().toISOString() };
+  const { error } = await supabase.from('portfolio_settings').upsert({ key: profileKey(user.id), data });
+  return !error;
+}
+async function loadPublicProfiles(ids?: string[]): Promise<Record<string, PublicProfile>> {
+  try {
+    let q: any = supabase.from('portfolio_settings').select('key,data');
+    q = ids && ids.length === 1 ? q.eq('key', profileKey(ids[0])) : q.like('key', 'profile:%');
+    const { data } = await q;
+    const out: Record<string, PublicProfile> = {};
+    (data || []).forEach((r: any) => { out[String(r.key).slice('profile:'.length)] = r.data || {}; });
+    return out;
+  } catch { return {}; }
+}
+// Bản công khai mới hơn thì dùng bản công khai (ảnh đổi trên máy khác vẫn hiện đúng).
+function withPublicProfile(u: UserAccount, pp?: PublicProfile): UserAccount {
+  if (!pp) return u;
+  return {
+    ...u,
+    avatarUrl: pp.avatarUrl !== undefined ? (pp.avatarUrl || undefined) : u.avatarUrl,
+    coverImage: pp.coverImage !== undefined ? (pp.coverImage || undefined) : u.coverImage,
+    coverImagePosition: pp.coverImagePosition || u.coverImagePosition,
+    avatarPosition: pp.avatarPosition || u.avatarPosition,
+  };
+}
+
 export async function getUsers(): Promise<UserAccount[]> {
   try {
-    const snapshot = await getDocs(collection(db, USERS_TABLE));
-    return snapshot.docs.map(docSnap => mapUserFromDB({ id: docSnap.id, ...docSnap.data() }));
+    const [snapshot, profiles] = await Promise.all([getDocs(collection(db, USERS_TABLE)), loadPublicProfiles()]);
+    return snapshot.docs.map(docSnap => withPublicProfile(mapUserFromDB({ id: docSnap.id, ...docSnap.data() }), profiles[docSnap.id]));
   } catch (error: any) {
     // If it's a permission error, it's expected if not logged in or restricted
     if (error.code !== 'permission-denied') {
@@ -501,9 +534,9 @@ export async function getUsers(): Promise<UserAccount[]> {
 
 export async function getUserById(userId: string): Promise<UserAccount | null> {
   try {
-    const snapshot = await getDoc(doc(db, USERS_TABLE, userId));
+    const [snapshot, profiles] = await Promise.all([getDoc(doc(db, USERS_TABLE, userId)), loadPublicProfiles([userId])]);
     if (!snapshot.exists()) return null;
-    return mapUserFromDB({ id: snapshot.id, ...snapshot.data() });
+    return withPublicProfile(mapUserFromDB({ id: snapshot.id, ...snapshot.data() }), profiles[userId]);
   } catch (error) {
     console.error(`Lỗi khi lấy hồ sơ Firebase của UID ${userId}:`, error);
     return null;

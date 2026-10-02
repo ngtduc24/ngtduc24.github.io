@@ -218,6 +218,8 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
   return (
     <div className="space-y-4">
       <LibraryHero
+        configKey="elearning_mine"
+        canEditBanner={currentUser.role === 'admin'}
         title="Bạn muốn soạn bài giảng nào?"
         subtitle="Soạn, lưu trữ và chia sẻ bài giảng theo môn cho lớp học."
         onBack={hero.onExit}
@@ -715,6 +717,8 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
   return (
     <div className="space-y-4">
       <LibraryHero
+        configKey="elearning_public"
+        canEditBanner={currentUser.role === 'admin'}
         title="Bạn muốn tìm bài giảng nào?"
         subtitle="Bài giảng được chia sẻ công khai, xem trước hoặc sao chép về kho của bạn."
         onBack={hero.onExit}

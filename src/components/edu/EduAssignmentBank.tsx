@@ -461,6 +461,8 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
   return (
     <div className="space-y-5 animate-fadeIn">
       <LibraryHero
+        configKey="assignment_bank"
+        canEditBanner={currentUser?.role === 'admin'}
         title="Bạn muốn tìm bài tập nào?"
         subtitle="Lưu, chia sẻ và dùng lại bài tập theo môn cho các lớp."
         onBack={onExit}
