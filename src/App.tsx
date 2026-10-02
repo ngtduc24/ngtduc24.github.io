@@ -354,6 +354,7 @@ export default function App() {
       utilities: 'Tiện ích',
       ar_module: 'Tiện ích',
       vr360: 'VR 360',
+      courses: 'Khoá học',
       utility_file_compress: 'Giảm dung lượng file',
       edu_bank: 'Ngân hàng bài tập',
       edu_exam: 'Kiểm tra trắc nghiệm',
