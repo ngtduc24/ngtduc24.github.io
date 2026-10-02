@@ -307,6 +307,7 @@ export default function SlideEditor({ initial, role, currentUser, onExit }: { in
     addNotification('Đã áp mẫu lên trang hiện tại. Bấm Ctrl Z nếu muốn lấy lại nội dung cũ.', 'info');
   };
   const setTransition = (type: TransitionKind, dur?: number, all = false) => {
+    ensureAnimCss();
     const tr = { type, dur: dur ?? slide.transition?.dur ?? 0.7 };
     commit(all ? slidesRef.current.map(s => ({ ...s, transition: tr })) : mapSlide(s => ({ ...s, transition: tr })));
     setTransKey(k => k + 1);

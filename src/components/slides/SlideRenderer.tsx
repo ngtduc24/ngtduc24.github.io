@@ -170,7 +170,7 @@ export function ElementView({ el, editingText, phase = 'static', loops = false, 
   } else if (el.type === 'image') {
     const flip = el.flipX || el.flipY ? `scale(${el.flipX ? -1 : 1},${el.flipY ? -1 : 1})` : undefined;
     body = (
-      <div style={{ ...fill, overflow: 'hidden', borderRadius: el.radius || 0, background: el.src ? 'transparent' : '#e2e8f0', filter: boxEffect(el) }}>
+      <div style={{ ...fill, position: 'relative', overflow: 'hidden', borderRadius: el.radius || 0, background: el.src ? 'transparent' : '#e2e8f0', filter: boxEffect(el) }}>
         {el.src && (el.crop
           ? <img src={el.src} alt="" draggable={false} style={{ position: 'absolute', maxWidth: 'none', width: `${100 / Math.max(0.02, 1 - el.crop.l - el.crop.r)}%`, height: `${100 / Math.max(0.02, 1 - el.crop.t - el.crop.b)}%`, left: `${-el.crop.l * 100 / Math.max(0.02, 1 - el.crop.l - el.crop.r)}%`, top: `${-el.crop.t * 100 / Math.max(0.02, 1 - el.crop.t - el.crop.b)}%`, pointerEvents: 'none', transform: flip, filter: imgFilter(el) }} />
           : <img src={el.src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: el.fit || 'cover', display: 'block', pointerEvents: 'none', transform: flip, filter: imgFilter(el), borderRadius: el.radius || 0 }} />)}
