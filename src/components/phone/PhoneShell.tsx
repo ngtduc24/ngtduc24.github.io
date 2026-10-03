@@ -73,7 +73,7 @@ export function PhoneActionGrid({ title, items }: { title?: string; items: Phone
 // Tên ngắn cho ô chức năng trên điện thoại (admin đã đổi tên thì giữ tên admin đặt).
 const SHORT_LABEL: Record<string, string> = {
   tasks: 'Công việc', scientific_journals: 'Điểm báo', calculator: 'Tính cỡ mẫu', edu: 'Lớp học', edu_bank: 'Bài tập',
-  edu_question_bank: 'Câu hỏi', remier: 'Remier', qr_codes: 'Mã QR', utility_image_resize: 'Phóng to ảnh',
+  remier: 'Remier', qr_codes: 'Mã QR', utility_image_resize: 'Phóng to ảnh',
   utility_file_compress: 'Nén file', notifications_admin: 'Phát thông báo', users: 'Người dùng', permissions: 'Phân quyền',
   settings: 'Cấu hình', assistant: 'Trợ lý', scientific_cv: 'Lý lịch KH',
 };
@@ -240,7 +240,6 @@ const CREATE_ITEMS: { id: string; label: string; icon: any; create: boolean }[] 
   { id: 'tasks', label: 'Công việc', icon: CalendarDays, create: true },
   { id: 'qr_codes', label: 'Mã QR', icon: QrCode, create: true },
   { id: 'automatic', label: 'Quy trình', icon: Workflow, create: true },
-  { id: 'edu_question_bank', label: 'Câu hỏi', icon: Library, create: false },
 ];
 
 function CreateSheet({ mods, onClose, onPick }: { mods: PhoneModule[]; onClose: () => void; onPick: (id: string, create: boolean) => void }) {

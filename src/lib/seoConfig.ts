@@ -80,7 +80,7 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
   edu_exam: {
     id: 'edu_exam',
     slug: 'trac-nghiem',
-    title: 'Kiểm tra trắc nghiệm | EduGo',
+    title: 'Trắc nghiệm | EduGo',
     description: 'Tạo, giao và chấm đề kiểm tra trắc nghiệm trực tuyến.',
     keywords: 'trắc nghiệm, đề kiểm tra, thi online',
   },

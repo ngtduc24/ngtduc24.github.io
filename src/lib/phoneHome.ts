@@ -104,14 +104,26 @@ export async function loadReminders(user: UserAccount, tasks: Task[], pending: P
   if (can('edu')) {
     const classes = await getAssignableClasses().catch(() => [] as any[]);
     if (classes.length) {
-      const { data } = await supabase.from('edu_extension_requests').select('id,class_id').eq('status', 'pending').in('class_id', classes.map((c: any) => c.id));
-      const by = new Map<string, number>();
-      (data || []).forEach((r: any) => by.set(r.class_id, (by.get(r.class_id) || 0) + 1));
-      [...by.entries()].slice(0, 2).forEach(([cid, n]) => out.push({
-        id: `ext:${cid}:${n}`, kind: 'extension',
-        title: `${n} yêu cầu gia hạn chờ duyệt`, detail: classes.find((c: any) => c.id === cid)?.name || 'Lớp học',
-        tab: 'edu', sub: { sv: 'class_detail', cid, ext: '1' },
-      }));
+      const { data } = await supabase.from('edu_extension_requests').select('id,class_id,student_name,mssv,assignment_id').eq('status', 'pending').in('class_id', classes.map((c: any) => c.id));
+      const aIds = [...new Set((data || []).map((r: any) => r.assignment_id).filter(Boolean))];
+      const titles = new Map<string, string>();
+      if (aIds.length) {
+        const { data: as } = await supabase.from('edu_assignments').select('id,title').in('id', aIds);
+        (as || []).forEach((a: any) => titles.set(a.id, a.title));
+      }
+      const by = new Map<string, any[]>();
+      (data || []).forEach((r: any) => by.set(r.class_id, [...(by.get(r.class_id) || []), r]));
+      // Ghi rõ sinh viên nào xin gia hạn (tên và mã số), nhiều người thì nêu 2 người đầu và số còn lại.
+      [...by.entries()].slice(0, 2).forEach(([cid, rs]) => {
+        const who = rs.map(r => r.student_name ? `${r.student_name}${r.mssv ? ` (${r.mssv})` : ''}` : (r.mssv || 'Sinh viên'));
+        const names = who.length <= 2 ? who.join(', ') : `${who.slice(0, 2).join(', ')} và ${who.length - 2} sinh viên khác`;
+        out.push({
+          id: `ext:${cid}:${rs.length}`, kind: 'extension',
+          title: rs.length === 1 ? `${who[0]} xin gia hạn nộp bài` : `${rs.length} yêu cầu gia hạn chờ duyệt`,
+          detail: `${rs.length === 1 ? (titles.get(rs[0].assignment_id) ? `Bài ${titles.get(rs[0].assignment_id)} · ` : '') : `${names} · `}${classes.find((c: any) => c.id === cid)?.name || 'Lớp học'}`,
+          tab: 'edu', sub: { sv: 'class_detail', cid, ext: '1' },
+        });
+      });
     }
   }
   // Yêu cầu chờ duyệt (gia hạn nộp bài) lên đầu danh sách, sau đó tới bài chờ chấm, việc sắp hạn, đề trắc nghiệm.

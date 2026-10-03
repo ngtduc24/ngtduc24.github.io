@@ -366,7 +366,7 @@ export default function App() {
       courses: 'Khoá học',
       utility_file_compress: 'Giảm dung lượng file',
       edu_bank: 'Ngân hàng bài tập',
-      edu_exam: 'Kiểm tra trắc nghiệm',
+      edu_exam: 'Trắc nghiệm',
       edu_question_bank: 'Ngân hàng câu hỏi',
       edu_grade: 'Nhập điểm',
       stats: 'Thống kê',

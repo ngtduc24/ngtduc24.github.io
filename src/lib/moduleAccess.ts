@@ -87,7 +87,8 @@ export function canUseModule(user: UserAccount | null | undefined, id: string): 
     case 'edu_bank':
       return p.includes('edu_bank') || (legacy && p.includes('edu') && !!user.canCreateEdu);
     case 'edu_exam':
-      return p.includes('edu_exam') || (legacy && p.includes('edu') && !!user.canGradeEdu);
+      // Ngân hàng câu hỏi nằm trong Trắc nghiệm: tài khoản trước đây chỉ có quyền Ngân hàng câu hỏi vẫn vào được Trắc nghiệm.
+      return p.includes('edu_exam') || p.includes('edu_question_bank') || (legacy && p.includes('edu') && !!user.canGradeEdu);
     case 'edu_question_bank':
       return p.includes('edu_question_bank') || (legacy && p.includes('edu') && !!user.canGradeEdu);
     case 'edu_grade':

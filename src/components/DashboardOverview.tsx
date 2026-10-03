@@ -244,7 +244,6 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
     { id: 'edu', label: 'Quản lý Giáo dục', desc: 'Quản lý lớp học, sinh viên, chương trình đào tạo', icon: GraduationCap, color: 'purple' },
     { id: 'edu_bank', label: 'Ngân hàng bài tập', desc: 'Kho bài tập dùng lại và chia sẻ theo môn', icon: Library, color: 'amber' },
     { id: 'edu_exam', label: 'Trắc nghiệm', desc: 'Tạo và chấm đề kiểm tra trắc nghiệm', icon: CheckCircle2, color: 'blue' },
-    { id: 'edu_question_bank', label: 'Ngân hàng câu hỏi', desc: 'Kho câu hỏi trắc nghiệm dùng lại và chia sẻ theo môn', icon: Library, color: 'teal' },
     { id: 'edu_grade', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường', icon: ClipboardList, color: 'emerald' },
     { id: 'courses', label: 'Khoá học', desc: 'Học các khoá trực tuyến do EduGo biên soạn', icon: GraduationCap, color: 'purple' },
     { id: 'slides', label: 'Bài giảng', desc: 'Thiết kế bài giảng trình chiếu', icon: Presentation, color: 'violet' },
