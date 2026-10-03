@@ -300,7 +300,7 @@ const getYouTubeEmbedUrl = (url: string): string | null => {
 // Trình phát mặc định bằng thẻ iframe thường không phát ra sự kiện nào,
 // nên không thể biết học viên đã xem hết video hay chưa.
 let youTubeApiPromise: Promise<any> | null = null;
-const loadYouTubeIframeApi = (): Promise<any> => {
+export const loadYouTubeIframeApi = (): Promise<any> => {
   const globalWindow = window as any;
   if (globalWindow.YT && globalWindow.YT.Player) return Promise.resolve(globalWindow.YT);
   if (youTubeApiPromise) return youTubeApiPromise;

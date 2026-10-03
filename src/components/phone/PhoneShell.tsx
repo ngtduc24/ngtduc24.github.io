@@ -5,7 +5,7 @@ import { MODULE_REGISTRY, isModuleHidden, resolveModuleMeta, ModuleDef } from '.
 import { canUseModule } from '../../lib/moduleAccess';
 import { phoneMode, phoneUi, navGlassStyle, gridGlassVars } from '../../lib/device';
 import { setCreateIntent, sendToComputer } from '../../lib/phone';
-import { writeSubRoute } from '../../lib/seoConfig';
+import { prepareSubRoute } from '../../lib/seoConfig';
 import { useSidebarTools } from '../../lib/sidebarTools';
 import './phone.css';
 
@@ -176,7 +176,7 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
   }, [settings]);
 
   const go = (id: string, sub?: Record<string, string>) => {
-    if (sub) writeSubRoute(sub);
+    if (sub) prepareSubRoute(sub);
     setTab(id);
   };
   const glass = navGlassStyle(phoneUi(settings));

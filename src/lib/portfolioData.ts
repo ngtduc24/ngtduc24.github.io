@@ -1005,7 +1005,7 @@ export const enrollCourse = async (course: PortfolioCourse, viewer: { id: string
 };
 
 export const saveCourseStudent = async (item: CourseStudent) => { await saveOne('portfolio_course_students', 'students', item, DEFAULT_STUDENTS, studentRow); };
-export const deleteCourseStudentDoc = async (id: string) => { await deleteOne('portfolio_course_students', id, 'students'); };
+export const deleteCourseStudentDoc = (id: string) => deleteOne('portfolio_course_students', id, 'students');
 
 export const getPortfolioResearch = () => loadCollection('portfolio_research', 'research', DEFAULT_RESEARCH, { row: researchRow });
 export const savePortfolioResearch = async (item: PortfolioResearch) => { await saveOne('portfolio_research', 'research', item, DEFAULT_RESEARCH, researchRow); };

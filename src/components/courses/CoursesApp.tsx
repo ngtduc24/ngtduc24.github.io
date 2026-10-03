@@ -91,8 +91,8 @@ export default function CoursesApp({ currentUser }: { currentUser: UserAccount }
         courseId: course.id, paymentStatus: 'paid', registrationDate: new Date().toISOString(), progress: 0, completedLessons: [],
       };
       const exists = (course.students || []).some(s => s.id === id);
-      updateCourse({ ...course, students: exists ? (course.students || []).map(s => (s.id === id ? row : s)) : [...(course.students || []), row] });
-      notice('Đã ghi danh, bạn có thể bắt đầu học.', 'info');
+      updateCourse({ ...course, studentsCount: (course.studentsCount || 0) + (exists ? 0 : 1), students: exists ? (course.students || []).map(s => (s.id === id ? row : s)) : [...(course.students || []), row] });
+      notice('Đã đăng ký khoá học, bạn có thể bắt đầu học.', 'info');
     } catch {
       notice('Ghi danh không thành công, vui lòng kiểm tra mạng rồi thử lại.');
     } finally {

@@ -17,7 +17,7 @@ import { UserAccount, AppSettings } from '../types';
 import { useNotifications } from './NotificationContext';
 import { useUsage, useScores, personalOrder, rememberOrder, setPins, setAutoSort, forgetDoc, MIN_EVENTS, DocVisit, featuredPicks, noteShown, setFeaturedPins, dismissFeatured, undismissFeatured } from '../lib/personalize';
 import { MODULE_REGISTRY } from '../lib/modules';
-import { writeSubRoute } from '../lib/seoConfig';
+import { prepareSubRoute } from '../lib/seoConfig';
 import { Pin, PinOff, History } from 'lucide-react';
 
 interface DashboardProps {
@@ -588,7 +588,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
         const findMod = (id: string) => baseIcons.find(m => m.id === id);
         const docs = (usage.docs || []).filter(d => findMod(d.tab)).slice(0, 4);
         if (!docs.length) return null;
-        const openDoc = (d: DocVisit) => { writeSubRoute(d.sub); onSwitchTab(d.tab); };
+        const openDoc = (d: DocVisit) => { prepareSubRoute(d.sub); onSwitchTab(d.tab); };
         return (
           <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center gap-2">

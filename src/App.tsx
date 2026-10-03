@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { applyBrandTheme, applyFontTheme } from './lib/applyTheme';
 import { startBandwidthMeter } from './lib/usage';
 import Sidebar from './components/Sidebar';
@@ -73,7 +73,7 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { requestFCMToken, getMessagingInstance } from './lib/firebase';
 import { AppSettings, UserAccount } from './types';
 import { onMessage } from 'firebase/messaging';
-import { updateDocumentSEO, getTabFromUrl, getSeoMeta, clearSubRoute } from './lib/seoConfig';
+import { updateDocumentSEO, getTabFromUrl, getSeoMeta, clearSubRoute, dropStaleSubRoute, keepSubRouteOnce, SUBROUTE_PARAMS } from './lib/seoConfig';
 import { isModuleHidden } from './lib/modules';
 import MaintenanceScreen from './components/MaintenanceScreen';
 import VirtualAssistant from './components/assistant/VirtualAssistant';
@@ -127,6 +127,10 @@ export default function App() {
     }
     return 'dashboard';
   });
+  // Đổi chức năng: bỏ tham số màn hình con còn sót trên URL ngay trước khi chức năng mới vẽ và đọc URL
+  // (trừ khi vừa chuyển kèm màn hình con qua prepareSubRoute, hoặc đang quay lại bằng nút của trình duyệt).
+  const renderedTab = useRef(currentTab);
+  if (renderedTab.current !== currentTab) { dropStaleSubRoute(); renderedTab.current = currentTab; }
 
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   // Giao diện điện thoại (màn hẹp, cảm ứng). Người dùng có thể chọn giao diện máy tính trên điện thoại.
@@ -211,11 +215,17 @@ export default function App() {
       const meta = getSeoMeta(currentTab);
       const url = new URL(window.location.href);
       if (url.searchParams.get('tab') !== meta.slug || url.pathname !== '/') {
+        // Mục lịch sử của chức năng cũ không giữ tham số màn hình con của chức năng mới, để bấm quay lại
+        // rồi mở chức năng khác không bị mở nhầm màn hình cũ.
+        const prev = new URL(window.location.href);
+        if (SUBROUTE_PARAMS.some(k => prev.searchParams.has(k)) && prev.searchParams.get('tab')) {
+          clearSubRoute(prev);
+          window.history.replaceState(window.history.state, '', prev.toString());
+        }
         url.pathname = '/'; // rời đường dẫn gọn của trang chia sẻ (/c/<id>/...) khi vào khu quản trị
         url.searchParams.set('tab', meta.slug);
         url.searchParams.delete('portfolio');
-        // Đổi sang chức năng khác thì bỏ các tham số màn hình con của chức năng cũ.
-        clearSubRoute(url);
+        // Tham số màn hình con lúc này là của chức năng mới (tham số cũ đã bỏ khi đổi chức năng), giữ lại để tải lại trang vẫn đúng màn.
         window.history.pushState({ tab: currentTab }, '', url.toString());
       }
     }
@@ -226,6 +236,7 @@ export default function App() {
     if (typeof window === 'undefined') return;
 
     const handlePopState = () => {
+      keepSubRouteOnce();
       const tab = getTabFromUrl();
       if (tab) {
         setCurrentTab(tab);

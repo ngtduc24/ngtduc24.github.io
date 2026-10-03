@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
 import { isNotificationForUser, subscribeToNotificationChanges } from './data';
 import { subscribeToTasks, isTaskRelevantToUser } from './tasks';
-import { getSeoMeta, writeSubRoute } from './seoConfig';
+import { getSeoMeta, prepareSubRoute } from './seoConfig';
 import type { AppNotification, Task, UserAccount } from '../types';
 
 // Thông báo dùng chung cho chuông, trang Thông báo, số đếm trên thanh bên và trang Tổng quan.
@@ -331,7 +331,7 @@ function goTo(tab: string, setCurrentTab: (t: string) => void, sub?: Record<stri
     window.location.assign(url.toString());
     return;
   }
-  if (sub) writeSubRoute(sub);
+  if (sub) prepareSubRoute(sub);
   setCurrentTab(tab);
 }
 

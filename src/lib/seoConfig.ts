@@ -446,6 +446,31 @@ export function clearSubRoute(url: URL) {
   SUBROUTE_PARAMS.forEach(k => url.searchParams.delete(k));
 }
 
+// Chuyển sang chức năng khác kèm màn hình con (mục Tiếp tục, Lời nhắc, thông báo): bỏ hết tham số cũ rồi ghi tham số
+// của màn đích, đánh dấu để App giữ lại khi đổi chức năng. Đổi chức năng mà không qua hàm này thì App bỏ tham số cũ,
+// tránh chức năng mới đọc nhầm màn hình con còn sót lại (ví dụ bấm phím tắt Edu lại mở thẳng 1 lớp cũ).
+let pendingAt = 0;
+export function prepareSubRoute(values?: Record<string, string | null | undefined>) {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  clearSubRoute(url);
+  Object.entries(values || {}).forEach(([k, v]) => { if (v) url.searchParams.set(k, v); });
+  window.history.replaceState(window.history.state, '', url.toString());
+  pendingAt = Date.now();
+}
+// Quay lại, tiến tới bằng nút của trình duyệt: giữ nguyên tham số đang có trên URL của mục lịch sử đó.
+export function keepSubRouteOnce() { pendingAt = Date.now(); }
+// Gọi đúng lúc đổi chức năng, trước khi chức năng mới đọc URL.
+export function dropStaleSubRoute() {
+  if (typeof window === 'undefined') return;
+  if (pendingAt && Date.now() - pendingAt < 2000) { pendingAt = 0; return; }
+  pendingAt = 0;
+  const url = new URL(window.location.href);
+  if (!SUBROUTE_PARAMS.some(k => url.searchParams.has(k))) return;
+  clearSubRoute(url);
+  window.history.replaceState(window.history.state, '', url.toString());
+}
+
 /**
  * Đọc tabId từ URL hiện tại
  */
