@@ -31,7 +31,7 @@ export default function PhoneAccount({ onLogout }: { onLogout: () => void }) {
         const { count } = await supabase.from('el_lessons').select('id', { count: 'exact', head: true }).eq('owner_id', user.id).is('deleted_at', null);
         out.lessons = count ?? undefined;
       })());
-      if (can('edu_exam')) jobs.push((async () => {
+      if (can('edu')) jobs.push((async () => {
         const { count } = await supabase.from('quizzes').select('id', { count: 'exact', head: true }).eq('owner_id', user.id);
         out.quizzes = count ?? undefined;
       })());
@@ -46,8 +46,8 @@ export default function PhoneAccount({ onLogout }: { onLogout: () => void }) {
   const content = [
     { id: 'slides', label: 'Bài giảng', icon: Presentation, num: n.decks },
     { id: 'elearning', label: 'Giáo trình', icon: BookOpen, num: n.lessons },
-    { id: 'edu_exam', label: 'Đề trắc nghiệm', icon: CircleCheck, num: n.quizzes },
-  ].filter(x => can(x.id));
+    { id: 'edu_exam', label: 'Đề Quizz', icon: CircleCheck, num: n.quizzes },
+  ].filter(x => can(x.id === 'edu_exam' ? 'edu' : x.id));
   const hint = (v: string) => { try { sessionStorage.setItem('open_hint:profile', v); } catch { /* bỏ qua */ } };
 
   return (

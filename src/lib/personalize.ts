@@ -1,7 +1,7 @@
 // Cá nhân hoá Trang chủ theo thói quen của từng người (phương án 2):
 //
 // 1. Ghi nhật ký riêng của tài khoản: mỗi lần mở một chức năng (mã chức năng, thời điểm) và các tài liệu
-//    vừa mở (bài giảng, giáo trình, đề trắc nghiệm, lớp học, quy trình Automatic) để làm mục Tiếp tục.
+//    vừa mở (bài giảng, giáo trình, đề Quizz, lớp học, quy trình Automatic) để làm mục Tiếp tục.
 //    Lưu trên máy để hiện ngay, đồng bộ lên máy chủ ở khoá usage:<uid> chỉ chủ tài khoản đọc ghi được.
 // 2. Điểm thói quen (tần suất kết hợp độ gần đây): mỗi lần mở có trọng số 2^(-tuổi / 7 ngày), cộng lại.
 // 3. Hệ số thời điểm: so xác suất dùng chức năng ở khung giờ và thứ hiện tại với xác suất chung

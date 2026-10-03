@@ -25,7 +25,6 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   { id: 'quantitative_analysis', label: 'Định lượng', desc: 'Phân tích thống kê, trực quan hóa dữ liệu', icon: BarChart3, color: 'blue', group: 'Nghiên cứu và phân tích' },
   { id: 'edu', label: 'Quản lý Giáo dục', desc: 'Quản lý lớp học, sinh viên, chương trình đào tạo', icon: GraduationCap, color: 'purple', group: 'Giảng dạy và nội dung' },
   { id: 'edu_bank', label: 'Ngân hàng bài tập', desc: 'Kho bài tập dùng lại và chia sẻ theo môn', icon: Library, color: 'amber', group: 'Giảng dạy và nội dung' },
-  { id: 'edu_exam', label: 'Trắc nghiệm', desc: 'Tạo và chấm đề kiểm tra trắc nghiệm', icon: CheckCircle2, color: 'blue', group: 'Giảng dạy và nội dung' },
   { id: 'edu_grade', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường', icon: ClipboardList, color: 'emerald', group: 'Giảng dạy và nội dung' },
   { id: 'courses', label: 'Khoá học', desc: 'Học các khoá trực tuyến do EduGo biên soạn, theo dõi tiến độ học', icon: GraduationCap, color: 'purple', group: 'Giảng dạy và nội dung' },
   { id: 'slides', label: 'Bài giảng', desc: 'Thiết kế bài giảng trình chiếu, cùng soạn và trình chiếu ngay trên web', icon: Presentation, color: 'violet', group: 'Giảng dạy và nội dung' },
@@ -56,6 +55,8 @@ export function getModuleOverride(id: string, settings?: AppSettings): ModuleOve
 // Chức năng có bị admin ẩn không. Chức năng bị ẩn thì không hiển thị và không truy cập được
 // với mọi tài khoản, kể cả admin (admin chỉ bật lại trong màn hình Cài đặt chức năng).
 export function isModuleHidden(id: string, settings?: AppSettings): boolean {
+  // Quizz và ngân hàng câu hỏi là chức năng con của Giáo dục: ẩn hay hiện theo Giáo dục.
+  if (id === 'edu_exam' || id === 'edu_question_bank') return !!settings?.moduleOverrides?.edu?.hidden;
   return !!settings?.moduleOverrides?.[id]?.hidden;
 }
 

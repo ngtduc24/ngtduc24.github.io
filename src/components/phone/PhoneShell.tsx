@@ -175,7 +175,7 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
     setTab(id);
   };
   const curMod = mods.find(m => m.id === tab);
-  const title = curMod ? phoneLabel(curMod) : (tab === 'profile' || tab === 'user_profile') ? 'Trang cá nhân' : (MODULE_REGISTRY.find(m => m.id === tab)?.label || 'EduGo');
+  const title = curMod ? phoneLabel(curMod) : (tab === 'profile' || tab === 'user_profile') ? 'Trang cá nhân' : (tab === 'edu_exam' ? 'Quizz' : MODULE_REGISTRY.find(m => m.id === tab)?.label || 'EduGo');
   const api: PhoneApi = {
     user, settings, tab, unread, title, back,
     open: (id, sub) => { if (phoneMode(id, settings) === 'laptop') setSheet({ id, sub }); else go(id, sub); },
@@ -236,7 +236,6 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
 const CREATE_ITEMS: { id: string; label: string; icon: any; create: boolean }[] = [
   { id: 'slides', label: 'Bài giảng', icon: Presentation, create: true },
   { id: 'elearning', label: 'Giáo trình', icon: BookOpen, create: true },
-  { id: 'edu_exam', label: 'Đề trắc nghiệm', icon: CircleCheck, create: true },
   { id: 'tasks', label: 'Công việc', icon: CalendarDays, create: true },
   { id: 'qr_codes', label: 'Mã QR', icon: QrCode, create: true },
   { id: 'automatic', label: 'Quy trình', icon: Workflow, create: true },

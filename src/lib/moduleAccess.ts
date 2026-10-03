@@ -87,10 +87,11 @@ export function canUseModule(user: UserAccount | null | undefined, id: string): 
     case 'edu_bank':
       return p.includes('edu_bank') || (legacy && p.includes('edu') && !!user.canCreateEdu);
     case 'edu_exam':
-      // Ngân hàng câu hỏi nằm trong Trắc nghiệm: tài khoản trước đây chỉ có quyền Ngân hàng câu hỏi vẫn vào được Trắc nghiệm.
-      return p.includes('edu_exam') || p.includes('edu_question_bank') || (legacy && p.includes('edu') && !!user.canGradeEdu);
+      // Ngân hàng câu hỏi nằm trong Quizz: tài khoản trước đây chỉ có quyền Ngân hàng câu hỏi vẫn vào được Quizz.
+      // Quizz là chức năng con trong Giáo dục: ai dùng được Giáo dục thì dùng được Quizz.
+      return p.includes('edu') || p.includes('edu_exam') || p.includes('edu_question_bank');
     case 'edu_question_bank':
-      return p.includes('edu_question_bank') || (legacy && p.includes('edu') && !!user.canGradeEdu);
+      return p.includes('edu') || p.includes('edu_question_bank') || p.includes('edu_exam');
     case 'edu_grade':
       return p.includes('edu_grade') || (legacy && p.includes('edu') && !!user.canGradeImportEdu);
     case 'utilities':

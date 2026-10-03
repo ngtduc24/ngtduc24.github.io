@@ -80,16 +80,16 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
   edu_exam: {
     id: 'edu_exam',
     slug: 'trac-nghiem',
-    title: 'Trắc nghiệm | EduGo',
-    description: 'Tạo, giao và chấm đề kiểm tra trắc nghiệm trực tuyến.',
-    keywords: 'trắc nghiệm, đề kiểm tra, thi online',
+    title: 'Quizz | EduGo',
+    description: 'Tạo, giao và chấm đề Quizz trực tuyến.',
+    keywords: 'Quizz, đề kiểm tra, thi online',
   },
   edu_question_bank: {
     id: 'edu_question_bank',
     slug: 'ngan-hang-cau-hoi',
     title: 'Ngân hàng câu hỏi | EduGo',
-    description: 'Kho câu hỏi trắc nghiệm dùng lại và chia sẻ theo môn.',
-    keywords: 'ngân hàng câu hỏi, câu hỏi trắc nghiệm',
+    description: 'Kho câu hỏi Quizz dùng lại và chia sẻ theo môn.',
+    keywords: 'ngân hàng câu hỏi, câu hỏi Quizz',
   },
   edu_grade: {
     id: 'edu_grade',
@@ -271,7 +271,7 @@ export const SEO_MODULES: Record<string, SeoModuleMeta> = {
     slug: 'portfolio',
     title: 'EduGo - Nền tảng học tập và làm việc trực tuyến',
     description: 'EduGo gom các công cụ giảng dạy, học tập và nghiên cứu vào một chỗ.',
-    keywords: 'edugo, giáo dục, e-learning, trắc nghiệm, quản lý lớp học',
+    keywords: 'edugo, giáo dục, e-learning, Quizz, quản lý lớp học',
   },
   public_search: {
     id: 'public_search',
@@ -410,7 +410,7 @@ export function getTabUrl(tabId: string): string {
 
 // ============================ ĐỊNH TUYẾN MÀN HÌNH CON ============================
 // Các tham số phụ mô tả màn hình con bên trong một chức năng: lớp, bài tập, bài giảng,
-// đề trắc nghiệm, cột điểm... Nhờ lưu trên URL nên tải lại trang không nhảy về màn hình
+// đề Quizz, cột điểm... Nhờ lưu trên URL nên tải lại trang không nhảy về màn hình
 // chính của chức năng mà giữ đúng nơi đang mở.
 //   sv   : tên màn hình con của chức năng đang mở
 //   cid  : id lớp học
@@ -418,8 +418,8 @@ export function getTabUrl(tabId: string): string {
 //   gcol : id cột điểm đang chấm
 //   lid  : id bài giảng
 //   ltab : kho bài giảng đang xem (của tôi hay chung)
-//   qv   : màn hình con của trắc nghiệm
-//   qid  : id đề trắc nghiệm
+//   qv   : màn hình con của Quizz
+//   qid  : id đề Quizz
 export const SUBROUTE_PARAMS = ['sv', 'cid', 'aid', 'gcol', 'lid', 'ltab', 'qv', 'qid', 'cvid', 'bid', 'sid', 'uid', 'awf'];
 
 // Đọc các tham số màn hình con hiện có trên URL.

@@ -89,7 +89,7 @@ export default function LandingSettings() {
             </label>
             <label className="space-y-1.5 sm:col-span-2">
               <span className="text-[13px] font-semibold text-slate-600">Mô tả ngắn</span>
-              <textarea rows={2} value={cfg.heroDesc || ''} onChange={e => update({ ...cfg, heroDesc: e.target.value })} placeholder="Quản lý lớp học, bài tập, trắc nghiệm, bài giảng E-Learning, dựng phim, AR, VR 360 và nhiều tiện ích khác, gom vào một chỗ." className={inputCls} />
+              <textarea rows={2} value={cfg.heroDesc || ''} onChange={e => update({ ...cfg, heroDesc: e.target.value })} placeholder="Quản lý lớp học, bài tập, Quizz, bài giảng E-Learning, dựng phim, AR, VR 360 và nhiều tiện ích khác, gom vào một chỗ." className={inputCls} />
             </label>
             <label className="space-y-1.5">
               <span className="text-[13px] font-semibold text-slate-600">Chữ nút đăng ký</span>

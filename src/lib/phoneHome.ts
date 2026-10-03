@@ -71,7 +71,7 @@ const fmtWhen = (ms: number) => {
   return `${time} ngày ${d.getDate()}/${d.getMonth() + 1}`;
 };
 
-// Lời nhắc: bài chờ chấm, việc sắp đến hạn, đề trắc nghiệm sắp đóng, yêu cầu gia hạn chờ duyệt.
+// Lời nhắc: bài chờ chấm, việc sắp đến hạn, đề Quizz sắp đóng, yêu cầu gia hạn chờ duyệt.
 export async function loadReminders(user: UserAccount, tasks: Task[], pending: PendingGrading | null, can: (id: string) => boolean): Promise<Reminder[]> {
   const out: Reminder[] = [];
   if (pending && can('edu')) {
@@ -92,7 +92,7 @@ export async function loadReminders(user: UserAccount, tasks: Task[], pending: P
         detail: `Hạn ${fmtWhen(d as number)}`, tab: 'tasks',
       }));
   }
-  if (can('edu_exam')) {
+  if (can('edu')) {
     const now = new Date().toISOString(); const soon = new Date(Date.now() + 3 * 86400000).toISOString();
     const { data } = await supabase.from('quizzes').select('id,title,close_at,status').eq('owner_id', user.id).gt('close_at', now).lt('close_at', soon).limit(3);
     (data || []).forEach((q: any) => out.push({
@@ -126,7 +126,7 @@ export async function loadReminders(user: UserAccount, tasks: Task[], pending: P
       });
     }
   }
-  // Yêu cầu chờ duyệt (gia hạn nộp bài) lên đầu danh sách, sau đó tới bài chờ chấm, việc sắp hạn, đề trắc nghiệm.
+  // Yêu cầu chờ duyệt (gia hạn nộp bài) lên đầu danh sách, sau đó tới bài chờ chấm, việc sắp hạn, đề Quizz.
   const rank: Record<Reminder['kind'], number> = { extension: 0, grading: 1, task: 2, quiz: 3 };
   return out.map((r, i) => ({ r, i })).sort((a, b) => rank[a.r.kind] - rank[b.r.kind] || a.i - b.i).map(x => x.r);
 }

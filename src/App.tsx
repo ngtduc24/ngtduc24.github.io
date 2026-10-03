@@ -192,7 +192,7 @@ export default function App() {
   // Đồng bộ tiêu đề trang (SEO), OpenGraph và URL hai chiều
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    // Các link công khai riêng (xem bài tập, làm trắc nghiệm, xem bài giảng...) giữ nguyên địa chỉ, không gắn ?tab.
+    // Các link công khai riêng (xem bài tập, làm Quizz, xem bài giảng...) giữ nguyên địa chỉ, không gắn ?tab.
     const sp = new URLSearchParams(window.location.search);
     if (['bt', 'quiz', 'elesson', 'elview', 'vr', 'ar'].some(k => sp.has(k)) || /^\/(bt|bg|hl|tn|vr|ar|nb)\//.test(window.location.pathname)) return;
 
@@ -366,7 +366,7 @@ export default function App() {
       courses: 'Khoá học',
       utility_file_compress: 'Giảm dung lượng file',
       edu_bank: 'Ngân hàng bài tập',
-      edu_exam: 'Trắc nghiệm',
+      edu_exam: 'Quizz',
       edu_question_bank: 'Ngân hàng câu hỏi',
       edu_grade: 'Nhập điểm',
       stats: 'Thống kê',
@@ -584,7 +584,7 @@ export default function App() {
 
     setCurrentUser(updatedUser);
     localStorage.setItem('logged_in_user', JSON.stringify(updatedUser));
-    // Đổi họ tên thì cập nhật tên người biên soạn trên bài giảng E-Learning và đề trắc nghiệm.
+    // Đổi họ tên thì cập nhật tên người biên soạn trên bài giảng E-Learning và đề Quizz.
     import('./lib/elearning').then(m => m.syncOwnerName(updatedUser.id, updatedUser.fullName)).catch(() => {});
   };
 
@@ -885,7 +885,7 @@ export default function App() {
     return <PublicVRViewer />;
   }
 
-  // Link làm bài trắc nghiệm công khai: sinh viên vào bằng MSSV, không cần đăng nhập.
+  // Link làm bài Quizz công khai: sinh viên vào bằng MSSV, không cần đăng nhập.
   const quizSlug = publicParam('quiz');
   if (quizSlug) {
     return <QuizTake slug={quizSlug} />;

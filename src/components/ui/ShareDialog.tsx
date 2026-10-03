@@ -10,7 +10,7 @@ import { usePerson } from '../../lib/people';
 import { AvatarImg, PersonHover } from './People';
 
 // Hộp thêm người cộng tác: tìm tài khoản theo tên hoặc email, chọn quyền, xem và đổi quyền người đã thêm.
-// Bài giảng, bài tập, trắc nghiệm, dự án: 3 mức Xem, Chỉnh sửa, Quản lý. Lớp, trường: tích chọn từng quyền.
+// Bài giảng, bài tập, Quizz, dự án: 3 mức Xem, Chỉnh sửa, Quản lý. Lớp, trường: tích chọn từng quyền.
 
 interface ShareDialogProps {
   type: CollabType;

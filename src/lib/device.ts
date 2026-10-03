@@ -103,7 +103,7 @@ export const PHONE_ACT_IDS = ['edu', 'elearning', 'edu_bank'];
 export function phoneActIds(ui: PhoneUi): string[] {
   const n = ui.moreOn === false ? 4 : 3;
   const chosen = new Set((ui.acts || []).map(a => a?.id).filter(Boolean) as string[]);
-  const pool = [...PHONE_ACT_IDS, 'slides', 'edu_exam', 'tasks'].filter(id => !chosen.has(id));
+  const pool = [...PHONE_ACT_IDS, 'slides', 'tasks', 'courses'].filter(id => !chosen.has(id));
   return Array.from({ length: n }, (_, i) => ui.acts?.[i]?.id || pool.shift() || '').filter(Boolean);
 }
 export const NOTI_DEFAULT = { title: 'Thử Automatic: tự gửi nhắc việc sắp đến hạn mỗi sáng', btn: 'Dùng mẫu có sẵn', target: 'automatic' };
@@ -114,7 +114,6 @@ export function phoneUi(settings?: AppSettings): PhoneUi {
 export const CTA_TARGETS: { value: string; label: string; need: string }[] = [
   { value: 'create:slides', label: 'Soạn bài giảng mới', need: 'slides' },
   { value: 'create:elearning', label: 'Tạo giáo trình mới', need: 'elearning' },
-  { value: 'create:edu_exam', label: 'Tạo đề trắc nghiệm', need: 'edu_exam' },
   { value: 'create:tasks', label: 'Tạo công việc', need: 'tasks' },
   { value: 'open:edu', label: 'Mở Lớp học', need: 'edu' },
   { value: 'open:courses', label: 'Mở Khoá học', need: 'courses' },

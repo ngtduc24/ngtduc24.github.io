@@ -15,8 +15,8 @@ export type TrashApp =
 
 export const TRASH_APP_LABELS: Record<TrashApp, string> = {
   bank_item: 'Ngân hàng bài tập',
-  quiz: 'Đề trắc nghiệm',
-  quiz_question: 'Câu hỏi trắc nghiệm',
+  quiz: 'Đề Quizz',
+  quiz_question: 'Câu hỏi Quizz',
   qda_project: 'Dự án định tính',
   vr_tour: 'Tour VR 360',
   task: 'Công việc',

@@ -33,7 +33,6 @@ const MODULES: ModuleDef[] = [
   { id: 'quantitative_analysis', group: 'Nghiên cứu và phân tích', label: 'Phân tích định lượng', desc: 'Phân tích thống kê, vẽ biểu đồ số liệu', flags: [['canCreateQuantitative', 'Tạo'], ['canEditQuantitative', 'Sửa'], ['canDeleteQuantitative', 'Xóa'], ['canImportQuantitative', 'Nhập'], ['canExportQuantitative', 'Xuất'], ['canManageQuantitativeSettings', 'Cấu hình']] },
   { id: 'edu', group: 'Giảng dạy và nội dung', label: 'Quản lý Giáo dục', desc: 'Trường, lớp, sinh viên, bài tập, bảng điểm', flags: [['canCreateEdu', 'Tạo lớp/trường'], ['canEditEdu', 'Sửa'], ['canDeleteEdu', 'Xóa'], ['canImportEdu', 'Nhập lớp/SV'], ['canExportEdu', 'Xuất bảng điểm'], ['canGradeImportEdu', 'Nhập điểm'], ['canGradeEdu', 'Chấm điểm']] },
   { id: 'edu_bank', group: 'Giảng dạy và nội dung', label: 'Ngân hàng bài tập', desc: 'Kho bài tập dùng lại, chia sẻ link xem bài, tải PDF' },
-  { id: 'edu_exam', group: 'Giảng dạy và nội dung', label: 'Trắc nghiệm', desc: 'Tạo đề, giao đề cho lớp và chấm tự động' },
   { id: 'edu_grade', group: 'Giảng dạy và nội dung', label: 'Nhập điểm', desc: 'Nhập điểm vào file .fg của phần mềm trường' },
   { id: 'slides', group: 'Giảng dạy và nội dung', label: 'Bài giảng', desc: 'Thiết kế bài giảng trình chiếu như Google Slides, Canva' },
   { id: 'elearning', group: 'Giảng dạy và nội dung', label: 'Giáo trình', desc: 'Soạn, lưu trữ và chia sẻ giáo trình theo môn', flags: [['canElearningPublic', 'Công khai lên thư viện'], ['canElearningAssign', 'Giao cho lớp']] },

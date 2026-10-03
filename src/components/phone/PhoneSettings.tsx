@@ -67,7 +67,7 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
                   <label className="text-[11px] font-bold text-slate-500">Mô tả ngắn {ui.descOn === false && <span className="font-semibold text-rose-500">(đang ẩn)</span>}</label>
                   {sw(ui.descOn !== false, () => setUi({ descOn: ui.descOn === false }), 'Bật tắt mô tả')}
                 </div>
-                <textarea rows={2} className={`${field} resize-none ${ui.descOn === false ? 'opacity-40' : ''}`} value={ui.desc ?? ''} onChange={e => setUi({ desc: e.target.value })} placeholder={formState.systemDescription || 'Bài giảng, lớp học, đề trắc nghiệm của bạn ở ngay đây.'} />
+                <textarea rows={2} className={`${field} resize-none ${ui.descOn === false ? 'opacity-40' : ''}`} value={ui.desc ?? ''} onChange={e => setUi({ desc: e.target.value })} placeholder={formState.systemDescription || 'Bài giảng, lớp học, đề Quizz của bạn ở ngay đây.'} />
                 <p className="text-[10px] text-slate-400">Để trống thì dùng tiêu đề và mô tả của Trang chủ máy tính.</p>
               </div>
               <div className="space-y-1.5">

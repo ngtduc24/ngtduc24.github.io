@@ -68,7 +68,7 @@ const FEATURE_GUIDE: Record<string, { whatIs: string; howTo: string[] }> = {
   edu: { whatIs: 'Quản lý Giáo dục là nơi quản lý trường, lớp, danh sách sinh viên, bài tập và bảng điểm.', howTo: ['Mở Quản lý Giáo dục.', 'Tạo hoặc chọn lớp rồi nhập danh sách sinh viên.', 'Tạo bài tập, cột điểm, giao bài và chấm điểm.', 'Xem cột Trung bình môn tính theo trọng số từng cột.'] },
   elearning: { whatIs: 'Giáo trình là nơi soạn, lưu trữ và chia sẻ giáo trình theo môn, giao giáo trình cho lớp.', howTo: ['Vào Giáo trình rồi bấm Tạo giáo trình mới.', 'Đặt tên và chọn môn, nếu chưa có môn thì bấm dấu cộng thêm nhanh.', 'Soạn nội dung theo từng phần, đính kèm tài nguyên.', 'Công khai lên thư viện hoặc giao cho lớp bằng liên kết.'] },
   edu_bank: { whatIs: 'Ngân hàng bài tập lưu các bài tập để dùng lại và chia sẻ theo môn.', howTo: ['Mở Ngân hàng bài tập.', 'Tạo bài tập mới hoặc chọn từ kho có sẵn.', 'Gán bài tập vào lớp khi cần giao.'] },
-  edu_exam: { whatIs: 'Trắc nghiệm là nơi soạn câu hỏi, tạo đề, giao đề cho lớp và chấm tự động.', howTo: ['Mở Trắc nghiệm.', 'Soạn câu hỏi trong Ngân hàng câu hỏi.', 'Bấm Tạo đề mới rồi thêm câu hỏi vào đề.', 'Bấm Phát hành đề rồi giao cho lớp.', 'Có thể xuất đề ra PDF để in.'] },
+  edu_exam: { whatIs: 'Quizz là nơi soạn câu hỏi, tạo đề, giao đề cho lớp và chấm tự động.', howTo: ['Mở Quizz.', 'Soạn câu hỏi trong Ngân hàng câu hỏi.', 'Bấm Tạo đề mới rồi thêm câu hỏi vào đề.', 'Bấm Phát hành đề rồi giao cho lớp.', 'Có thể xuất đề ra PDF để in.'] },
   edu_grade: { whatIs: 'Nhập điểm giúp nhập điểm vào file của phần mềm trường.', howTo: ['Mở Nhập điểm.', 'Chọn lớp và cột điểm.', 'Nhập điểm rồi xuất file.'] },
   calculator: { whatIs: 'Tính cỡ mẫu nghiên cứu hỗ trợ tính toán cỡ mẫu theo công thức chuẩn.', howTo: ['Mở Tính cỡ mẫu nghiên cứu.', 'Chọn công thức phù hợp.', 'Nhập các tham số rồi xem kết quả cỡ mẫu.'] },
   scientific_journals: { whatIs: 'Quản lý điểm báo khoa học để lưu trữ và phân loại điểm báo, bài viết.', howTo: ['Mở Quản lý điểm báo khoa học.', 'Thêm hoặc nhập danh sách tạp chí.', 'Lọc theo ngành, loại và điểm.'] },
@@ -90,7 +90,7 @@ const FEATURE_GUIDE: Record<string, { whatIs: string; howTo: string[] }> = {
 
 // Mẹo hướng dẫn thao tác nhanh cho người dùng mới. Khớp theo từ khóa đã bỏ dấu.
 const FAQS: { keys: string[]; title: string; body: string; goId?: string }[] = [
-  { keys: ['tao de', 'de trac nghiem', 'trac nghiem', 'tao bai kiem tra'], title: 'Tạo đề trắc nghiệm', body: 'Vào Quản lý Giáo dục, mở Trắc nghiệm, bấm Tạo đề mới, thêm câu hỏi từ ngân hàng rồi bấm Phát hành đề để giao cho lớp.', goId: 'edu_exam' },
+  { keys: ['tao de', 'de trac nghiem', 'trac nghiem', 'tao bai kiem tra'], title: 'Tạo đề Quizz', body: 'Vào Quản lý Giáo dục, mở Quizz, bấm Tạo đề mới, thêm câu hỏi từ ngân hàng rồi bấm Phát hành đề để giao cho lớp.', goId: 'edu_exam' },
   { keys: ['nhap diem', 'vao diem', 'cong diem'], title: 'Nhập điểm', body: 'Vào Quản lý Giáo dục, mở Nhập điểm để nhập điểm vào file của phần mềm trường.', goId: 'edu_grade' },
   { keys: ['ngan hang bai tap', 'kho bai tap', 'bai tap'], title: 'Ngân hàng bài tập', body: 'Mở Ngân hàng bài tập trong Quản lý Giáo dục để lưu và dùng lại bài tập theo môn.', goId: 'edu_bank' },
   { keys: ['xuat pdf bai giang', 'tai bai giang', 'tai pdf'], title: 'Tải bài giảng ra PDF', body: 'Mở bài giảng cần tải, bấm nút Tải PDF ở góc trên, sau đó chọn Lưu thành PDF.' },
@@ -387,7 +387,7 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
 
   const suggestions = knowledgeMode
     ? ['Bài giảng về Blender', 'Vertex là gì', 'Bài tập về dựng hình', 'Câu hỏi ôn tập']
-    : ['Tạo đề trắc nghiệm', 'Nhập điểm ở đâu', 'Tải bài giảng ra PDF', 'Thêm môn học mới'];
+    : ['Tạo đề Quizz', 'Nhập điểm ở đâu', 'Tải bài giảng ra PDF', 'Thêm môn học mới'];
   const greeting = knowledgeMode
     ? `Xin chào ${currentUser?.fullName?.split(' ').slice(-1)[0] || ''}. Mình là Trợ lý giáo dục, giúp hỏi đáp kiến thức bài học dựa trên bài giảng, câu hỏi và bài tập đã được chia sẻ công khai. Bạn muốn tìm hiểu điều gì?`
     : `Xin chào ${currentUser?.fullName?.split(' ').slice(-1)[0] || ''}. Mình là Trợ lý hệ thống, giúp hướng dẫn dùng và chỉ đường tới các chức năng. Bạn muốn làm gì?`;
@@ -494,7 +494,7 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
                     <p key={qq.id} className="rounded-xl bg-slate-50 px-2.5 py-1.5 text-[12px] text-slate-700 line-clamp-2">{qq.text || '(câu hỏi trống)'}</p>
                   ))}
                 </div>
-                {!knowledgeMode && <button onClick={() => go('edu_exam')} className="mt-2 inline-flex items-center gap-1 px-1 text-[11px] font-bold text-brand hover:underline">Mở phần trắc nghiệm <ArrowRight className="h-3 w-3" /></button>}
+                {!knowledgeMode && <button onClick={() => go('edu_exam')} className="mt-2 inline-flex items-center gap-1 px-1 text-[11px] font-bold text-brand hover:underline">Mở phần Quizz <ArrowRight className="h-3 w-3" /></button>}
               </div>
             )}
 

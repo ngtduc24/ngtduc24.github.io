@@ -73,7 +73,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
   const [activeCourseEditorTab, setActiveCourseEditorTab] = useState<'info' | 'curriculum' | 'students'>('info');
   const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
   const [fetchingLessons, setFetchingLessons] = useState<Record<string, boolean>>({});
-  // Nguồn để gắn vào bài học của khoá học: bài giảng E-Learning (của tôi + công khai) và đề trắc nghiệm đã phát hành.
+  // Nguồn để gắn vào bài học của khoá học: bài giảng E-Learning (của tôi + công khai) và đề Quizz đã phát hành.
   const [elLessons, setElLessons] = useState<ELLesson[]>([]);
   const [quizOptions, setQuizOptions] = useState<{ id: string; title: string; slug: string; owner_id?: string | null; owner_name?: string | null; is_public?: boolean; open_access?: boolean }[]>([]);
   const [sourcesLoaded, setSourcesLoaded] = useState(false);
@@ -1855,7 +1855,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                     />
                                   </div>
 
-                                  {/* Gắn bài giảng E-Learning và đề trắc nghiệm */}
+                                  {/* Gắn bài giảng E-Learning và đề Quizz */}
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div className="space-y-1">
                                       <label className="text-xs font-black text-slate-400">Giáo trình (nội dung hiện dưới video)</label>
@@ -1874,7 +1874,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
                                       </select>
                                     </div>
                                     <div className="space-y-1">
-                                      <label className="text-xs font-black text-slate-400">Đề trắc nghiệm (nút làm bài góc trên phải)</label>
+                                      <label className="text-xs font-black text-slate-400">Đề Quizz (nút làm bài góc trên phải)</label>
                                       <select
                                         value={lesson.quizId || ''}
                                         onChange={async (e) => {

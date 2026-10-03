@@ -209,7 +209,7 @@ export default function QuizTake({ slug }: QuizTakeProps) {
       <div className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center px-4 py-10">
         <Card padding="none" className="w-full p-7 sm:p-8 shadow-xl animate-fadeIn">
           <div className="w-11 h-11 rounded-xl bg-brand-light text-brand flex items-center justify-center mb-3"><ListChecks size={22} /></div>
-          <h1 className="text-xl font-bold text-slate-800">{info?.quiz?.title || 'Vào làm bài trắc nghiệm'}</h1>
+          <h1 className="text-xl font-bold text-slate-800">{info?.quiz?.title || 'Vào làm bài Quizz'}</h1>
           <p className="mt-1 text-[13px] text-slate-500">{isLearner ? 'Bài kiểm tra sau bài học trong khoá học, kết quả lưu theo tên học viên.' : 'Nhập mã số sinh viên để vào làm bài, không cần đăng nhập.'}</p>
 
           {info && (

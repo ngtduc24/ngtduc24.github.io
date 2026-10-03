@@ -46,7 +46,7 @@ export default function QuizModule({ currentUser, standaloneBank, onExit }: Quiz
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
 
-  // Khôi phục màn hình con của trắc nghiệm và đề đang mở từ URL để tải lại trang không nhảy về danh sách.
+  // Khôi phục màn hình con của Quizz và đề đang mở từ URL để tải lại trang không nhảy về danh sách.
   const quizSub = readSubRoute();
   const [view, setView] = useState<View>(() => {
     // Mở như phím tắt Ngân hàng câu hỏi riêng thì vào thẳng màn ngân hàng, không qua danh sách đề.
@@ -67,11 +67,11 @@ export default function QuizModule({ currentUser, standaloneBank, onExit }: Quiz
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
   const [bankSelectMode, setBankSelectMode] = useState(false); // mở ngân hàng để chọn câu thêm vào đề
 
-  // Đảm bảo ngữ cảnh người dùng (Firebase uid) luôn có cho các thao tác trắc nghiệm.
+  // Đảm bảo ngữ cảnh người dùng (Firebase uid) luôn có cho các thao tác Quizz.
   useEffect(() => { setEduAuthContext(currentUser.id, currentUser.role === 'admin'); }, [currentUser]);
   useEffect(() => { getSubjects().then(setSubjects).catch(() => {}); }, []);
 
-  // Nạp lại đề trắc nghiệm theo id trên URL khi tải lại trang đang ở màn hình chi tiết, sửa hoặc giao đề.
+  // Nạp lại đề Quizz theo id trên URL khi tải lại trang đang ở màn hình chi tiết, sửa hoặc giao đề.
   useEffect(() => {
     if (quizSub.qid && !activeQuiz) {
       getQuizById(quizSub.qid).then(setActiveQuiz).catch(() => setView('list'));
@@ -92,7 +92,7 @@ export default function QuizModule({ currentUser, standaloneBank, onExit }: Quiz
     if (activeQuiz && (view === 'editor' || view === 'detail')) trackDoc({ kind: 'quiz', id: activeQuiz.id, title: activeQuiz.title, tab: 'edu_exam', sub: { sv: 'exam_bank', qv: view, qid: activeQuiz.id } });
   }, [activeQuiz?.id, view]);
 
-  // Rời khỏi màn hình trắc nghiệm thì bỏ các tham số của nó khỏi URL.
+  // Rời khỏi màn hình Quizz thì bỏ các tham số của nó khỏi URL.
   useEffect(() => () => { writeSubRoute({ qv: null, qid: null }); }, []);
   const loadQuizzes = useCallback(() => {
     setLoading(true);
@@ -141,7 +141,7 @@ export default function QuizModule({ currentUser, standaloneBank, onExit }: Quiz
   useEffect(() => { if (takeCreateIntent('edu_exam')) openNewQuiz(); /* eslint-disable-line react-hooks/exhaustive-deps */ }, []);
 
   const removeQuiz = (q: Quiz, onDone?: () => void) => {
-    confirm('Xóa đề trắc nghiệm', `Xóa đề "${q.title}"? Đề cùng kết quả làm bài sẽ nằm ở mục Đã xoá trong trang Cá nhân 30 ngày, khôi phục được.`, async () => {
+    confirm('Xóa đề Quizz', `Xóa đề "${q.title}"? Đề cùng kết quả làm bài sẽ nằm ở mục Đã xoá trong trang Cá nhân 30 ngày, khôi phục được.`, async () => {
       try { await deleteQuiz(q.id); addNotification('Đã xóa đề.', 'success'); if (onDone) onDone(); else loadQuizzes(); }
       catch (e: any) { addNotification('Lỗi xóa đề: ' + e.message, 'error'); }
     });
@@ -169,7 +169,7 @@ export default function QuizModule({ currentUser, standaloneBank, onExit }: Quiz
           onBack={onExit}
           backTitle="Quay lại"
 
-          title="Bạn muốn tìm đề trắc nghiệm nào?"
+          title="Bạn muốn tìm đề Quizz nào?"
           subtitle="Soạn đề, giao cho lớp, chấm tự động. Dùng lại đề hay từ thư viện của đồng nghiệp."
           tabs={[{ id: 'shared', label: 'Thư viện' }, { id: 'mine', label: 'Đề của tôi' }, { id: 'collab', label: 'Được chia sẻ với tôi' }]}
           activeTab={listTab}
@@ -185,13 +185,13 @@ export default function QuizModule({ currentUser, standaloneBank, onExit }: Quiz
             <button onClick={openNewQuiz} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-brand px-4 text-sm font-semibold text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Plus className="h-4 w-4" /> Tạo đề mới</button>
           </>}
         />
-        <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{shownQuizzes.length}</span> đề trắc nghiệm{filterSubject ? ` trong môn ${filterSubject === '__none' ? 'chưa chọn' : subjectName(filterSubject)}` : ''}</p>
+        <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{shownQuizzes.length}</span> đề Quizz{filterSubject ? ` trong môn ${filterSubject === '__none' ? 'chưa chọn' : subjectName(filterSubject)}` : ''}</p>
 
         {loading ? (
           <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-brand" /></div>
         ) : quizzes.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center">
-            <p className="text-sm font-bold text-slate-700">{listTab === 'shared' ? 'Thư viện chưa có đề nào' : listTab === 'collab' ? 'Chưa có ai thêm bạn vào đề nào' : 'Chưa có đề trắc nghiệm nào'}</p>
+            <p className="text-sm font-bold text-slate-700">{listTab === 'shared' ? 'Thư viện chưa có đề nào' : listTab === 'collab' ? 'Chưa có ai thêm bạn vào đề nào' : 'Chưa có đề Quizz nào'}</p>
             <p className="mt-1 text-xs text-slate-400">{listTab === 'shared' ? 'Đề được chia sẻ khi người soạn bật "Chia sẻ vào thư viện đề" trong phần Thiết lập của đề.' : 'Bấm "Tạo đề mới" để bắt đầu, hoặc thêm câu hỏi vào ngân hàng trước.'}</p>
           </div>
         ) : shownQuizzes.length === 0 ? (

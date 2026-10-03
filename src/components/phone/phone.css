@@ -625,3 +625,14 @@ html:not(.ph-own-head) .ph-in > .ph-sbar { display: none; }
 .pk-li .st.g { color: var(--ph-brand-hover); } .pk-li .st.a { color: #b45309; } .pk-li .st.b { color: #1d4ed8; } .pk-li .st.p { color: #6d28d9; } .pk-li .st.r { color: #be123c; } .pk-li .st.n { color: var(--ph-text); }
 .pk-li.sel { background: var(--ph-brand-light); }
 .pk-li .m small:not(.as) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Hai nút giao việc trong trang lớp */
+.pk-give { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pk-give button { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 18px; padding: 12px; text-align: left; box-shadow: 0 1px 2px rgba(15,23,42,.06); }
+.pk-give .ic { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: var(--ph-brand-light); color: var(--ph-brand-hover); flex: none; }
+.pk-give .ic svg { width: 22px; height: 22px; }
+.pk-give b { display: block; font-size: 15px; font-weight: 800; color: var(--ph-ink); }
+.pk-give small { display: block; font-size: 11.5px; color: var(--ph-muted); }
+
+/* Thanh trạng thái iPhone (Safari và ứng dụng thêm ra màn hình chính) lấy màu nền trang: tô nền trang theo màu hệ thống
+   để vùng tai thỏ liền màu với đầu trang, không còn dải trắng. Nội dung vẫn nằm trong .ph-root phủ kín màn. */
+html.is-phone, html.is-phone body { background-color: var(--color-brand-hover, #059669); }

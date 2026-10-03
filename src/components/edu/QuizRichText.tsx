@@ -9,7 +9,7 @@ interface QuizRichTextProps {
 }
 
 /**
- * Nội dung câu hỏi trắc nghiệm và bài giảng E-Learning dùng chung trình soạn thảo chuẩn của EduGo
+ * Nội dung câu hỏi Quizz và bài giảng E-Learning dùng chung trình soạn thảo chuẩn của EduGo
  * (cùng thanh công cụ, cùng cách chèn ảnh, video từ Kho lưu trữ như trang soạn bài Website).
  */
 export default function QuizRichText({ value, onChange, placeholder, allowVideo }: QuizRichTextProps) {

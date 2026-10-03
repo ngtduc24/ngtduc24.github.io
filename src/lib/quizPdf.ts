@@ -1,6 +1,6 @@
 import { QuizQuestion } from './quiz';
 
-// Xuất đề trắc nghiệm hoặc các câu hỏi đã chọn ra PDF theo mẫu đề thi để in. Dựng tài liệu in
+// Xuất đề Quizz hoặc các câu hỏi đã chọn ra PDF theo mẫu đề thi để in. Dựng tài liệu in
 // gọn gàng có đầu trang (trường, môn, tên bài kiểm tra, mã đề, thời gian) rồi mở hộp thoại in,
 // người dùng chọn Lưu thành PDF. Chạy trên cả máy tính và điện thoại, giữ đúng tiếng Việt.
 
@@ -108,7 +108,7 @@ function buildExamHtml(header: ExamHeader, questions: QuizQuestion[]): string {
     ${codeBox}
   </div>
   <hr class="rule" />
-  <div class="part">I. PHẦN CÂU HỎI TRẮC NGHIỆM</div>
+  <div class="part">I. PHẦN CÂU HỎI QUIZZ</div>
   ${questionsHtml || '<p>Chưa có câu hỏi.</p>'}
   ${answerKey}
 </body></html>`;

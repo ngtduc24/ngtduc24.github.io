@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Users, UserPlus, Link2, Eye, ClipboardCheck, Clock, Plus, Download, MoreHorizontal, Pencil, Trash2, Lock, Unlock, FileSpreadsheet, ChevronLeft, ChevronRight, Check, Search, X, FileText, BarChart3, Send } from 'lucide-react';
+import { Users, UserPlus, Link2, Eye, ClipboardCheck, Clock, Plus, Download, MoreHorizontal, Pencil, Trash2, Lock, Unlock, FileSpreadsheet, ChevronLeft, ChevronRight, Check, Search, X, FileText, BarChart3, Send, ListChecks } from 'lucide-react';
 import type { EduUser, EduGradeColumn, EduAssignment, EduGrade, EduExtensionRequest } from '../../types/edu';
 import { takeOpenExt } from '../../lib/phone';
 import { PhoneExt, PhoneSeg, PhoneChips, PhoneChip, PhoneSheet, PhoneMenuSheet, PhoneFab, PhoneEmpty, PhonePickSheet } from '../phone/PhoneKit';
@@ -17,6 +17,8 @@ export interface PhoneClassProps {
   onShare: () => void;
   onNewAssignment: () => void;
   onEditAssignment: (id: string) => void;
+  onAssignQuiz: () => void;
+  quizSlot?: React.ReactNode;
   onDeleteAssignment: (id: string, colId?: string) => void;
   onViewAssignment: (id: string) => void;
   onGrading: (assignmentId: string, columnId: string) => void;
@@ -135,10 +137,17 @@ export default function PhoneClassDetail(p: PhoneClassProps) {
 
       {tab === 'assignments' && (
         <div className="pk-list" style={{ gap: 10 }}>
+          {p.can.assign && (
+            // Giao việc cho đúng lớp này: Bài tập (nộp tệp) hoặc Quizz (chọn đề rồi giao)
+            <div className="pk-give">
+              <button type="button" onClick={p.onNewAssignment}><span className="ic"><FileText /></span><span><b>Bài tập</b><small>Giao bài nộp tệp</small></span></button>
+              <button type="button" onClick={p.onAssignQuiz}><span className="ic"><ListChecks /></span><span><b>Quizz</b><small>Chọn đề rồi giao</small></span></button>
+            </div>
+          )}
           {p.can.grade && p.extRequests.length > 0 && (
             <button type="button" className="pk-warn" onClick={() => setExtOpen(true)}><Clock /><span>{p.extRequests.length} sinh viên xin gia hạn nộp bài</span><b>Xem</b></button>
           )}
-          {sortedAsg.length === 0 ? <PhoneEmpty icon={FileText} title="Lớp chưa có bài tập nào" sub={p.can.assign ? 'Bấm Giao bài để tạo bài tập đầu tiên.' : undefined} /> : (
+          {sortedAsg.length === 0 ? <PhoneEmpty icon={FileText} title="Lớp chưa có bài tập nào" sub={p.can.assign ? 'Bấm Bài tập ở trên để giao bài đầu tiên.' : undefined} /> : (
             // Danh sách gọn trong thẻ trắng: mỗi bài tập 1 dòng, bấm để xem chi tiết, nút Chấm khi còn bài chờ, nút ba chấm mở thao tác khác.
             <div className="pk-grp">
               {sortedAsg.map(a => {
@@ -158,6 +167,7 @@ export default function PhoneClassDetail(p: PhoneClassProps) {
               })}
             </div>
           )}
+          {p.quizSlot}
         </div>
       )}
 
@@ -253,7 +263,6 @@ export default function PhoneClassDetail(p: PhoneClassProps) {
         </>
       )}
 
-      {tab === 'assignments' && p.can.assign && <PhoneFab label="Giao bài" icon={Send} onClick={p.onNewAssignment} />}
       {tab === 'students' && p.can.addStudent && <PhoneFab label="Thêm sinh viên" icon={Plus} onClick={() => setStuForm({ stt: String(users.length + 1), fullName: '', mssv: '' })} />}
 
       {menu && <PhoneMenuSheet title="Thao tác với lớp" onClose={() => setMenu(false)} items={[

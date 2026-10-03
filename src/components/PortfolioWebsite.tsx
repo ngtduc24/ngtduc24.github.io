@@ -1813,7 +1813,7 @@ export function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, glo
                   {/* Right Column: Course Playlist navigation */}
                   <div className="lg:col-span-4 lg:sticky lg:top-[7.5rem] lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto lg:pr-1 scrollbar-thin">
                     <div className="space-y-4">
-                    {/* Nút làm bài trắc nghiệm (góc trên bên phải) */}
+                    {/* Nút làm bài Quizz (góc trên bên phải) */}
                     {activeLesson && activeLesson.quizSlug && (
                       canLearn && quizUrl ? (
                         <a
@@ -1825,7 +1825,7 @@ export function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, glo
                           <span className="flex items-center gap-3">
                             <span className="grid h-9 w-9 place-items-center rounded-xl bg-white/15"><ClipboardList className="h-5 w-5" /></span>
                             <span>
-                              <span className="block text-sm font-bold">Làm bài trắc nghiệm</span>
+                              <span className="block text-sm font-bold">Làm bài Quizz</span>
                               <span className="block text-[11px] text-white/80 truncate max-w-[200px]">{activeLesson.quizTitle || 'Kiểm tra sau bài học'}</span>
                             </span>
                           </span>
@@ -1835,7 +1835,7 @@ export function PortfolioDetailPage({ item, related, onOpen, viewer, onBack, glo
                         <div className="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-slate-400">
                           <span className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100"><LockKeyhole className="h-5 w-5" /></span>
                           <span>
-                            <span className="block text-sm font-bold text-slate-600">Bài trắc nghiệm</span>
+                            <span className="block text-sm font-bold text-slate-600">Bài Quizz</span>
                             <span className="block text-[11px]">{viewer ? 'Đăng ký khoá học để làm bài' : 'Đăng nhập và đăng ký để làm bài'}</span>
                           </span>
                         </div>

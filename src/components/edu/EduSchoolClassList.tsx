@@ -456,7 +456,7 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
           { key: 'import', label: 'Import tạo lớp', sub: 'Từ tệp Excel danh sách sinh viên', icon: Upload, hidden: !(onImport && canImportEdu), onClick: () => onImport?.() },
           { key: 'school', label: 'Thêm trường', icon: School, hidden: !canCreate, onClick: () => { newSchool(); } },
           { key: 'bank', label: 'Ngân hàng bài tập', icon: BookMarked, hidden: !(onOpenBank && canUseModule(currentUser, 'edu_bank')), onClick: () => onOpenBank?.() },
-          { key: 'exam', label: 'Trắc nghiệm', icon: FileCheck2, hidden: !(onOpenExams && canUseModule(currentUser, 'edu_exam')), onClick: () => onOpenExams?.() },
+          { key: 'exam', label: 'Quizz', icon: FileCheck2, hidden: !(onOpenExams && canUseModule(currentUser, 'edu_exam')), onClick: () => onOpenExams?.() },
           { key: 'grade', label: 'Nhập điểm hàng loạt', sub: phoneMode('edu_grade', phone.settings) === 'laptop' ? 'Nên làm trên máy tính' : undefined, icon: ClipboardList, hidden: !(onOpenGrades && canUseModule(currentUser, 'edu_grade')), onClick: () => phone.open('edu_grade') },
         ]} />}
         {sel && 'cls' in sel && (() => { const c = sel.cls; return <PhoneMenuSheet title={c.name} sub={schoolName(c.schoolId)} onClose={() => setPSheet(null)} items={[
@@ -525,7 +525,7 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
                 ...(onImport && canImportEdu ? [{ key: 'import', label: 'Import tạo lớp', icon: Upload, onClick: onImport, primary: true }] : []),
                 ...(canCreate ? [{ key: 'school', label: 'Thêm trường', icon: Plus, onClick: () => { setIsCreatingSchool(true); setNewForm({ name: '', description: '' }); } }] : []),
                 ...(onOpenBank && canUseModule(currentUser, 'edu_bank') ? [{ key: 'bank', label: 'Ngân hàng bài tập', icon: BookMarked, onClick: onOpenBank }] : []),
-                ...(onOpenExams && canUseModule(currentUser, 'edu_exam') ? [{ key: 'exam', label: 'Trắc nghiệm', icon: FileCheck2, onClick: onOpenExams }] : []),
+                ...(onOpenExams && canUseModule(currentUser, 'edu_exam') ? [{ key: 'exam', label: 'Quizz', icon: FileCheck2, onClick: onOpenExams }] : []),
                 ...(onOpenGrades && canUseModule(currentUser, 'edu_grade') ? [{ key: 'grade', label: 'Nhập điểm', icon: ClipboardList, onClick: () => phone.open('edu_grade'), laptop: phoneMode('edu_grade', phone.settings) === 'laptop' }] : []),
               ]} />
             </div>
@@ -569,7 +569,7 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider"
             >
               <FileCheck2 className="w-4 h-4 text-brand" />
-              <span>Trắc nghiệm</span>
+              <span>Quizz</span>
             </button>
           )}
 

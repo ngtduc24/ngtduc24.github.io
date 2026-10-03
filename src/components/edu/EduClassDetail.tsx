@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { trackDoc } from '../../lib/personalize';
 import { prettyShareUrl } from '../../lib/shareLinks';
 import { copyText } from '../ui/Dialogs';
+import { ClassQuizPicker, ClassQuizList } from './ClassQuizAssign';
+import { ListChecks } from 'lucide-react';
 import { usePhoneMaybe, usePhoneBack } from '../phone/PhoneShell';
 import PhoneClassDetail from './PhoneClassDetail';
 import { exportAllGrades, exportGradeColumn } from './EduExport';
@@ -67,13 +69,18 @@ interface EduClassDetailProps {
   onViewAssignment: (assignmentId: string) => void;
   onGrading: (assignmentId: string, gradeColumnId: string) => void;
   onBack?: () => void;
+  // Quizz là chức năng con của Edu: mở kết quả một đề, hoặc sang Quizz để tạo đề mới.
+  onOpenQuiz?: (quizId: string) => void;
+  onNewQuiz?: () => void;
 }
 
 // Đơn vị thời gian gia hạn nộp bài và số mili giây tương ứng.
 type ExtUnit = 'second' | 'minute' | 'hour' | 'day';
 const EXT_UNIT_MS: Record<ExtUnit, number> = { second: 1000, minute: 60 * 1000, hour: 3600 * 1000, day: 24 * 3600 * 1000 };
 
-export default function EduClassDetail({ classId, currentUser, onEditAssignment, onViewAssignment, onGrading, onBack }: EduClassDetailProps) {
+export default function EduClassDetail({ classId, currentUser, onEditAssignment, onViewAssignment, onGrading, onBack, onOpenQuiz, onNewQuiz }: EduClassDetailProps) {
+  const [quizPicker, setQuizPicker] = useState(false);
+  const [quizReload, setQuizReload] = useState(0);
   const [clazz, setClazz] = useState<(EduClass & { edu_schools: EduSchool }) | null>(null);
   const [users, setUsers] = useState<EduUser[]>([]);
   const [gradeColumns, setGradeColumns] = useState<EduGradeColumn[]>([]);
@@ -439,7 +446,10 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
             ownerId={isOwner ? (clazz.ownerId || currentUser.id) : (clazz.ownerId || '')}
             currentUser={currentUser} canManage={canShare} onClose={() => setShareOpen(false)} />
         )}
+        {quizPicker && <ClassQuizPicker classId={clazz.id} className={clazz.name} currentUser={currentUser} onClose={() => setQuizPicker(false)} onDone={() => setQuizReload(v => v + 1)} onCreateNew={onNewQuiz} />}
         <PhoneClassDetail
+          onAssignQuiz={() => setQuizPicker(true)}
+          quizSlot={<ClassQuizList classId={clazz.id} reloadKey={quizReload} canAssign={canAssign} onOpenQuiz={onOpenQuiz} />}
           clazz={clazz as any} isOwner={isOwner} users={users} gradeColumns={gradeColumns} assignments={assignments} grades={grades} submissions={submissions} extRequests={extRequests}
           can={{ share: canShare, assign: canAssign, editAssign: canEditAssign, deleteAssign: canDeleteAssign, grade: canGrade, addStudent: canAddStudent, editStudent: canEditStudent, deleteStudent: canDeleteStudent, addColumn: canAddColumn, editColumn: canEditColumn, deleteColumn: canDeleteColumn, exportGrades: canExportEdu, viewSubs: canViewSubs }}
           avgOf={avgOf}
@@ -563,9 +573,16 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
             }`}
           >
             <Plus className="w-4 h-4" />
-            <span>Tạo bài tập</span>
+            <span>Bài tập</span>
             {gradeColumns.length === 0 && <Lock className="w-3 h-3 ml-1" />}
           </button>
+          )}
+          {canAssign && (
+            <button onClick={() => setQuizPicker(true)} title="Chọn đề Quizz và giao cho lớp này"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md bg-brand hover:bg-brand-hover text-white shadow-brand/20">
+              <ListChecks className="w-4 h-4" />
+              <span>Quizz</span>
+            </button>
           )}
         </div>
       </div>
@@ -930,6 +947,8 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
         </div>
       )}
 
+      {activeTab === 'assignments' && <ClassQuizList classId={clazz.id} reloadKey={quizReload} canAssign={canAssign} onOpenQuiz={onOpenQuiz} />}
+      {quizPicker && !phone && <ClassQuizPicker classId={clazz.id} className={clazz.name} currentUser={currentUser} onClose={() => setQuizPicker(false)} onDone={() => setQuizReload(v => v + 1)} onCreateNew={onNewQuiz} />}
       {activeTab === 'assignments' && (
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden animate-fadeIn">
           {(() => {

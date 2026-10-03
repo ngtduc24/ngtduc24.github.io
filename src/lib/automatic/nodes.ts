@@ -689,12 +689,12 @@ const taskNode: NodeType = {
 };
 
 const readNode: NodeType = {
-  type: 'edugoRead', label: 'Đọc dữ liệu EduGo', desc: 'Lấy danh sách công việc, lớp học, đề trắc nghiệm, giáo trình, bài giảng của bạn', icon: 'Database', color: '#7c3aed',
+  type: 'edugoRead', label: 'Đọc dữ liệu EduGo', desc: 'Lấy danh sách công việc, lớp học, đề Quizz, giáo trình, bài giảng của bạn', icon: 'Database', color: '#7c3aed',
   group: 'edugo', inputs: 1, outputs: 1,
-  subtitle: p => ({ tasks: 'Công việc', classes: 'Lớp học', quizzes: 'Đề trắc nghiệm', lessons: 'Giáo trình', decks: 'Bài giảng' } as any)[p.resource] || '',
+  subtitle: p => ({ tasks: 'Công việc', classes: 'Lớp học', quizzes: 'Đề Quizz', lessons: 'Giáo trình', decks: 'Bài giảng' } as any)[p.resource] || '',
   defaults: { resource: 'tasks', limit: 100 },
   fields: [
-    { name: 'resource', label: 'Dữ liệu', type: 'options', noExpression: true, options: opt([['tasks', 'Công việc'], ['classes', 'Lớp học'], ['quizzes', 'Đề trắc nghiệm'], ['lessons', 'Giáo trình'], ['decks', 'Bài giảng']]) },
+    { name: 'resource', label: 'Dữ liệu', type: 'options', noExpression: true, options: opt([['tasks', 'Công việc'], ['classes', 'Lớp học'], ['quizzes', 'Đề Quizz'], ['lessons', 'Giáo trình'], ['decks', 'Bài giảng']]) },
     { name: 'limit', label: 'Số dòng tối đa', type: 'number', min: 1 },
   ],
   execute: async (ctx) => {

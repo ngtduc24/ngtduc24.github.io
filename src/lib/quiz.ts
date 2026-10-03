@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import { getEduCtx } from './edu';
 
 // =====================================================================
-// Lớp dữ liệu cho phân hệ trắc nghiệm. Phía giảng viên dùng anon key và lọc
+// Lớp dữ liệu cho phân hệ Quizz. Phía giảng viên dùng anon key và lọc
 // theo owner_id (Firebase uid) ở client, giống phần EDU hiện có. Luồng sinh
 // viên đi qua các hàm RPC phía máy chủ (quiz_open/start/save_answer/...).
 // =====================================================================
@@ -230,7 +230,7 @@ export async function toggleQuestionPublic(id: string, isPublic: boolean): Promi
   if (error) throw error;
 }
 
-// --------------------------- Đề trắc nghiệm ---------------------------
+// --------------------------- Đề Quizz ---------------------------
 
 export async function getQuizzes(subjectId?: string): Promise<Quiz[]> {
   const ctx = getEduCtx();
@@ -361,7 +361,7 @@ export async function deleteQuiz(id: string): Promise<void> {
       const [items, assigns, attempts, collab] = await Promise.all([rowsOf(ITEM_TABLE, 'quiz_id', [id]), rowsOf(ASSIGN_TABLE, 'quiz_id', [id]), rowsOf(ATTEMPT_TABLE, 'quiz_id', [id]), rowsOf('collaborators', 'resource_id', [id])]);
       const aids = attempts.map((a: any) => a.id);
       const [answers, logs] = await Promise.all([rowsOf(ANSWER_TABLE, 'attempt_id', aids), rowsOf(LOG_TABLE, 'attempt_id', aids)]);
-      await putInTrash('quiz', qz[0].title || 'Đề trắc nghiệm', [
+      await putInTrash('quiz', qz[0].title || 'Đề Quizz', [
         { table: QUIZ_TABLE, rows: qz }, { table: ITEM_TABLE, rows: items }, { table: ASSIGN_TABLE, rows: assigns },
         { table: ATTEMPT_TABLE, rows: attempts }, { table: ANSWER_TABLE, rows: answers }, { table: LOG_TABLE, rows: logs },
         { table: 'collaborators', rows: collab.filter((c: any) => c.resource_type === 'quiz') },

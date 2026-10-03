@@ -33,11 +33,13 @@ import QuizModule from './edu/QuizModule';
 import { EduClass, EduSchool } from '../types/edu';
 import { getClasses, getSchools, getClassAccess, getAssignmentById } from '../lib/edu';
 import { readSubRoute, writeSubRoute } from '../lib/seoConfig';
+import { setCreateIntent } from '../lib/phone';
+import { usePhoneMaybe, usePhoneBack } from './phone/PhoneShell';
 
 interface EduModuleProps {
   currentUser: UserAccount;
   settings: AppSettings;
-  initialView?: EduView; // mở thẳng một màn hình con khi vào bằng link riêng (ngân hàng bài tập, trắc nghiệm...)
+  initialView?: EduView; // mở thẳng một màn hình con khi vào bằng link riêng (ngân hàng bài tập, Quizz...)
 }
 
 type EduView = 'list' | 'import' | 'class_detail' | 'assignment_edit' | 'assignment_detail' | 'grading' | 'assignment_bank' | 'grade_entry' | 'exam_bank' | 'question_bank';
@@ -49,7 +51,7 @@ export default function EduModule({ currentUser, settings, initialView }: EduMod
     const valid: EduView[] = ['import', 'class_detail', 'assignment_edit', 'assignment_detail', 'grading', 'assignment_bank', 'grade_entry', 'exam_bank', 'question_bank'];
     if (sub.sv && (valid as string[]).includes(sub.sv)) return sub.sv as EduView;
     if (initialView) return initialView;
-    // Phím tắt từ Dashboard có thể mở thẳng vào Trắc nghiệm, Nhập điểm hoặc Ngân hàng câu hỏi.
+    // Phím tắt từ Dashboard có thể mở thẳng vào Quizz, Nhập điểm hoặc Ngân hàng câu hỏi.
     try {
       const v = localStorage.getItem('edu_initial_view');
       if (v === 'exam_bank' || v === 'grade_entry' || v === 'assignment_bank' || v === 'question_bank') { localStorage.removeItem('edu_initial_view'); return v as EduView; }
@@ -61,6 +63,7 @@ export default function EduModule({ currentUser, settings, initialView }: EduMod
   const [selectedGradeColumnId, setSelectedGradeColumnId] = useState<string | null>(sub.gcol || null);
 
   const { addNotification } = useNotifications();
+  const quizFromClass = React.useRef(false);
 
   // Đồng bộ màn hình con hiện tại lên URL mỗi khi đổi màn hình hay đổi lớp, bài tập, cột điểm.
   useEffect(() => {
@@ -158,16 +161,24 @@ export default function EduModule({ currentUser, settings, initialView }: EduMod
     } else if (view === 'grade_entry') {
       setView('list');
     } else if (view === 'exam_bank') {
-      setView('list');
+      // Mở Quizz từ trong một lớp thì quay lại đúng lớp đó.
+      if (quizFromClass.current && selectedClassId) { quizFromClass.current = false; setView('class_detail'); }
+      else setView('list');
     } else if (view === 'question_bank') {
       setView('list');
     }
   };
 
+  // Điện thoại: bỏ khối tiêu đề Hệ thống Giáo dục Edu ở các màn con (thanh trên của ứng dụng hoặc header riêng
+  // của màn đã có nút quay lại), nút quay lại của thanh trên đưa về đúng màn trước trong Edu.
+  const phone = usePhoneMaybe();
+  const ownBack = ['import', 'assignment_edit', 'assignment_detail', 'grading', 'grade_entry', 'question_bank'].includes(view);
+  usePhoneBack(phone && ownBack ? handleBack : null);
+
   return (
     <div className="space-y-6 animate-fadeIn" id="edu-module-container">
       {/* Module Header - Ẩn ở danh sách và ở chi tiết lớp (chi tiết lớp có nút quay lại riêng ở tiêu đề). */}
-      {view !== 'list' && view !== 'class_detail' && view !== 'assignment_bank' && view !== 'exam_bank' && (
+      {!phone && view !== 'list' && view !== 'class_detail' && view !== 'assignment_bank' && view !== 'exam_bank' && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-brand/10 text-brand rounded-2xl flex items-center justify-center">
@@ -244,6 +255,8 @@ export default function EduModule({ currentUser, settings, initialView }: EduMod
             onEditAssignment={(assignmentId) => handleAssignmentEdit(selectedClassId, assignmentId)}
             onViewAssignment={(assignmentId) => handleAssignmentDetail(selectedClassId, assignmentId)}
             onGrading={(assignmentId, gradeColumnId) => handleGrading(selectedClassId, assignmentId, gradeColumnId)}
+            onOpenQuiz={qid => { quizFromClass.current = true; writeSubRoute({ qv: 'detail', qid }); setView('exam_bank'); }}
+            onNewQuiz={() => { quizFromClass.current = true; setCreateIntent('edu_exam'); setView('exam_bank'); }}
           />
         )}
 

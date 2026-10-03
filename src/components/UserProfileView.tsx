@@ -13,7 +13,7 @@ const KIND: Record<Kind, { verb: string; label: string; icon: any; tone: string 
   lesson: { verb: 'đã đăng giáo trình', label: 'Giáo trình', icon: BookOpen, tone: 'bg-orange-50 text-orange-600' },
   bank: { verb: 'đã chia sẻ bài tập', label: 'Bài tập', icon: Library, tone: 'bg-amber-50 text-amber-600' },
   deck: { verb: 'đã đưa bài giảng vào thư viện', label: 'Bài giảng', icon: Presentation, tone: 'bg-violet-50 text-violet-600' },
-  quiz: { verb: 'đã chia sẻ đề trắc nghiệm', label: 'Đề trắc nghiệm', icon: ListChecks, tone: 'bg-sky-50 text-sky-600' },
+  quiz: { verb: 'đã chia sẻ đề Quizz', label: 'Đề Quizz', icon: ListChecks, tone: 'bg-sky-50 text-sky-600' },
 };
 
 // Bỏ thẻ HTML và rút gọn đoạn giới thiệu ngắn cho bài đăng.
@@ -55,7 +55,7 @@ export default function UserProfileView({ uid, isMe, onBack, onEditMine }: { uid
         ...lessons.map(l => ({ key: `l${l.id}`, kind: 'lesson' as const, title: l.title || 'Giáo trình', at: l.updated_at, text: plain(l.summary), cover: l.cover_url || undefined, href: prettyShareUrl('elview', l.id), external: true })),
         ...bank.map(b => ({ key: `b${b.id}`, kind: 'bank' as const, title: b.title || 'Bài tập', at: b.updated_at, text: plain(b.content), href: b.share_token ? prettyShareUrl('bt', b.share_token) : undefined, external: true })),
         ...decks.filter(d => !d.del).map(d => { const id = String(d.key).split(':')[2]; return { key: `d${id}`, kind: 'deck' as const, title: d.title || 'Bài giảng', at: d.at || '', href: `/?tab=bai-giang&sid=${encodeURIComponent(id)}` }; }),
-        ...quizzes.map(q => ({ key: `q${q.id}`, kind: 'quiz' as const, title: q.title || 'Đề trắc nghiệm', at: q.updated_at, text: plain(q.description) })),
+        ...quizzes.map(q => ({ key: `q${q.id}`, kind: 'quiz' as const, title: q.title || 'Đề Quizz', at: q.updated_at, text: plain(q.description) })),
       ];
       list.sort((a, b) => (new Date(b.at).getTime() || 0) - (new Date(a.at).getTime() || 0));
       setPosts(list);
@@ -94,7 +94,7 @@ export default function UserProfileView({ uid, isMe, onBack, onEditMine }: { uid
 
       {/* Thẻ lọc dòng thời gian */}
       <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-none">
-        {([['all', 'Tất cả'], ['lesson', 'Giáo trình'], ['deck', 'Bài giảng'], ['bank', 'Bài tập'], ['quiz', 'Đề trắc nghiệm']] as const).map(([k, l]) => (
+        {([['all', 'Tất cả'], ['lesson', 'Giáo trình'], ['deck', 'Bài giảng'], ['bank', 'Bài tập'], ['quiz', 'Đề Quizz']] as const).map(([k, l]) => (
           <button key={k} onClick={() => { setFilter(k); setLimit(12); }}
             className={`shrink-0 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors ${filter === k ? 'bg-brand-light text-brand' : 'bg-white text-slate-500 border border-slate-100'}`}>
             {l} <span className="opacity-60">{counts[k]}</span>

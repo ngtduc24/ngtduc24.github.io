@@ -5,7 +5,7 @@ import type { UserAccount } from '../types';
 
 // Cộng tác: chủ sở hữu thêm người khác vào tài nguyên của mình với quyền hạn rõ ràng.
 // Bảng collaborators (xem COLLABORATORS.sql).
-// Bài giảng, bài tập, câu hỏi, đề trắc nghiệm, dự án dùng 3 mức: view (xem), edit (chỉnh sửa), manage (quản lý).
+// Bài giảng, bài tập, câu hỏi, đề Quizz, dự án dùng 3 mức: view (xem), edit (chỉnh sửa), manage (quản lý).
 // Lớp, trường dùng quyền tích chọn trong cột perms.
 
 export type CollabType = 'el_lesson' | 'bank_item' | 'quiz' | 'quiz_question' | 'edu_class' | 'edu_school' | 'qda_project' | 'quant_project' | 'slide_deck';
@@ -39,7 +39,7 @@ export const ROLE_LABELS: Record<CollabRole, { label: string; hint: string }> = 
 };
 
 export const TYPE_LABELS: Record<CollabType, string> = {
-  el_lesson: 'giáo trình', bank_item: 'bài tập', quiz: 'đề trắc nghiệm', quiz_question: 'câu hỏi',
+  el_lesson: 'giáo trình', bank_item: 'bài tập', quiz: 'đề Quizz', quiz_question: 'câu hỏi',
   edu_class: 'lớp', edu_school: 'trường', qda_project: 'dự án định tính', quant_project: 'dự án định lượng', slide_deck: 'bài giảng',
 };
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-// Tìm kiếm và chia trang dùng chung cho các danh sách E-Learning, trắc nghiệm.
+// Tìm kiếm và chia trang dùng chung cho các danh sách E-Learning, Quizz.
 // Bỏ dấu tiếng Việt, chữ thường để tìm kiếm
 export const fold = (v: string) => (v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim();
 

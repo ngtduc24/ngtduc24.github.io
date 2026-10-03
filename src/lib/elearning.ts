@@ -5,7 +5,7 @@ import { uploadFileToSupabase } from './upload';
 
 // =====================================================================
 // Lớp dữ liệu cho module E-Learning. Giảng viên dùng anon key và lọc theo
-// owner_id (Firebase uid) ở client, giống EDU và trắc nghiệm. Luồng sinh viên
+// owner_id (Firebase uid) ở client, giống EDU và Quizz. Luồng sinh viên
 // đi qua RPC el_public_lesson / el_log_view. Sao chép bài công khai qua el_copy_lesson.
 // =====================================================================
 
@@ -366,7 +366,7 @@ export async function elLogView(token: string, studentCode: string, sectionId: s
 export { stripHtml };
 
 // Tên người biên soạn lưu kèm bài giảng (owner_name) là bản chụp tên lúc tạo bài. Khi người dùng đổi
-// họ tên trong hồ sơ thì cập nhật lại cho mọi bài giảng và đề trắc nghiệm của họ, để trang xem, thẻ
+// họ tên trong hồ sơ thì cập nhật lại cho mọi bài giảng và đề Quizz của họ, để trang xem, thẻ
 // bài giảng và chân trang PDF hiện đúng tên mới.
 export async function syncOwnerName(ownerId: string, name: string): Promise<void> {
   const n = (name || '').trim();

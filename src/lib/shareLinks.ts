@@ -10,7 +10,7 @@ export const SHARE_FOLDERS = {
   bt: 'bt',       // bài tập trong ngân hàng
   elview: 'bg',   // bài giảng E-Learning công khai
   elesson: 'hl',  // bài giảng giao cho lớp (sinh viên nhập MSSV)
-  quiz: 'tn',     // đề trắc nghiệm
+  quiz: 'tn',     // đề Quizz
   vr: 'vr',       // VR 360
   ar: 'ar',       // AR
   edu: 'nb',      // link nộp bài tập của lớp (tracuu.html)
@@ -33,7 +33,7 @@ export function publicParam(kind: ShareKind): string | null {
 }
 
 // Đổi thanh địa chỉ ?tham_số=mã về dạng gọn. Chỉ đổi khi địa chỉ không kèm tham số nào khác
-// (ví dụ link làm trắc nghiệm của học viên khoá học có thêm learner, name thì giữ nguyên).
+// (ví dụ link làm Quizz của học viên khoá học có thêm learner, name thì giữ nguyên).
 export function normalizeShareAddress(kinds: ShareKind[] = Object.keys(SHARE_FOLDERS) as ShareKind[]) {
   if (typeof window === 'undefined') return;
   const sp = new URLSearchParams(window.location.search);

@@ -203,7 +203,7 @@ export function PhoneTop({ settings, ui: uiOverride, name, avatar, unread, acts,
   const img = !show ? '' : mode === 'custom' ? ui.image : mode === 'desktop' ? settings?.dashboardBannerImage : '';
   const pos = mode === 'custom' ? ui.position : settings?.dashboardBannerPosition;
   const title = ui.title?.trim() || settings?.dashboardBannerTitle || 'Hôm nay bạn muốn làm gì?';
-  const desc = ui.desc?.trim() || settings?.systemDescription || 'Bài giảng, lớp học, đề trắc nghiệm của bạn ở ngay đây';
+  const desc = ui.desc?.trim() || settings?.systemDescription || 'Bài giảng, lớp học, đề Quizz của bạn ở ngay đây';
   return (
     <div className={`ph-top ${img ? 'has-img' : ''}`} style={img ? { backgroundImage: `url(${img})`, backgroundPosition: pos || 'center' } : undefined}>
       {img && <div className="shade" />}
@@ -243,7 +243,7 @@ export function PhoneTop({ settings, ui: uiOverride, name, avatar, unread, acts,
 const ACT_DEFAULTS: { id: string; label: string; icon: any }[] = [
   { id: 'edu', label: 'Lớp học', icon: GraduationCap }, { id: 'elearning', label: 'Giáo trình', icon: BookOpen },
   { id: 'edu_bank', label: 'Bài tập', icon: Library }, { id: 'slides', label: 'Bài giảng', icon: Presentation },
-  { id: 'edu_exam', label: 'Trắc nghiệm', icon: CircleCheck }, { id: 'tasks', label: 'Công việc', icon: CalendarDays },
+  { id: 'tasks', label: 'Công việc', icon: CalendarDays },
   { id: 'courses', label: 'Khoá học', icon: GraduationCap },
 ];
 export function resolveActs(ui: PhoneUi, allowed: (id: string) => boolean, labelOf: (id: string) => string | undefined) {
