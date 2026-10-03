@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, BookOpen, Globe, Library, ListChecks, Loader2, Pencil, Presentation, ChevronRight } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { ArrowLeft, BookOpen, Globe, Library, ListChecks, Loader2, Presentation, ChevronLeft, Home, Share2, QrCode, Mail, AtSign, Link2, LayoutGrid, List, ImagePlus, FileText } from 'lucide-react';
+import type { UserAccount } from '../types';
+import { copyText } from './ui/Dialogs';
+import { useNotifications } from './NotificationContext';
+import { getSeoMeta } from '../lib/seoConfig';
+import './profile.css';
 import { supabase } from '../lib/supabase';
 import { usePerson, loadPeople } from '../lib/people';
 import { AvatarImg } from './ui/People';
@@ -29,8 +35,11 @@ const when = (iso: string) => {
 
 // Trang cá nhân công khai: ảnh bìa, ảnh đại diện, tên, Website và dòng thời gian các nội dung đã công khai,
 // trình bày như trang đăng bài mạng xã hội. Chỉ hiện thông tin công khai, không có email hay dữ liệu riêng.
-export default function UserProfileView({ uid, isMe, onBack, onEditMine }: { uid: string; isMe: boolean; onBack: () => void; onEditMine: () => void }) {
-  const person = usePerson(uid);
+export default function UserProfileView({ uid, isMe, onBack, onEditMine, self }: { uid: string; isMe: boolean; onBack: () => void; onEditMine: () => void; self?: UserAccount | null }) {
+  const cached = usePerson(uid);
+  // Trang của chính mình: lấy thẳng ảnh đại diện, ảnh bìa, tên đang dùng để đổi xong thấy ngay, không chờ danh bạ công khai.
+  const person = isMe && self ? { ...(cached || { id: uid, name: '' }), id: uid, name: self.fullName || cached?.name || '', username: self.username || cached?.username,
+    avatar: self.avatarUrl || '', avatarPos: self.avatarPosition, cover: self.coverImage || '', coverPos: self.coverImagePosition } : cached;
   const [site, setSite] = useState<{ slug: string; title?: string } | null>(null);
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [filter, setFilter] = useState<'all' | Kind>('all');
@@ -69,75 +78,174 @@ export default function UserProfileView({ uid, isMe, onBack, onEditMine }: { uid
   }, [posts]);
   const shown = (posts || []).filter(p => filter === 'all' || p.kind === filter);
   const phone = usePhoneMaybe();
+  const { addNotification } = useNotifications();
+  const [mode, setMode] = useState<'list' | 'grid'>('list');
+  const [qr, setQr] = useState<string | null>(null);
+  const link = `${window.location.origin}/?tab=${getSeoMeta('user_profile').slug}&uid=${encodeURIComponent(uid)}`;
+  const siteUrl = site ? `/${site.slug}` : '';
+  const copyLink = () => copyText(link).then(ok => addNotification(ok ? 'Đã sao chép link trang cá nhân.' : 'Không sao chép được.', ok ? 'success' : 'error'));
+  const share = async () => {
+    try { if ((navigator as any).share) { await (navigator as any).share({ title: person?.name || 'Trang cá nhân', url: link }); return; } } catch { return; }
+    copyLink();
+  };
+  const openQr = () => { import('qrcode').then(m => (m.default || m).toDataURL(link, { margin: 1, width: 440 })).then(setQr).catch(() => setQr('')); };
+  // Điện thoại: trang tự vẽ băng đầu trang có nút quay lại và về Trang chủ, nên ẩn thanh trên của ứng dụng.
+  useEffect(() => {
+    if (!phone) return;
+    document.documentElement.classList.add('ph-own-head');
+    return () => document.documentElement.classList.remove('ph-own-head');
+  }, [!!phone]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return (
-    <div className="mx-auto max-w-3xl space-y-4 animate-fadeIn">
-      {/* Điện thoại đã có nút quay lại trên thanh trên nên không lặp lại */}
-      {!phone && <button onClick={onBack} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-brand"><ArrowLeft className="h-4 w-4" /> Quay lại</button>}
+  const name = person?.name || 'Người dùng';
+  const email = isMe ? self?.email : ''; // email chỉ hiện ở trang của chính mình, người khác không thấy
+  const coverStyle = person?.cover ? { backgroundImage: `url(${person.cover})`, backgroundPosition: person.coverPos || '50% 50%' } : undefined;
+  const KINDS: Array<{ id: Kind; label: string; icon: any; bg: string; fg: string; grad: string }> = [
+    { id: 'lesson', label: 'Giáo trình', icon: BookOpen, bg: '#fff7ed', fg: '#ea580c', grad: 'linear-gradient(135deg,#ea580c,#fb923c)' },
+    { id: 'deck', label: 'Bài giảng', icon: Presentation, bg: '#f5f3ff', fg: '#7c3aed', grad: 'linear-gradient(135deg,#7c3aed,#c084fc)' },
+    { id: 'bank', label: 'Bài tập', icon: Library, bg: '#fffbeb', fg: '#d97706', grad: 'linear-gradient(135deg,#d97706,#facc15)' },
+    { id: 'quiz', label: 'Quizz', icon: ListChecks, bg: '#f0f9ff', fg: '#0284c7', grad: 'linear-gradient(135deg,#0284c7,#38bdf8)' },
+  ];
+  const kindOf = (k: Kind) => KINDS.find(x => x.id === k)!;
+  const pick = (k: 'all' | Kind) => { setFilter(f => (f === k && k !== 'all' ? 'all' : k)); setLimit(12); };
+  const thumb = (p: Post, cls: string, tag = true) => {
+    const k = kindOf(p.kind); const I = k.icon;
+    return <span className={`up-th ${cls}`} style={p.cover ? { backgroundImage: `url(${p.cover})` } : { background: k.grad }}>{!p.cover && <I />}{tag && <i className={`k-${p.kind}`}>{k.label}</i>}</span>;
+  };
+  const wrap = (p: Post, cls: string, children: React.ReactNode) => p.href
+    ? <a key={p.key} href={p.href} target={p.external ? '_blank' : undefined} rel="noreferrer" className={cls}>{children}</a>
+    : <div key={p.key} className={cls}>{children}</div>;
+  const tabs = (
+    <>
+      <button type="button" className={filter === 'all' ? 'on' : ''} onClick={() => pick('all')}><LayoutGrid />Tất cả<em>{counts.all}</em></button>
+      {KINDS.map(k => { const I = k.icon; return <button key={k.id} type="button" className={filter === k.id ? 'on' : ''} onClick={() => pick(k.id)}><I />{k.label}<em>{counts[k.id]}</em></button>; })}
+    </>
+  );
+  const empty = posts === null
+    ? <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> Đang tải...</div>
+    : <div className="py-10 text-center text-sm text-slate-400">Chưa có nội dung công khai.</div>;
+  const more = shown.length > limit && <button type="button" onClick={() => setLimit(n => n + 12)} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white py-3 text-sm font-semibold text-slate-600 hover:border-brand hover:text-brand">Xem thêm</button>;
+  const qrBox = qr !== null && createPortal(
+    <div className="up up-qr" onClick={() => setQr(null)}>
+      <div onClick={e => e.stopPropagation()}>
+        <b>Mã QR trang cá nhân</b>
+        {qr ? <img src={qr} alt="Mã QR trang cá nhân" /> : <p className="py-10">Chưa tạo được mã QR.</p>}
+        <p>{link}</p>
+        <button type="button" onClick={() => { copyLink(); setQr(null); }}>Sao chép link</button>
+      </div>
+    </div>, document.body);
 
-      {/* Ảnh bìa, ảnh đại diện, tên */}
-      <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
-        <div className="h-36 w-full bg-gradient-to-r from-brand to-brand-hover sm:h-56" style={person?.cover ? { backgroundImage: `url(${person.cover})`, backgroundSize: 'cover', backgroundPosition: person.coverPos || '50% 50%' } : undefined} />
-        <div className="flex flex-col gap-3 px-5 pb-5 sm:flex-row sm:items-end sm:px-6">
-          <div className="-mt-12 sm:-mt-16"><AvatarImg person={person} size={104} ring /></div>
-          <div className="min-w-0 flex-1">
-            <h1 className="break-words text-2xl font-black leading-tight text-slate-900">{person?.name || 'Người dùng'}</h1>
-            {person?.username && <p className="text-sm text-slate-500">@{person.username}</p>}
-            {posts && <p className="mt-1 text-xs text-slate-400">{counts.lesson} giáo trình · {counts.deck} bài giảng · {counts.bank} bài tập · {counts.quiz} đề</p>}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {site && <a href={`/${site.slug}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-brand hover:text-brand"><Globe className="h-4 w-4" /> Website</a>}
-            {isMe && <button onClick={onEditMine} className="flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-hover"><Pencil className="h-4 w-4" /> Cài đặt tài khoản</button>}
+  // ===================== ĐIỆN THOẠI =====================
+  if (phone) return (
+    <div className="up animate-fadeIn">
+      <div className={`up-top ${person?.cover ? 'img' : ''}`} style={coverStyle}>
+        <div className="up-nv">
+          <button type="button" onClick={phone.back} aria-label="Quay lại"><ChevronLeft /></button>
+          <b>Trang cá nhân</b>
+          <button type="button" onClick={share} aria-label="Chia sẻ trang cá nhân"><Share2 /></button>
+          <button type="button" onClick={() => phone.open('dashboard')} aria-label="Về Trang chủ"><Home /></button>
+        </div>
+        <div className="up-me">
+          <span className="up-av"><AvatarImg person={person} size={76} /></span>
+          <div className="m">
+            <b>{name}</b>
+            {person?.username && <span><AtSign />{person.username}</span>}
+            {email && <span><Mail />{email}</span>}
           </div>
         </div>
+        <div className="up-acts">
+          {site && <a href={siteUrl} target="_blank" rel="noreferrer" className="up-pill"><Globe />Website</a>}
+          <button type="button" className="up-pill" onClick={copyLink}><Link2 />Sao chép link</button>
+          <button type="button" className="up-pill ic" onClick={openQr} aria-label="Mã QR trang cá nhân"><QrCode /></button>
+        </div>
       </div>
-
-      {/* Thẻ lọc dòng thời gian */}
-      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-none">
-        {([['all', 'Tất cả'], ['lesson', 'Giáo trình'], ['deck', 'Bài giảng'], ['bank', 'Bài tập'], ['quiz', 'Đề Quizz']] as const).map(([k, l]) => (
-          <button key={k} onClick={() => { setFilter(k); setLimit(12); }}
-            className={`shrink-0 rounded-full px-4 py-2 text-[13px] font-semibold transition-colors ${filter === k ? 'bg-brand-light text-brand' : 'bg-white text-slate-500 border border-slate-100'}`}>
-            {l} <span className="opacity-60">{counts[k]}</span>
+      <div className="up-grid">
+        {KINDS.map(k => { const I = k.icon; return (
+          <button key={k.id} type="button" className={filter === k.id ? 'on' : ''} onClick={() => pick(k.id)}>
+            <span className="ic" style={{ background: k.bg, color: k.fg }}><I /></span><b>{posts ? counts[k.id] : '–'}</b>{k.label}
           </button>
-        ))}
+        ); })}
       </div>
+      <div className="up-tabs" style={{ marginTop: 18 }}>{tabs}</div>
+      <div className="up-panel">
+        <div className="up-vt">
+          <small>{shown.length} nội dung công khai</small>
+          <span className="tg">
+            <button type="button" className={mode === 'list' ? 'on' : ''} onClick={() => setMode('list')} aria-label="Xem dạng danh sách"><List /></button>
+            <button type="button" className={mode === 'grid' ? 'on' : ''} onClick={() => setMode('grid')} aria-label="Xem dạng lưới ảnh"><LayoutGrid /></button>
+          </span>
+        </div>
+        {!shown.length ? empty : mode === 'list'
+          ? shown.slice(0, limit).map(p => wrap(p, 'up-post', <>{thumb(p, '')}<span className="m"><b>{p.title}</b>{p.text && <p>{p.text}</p>}<small>{when(p.at)}</small></span></>))
+          : <div className="up-g3">{shown.slice(0, limit).map(p => p.href
+              ? <a key={p.key} href={p.href} target={p.external ? '_blank' : undefined} rel="noreferrer" style={p.cover ? { backgroundImage: `url(${p.cover})` } : { background: kindOf(p.kind).grad }}><span>{p.title}</span></a>
+              : <div key={p.key} className="t" style={p.cover ? { backgroundImage: `url(${p.cover})` } : { background: kindOf(p.kind).grad }}><span>{p.title}</span></div>)}</div>}
+        {more}
+      </div>
+      <div style={{ height: 24 }} />
+      {qrBox}
+    </div>
+  );
 
-      {/* Dòng thời gian */}
-      {posts === null ? (
-        <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> Đang tải...</div>
-      ) : !shown.length ? (
-        <div className="rounded-3xl border border-slate-100 bg-white py-12 text-center text-sm text-slate-400">Chưa có nội dung công khai.</div>
-      ) : (
-        <div className="space-y-4">
-          {shown.slice(0, limit).map(p => {
-            const k = KIND[p.kind]; const Icon = k.icon;
-            const body = (
-              <>
-                <div className="flex items-center gap-3 px-4 pt-4">
-                  <AvatarImg person={person} size={40} />
-                  <div className="min-w-0 flex-1 text-[13px] leading-snug">
-                    <p className="text-slate-600"><b className="font-bold text-slate-900">{person?.name || 'Người dùng'}</b> {k.verb}</p>
-                    <p className="text-[12px] text-slate-400">{when(p.at)}</p>
-                  </div>
-                  <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${k.tone}`}><Icon className="h-3.5 w-3.5" />{k.label}</span>
-                </div>
-                <div className="px-4 pb-3 pt-3">
-                  <h3 className="break-words text-[15px] font-bold leading-snug text-slate-900">{p.title}</h3>
-                  {p.text && <p className="mt-1 line-clamp-3 break-words text-[13px] leading-relaxed text-slate-500">{p.text}</p>}
-                </div>
-                {p.cover && <img src={p.cover} alt="" loading="lazy" className="aspect-[16/9] w-full object-cover" />}
-                {p.href && <div className="flex items-center justify-between border-t border-slate-100 px-4 py-2.5 text-[13px] font-semibold text-brand">Xem {k.label.toLowerCase()}<ChevronRight className="h-4 w-4" /></div>}
-              </>
-            );
-            return p.href
-              ? <a key={p.key} href={p.href} target={p.external ? '_blank' : undefined} rel="noreferrer" className="block overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm transition-shadow hover:shadow-md">{body}</a>
-              : <div key={p.key} className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">{body}</div>;
-          })}
-          {shown.length > limit && (
-            <button onClick={() => setLimit(n => n + 12)} className="w-full rounded-2xl border border-slate-200 bg-white py-3 text-sm font-semibold text-slate-600 hover:border-brand hover:text-brand">Xem thêm</button>
+  // ===================== MÁY TÍNH =====================
+  const recent = (posts || []).slice(0, 5);
+  return (
+    <div className="up mx-auto max-w-6xl animate-fadeIn">
+      <div className="upd-hero">
+        <div className="upd-cover" style={coverStyle}>
+          <button type="button" className="back" onClick={onBack} aria-label="Quay lại"><ArrowLeft className="h-5 w-5" /></button>
+          {isMe && <button type="button" className="edit" onClick={onEditMine}><ImagePlus className="h-4 w-4" />Đổi ảnh bìa</button>}
+        </div>
+        <div className="upd-id">
+          <span className="up-av"><AvatarImg person={person} size={128} /></span>
+          <div className="nm">
+            <h1>{name}</h1>
+            <div className="h">
+              {person?.username && <span><AtSign />{person.username}</span>}
+              {email && <span><Mail />{email}</span>}
+            </div>
+          </div>
+          <div className="acts">
+            {site && <a href={siteUrl} target="_blank" rel="noreferrer" className="upd-btn"><Globe />Website</a>}
+            <button type="button" className="upd-btn" onClick={copyLink}><Link2 />Sao chép link</button>
+            <button type="button" className="upd-btn" onClick={openQr} aria-label="Mã QR trang cá nhân"><QrCode /></button>
+          </div>
+        </div>
+        <div className="upd-stats">
+          {KINDS.map(k => { const I = k.icon; return (
+            <button key={k.id} type="button" className={filter === k.id ? 'on' : ''} onClick={() => pick(k.id)}>
+              <span className="ic" style={{ background: k.bg, color: k.fg }}><I /></span>
+              <span><b>{posts ? counts[k.id] : '–'}</b><span>{k.label}</span></span>
+            </button>
+          ); })}
+        </div>
+      </div>
+      <div className="upd-cols">
+        <div>
+          <div className="upd-box">
+            <h3>Giới thiệu</h3>
+            {person?.username && <div className="row"><AtSign />{person.username}</div>}
+            {email && <div className="row"><Mail />{email}</div>}
+            {site && <div className="row"><Globe /><a href={siteUrl} target="_blank" rel="noreferrer" className="hover:text-brand">{window.location.host}/{site.slug}</a></div>}
+            <div className="row"><FileText />{posts ? `${counts.all} nội dung công khai` : 'Đang tải...'}</div>
+          </div>
+          {recent.length > 0 && (
+            <div className="upd-box">
+              <h3>Mới đăng gần đây</h3>
+              <div className="upd-mini">
+                {recent.map(p => wrap(p, p.href ? '' : 'r', <>{thumb(p, '', false)}<b>{p.title}</b></>))}
+              </div>
+            </div>
           )}
         </div>
-      )}
+        <div className="min-w-0">
+          <div className="up-tabs upd-tabs">{tabs}</div>
+          <div className="upd-panel">
+            {!shown.length ? empty : <div className="upd-grid">{shown.slice(0, limit).map(p => wrap(p, 'upd-card', <>{thumb(p, '')}<div className="bd"><b>{p.title}</b>{p.text && <p>{p.text}</p>}<small>{when(p.at)}</small></div></>))}</div>}
+            {more}
+          </div>
+        </div>
+      </div>
+      {qrBox}
     </div>
   );
 }

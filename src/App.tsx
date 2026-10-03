@@ -308,7 +308,7 @@ export default function App() {
     rememberMe(currentUser);
     syncPublicName(currentUser).then(() => loadPeople(true)).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.id, currentUser?.fullName, currentUser?.avatarUrl, currentUser?.coverImage]);
+  }, [currentUser?.id, currentUser?.fullName, currentUser?.avatarUrl, currentUser?.coverImage, currentUser?.avatarPosition, currentUser?.coverImagePosition]);
   useEffect(() => { if (users.length) rememberUsers(users); }, [users]);
 
   // Số thông báo chưa đọc lấy từ kho thông báo dùng chung (đồng bộ giữa các thiết bị).
@@ -701,7 +701,7 @@ export default function App() {
         return <AssistantPage currentUser={currentUser} settings={settings} onSwitchTab={(tab) => setCurrentTab(tab)} onBack={() => setCurrentTab('dashboard')} />;
       case 'user_profile': {
         const uid = profileUid || readSubRoute().uid || currentUser.id;
-        return <UserProfileView key={uid} uid={uid} isMe={uid === currentUser.id} onBack={() => window.history.length > 1 ? window.history.back() : setCurrentTab('dashboard')} onEditMine={() => setCurrentTab('profile')} />;
+        return <UserProfileView key={uid} uid={uid} isMe={uid === currentUser.id} self={currentUser} onBack={() => window.history.length > 1 ? window.history.back() : setCurrentTab('dashboard')} onEditMine={() => setCurrentTab('profile')} />;
       }
       case 'profile':
         return <ProfilePage user={currentUser} onSaveProfile={handleSaveProfile} onBack={() => setCurrentTab('dashboard')} />;

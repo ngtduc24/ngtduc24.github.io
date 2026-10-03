@@ -41,6 +41,8 @@ export function loadPeople(force = false): Promise<void> {
         const old = cache.get(id);
         cache.set(id, { ...p, name: p.name || old?.name || '' , username: p.username || old?.username });
       });
+      // Bản công khai trên máy chủ có thể chậm hơn: giữ ảnh đại diện, ảnh bìa người đang đăng nhập vừa đổi.
+      if (me) cache.set(me.id, { ...(cache.get(me.id) || {}), ...me });
       loadedAt = Date.now();
       emit();
     } catch { /* bỏ qua */ } finally { loading = null; }
@@ -59,6 +61,7 @@ export function rememberName(id: string, name?: string | null) {
 export function rememberUsers(users: UserAccount[]) {
   let changed = false;
   for (const u of users) {
+    if (me && u.id === me.id) continue;
     const p = cache.get(u.id);
     const next: Person = { id: u.id, name: p?.name || u.fullName || '', username: p?.username || u.username, avatar: p?.avatar || u.avatarUrl, avatarPos: p?.avatarPos || u.avatarPosition, cover: p?.cover || u.coverImage, coverPos: p?.coverPos || u.coverImagePosition, role: p?.role || u.role };
     if (JSON.stringify(p) !== JSON.stringify(next)) { cache.set(u.id, next); changed = true; }
@@ -66,8 +69,10 @@ export function rememberUsers(users: UserAccount[]) {
   if (changed) emit();
 }
 // Cập nhật ngay người đang đăng nhập (đổi ảnh xong thấy liền).
+let me: Person | null = null;
 export function rememberMe(u: UserAccount) {
-  cache.set(u.id, { id: u.id, name: u.fullName || '', username: u.username, avatar: u.avatarUrl, avatarPos: u.avatarPosition, cover: u.coverImage, coverPos: u.coverImagePosition, role: u.role });
+  me = { id: u.id, name: u.fullName || '', username: u.username, avatar: u.avatarUrl || '', avatarPos: u.avatarPosition, cover: u.coverImage || '', coverPos: u.coverImagePosition, role: u.role };
+  cache.set(u.id, me);
   emit();
 }
 
