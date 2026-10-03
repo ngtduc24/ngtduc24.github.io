@@ -124,11 +124,16 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
     if (preview) return;
     const html = document.documentElement; const before = html.style.backgroundColor;
     html.style.backgroundColor = topColor; document.body.style.backgroundColor = topColor;
+    // Safari mới trên iPhone vẽ nền trang ra cả vùng dưới thanh công cụ ở đáy: nửa dưới dùng màu phần đáy của hình nền
+    // để không thành dải màu đậm của phần đầu trang.
+    const stops = artKey === 'image' ? [] : Array.from(PW_ART[artKey].svg(color).matchAll(/stop-color="([^"]+)"/g)).map(x => x[1]);
+    const bottom = stops.length ? `color-mix(in srgb, ${stops[stops.length - 1]} 80%, #ffffff)` : topColor;
+    html.style.backgroundImage = `linear-gradient(${topColor} 50%, ${bottom} 50%)`; document.body.style.backgroundImage = html.style.backgroundImage;
     let m = document.querySelector('meta[name="theme-color"]'); const prev = m?.getAttribute('content') ?? null;
     if (!m) { m = document.createElement('meta'); m.setAttribute('name', 'theme-color'); document.head.appendChild(m); }
     m.setAttribute('content', topColor);
-    return () => { html.style.backgroundColor = before; document.body.style.backgroundColor = ''; if (prev === null) m?.remove(); else m?.setAttribute('content', prev); };
-  }, [topColor, !!preview]); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => { html.style.backgroundColor = before; document.body.style.backgroundColor = ''; html.style.backgroundImage = ''; document.body.style.backgroundImage = ''; if (prev === null) m?.remove(); else m?.setAttribute('content', prev); };
+  }, [topColor, artKey, color, !!preview]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const shade = Math.min(70, Math.max(0, cfg.shade ?? 20)) / 100;
   const hour = new Date().getHours();
