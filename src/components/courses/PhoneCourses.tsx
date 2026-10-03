@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ChevronLeft, ChevronDown, Home, Heart, Share2, Play, Lock, CheckCircle2, Clock, Users, List, Award, BookOpen,
   Video, FileText, ClipboardCheck, Download, PenLine, Presentation, GraduationCap, X, Search, Library, Trash2, Copy,
-  Loader2, Bookmark, BookMarked, LogOut,
+  Loader2, Bookmark, BookMarked, LogOut, Info,
 } from 'lucide-react';
 import { UserAccount } from '../../types';
 import { PortfolioCourse, CourseLesson, CourseStudent, PortfolioCoursesSettings } from '../portfolioTypes';
@@ -385,11 +385,13 @@ function CourseDetail({ c, ctx }: { c: PortfolioCourse; ctx: Ctx }) {
           </div>
         )}
 
-        <div className="cx-seg">
-          <button type="button" className={tab === 'over' ? 'on' : ''} onClick={() => setTab('over')}>Tổng quan</button>
-          <button type="button" className={tab === 'cont' ? 'on' : ''} onClick={() => setTab('cont')}>Nội dung</button>
-          <button type="button" className={tab === 'doc' ? 'on' : ''} onClick={() => setTab('doc')}>Tài liệu</button>
-        </div>
+        <div className="pk-cls-sec cx-tabs">
+        <PhoneSeg tabs={[
+          { id: 'over', label: 'Tổng quan', icon: Info },
+          { id: 'cont', label: 'Nội dung', icon: List, count: lessons.length || undefined },
+          { id: 'doc', label: 'Tài liệu', icon: FileText, count: (c.documents || []).filter(d => d.url).length || undefined },
+        ]} active={tab} onTab={t => setTab(t as any)} />
+        <div className="pk-cls-panel cx-panel">
 
         {tab === 'over' && <>
           {(c.detailedDescription || c.briefDescription) && <div className="cx-box"><h4>Giới thiệu</h4><div className="cx-html" dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.detailedDescription || c.briefDescription) }} /></div>}
@@ -408,6 +410,7 @@ function CourseDetail({ c, ctx }: { c: PortfolioCourse; ctx: Ctx }) {
               : c.documents.filter(d => d.url).map((d, i) => <ResRow key={i} title={d.name || 'Tài liệu'} url={d.url} locked={!learn} />)}
           </div>
         )}
+        </div></div>
       </div>
 
       <div className="cx-bot">
@@ -508,9 +511,6 @@ function CourseLearn({ c, startLesson, ctx }: { c: PortfolioCourse; startLesson?
   const cur = lessons.find(l => l.id === curId) || lessons[0];
   const [tab, setTab] = useState<'list' | 'doc' | 'quiz' | 'note'>('list');
   const bodyRef = useRef<HTMLDivElement>(null);
-  const tabsRef = useRef<HTMLDivElement>(null);
-  // Đổi thẻ thì kéo thẻ đang chọn vào giữa hàng thẻ (hàng thẻ cuộn ngang).
-  useEffect(() => { const el = tabsRef.current?.querySelector('.on') as HTMLElement | null; el?.scrollIntoView({ inline: 'center', block: 'nearest' }); }, [tab]);
   const player = useRef<PlayerApi>(null);
   const locked = !!cur && !learn && !(cur.allowPreview || cur.isFreePreview);
 
@@ -616,12 +616,14 @@ function CourseLearn({ c, startLesson, ctx }: { c: PortfolioCourse; startLesson?
           <h3>{cur.title}</h3>
           <span className="cx-pg"><span className="t"><span>Khoá học · {done.filter(id => lessons.some(l => l.id === id)).length} trên {lessons.length} bài</span><b>{progress}%</b></span><span className="bar"><i style={{ width: `${progress}%` }} /></span></span>
         </div>
-        <div className="cx-ltabs" data-no-pull ref={tabsRef}>
-          <button type="button" className={tab === 'list' ? 'on' : ''} onClick={() => setTab('list')}><List />Nội dung khoá</button>
-          <button type="button" className={tab === 'doc' ? 'on' : ''} onClick={() => setTab('doc')}><FileText />Tài liệu{docN ? ` (${docN})` : ''}</button>
-          <button type="button" className={tab === 'quiz' ? 'on' : ''} onClick={() => setTab('quiz')}><ClipboardCheck />Quizz{cur.quizSlug ? ' (1)' : ''}</button>
-          {enr && <button type="button" className={tab === 'note' ? 'on' : ''} onClick={() => setTab('note')}><PenLine />Ghi chú{notes.length ? ` (${notes.length})` : ''}</button>}
-        </div>
+        <div className="pk-cls-sec cx-tabs cx-ltab">
+        <PhoneSeg tabs={[
+          { id: 'list', label: 'Nội dung', icon: List },
+          { id: 'doc', label: 'Tài liệu', icon: FileText, count: docN || undefined },
+          { id: 'quiz', label: 'Quizz', icon: ClipboardCheck, count: cur.quizSlug ? 1 : undefined },
+          ...(enr ? [{ id: 'note', label: 'Ghi chú', icon: PenLine, count: notes.length || undefined }] : []),
+        ]} active={tab} onTab={t => setTab(t as any)} />
+        <div className="pk-cls-panel cx-panel">
 
         {tab === 'list' && <div className="cx-pad"><div className="cx-box"><Chapters c={c} lessons={lessons} learn={learn} done={done} current={cur.id} onOpen={go} /></div></div>}
         {tab === 'doc' && <div className="cx-pad">
@@ -668,6 +670,7 @@ function CourseLearn({ c, startLesson, ctx }: { c: PortfolioCourse; startLesson?
             </div>
           ))}
         </div>}
+        </div></div>
         <div style={{ height: 110 }} />
       </div>
 

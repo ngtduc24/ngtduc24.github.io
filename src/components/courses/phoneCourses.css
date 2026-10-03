@@ -294,3 +294,16 @@
 .cxp .vp .vs input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px var(--ph-brand, #10b981); }
 .cxp .vp .vs input[type=range]::-moz-range-track { height: 4px; background: rgba(255,255,255,.35); }
 .cxp .vp button { width: 32px; height: 32px; }
+/* Thẻ phân trang dạng bìa hồ sơ, đồng bộ các trang khác trên điện thoại */
+.cx-tabs { margin-top: 14px !important; }
+.cx-ltab { margin: 14px 14px 0 !important; }
+.cx-panel { padding: 4px 14px 14px !important; }
+.cx-panel .cx-pad { padding: 0; }
+.cx-panel .cx-box { background: transparent; padding: 14px 0 4px; margin-top: 0; border-radius: 0; border-top: 1px solid #f1f5f9; }
+.cx-panel > .cx-box:first-child, .cx-panel .cx-pad > .cx-box:first-child { border-top: 0; }
+.cx-panel .cx-quiz, .cx-panel .cx-note { margin-top: 12px; }
+.cx-panel .cx-ga .hd { margin-bottom: 4px; }
+/* Màn học bài có 4 thẻ: thẻ đang mở hiện chữ, thẻ khác chỉ hiện biểu tượng và số */
+.cx-ltab .pk-ftabs .ft:not(.on) span { display: none; }
+.cx-ltab .pk-ftabs .ft.on { flex: 2.2 1 0; }
+.cx-panel .cx-pad > .cx-box:first-child { padding-top: 6px; }
