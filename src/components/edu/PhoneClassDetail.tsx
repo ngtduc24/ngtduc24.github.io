@@ -48,7 +48,7 @@ const left = (iso?: string) => {
 const when = (iso?: string) => { if (!iso) return ''; const d = new Date(iso); return d.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }); };
 
 export default function PhoneClassDetail(p: PhoneClassProps) {
-  const [tab, setTab] = useState<Tab>('assignments');
+  const [tab, setTab] = useState<Tab>('students');
   const [menu, setMenu] = useState(false);
   const [extOpen, setExtOpen] = useState(false);
   const [asgMenu, setAsgMenu] = useState<EduAssignment | null>(null);
@@ -122,7 +122,7 @@ export default function PhoneClassDetail(p: PhoneClassProps) {
           <div><b>{classAvg == null ? '–' : fmt(classAvg)}</b><span>Điểm TB</span></div>
         </div>
       </div>
-      <PhoneSeg tabs={[{ id: 'assignments', label: 'Bài tập' }, { id: 'students', label: 'Sinh viên' }, { id: 'grades', label: 'Bảng điểm' }]} active={tab} onTab={t => setTab(t as Tab)} />
+      <PhoneSeg tabs={[{ id: 'students', label: 'Sinh viên' }, { id: 'grades', label: 'Bảng điểm' }, { id: 'assignments', label: 'Bài tập' }]} active={tab} onTab={t => setTab(t as Tab)} />
     </PhoneExt>
   );
 

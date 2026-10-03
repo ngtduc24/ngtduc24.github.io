@@ -411,10 +411,13 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
                           <b>{c.name}</b>
                           <small>{st ? `${n} sinh viên${st.assignments != null ? ` · ${st.assignments} bài tập` : ''}` : 'Đang tải...'}{!mine(c) ? ' · Được chia sẻ' : ''}</small>
                           {st?.assignmentTitle && (
-                            <small className="as">
-                              <span className="t">{st.assignmentTitle}</span>
-                              <span>{st.submitted}/{n} đã nộp{l ? ` · ${l.t.toLowerCase()}` : ''}</span>
-                            </small>
+                            <>
+                              <small className="as">
+                                <span className="t">{st.assignmentTitle}</span>
+                                <span>{st.submitted}/{n} đã nộp{l ? ` · ${l.t.toLowerCase()}` : ''}</span>
+                              </small>
+                              <span className="pk-pbar" aria-label={`Đã nộp ${st.submitted} trên ${n}`}><i style={{ width: `${n ? Math.min(100, st.submitted / n * 100) : 0}%` }} /></span>
+                            </>
                           )}
                         </span>
                         {!!st?.pending && canGrade && st.assignmentId && st.gradeColumnId && onGrade ? (

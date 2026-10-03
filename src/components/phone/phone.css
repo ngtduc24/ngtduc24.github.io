@@ -617,3 +617,5 @@ html:not(.ph-own-head) .ph-in > .ph-sbar { display: none; }
 .pk-li .mn2 svg { width: 20px; height: 20px; }
 .pk-li .lt.r { color: #be123c; font-weight: 600; } .pk-li .lt.a { color: #b45309; font-weight: 600; } .pk-li .lt.g { color: var(--ph-brand-hover); font-weight: 600; }
 .pk-ext.pk-hd.st { position: sticky; top: -12px; }
+.pk-li .pk-pbar { display: block; height: 6px; border-radius: 3px; background: #eef2f6; overflow: hidden; margin-top: 7px; }
+.pk-li .pk-pbar i { display: block; height: 100%; border-radius: 3px; background: var(--ph-brand); }
