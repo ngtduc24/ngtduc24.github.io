@@ -1123,7 +1123,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 text-slate-800 font-sans" id="app-root">
+    <div className="flex h-[100dvh] w-screen overflow-hidden bg-slate-50 text-slate-800 font-sans" id="app-root">
       {isPhoneDevice && (
         <button type="button" onClick={() => setUiPreference('auto')} className="fixed bottom-3 left-1/2 z-[300] -translate-x-1/2 rounded-full bg-brand px-4 py-2 text-xs font-bold text-white shadow-lg">Về giao diện điện thoại</button>
       )}

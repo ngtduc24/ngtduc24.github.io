@@ -186,8 +186,8 @@ export default function QuizModule({ currentUser, standaloneBank, onExit, fromCl
           chips={subjectChips}
           activeChip={filterSubject}
           onChip={setFilterSubject}
+          extraActions={<button onClick={() => { setBankSelectMode(false); setView('bank'); }} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm hover:border-brand hover:text-brand"><Library className="h-4 w-4" /> Ngân hàng câu hỏi</button>}
           actions={<>
-            <button onClick={() => { setBankSelectMode(false); setView('bank'); }} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm hover:border-brand hover:text-brand"><Library className="h-4 w-4" /> Ngân hàng câu hỏi</button>
             <button onClick={openNewQuiz} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-brand px-4 text-sm font-semibold text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Plus className="h-4 w-4" /> Tạo đề mới</button>
           </>}
         />

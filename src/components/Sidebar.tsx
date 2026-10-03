@@ -98,7 +98,7 @@ export default function Sidebar({
   return (
     <aside
       id="sidebar"
-      className={`relative ${compact ? 'z-[130] overflow-y-auto py-2' : 'z-40 py-4'} flex h-screen w-20 shrink-0 flex-col items-center border-r border-slate-200 bg-white`}
+      className={`relative ${compact ? 'z-[130] overflow-y-auto py-2' : 'z-40 overflow-y-auto py-4'} flex h-[100dvh] w-20 shrink-0 flex-col items-center border-r border-slate-200 bg-white`}
     >
       {compact ? (
         <nav className="flex w-full flex-col items-center gap-1 px-2">{tools!.map(renderTool)}</nav>

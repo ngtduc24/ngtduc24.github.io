@@ -40,6 +40,9 @@ interface LibraryHeroProps {
   onChip: (id: string) => void;
   onAddChip?: (name: string) => void | Promise<void>;
   actions?: React.ReactNode;
+  // Nút tạo mới, tải lên chỉ hiện ở thẻ này (mặc định thẻ Của tôi). Ở Thư viện và Được chia sẻ thì ẩn.
+  actionsTab?: string;
+  extraActions?: React.ReactNode; // nút luôn hiện ở mọi thẻ (ví dụ Ngân hàng câu hỏi, Thùng rác)
   // Khoá lưu nội dung đầu trang dùng chung (ví dụ 'assignment_bank', 'elearning') và quyền chỉnh (quản trị).
   configKey?: string;
   canEditBanner?: boolean;
@@ -206,7 +209,8 @@ function LibraryHeroDesktop(p: LibraryHeroProps) {
           </button>
         ) : <span />}
         <div className="flex flex-wrap items-center justify-end gap-2">
-          {p.actions}
+          {p.extraActions}
+          {(!p.tabs || p.tabs.length < 2 || p.activeTab === (p.actionsTab || 'mine')) && p.actions}
           {p.canEditBanner && p.configKey && (
             <button type="button" onClick={() => setEditingHero(true)} title="Chỉnh đầu trang (mọi tài khoản đều thấy)" aria-label="Chỉnh đầu trang"
               className="grid h-10 w-10 place-items-center rounded-xl bg-white/80 text-slate-600 shadow-sm hover:bg-white hover:text-brand"><Settings2 className="h-4 w-4" /></button>

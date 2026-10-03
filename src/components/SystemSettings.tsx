@@ -235,31 +235,50 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
         badge={<Badge tone="brand">{currentUser?.role === 'admin' ? 'Quản trị viên' : 'Được cấp quyền'}</Badge>}
       />
 
-      {/* Thanh chọn mục, cùng kiểu với các trang khác. Màn hình hẹp thì kéo ngang. */}
-      <div className="overflow-x-auto scrollbar-thin">
-        <div className="flex w-max gap-1 rounded-2xl bg-slate-100 p-1">
-          {([
+      {/* Thanh chọn mục chia 3 nhóm theo việc cần làm: Hiển thị (bộ mặt ứng dụng), Vận hành (chức năng, trợ lý),
+          Dữ liệu (kho lưu trữ, sao lưu, bảo trì). Màn hình hẹp thì các nhóm xuống dòng. */}
+      {(() => {
+        const admin = currentUser?.role === 'admin';
+        type T = { id: typeof activeTab; label: string; icon: any };
+        const groups: { title: string; items: T[] }[] = [
+          { title: 'Hiển thị', items: [
             { id: 'general', label: 'Giao diện', icon: Settings },
-            ...(currentUser?.role === 'admin' ? [{ id: 'landing', label: 'Trang đầu', icon: LayoutGrid }] : []),
-            { id: 'functions', label: 'Chức năng', icon: Boxes },
+            ...(admin ? [{ id: 'landing', label: 'Trang đầu', icon: LayoutGrid } as T] : []),
             // Giao diện điện thoại: chỉ quản trị viên, chỉ hiện khi đang dùng máy tính.
-            ...(currentUser?.role === 'admin' && !isPhone ? [{ id: 'phone', label: 'Điện thoại', icon: Smartphone }] : []),
+            ...(admin && !isPhone ? [{ id: 'phone', label: 'Điện thoại', icon: Smartphone } as T] : []),
+          ] },
+          { title: 'Vận hành', items: [
+            { id: 'functions', label: 'Chức năng', icon: Boxes },
             { id: 'assistant', label: 'Trợ lý', icon: Sparkles },
-            { id: 'maintenance', label: 'Bảo trì', icon: Wrench },
+          ] },
+          { title: 'Dữ liệu', items: [
             { id: 'storage', label: 'Kho lưu trữ', icon: Images },
-            ...(currentUser?.role === 'admin' ? [{ id: 'backup', label: 'Sao lưu', icon: Database }] : []),
-          ] as { id: typeof activeTab; label: string; icon: any }[]).map(t => {
-            const Icon = t.icon;
-            const on = activeTab === t.id;
-            return (
-              <button key={t.id} type="button" onClick={() => setActiveTab(t.id)}
-                className={`inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-[13px] font-semibold transition-all ${on ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                <Icon className={`h-4 w-4 ${on ? 'text-brand' : ''}`} /> {t.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+            ...(admin ? [{ id: 'backup', label: 'Sao lưu', icon: Database } as T] : []),
+            { id: 'maintenance', label: 'Bảo trì', icon: Wrench },
+          ] },
+        ];
+        return (
+          <div className="flex flex-wrap gap-x-4 gap-y-3">
+            {groups.filter(g => g.items.length).map(g => (
+              <div key={g.title} className="min-w-0">
+                <p className="mb-1.5 pl-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">{g.title}</p>
+                <div className="flex w-max max-w-full gap-1 overflow-x-auto rounded-2xl bg-slate-100 p-1">
+                  {g.items.map(t => {
+                    const Icon = t.icon;
+                    const on = activeTab === t.id;
+                    return (
+                      <button key={t.id} type="button" onClick={() => setActiveTab(t.id)}
+                        className={`inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-[13px] font-semibold transition-all ${on ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                        <Icon className={`h-4 w-4 ${on ? 'text-brand' : ''}`} /> {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {activeTab === 'general' ? (
         <form onSubmit={handleFormSubmit} className="space-y-6">

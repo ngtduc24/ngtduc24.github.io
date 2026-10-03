@@ -131,7 +131,7 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
         chips={[]} activeChip="" onChip={() => {}}
         configKey="slides" canEditBanner={currentUser.role === 'admin'}
         phoneStatus={{ chips: [{ id: '', label: 'Tất cả' }, { id: 'week', label: 'Sửa tuần này' }, ...(scope === 'mine' ? [{ id: 'lib', label: 'Trong Thư viện' }, { id: 'private', label: 'Chưa vào Thư viện' }] : [])], active: pf, onChange: setPf }}
-        phoneMenu={[{ key: 'pptx', label: 'Tải lên PowerPoint', sub: 'Chuyển tệp .pptx thành bài giảng sửa được', icon: FileUp, onClick: () => setImporting(true) }]}
+        phoneMenu={scope !== 'mine' ? [] : [{ key: 'pptx', label: 'Tải lên PowerPoint', sub: 'Chuyển tệp .pptx thành bài giảng sửa được', icon: FileUp, onClick: () => setImporting(true) }]}
         actions={<><button onClick={() => setImporting(true)} className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm hover:border-brand hover:text-brand"><FileUp className="h-4 w-4" /> Tải lên PowerPoint</button><button onClick={create} disabled={busy} className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Tạo bài giảng mới</button></>}
       />
 
@@ -218,7 +218,7 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
         </div>
       )}
       </>}
-      {phone && !open && <PhoneFab label="Bài giảng mới" icon={Plus} busy={busy} onClick={create} />}
+      {phone && !open && scope === 'mine' && <PhoneFab label="Bài giảng mới" icon={Plus} busy={busy} onClick={create} />}
       {menuFor && (
         <PhoneMenuSheet title={menuFor.title} sub={`${menuFor.count} trang · sửa ${ago(menuFor.updatedAt)}`} onClose={() => setMenuFor(null)} items={[
           { key: 'play', label: 'Trình chiếu', icon: Play, onClick: () => present(menuFor) },

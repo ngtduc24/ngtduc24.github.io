@@ -301,8 +301,8 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
         }}
         phoneStatus={{ chips: [{ id: '', label: 'Tất cả' }, { id: 'draft', label: 'Đang soạn' }, { id: 'published', label: 'Đã xuất bản' }, { id: 'public', label: 'Công khai' }], active: status, onChange: setStatus }}
         phoneMenu={hero.onTrash ? [{ key: 'trash', label: 'Thùng rác', sub: 'Giáo trình đã xoá trong 30 ngày', icon: Trash2, onClick: hero.onTrash }] : []}
+        extraActions={hero.onTrash && <button onClick={hero.onTrash} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 hover:border-brand/30 hover:text-brand"><Trash2 className="h-4 w-4" /> Thùng rác</button>}
         actions={<>
-          {hero.onTrash && <button onClick={hero.onTrash} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 hover:border-brand/30 hover:text-brand"><Trash2 className="h-4 w-4" /> Thùng rác</button>}
           <button onClick={() => setCreating(true)} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-brand px-4 text-sm font-semibold text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Plus className="h-4 w-4" /> Tạo giáo trình mới</button>
         </>}
       />

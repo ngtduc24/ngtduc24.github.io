@@ -659,7 +659,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
       )}
       {sharing && <ShareDialog type="bank_item" resourceId={sharing.id} resourceTitle={sharing.title} ownerId={sharing.ownerId || currentUser.id} ownerName={ownerName(sharing.ownerId) || undefined}
         currentUser={currentUser} canManage={isOwner(sharing) || roles[sharing.id] === 'manage'} onClose={() => { setSharing(null); reloadItems(); }} />}
-      {phone && <PhoneFab label="Bài tập mới" icon={Plus} onClick={() => openEditor(emptyItem(subjectId && subjectId !== '__none' ? subjectId : undefined))} />}
+      {phone && scope === 'mine' && <PhoneFab label="Bài tập mới" icon={Plus} onClick={() => openEditor(emptyItem(subjectId && subjectId !== '__none' ? subjectId : undefined))} />}
       {menuFor && (() => { const it = menuFor; return (
         <PhoneMenuSheet title={it.title} sub={subjName(it.subjectId) || 'Chưa chọn môn'} onClose={() => setMenuFor(null)} items={[
           { key: 'view', label: 'Xem bài tập', icon: Eye, onClick: () => setViewId(it.id) },
