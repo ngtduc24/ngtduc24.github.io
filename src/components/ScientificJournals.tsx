@@ -78,6 +78,7 @@ import { useConfirmation } from './ConfirmationContext';
 import { useNotifications } from './NotificationContext';
 import { usePhoneMaybe } from './phone/PhoneShell';
 import PhoneJournals from './phone/PhoneJournals';
+import { cleanJournalDetails } from './JournalManualForm';
 
 interface ScientificJournalsProps {
   currentUser: UserAccount;
@@ -569,7 +570,8 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
       dateImported: isEditing ? (formState.dateImported || todayStr) : todayStr,
       status: isEditing ? (journals.find(j => j.id === formState.id)?.status || 'approved') : (isAdmin ? 'approved' : 'pending'),
       createdBy: isEditing ? (journals.find(j => j.id === formState.id)?.createdBy || currentUser.id) : currentUser.id,
-      createdByName: isEditing ? (journals.find(j => j.id === formState.id)?.createdByName || currentUser.fullName) : currentUser.fullName
+      createdByName: isEditing ? (journals.find(j => j.id === formState.id)?.createdByName || currentUser.fullName) : currentUser.fullName,
+      details: cleanJournalDetails(formState.details)
     };
 
     try {
@@ -1803,14 +1805,14 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
 
       {/* Render sub-tabs */}
       {activeSubTab === "list" && phone && (
-        <PhoneJournals journals={filteredJournals} search={searchQuery} onSearch={setSearchQuery} defaultCover={settings.defaultCoverImage}
+        <PhoneJournals journals={filteredJournals} allJournals={approvedJournals} userId={currentUser.id} search={searchQuery} onSearch={setSearchQuery} defaultCover={settings.defaultCoverImage}
           filters={[
             { key: 'type', label: 'Phân loại', value: selectedType, onChange: setSelectedType, options: types.map(t => ({ id: t, label: t === 'all' ? 'Tất cả loại' : t })) },
             { key: 'field', label: 'Ngành', value: selectedField, onChange: setSelectedField, options: fields.map(f => ({ id: f, label: f === 'all' ? 'Tất cả ngành' : f })) },
             { key: 'score', label: 'Điểm', value: selectedScore, onChange: setSelectedScore, options: scoreFilters.map(x => ({ id: x, label: x === 'all' ? 'Tất cả điểm' : x })) },
             { key: 'time', label: 'Thời gian nhập', value: selectedTime, onChange: setSelectedTime, options: [{ id: 'all', label: 'Tất cả thời gian' }, { id: 'today', label: 'Hôm nay' }, { id: '3days', label: '3 ngày gần đây' }, { id: '7days', label: '7 ngày gần đây' }, { id: '30days', label: '30 ngày gần đây' }, { id: 'thismonth', label: 'Tháng này' }, { id: 'thisyear', label: 'Năm nay' }] },
           ]}
-          onOpen={j => setSelectedJournal(j)} canDelete={hasDeletePermission} selectedIds={selectedIds} setSelectedIds={setSelectedIds} onDeleteBulk={handleDeleteBulk}
+          canDelete={hasDeletePermission} canEdit={hasEditPermission} onEdit={handleEditClick} onDeleteOne={j => handleDeleteSingle(j.id, j.name)} selectedIds={selectedIds} setSelectedIds={setSelectedIds} onDeleteBulk={handleDeleteBulk}
           onCreate={hasCreatePermission ? startManual : undefined}
           menu={[
             { key: 'excel', label: 'Nhập từ Excel', sub: 'Nên làm trên máy tính cho dễ đối chiếu', icon: Upload, hidden: !(hasImportPermission || hasCreatePermission), onClick: () => { setActiveSubTab("excel"); setIsEditing(false); } },

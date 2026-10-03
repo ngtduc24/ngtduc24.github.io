@@ -628,7 +628,8 @@ export async function getJournalsFromSupabase(): Promise<ScientificJournal[]> {
       deletedAt: j.deleted_at,
       status: j.status || 'approved',
       createdBy: j.created_by,
-      createdByName: j.created_by_name
+      createdByName: j.created_by_name,
+      details: j.details && typeof j.details === 'object' ? j.details : undefined
     }));
   } catch (error) {
     handleSupabaseError(error, "Lấy danh sách tạp chí", JOURNALS_TABLE);
@@ -659,7 +660,8 @@ export async function getDeletedJournalsFromSupabase(): Promise<ScientificJourna
       deletedAt: j.deleted_at,
       status: j.status || 'approved',
       createdBy: j.created_by,
-      createdByName: j.created_by_name
+      createdByName: j.created_by_name,
+      details: j.details && typeof j.details === 'object' ? j.details : undefined
     }));
   } catch (error) {
     handleSupabaseError(error, "Lấy danh sách tạp chí đã xóa", JOURNALS_TABLE);
@@ -687,17 +689,19 @@ export async function saveJournalToSupabase(journal: ScientificJournal) {
       deleted_at: journal.deletedAt || null,
       status: journal.status || 'approved',
       created_by: journal.createdBy || null,
-      created_by_name: journal.createdByName || null
+      created_by_name: journal.createdByName || null,
+      ...(journal.details ? { details: journal.details } : {})
     };
     
     const { error } = await supabase.from(JOURNALS_TABLE).upsert(dbData);
     if (error) {
-      if (error.code === '42703' || error.message?.includes('status') || error.message?.includes('created_by')) {
+      if (error.code === '42703' || error.message?.includes('status') || error.message?.includes('created_by') || error.message?.includes('details')) {
         console.warn("⚠️ Bảng 'scientific_journals' thiếu cột 'status' hoặc 'created_by'. Tiến hành lưu không có các trường này...");
         const fallbackDbData = { ...dbData };
         delete fallbackDbData.status;
         delete fallbackDbData.created_by;
         delete fallbackDbData.created_by_name;
+        delete fallbackDbData.details;
         const { error: fallbackError } = await supabase.from(JOURNALS_TABLE).upsert(fallbackDbData);
         if (fallbackError) throw fallbackError;
       } else {
@@ -731,7 +735,8 @@ export async function saveJournalsBulkToSupabase(journals: ScientificJournal[]) 
       deleted_at: journal.deletedAt || null,
       status: journal.status || 'approved',
       created_by: journal.createdBy || null,
-      created_by_name: journal.createdByName || null
+      created_by_name: journal.createdByName || null,
+      ...(journal.details ? { details: journal.details } : {})
     }));
 
     const batchSize = 100;
@@ -739,13 +744,14 @@ export async function saveJournalsBulkToSupabase(journals: ScientificJournal[]) 
       const batch = dbDataList.slice(i, i + batchSize);
       const { error } = await supabase.from(JOURNALS_TABLE).upsert(batch);
       if (error) {
-        if (error.code === '42703' || error.message?.includes('status') || error.message?.includes('created_by')) {
+        if (error.code === '42703' || error.message?.includes('status') || error.message?.includes('created_by') || error.message?.includes('details')) {
           console.warn("⚠️ Bảng 'scientific_journals' thiếu cột 'status' hoặc 'created_by'. Tiến hành lưu fallback không có các trường này...");
           const fallbackBatch = batch.map((item: any) => {
             const copy = { ...item };
             delete copy.status;
             delete copy.created_by;
             delete copy.created_by_name;
+            delete copy.details;
             return copy;
           });
           const { error: fallbackError } = await supabase.from(JOURNALS_TABLE).upsert(fallbackBatch);

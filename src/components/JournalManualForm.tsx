@@ -1,8 +1,8 @@
 import { uploadImageToCloudinary } from '../lib/upload';
 import MediaSourcePicker from './MediaSourcePicker';
 import React from "react";
-import { Plus, Image as ImageIcon, X } from "lucide-react";
-import { ScientificJournal, JournalField, JournalType } from "../types";
+import { Plus, Image as ImageIcon, X, Trash2 } from "lucide-react";
+import { ScientificJournal, JournalField, JournalType, JournalDetails } from "../types";
 import { useNotifications } from './NotificationContext';
 
 interface JournalManualFormProps {
@@ -15,6 +15,16 @@ interface JournalManualFormProps {
   typesList?: JournalType[];
 }
 
+// Bỏ các ô để trống trước khi lưu, không còn gì thì không lưu cột details.
+export function cleanJournalDetails(d?: JournalDetails): JournalDetails | undefined {
+  if (!d) return undefined;
+  const out: JournalDetails = {};
+  (['website', 'language', 'frequency', 'scoreYear'] as const).forEach(k => { const v = String(d[k] || '').trim(); if (v) out[k] = v; });
+  const fs = (d.fieldScores || []).map(x => ({ field: String(x.field || '').trim(), score: String(x.score || '').trim() })).filter(x => x.field);
+  if (fs.length) out.fieldScores = fs;
+  return Object.keys(out).length ? out : undefined;
+}
+
 export default function JournalManualForm({
   formState,
   setFormState,
@@ -25,6 +35,11 @@ export default function JournalManualForm({
   typesList = []
 }: JournalManualFormProps) {
   const { addNotification } = useNotifications();
+  const det = formState.details || {};
+  const setDet = (patch: Partial<JournalDetails>) => setFormState(cur => ({ ...cur, details: { ...(cur.details || {}), ...patch } }));
+  const fScores = det.fieldScores || [];
+  const setFs = (i: number, patch: Partial<{ field: string; score: string }>) => setDet({ fieldScores: fScores.map((x, k) => (k === i ? { ...x, ...patch } : x)) });
+  const inCls = "w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all";
   return (
     <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm max-w-3xl mx-auto space-y-6 animate-fadeIn">
       <div className="border-b border-slate-100 pb-4">
@@ -206,6 +221,37 @@ export default function JournalManualForm({
                 <p className="text-[10px] text-slate-400 mt-1">Chọn file ảnh từ thiết bị, kích thước tối đa 800KB. Nếu trống sẽ áp dụng ảnh bìa mặc định.</p>
               </div>
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-500 uppercase">Trang web tạp chí</label>
+            <input type="url" value={det.website || ""} onChange={e => setDet({ website: e.target.value })} className={inCls} placeholder="https://..." />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-500 uppercase">Năm áp dụng điểm</label>
+            <input type="text" inputMode="numeric" value={det.scoreYear || ""} onChange={e => setDet({ scoreYear: e.target.value })} className={inCls} placeholder="Ví dụ: 2025" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-500 uppercase">Ngôn ngữ</label>
+            <input type="text" value={det.language || ""} onChange={e => setDet({ language: e.target.value })} className={inCls} placeholder="Ví dụ: Tiếng Việt, tiếng Anh" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-500 uppercase">Kỳ xuất bản</label>
+            <input type="text" value={det.frequency || ""} onChange={e => setDet({ frequency: e.target.value })} className={inCls} placeholder="Ví dụ: 6 số mỗi năm" />
+          </div>
+
+          <div className="md:col-span-2 space-y-2">
+            <label className="text-[11px] font-bold text-slate-500 uppercase">Điểm theo từng ngành</label>
+            <p className="text-[10px] text-slate-400">Tạp chí được tính điểm ở nhiều ngành thì nhập từng ngành và điểm tối đa của ngành đó. Để trống thì trang chi tiết tự gom các dòng cùng ISSN.</p>
+            {fScores.map((x, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input list="jr-field-opts" value={x.field} onChange={e => setFs(i, { field: e.target.value })} className={inCls} placeholder="Ngành" />
+                <input value={x.score} onChange={e => setFs(i, { score: e.target.value })} className={`${inCls} max-w-[110px]`} placeholder="1,0" />
+                <button type="button" onClick={() => setDet({ fieldScores: fScores.filter((_, k) => k !== i) })} className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 cursor-pointer" aria-label="Bỏ ngành này"><Trash2 className="w-4 h-4" /></button>
+              </div>
+            ))}
+            <datalist id="jr-field-opts">{fieldsList.map(f => <option key={f.id} value={f.name} />)}</datalist>
+            <button type="button" onClick={() => setDet({ fieldScores: [...fScores, { field: '', score: '' }] })} className="px-3 py-2 rounded-xl border border-dashed border-slate-300 text-xs font-bold text-slate-600 hover:border-brand hover:text-brand cursor-pointer inline-flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" />Thêm ngành</button>
           </div>
 
           <div className="md:col-span-2 space-y-1">

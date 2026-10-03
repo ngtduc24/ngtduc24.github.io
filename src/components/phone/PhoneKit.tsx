@@ -10,7 +10,7 @@ import { AvatarStack } from '../ui/People';
 // Phần nền màu ngay dưới thanh trên (ô tìm kiếm, nhóm Của tôi, Được chia sẻ, Thư viện)
 // head: gộp luôn thanh trên của ứng dụng vào khối màu này (nút quay lại, tên chức năng, nút về Trang chủ),
 // cả khối đứng yên ở đầu màn khi cuộn, không còn 2 thanh chồng lên nhau.
-export function PhoneExt({ children, head, title, still }: { children: React.ReactNode; head?: boolean; title?: string; still?: boolean }) {
+export function PhoneExt({ children, head, title, still, actions, onBack }: { children?: React.ReactNode; head?: boolean; title?: string; still?: boolean; actions?: React.ReactNode; onBack?: () => void }) {
   const phone = usePhoneMaybe();
   const own = !!(head && phone);
   useEffect(() => {
@@ -22,9 +22,9 @@ export function PhoneExt({ children, head, title, still }: { children: React.Rea
   return (
     <div className={`pk-ext pk-hd ${still ? "" : "st"}`}>
       <div className="nv">
-        <button type="button" className="bk" onClick={phone!.back} aria-label="Quay lại"><ChevronLeft /></button>
+        <button type="button" className="bk" onClick={onBack || phone!.back} aria-label="Quay lại"><ChevronLeft /></button>
         <h1>{title || phone!.title}</h1>
-        <button type="button" className="hm" onClick={() => phone!.open('dashboard')} aria-label="Về Trang chủ"><Home /></button>
+        {actions ?? <button type="button" className="hm" onClick={() => phone!.open('dashboard')} aria-label="Về Trang chủ"><Home /></button>}
       </div>
       {children}
     </div>

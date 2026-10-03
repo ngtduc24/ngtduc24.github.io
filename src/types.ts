@@ -101,6 +101,16 @@ export interface ScientificJournal {
   status?: 'pending' | 'approved' | 'rejected';
   createdBy?: string;
   createdByName?: string;
+  details?: JournalDetails;
+}
+
+// Thông tin thêm của tạp chí (cột details kiểu jsonb): trang web, ngôn ngữ, kỳ xuất bản, năm áp dụng điểm, điểm theo từng ngành.
+export interface JournalDetails {
+  website?: string;
+  language?: string;
+  frequency?: string;
+  scoreYear?: string;
+  fieldScores?: Array<{ field: string; score: string }>;
 }
 
 export interface JournalField {

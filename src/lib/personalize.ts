@@ -24,6 +24,7 @@ export interface UsageData {
   fdis?: Record<string, number>;        // thẻ người dùng bỏ đi, không gợi ý lại trong 30 ngày
   shown?: Record<string, { n: number; d: number }>; // số ngày đã gợi ý mà chưa mở, để luân phiên gợi ý
   favCourses?: string[];                // khoá học người dùng bấm tim để lưu lại
+  favJournals?: string[];               // tạp chí người dùng bấm Lưu ở trang Điểm báo
 }
 
 const DAY = 86400;
@@ -128,6 +129,10 @@ export function trackDoc(doc: { kind: string; id: string; title: string; tab: st
 // Lưu hoặc bỏ lưu 1 khoá học (nút tim ở trang khoá học), đồng bộ theo tài khoản như các dữ liệu thói quen khác.
 export function toggleFavCourse(uid: string, id: string) {
   update(uid, x => { const f = x.favCourses || []; return { ...x, favCourses: f.includes(id) ? f.filter(v => v !== id) : [id, ...f] }; });
+}
+// Lưu hoặc bỏ lưu 1 tạp chí ở Điểm báo, đồng bộ theo tài khoản.
+export function toggleFavJournal(uid: string, id: string) {
+  update(uid, x => { const f = x.favJournals || []; return { ...x, favJournals: f.includes(id) ? f.filter(v => v !== id) : [id, ...f] }; });
 }
 export function forgetDoc(uid: string, key: string) { update(uid, x => ({ ...x, docs: x.docs.filter(d => d.key !== key) })); }
 export function setAutoSort(uid: string, on: boolean) { update(uid, x => ({ ...x, autoSort: on })); }
