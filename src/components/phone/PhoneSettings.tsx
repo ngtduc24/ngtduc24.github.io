@@ -268,12 +268,12 @@ const PS_SECS: { id: PsSec; label: string; icon: any }[] = [
 // theo cấu hình đang sửa, nên thấy ngay mọi thay đổi.
 function PsPreview({ sec, formState, ui, welcome }: { sec: PsSec; formState: AppSettings; ui: PhoneUi; welcome?: any }) {
   const ov = formState.moduleOverrides || {};
-  const acts = resolveActs(ui, id => phoneMode(id, formState) === 'full' && !ov[id]?.hidden, id => ov[id]?.label?.trim() || undefined);
+  const acts = ui.actsOn === false ? [] : resolveActs(ui, id => phoneMode(id, formState) === 'full' && !ov[id]?.hidden, id => ov[id]?.label?.trim() || undefined);
   const actIds = new Set(acts.map(a => a.id));
   const hide = new Set(ui.gridHide || []);
   const order = ui.gridOrder || [];
   const mods = MODULE_REGISTRY.filter(m => !PHONE_GRID_SKIP.has(m.id) && !actIds.has(m.id) && !hide.has(m.id) && !ov[m.id]?.hidden && phoneMode(m.id, formState) === 'full')
-    .sort((a, b) => { const ia = order.indexOf(a.id), ib = order.indexOf(b.id); return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib); }).slice(0, 8);
+    .sort((a, b) => { const ia = order.indexOf(a.id), ib = order.indexOf(b.id); return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib); }).slice(0, 4);
   const gv = gridGlassVars(ui);
   const g = navGlassStyle(ui);
   const frame = 'ph relative h-[720px] w-[350px] overflow-hidden rounded-[44px] border-[9px] border-slate-900 bg-[#f3f6f9] shadow-2xl';
@@ -298,6 +298,7 @@ function PsPreview({ sec, formState, ui, welcome }: { sec: PsSec; formState: App
               <span key={m.id} className="ph-app"><span className="ph-ico" style={{ background: 'var(--ph-brand-light)', color: 'var(--ph-brand-hover)' }}><I className="h-6 w-6" /></span><span>{ov[m.id]?.label?.trim() || m.label}</span></span>
             ); })}
           </div>
+          <span className="more" style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 0', marginBottom: -8, color: '#f59e0b' }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m6 9 6 6 6-6" /></svg></span>
         </div>
         <div className="space-y-2 px-3 pt-4">
           {['Tiếp tục: Bài 5. Nhóm brush tạo khối', '38 bài nộp chờ chấm', 'Lời nhắc: họp khoa 14:00'].map(t => <div key={t} className="rounded-2xl bg-white px-3 py-3 text-[12px] font-semibold text-slate-600">{t}</div>)}
@@ -356,7 +357,7 @@ function GridOrderCard({ formState, ui, setUi, sw }: {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-sm font-bold text-slate-800">Lưới chức năng ở Trang chủ</h3>
-          <p className="text-[12px] text-slate-500">Kéo thả hoặc bấm mũi tên để xếp thứ tự cho mọi người, bấm Ẩn để bỏ chức năng khỏi Trang chủ điện thoại (vẫn mở được ở Tất cả chức năng). 8 chức năng đầu hiện ngay dưới đầu trang, phần còn lại hiện khi bấm mũi tên xem thêm. Chức năng đã nằm ở các nút tròn đầu trang thì không lặp lại trong lưới. Ai không có quyền dùng chức năng nào thì chức năng đó tự bỏ qua.</p>
+          <p className="text-[12px] text-slate-500">Kéo thả hoặc bấm mũi tên để xếp thứ tự cho mọi người, bấm Ẩn để bỏ chức năng khỏi Trang chủ điện thoại (vẫn mở được ở Tất cả chức năng). 4 chức năng đầu hiện ngay dưới đầu trang, 4 chức năng tiếp theo hiện khi bấm mũi tên, phần còn lại nằm ở Tất cả chức năng. Chức năng đã nằm ở các nút tròn đầu trang thì không lặp lại trong lưới. Ai không có quyền dùng chức năng nào thì chức năng đó tự bỏ qua.</p>
         </div>
         {(saved.length > 0 || locks.size > 0 || hidden.size > 0) && (
           <button type="button" onClick={() => setUi({ gridOrder: [], gridLock: [], gridHide: [] })} className="inline-flex shrink-0 items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-rose-500"><RotateCcw className="h-3 w-3" /> Về mặc định</button>
@@ -381,14 +382,14 @@ function GridOrderCard({ formState, ui, setUi, sw }: {
           const m = MODULE_REGISTRY.find(x => x.id === id)!; const Icon = m.icon; const locked = locks.has(id);
           return (
             <React.Fragment key={id}>
-              {i === 8 && <div className="flex items-center gap-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400"><span className="h-px flex-1 bg-slate-200" />Hiện khi bấm xem thêm<span className="h-px flex-1 bg-slate-200" /></div>}
+              {(i === 4 || i === 8) && <div className="flex items-center gap-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400"><span className="h-px flex-1 bg-slate-200" />{i === 4 ? 'Hiện khi bấm mũi tên' : 'Chỉ có ở Tất cả chức năng'}<span className="h-px flex-1 bg-slate-200" /></div>}
               <div draggable onDragStart={e => { setDrag(id); e.dataTransfer.effectAllowed = 'move'; }}
                 onDragOver={e => { e.preventDefault(); setOver(i); }} onDragLeave={() => setOver(o => (o === i ? null : o))}
                 onDrop={e => { e.preventDefault(); if (drag) move(ids.indexOf(drag), i); setDrag(null); setOver(null); }}
                 onDragEnd={() => { setDrag(null); setOver(null); }}
                 className={`flex items-center gap-3 rounded-xl border px-2 py-2 transition-colors ${over === i && drag && drag !== id ? 'border-brand bg-brand-light' : 'border-slate-100 bg-white'} ${drag === id ? 'opacity-40' : ''}`}>
                 <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-slate-300" />
-                <span className={`w-5 shrink-0 text-center text-[11px] font-black ${i < 8 ? 'text-brand' : 'text-slate-400'}`}>{i + 1}</span>
+                <span className={`w-5 shrink-0 text-center text-[11px] font-black ${i < 4 ? 'text-brand' : i < 8 ? 'text-amber-500' : 'text-slate-400'}`}>{i + 1}</span>
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand/10 text-brand"><Icon className="h-4 w-4" /></span>
                 <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-slate-700">{name(id)}</span>
                 <button type="button" onClick={() => toggleLock(id)} title={locked ? 'Đang khoá vị trí, bấm để mở khoá' : 'Khoá vị trí này, thói quen không đẩy đi'}
@@ -449,11 +450,15 @@ function ActsCard({ formState, ui, setUi, sw, field }: {
           <h3 className="text-sm font-bold text-slate-800">Nút tròn đầu Trang chủ</h3>
           <p className="text-[12px] text-slate-500">Chọn chức năng và đặt tên ngắn cho từng nút. Để trống ô nào thì dùng mặc định. Ai không có quyền dùng chức năng đã chọn thì nút đó tự đổi sang chức năng khác người đó dùng được.</p>
         </div>
-        {(ui.acts?.some(a => a?.id) || ui.moreOn === false || ui.moreLabel) && (
-          <button type="button" onClick={() => setUi({ acts: [], moreOn: true, moreLabel: '' })} className="inline-flex shrink-0 items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-rose-500"><RotateCcw className="h-3 w-3" /> Về mặc định</button>
-        )}
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          {sw(ui.actsOn !== false, () => setUi({ actsOn: ui.actsOn === false }), 'Bật tắt cụm nút tròn')}
+          {(ui.acts?.some(a => a?.id) || ui.moreOn === false || ui.moreLabel) && (
+            <button type="button" onClick={() => setUi({ acts: [], moreOn: true, moreLabel: '' })} className="inline-flex shrink-0 items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-rose-500"><RotateCcw className="h-3 w-3" /> Về mặc định</button>
+          )}
+        </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      {ui.actsOn === false && <p className="rounded-xl bg-amber-50 px-3 py-2 text-[12px] font-semibold text-amber-700">Đang tắt cụm nút tròn. Các chức năng của nút tròn đã chuyển về lưới phím tắt bên dưới đầu trang.</p>}
+      <div className={`grid gap-3 sm:grid-cols-2 ${ui.actsOn === false ? 'pointer-events-none opacity-40' : ''}`}>
         {cur.map((a, i) => (
           <div key={i} className="space-y-1.5 rounded-xl border border-slate-100 p-3">
             <label className="text-[11px] font-bold text-slate-500">Nút {i + 1}</label>

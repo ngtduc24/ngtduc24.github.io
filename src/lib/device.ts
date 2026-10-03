@@ -75,6 +75,7 @@ export interface PhoneUi {
   navAlpha?: number;           // mặc định 62
   navBlur?: number;            // mặc định 20
   // Mọi lưới chức năng trên điện thoại (Trang chủ, Lớp học, Tất cả chức năng...) kiểu kính lỏng như iOS: chỉnh 1 chỗ, mọi lưới đổi theo
+  actsOn?: boolean;            // hiện cụm nút tròn đầu Trang chủ, mặc định bật. Tắt thì các chức năng đó về lưới phím tắt
   gridGlass?: boolean;         // mặc định bật
   gridAlpha?: number;          // độ đục lớp kính, mặc định 72
   gridBlur?: number;           // độ nhoè nền phía sau, mặc định 22
@@ -110,6 +111,7 @@ export const PHONE_GRID_SKIP = new Set(['notifications', 'notifications_admin', 
 export const PHONE_ACT_IDS = ['edu', 'elearning', 'edu_bank'];
 // Chức năng đang nằm ở các nút tròn theo cấu hình admin (chưa chọn thì dùng mặc định).
 export function phoneActIds(ui: PhoneUi): string[] {
+  if (ui.actsOn === false) return [];
   const n = ui.moreOn === false ? 4 : 3;
   const chosen = new Set((ui.acts || []).map(a => a?.id).filter(Boolean) as string[]);
   const pool = [...PHONE_ACT_IDS, 'slides', 'tasks', 'courses'].filter(id => !chosen.has(id));

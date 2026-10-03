@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, BookOpen, LayoutGrid, HelpCircle, ArrowRight, Loader2, FileQuestion, Sparkles, BookMarked } from 'lucide-react';
+import { Send, BookOpen, LayoutGrid, HelpCircle, ArrowRight, Loader2, FileQuestion, Sparkles, BookMarked, Box, Library, ListChecks, Clock, Copy, RotateCcw, ClipboardList, Presentation, Settings2 } from 'lucide-react';
+import { copyText } from '../ui/Dialogs';
 import { UserAccount, AppSettings } from '../../types';
 import { MODULE_REGISTRY, resolveModuleMeta, isModuleHidden } from '../../lib/modules';
 import { getSubjects, getSubjectsByIds, getAssignmentBank } from '../../lib/edu';
@@ -16,6 +17,8 @@ interface Props {
   // 'system' (nút nổi): hỏi đáp và hướng dẫn dùng hệ thống. 'knowledge' (trang riêng): chỉ
   // hỏi đáp kiến thức bài học từ nội dung công khai, không trả lời về hệ thống hay cách dùng.
   mode?: 'system' | 'knowledge';
+  // Giao diện điện thoại: màn chào có thẻ gợi ý, bong bóng hội thoại, ô nhập kính mờ nổi ở đáy.
+  phone?: boolean;
 }
 
 // Bỏ dấu tiếng Việt để tìm kiếm không phân biệt dấu.
@@ -102,7 +105,7 @@ const FAQS: { keys: string[]; title: string; body: string; goId?: string }[] = [
 ];
 
 // Phần lõi hội thoại của trợ lý, dùng chung cho nút nổi và trang Trợ lý.
-export default function AssistantChat({ currentUser, settings, onSwitchTab, onAfterNavigate, mode = 'system' }: Props) {
+export default function AssistantChat({ currentUser, settings, onSwitchTab, onAfterNavigate, mode = 'system', phone }: Props) {
   const knowledgeMode = mode === 'knowledge';
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -371,9 +374,19 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
     return { intro, aiAnswer, aiError, answers: [], knowledge, guides, faqs, features, lessons: lessonHits, questions, assignments: [] };
   };
 
+  // Câu hỏi gần đây (lưu trên máy này, theo từng chế độ)
+  const recentKey = `assistant_recent_${mode}_${currentUser?.id || ''}`;
+  const [recent, setRecent] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem(recentKey) || '[]').slice(0, 5); } catch { return []; } });
+  const remember = (t: string) => setRecent(prev => {
+    const next = [t, ...prev.filter(x => x.toLowerCase() !== t.toLowerCase())].slice(0, 5);
+    try { localStorage.setItem(recentKey, JSON.stringify(next)); } catch { /* bỏ qua */ }
+    return next;
+  });
+
   const submit = async (raw?: string) => {
     const text = (raw ?? input).trim();
     if (!text || loading) return;
+    remember(text);
     setMsgs(m => [...m, { role: 'user', text }]);
     setInput('');
     setLoading(true);
@@ -391,6 +404,198 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
   const greeting = knowledgeMode
     ? `Xin chào ${currentUser?.fullName?.split(' ').slice(-1)[0] || ''}. Mình là Trợ lý giáo dục, giúp hỏi đáp kiến thức bài học dựa trên bài giảng, câu hỏi và bài tập đã được chia sẻ công khai. Bạn muốn tìm hiểu điều gì?`
     : `Xin chào ${currentUser?.fullName?.split(' ').slice(-1)[0] || ''}. Mình là Trợ lý hệ thống, giúp hướng dẫn dùng và chỉ đường tới các chức năng. Bạn muốn làm gì?`;
+
+  // Phần trả lời của trợ lý (AI, đoạn trích, kiến thức, hướng dẫn, bài giảng, câu hỏi...), dùng chung máy tính và điện thoại.
+  const renderResult = (r: BotResult) => (
+    <div className="space-y-2">
+            <div className="rounded-2xl rounded-tl-sm bg-white px-3 py-2.5 text-[13px] text-slate-700 shadow-sm">{r.intro}</div>
+
+            {r.aiAnswer && (
+              <div className="rounded-2xl border border-brand/30 bg-brand-light/50 p-3">
+                <p className="mb-1 flex items-center gap-1.5 text-[10px] font-black uppercase text-brand"><Sparkles className="h-3.5 w-3.5" /> AI Gemini</p>
+                <p className="whitespace-pre-line text-[13.5px] leading-snug text-slate-800">{r.aiAnswer}</p>
+              </div>
+            )}
+            {r.aiError && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-800">Không dùng được AI ({r.aiError}). Dưới đây là kết quả tìm trong học liệu.</div>
+            )}
+
+            {r.answers.map((a, k) => (
+              <div key={`ans${k}`} className="rounded-2xl border border-brand/20 bg-brand-light/40 p-3">
+                <p className="text-[13.5px] leading-snug text-slate-800">{a.snippet}</p>
+                <button onClick={() => openLesson(a.lessonId)} className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:underline">Nguồn: {a.lessonTitle} <ArrowRight className="h-3 w-3" /></button>
+              </div>
+            ))}
+
+            {r.knowledge.map((kn, k) => (
+              <div key={`kn${k}`} className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+                <p className="flex items-center gap-1.5 text-[13px] font-bold text-slate-900"><BookMarked className="h-4 w-4 text-brand" /> {kn.title}</p>
+                <p className="mt-1 whitespace-pre-line text-[12.5px] leading-snug text-slate-600">{kn.content}</p>
+              </div>
+            ))}
+
+            {r.guides.map((g, k) => (
+              <div key={k} className="rounded-2xl border border-brand/20 bg-brand-light/40 p-3">
+                <p className="flex items-center gap-1.5 text-[13px] font-black text-slate-900"><Sparkles className="h-4 w-4 text-brand" /> {g.name}</p>
+                <p className="mt-1 text-[12.5px] leading-snug text-slate-600">{g.whatIs}</p>
+                <p className="mt-2 text-[10px] font-black uppercase text-slate-400">Cách dùng</p>
+                <ol className="mt-1 space-y-1">
+                  {g.howTo.map((step, si) => (
+                    <li key={si} className="flex gap-2 text-[12.5px] text-slate-700">
+                      <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-brand text-[9px] font-bold text-white">{si + 1}</span>
+                      <span className="min-w-0 flex-1">{step}</span>
+                    </li>
+                  ))}
+                </ol>
+                <button onClick={() => go(g.id)} className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-[11px] font-bold text-white hover:bg-brand-hover">Mở {g.name} <ArrowRight className="h-3 w-3" /></button>
+              </div>
+            ))}
+
+            {r.faqs.length > 0 && (
+              <div className="space-y-1.5">
+                {r.faqs.map((f, k) => (
+                  <div key={k} className="rounded-2xl border border-amber-100 bg-amber-50 p-3">
+                    <p className="flex items-center gap-1.5 text-[12px] font-bold text-amber-800"><HelpCircle className="h-3.5 w-3.5" /> {f.title}</p>
+                    <p className="mt-1 text-[12px] leading-snug text-amber-900/90">{f.body}</p>
+                    {f.goId && <button onClick={() => go(f.goId!)} className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:underline">Tới chức năng <ArrowRight className="h-3 w-3" /></button>}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {r.lessons.length > 0 && (
+              <div className="rounded-2xl border border-slate-100 bg-white p-2.5">
+                <p className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-black uppercase text-slate-400"><BookOpen className="h-3.5 w-3.5" /> Bài giảng</p>
+                <div className="space-y-1">
+                  {r.lessons.map(l => (
+                    <button key={l.id} onClick={() => openLesson(l.id)} className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left hover:bg-slate-50">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[12.5px] font-semibold text-slate-800">{l.title}</span>
+                        {l.subject && <span className="block truncate text-[10px] text-slate-400">{l.subject}</span>}
+                      </span>
+                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {r.questions.length > 0 && (
+              <div className="rounded-2xl border border-slate-100 bg-white p-2.5">
+                <p className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-black uppercase text-slate-400"><FileQuestion className="h-3.5 w-3.5" /> Câu hỏi trong ngân hàng</p>
+                <div className="space-y-1">
+                  {r.questions.map(qq => (
+                    <p key={qq.id} className="rounded-xl bg-slate-50 px-2.5 py-1.5 text-[12px] text-slate-700 line-clamp-2">{qq.text || '(câu hỏi trống)'}</p>
+                  ))}
+                </div>
+                {!knowledgeMode && <button onClick={() => go('edu_exam')} className="mt-2 inline-flex items-center gap-1 px-1 text-[11px] font-bold text-brand hover:underline">Mở phần Quizz <ArrowRight className="h-3 w-3" /></button>}
+              </div>
+            )}
+
+            {r.assignments.length > 0 && (
+              <div className="rounded-2xl border border-slate-100 bg-white p-2.5">
+                <p className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-black uppercase text-slate-400"><BookMarked className="h-3.5 w-3.5" /> Bài tập công khai</p>
+                <div className="space-y-1">
+                  {r.assignments.map(a => (
+                    <div key={a.id} className="rounded-xl bg-slate-50 px-2.5 py-2">
+                      <p className="text-[12.5px] font-semibold text-slate-800">{a.title}{a.subject ? ` · ${a.subject}` : ''}</p>
+                      {a.snippet && <p className="mt-0.5 text-[11px] text-slate-500 line-clamp-2">{a.snippet}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {r.features.length > 0 && (
+              <div className="rounded-2xl border border-slate-100 bg-white p-2.5">
+                <p className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-black uppercase text-slate-400"><LayoutGrid className="h-3.5 w-3.5" /> Chức năng</p>
+                <div className="space-y-1">
+                  {r.features.map(f => (
+                    <button key={f.id} onClick={() => go(f.id)} className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left hover:bg-slate-50">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[12.5px] font-semibold text-slate-800">{f.label}</span>
+                        <span className="block truncate text-[10px] text-slate-400">{f.desc}</span>
+                      </span>
+                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+    </div>
+  );
+
+  const name = currentUser?.fullName?.split(' ').slice(-1)[0] || '';
+  const SUG_META: Record<string, { icon: any; bg: string; fg: string; sub: string }> = knowledgeMode ? {
+    'Bài giảng về Blender': { icon: BookOpen, bg: '#fff7ed', fg: '#ea580c', sub: 'Tìm giáo trình, bài giảng liên quan' },
+    'Vertex là gì': { icon: Box, bg: '#eff6ff', fg: '#2563eb', sub: 'Giải thích khái niệm ngắn gọn' },
+    'Bài tập về dựng hình': { icon: Library, bg: '#fffbeb', fg: '#d97706', sub: 'Gợi ý bài tập có sẵn trong kho' },
+    'Câu hỏi ôn tập': { icon: ListChecks, bg: '#f0f9ff', fg: '#0284c7', sub: 'Lấy câu hỏi từ ngân hàng Quizz' },
+  } : {
+    'Tạo đề Quizz': { icon: ListChecks, bg: '#f0f9ff', fg: '#0284c7', sub: 'Các bước soạn và giao đề' },
+    'Nhập điểm ở đâu': { icon: ClipboardList, bg: '#ecfdf5', fg: '#059669', sub: 'Tìm chỗ nhập điểm cho lớp' },
+    'Tải bài giảng ra PDF': { icon: Presentation, bg: '#f5f3ff', fg: '#7c3aed', sub: 'Xuất bài giảng để in, gửi' },
+    'Thêm môn học mới': { icon: Settings2, bg: '#fff7ed', fg: '#ea580c', sub: 'Tạo môn để xếp học liệu' },
+  };
+  const lastQ = [...msgs].reverse().find(m => m.role === 'user') as { role: 'user'; text: string } | undefined;
+  const followUps = knowledgeMode
+    ? ['Giải thích thêm', 'Cho ví dụ cụ thể', 'Câu hỏi ôn tập', 'Bài tập liên quan']
+    : ['Hướng dẫn chi tiết hơn', 'Mở chức năng này ở đâu', 'Có cách nào nhanh hơn'];
+  const askFollow = (f: string) => submit(lastQ ? `${f} về ${lastQ.text}` : f);
+
+  // ===================== ĐIỆN THOẠI =====================
+  if (phone) return (
+    <>
+      <div ref={scrollRef} className="as-body">
+        {msgs.length === 0 && (
+          <div>
+            <div className="as-hello">
+              <div className="orb"><Sparkles /></div>
+              <h3>Chào {name || 'bạn'}, hôm nay bạn muốn {knowledgeMode ? 'tìm hiểu gì' : 'làm gì'}?</h3>
+              <p>{knowledgeMode ? 'Mình trả lời dựa trên học liệu công khai trong EduGo và luôn ghi rõ nguồn.' : 'Mình hướng dẫn cách dùng và chỉ đường tới đúng chức năng trong EduGo.'}</p>
+            </div>
+            <div className="as-sg">
+              {suggestions.map(s2 => { const m2 = SUG_META[s2]; const I = m2?.icon || Sparkles; return (
+                <button key={s2} type="button" onClick={() => submit(s2)}>
+                  <span className="ic" style={{ background: m2?.bg, color: m2?.fg }}><I /></span>
+                  <b>{s2}</b>{m2 && <small>{m2.sub}</small>}
+                </button>
+              ); })}
+            </div>
+            {recent.length > 0 && (
+              <>
+                <div className="as-sec"><Clock />Hỏi gần đây</div>
+                <div className="as-recent">{recent.map(r => <button key={r} type="button" onClick={() => submit(r)}><Clock /><span>{r}</span></button>)}</div>
+              </>
+            )}
+          </div>
+        )}
+        {msgs.map((m, i) => m.role === 'user' ? (
+          <div key={i} className="as-msg me"><div className="bub">{m.text}</div></div>
+        ) : (
+          <div key={i}>
+            <div className="as-msg ai">
+              <span className="av"><Sparkles /></span>
+              <div className="as-res">{renderResult(m.result)}</div>
+            </div>
+            <div className="as-acts">
+              <button type="button" onClick={() => copyText([m.result.aiAnswer, m.result.intro].filter(Boolean).join('\n\n')).then(() => {})}><Copy />Sao chép</button>
+              {(() => { const q = (msgs[i - 1] as any)?.text; return q ? <button type="button" onClick={() => submit(q)}><RotateCcw />Hỏi lại</button> : null; })()}
+            </div>
+          </div>
+        ))}
+        {loading && <div className="as-msg ai"><span className="av"><Sparkles /></span><div className="bub"><span className="as-typing"><i /><i /><i /></span></div></div>}
+      </div>
+      <div className="as-dock">
+        {msgs.length > 0 && !loading && <div className="as-chips">{followUps.map(f => <button key={f} type="button" onClick={() => askFollow(f)}>{f}</button>)}</div>}
+        <div className="as-cmp">
+          <textarea value={input} rows={1} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }} placeholder="Hỏi hoặc tìm gì đó..." enterKeyHint="send" />
+          <button type="button" className="send" onClick={() => submit()} disabled={!input.trim() || loading} aria-label="Gửi"><Send /></button>
+        </div>
+        {aiMode && <div className="as-hint"><Sparkles />Đang trả lời bằng AI Gemini{knowledgeMode ? ', có trích nguồn học liệu' : ''}</div>}
+      </div>
+    </>
+  );
 
   return (
     <>
@@ -413,122 +618,7 @@ export default function AssistantChat({ currentUser, settings, onSwitchTab, onAf
             <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-brand px-3 py-2 text-[13px] font-medium text-white">{m.text}</div>
           </div>
         ) : (
-          <div key={i} className="space-y-2">
-            <div className="rounded-2xl rounded-tl-sm bg-white px-3 py-2.5 text-[13px] text-slate-700 shadow-sm">{m.result.intro}</div>
-
-            {m.result.aiAnswer && (
-              <div className="rounded-2xl border border-brand/30 bg-brand-light/50 p-3">
-                <p className="mb-1 flex items-center gap-1.5 text-[10px] font-black uppercase text-brand"><Sparkles className="h-3.5 w-3.5" /> AI Gemini</p>
-                <p className="whitespace-pre-line text-[13.5px] leading-snug text-slate-800">{m.result.aiAnswer}</p>
-              </div>
-            )}
-            {m.result.aiError && (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-800">Không dùng được AI ({m.result.aiError}). Dưới đây là kết quả tìm trong học liệu.</div>
-            )}
-
-            {m.result.answers.map((a, k) => (
-              <div key={`ans${k}`} className="rounded-2xl border border-brand/20 bg-brand-light/40 p-3">
-                <p className="text-[13.5px] leading-snug text-slate-800">{a.snippet}</p>
-                <button onClick={() => openLesson(a.lessonId)} className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:underline">Nguồn: {a.lessonTitle} <ArrowRight className="h-3 w-3" /></button>
-              </div>
-            ))}
-
-            {m.result.knowledge.map((kn, k) => (
-              <div key={`kn${k}`} className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
-                <p className="flex items-center gap-1.5 text-[13px] font-bold text-slate-900"><BookMarked className="h-4 w-4 text-brand" /> {kn.title}</p>
-                <p className="mt-1 whitespace-pre-line text-[12.5px] leading-snug text-slate-600">{kn.content}</p>
-              </div>
-            ))}
-
-            {m.result.guides.map((g, k) => (
-              <div key={k} className="rounded-2xl border border-brand/20 bg-brand-light/40 p-3">
-                <p className="flex items-center gap-1.5 text-[13px] font-black text-slate-900"><Sparkles className="h-4 w-4 text-brand" /> {g.name}</p>
-                <p className="mt-1 text-[12.5px] leading-snug text-slate-600">{g.whatIs}</p>
-                <p className="mt-2 text-[10px] font-black uppercase text-slate-400">Cách dùng</p>
-                <ol className="mt-1 space-y-1">
-                  {g.howTo.map((step, si) => (
-                    <li key={si} className="flex gap-2 text-[12.5px] text-slate-700">
-                      <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-brand text-[9px] font-bold text-white">{si + 1}</span>
-                      <span className="min-w-0 flex-1">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-                <button onClick={() => go(g.id)} className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-[11px] font-bold text-white hover:bg-brand-hover">Mở {g.name} <ArrowRight className="h-3 w-3" /></button>
-              </div>
-            ))}
-
-            {m.result.faqs.length > 0 && (
-              <div className="space-y-1.5">
-                {m.result.faqs.map((f, k) => (
-                  <div key={k} className="rounded-2xl border border-amber-100 bg-amber-50 p-3">
-                    <p className="flex items-center gap-1.5 text-[12px] font-bold text-amber-800"><HelpCircle className="h-3.5 w-3.5" /> {f.title}</p>
-                    <p className="mt-1 text-[12px] leading-snug text-amber-900/90">{f.body}</p>
-                    {f.goId && <button onClick={() => go(f.goId!)} className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-brand hover:underline">Tới chức năng <ArrowRight className="h-3 w-3" /></button>}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {m.result.lessons.length > 0 && (
-              <div className="rounded-2xl border border-slate-100 bg-white p-2.5">
-                <p className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-black uppercase text-slate-400"><BookOpen className="h-3.5 w-3.5" /> Bài giảng</p>
-                <div className="space-y-1">
-                  {m.result.lessons.map(l => (
-                    <button key={l.id} onClick={() => openLesson(l.id)} className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left hover:bg-slate-50">
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[12.5px] font-semibold text-slate-800">{l.title}</span>
-                        {l.subject && <span className="block truncate text-[10px] text-slate-400">{l.subject}</span>}
-                      </span>
-                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-300" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {m.result.questions.length > 0 && (
-              <div className="rounded-2xl border border-slate-100 bg-white p-2.5">
-                <p className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-black uppercase text-slate-400"><FileQuestion className="h-3.5 w-3.5" /> Câu hỏi trong ngân hàng</p>
-                <div className="space-y-1">
-                  {m.result.questions.map(qq => (
-                    <p key={qq.id} className="rounded-xl bg-slate-50 px-2.5 py-1.5 text-[12px] text-slate-700 line-clamp-2">{qq.text || '(câu hỏi trống)'}</p>
-                  ))}
-                </div>
-                {!knowledgeMode && <button onClick={() => go('edu_exam')} className="mt-2 inline-flex items-center gap-1 px-1 text-[11px] font-bold text-brand hover:underline">Mở phần Quizz <ArrowRight className="h-3 w-3" /></button>}
-              </div>
-            )}
-
-            {m.result.assignments.length > 0 && (
-              <div className="rounded-2xl border border-slate-100 bg-white p-2.5">
-                <p className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-black uppercase text-slate-400"><BookMarked className="h-3.5 w-3.5" /> Bài tập công khai</p>
-                <div className="space-y-1">
-                  {m.result.assignments.map(a => (
-                    <div key={a.id} className="rounded-xl bg-slate-50 px-2.5 py-2">
-                      <p className="text-[12.5px] font-semibold text-slate-800">{a.title}{a.subject ? ` · ${a.subject}` : ''}</p>
-                      {a.snippet && <p className="mt-0.5 text-[11px] text-slate-500 line-clamp-2">{a.snippet}</p>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {m.result.features.length > 0 && (
-              <div className="rounded-2xl border border-slate-100 bg-white p-2.5">
-                <p className="mb-1.5 flex items-center gap-1.5 px-1 text-[10px] font-black uppercase text-slate-400"><LayoutGrid className="h-3.5 w-3.5" /> Chức năng</p>
-                <div className="space-y-1">
-                  {m.result.features.map(f => (
-                    <button key={f.id} onClick={() => go(f.id)} className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left hover:bg-slate-50">
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[12.5px] font-semibold text-slate-800">{f.label}</span>
-                        <span className="block truncate text-[10px] text-slate-400">{f.desc}</span>
-                      </span>
-                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-300" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <div key={i}>{renderResult(m.result)}</div>
         ))}
 
         {loading && <div className="flex items-center gap-2 px-2 text-[12px] text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> {aiMode ? 'AI đang trả lời...' : 'Đang tìm...'}</div>}

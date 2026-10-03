@@ -60,7 +60,8 @@ export default function PhoneHome() {
   const shownReminders = reminders.filter(r => !off.has(r.id)).slice(0, 3);
 
   // ===== 4 nút tròn trên đầu trang: admin chọn trong Cấu hình hệ thống, thiếu quyền thì lấy chức năng khác =====
-  const actList = resolveActs(phoneUi(settings), id => can(id) && phoneMode(id, settings) !== 'laptop', id => { const m = find(id); return m ? phoneLabel(m) : undefined; });
+  // Admin tắt cụm nút tròn: không hiện hàng nút, các chức năng đó trở về lưới phím tắt bên dưới.
+  const actList = phoneUi(settings).actsOn === false ? [] : resolveActs(phoneUi(settings), id => can(id) && phoneMode(id, settings) !== 'laptop', id => { const m = find(id); return m ? phoneLabel(m) : undefined; });
   const actMods = actList.filter(a => a.id !== 'all_features');
   const acts: TopAct[] = actList.map(a => ({ key: a.id, label: a.label, icon: a.icon, run: () => open(a.id) }));
   const actIds = new Set(actMods.map(a => a.id));
@@ -109,7 +110,8 @@ export default function PhoneHome() {
 
   const [expand, setExpand] = useState(false);
   const gridAll = order.map(find).filter(Boolean) as PhoneModule[];
-  const gridShown = gridAll.slice(0, expand ? 16 : 8);
+  // Hiện 4 chức năng, bấm mũi tên hiện thêm 4 (tổng 8, admin xếp sẵn rồi tự đổi theo thói quen). Còn lại ở Tất cả chức năng.
+  const gridShown = gridAll.slice(0, expand ? 8 : 4);
 
   return (
     <div>
@@ -128,7 +130,7 @@ export default function PhoneHome() {
             </button>
           ); })}
         </div>
-        {gridAll.length > 8 && (
+        {gridAll.length > 4 && (
           <button type="button" className="more" aria-label={expand ? 'Thu gọn' : 'Xem thêm chức năng'} onClick={() => setExpand(v => !v)}>
             <ChevronDown style={{ transform: expand ? 'rotate(180deg)' : undefined }} />
           </button>
