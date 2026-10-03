@@ -87,9 +87,10 @@ const Ic = {
 
 const isExternal = (link: string) => /^https?:\/\//i.test(link) && !link.startsWith(window.location.origin);
 
-export default function PhoneWelcome({ settings, users = [], onLoginSuccess, initialMode = 'login', preview }: {
+export default function PhoneWelcome({ settings, users = [], onLoginSuccess, initialMode = 'login', preview, onClosePreview }: {
   settings?: AppSettings; users?: UserAccount[]; onLoginSuccess?: (u: UserAccount) => void;
   initialMode?: 'login' | 'register';
+  onClosePreview?: () => void; // đang đăng nhập mà mở xem thử bằng link ?chao=1: hiện thanh nhắc và nút đóng, không đăng nhập thật
   preview?: PhoneWelcomeConfig; // xem trước trong cài đặt admin: dùng cấu hình đang sửa, không đăng nhập thật
 }) {
   const [loaded, setLoaded] = useState<PhoneWelcomeConfig>(() => getCachedLanding().phone || {});
@@ -161,6 +162,7 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
   const switchMode = (m: 'login' | 'register') => { setMode(m); setMsg(null); setShow(false); };
   const doLogin = async (e: React.FormEvent) => {
     e.preventDefault(); if (preview || busy) return;
+    if (onClosePreview) { setMsg({ ok: true, text: 'Đây là bản xem thử khi bạn đang đăng nhập, nút Đăng nhập không đổi tài khoản.' }); return; }
     if (!u.trim() || !p) { setMsg({ text: 'Nhập email hoặc tên đăng nhập và mật khẩu.' }); return; }
     setBusy(true); setMsg(null);
     try { const user = await loginWithPassword(users, u, p); onLoginSuccess?.(user); }
@@ -169,6 +171,7 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
   };
   const doRegister = async (e: React.FormEvent) => {
     e.preventDefault(); if (preview || busy) return;
+    if (onClosePreview) { setMsg({ ok: true, text: 'Đây là bản xem thử khi bạn đang đăng nhập, nút Đăng ký không tạo tài khoản.' }); return; }
     setBusy(true); setMsg(null);
     try { const user = await registerAccount(name, mail, np); onLoginSuccess?.(user); }
     catch (err: any) { setMsg({ text: err?.message || 'Không tạo được tài khoản. Vui lòng thử lại.' }); }
@@ -193,6 +196,7 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
           : <svg viewBox="0 0 390 844" preserveAspectRatio="xMidYMin slice" dangerouslySetInnerHTML={{ __html: PW_ART[artKey].svg(color) }} />}
         <div className="shade" style={{ background: `linear-gradient(180deg,rgba(0,0,0,${shade}) 0%,rgba(0,0,0,${shade / 2}) 60%,transparent 100%)` }} />
       </div>
+      {onClosePreview && <div className="pvbar">Xem thử màn chào khi chưa đăng nhập<button type="button" onClick={onClosePreview}>Đóng</button></div>}
       <div className="view">
         <div className="top">
           <div className="logo"><span className="mk">{settings?.webAppIcon ? <img src={settings.webAppIcon} alt="" /> : Ic.cap}</span><span>EduGo</span></div>
@@ -208,6 +212,7 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
 
         {mode === 'login' && banners.length > 0 && (
           <div className="ban">
+            <div className="win">
             <div className="trk" style={{ transform: `translateX(-${bi * 100}%)` }}
               onPointerDown={e => { x0.current = e.clientX; moved.current = false; }}
               onPointerUp={e => {
@@ -217,7 +222,7 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
               }}>
               {banners.map(b => (
                 <div key={b.id} role={b.link ? 'link' : undefined} className={`slide ${b.image ? 'img' : ''}`} onClick={() => openBanner(b)}
-                  style={b.image ? { backgroundImage: `url(${b.image})` } : { background: PW_TONES[(b.tone ?? 0) % PW_TONES.length] }}>
+                  style={b.image ? { backgroundImage: `url(${b.image}), ${PW_TONES[(b.tone ?? 0) % PW_TONES.length]}` } : { background: PW_TONES[(b.tone ?? 0) % PW_TONES.length] }}>
                   {b.tag && <span className="tg">{b.tag}</span>}
                   <b>{b.title}</b>
                   {b.sub && <span className="s">{b.sub}</span>}
@@ -225,6 +230,7 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
                   {!b.image && <svg className="dec" viewBox="0 0 100 100" aria-hidden><circle cx="70" cy="70" r="45" fill="#fff" opacity=".15" /><circle cx="72" cy="72" r="28" fill="#fff" opacity=".18" /><path d="M58 64 72 57l14 7-14 7z" fill="#fff" opacity=".9" /></svg>}
                 </div>
               ))}
+            </div>
             </div>
             {banners.length > 1 && <div className="dots">{banners.map((b, i) => <i key={b.id} className={i === bi ? 'on' : ''} />)}</div>}
           </div>

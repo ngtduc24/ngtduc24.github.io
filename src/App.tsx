@@ -176,6 +176,7 @@ export default function App() {
     return 'landing';
   });
   const [loginMode, setLoginMode] = useState<'login' | 'register'>('login');
+  const [welcomePreview, setWelcomePreview] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('chao') === '1');
 
   // Website của người dùng: ngtduc24.github.io/<địa chỉ> hoặc ?site=<địa chỉ>. Không có địa chỉ là trang cũ của admin.
   const [siteState, setSiteState] = useState<{ slug: string; status: 'loading' | 'ok' | 'missing'; rec?: SiteRecord | null }>({ slug: '', status: 'ok' });
@@ -945,6 +946,13 @@ export default function App() {
         <p className="text-xs font-semibold text-slate-400">Đang tải cấu hình...</p>
       </div>
     );
+  }
+
+  // Xem thử màn chào chưa đăng nhập khi đang đăng nhập (link ?chao=1, admin mở từ Cấu hình hệ thống).
+  if (welcomePreview) {
+    return <PhoneWelcome settings={settings} users={users} onClosePreview={() => {
+      const url = new URL(window.location.href); url.searchParams.delete('chao'); window.history.replaceState({}, '', url.toString()); setWelcomePreview(false); if (currentUser) setEntryView('admin');
+    }} />;
   }
 
   // Điện thoại chưa đăng nhập: màn chào có sẵn ô đăng nhập, đăng ký ngay trên màn hình (thay trang đầu và trang đăng nhập).

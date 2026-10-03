@@ -6,6 +6,7 @@ import type { AppSettings, ModuleOverride } from '../../types';
 import { MODULE_REGISTRY } from '../../lib/modules';
 import { phoneMode, phoneUi, PhoneUi, PhoneMode, PHONE_UI_KEY, CTA_TARGETS, NOTI_DEFAULT, PHONE_GRID_SKIP, phoneActIds, navGlassStyle, gridGlassVars } from '../../lib/device';
 import { NotiBanner } from './PhoneNotifications';
+import { PhoneWelcomeSettingsBox } from './PhoneWelcomeSettings';
 import MediaSourcePicker from '../MediaSourcePicker';
 import { PhoneTop, resolveActs } from './PhoneHome';
 import './phone.css';
@@ -42,8 +43,11 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
         <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2"><Smartphone className="w-4 h-4 text-brand" /> Giao diện trên điện thoại</h2>
-        <p className="text-[13px] text-slate-500 mt-1">Chỉnh đầu Trang chủ, băng giới thiệu ở trang Thông báo và cách dùng từng chức năng khi mọi người mở EduGo bằng điện thoại. Mục này chỉ hiện với quản trị viên trên máy tính. Thay đổi được lưu tự động như các mục khác.</p>
+        <p className="text-[13px] text-slate-500 mt-1">Chỉnh màn chào khi chưa đăng nhập, đầu Trang chủ, băng giới thiệu ở trang Thông báo và cách dùng từng chức năng khi mọi người mở EduGo bằng điện thoại. Mục này chỉ hiện với quản trị viên trên máy tính. Thay đổi được lưu tự động như các mục khác.</p>
       </div>
+
+      {/* Màn chào khi chưa đăng nhập (ô đăng nhập, đăng ký ngay trên màn hình) */}
+      <PhoneWelcomeSettingsBox />
 
       {/* Đầu Trang chủ điện thoại */}
       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Check, ExternalLink, Loader2 } from 'lucide-react';
 import { ArrowDown, ArrowUp, Plus, RotateCcw, Smartphone, Trash2 } from 'lucide-react';
 import MediaSourcePicker from '../MediaSourcePicker';
-import { newBannerId, PhoneWelcomeConfig, PhoneWelcomeBanner } from '../../lib/landing';
+import { newBannerId, PhoneWelcomeConfig, PhoneWelcomeBanner, getLandingConfig, saveLandingConfig, LandingConfig } from '../../lib/landing';
 import PhoneWelcome, { PW_ART, PW_COLORS, PW_DEFAULT_BANNERS, PW_TONES } from './PhoneWelcome';
 
 // Cài đặt màn chào điện thoại khi chưa đăng nhập (Cấu hình hệ thống, mục Trang đầu). Có xem trước ngay bên phải.
@@ -148,11 +149,15 @@ export default function PhoneWelcomeSettings({ value, onChange }: { value: Phone
                     <input className={inputCls} value={b.btn || ''} onChange={e => setB(b.id, { btn: e.target.value })} placeholder="Chữ trên nút, ví dụ Xem ngay" />
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
+                    <MediaSourcePicker onSelect={url => setB(b.id, { image: url })} accept="image/*" resourceType="image" folder="system/landing" category="Ảnh cấu hình hệ thống" label={b.image ? 'Đổi ảnh banner' : 'Tải ảnh banner'} />
+                    {b.image && <button type="button" onClick={() => setB(b.id, { image: '' })} className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50">Bỏ ảnh, dùng màu</button>}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-bold text-slate-500">{b.image ? 'Màu dự phòng khi ảnh lỗi' : 'Màu nền banner'}</span>
                     {PW_TONES.map((tn, k) => (
-                      <button key={k} type="button" onClick={() => setB(b.id, { tone: k, image: '' })} aria-label={`Dải màu ${k + 1}`}
-                        className={`h-6 w-6 rounded-full ${!b.image && (b.tone ?? 0) === k ? 'ring-2 ring-slate-800 ring-offset-1' : ''}`} style={{ background: tn }} />
+                      <button key={k} type="button" onClick={() => setB(b.id, { tone: k })} aria-label={`Dải màu ${k + 1}`}
+                        className={`h-6 w-6 rounded-full ${(b.tone ?? 0) === k ? 'ring-2 ring-slate-800 ring-offset-1' : ''}`} style={{ background: tn }} />
                     ))}
-                    <MediaSourcePicker onSelect={url => setB(b.id, { image: url })} accept="image/*" resourceType="image" folder="system/landing" category="Ảnh cấu hình hệ thống" label={b.image ? 'Đổi ảnh' : 'Dùng ảnh'} />
                     <span className="ml-auto flex items-center gap-1">
                       <button type="button" title="Lên trên" onClick={() => moveB(i, -1)} disabled={i === 0} className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-30"><ArrowUp className="h-4 w-4" /></button>
                       <button type="button" title="Xuống dưới" onClick={() => moveB(i, 1)} disabled={i === banners.length - 1} className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-30"><ArrowDown className="h-4 w-4" /></button>
@@ -178,6 +183,33 @@ export default function PhoneWelcomeSettings({ value, onChange }: { value: Phone
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Dùng trong Cấu hình hệ thống, mục Giao diện trên điện thoại: tự tải cấu hình trang đầu, sửa phần màn chào, tự lưu sau 1 giây.
+// Lưu cùng chỗ với trang đầu (bảng portfolio_settings) vì khách chưa đăng nhập cũng phải đọc được.
+export function PhoneWelcomeSettingsBox() {
+  const [cfg, setCfg] = useState<LandingConfig | null>(null);
+  const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => { getLandingConfig().then(setCfg).catch(() => setCfg({ banners: [], defaultApps: [] })); }, []);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  if (!cfg) return <div className="rounded-2xl border border-slate-100 bg-white p-8 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" /> Đang tải màn chào...</div>;
+  const onChange = (phone: PhoneWelcomeConfig) => {
+    const next = { ...cfg, phone }; setCfg(next); setState('saving');
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(async () => { try { await saveLandingConfig(next); setState('saved'); } catch { setState('error'); } }, 900);
+  };
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <a href="/?chao=1" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-brand hover:text-brand"><ExternalLink className="h-3.5 w-3.5" /> Mở xem thử toàn màn hình</a>
+        <span className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-semibold ${state === 'error' ? 'bg-rose-50 text-rose-600' : state === 'saving' ? 'bg-slate-100 text-slate-500' : 'bg-brand-light text-brand'}`}>
+          {state === 'saving' ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Đang lưu...</> : state === 'error' ? 'Chưa lưu được, thử lại' : <><Check className="h-3.5 w-3.5" /> Tự động lưu</>}
+        </span>
+      </div>
+      <PhoneWelcomeSettings value={cfg.phone} onChange={onChange} />
     </div>
   );
 }

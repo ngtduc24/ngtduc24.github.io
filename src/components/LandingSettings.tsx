@@ -4,7 +4,6 @@ import MediaSourcePicker from './MediaSourcePicker';
 import { MODULE_REGISTRY } from '../lib/modules';
 import { getLandingConfig, saveLandingConfig, newBannerId, LandingBanner, LandingConfig, EMPTY_LANDING } from '../lib/landing';
 import { setDefaultApps } from '../lib/moduleAccess';
-import PhoneWelcomeSettings from './phone/PhoneWelcomeSettings';
 
 // Cài đặt trang đầu EduGo: nội dung giới thiệu, lưới banner, ứng dụng mặc định cho tài khoản tự đăng ký.
 // Thay đổi tự lưu sau khi ngừng gõ 1 giây, giống các mục cài đặt khác.
@@ -61,9 +60,6 @@ export default function LandingSettings() {
           {state === 'saving' ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Đang lưu...</> : state === 'error' ? 'Chưa lưu được, thử lại' : <><Check className="h-3.5 w-3.5" /> Tự động lưu</>}
         </span>
       </div>
-
-      {/* Màn chào trên điện thoại khi chưa đăng nhập */}
-      <PhoneWelcomeSettings value={cfg.phone} onChange={phone => update({ ...cfg, phone })} />
 
       {/* Nội dung giới thiệu */}
       <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">

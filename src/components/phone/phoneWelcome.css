@@ -31,7 +31,9 @@
 .pw .hello h2 { font-size: 25px; line-height: 1.2; font-weight: 800; margin: 4px 0 0; max-width: 300px; text-shadow: 0 2px 12px rgba(0,0,0,.18); }
 
 .pw .ban { margin: 0 16px; position: relative; }
-.pw .ban .trk { display: flex; transition: transform .45s ease; border-radius: 20px; overflow: hidden; touch-action: pan-y; }
+/* Khung cắt banner đứng yên, dải banner bên trong trượt ngang: không bị lòi banner ra ngoài khi chuyển */
+.pw .ban .win { border-radius: 20px; overflow: hidden; -webkit-mask-image: -webkit-radial-gradient(white, black); }
+.pw .ban .trk { display: flex; transition: transform .45s ease; touch-action: pan-y; }
 .pw .slide { flex: 0 0 100%; min-height: 132px; position: relative; overflow: hidden; color: #fff; padding: 16px 18px; display: flex; flex-direction: column; justify-content: center; text-align: left; background-size: cover; background-position: center; }
 .pw .slide.img::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(15,23,42,.62), rgba(15,23,42,.1)); }
 .pw .slide > * { position: relative; }
@@ -74,3 +76,13 @@
 .pw .msg.ok { background: rgba(236,253,245,.92); color: #047857; }
 .pw .foot { height: 22px; }
 .pw.pv .view { padding-top: 26px; }
+
+/* Màn rộng (máy tính bảng, xem thử trên máy tính): nội dung gom vào cột giữa như điện thoại */
+.pw .view { container-type: inline-size; }
+@container (min-width: 560px) {
+  .pw .view > .top, .pw .view > .hello { width: 100%; max-width: 460px; margin-left: auto; margin-right: auto; }
+  .pw .view > .ban, .pw .view > .card { width: calc(100% - 32px); max-width: 428px; margin-left: auto; margin-right: auto; }
+}
+.pw .pvbar { position: absolute; left: 50%; top: calc(env(safe-area-inset-top) + 8px); transform: translateX(-50%); z-index: 5; display: flex; align-items: center; gap: 8px;
+  padding: 6px 6px 6px 12px; border-radius: 999px; background: rgba(15,23,42,.72); color: #fff; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.pw .pvbar button { background: #fff; color: #0f172a; border-radius: 999px; padding: 4px 10px; font-weight: 700; }
