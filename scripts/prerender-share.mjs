@@ -165,6 +165,7 @@ async function ogImage(raw, folder, id) {
   return localOg(url, folder, id);
 }
 
+let APP_ICON_TAGS = '';
 function buildSharePage({ title, description, image, targetUrl, shareUrl, icon = '', keywords = '', siteName = '' }) {
   const safeTitle = escapeHtml(title);
   const safeDescription = escapeHtml(description);
@@ -192,7 +193,8 @@ function buildSharePage({ title, description, image, targetUrl, shareUrl, icon =
     <meta name="description" content="${safeDescription}" />
     <link rel="canonical" href="${escapeHtml(shareUrl)}" />${icon ? `
     <link rel="icon" href="${escapeHtml(icon)}" />
-    <link rel="apple-touch-icon" href="${escapeHtml(icon)}" />` : ''}${keywords ? `
+    <link rel="apple-touch-icon" href="${escapeHtml(icon)}" />` : APP_ICON_TAGS ? `
+    ${APP_ICON_TAGS}` : ''}${keywords ? `
     <meta name="keywords" content="${escapeHtml(keywords)}" />` : ''}
 
     <meta property="og:type" content="${siteName ? 'website' : 'article'}" />
@@ -242,6 +244,70 @@ async function applyDefaultShareImage(image) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Biểu tượng web (favicon) đồng bộ cho mọi trang
+// ---------------------------------------------------------------------------
+
+/**
+ * Lấy biểu tượng admin đặt ở Cấu hình hệ thống (cột web_app_icon), xuất thành các tệp ảnh tĩnh
+ * (favicon, biểu tượng màn hình chính iPhone và Android) rồi gắn vào mọi trang HTML đã build,
+ * để thẻ trình duyệt, kết quả tìm kiếm, link chia sẻ và biểu tượng thêm ra màn hình chính đều giống nhau.
+ * Trả về đoạn thẻ link để gắn vào các trang chia sẻ, chuỗi rỗng nếu chưa có biểu tượng.
+ */
+async function buildAppIcon() {
+  try {
+    const rows = await fetchJson(`${SUPABASE_URL}/rest/v1/app_settings?select=web_app_icon,web_app_title&id=eq.general_config`);
+    const raw = Array.isArray(rows) && rows[0]?.web_app_icon ? String(rows[0].web_app_icon) : '';
+    const name = (Array.isArray(rows) && rows[0]?.web_app_title) || 'EduGo';
+    if (!raw) return '';
+    let buf;
+    const m = /^data:[^;,]+;base64,(.*)$/s.exec(raw);
+    if (m) buf = Buffer.from(m[1], 'base64');
+    else {
+      const url = toAbsoluteUrl(raw);
+      if (!url) return '';
+      const res = await fetch(url);
+      if (!res.ok) return '';
+      buf = Buffer.from(await res.arrayBuffer());
+    }
+    const sharp = await getSharp();
+    if (!sharp) return '';
+    const png = size => sharp(buf, { failOn: 'none' }).resize(size, size, { fit: 'cover' }).png().toBuffer();
+    const [p32, p180, p192, p512] = await Promise.all([png(32), png(180), png(192), png(512)]);
+    await Promise.all([
+      writeFile(path.join(DIST_DIR, 'favicon-32.png'), p32),
+      writeFile(path.join(DIST_DIR, 'favicon.ico'), p32),
+      writeFile(path.join(DIST_DIR, 'apple-touch-icon.png'), p180),
+      writeFile(path.join(DIST_DIR, 'icon-192.png'), p192),
+      writeFile(path.join(DIST_DIR, 'icon-512.png'), p512),
+      writeFile(path.join(DIST_DIR, 'manifest.webmanifest'), JSON.stringify({
+        name, short_name: name, start_url: '/', display: 'standalone', background_color: '#ffffff',
+        icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }, { src: '/icon-512.png', sizes: '512x512', type: 'image/png' }],
+      }), 'utf8'),
+    ]);
+    // Đổi biểu tượng thì đổi mã phiên bản để trình duyệt không giữ ảnh cũ.
+    let h = 0; for (const b of p32) h = (h * 31 + b) >>> 0;
+    const v = h.toString(36);
+    const tags = `<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=${v}" data-app-icon />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=${v}" data-app-icon />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=${v}" data-app-icon />
+    <link rel="manifest" href="/manifest.webmanifest?v=${v}" />`;
+    for (const file of ['index.html', '404.html', 'khoiphuc.html']) {
+      try {
+        const fp = path.join(DIST_DIR, file);
+        const html = await readFile(fp, 'utf8');
+        if (html.includes('data-app-icon')) continue;
+        await writeFile(fp, html.replace('</head>', `    ${tags}\n  </head>`), 'utf8');
+      } catch { /* trang không có trong bản build */ }
+    }
+    console.log('Đã gắn biểu tượng web cho các trang.');
+    return tags;
+  } catch (error) {
+    console.warn('Bỏ qua biểu tượng web:', error?.message || error);
+    return '';
+  }
+}
+
 /** Chạy lần lượt theo nhóm nhỏ để không tải dồn quá nhiều ảnh cùng lúc. */
 async function inBatches(items, size, fn) {
   for (let i = 0; i < items.length; i += size) await Promise.all(items.slice(i, i + size).map(fn));
@@ -252,6 +318,8 @@ async function run() {
     console.warn('Thiếu cấu hình Supabase nên bỏ qua bước tạo trang chia sẻ.');
     return;
   }
+
+  APP_ICON_TAGS = await buildAppIcon();
 
   let fallbackImage = '';
   try {

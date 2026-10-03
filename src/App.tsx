@@ -408,14 +408,20 @@ export default function App() {
   }, [currentTab, entryView, settings.webAppTitle]);
 
   useEffect(() => {
+    // Biểu tượng trên thẻ trình duyệt theo ảnh admin vừa đặt (mọi thẻ link icon, kể cả các thẻ do bước build gắn sẵn),
+    // để đổi biểu tượng là thấy ngay trên mọi trang mà không chờ build lại. Biểu tượng màn hình chính iPhone giữ tệp tĩnh.
     if (settings.webAppIcon) {
-      let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
-      if (!link) {
-        link = document.createElement('link');
+      const links = Array.from(document.querySelectorAll<HTMLLinkElement>("link[rel~='icon']"));
+      if (!links.length) {
+        const link = document.createElement('link');
         link.rel = 'icon';
         document.head.appendChild(link);
+        links.push(link);
       }
-      link.href = settings.webAppIcon;
+      links.forEach(l => { l.href = settings.webAppIcon!; l.removeAttribute('type'); });
+      if (!document.querySelector("link[rel='apple-touch-icon']")) {
+        const a = document.createElement('link'); a.rel = 'apple-touch-icon'; a.href = settings.webAppIcon; document.head.appendChild(a);
+      }
     }
   }, [settings.webAppIcon]);
 
