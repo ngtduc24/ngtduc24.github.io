@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Search, Bell, ClipboardList, CircleCheck, GraduationCap, Library, X, Sparkles, CalendarDays, Clock, Presentation, Hourglass, BookOpen, MoreHorizontal, ChevronDown, Hand } from 'lucide-react';
+import { Search, Bell, ClipboardList, CircleCheck, GraduationCap, Library, X, Sparkles, CalendarDays, Clock, Presentation, Hourglass, BookOpen, MoreHorizontal, ChevronDown, Hand, ChevronLeft, Home } from 'lucide-react';
 import { usePhone, usePhoneModules, ModIcon, PhoneModule, phoneLabel } from './PhoneShell';
 import { useTasks } from '../TaskContext';
 import { phoneMode, phoneUi, PhoneUi, CTA_TARGETS, PHONE_GRID_SKIP } from '../../lib/device';
@@ -191,9 +191,11 @@ export const tone = (c?: string) => TONES[c || ''] || TONES.emerald;
 export interface TopAct { key: string; label: string; icon: any; run: () => void }
 
 // Đầu Trang chủ điện thoại. Dùng chung cho Trang chủ và khung xem trước trong Cấu hình hệ thống.
-export function PhoneTop({ settings, ui: uiOverride, name, avatar, unread, acts, onProfile, onSearch, onBell }: {
-  settings?: AppSettings; ui?: PhoneUi; name: string; avatar?: string; unread: number; acts: TopAct[];
+export function PhoneTop({ settings, ui: uiOverride, name, avatar, unread, acts, onProfile, onSearch, onBell, nav }: {
+  settings?: AppSettings; ui?: PhoneUi; name?: string; avatar?: string; unread?: number; acts: TopAct[];
   onProfile?: () => void; onSearch?: () => void; onBell?: () => void;
+  // Dùng trong chức năng (ví dụ Lớp học): thay lời chào bằng nút quay lại, tên chức năng và nút về Trang chủ.
+  nav?: { title: string; onBack: () => void; onHome: () => void; right?: React.ReactNode };
 }) {
   const ui = uiOverride || phoneUi(settings);
   const show = ui.bannerOn !== false;
@@ -205,14 +207,23 @@ export function PhoneTop({ settings, ui: uiOverride, name, avatar, unread, acts,
   return (
     <div className={`ph-top ${img ? 'has-img' : ''}`} style={img ? { backgroundImage: `url(${img})`, backgroundPosition: pos || 'center' } : undefined}>
       {img && <div className="shade" />}
+      {nav ? (
+        <div className="hi nv">
+          <button type="button" className="ib bk" onClick={nav.onBack} aria-label="Quay lại"><ChevronLeft /></button>
+          <b className="nt">{nav.title}</b>
+          {nav.right}
+          <button type="button" className="ib" onClick={nav.onHome} aria-label="Về Trang chủ"><Home /></button>
+        </div>
+      ) : (
       <div className="hi">
         <button type="button" className="me" onClick={onProfile} aria-label="Mở trang cá nhân">
-          <span className="lg">{avatar ? <img src={avatar} alt="" /> : initials(name)}</span>
+          <span className="lg">{avatar ? <img src={avatar} alt="" /> : initials(name || '')}</span>
           <span className="t"><span>Xin chào <Hand /></span><b>{name}</b></span>
         </button>
         <button type="button" className="ib" onClick={onSearch} aria-label="Tìm chức năng"><Search /></button>
-        <button type="button" className="ib" onClick={onBell} aria-label="Thông báo"><Bell />{unread > 0 && <span className="d" />}</button>
+        <button type="button" className="ib" onClick={onBell} aria-label="Thông báo"><Bell />{(unread || 0) > 0 && <span className="d" />}</button>
       </div>
+      )}
       {show && (ui.titleOn !== false || ui.descOn !== false) && (
         <div className="ht">
           {ui.titleOn !== false && <b>{title}</b>}

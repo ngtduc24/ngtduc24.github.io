@@ -21,7 +21,8 @@ import {
   CheckCircle2,
   ClipboardList,
   FileCheck2,
-  UserPlus
+  UserPlus,
+  Monitor
 } from 'lucide-react';
 import { EduClass, EduSchool } from '../../types/edu';
 import { getClasses, getSchools, getSharedEdu, deleteSchool, deleteClass, saveSchool, saveClass, getClassUsers, getAssignments, getSubmissions } from '../../lib/edu';
@@ -32,7 +33,9 @@ import { usePhoneMaybe, PhoneActionGrid } from '../phone/PhoneShell';
 import { PhoneExt, PhoneSearch, PhoneSeg, PhoneChips, PhoneChip, PhoneSheet, PhoneMenuSheet, PhoneFab, PhoneEmpty, bandOf } from '../phone/PhoneKit';
 import { askText } from '../ui/Dialogs';
 import { getGrades } from '../../lib/edu';
-import { phoneMode } from '../../lib/device';
+import { phoneMode, phoneUi } from '../../lib/device';
+import { PhoneTop, tone } from '../phone/PhoneHome';
+import { MODULE_REGISTRY } from '../../lib/modules';
 import ShareDialog from '../ui/ShareDialog';
 import type { CollabType } from '../../lib/collab';
 import { collaboratorsByResource } from '../../lib/collab';
@@ -61,6 +64,12 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const phone = usePhoneMaybe();
+  // Điện thoại: đầu trang Lớp học có nút quay lại và về Trang chủ riêng, nên ẩn thanh trên của ứng dụng.
+  useEffect(() => {
+    if (!phone) return;
+    document.documentElement.classList.add('ph-own-head');
+    return () => document.documentElement.classList.remove('ph-own-head');
+  }, [!!phone]); // eslint-disable-line react-hooks/exhaustive-deps
   // Mục của mình (không có access) hoặc mục người khác chia sẻ mà mình là chủ.
   const mine = (x: { access?: EduSchool['access'] }) => !x.access || x.access.owner;
   const [classCollabs, setClassCollabs] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
@@ -319,11 +328,56 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
           <ShareDialog type={sharing.type} resourceId={sharing.id} resourceTitle={sharing.title} ownerId={sharing.ownerId}
             currentUser={currentUser} canManage={sharing.canManage} onClose={() => setSharing(null)} />
         )}
-        <PhoneExt>
-          <PhoneSearch value={searchTerm} onChange={setSearchTerm} placeholder="Tìm lớp, trường..."
-            right={<button type="button" className="rb" aria-label="Thao tác khác" onClick={() => setPSheet('menu')}><MoreVertical /></button>} />
+        {(() => {
+          // Đầu trang giống Trang chủ: ảnh nền theo mùa của admin, tên chức năng, số liệu nhanh, 4 nút tròn.
+          const totalSt = scoped.reduce((n, c) => n + (classStats[c.id]?.students || 0), 0);
+          const totalPending = scoped.reduce((n, c) => n + (classStats[c.id]?.pending || 0), 0);
+          const ui = { ...phoneUi(phone.settings), title: `${scoped.length} lớp · ${totalSt} sinh viên`, desc: totalPending ? `${totalPending} bài đang chờ chấm, bấm Chờ chấm để xem lớp cần chấm.` : 'Bài đã nộp đều được chấm hết.', titleOn: true, descOn: true };
+          const acts = [
+            ...(canCreate ? [{ key: 'new', label: 'Lớp mới', icon: Plus, run: () => { setNewCls({ schoolId: pSchool || mySchools[0]?.id || '', name: '' }); setPSheet('new'); } }] : []),
+            ...(onImport && canImportEdu ? [{ key: 'import', label: 'Import', icon: Upload, run: () => onImport() }] : []),
+            { key: 'pending', label: 'Chờ chấm', icon: ClipboardList, run: () => { setPQuick(pQuick === 'pending' ? '' : 'pending'); document.getElementById('pk-cls-list')?.scrollIntoView({ behavior: 'smooth' }); } },
+            { key: 'more', label: 'Khác', icon: MoreVertical, run: () => setPSheet('menu') },
+          ].slice(0, 4);
+          // Lưới chức năng liên quan đến lớp học
+          const can = (id: string) => canUseModule(currentUser, id) && phoneMode(id, phone.settings) !== 'hidden';
+          const meta = (id: string) => MODULE_REGISTRY.find(m => m.id === id);
+          const tiles = [
+            { key: 'bank', id: 'edu_bank', label: 'Bài tập', icon: BookMarked, on: !!onOpenBank && can('edu_bank'), run: () => onOpenBank?.() },
+            { key: 'exam', id: 'edu_exam', label: 'Kiểm tra', icon: FileCheck2, on: !!onOpenExams && can('edu_exam'), run: () => onOpenExams?.() },
+            { key: 'grade', id: 'edu_grade', label: 'Nhập điểm', icon: ClipboardList, on: !!onOpenGrades && can('edu_grade'), run: () => phone.open('edu_grade'), lap: phoneMode('edu_grade', phone.settings) === 'laptop' },
+            { key: 'el', id: 'elearning', label: 'Giáo trình', icon: BookOpen, on: can('elearning'), run: () => phone.open('elearning') },
+            { key: 'sl', id: 'slides', label: 'Bài giảng', icon: meta('slides')?.icon || BookOpen, on: can('slides'), run: () => phone.open('slides') },
+            { key: 'qb', id: 'edu_question_bank', label: 'Câu hỏi', icon: meta('edu_question_bank')?.icon || BookOpen, on: can('edu_question_bank'), run: () => phone.open('edu_question_bank') },
+            { key: 'school', id: '', label: 'Thêm trường', icon: School, on: canCreate, run: () => { newSchool(); } },
+            { key: 'qr', id: 'qr_codes', label: 'Mã QR', icon: meta('qr_codes')?.icon || School, on: can('qr_codes'), run: () => phone.open('qr_codes') },
+          ].filter(t => t.on).slice(0, 8);
+          return (
+            <div style={{ margin: '-12px -12px 0' }}>
+              <PhoneTop settings={phone.settings} ui={ui} acts={acts}
+                nav={{ title: 'Lớp học', onBack: () => phone.open('dashboard'), onHome: () => phone.open('dashboard') }} />
+              {tiles.length > 0 && (
+                <div className="ph-grid">
+                  <div className="ph-apps">
+                    {tiles.map(t => { const c = tone(meta(t.id)?.color); const I = t.icon; return (
+                      <button key={t.key} type="button" className="ph-app" onClick={t.run}>
+                        {t.lap && <span className="lap"><Monitor /></span>}
+                        <span className="ph-ico" style={{ background: c.bg, color: c.fg }}><I /></span><span>{t.label}</span>
+                      </button>
+                    ); })}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+        <div id="pk-cls-list" className="pk-cls-sec">
           <PhoneSeg tabs={[{ id: 'mine', label: 'Lớp của tôi' }, { id: 'shared', label: `Được chia sẻ${classes.some(c => !mine(c)) ? ` (${classes.filter(c => !mine(c)).length})` : ''}` }]} active={pScope} onTab={t => { setPScope(t as any); setPSchool(''); }} />
-        </PhoneExt>
+          <div className="pk-srch" style={{ marginTop: 10 }}>
+            <Search /><input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Tìm lớp, trường..." enterKeyHint="search" />
+            {searchTerm && <button type="button" className="clr" aria-label="Xoá tìm kiếm" onClick={() => setSearchTerm('')}><X /></button>}
+          </div>
+        </div>
         <PhoneChips>
           <PhoneChip caret on={!!pSchool} onClick={() => setPSheet('school')}>{pSchool ? schoolName(pSchool) : 'Mọi trường'}</PhoneChip>
           <PhoneChip on={pQuick === ''} onClick={() => setPQuick('')}>Tất cả</PhoneChip>
@@ -369,7 +423,6 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
             ); })}
           </div>
         )}
-        {canCreate && <PhoneFab label="Lớp mới" icon={Plus} onClick={() => { setNewCls({ schoolId: pSchool || mySchools[0]?.id || '', name: '' }); setPSheet('new'); }} />}
 
         {pSheet === 'school' && (
           <PhoneSheet title="Chọn trường" onClose={() => setPSheet(null)}>

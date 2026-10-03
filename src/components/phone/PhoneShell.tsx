@@ -191,9 +191,8 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
   return (
     <Ctx.Provider value={api}>
       <div className={`ph ph-root ${bare ? '' : 'ph-in'}`} id="app-root">
-        {bare
-          ? <div className={`ph-sbar ${scrolled || tab === 'all_features' ? 'on' : ''}`} aria-hidden />
-          : (
+        <div className={`ph-sbar ${scrolled || tab === 'all_features' ? 'on' : ''}`} aria-hidden />
+        {bare ? null : (
             // Trong chức năng: thanh trên có nút quay lại màn trước, ẩn thanh menu dưới cho rộng chỗ thao tác.
             <header className="ph-appbar">
               <button type="button" className="bk" onClick={back} aria-label="Quay lại màn trước"><ChevronLeft /></button>
