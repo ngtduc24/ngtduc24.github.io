@@ -237,7 +237,7 @@ export function useScores(data: UsageData) {
 // 4. Quay lại: từng mở từ 3 lần nhưng hơn 14 ngày nay chưa mở.
 // Bốn nhóm được xếp xen kẽ để vừa tiện vừa giúp biết thêm chức năng. Thẻ bị bỏ thì 30 ngày không gợi ý lại.
 const NEW_MODULES: Record<string, string> = { automatic: '2026-10-03' };
-const isNewModule = (id: string) => { const d = NEW_MODULES[id]; return !!d && Date.now() - new Date(d).getTime() < 60 * DAY * 1000; };
+export const isNewModule = (id: string) => { const d = NEW_MODULES[id]; return !!d && Date.now() - new Date(d).getTime() < 60 * DAY * 1000; };
 
 export interface FeaturedPick { id: string; reason: string; kind: 'pin' | 'discover' | 'frequent' | 'return' }
 

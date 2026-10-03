@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { takeCreateIntent } from '../../lib/phone';
 import { Workflow as WorkflowIcon, Plus, Upload, MoreHorizontal, Copy, Download, Trash2, CheckCircle2, XCircle, Loader2, Clock, Database, Info, Sparkles } from 'lucide-react';
 import type { UserAccount } from '../../types';
 import type { Workflow } from '../../lib/automatic/types';
@@ -68,6 +69,7 @@ export default function AutomaticModule({ currentUser }: { currentUser: UserAcco
       addNotification(e?.message || String(e), 'error');
     } finally { setCreating(''); }
   };
+  useEffect(() => { if (takeCreateIntent('automatic')) createFrom('blank'); /* eslint-disable-line react-hooks/exhaustive-deps */ }, []);
 
   const onImport = async (f: File) => {
     try {

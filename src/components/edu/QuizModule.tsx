@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { takeCreateIntent } from '../../lib/phone';
 import { trackDoc } from '../../lib/personalize';
 import { takeOpenHint } from '../../lib/notifications';
 import { prettyShareUrl } from '../../lib/shareLinks';
@@ -137,6 +138,7 @@ export default function QuizModule({ currentUser, standaloneBank, onExit }: Quiz
       setActiveQuiz(q); setView('editor');
     } catch (e: any) { addNotification('Không tạo được đề: ' + e.message, 'error'); }
   };
+  useEffect(() => { if (takeCreateIntent('edu_exam')) openNewQuiz(); /* eslint-disable-line react-hooks/exhaustive-deps */ }, []);
 
   const removeQuiz = (q: Quiz, onDone?: () => void) => {
     confirm('Xóa đề trắc nghiệm', `Xóa đề "${q.title}"? Đề cùng kết quả làm bài sẽ nằm ở mục Đã xoá trong trang Cá nhân 30 ngày, khôi phục được.`, async () => {

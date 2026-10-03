@@ -8,6 +8,12 @@ export interface SeoModuleMeta {
 }
 
 export const SEO_MODULES: Record<string, SeoModuleMeta> = {
+  me: {
+    id: 'me',
+    slug: 'tai-khoan',
+    title: 'Tài khoản | EduGo',
+    description: 'Thông tin tài khoản, nội dung của tôi và cài đặt trên điện thoại.',
+  },
   user_profile: {
     id: 'user_profile',
     slug: 'nguoi-dung',

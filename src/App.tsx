@@ -49,6 +49,12 @@ import { MODULE_REGISTRY } from './lib/modules';
 import EduModule from './components/EduModule';
 import { setEduAuthContext } from './lib/edu';
 import { TaskProvider } from './components/TaskContext';
+import { useIsPhone, useIsPhoneDevice, setUiPreference } from './lib/device';
+import PhoneShell from './components/phone/PhoneShell';
+import PhoneHome from './components/phone/PhoneHome';
+import PhoneAllFeatures from './components/phone/PhoneAllFeatures';
+import PhoneNotifications from './components/phone/PhoneNotifications';
+import PhoneAccount from './components/phone/PhoneAccount';
 import { ShieldAlert, RefreshCw, LayoutDashboard, Calculator, BookOpen, Users, Settings, ClipboardList, Shield, Bell, Layers, Image, Wrench, FolderKanban, GraduationCap, Film, FileUser, QrCode, Presentation, Workflow } from 'lucide-react';
 import { supabase } from "./lib/supabase";
 import { useMyNotifications, resetNotificationStore, notifyAppAccessChange } from './lib/notifications';
@@ -122,6 +128,10 @@ export default function App() {
   });
 
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  // Giao diện điện thoại (màn hẹp, cảm ứng). Người dùng có thể chọn giao diện máy tính trên điện thoại.
+  const isPhone = useIsPhone();
+  const isPhoneDevice = useIsPhoneDevice();
+  useEffect(() => { if (!isPhone && currentTab === 'me') setCurrentTab('dashboard'); }, [isPhone, currentTab]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -1072,8 +1082,30 @@ export default function App() {
     return allowed;
   };
 
+  if (isPhone) {
+    const PHONE_SCREENS = ['dashboard', 'all_features', 'notifications', 'me'];
+    const phoneContent = currentTab === 'dashboard' ? <PhoneHome />
+      : currentTab === 'all_features' ? <PhoneAllFeatures />
+      : currentTab === 'notifications' ? <PhoneNotifications />
+      : currentTab === 'me' ? <PhoneAccount onLogout={handleLogout} />
+      : renderActiveTab();
+    return (
+      <TaskProvider>
+        <PhoneShell user={currentUser} settings={settings} tab={currentTab} setTab={setCurrentTab} unread={myNotifs.unread} bare={PHONE_SCREENS.includes(currentTab)}>
+          {phoneContent}
+        </PhoneShell>
+        {showProfileModal && currentUser && (
+          <ProfileModal user={currentUser} onSaveProfile={handleSaveProfile} onClose={() => setShowProfileModal(false)} isReadOnly={profileModalReadOnly} />
+        )}
+      </TaskProvider>
+    );
+  }
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 text-slate-800 font-sans" id="app-root">
+      {isPhoneDevice && (
+        <button type="button" onClick={() => setUiPreference('auto')} className="fixed bottom-3 left-1/2 z-[300] -translate-x-1/2 rounded-full bg-brand px-4 py-2 text-xs font-bold text-white shadow-lg">Về giao diện điện thoại</button>
+      )}
       
       {/* Sidebar Navigation */}
       <Sidebar

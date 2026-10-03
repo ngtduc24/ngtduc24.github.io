@@ -309,6 +309,11 @@ export function openNotificationTarget(n: AppNotification, setCurrentTab?: (t: s
     goTo(r.tab, setCurrentTab, r.sub);
     return true;
   }
+  // Gửi từ điện thoại sang máy tính: mở đúng chức năng, đúng màn hình con.
+  if (meta.handoff?.tab) {
+    goTo(meta.handoff.tab, setCurrentTab, meta.handoff.sub || undefined);
+    return true;
+  }
   if (meta.appId && n.type === 'access') {
     setCurrentTab(meta.appId);
     return true;

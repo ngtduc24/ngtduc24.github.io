@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { takeCreateIntent } from '../../lib/phone';
 import {
   QrCode, Plus, Pencil, Trash2, Download, Copy, ExternalLink, List, LayoutGrid, FileImage,
 } from 'lucide-react';
@@ -33,6 +34,7 @@ export default function QrCodeModule({ currentUser: _currentUser }: Props) {
   const [error, setError] = useState('');
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState<QrItem | 'new' | null>(null);
+  useEffect(() => { if (takeCreateIntent('qr_codes')) setEditing('new'); }, []);
   const [view, setView] = useState<'list' | 'grid'>(() => {
     try { return localStorage.getItem('qr_view') === 'grid' ? 'grid' : 'list'; } catch { return 'list'; }
   });

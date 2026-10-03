@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { takeCreateIntent } from '../../lib/phone';
 import { trackDoc } from '../../lib/personalize';
 import { FileUp, Plus, Loader2, Presentation, Copy, Trash2, Pencil, Users, LayoutGrid, List as ListIcon, Play, Eye, Library } from 'lucide-react';
 import LibraryHero, { ViewToggle } from '../ui/LibraryHero';
@@ -79,6 +80,8 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
     catch (e: any) { addNotification(e?.message || 'Chưa tạo được bài giảng.', 'error'); }
     finally { setBusy(false); }
   };
+  // Bấm Tạo mới trên điện thoại: mở thẳng bài giảng mới.
+  useEffect(() => { if (takeCreateIntent('slides')) create(); /* eslint-disable-line react-hooks/exhaustive-deps */ }, []);
   const rename = async (s: DeckSummary) => {
     const v = await askText({ title: 'Đổi tên bài giảng', defaultValue: s.title });
     if (v == null) return;

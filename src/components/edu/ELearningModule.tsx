@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { takeCreateIntent } from '../../lib/phone';
 import { trackDoc } from '../../lib/personalize';
 import { takeOpenHint } from '../../lib/notifications';
 import { prettyShareUrl } from '../../lib/shareLinks';
@@ -122,6 +123,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
   // Mặc định luôn mở dạng lưới, người dùng tự đổi sang danh sách khi cần.
   const [mode, setMode] = useState<'grid' | 'table'>('grid');
   const [creating, setCreating] = useState(false);
+  useEffect(() => { if (takeCreateIntent('elearning')) setCreating(true); }, []);
   // Chọn nhiều bài ở dạng danh sách để thao tác cùng lúc
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);

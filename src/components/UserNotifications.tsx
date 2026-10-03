@@ -20,6 +20,7 @@ import { UserAccount, Task, AppSettings, AppNotification } from '../types';
 import { isTaskRelevantToUser } from '../lib/tasks';
 import { useMyNotifications, openNotificationTarget } from '../lib/notifications';
 import { useConfirmation } from './ConfirmationContext';
+import { notifCategory } from '../lib/phone';
 
 interface UserNotificationsProps {
   currentUser: UserAccount;
@@ -31,7 +32,7 @@ interface UserNotificationsProps {
 export default function UserNotifications({ currentUser, settings, setCurrentTab, onUnreadCountChange }: UserNotificationsProps) {
   const { confirm } = useConfirmation();
   const [search, setSearch] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'task' | 'system'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'task' | 'collab' | 'class' | 'system'>('all');
   const [selectedSystemNotification, setSelectedSystemNotification] = useState<AppNotification | null>(null);
   // Danh sách, trạng thái đọc và xoá dùng chung, đồng bộ giữa các thiết bị.
   const notif = useMyNotifications(currentUser);
@@ -197,8 +198,7 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
   const filteredNotifs = uniqueNotifications.filter(n => {
     // Type Filter
     if (activeFilter === 'unread' && !n.unread) return false;
-    if (activeFilter === 'task' && n.type !== 'task' && n.type !== 'warning') return false;
-    if (activeFilter === 'system' && !['system', 'journal', 'collab', 'access', 'info', 'success', 'error'].includes(n.type)) return false;
+    if (activeFilter !== 'all' && activeFilter !== 'unread' && notifCategory(n) !== activeFilter) return false;
 
     // Search filter
     const matchesSearch = n.title.toLowerCase().includes(search.toLowerCase()) || 
@@ -324,6 +324,12 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
             >
               Công việc
             </button>
+            {(['collab', 'class'] as const).map(k => (
+              <button key={k} onClick={() => setActiveFilter(k)}
+                className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeFilter === k ? 'bg-white shadow-xs text-brand' : 'text-slate-500'}`}>
+                {k === 'collab' ? 'Cộng tác' : 'Lớp học'}
+              </button>
+            ))}
             <button 
               onClick={() => setActiveFilter('system')}
               className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeFilter === 'system' ? 'bg-white shadow-xs text-brand' : 'text-slate-500'}`}
@@ -398,7 +404,7 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
 
               {/* Action and delete buttons */}
               <div className="flex items-center gap-2 self-end sm:self-center w-full sm:w-auto justify-end">
-                {(n.actionUrl || (n.metadata?.collabType && !n.metadata?.removed) || (n.type === 'access' && n.metadata?.appId)) && (
+                {(n.actionUrl || n.metadata?.handoff?.tab || (n.metadata?.collabType && !n.metadata?.removed) || (n.type === 'access' && n.metadata?.appId)) && (
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();

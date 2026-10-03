@@ -1,4 +1,5 @@
 import { uploadImageToCloudinary } from '../lib/upload';
+import { takeCreateIntent } from '../lib/phone';
 import MediaSourcePicker from './MediaSourcePicker';
 import { PageHeader, Badge, IconButton } from './ui';
 import React, { useState, useEffect } from 'react';
@@ -78,6 +79,7 @@ export default function TaskProjects({ users, currentUser, settings, onRefreshSe
   const isUserAdmin = currentUser?.role === 'admin';
 
   const [isAdding, setIsAdding] = useState(false);
+  useEffect(() => { if (takeCreateIntent('tasks')) setIsAdding(true); }, []);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'All'>('All');
   const [currentTime, setCurrentTime] = useState(new Date());
