@@ -129,7 +129,7 @@ function LibraryHeroPhone(p: LibraryHeroProps) {
   };
   return (
     <>
-      <PhoneExt>
+      <PhoneExt head>
         <PhoneSearch value={p.search} onChange={p.onSearch} placeholder={p.placeholder}
           right={menu.length ? <button type="button" className="rb" aria-label="Thêm thao tác" onClick={() => setMenuOpen(true)}><MoreHorizontalIcon /></button> : undefined} />
         {tabs.length > 1 && <PhoneSeg tabs={tabs} active={p.activeTab || ''} onTab={id => p.onTab?.(id)} />}

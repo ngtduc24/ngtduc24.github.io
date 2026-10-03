@@ -29,6 +29,9 @@ interface PhoneApi {
   open: (id: string, sub?: Record<string, string>) => void;
   openCreate: () => void;
   openScan: () => void;
+  // Tên màn đang mở và nút quay lại, cho các chức năng tự vẽ đầu trang riêng (gộp thanh trên vào khối màu của chức năng).
+  title: string;
+  back: () => void;
 }
 const Ctx = createContext<PhoneApi | null>(null);
 export const usePhone = () => useContext(Ctx)!;
@@ -171,15 +174,15 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
     if (sub) writeSubRoute(sub);
     setTab(id);
   };
+  const curMod = mods.find(m => m.id === tab);
+  const title = curMod ? phoneLabel(curMod) : (tab === 'profile' || tab === 'user_profile') ? 'Trang cá nhân' : (MODULE_REGISTRY.find(m => m.id === tab)?.label || 'EduGo');
   const api: PhoneApi = {
-    user, settings, tab, unread,
+    user, settings, tab, unread, title, back,
     open: (id, sub) => { if (phoneMode(id, settings) === 'laptop') setSheet({ id, sub }); else go(id, sub); },
     openCreate: () => setSheet('create'),
     openScan: () => setScan(true),
   };
 
-  const curMod = mods.find(m => m.id === tab);
-  const title = curMod ? phoneLabel(curMod) : (tab === 'profile' || tab === 'user_profile') ? 'Trang cá nhân' : (MODULE_REGISTRY.find(m => m.id === tab)?.label || 'EduGo');
 
   const item = (id: string, label: string, Icon: any, on: boolean, badge?: number) => (
     <button type="button" className={`it ${on ? 'on' : ''}`} onClick={() => go(id)} aria-current={on ? 'page' : undefined}>

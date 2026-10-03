@@ -38,7 +38,7 @@ export default function PhoneJournals({ journals, search, onSearch, filters, def
 
   return (
     <div>
-      <PhoneExt>
+      <PhoneExt head>
         <PhoneSearch value={search} onChange={onSearch} placeholder="Tên tạp chí, ISSN, ngành, cơ quan..."
           right={menu.length ? <button type="button" className="rb" aria-label="Thao tác quản trị" onClick={() => setMenuOpen(true)}><Dots /></button> : undefined} />
       </PhoneExt>

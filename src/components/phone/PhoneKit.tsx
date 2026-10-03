@@ -1,14 +1,34 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, X, ChevronDown, MoreHorizontal, Loader2 } from 'lucide-react';
+import { Search, X, ChevronDown, MoreHorizontal, Loader2, ChevronLeft, Home } from 'lucide-react';
+import { usePhoneMaybe } from './PhoneShell';
 import { AvatarStack } from '../ui/People';
 
 // Bộ khung giao diện điện thoại dùng chung cho các chức năng (Bài giảng, Giáo trình, Bài tập, Điểm báo, Lớp học):
 // phần nền màu nối liền thanh trên, ô tìm, nhóm chuyển kho, dải chip lọc cuộn ngang, thẻ có dải màu, nút nổi, bảng dưới.
 
 // Phần nền màu ngay dưới thanh trên (ô tìm kiếm, nhóm Của tôi, Được chia sẻ, Thư viện)
-export function PhoneExt({ children }: { children: React.ReactNode }) {
-  return <div className="pk-ext">{children}</div>;
+// head: gộp luôn thanh trên của ứng dụng vào khối màu này (nút quay lại, tên chức năng, nút về Trang chủ),
+// cả khối đứng yên ở đầu màn khi cuộn, không còn 2 thanh chồng lên nhau.
+export function PhoneExt({ children, head, title }: { children: React.ReactNode; head?: boolean; title?: string }) {
+  const phone = usePhoneMaybe();
+  const own = !!(head && phone);
+  useEffect(() => {
+    if (!own) return;
+    document.documentElement.classList.add('ph-own-head');
+    return () => document.documentElement.classList.remove('ph-own-head');
+  }, [own]);
+  if (!own) return <div className="pk-ext">{children}</div>;
+  return (
+    <div className="pk-ext pk-hd">
+      <div className="nv">
+        <button type="button" className="bk" onClick={phone!.back} aria-label="Quay lại"><ChevronLeft /></button>
+        <h1>{title || phone!.title}</h1>
+        <button type="button" className="hm" onClick={() => phone!.open('dashboard')} aria-label="Về Trang chủ"><Home /></button>
+      </div>
+      {children}
+    </div>
+  );
 }
 
 export function PhoneSearch({ value, onChange, placeholder, right }: { value: string; onChange: (v: string) => void; placeholder?: string; right?: React.ReactNode }) {
