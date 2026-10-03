@@ -51,6 +51,7 @@ import { setEduAuthContext } from './lib/edu';
 import { TaskProvider } from './components/TaskContext';
 import { useIsPhone, useIsPhoneDevice, setUiPreference } from './lib/device';
 import PhoneShell from './components/phone/PhoneShell';
+import PhoneWelcome from './components/phone/PhoneWelcome';
 import PhoneHome from './components/phone/PhoneHome';
 import PhoneAllFeatures from './components/phone/PhoneAllFeatures';
 import PhoneNotifications from './components/phone/PhoneNotifications';
@@ -943,6 +944,18 @@ export default function App() {
         <div className="w-12 h-12 rounded-full border-4 border-slate-200 border-t-brand animate-spin" style={{ borderTopColor: 'var(--color-brand, #10b981)' }} />
         <p className="text-xs font-semibold text-slate-400">Đang tải cấu hình...</p>
       </div>
+    );
+  }
+
+  // Điện thoại chưa đăng nhập: màn chào có sẵn ô đăng nhập, đăng ký ngay trên màn hình (thay trang đầu và trang đăng nhập).
+  if (isPhone && !currentUser && (entryView === 'landing' || entryView === 'login' || (entryView === 'admin' && authInitialized))) {
+    return (
+      <PhoneWelcome
+        settings={settings}
+        users={users}
+        initialMode={loginMode}
+        onLoginSuccess={(user) => { handleLoginSuccess(user); setEntryView('admin'); }}
+      />
     );
   }
 

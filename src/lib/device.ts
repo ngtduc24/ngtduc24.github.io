@@ -93,6 +93,7 @@ export interface PhoneUi {
   // Lưới chức năng ở Trang chủ điện thoại
   gridOrder?: string[];        // thứ tự admin xếp sẵn, 8 ô đầu hiện ngay
   gridLock?: string[];         // chức năng giữ cố định đúng vị trí admin xếp, không bị thói quen đẩy đi
+  gridHide?: string[];         // chức năng admin ẩn khỏi Trang chủ điện thoại (vẫn có trong Tất cả chức năng)
   gridAuto?: boolean;          // tự xếp theo thói quen sử dụng, mặc định bật
   // Nút tròn trên đầu Trang chủ: admin chọn chức năng và tên cho từng ô
   acts?: Array<{ id: string; label?: string }>;

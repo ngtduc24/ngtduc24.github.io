@@ -75,7 +75,8 @@ export default function PhoneHome() {
   const scores = useScores(usage);
   const autoOn = ui.gridAuto !== false && usage.autoSort !== false;
   const enough = usage.ev.length >= MIN_EVENTS && autoOn;
-  const gridBase = mods.filter(m => !SKIP_GRID.has(m.id) && !actIds.has(m.id) && phoneMode(m.id, settings) !== 'laptop' && !(user.dashboardIconHidden || []).includes(m.id));
+  const gridHide = new Set(ui.gridHide || []);
+  const gridBase = mods.filter(m => !SKIP_GRID.has(m.id) && !gridHide.has(m.id) && !actIds.has(m.id) && phoneMode(m.id, settings) !== 'laptop' && !(user.dashboardIconHidden || []).includes(m.id));
   const adminOrder = ui.gridOrder || [];
   const lockKey = (ui.gridLock || []).join('|');
   const order = useMemo(() => {
@@ -95,7 +96,7 @@ export default function PhoneHome() {
 
   // ===== Tính năng nổi bật =====
   const picks = useMemo(() => {
-    const cands = mods.filter(m => !SKIP_GRID.has(m.id) && phoneMode(m.id, settings) !== 'laptop').map(m => ({ id: m.id, label: m.label, group: MODULE_REGISTRY.find(r => r.id === m.id)?.group }));
+    const cands = mods.filter(m => !SKIP_GRID.has(m.id) && !gridHide.has(m.id) && phoneMode(m.id, settings) !== 'laptop').map(m => ({ id: m.id, label: m.label, group: MODULE_REGISTRY.find(r => r.id === m.id)?.group }));
     if (enough) return featuredPicks({ candidates: cands, rowIds: grid.map(m => m.id), scores, data: usage }).slice(0, 6);
     return cands.filter(c => !grid.some(g => g.id === c.id)).slice(0, 5).map(c => ({ id: c.id, reason: isNewModule(c.id) ? 'Chức năng mới trên EduGo' : 'Bạn có thể thử', kind: 'discover' as const }));
     // eslint-disable-next-line react-hooks/exhaustive-deps

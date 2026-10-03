@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Home as HomeIcon, LayoutGrid, Plus, Bell, User } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { Smartphone, Monitor, EyeOff, Image as ImageIcon, RotateCcw, GraduationCap, BookOpen, Library, MoreHorizontal, GripVertical, ArrowUp, ArrowDown, Lock, Unlock, Sparkles } from 'lucide-react';
 import type { AppSettings, ModuleOverride } from '../../types';
 import { MODULE_REGISTRY } from '../../lib/modules';
@@ -210,10 +211,17 @@ function GridOrderCard({ formState, ui, setUi, sw }: {
   const actIds = phoneActIds(ui);
   const avail = MODULE_REGISTRY.filter(m => !PHONE_GRID_SKIP.has(m.id) && !actIds.includes(m.id) && !ov[m.id]?.hidden && phoneMode(m.id, formState) === 'full');
   const saved = ui.gridOrder || [];
-  const ids = avail.map(m => m.id).sort((a, b) => {
+  const hidden = new Set(ui.gridHide || []);
+  const ids = avail.map(m => m.id).filter(id => !hidden.has(id)).sort((a, b) => {
     const ia = saved.indexOf(a), ib = saved.indexOf(b);
     return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || avail.findIndex(m => m.id === a) - avail.findIndex(m => m.id === b);
   });
+  const hiddenIds = avail.map(m => m.id).filter(id => hidden.has(id));
+  // Ẩn khỏi Trang chủ điện thoại: không có trong lưới và mục nổi bật, vẫn mở được ở Tất cả chức năng.
+  const toggleHide = (id: string) => {
+    const next = new Set(hidden); if (next.has(id)) next.delete(id); else next.add(id);
+    setUi({ gridOrder: ids, gridHide: [...next], gridLock: (ui.gridLock || []).filter(x => !next.has(x)) });
+  };
   const locks = new Set(ui.gridLock || []);
   const auto = ui.gridAuto !== false;
   const [drag, setDrag] = useState<string | null>(null);
@@ -234,10 +242,10 @@ function GridOrderCard({ formState, ui, setUi, sw }: {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-sm font-bold text-slate-800">Lưới chức năng ở Trang chủ</h3>
-          <p className="text-[12px] text-slate-500">Kéo thả hoặc bấm mũi tên để xếp thứ tự cho mọi người. 8 chức năng đầu hiện ngay dưới đầu trang, phần còn lại hiện khi bấm mũi tên xem thêm. Chức năng đã nằm ở các nút tròn đầu trang thì không lặp lại trong lưới. Ai không có quyền dùng chức năng nào thì chức năng đó tự bỏ qua.</p>
+          <p className="text-[12px] text-slate-500">Kéo thả hoặc bấm mũi tên để xếp thứ tự cho mọi người, bấm Ẩn để bỏ chức năng khỏi Trang chủ điện thoại (vẫn mở được ở Tất cả chức năng). 8 chức năng đầu hiện ngay dưới đầu trang, phần còn lại hiện khi bấm mũi tên xem thêm. Chức năng đã nằm ở các nút tròn đầu trang thì không lặp lại trong lưới. Ai không có quyền dùng chức năng nào thì chức năng đó tự bỏ qua.</p>
         </div>
-        {(saved.length > 0 || locks.size > 0) && (
-          <button type="button" onClick={() => setUi({ gridOrder: [], gridLock: [] })} className="inline-flex shrink-0 items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-rose-500"><RotateCcw className="h-3 w-3" /> Về mặc định</button>
+        {(saved.length > 0 || locks.size > 0 || hidden.size > 0) && (
+          <button type="button" onClick={() => setUi({ gridOrder: [], gridLock: [], gridHide: [] })} className="inline-flex shrink-0 items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-rose-500"><RotateCcw className="h-3 w-3" /> Về mặc định</button>
         )}
       </div>
 
@@ -273,10 +281,29 @@ function GridOrderCard({ formState, ui, setUi, sw }: {
                   className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold ${locked ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}>
                   {locked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}<span className="hidden sm:inline">{locked ? 'Cố định' : 'Khoá'}</span>
                 </button>
+                <button type="button" onClick={() => toggleHide(id)} title="Ẩn khỏi Trang chủ điện thoại, vẫn có trong Tất cả chức năng"
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-400 hover:bg-slate-50 hover:text-rose-500">
+                  <EyeOff className="h-3.5 w-3.5" /><span className="hidden sm:inline">Ẩn</span>
+                </button>
                 <button type="button" disabled={i === 0} onClick={() => move(i, i - 1)} title="Lên trên" className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"><ArrowUp className="h-3.5 w-3.5" /></button>
                 <button type="button" disabled={i === ids.length - 1} onClick={() => move(i, i + 1)} title="Xuống dưới" className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"><ArrowDown className="h-3.5 w-3.5" /></button>
               </div>
             </React.Fragment>
+          );
+        })}
+        {hiddenIds.length > 0 && <div className="flex items-center gap-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400"><span className="h-px flex-1 bg-slate-200" />Đang ẩn khỏi Trang chủ điện thoại ({hiddenIds.length})<span className="h-px flex-1 bg-slate-200" /></div>}
+        {hiddenIds.map(id => {
+          const m = MODULE_REGISTRY.find(x => x.id === id)!; const Icon = m.icon;
+          return (
+            <div key={id} className="flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-2 py-2 opacity-70">
+              <span className="w-4" /><span className="w-5" />
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-200 text-slate-500"><Icon className="h-4 w-4" /></span>
+              <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-slate-500 line-through decoration-slate-300">{name(id)}</span>
+              <button type="button" onClick={() => toggleHide(id)} title="Hiện lại trên Trang chủ điện thoại"
+                className="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1 text-[11px] font-bold text-brand ring-1 ring-brand/30 hover:bg-brand-light">
+                <Eye className="h-3.5 w-3.5" /> Hiện lại
+              </button>
+            </div>
           );
         })}
       </div>

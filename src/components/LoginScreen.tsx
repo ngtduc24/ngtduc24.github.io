@@ -13,11 +13,8 @@ import {
 } from 'lucide-react';
 import { UserAccount } from '../types';
 import { Button, IconButton, Input, Field, Card } from './ui';
-import { auth, db } from '../lib/firebase';
-import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
-import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { getUserById, USERS_TABLE, mapUserFromDB } from '../lib/data';
-import { supabase } from '../lib/supabase';
+import { auth } from '../lib/firebase';
+import { loginWithPassword, registerAccount } from '../lib/authActions';
 
 
 interface LoginScreenProps {
@@ -36,51 +33,13 @@ export default function LoginScreen({ users, onLoginSuccess, onBackToPublic, ini
   const [regPass2, setRegPass2] = useState('');
   const [regError, setRegError] = useState('');
 
-  // Tạo tài khoản mới: tài khoản Firebase, rồi hồ sơ vai trò người dùng thường, chưa có quyền riêng.
-  // Ứng dụng được dùng ngay là danh sách mặc định admin chọn trong Cấu hình hệ thống.
+  // Tạo tài khoản mới (xử lý chung ở lib/authActions)
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegError('');
-    const name = regName.trim();
-    const email = regEmail.trim().toLowerCase();
-    if (name.length < 2) { setRegError('Vui lòng nhập họ và tên.'); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setRegError('Email chưa đúng định dạng.'); return; }
-    if (regPass.length < 6) { setRegError('Mật khẩu cần ít nhất 6 ký tự.'); return; }
-    if (regPass !== regPass2) { setRegError('Hai lần nhập mật khẩu chưa khớp nhau.'); return; }
     setLoading(true);
-    try {
-      const cred = await createUserWithEmailAndPassword(auth, email, regPass);
-      try { await updateProfile(cred.user, { displayName: name }); } catch { /* bỏ qua */ }
-      // Tên đăng nhập lấy theo phần trước @ của email, trùng thì thêm số phía sau.
-      const base = (email.split('@')[0] || 'user').replace(/[^a-z0-9._-]/g, '').slice(0, 24) || 'user';
-      let username = base;
-      for (let i = 1; i < 50; i++) {
-        const snap = await getDocs(query(collection(db, USERS_TABLE), where('username', '==', username)));
-        if (snap.empty) break;
-        username = `${base}${i + 1}`;
-      }
-      const profile = {
-        id: cred.user.uid,
-        username,
-        full_name: name,
-        email,
-        role: 'user',
-        permissions: [] as string[],
-        self_registered: true,
-        created_at: new Date().toISOString(),
-      };
-      await setDoc(doc(db, USERS_TABLE, cred.user.uid), profile);
-      const created = mapUserFromDB(profile);
-      onLoginSuccess(created);
-    } catch (err: any) {
-      const code = err?.code || '';
-      if (code === 'auth/email-already-in-use') setRegError('Email này đã có tài khoản. Hãy đăng nhập hoặc dùng email khác.');
-      else if (code === 'auth/weak-password') setRegError('Mật khẩu quá yếu, hãy dùng ít nhất 6 ký tự.');
-      else if (code === 'auth/invalid-email') setRegError('Email chưa đúng định dạng.');
-      else if (code === 'auth/operation-not-allowed') setRegError('Hệ thống chưa bật đăng ký bằng email. Vui lòng báo quản trị viên.');
-      else if (code === 'auth/network-request-failed') setRegError('Không kết nối được máy chủ. Vui lòng kiểm tra mạng.');
-      else setRegError('Không tạo được tài khoản. Vui lòng thử lại.');
-    }
+    try { onLoginSuccess(await registerAccount(regName, regEmail, regPass, regPass2)); }
+    catch (err: any) { setRegError(err?.message || 'Không tạo được tài khoản. Vui lòng thử lại.'); }
     setLoading(false);
   };
   // Login Form
@@ -96,109 +55,8 @@ export default function LoginScreen({ users, onLoginSuccess, onBackToPublic, ini
     e.preventDefault();
     setLoginError('');
     setLoading(true);
-
-    const usernameClean = loginUsername.trim().toLowerCase();
-    
-    // Tìm email của người dùng nếu họ đăng nhập bằng tên người dùng
-    let targetEmail = usernameClean;
-    let targetUserMetadata = users.find(u => 
-      u.username.toLowerCase() === usernameClean || 
-      u.email.toLowerCase() === usernameClean
-    );
-    
-    if (!targetUserMetadata) {
-      try {
-        
-        
-        // Cố gắng tìm trong Firebase Firestore trước vì đây là database chính cho users
-        const usersRef = collection(db, USERS_TABLE);
-        const emailQuery = query(usersRef, where("email", "==", usernameClean));
-        const emailDocs = await getDocs(emailQuery);
-        
-        if (!emailDocs.empty) {
-          const docData = emailDocs.docs[0];
-          targetUserMetadata = mapUserFromDB({ id: docData.id, ...docData.data() }) as any;
-        } else {
-          const usernameQuery = query(usersRef, where("username", "==", usernameClean));
-          const usernameDocs = await getDocs(usernameQuery);
-          if (!usernameDocs.empty) {
-            const docData = usernameDocs.docs[0];
-            targetUserMetadata = mapUserFromDB({ id: docData.id, ...docData.data() }) as any;
-          }
-        }
-        
-        // Nếu vẫn không tìm thấy trong Firebase, thử tìm fallback trong Supabase
-        if (!targetUserMetadata) {
-          const { data: sbUser, error: sbError } = await supabase
-            .from('users')
-            .select('*')
-            .or(`username.ilike."${usernameClean}",email.ilike."${usernameClean}"`)
-            .maybeSingle();
-          if (sbUser && !sbError) {
-            targetUserMetadata = {
-              id: sbUser.id,
-              username: sbUser.username,
-              fullName: sbUser.full_name,
-              email: sbUser.email,
-              role: sbUser.role,
-              permissions: sbUser.permissions || [],
-              createdAt: sbUser.created_at,
-            } as any;
-          }
-        }
-      } catch (e) {
-        console.warn("Lấy thông tin user thất bại:", e);
-      }
-    }
-
-    if (targetUserMetadata) {
-      targetEmail = targetUserMetadata.email;
-    } else {
-      if (!usernameClean.includes('@')) {
-        setLoginError('Tên đăng nhập không tồn tại trên hệ thống.');
-        setLoading(false);
-        return;
-      }
-    }
-
-    // Mọi tài khoản đều phải được xác thực nghiêm ngặt qua Firebase Authentication.
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, targetEmail, loginPassword);
-
-      // Quyền truy cập luôn được lấy theo UID do Firebase Auth xác thực,
-      // không tin hồ sơ chỉ khớp username/email để tránh nhận nhầm vai trò.
-      const authenticatedProfile = users.find(user => user.id === userCredential.user.uid)
-        || await getUserById(userCredential.user.uid);
-      
-      const isIdMismatch = targetUserMetadata && targetUserMetadata.id !== userCredential.user.uid;
-      const isEmailMatch = targetUserMetadata && targetUserMetadata.email.toLowerCase() === userCredential.user.email?.toLowerCase();
-      
-      if (!authenticatedProfile || (isIdMismatch && !isEmailMatch)) {
-        await signOut(auth);
-        setLoginError('Tài khoản chưa được quản trị viên kích hoạt hoặc hồ sơ đăng nhập không đồng bộ.');
-        setLoading(false);
-        return;
-      }
-
-      const { password, ...cleanedUser } = authenticatedProfile;
-      onLoginSuccess(cleanedUser);
-    } catch (authError: any) {
-      console.error("Lỗi xác thực Firebase Auth:", authError.code || authError.message);
-      if (authError.code === 'auth/wrong-password' || authError.code === 'auth/invalid-credential') {
-        setLoginError('Mật khẩu không chính xác.');
-      } else if (authError.code === 'auth/user-not-found') {
-        setLoginError('Tài khoản không tồn tại hoặc chưa được kích hoạt.');
-      } else if (authError.code === 'auth/operation-not-allowed') {
-        setLoginError(`Firebase project “${auth.app.options.projectId}” chưa bật đăng nhập Email/Mật khẩu. Quản trị viên cần bật phương thức này trong Firebase Console.`);
-      } else if (authError.code === 'auth/too-many-requests') {
-        setLoginError('Tài khoản tạm thời bị giới hạn do đăng nhập sai nhiều lần. Vui lòng thử lại sau.');
-      } else if (authError.code === 'auth/network-request-failed') {
-        setLoginError('Không thể kết nối Firebase Authentication. Vui lòng kiểm tra mạng.');
-      } else {
-        setLoginError('Tên đăng nhập hoặc mật khẩu không chính xác.');
-      }
-    }
-
+    try { onLoginSuccess(await loginWithPassword(users, loginUsername, loginPassword)); }
+    catch (err: any) { setLoginError(err?.message || 'Tên đăng nhập hoặc mật khẩu không chính xác.'); }
     setLoading(false);
   };
 
