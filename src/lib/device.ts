@@ -72,13 +72,22 @@ export interface PhoneUi {
   bannerOn?: boolean;          // hiện băng chào đầu Trang chủ, mặc định bật
   title?: string;
   desc?: string;
+  titleOn?: boolean;           // hiện tiêu đề, mặc định bật
+  descOn?: boolean;            // hiện mô tả, mặc định bật
   imageMode?: 'desktop' | 'custom' | 'art'; // ảnh nền Trang chủ máy tính, ảnh riêng, hay hình minh hoạ
   image?: string;
   position?: string;
   ctaOn?: boolean;             // hiện nút trên băng chào, mặc định bật
   ctaLabel?: string;
   ctaTarget?: string;          // create:<chức năng> mở thẳng màn tạo mới, open:<chức năng> mở chức năng
+  // Băng giới thiệu ở trang Thông báo
+  notiOn?: boolean;            // mặc định bật
+  notiTitle?: string;
+  notiBtn?: string;
+  notiTarget?: string;         // id chức năng mở khi bấm, mặc định automatic
+  notiImage?: string;          // ảnh nhỏ bên phải thay cho biểu tượng chức năng
 }
+export const NOTI_DEFAULT = { title: 'Thử Automatic: tự gửi nhắc việc sắp đến hạn mỗi sáng', btn: 'Dùng mẫu có sẵn', target: 'automatic' };
 export const PHONE_UI_KEY = '__phone_ui';
 export function phoneUi(settings?: AppSettings): PhoneUi {
   return ((settings?.moduleOverrides as any)?.[PHONE_UI_KEY] || {}) as PhoneUi;

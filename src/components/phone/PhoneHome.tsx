@@ -232,8 +232,8 @@ export function PhoneHero({ settings, can, onCta, onTap, ui: uiOverride }: { set
       {img && <div className="shade" />}
       {!img && <HeroArt />}
       <div className="in">
-        <div className="t1">{ui.title?.trim() || settings?.dashboardBannerTitle || 'Hôm nay bạn muốn làm gì?'}</div>
-        <div className="t2">{ui.desc?.trim() || settings?.systemDescription || 'Bài giảng, lớp học, đề trắc nghiệm của bạn ở ngay đây.'}</div>
+        {ui.titleOn !== false && <div className="t1">{ui.title?.trim() || settings?.dashboardBannerTitle || 'Hôm nay bạn muốn làm gì?'}</div>}
+        {ui.descOn !== false && <div className="t2">{ui.desc?.trim() || settings?.systemDescription || 'Bài giảng, lớp học, đề trắc nghiệm của bạn ở ngay đây.'}</div>}
         {ui.ctaOn !== false && (ok
           ? <button type="button" className="cta" onClick={e => { e.stopPropagation(); onCta(target); }}>{target.startsWith('create:') && <Plus size={15} />}{label}</button>
           : <button type="button" className="cta" onClick={e => { e.stopPropagation(); onCta('open:all_features'); }}>Xem tất cả chức năng</button>)}

@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { Search, SlidersHorizontal, CheckCheck, ClipboardList, Users, GraduationCap, Info, AlertTriangle, Shield, Workflow, BookOpen, Bell, Trash2, Monitor } from 'lucide-react';
-import { usePhone } from './PhoneShell';
+import { usePhone, usePhoneModules } from './PhoneShell';
+import { phoneUi, NOTI_DEFAULT, PhoneUi } from '../../lib/device';
+import { MODULE_REGISTRY } from '../../lib/modules';
+import type { AppSettings } from '../../types';
 import { useMyNotifications, openNotificationTarget } from '../../lib/notifications';
 import { isTaskRelevantToUser } from '../../lib/tasks';
 import { notifCategory, NotifCategory, NOTIF_CATEGORY_LABEL } from '../../lib/phone';
@@ -30,7 +33,8 @@ const when = (iso: string) => { const d = new Date(iso); const k = dayKey(iso); 
 // Thông báo trên điện thoại: đầu trang màu hệ thống, ô tìm kiếm có nút lọc chưa đọc,
 // thẻ phân loại Tất cả, Công việc, Cộng tác, Lớp học, Hệ thống, danh sách chia theo ngày.
 export default function PhoneNotifications() {
-  const { user, open } = usePhone();
+  const { user, settings, open } = usePhone();
+  const mods = usePhoneModules(user, settings);
   const notif = useMyNotifications(user);
   const [cat, setCat] = useState<'all' | NotifCategory>('all');
   const [q, setQ] = useState('');
@@ -90,13 +94,7 @@ export default function PhoneNotifications() {
         </div>
       </div>
 
-      {user.role !== 'member' && (
-        <div style={{ background: '#fff', paddingBottom: 10 }}>
-          <button type="button" className="ph-banner" onClick={() => open('automatic')}>
-            <b>Thử Automatic: tự gửi nhắc việc sắp đến hạn mỗi sáng</b><span>Dùng mẫu có sẵn</span><Workflow />
-          </button>
-        </div>
-      )}
+      <NotiBanner settings={settings} canOpen={id => mods.some(m => m.id === id)} onOpen={open} />
 
       <div className="ph-tabs" style={{ position: 'sticky', top: 0, zIndex: 4 }}>
         {(['all', 'task', 'collab', 'class', 'system'] as const).map(k => (
@@ -139,6 +137,24 @@ export default function PhoneNotifications() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Băng giới thiệu đầu danh sách thông báo. Admin chỉnh trong Cấu hình hệ thống, mục Điện thoại.
+// Người không có quyền dùng chức năng được giới thiệu thì không thấy băng này.
+export function NotiBanner({ settings, ui: uiOverride, canOpen, onOpen }: { settings?: AppSettings; ui?: PhoneUi; canOpen: (id: string) => boolean; onOpen: (id: string) => void }) {
+  const ui = uiOverride || phoneUi(settings);
+  const target = ui.notiTarget || NOTI_DEFAULT.target;
+  if (ui.notiOn === false || !canOpen(target)) return null;
+  const Icon = MODULE_REGISTRY.find(m => m.id === target)?.icon || Workflow;
+  return (
+    <div style={{ background: '#fff', paddingBottom: 10 }}>
+      <button type="button" className="ph-banner" onClick={() => onOpen(target)}>
+        <b>{ui.notiTitle?.trim() || NOTI_DEFAULT.title}</b>
+        {(ui.notiBtn ?? NOTI_DEFAULT.btn).trim() && <span>{(ui.notiBtn ?? NOTI_DEFAULT.btn).trim()}</span>}
+        {ui.notiImage ? <img src={ui.notiImage} alt="" className="pic" /> : <Icon />}
+      </button>
     </div>
   );
 }

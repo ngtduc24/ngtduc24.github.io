@@ -2,7 +2,8 @@ import React from 'react';
 import { Smartphone, Monitor, EyeOff, Image as ImageIcon, RotateCcw } from 'lucide-react';
 import type { AppSettings, ModuleOverride } from '../../types';
 import { MODULE_REGISTRY } from '../../lib/modules';
-import { phoneMode, phoneUi, PhoneUi, PhoneMode, PHONE_UI_KEY, CTA_TARGETS } from '../../lib/device';
+import { phoneMode, phoneUi, PhoneUi, PhoneMode, PHONE_UI_KEY, CTA_TARGETS, NOTI_DEFAULT } from '../../lib/device';
+import { NotiBanner } from './PhoneNotifications';
 import MediaSourcePicker from '../MediaSourcePicker';
 import { PhoneHero } from './PhoneHome';
 import './phone.css';
@@ -39,7 +40,7 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
         <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2"><Smartphone className="w-4 h-4 text-brand" /> Giao diện trên điện thoại</h2>
-        <p className="text-[13px] text-slate-500 mt-1">Chỉnh băng chào đầu Trang chủ và cách dùng từng chức năng khi mọi người mở EduGo bằng điện thoại. Mục này chỉ hiện với quản trị viên trên máy tính. Thay đổi được lưu tự động như các mục khác.</p>
+        <p className="text-[13px] text-slate-500 mt-1">Chỉnh băng chào đầu Trang chủ, băng giới thiệu ở trang Thông báo và cách dùng từng chức năng khi mọi người mở EduGo bằng điện thoại. Mục này chỉ hiện với quản trị viên trên máy tính. Thay đổi được lưu tự động như các mục khác.</p>
       </div>
 
       {/* Băng chào đầu Trang chủ */}
@@ -55,12 +56,18 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
             </div>
             <div className={`space-y-4 ${ui.bannerOn === false ? 'pointer-events-none opacity-40' : ''}`}>
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-500">Tiêu đề</label>
-                <input className={field} value={ui.title ?? ''} onChange={e => setUi({ title: e.target.value })} placeholder={formState.dashboardBannerTitle || 'Hôm nay bạn muốn làm gì?'} />
+                <div className="flex items-center justify-between gap-3">
+                  <label className="text-[11px] font-bold text-slate-500">Tiêu đề {ui.titleOn === false && <span className="font-semibold text-rose-500">(đang ẩn)</span>}</label>
+                  {sw(ui.titleOn !== false, () => setUi({ titleOn: ui.titleOn === false }), 'Bật tắt tiêu đề')}
+                </div>
+                <input className={`${field} ${ui.titleOn === false ? 'opacity-40' : ''}`} value={ui.title ?? ''} onChange={e => setUi({ title: e.target.value })} placeholder={formState.dashboardBannerTitle || 'Hôm nay bạn muốn làm gì?'} />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-500">Mô tả ngắn</label>
-                <textarea rows={2} className={`${field} resize-none`} value={ui.desc ?? ''} onChange={e => setUi({ desc: e.target.value })} placeholder={formState.systemDescription || 'Bài giảng, lớp học, đề trắc nghiệm của bạn ở ngay đây.'} />
+                <div className="flex items-center justify-between gap-3">
+                  <label className="text-[11px] font-bold text-slate-500">Mô tả ngắn {ui.descOn === false && <span className="font-semibold text-rose-500">(đang ẩn)</span>}</label>
+                  {sw(ui.descOn !== false, () => setUi({ descOn: ui.descOn === false }), 'Bật tắt mô tả')}
+                </div>
+                <textarea rows={2} className={`${field} resize-none ${ui.descOn === false ? 'opacity-40' : ''}`} value={ui.desc ?? ''} onChange={e => setUi({ desc: e.target.value })} placeholder={formState.systemDescription || 'Bài giảng, lớp học, đề trắc nghiệm của bạn ở ngay đây.'} />
                 <p className="text-[10px] text-slate-400">Để trống thì dùng tiêu đề và mô tả của Trang chủ máy tính.</p>
               </div>
               <div className="space-y-1.5">
@@ -114,6 +121,55 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
                 <span className="ph-avatar">A</span>
                 <div className="txt">Chào buổi sáng<b>Tên người dùng</b></div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Băng giới thiệu ở trang Thông báo */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
+        <div className="flex flex-col gap-6 lg:flex-row">
+          <div className="flex-1 space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-bold text-slate-800">Băng giới thiệu ở trang Thông báo</h3>
+                <p className="text-[12px] text-slate-500">Nằm ngay dưới ô tìm thông báo. Bấm vào băng là mở chức năng đã chọn. Ai không có quyền dùng chức năng đó thì không thấy băng.</p>
+              </div>
+              {sw(ui.notiOn !== false, () => setUi({ notiOn: ui.notiOn === false }), 'Bật tắt băng giới thiệu')}
+            </div>
+            <div className={`space-y-4 ${ui.notiOn === false ? 'pointer-events-none opacity-40' : ''}`}>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-500">Nội dung</label>
+                <textarea rows={2} className={`${field} resize-none`} value={ui.notiTitle ?? ''} onChange={e => setUi({ notiTitle: e.target.value })} placeholder={NOTI_DEFAULT.title} />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500">Bấm vào sẽ mở</label>
+                  <select className={field} value={ui.notiTarget || NOTI_DEFAULT.target} onChange={e => setUi({ notiTarget: e.target.value })}>
+                    {MODULE_REGISTRY.map(m => <option key={m.id} value={m.id}>{formState.moduleOverrides?.[m.id]?.label?.trim() || m.label}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500">Chữ trên nhãn nhỏ</label>
+                  <input className={field} value={ui.notiBtn ?? ''} onChange={e => setUi({ notiBtn: e.target.value })} placeholder={NOTI_DEFAULT.btn} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-500">Ảnh bên phải</label>
+                <div className="flex flex-wrap items-center gap-3">
+                  {ui.notiImage ? <img src={ui.notiImage} alt="" className="h-14 w-14 rounded-lg object-cover border border-slate-200" /> : <span className="text-[11px] text-slate-400">Đang dùng biểu tượng của chức năng</span>}
+                  <MediaSourcePicker onSelect={url => setUi({ notiImage: url })} accept="image/*" resourceType="image" folder="system/phone" category="Ảnh cấu hình hệ thống" label="Tải/chọn ảnh"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-[11px] font-bold text-white hover:bg-brand-hover" />
+                  {ui.notiImage && <button type="button" onClick={() => setUi({ notiImage: '' })} className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-rose-500"><RotateCcw className="h-3 w-3" /> Dùng biểu tượng</button>}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="shrink-0">
+            <p className="mb-2 text-[11px] font-bold text-slate-500">Xem trước</p>
+            <div className="ph w-[320px] overflow-hidden rounded-[28px] border-[6px] border-slate-900 bg-[#f3f6f9] shadow-xl">
+              <div className="ph-head" style={{ paddingTop: 16 }}><h2>Thông báo</h2></div>
+              {ui.notiOn === false ? <p className="bg-white p-4 text-center text-[11px] text-slate-400">Đang tắt băng giới thiệu</p> : <NotiBanner ui={ui} canOpen={() => true} onOpen={() => {}} />}
             </div>
           </div>
         </div>
