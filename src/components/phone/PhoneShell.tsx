@@ -331,6 +331,10 @@ function PullRefresh({ className, disabled, children }: { className: string; dis
       // Không bắt khi kéo trong vùng tự cuộn riêng (danh sách ngang, bảng trượt, ô nhập nhiều dòng).
       const t = e.target as HTMLElement;
       if (t.closest('textarea, input, select, [data-no-pull], .ph-hscroll')) { st.current = null; return; }
+      // Đang ở trong một khung tự cuộn dọc (khung chat Trợ lý, danh sách trong bảng trượt...) chưa về đầu thì nhường cho khung đó cuộn.
+      for (let n: HTMLElement | null = t; n && n !== el; n = n.parentElement) {
+        if (n.scrollTop > 0 && n.scrollHeight > n.clientHeight) { st.current = null; return; }
+      }
       st.current = { y: e.touches[0].clientY, active: false };
     };
     const move = (e: TouchEvent) => {

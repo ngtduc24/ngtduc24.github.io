@@ -24,7 +24,7 @@ export default function AssistantPage({ currentUser, settings, onSwitchTab, onBa
 
   // Điện thoại: phủ kín màn hình, đầu trang liền khối có 2 chế độ, phần hội thoại cuộn riêng, ô nhập nổi ở đáy.
   if (phone) return (
-    <div className="as-page">
+    <div className="as-page" data-no-pull>
       <div className="as-hd">
         <div className="as-nv">
           <button type="button" onClick={phone.back} aria-label="Quay lại"><ChevronLeft /></button>

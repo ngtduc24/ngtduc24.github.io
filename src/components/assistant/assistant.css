@@ -69,3 +69,7 @@
 .as-cmp .send svg { width: 19px; height: 19px; }
 .as-hint { display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 10.5px; color: #94a3b8; margin-top: 7px; }
 .as-hint svg { width: 12px; height: 12px; color: var(--ac); }
+/* Đã có hội thoại thì thu gọn đầu trang để khung chat rộng hơn */
+.as-page:has(.as-msg) .as-who { display: none; }
+.as-page:has(.as-msg) .as-hd { padding-bottom: 12px; }
+.as-page:has(.as-msg) .as-mode { margin-top: 6px; }
