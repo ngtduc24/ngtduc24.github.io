@@ -10,7 +10,8 @@
   color: var(--ph-text);
   -webkit-tap-highlight-color: transparent;
 }
-:where(.ph) button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+/* Chỉ đặt lại nút trong các màn riêng của điện thoại. Nội dung các chức năng (khung .ph-mod) giữ nguyên kiểu nút của chức năng đó. */
+:where(.ph-root > nav, .ph-scrim, .ph-scan, .ph-main:not(.ph-mod)) button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 .ph-root { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--ph-bg); }
 .ph-main { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 .ph-main.ph-mod { padding: 12px 12px calc(100px + env(safe-area-inset-bottom)); }
