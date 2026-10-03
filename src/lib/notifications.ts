@@ -119,6 +119,7 @@ interface Store {
   user: UserAccount;
   server: AppNotification[];
   tasks: Task[];
+  approvals: AppNotification[];
   state: NState;
   ready: boolean;
   listeners: Set<(s: Snapshot) => void>;
@@ -154,7 +155,7 @@ function taskNotifs(user: UserAccount, tasks: Task[]): AppNotification[] {
 }
 
 function snapshot(s: Store): Snapshot {
-  const all = [...s.server, ...taskNotifs(s.user, s.tasks)];
+  const all = [...s.approvals, ...s.server, ...taskNotifs(s.user, s.tasks)];
   const seen = new Set<string>();
   const items = all
     .filter(n => { if (seen.has(n.id) || s.state.del[n.id]) return false; seen.add(n.id); return true; })
@@ -170,6 +171,42 @@ function emit(s: Store) {
 
 async function reloadServer(s: Store) {
   try { s.server = await fetchMyNotifications(s.user); s.ready = true; if (store === s) emit(s); } catch { /* giữ bản cũ */ }
+  reloadApprovals(s);
+}
+
+// ===== Yêu cầu chờ phê duyệt =====
+// Hiện nay là yêu cầu gia hạn nộp bài của sinh viên ở các lớp mình được quyền chấm (lớp của mình hoặc lớp được chia sẻ
+// có quyền chấm). Mỗi yêu cầu là 1 thông báo, duyệt hay từ chối xong thì thông báo tự mất ở lần tải sau.
+async function reloadApprovals(s: Store) {
+  try {
+    const [{ canUseModule }, edu] = await Promise.all([import('./moduleAccess'), import('./edu')]);
+    if (!canUseModule(s.user, 'edu')) { if (s.approvals.length) { s.approvals = []; if (store === s) emit(s); } return; }
+    edu.setEduAuthContext(s.user.id, s.user.role === 'admin');
+    const [own, shared] = await Promise.all([edu.getClasses().catch(() => [] as any[]), edu.getSharedEdu().catch(() => ({ schools: [], classes: [] as any[] }))]);
+    const classes = [...own, ...shared.classes.filter((c: any) => c.access?.perms?.grade)];
+    if (!classes.length) { s.approvals = []; if (store === s) emit(s); return; }
+    const { data } = await supabase.from(edu.EXTENSION_TABLE).select('id,class_id,assignment_id,student_name,mssv,reason,created_at')
+      .eq('status', 'pending').in('class_id', classes.map((c: any) => c.id)).order('created_at', { ascending: false }).limit(60);
+    const rows = data || [];
+    const aIds = [...new Set(rows.map((r: any) => r.assignment_id).filter(Boolean))];
+    const titles = new Map<string, string>();
+    if (aIds.length) {
+      const { data: as } = await supabase.from('edu_assignments').select('id,title').in('id', aIds);
+      (as || []).forEach((a: any) => titles.set(a.id, a.title));
+    }
+    s.approvals = rows.map((r: any): AppNotification => {
+      const cls = classes.find((c: any) => c.id === r.class_id);
+      const who = r.student_name ? `${r.student_name}${r.mssv ? ` (${r.mssv})` : ''}` : (r.mssv || 'Sinh viên');
+      const t = titles.get(r.assignment_id);
+      return {
+        id: `approve-ext-${r.id}`, title: `${who} xin gia hạn nộp bài`,
+        description: `${t ? `Bài "${t}"` : 'Bài tập'} · Lớp ${cls?.name || ''}${r.reason ? `. Lý do: ${String(r.reason).slice(0, 160)}` : ''}. Bấm để mở lớp và duyệt hoặc từ chối.`,
+        timestamp: r.created_at || new Date().toISOString(), type: 'approval', priority: 'high', actionUrl: 'edu',
+        metadata: { approval: 'extension', classId: r.class_id, requestId: r.id, assignmentId: r.assignment_id },
+      };
+    });
+    if (store === s) emit(s);
+  } catch { /* giữ bản cũ */ }
 }
 async function reloadState(s: Store) {
   const remote = await pullServer(s.uid);
@@ -183,7 +220,7 @@ function ensureStore(user: UserAccount): Store {
   if (store && store.uid === user.id) { store.user = user; return store; }
   if (store) store.stop();
   const s: Store = {
-    uid: user.id, user, server: [], tasks: [], ready: false, listeners: new Set(), stop: () => {},
+    uid: user.id, user, server: [], tasks: [], approvals: [], ready: false, listeners: new Set(), stop: () => {},
     state: prune(merge(readCache(user.id), takeLegacy(user.id))),
   };
   store = s;
@@ -302,6 +339,12 @@ function goTo(tab: string, setCurrentTab: (t: string) => void, sub?: Record<stri
 export function openNotificationTarget(n: AppNotification, setCurrentTab?: (t: string) => void): boolean {
   if (!setCurrentTab) return false;
   const meta: any = n.metadata || {};
+  // Yêu cầu chờ phê duyệt (gia hạn nộp bài): mở đúng lớp và bật sẵn bảng duyệt.
+  if (meta.approval === 'extension' && meta.classId) {
+    try { sessionStorage.setItem('edu_open_ext', meta.classId); } catch { /* bỏ qua */ }
+    goTo('edu', setCurrentTab, { sv: 'class_detail', cid: meta.classId });
+    return true;
+  }
   if (meta.collabType && meta.resourceId && COLLAB_ROUTES[meta.collabType]) {
     if (meta.removed) return false;
     const r = COLLAB_ROUTES[meta.collabType](meta.resourceId);

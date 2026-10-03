@@ -32,7 +32,7 @@ interface UserNotificationsProps {
 export default function UserNotifications({ currentUser, settings, setCurrentTab, onUnreadCountChange }: UserNotificationsProps) {
   const { confirm } = useConfirmation();
   const [search, setSearch] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'task' | 'collab' | 'class' | 'system'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'approval' | 'task' | 'collab' | 'class' | 'system'>('all');
   const [selectedSystemNotification, setSelectedSystemNotification] = useState<AppNotification | null>(null);
   // Danh sách, trạng thái đọc và xoá dùng chung, đồng bộ giữa các thiết bị.
   const notif = useMyNotifications(currentUser);
@@ -207,6 +207,7 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
   });
 
   const unreadCount = uniqueNotifications.filter(n => n.unread).length;
+  const approvalCount = uniqueNotifications.filter(n => n.type === 'approval').length;
   const taskCount = uniqueNotifications.filter(n => n.type === 'task' || n.type === 'warning').length;
   const systemCount = uniqueNotifications.filter(n => ['system', 'journal', 'collab', 'access', 'info', 'success', 'error'].includes(n.type)).length;
 
@@ -318,6 +319,12 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
             >
               Chưa đọc ({unreadCount})
             </button>
+            <button
+              onClick={() => setActiveFilter('approval')}
+              className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeFilter === 'approval' ? 'bg-white shadow-xs text-brand' : 'text-slate-500'}`}
+            >
+              Phê duyệt{approvalCount > 0 && <span className="ml-1.5 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] text-white">{approvalCount}</span>}
+            </button>
             <button 
               onClick={() => setActiveFilter('task')}
               className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeFilter === 'task' ? 'bg-white shadow-xs text-brand' : 'text-slate-500'}`}
@@ -385,11 +392,12 @@ export default function UserNotifications({ currentUser, settings, setCurrentTab
                       {n.title}
                     </h3>
                     <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                      n.type === 'task' || n.type === 'warning' 
+                      n.type === 'approval' ? 'bg-amber-50 text-amber-700 border border-amber-200/70'
+                      : n.type === 'task' || n.type === 'warning' 
                         ? 'bg-rose-50 text-rose-600 border border-rose-100/60' 
                         : (n.type === 'journal' ? 'bg-brand-light text-brand border border-brand-light/60' : 'bg-brand-light text-brand border border-brand-light/60')
                     }`}>
-                      {n.type === 'warning' ? 'Cảnh báo' : (n.type === 'task' ? 'Công việc' : (n.type === 'journal' ? 'Tạp chí' : n.type === 'collab' ? 'Cộng tác' : n.type === 'access' ? 'Quyền sử dụng' : 'Hệ thống'))}
+                      {n.type === 'approval' ? 'Chờ phê duyệt' : n.type === 'warning' ? 'Cảnh báo' : (n.type === 'task' ? 'Công việc' : (n.type === 'journal' ? 'Tạp chí' : n.type === 'collab' ? 'Cộng tác' : n.type === 'access' ? 'Quyền sử dụng' : 'Hệ thống'))}
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 max-w-2xl leading-relaxed">

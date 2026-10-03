@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, SlidersHorizontal, CheckCheck, ClipboardList, Users, GraduationCap, Info, AlertTriangle, Shield, Workflow, BookOpen, Bell, Trash2, Monitor, CheckSquare, Square, CheckCircle2, X, ChevronLeft } from 'lucide-react';
+import { Search, SlidersHorizontal, CheckCheck, ClipboardList, Users, GraduationCap, Info, AlertTriangle, Shield, Workflow, BookOpen, Bell, Trash2, Monitor, CheckSquare, Square, CheckCircle2, X, ChevronLeft, CalendarClock } from 'lucide-react';
 import { usePhone, usePhoneModules } from './PhoneShell';
 import { phoneUi, NOTI_DEFAULT, PhoneUi } from '../../lib/device';
 import { MODULE_REGISTRY } from '../../lib/modules';
@@ -10,7 +10,7 @@ import { isTaskRelevantToUser } from '../../lib/tasks';
 import { notifCategory, NotifCategory, NOTIF_CATEGORY_LABEL } from '../../lib/phone';
 import type { AppNotification } from '../../types';
 
-const ICON: Record<NotifCategory, any> = { task: ClipboardList, collab: Users, class: GraduationCap, system: Info };
+const ICON: Record<NotifCategory, any> = { approval: CalendarClock, task: ClipboardList, collab: Users, class: GraduationCap, system: Info };
 const iconFor = (n: AppNotification) => {
   if (n.metadata?.handoff) return Monitor;
   if (n.type === 'warning') return AlertTriangle;
@@ -76,8 +76,8 @@ export default function PhoneNotifications() {
 
   const items = useMemo(() => Array.from(new Map(notif.items.map(n => [n.id, n])).values()).filter(n => !hidden.has(n.id)), [notif.items, hidden]);
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: 0, task: 0, collab: 0, class: 0, system: 0 };
-    items.forEach(n => { if (n.unread) { c.all++; c[notifCategory(n)]++; } });
+    const c: Record<string, number> = { all: 0, approval: 0, task: 0, collab: 0, class: 0, system: 0 };
+    items.forEach(n => { const k = notifCategory(n); if (n.unread) { c.all++; if (k !== 'approval') c[k]++; } if (k === 'approval') c.approval++; });
     return c;
   }, [items]);
   const list = items.filter(n => (cat === 'all' || notifCategory(n) === cat) && (!unreadOnly || n.unread)
@@ -130,7 +130,7 @@ export default function PhoneNotifications() {
       <NotiBanner settings={settings} canOpen={id => mods.some(m => m.id === id)} onOpen={open} />
 
       <div className="ph-tabs" style={{ position: 'sticky', top: 0, zIndex: 4 }}>
-        {(['all', 'task', 'collab', 'class', 'system'] as const).map(k => (
+        {(['all', 'approval', 'task', 'collab', 'class', 'system'] as const).map(k => (
           <button key={k} type="button" className={cat === k ? 'on' : ''} onClick={() => setCat(k)}>
             {k === 'all' ? 'Tất cả' : NOTIF_CATEGORY_LABEL[k]}{counts[k] > 0 && <span className="c">{counts[k] > 99 ? '99+' : counts[k]}</span>}
           </button>

@@ -37,11 +37,12 @@ export async function sendToComputer(user: UserAccount, tab: string, label: stri
 }
 
 // ===== Phân loại thông báo theo thẻ Tất cả, Công việc, Cộng tác, Lớp học, Hệ thống =====
-export type NotifCategory = 'task' | 'collab' | 'class' | 'system';
+export type NotifCategory = 'approval' | 'task' | 'collab' | 'class' | 'system';
 const CLASS_TYPES = new Set(['edu_class', 'edu_school', 'quiz', 'quiz_question', 'bank_item']);
 
 export function notifCategory(n: AppNotification): NotifCategory {
   const meta: any = n.metadata || {};
+  if (n.type === 'approval' || meta.approval) return 'approval';
   if (n.type === 'task' || n.type === 'warning') return 'task';
   if (meta.collabType && CLASS_TYPES.has(meta.collabType)) return 'class';
   if (meta.classId || meta.assignmentId || meta.quizId) return 'class';
@@ -50,5 +51,5 @@ export function notifCategory(n: AppNotification): NotifCategory {
 }
 
 export const NOTIF_CATEGORY_LABEL: Record<NotifCategory, string> = {
-  task: 'Công việc', collab: 'Cộng tác', class: 'Lớp học', system: 'Hệ thống',
+  approval: 'Phê duyệt', task: 'Công việc', collab: 'Cộng tác', class: 'Lớp học', system: 'Hệ thống',
 };
