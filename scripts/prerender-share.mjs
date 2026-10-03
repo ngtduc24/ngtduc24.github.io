@@ -280,18 +280,14 @@ async function buildAppIcon() {
       writeFile(path.join(DIST_DIR, 'apple-touch-icon.png'), p180),
       writeFile(path.join(DIST_DIR, 'icon-192.png'), p192),
       writeFile(path.join(DIST_DIR, 'icon-512.png'), p512),
-      writeFile(path.join(DIST_DIR, 'manifest.webmanifest'), JSON.stringify({
-        name, short_name: name, start_url: '/', display: 'standalone', background_color: '#ffffff',
-        icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }, { src: '/icon-512.png', sizes: '512x512', type: 'image/png' }],
-      }), 'utf8'),
     ]);
     // Đổi biểu tượng thì đổi mã phiên bản để trình duyệt không giữ ảnh cũ.
     let h = 0; for (const b of p32) h = (h * 31 + b) >>> 0;
     const v = h.toString(36);
     const tags = `<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=${v}" data-app-icon />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=${v}" data-app-icon />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=${v}" data-app-icon />
-    <link rel="manifest" href="/manifest.webmanifest?v=${v}" />`;
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=${v}" data-app-icon />`;
+    // Không gắn tệp manifest: trên iPhone, ứng dụng thêm ra màn hình chính có manifest bị thiếu khung ở đáy màn hình.
     for (const file of ['index.html', '404.html', 'khoiphuc.html']) {
       try {
         const fp = path.join(DIST_DIR, file);

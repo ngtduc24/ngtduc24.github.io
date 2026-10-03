@@ -171,8 +171,11 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
     // thì gán lại nền trang và nhích cuộn 1 điểm để thanh trạng thái lấy đúng màu hệ thống, không giữ màu tối cũ.
     const h = document.documentElement;
     h.style.backgroundColor = c; document.body.style.backgroundColor = c;
+    // Nửa dưới nền trang dùng màu nền nội dung: nếu iPhone để hở 1 khoảng ở đáy (ứng dụng ở màn hình chính) thì khoảng đó
+    // cùng màu với trang, không thành dải màu hệ thống.
+    h.style.backgroundImage = `linear-gradient(${c} 50%, #f3f6f9 50%)`; document.body.style.backgroundImage = h.style.backgroundImage;
     const t = window.setTimeout(() => { try { window.scrollTo(0, 1); window.scrollTo(0, 0); } catch { /* bỏ qua */ } }, 60);
-    return () => { window.clearTimeout(t); h.style.backgroundColor = ''; document.body.style.backgroundColor = ''; if (before === null) m?.remove(); else m?.setAttribute('content', before); };
+    return () => { window.clearTimeout(t); h.style.backgroundColor = ''; document.body.style.backgroundColor = ''; h.style.backgroundImage = ''; document.body.style.backgroundImage = ''; if (before === null) m?.remove(); else m?.setAttribute('content', before); };
   }, [settings]);
 
   const go = (id: string, sub?: Record<string, string>) => {
