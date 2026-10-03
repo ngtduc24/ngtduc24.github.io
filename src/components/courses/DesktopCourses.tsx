@@ -22,7 +22,6 @@ export function DeskList(props: {
 }) {
   const { ctx, published, mine, saved, cats, cont, contLesson, doneN, slides, tab, setTab, cat, setCat, q, setQ, list, kw } = props;
   const plain = tab === 'all' && !cat && !kw;
-  const learning = mine.filter(c => (ctx.progressOf(c) ?? 0) < 100);
   return (
     <div className="dc">
       <section className="dc-hero">
@@ -70,11 +69,6 @@ export function DeskList(props: {
               {cats.map(x => <PhoneChip key={x} on={cat === x} onClick={() => setCat(x)}>{x}</PhoneChip>)}
             </PhoneChips>
           )}
-          {plain && learning.length > 0 && <>
-            <div className="dc-sec"><h3>Đang học <span>({learning.length})</span></h3><button type="button" onClick={() => setTab('mine')}>Xem khoá của tôi</button></div>
-            <div className="dc-grid">{learning.slice(0, 4).map(c => <DeskCard key={c.id} c={c} ctx={ctx} />)}</div>
-            <div className="dc-sec"><h3>Tất cả khoá học <span>({published.length})</span></h3></div>
-          </>}
           {list.length === 0 ? (
             <PhoneEmpty icon={tab === 'saved' ? Bookmark : GraduationCap}
               title={kw || cat ? 'Không có khoá nào khớp' : tab === 'mine' ? 'Bạn chưa đăng ký khoá học nào' : tab === 'saved' ? 'Chưa lưu khoá học nào' : 'Chưa có khoá học nào được phát hành'}
