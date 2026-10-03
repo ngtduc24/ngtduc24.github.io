@@ -105,7 +105,7 @@ export default function PhoneClassDetail(p: PhoneClassProps) {
   const colAsg = col ? asgOfCol(col.id) : undefined;
 
   const ext = (
-    <PhoneExt>
+    <PhoneExt head still title="Lớp học">
       <div className="pk-ch">
         <div className="r1">
           <small>{p.clazz.edu_schools?.name}{!p.isOwner ? ' · Được chia sẻ với bạn' : ''}</small>
@@ -135,28 +135,26 @@ export default function PhoneClassDetail(p: PhoneClassProps) {
           {p.can.grade && p.extRequests.length > 0 && (
             <button type="button" className="pk-warn" onClick={() => setExtOpen(true)}><Clock /><span>{p.extRequests.length} sinh viên xin gia hạn nộp bài</span><b>Xem</b></button>
           )}
-          {sortedAsg.length === 0 ? <PhoneEmpty icon={FileText} title="Lớp chưa có bài tập nào" sub={p.can.assign ? 'Bấm Giao bài để tạo bài tập đầu tiên.' : undefined} /> : sortedAsg.map(a => {
-            const st = stat(a); const c = colOfAsg(a); const l = left(a.deadline); const n = users.length || 1;
-            return (
-              <div key={a.id} className="pk-asg">
-                <div className="t">
-                  <span className="ico"><FileText /></span>
-                  <div className="m" onClick={() => p.onViewAssignment(a.id)}><b>{a.title}</b><small>{a.deadline ? `Hạn ${when(a.deadline)}` : 'Không đặt hạn'}{c ? ` · cột ${c.name}` : ' · chưa gán cột điểm'}</small></div>
-                  <span className={`bd ${l.tone}`}>{l.text}</span>
-                  {(p.can.editAssign || p.can.deleteAssign) && <button type="button" className="mn" aria-label="Thao tác bài tập" onClick={() => setAsgMenu(a)}><MoreHorizontal /></button>}
-                </div>
-                <div className="bars">
-                  <div><small><span>Đã nộp</span><b>{st.submitted}/{users.length}</b></small><div className="pg"><i style={{ width: `${Math.min(100, st.submitted / n * 100)}%` }} /></div></div>
-                  <div><small><span>Đã chấm</span><b>{st.graded}/{st.submitted}</b></small><div className="pg am"><i style={{ width: `${st.submitted ? st.graded / st.submitted * 100 : 0}%` }} /></div></div>
-                </div>
-                <div className="row">
-                  <button type="button" className="b gr" onClick={() => p.onCopyLink(a.shareLinkId)}><Link2 />Link</button>
-                  <button type="button" className="b gr" onClick={() => p.onViewAssignment(a.id)}><Eye />Chi tiết</button>
-                  {p.can.grade && c && <button type="button" className={`b ${st.pending ? '' : 'gh'}`} onClick={() => p.onGrading(a.id, c.id)}><ClipboardCheck />{st.pending ? `Chấm ${st.pending}` : 'Chấm bài'}</button>}
-                </div>
-              </div>
-            );
-          })}
+          {sortedAsg.length === 0 ? <PhoneEmpty icon={FileText} title="Lớp chưa có bài tập nào" sub={p.can.assign ? 'Bấm Giao bài để tạo bài tập đầu tiên.' : undefined} /> : (
+            // Danh sách gọn trong thẻ trắng: mỗi bài tập 1 dòng, bấm để xem chi tiết, nút Chấm khi còn bài chờ, nút ba chấm mở thao tác khác.
+            <div className="pk-grp">
+              {sortedAsg.map(a => {
+                const st = stat(a); const c = colOfAsg(a); const l = left(a.deadline);
+                return (
+                  <div key={a.id} className="pk-li" role="button" tabIndex={0} onClick={() => p.onViewAssignment(a.id)}>
+                    <span className="ic"><FileText /></span>
+                    <span className="m">
+                      <b>{a.title}</b>
+                      <small>{a.deadline ? <>Hạn {when(a.deadline)} · <span className={`lt ${l.tone}`}>{l.text.toLowerCase()}</span></> : 'Không đặt hạn'}</small>
+                      <small className="as"><span>{st.submitted}/{users.length} đã nộp · {st.graded} đã chấm{c ? '' : ' · chưa gán cột điểm'}</span></small>
+                    </span>
+                    {p.can.grade && c && st.pending > 0 && <button type="button" className="pd" onClick={e => { e.stopPropagation(); p.onGrading(a.id, c.id); }}>Chấm {st.pending}</button>}
+                    <button type="button" className="mn2" aria-label="Thao tác bài tập" onClick={e => { e.stopPropagation(); setAsgMenu(a); }}><MoreHorizontal /></button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -269,6 +267,7 @@ export default function PhoneClassDetail(p: PhoneClassProps) {
       {exportPick && <PhonePickSheet title="Xuất cột điểm" value="" onClose={() => setExportPick(false)} options={p.gradeColumns.map(c => ({ id: c.id, label: c.name }))} onPick={p.onExportColumn} />}
       {asgMenu && <PhoneMenuSheet title={asgMenu.title} onClose={() => setAsgMenu(null)} items={[
         { key: 'view', label: 'Xem chi tiết', icon: Eye, onClick: () => p.onViewAssignment(asgMenu.id) },
+        { key: 'grade', label: 'Chấm bài', icon: ClipboardCheck, hidden: !(p.can.grade && colOfAsg(asgMenu)), onClick: () => { const c = colOfAsg(asgMenu); if (c) p.onGrading(asgMenu.id, c.id); } },
         { key: 'link', label: 'Sao chép link nộp bài', icon: Link2, onClick: () => p.onCopyLink(asgMenu.shareLinkId) },
         { key: 'edit', label: 'Sửa bài tập', icon: Pencil, hidden: !p.can.editAssign, onClick: () => p.onEditAssignment(asgMenu.id) },
         { key: 'del', label: 'Xoá bài tập', icon: Trash2, danger: true, hidden: !p.can.deleteAssign, onClick: () => p.onDeleteAssignment(asgMenu.id, asgMenu.gradeColumnId) },
