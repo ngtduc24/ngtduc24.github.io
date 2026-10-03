@@ -174,7 +174,7 @@ export default function PhoneHome() {
                 <div className="big">{m.label}</div>
                 <I />
               </div>
-              <div className="body"><p>{m.desc}</p>{p.kind !== 'discover' && <div className="why"><Sparkles />{p.reason}</div>}</div>
+              <div className="body"><p>{m.desc}</p></div>
             </button>
           ); })}
         </div>

@@ -121,7 +121,10 @@
 .ph-cont .in .m { flex: 1; min-width: 0; font-size: 13px; line-height: 1.4; }
 .ph-cont .in .m b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ph-ink); }
 .ph-cont .in .m small { display: block; color: var(--ph-muted); font-size: 12px; margin-top: 2px; }
-.ph-feat { width: 240px; flex: none; border-radius: 18px; background: #fff; overflow: hidden; box-shadow: 0 1px 2px rgba(15,23,42,.06); text-align: left; }
+.ph-feat { width: 240px; flex: none; border-radius: 18px; background: #fff; overflow: hidden; box-shadow: 0 1px 2px rgba(15,23,42,.06); text-align: left;
+  display: flex; flex-direction: column; justify-content: flex-start; align-items: stretch; }
+.ph-feat .img { flex: none; }
+.ph-feat .body { flex: 1; }
 .ph-feat .img { height: 116px; position: relative; padding: 12px 14px; color: #fff; }
 .ph-feat .img .k { font-size: 11px; font-weight: 700; background: rgba(255,255,255,.22); border-radius: 8px; padding: 3px 8px; display: inline-block; }
 .ph-feat .img .big { font-size: 19px; font-weight: 800; line-height: 1.18; margin-top: 8px; max-width: 150px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
