@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Bell, Check, Trash2, ClipboardList, BookOpen, AlertTriangle, Info, X, Clock, Users, KeyRound } from 'lucide-react';
 import { UserAccount, Task, AppSettings, AppNotification } from '../types';
 import { isTaskRelevantToUser } from '../lib/tasks';
@@ -19,6 +20,14 @@ interface NotificationBellProps {
  */
 export default function NotificationBell({ currentUser, settings, setCurrentTab, collapsed }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
+  // Thanh bên có cuộn dọc nên bảng thông báo nằm trong thanh sẽ bị cắt mất. Gắn bảng vào body, đặt cạnh nút chuông theo toạ độ của nút.
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState<{ left: number; bottom: number }>({ left: 92, bottom: 16 });
+  const toggle = () => {
+    const r = btnRef.current?.getBoundingClientRect();
+    if (r) setPos({ left: r.right + 12, bottom: Math.max(12, window.innerHeight - r.bottom) });
+    setIsOpen(v => !v);
+  };
   const [activeFilter, setActiveFilter] = useState<'all' | 'unread'>('all');
   const [selectedSystemNotification, setSelectedSystemNotification] = useState<AppNotification | null>(null);
   // Danh sách, trạng thái đọc và xoá dùng chung, đồng bộ giữa các thiết bị.
@@ -147,7 +156,8 @@ export default function NotificationBell({ currentUser, settings, setCurrentTab,
     <div className="relative w-full">
       <button
         type="button"
-        onClick={() => setIsOpen(v => !v)}
+        ref={btnRef}
+        onClick={toggle}
         aria-label="Thông báo"
         className={`group relative flex w-full flex-col items-center gap-1 rounded-2xl py-2.5 transition-all ${isOpen ? 'bg-brand/10 text-brand' : 'text-slate-500 hover:bg-slate-100 hover:text-brand'}`}
       >
@@ -160,7 +170,8 @@ export default function NotificationBell({ currentUser, settings, setCurrentTab,
         {!collapsed && <span className="text-[10px] font-bold leading-none">Thông báo</span>}
       </button>
 
-      {isOpen && <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />}
+      {createPortal(<>
+      {isOpen && <div className="fixed inset-0 z-[140]" onClick={() => setIsOpen(false)} />}
 
       <AnimatePresence>
         {isOpen && (
@@ -169,7 +180,8 @@ export default function NotificationBell({ currentUser, settings, setCurrentTab,
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: -10, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-0 left-full z-50 ml-3 flex max-h-[32rem] w-96 max-w-[calc(100vw-6rem)] flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white text-left shadow-2xl"
+            style={{ left: pos.left, bottom: pos.bottom }}
+            className="fixed z-[141] flex max-h-[min(32rem,calc(100dvh-24px))] w-96 max-w-[calc(100vw-6rem)] flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white text-left shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 p-4">
               <div className="flex items-center gap-2">
@@ -224,7 +236,7 @@ export default function NotificationBell({ currentUser, settings, setCurrentTab,
       {/* Hộp thoại đọc chi tiết thông báo */}
       <AnimatePresence>
         {selectedSystemNotification && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedSystemNotification(null)} className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} transition={{ type: 'spring', duration: 0.3 }} className="relative z-10 flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white text-left shadow-2xl">
               <div className={`h-1.5 w-full ${selectedSystemNotification.type === 'warning' ? 'bg-amber-500' : selectedSystemNotification.type === 'error' ? 'bg-rose-500' : selectedSystemNotification.type === 'success' ? 'bg-emerald-500' : 'bg-brand'}`} />
@@ -254,6 +266,7 @@ export default function NotificationBell({ currentUser, settings, setCurrentTab,
           </div>
         )}
       </AnimatePresence>
+      </>, document.body)}
     </div>
   );
 }
