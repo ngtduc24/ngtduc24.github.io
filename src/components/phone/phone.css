@@ -273,7 +273,7 @@ html.is-phone.ph-has-tools .left-20 { bottom: calc(64px + env(safe-area-inset-bo
 .ph-top .act:active .c { transform: scale(.94); }
 .ph-grid { position: relative; z-index: 2; margin: -40px 14px 0; background: #fff; border-radius: 22px; padding: 18px 6px 18px; box-shadow: 0 8px 24px -12px rgba(15,23,42,.25); }
 .ph-grid .ph-apps { row-gap: 18px; }
-.ph-grid .more { display: flex; justify-content: center; width: 100%; padding: 10px 0 0; margin-bottom: -8px; color: #f59e0b; }
+.ph-grid .more { display: flex; justify-content: center; width: 100%; padding: 10px 0 0; margin-bottom: -8px; color: var(--ph-brand); }
 .ph-grid .more svg { width: 24px; height: 24px; transition: transform .2s; }
 .ph-ico { width: 48px; height: 48px; border-radius: 15px; display: grid; place-items: center; overflow: hidden; }
 .ph-ico svg { width: 25px; height: 25px; stroke-width: 2; }

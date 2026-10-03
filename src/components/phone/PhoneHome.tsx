@@ -65,6 +65,10 @@ export default function PhoneHome() {
   const actMods = actList.filter(a => a.id !== 'all_features');
   const acts: TopAct[] = actList.map(a => ({ key: a.id, label: a.label, icon: a.icon, run: () => open(a.id) }));
   const actIds = new Set(actMods.map(a => a.id));
+  // Tắt cụm nút tròn: các chức năng của cụm (mặc định Edu, Giáo trình, Bài tập) đứng đầu lưới, đúng thứ tự admin chọn.
+  const frontIds = phoneUi(settings).actsOn === false
+    ? resolveActs({ ...phoneUi(settings), actsOn: true }, id => can(id) && phoneMode(id, settings) !== 'laptop', id => { const m = find(id); return m ? phoneLabel(m) : undefined; }).map(a => a.id).filter(id => id !== 'all_features')
+    : [];
 
   // ===== Lưới chức năng =====
   // 1. Thứ tự gốc do admin xếp ở Cấu hình hệ thống, mục Điện thoại (chưa xếp thì theo thứ tự người dùng đặt ở máy tính).
@@ -84,15 +88,17 @@ export default function PhoneHome() {
     const ids = gridBase.map(m => m.id);
     const ref = adminOrder.length ? adminOrder : ((user.dashboardIconOrder || []) as string[]);
     const base = [...ids].sort((a, b) => { const ia = ref.indexOf(a), ib = ref.indexOf(b); return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || ids.indexOf(a) - ids.indexOf(b); });
-    if (!enough) return base;
+    const front = frontIds.filter(id => ids.includes(id));
+    const withFront = (list: string[]) => [...front, ...list.filter(id => !front.includes(id))];
+    if (!enough) return withFront(base);
     // Vị trí khoá tính theo thứ tự gốc sau khi đã bỏ chức năng người dùng không có quyền
     const locks: Record<string, number> = {};
     for (const id of ui.gridLock || []) { const i = base.indexOf(id); if (i >= 0) locks[id] = i; }
     const userPins: Record<string, number> = {};
     for (const [id, i] of Object.entries(usage.pins || {})) if (locks[id] === undefined && base.includes(id)) userPins[id] = i;
-    return personalOrder(base, scores, adminOrder.length ? undefined : usage.order, { ...userPins, ...locks });
+    return withFront(personalOrder(base, scores, adminOrder.length ? undefined : usage.order, { ...userPins, ...locks }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gridBase.map(m => m.id).join('|'), adminOrder.join('|'), lockKey, enough, scores, JSON.stringify(usage.pins || {})]);
+  }, [frontIds.join('|'), gridBase.map(m => m.id).join('|'), adminOrder.join('|'), lockKey, enough, scores, JSON.stringify(usage.pins || {})]);
   const grid = order.slice(0, 8).map(find).filter(Boolean) as PhoneModule[];
 
   // ===== Tính năng nổi bật =====
