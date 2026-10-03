@@ -147,6 +147,9 @@ export default function PhoneClassDetail(p: PhoneClassProps) {
           {p.can.grade && p.extRequests.length > 0 && (
             <button type="button" className="pk-warn" onClick={() => setExtOpen(true)}><Clock /><span>{p.extRequests.length} sinh viên xin gia hạn nộp bài</span><b>Xem</b></button>
           )}
+          {/* Quizz đã giao nằm trên, bài tập đã giao nằm dưới */}
+          {p.quizSlot}
+          {sortedAsg.length > 0 && <div className="pk-grp-h"><span>Bài tập đã giao</span><em>{sortedAsg.length} bài</em></div>}
           {sortedAsg.length === 0 ? <PhoneEmpty icon={FileText} title="Lớp chưa có bài tập nào" sub={p.can.assign ? 'Bấm Bài tập ở trên để giao bài đầu tiên.' : undefined} /> : (
             // Danh sách gọn trong thẻ trắng: mỗi bài tập 1 dòng, bấm để xem chi tiết, nút Chấm khi còn bài chờ, nút ba chấm mở thao tác khác.
             <div className="pk-grp">
@@ -167,7 +170,6 @@ export default function PhoneClassDetail(p: PhoneClassProps) {
               })}
             </div>
           )}
-          {p.quizSlot}
         </div>
       )}
 
