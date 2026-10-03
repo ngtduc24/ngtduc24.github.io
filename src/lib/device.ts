@@ -74,6 +74,10 @@ export interface PhoneUi {
   navGlass?: boolean;          // mặc định bật
   navAlpha?: number;           // mặc định 62
   navBlur?: number;            // mặc định 20
+  // Mọi lưới chức năng trên điện thoại (Trang chủ, Lớp học, Tất cả chức năng...) kiểu kính lỏng như iOS: chỉnh 1 chỗ, mọi lưới đổi theo
+  gridGlass?: boolean;         // mặc định bật
+  gridAlpha?: number;          // độ đục lớp kính, mặc định 72
+  gridBlur?: number;           // độ nhoè nền phía sau, mặc định 22
   title?: string;
   desc?: string;
   titleOn?: boolean;           // hiện tiêu đề, mặc định bật
@@ -131,4 +135,11 @@ export function navGlassStyle(ui: PhoneUi): { cls: string; style: Record<string,
   const a = Math.min(100, Math.max(0, ui.navAlpha ?? 62));
   const b = Math.min(40, Math.max(0, ui.navBlur ?? 20));
   return { cls: 'glass', style: { '--gl-a': String(a / 100), '--gl-b': `${b}px` } };
+}
+
+// Biến CSS cho kính lỏng của lưới chức năng: gắn lên thẻ html để mọi lưới ở mọi màn cùng đổi theo 1 cài đặt.
+export function gridGlassVars(ui: PhoneUi): { on: boolean; a: string; b: string } {
+  const a = Math.min(100, Math.max(20, ui.gridAlpha ?? 72));
+  const b = Math.min(40, Math.max(0, ui.gridBlur ?? 22));
+  return { on: ui.gridGlass !== false, a: String(a / 100), b: `${b}px` };
 }

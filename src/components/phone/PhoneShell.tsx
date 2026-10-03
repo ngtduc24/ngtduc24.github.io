@@ -3,7 +3,7 @@ import { RefreshCw, ChevronLeft, Home, Bell, Plus, LayoutGrid, User, Monitor, Se
 import type { AppSettings, UserAccount } from '../../types';
 import { MODULE_REGISTRY, isModuleHidden, resolveModuleMeta, ModuleDef } from '../../lib/modules';
 import { canUseModule } from '../../lib/moduleAccess';
-import { phoneMode, phoneUi, navGlassStyle } from '../../lib/device';
+import { phoneMode, phoneUi, navGlassStyle, gridGlassVars } from '../../lib/device';
 import { setCreateIntent, sendToComputer } from '../../lib/phone';
 import { writeSubRoute } from '../../lib/seoConfig';
 import { useSidebarTools } from '../../lib/sidebarTools';
@@ -175,6 +175,13 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
     setTab(id);
   };
   const glass = navGlassStyle(phoneUi(settings));
+  // Kính lỏng cho mọi lưới chức năng: 1 cài đặt của admin, gắn biến lên html để lưới ở mọi màn cùng đổi theo.
+  const gg = gridGlassVars(phoneUi(settings));
+  useEffect(() => {
+    const h = document.documentElement;
+    h.classList.toggle('ph-lg', gg.on); h.style.setProperty('--lg-a', gg.a); h.style.setProperty('--lg-b', gg.b);
+    return () => { h.classList.remove('ph-lg'); h.style.removeProperty('--lg-a'); h.style.removeProperty('--lg-b'); };
+  }, [gg.on, gg.a, gg.b]);
   const curMod = mods.find(m => m.id === tab);
   const title = curMod ? phoneLabel(curMod) : (tab === 'profile' || tab === 'user_profile') ? 'Trang cá nhân' : (tab === 'edu_exam' ? 'Quizz' : MODULE_REGISTRY.find(m => m.id === tab)?.label || 'EduGo');
   const api: PhoneApi = {

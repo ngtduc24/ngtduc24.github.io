@@ -268,9 +268,9 @@ html.is-phone.ph-has-tools .left-20 { bottom: calc(64px + env(safe-area-inset-bo
 .ph-top .act .c { width: 54px; height: 54px; border-radius: 50%; background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.28); display: grid; place-items: center; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 .ph-top .act .c svg { width: 25px; height: 25px; stroke-width: 2; }
 .ph-top .act:active .c { transform: scale(.94); }
-.ph-grid { position: relative; z-index: 2; margin: -40px 14px 0; background: #fff; border-radius: 22px; padding: 18px 6px 4px; box-shadow: 0 8px 24px -12px rgba(15,23,42,.25); }
+.ph-grid { position: relative; z-index: 2; margin: -40px 14px 0; background: #fff; border-radius: 22px; padding: 18px 6px 18px; box-shadow: 0 8px 24px -12px rgba(15,23,42,.25); }
 .ph-grid .ph-apps { row-gap: 18px; }
-.ph-grid .more { display: flex; justify-content: center; width: 100%; padding: 8px 0 6px; color: #f59e0b; }
+.ph-grid .more { display: flex; justify-content: center; width: 100%; padding: 10px 0 0; margin-bottom: -8px; color: #f59e0b; }
 .ph-grid .more svg { width: 24px; height: 24px; transition: transform .2s; }
 .ph-ico { width: 48px; height: 48px; border-radius: 15px; display: grid; place-items: center; overflow: hidden; }
 .ph-ico svg { width: 25px; height: 25px; stroke-width: 2; }
@@ -654,3 +654,13 @@ html.is-phone, html.is-phone body { background-color: var(--color-brand-hover, #
 .ph-nav2.glass .bg svg path { fill: rgba(255,255,255,var(--gl-a, .62)); }
 .ph-nav2.glass .it.on { background: color-mix(in srgb, var(--ph-brand-light) 70%, transparent); }
 .ph-nav2.glass .it { color: #475569; }
+
+/* Kính lỏng (Liquid Glass kiểu iOS) cho mọi lưới chức năng trên điện thoại: Trang chủ, Lớp học, Tất cả chức năng, lưới thao tác.
+   Admin chỉnh độ đục (--lg-a) và độ nhoè (--lg-b) ở 1 chỗ trong Cài đặt giao diện điện thoại, mọi lưới đổi theo. */
+html.ph-lg .ph-grid, html.ph-lg .ph-box:not(.lap), .ph-lg-demo .ph-grid {
+  background: linear-gradient(160deg, rgba(255,255,255,calc(var(--lg-a, .72) + .1)) 0%, rgba(255,255,255,var(--lg-a, .72)) 45%, rgba(255,255,255,calc(var(--lg-a, .72) - .08)) 100%);
+  -webkit-backdrop-filter: blur(var(--lg-b, 22px)) saturate(180%); backdrop-filter: blur(var(--lg-b, 22px)) saturate(180%);
+  border: 1px solid rgba(255,255,255,.65);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35), inset 0 0 0 .5px rgba(255,255,255,.4), 0 12px 30px -14px rgba(15,23,42,.32), 0 2px 6px -3px rgba(15,23,42,.12);
+}
+html.ph-lg .ph-grid .ph-ico, .ph-lg-demo .ph-grid .ph-ico { box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }

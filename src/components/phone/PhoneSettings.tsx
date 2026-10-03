@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Home as HomeIcon, LayoutGrid, Plus, Bell, User } from 'lucide-react';
+import { Home as HomeIcon, LayoutGrid, Plus, Bell, User, Presentation as PresIcon, QrCode as QrIcon, ImageIcon as ImgIcon, FileArchive } from 'lucide-react';
 import { Eye } from 'lucide-react';
 import { Smartphone, Monitor, EyeOff, Image as ImageIcon, RotateCcw, GraduationCap, BookOpen, Library, MoreHorizontal, GripVertical, ArrowUp, ArrowDown, Lock, Unlock, Sparkles } from 'lucide-react';
 import type { AppSettings, ModuleOverride } from '../../types';
 import { MODULE_REGISTRY } from '../../lib/modules';
-import { phoneMode, phoneUi, PhoneUi, PhoneMode, PHONE_UI_KEY, CTA_TARGETS, NOTI_DEFAULT, PHONE_GRID_SKIP, phoneActIds, navGlassStyle } from '../../lib/device';
+import { phoneMode, phoneUi, PhoneUi, PhoneMode, PHONE_UI_KEY, CTA_TARGETS, NOTI_DEFAULT, PHONE_GRID_SKIP, phoneActIds, navGlassStyle, gridGlassVars } from '../../lib/device';
 import { NotiBanner } from './PhoneNotifications';
 import MediaSourcePicker from '../MediaSourcePicker';
 import { PhoneTop, resolveActs } from './PhoneHome';
@@ -160,6 +160,7 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
       <ActsCard formState={formState} ui={ui} setUi={setUi} sw={sw} field={field} />
 
       {/* Thanh menu dưới kiểu kính mờ */}
+      <GridGlassCard ui={ui} setUi={setUi} sw={sw} />
       <NavGlassCard ui={ui} setUi={setUi} sw={sw} />
 
       {/* Lưới chức năng ở Trang chủ điện thoại */}
@@ -413,6 +414,58 @@ function NavGlassCard({ ui, setUi, sw }: { ui: PhoneUi; setUi: (p: Partial<Phone
               <span className="it"><Bell />Thông báo</span>
               <span className="it"><User />Cá nhân</span>
             </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Kính lỏng (Liquid Glass kiểu iOS) cho mọi lưới chức năng trên điện thoại. Chỉnh 1 lưới mẫu, mọi lưới ở mọi màn đổi theo.
+function GridGlassCard({ ui, setUi, sw }: { ui: PhoneUi; setUi: (p: Partial<PhoneUi>) => void; sw: (on: boolean, fn: () => void, label: string) => React.ReactNode }) {
+  const v = gridGlassVars(ui);
+  const alpha = ui.gridAlpha ?? 72;
+  const blur = ui.gridBlur ?? 22;
+  const range = 'w-full accent-[var(--color-brand,#10b981)]';
+  const items = [
+    { l: 'Bài giảng', I: PresIcon, bg: '#f5f3ff', fg: '#7c3aed' }, { l: 'Mã QR', I: QrIcon, bg: '#ecfdf5', fg: '#059669' },
+    { l: 'Phóng to ảnh', I: ImgIcon, bg: '#eff6ff', fg: '#2563eb' }, { l: 'Nén file', I: FileArchive, bg: '#ecfdf5', fg: '#059669' },
+  ];
+  return (
+    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="flex-1 space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-800">Lưới chức năng kiểu kính lỏng (Liquid Glass)</h3>
+              <p className="text-[12px] text-slate-500">Chỉnh trên lưới mẫu bên phải, mọi lưới chức năng trên điện thoại đổi theo: Trang chủ, Lớp học, Tất cả chức năng và các lưới thao tác trong từng chức năng. Tắt thì lưới trở lại thẻ trắng đặc.</p>
+            </div>
+            {sw(v.on, () => setUi({ gridGlass: !v.on }), 'Bật tắt kính lỏng cho lưới chức năng')}
+          </div>
+          <div className={`space-y-4 ${v.on ? '' : 'pointer-events-none opacity-40'}`}>
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-[11px] font-bold text-slate-500"><span>Độ đục của lớp kính</span><span className="text-slate-800">{alpha}%</span></div>
+              <input type="range" min={20} max={95} value={alpha} onChange={e => setUi({ gridAlpha: Number(e.target.value) })} className={range} />
+              <p className="text-[10px] text-slate-400">Thấp thì lưới trong như kính, cao thì gần như trắng đặc.</p>
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-[11px] font-bold text-slate-500"><span>Độ nhoè nền phía sau</span><span className="text-slate-800">{blur}px</span></div>
+              <input type="range" min={0} max={40} value={blur} onChange={e => setUi({ gridBlur: Number(e.target.value) })} className={range} />
+            </div>
+            <button type="button" onClick={() => setUi({ gridAlpha: undefined, gridBlur: undefined })} className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-brand"><RotateCcw className="h-3 w-3" /> Về mức mặc định</button>
+          </div>
+        </div>
+        <div className="shrink-0">
+          <p className="mb-2 text-[11px] font-bold text-slate-500">Lưới mẫu</p>
+          <div className={`ph relative h-[230px] w-[372px] overflow-hidden rounded-[28px] border-[6px] border-slate-900 shadow-xl ${v.on ? 'ph-lg-demo' : ''}`}
+            style={{ '--lg-a': v.a, '--lg-b': v.b, background: 'linear-gradient(180deg,var(--color-brand-hover,#059669) 0%,var(--color-brand,#10b981) 52%,#f1f5f9 52%)' } as React.CSSProperties}>
+            <div style={{ position: 'absolute', right: -40, top: -30, width: 180, height: 180, borderRadius: '50%', background: 'rgba(255,255,255,.14)' }} />
+            <div style={{ position: 'absolute', left: 30, top: 70, width: 90, height: 90, borderRadius: '50%', background: '#fbbf24', opacity: .8 }} />
+            <div className="ph-grid" style={{ margin: '60px 14px 0' }}>
+              <div className="ph-apps">
+                {items.map(({ l, I, bg, fg }) => <span key={l} className="ph-app"><span className="ph-ico" style={{ background: bg, color: fg }}><I className="h-6 w-6" /></span><span>{l}</span></span>)}
+              </div>
+            </div>
           </div>
         </div>
       </div>
