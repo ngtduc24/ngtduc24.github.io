@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Search, SlidersHorizontal, CheckCheck, ClipboardList, Users, GraduationCap, Info, AlertTriangle, Shield, Workflow, BookOpen, Bell, Trash2, Monitor, CheckSquare, Square, CheckCircle2, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Search, SlidersHorizontal, CheckCheck, ClipboardList, Users, GraduationCap, Info, AlertTriangle, Shield, Workflow, BookOpen, Bell, Trash2, Monitor, CheckSquare, Square, CheckCircle2, X, ChevronLeft } from 'lucide-react';
 import { usePhone, usePhoneModules } from './PhoneShell';
 import { phoneUi, NOTI_DEFAULT, PhoneUi } from '../../lib/device';
 import { MODULE_REGISTRY } from '../../lib/modules';
@@ -28,6 +29,7 @@ const dayKey = (iso: string) => {
   if (diff < 7) return 'Tuần này';
   return `Tháng ${d.getMonth() + 1}/${d.getFullYear()}`;
 };
+const fullWhen = (iso: string) => { const d = new Date(iso); return `${hhmm(d)} ${['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'][d.getDay()]}, ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`; };
 const when = (iso: string) => { const d = new Date(iso); const k = dayKey(iso); return k === 'Hôm nay' || k === 'Hôm qua' ? hhmm(d) : `${d.getDate()}/${d.getMonth() + 1} ${hhmm(d)}`; };
 
 // Thông báo trên điện thoại: đầu trang màu hệ thống, ô tìm kiếm có nút lọc chưa đọc,
@@ -164,18 +166,30 @@ export default function PhoneNotifications() {
         );
       })}
 
-      {detail && (
-        <div className="ph ph-scrim" onClick={() => setDetail(null)}>
-          <div className="ph-sheet" onClick={e => e.stopPropagation()}>
-            <div className="grab" />
-            <h3>{detail.title}</h3>
-            <p className="s">{when(detail.timestamp)}{detail.senderName ? ` · ${detail.senderName}` : ''}</p>
-            <div style={{ marginTop: 14, background: '#f8fafc', borderRadius: 16, padding: 14, fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap', color: 'var(--ph-text)' }}>{detail.description}</div>
-            <button type="button" className="ph-btn" style={{ width: '100%', marginTop: 16 }} onClick={() => setDetail(null)}>Đóng</button>
-            <button type="button" className="ph-btn ghost" style={{ width: '100%', marginTop: 10, color: 'var(--ph-rose)', borderColor: '#fecdd3' }} onClick={() => { removeIds([detail.id]); setDetail(null); }}><Trash2 size={18} />Xoá thông báo</button>
+      {detail && createPortal(
+        // Xem chi tiết thông báo trên màn riêng phủ kín, không bị thanh dưới che. Có nút quay lại ở góc trên trái.
+        <div className="ph ph-detail fixed inset-0" role="dialog" aria-label={detail.title}>
+          <header className="ph-appbar">
+            <button type="button" className="bk" onClick={() => setDetail(null)} aria-label="Quay lại danh sách thông báo"><ChevronLeft /></button>
+            <h1>Chi tiết thông báo</h1>
+            <button type="button" className="hm" onClick={() => { removeIds([detail.id]); setDetail(null); }} aria-label="Xoá thông báo"><Trash2 /></button>
+          </header>
+          <div className="bd">
+            <div className="hd">
+              <span className="ic">{(() => { const I = iconFor(detail); return <I />; })()}</span>
+              <div>
+                <span className="cat">{NOTIF_CATEGORY_LABEL[notifCategory(detail)]}</span>
+                <h2>{detail.title}</h2>
+                <p>{fullWhen(detail.timestamp)}{detail.senderName ? ` · ${detail.senderName}` : ''}</p>
+              </div>
+            </div>
+            <div className="ct">{detail.description}</div>
           </div>
-        </div>
-      )}
+          <div className="ft">
+            <button type="button" className="ph-btn ghost del" onClick={() => { removeIds([detail.id]); setDetail(null); }}><Trash2 size={18} />Xoá</button>
+            <button type="button" className="ph-btn" onClick={() => setDetail(null)}>Xong</button>
+          </div>
+        </div>, document.body)}
 
       {!picking && items.length > 0 && !undo && <p className="ph-hint">Vuốt thông báo sang trái để xoá</p>}
 

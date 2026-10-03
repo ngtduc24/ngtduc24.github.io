@@ -336,3 +336,18 @@ html.is-phone, html.is-phone body { touch-action: manipulation; overscroll-behav
 .ph-pickbar .del:disabled { opacity: .4; }
 .ph-toast { position: fixed; left: 16px; right: 16px; bottom: calc(96px + max(8px, calc(env(safe-area-inset-bottom) - 12px))); z-index: 46; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-radius: 16px; background: #1e293b; color: #fff; font-size: 13.5px; box-shadow: 0 10px 30px -10px rgba(15,23,42,.5); animation: ph-up .2s ease-out; }
 .ph-toast button { color: #6ee7b7; font-weight: 800; font-size: 13.5px; background: none; border: 0; }
+
+/* Màn chi tiết thông báo */
+.ph-detail { z-index: 200; display: flex; flex-direction: column; background: var(--ph-bg); animation: ph-in .2s ease-out; }
+@keyframes ph-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.ph-detail .bd { flex: 1; min-height: 0; overflow-y: auto; padding: 16px; }
+.ph-detail .hd { display: flex; gap: 14px; align-items: flex-start; background: #fff; border-radius: 20px; padding: 16px; }
+.ph-detail .hd .ic { width: 48px; height: 48px; border-radius: 16px; flex: none; display: grid; place-items: center; background: var(--ph-brand-light); color: var(--ph-brand-hover); }
+.ph-detail .hd .ic svg { width: 24px; height: 24px; }
+.ph-detail .hd .cat { display: inline-block; font-size: 11px; font-weight: 700; color: var(--ph-brand-hover); background: var(--ph-brand-light); border-radius: 8px; padding: 2px 8px; }
+.ph-detail .hd h2 { font-size: 18px; font-weight: 800; color: var(--ph-ink); line-height: 1.35; margin: 6px 0 0; }
+.ph-detail .hd p { font-size: 12.5px; color: var(--ph-muted); margin-top: 4px; }
+.ph-detail .ct { margin-top: 12px; background: #fff; border-radius: 20px; padding: 16px; font-size: 15px; line-height: 1.65; color: var(--ph-text); white-space: pre-wrap; overflow-wrap: anywhere; }
+.ph-detail .ft { flex: none; display: grid; grid-template-columns: 1fr 2fr; gap: 10px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: #fff; box-shadow: 0 -8px 24px rgba(15,23,42,.06); }
+.ph-detail .ft .ph-btn { width: 100%; }
+.ph-detail .ft .del { color: var(--ph-rose) !important; border-color: #fecdd3; }
