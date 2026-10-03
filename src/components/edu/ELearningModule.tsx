@@ -504,7 +504,9 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
   const load = useCallback(async () => {
     const [l, secs, res] = await Promise.all([getLesson(lessonId), getSections(lessonId), getResources(lessonId)]);
     // Chủ giáo trình và người được thêm với quyền chỉnh sửa hoặc quản lý mới mở được trang soạn.
-    const role = await getMyRole('el_lesson', lessonId, l.owner_id);
+    // Mở thẳng bằng đường dẫn thì ngữ cảnh tài khoản có thể chưa kịp gắn, gắn ngay tại đây
+    setEduAuthContext(currentUser.id, currentUser.role === 'admin');
+    const role = l.owner_id === currentUser.id ? 'owner' : await getMyRole('el_lesson', lessonId, l.owner_id);
     if (role !== 'owner' && role !== 'edit' && role !== 'manage') { addNotification(role === 'view' ? 'Bạn chỉ có quyền xem giáo trình này.' : 'Không tìm thấy giáo trình.', role === 'view' ? 'warning' : 'error'); onBack(); return; }
     setMyRole(role);
     setLesson(l); setSections(secs); setResources(res);

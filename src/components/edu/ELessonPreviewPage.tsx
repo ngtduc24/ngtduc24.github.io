@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, BookOpen, FileText, CheckCircle2, ArrowLeft, Copy, ExternalLink, ShieldAlert, FileDown } from 'lucide-react';
+import { Loader2, BookOpen, FileText, CheckCircle2, ArrowLeft, Copy, ExternalLink, ShieldAlert, FileDown, Pencil, UserPlus } from 'lucide-react';
+import { getMyRole, listCollaborators, Collaborator, MyRole } from '../../lib/collab';
+import { setEduAuthContext } from '../../lib/edu';
+import { getSeoMeta } from '../../lib/seoConfig';
+import { useNotifications } from '../NotificationContext';
+import LessonSharePanel from './LessonSharePanel';
 import { ELLesson, ELSection, ELResource, getLesson, getSections, getResources, copyPublicLesson } from '../../lib/elearning';
 import { exportLessonToPdf } from '../../lib/lessonPdf';
 import { UserChip } from '../ui/People';
@@ -17,6 +22,12 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
   const [active, setActive] = useState(0);
   const [copying, setCopying] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Chủ sở hữu và người cộng tác: nút Sửa, nút Thêm người cạnh nút Tải PDF
+  const [role, setRole] = useState<MyRole>(null);
+  const [collabs, setCollabs] = useState<Collaborator[]>([]);
+  const [collabTick, setCollabTick] = useState(0);
+  const [shareOpen, setShareOpen] = useState(false);
+  const { addNotification } = useNotifications();
 
   const me = (() => { try { return JSON.parse(localStorage.getItem('logged_in_user') || 'null'); } catch { return null; } })();
   const goBack = () => {
@@ -31,7 +42,11 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
         const l = await getLesson(lessonId);
         const isPublic = l.is_public && l.status === 'published' && !l.deleted_at;
         const isOwner = !!me && me.id === l.owner_id;
-        if (!isPublic && !isOwner) { setDenied(true); setLoading(false); return; }
+        if (me?.id) setEduAuthContext(me.id, me.role === 'admin');
+        const myRole: MyRole = isOwner ? 'owner' : me?.id ? await getMyRole('el_lesson', lessonId, l.owner_id).catch(() => null) : null;
+        setRole(myRole);
+        // Bản chưa công khai: chủ sở hữu và người được thêm vẫn xem được
+        if (!isPublic && !myRole) { setDenied(true); setLoading(false); return; }
         const [s, r] = await Promise.all([getSections(lessonId), getResources(lessonId)]);
         setLesson(l); setSections(s); setResources(r);
       } catch { setDenied(true); }
@@ -39,6 +54,8 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
+
+  useEffect(() => { if (role === 'owner' || role === 'manage') listCollaborators('el_lesson', lessonId).then(setCollabs).catch(() => {}); }, [role, lessonId, collabTick]);
 
   // Khi chuyển sang phần nội dung khác (bấm Phần tiếp theo, Phần trước hoặc chọn ở mục lục),
   // tự động cuộn màn hình lên đầu trang cho dễ đọc từ đầu.
@@ -83,6 +100,27 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {(role === 'owner' || role === 'manage') && (
+              <div className="relative">
+                <button data-share-toggle onClick={() => setShareOpen(v => !v)} title="Thêm người cùng xem, cùng chỉnh sửa" className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand">
+                  <UserPlus className="h-3.5 w-3.5" /> Thêm người
+                </button>
+                {shareOpen && (
+                  <LessonSharePanel lesson={lesson} title={lesson.title} currentUser={me} canManage isOwner={role === 'owner'}
+                    canGoPublic={false} publicHint="Muốn công khai lên Thư viện, hãy mở trang Sửa và bật Xuất bản, Công khai lên thư viện."
+                    collabs={collabs} onCollabsChange={() => setCollabTick(v => v + 1)}
+                    onTogglePublic={async () => { addNotification('Hãy mở trang Sửa để đổi chế độ công khai.', 'info'); return false; }}
+                    onPdf={() => { setShareOpen(false); exportLessonToPdf(lesson, sections, resources); }}
+                    onPreview={() => setShareOpen(false)}
+                    onClose={() => setShareOpen(false)} notify={(m, t) => addNotification(m, t)} />
+                )}
+              </div>
+            )}
+            {(role === 'owner' || role === 'manage' || role === 'edit') && (
+              <a href={`${window.location.origin}/?tab=${getSeoMeta('elearning').slug}&sv=editor&lid=${encodeURIComponent(lesson.id)}`} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-[11px] font-bold text-white hover:bg-brand-hover">
+                <Pencil className="h-3.5 w-3.5" /> Sửa
+              </a>
+            )}
             <button onClick={() => exportLessonToPdf(lesson, sections, resources)} title="Tải toàn bộ giáo trình ra PDF" className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand">
               <FileDown className="h-3.5 w-3.5" /> Tải PDF
             </button>
