@@ -2,6 +2,13 @@ import type { AppNotification, UserAccount } from '../types';
 
 // ===== Mở thẳng màn tạo mới của một chức năng (nút Tạo mới trên điện thoại) =====
 // Đặt cờ dùng 1 lần, chức năng đích đọc cờ khi mở và tự bật màn tạo mới.
+// Mở bảng duyệt gia hạn ngay khi vào trang lớp (từ lời nhắc hoặc ô Phê duyệt yêu cầu).
+export function markOpenExt(classId: string) { try { sessionStorage.setItem('edu_open_ext', classId); } catch { /* bỏ qua */ } }
+export function takeOpenExt(classId: string): boolean {
+  try { if (sessionStorage.getItem('edu_open_ext') === classId) { sessionStorage.removeItem('edu_open_ext'); return true; } } catch { /* bỏ qua */ }
+  return false;
+}
+
 export function setCreateIntent(tab: string) {
   try { sessionStorage.setItem(`open_hint:create:${tab}`, '1'); } catch { /* bỏ qua */ }
 }

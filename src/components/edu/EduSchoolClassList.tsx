@@ -33,7 +33,7 @@ import { usePhoneMaybe, PhoneActionGrid } from '../phone/PhoneShell';
 import { PhoneExt, PhoneSearch, PhoneSeg, PhoneChips, PhoneChip, PhoneSheet, PhoneMenuSheet, PhoneFab, PhoneEmpty, bandOf } from '../phone/PhoneKit';
 import { askText } from '../ui/Dialogs';
 import { supabase } from '../../lib/supabase';
-import { writeSubRoute } from '../../lib/seoConfig';
+import { markOpenExt } from '../../lib/phone';
 import { getGrades } from '../../lib/edu';
 import { phoneMode, phoneUi } from '../../lib/device';
 import { PhoneTop } from '../phone/PhoneHome';
@@ -346,7 +346,7 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
           // Lưới chức năng của Lớp học: chỉ 4 việc chính, không còn hàng nút tròn.
           const totalExt = Object.values(extCount).reduce((a, b) => a + b, 0);
           const extClasses = classes.filter(c => (extCount[c.id] || 0) > 0);
-          const openExt = (cid: string) => { writeSubRoute({ ext: '1' }); onSelectClass(cid); };
+          const openExt = (cid: string) => { markOpenExt(cid); onSelectClass(cid); };
           const tiles = [
             { key: 'school', label: 'Thêm trường', icon: School, on: canCreate, badge: 0, run: () => { newSchool(); } },
             { key: 'new', label: 'Thêm lớp', icon: Plus, on: canCreate, badge: 0, run: () => { setNewCls({ schoolId: pSchool || mySchools[0]?.id || '', name: '' }); setPSheet('new'); } },
@@ -437,7 +437,7 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
           <PhoneSheet title="Phê duyệt yêu cầu" sub={classes.some(c => (extCount[c.id] || 0) > 0) ? 'Chọn lớp để xem và duyệt yêu cầu gia hạn nộp bài.' : 'Hiện chưa có yêu cầu nào đang chờ duyệt.'} onClose={() => setPSheet(null)}>
             <div className="pk-pick">
               {classes.filter(c => (extCount[c.id] || 0) > 0).map(c => (
-                <button key={c.id} type="button" onClick={() => { setPSheet(null); writeSubRoute({ ext: '1' }); onSelectClass(c.id); }}><span>{c.name}</span><em>{extCount[c.id]} yêu cầu</em></button>
+                <button key={c.id} type="button" onClick={() => { setPSheet(null); markOpenExt(c.id); onSelectClass(c.id); }}><span>{c.name}</span><em>{extCount[c.id]} yêu cầu</em></button>
               ))}
             </div>
           </PhoneSheet>

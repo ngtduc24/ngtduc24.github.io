@@ -121,7 +121,7 @@ export async function loadReminders(user: UserAccount, tasks: Task[], pending: P
           id: `ext:${cid}:${rs.length}`, kind: 'extension',
           title: rs.length === 1 ? `${who[0]} xin gia hạn nộp bài` : `${rs.length} yêu cầu gia hạn chờ duyệt`,
           detail: `${rs.length === 1 ? (titles.get(rs[0].assignment_id) ? `Bài ${titles.get(rs[0].assignment_id)} · ` : '') : `${names} · `}${classes.find((c: any) => c.id === cid)?.name || 'Lớp học'}`,
-          tab: 'edu', sub: { sv: 'class_detail', cid, ext: '1' },
+          tab: 'edu', sub: { sv: 'class_detail', cid },
         });
       });
     }

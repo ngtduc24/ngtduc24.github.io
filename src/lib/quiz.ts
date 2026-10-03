@@ -425,6 +425,18 @@ export async function assignQuizToClass(quizId: string, classId: string, gradeCo
   if (error) throw error;
 }
 
+// Các đề Quizz đã giao cho một lớp (kèm cột điểm), dùng ở trang lớp học.
+export async function getClassQuizzes(classId: string): Promise<Array<{ quiz: Quiz; grade_column_id: string | null }>> {
+  const { data, error } = await supabase.from(ASSIGN_TABLE).select('quiz_id, grade_column_id').eq('class_id', classId);
+  if (error) throw error;
+  const rows = (data || []) as Array<{ quiz_id: string; grade_column_id: string | null }>;
+  if (!rows.length) return [];
+  const { data: qs, error: e2 } = await supabase.from(QUIZ_TABLE).select('*').in('id', rows.map(r => r.quiz_id));
+  if (e2) throw e2;
+  const byId = new Map((qs || []).map((q: any) => [q.id, q as Quiz]));
+  return rows.filter(r => byId.has(r.quiz_id)).map(r => ({ quiz: byId.get(r.quiz_id)!, grade_column_id: r.grade_column_id }));
+}
+
 export async function unassignQuizFromClass(quizId: string, classId: string): Promise<void> {
   const { error } = await supabase.from(ASSIGN_TABLE).delete().eq('quiz_id', quizId).eq('class_id', classId);
   if (error) throw error;

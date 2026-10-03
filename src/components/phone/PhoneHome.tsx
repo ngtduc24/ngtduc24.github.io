@@ -4,7 +4,7 @@ import { usePhone, usePhoneModules, ModIcon, PhoneModule, phoneLabel } from './P
 import { useTasks } from '../TaskContext';
 import { phoneMode, phoneUi, PhoneUi, CTA_TARGETS, PHONE_GRID_SKIP } from '../../lib/device';
 import type { AppSettings } from '../../types';
-import { setCreateIntent } from '../../lib/phone';
+import { setCreateIntent, markOpenExt } from '../../lib/phone';
 import { todayTasks, loadPendingGrading, loadReminders, PendingGrading, Reminder, dismissedReminders, dismissReminder } from '../../lib/phoneHome';
 import { useUsage, useScores, personalOrder, MIN_EVENTS, featuredPicks, noteShown, forgetDoc, isNewModule, DocVisit } from '../../lib/personalize';
 import { MODULE_REGISTRY } from '../../lib/modules';
@@ -152,7 +152,7 @@ export default function PhoneHome() {
       {shownReminders.length > 0 && <>
         <div className="ph-sec"><h3>Lời nhắc cho bạn <span className="n">({shownReminders.length})</span></h3></div>
         {shownReminders.map(r => { const I = REMIND_ICON[r.kind]; return (
-          <div key={r.id} role="button" tabIndex={0} className="ph-remind" onClick={() => open(r.tab, r.sub)}>
+          <div key={r.id} role="button" tabIndex={0} className="ph-remind" onClick={() => { if (r.kind === 'extension' && r.sub?.cid) markOpenExt(r.sub.cid); open(r.tab, r.sub); }}>
             <b>{r.title}</b><p>{r.detail}</p>
             <button type="button" className="x" aria-label="Ẩn lời nhắc" onClick={e => { e.stopPropagation(); dismissReminder(user.id, r.id); setOff(dismissedReminders(user.id)); }}><X /></button>
             <span className="pic"><I /></span>
