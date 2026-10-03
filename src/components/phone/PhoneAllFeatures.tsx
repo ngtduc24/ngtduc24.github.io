@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Search, X, Monitor } from 'lucide-react';
 import { usePhone, usePhoneModules, ModIcon, PhoneModule, phoneLabel } from './PhoneShell';
-import { LAPTOP_ONLY } from '../../lib/device';
+import { phoneMode } from '../../lib/device';
 import { isNewModule } from '../../lib/personalize';
 
 const GROUP_ORDER = ['Giảng dạy và nội dung', 'Quản lý và hệ thống', 'Nghiên cứu và phân tích', 'Công cụ thiết kế'];
@@ -20,7 +20,7 @@ export default function PhoneAllFeatures() {
   const boxRefs = useRef<Record<string, HTMLDivElement | null>>({});
   useEffect(() => { if (searching) setTimeout(() => inputRef.current?.focus(), 50); }, [searching]);
 
-  const groupOf = (m: PhoneModule) => LAPTOP_ONLY.has(m.id) ? LAP : m.group;
+  const groupOf = (m: PhoneModule) => phoneMode(m.id, settings) === 'laptop' ? LAP : m.group;
   const groups = [...GROUP_ORDER, LAP].map(g => ({ g, items: mods.filter(m => groupOf(m) === g) })).filter(x => x.items.length);
   const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
   const found = q.trim() ? mods.filter(m => norm(`${m.label} ${m.desc}`).includes(norm(q.trim()))) : null;
@@ -28,7 +28,7 @@ export default function PhoneAllFeatures() {
   const jump = (g: string) => { setActive(g); boxRefs.current[g]?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
 
   const app = (m: PhoneModule) => {
-    const lap = LAPTOP_ONLY.has(m.id);
+    const lap = phoneMode(m.id, settings) === 'laptop';
     return (
       <button key={m.id} type="button" className={`ph-app ${lap ? 'dim' : ''}`} onClick={() => open(m.id)}>
         {lap ? <span className="lap"><Monitor /></span> : isNewModule(m.id) ? <span className="tag">Mới</span> : null}

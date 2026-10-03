@@ -16,7 +16,8 @@ import {
   X,
   Database
 } from "lucide-react";
-import { EyeOff, Eye, RotateCcw, Wrench, Power, Boxes, ImagePlay, Sparkles, Plus, Trash2, BookMarked, FlaskConical, Link2, Copy } from "lucide-react";
+import { EyeOff, Eye, RotateCcw, Wrench, Power, Boxes, ImagePlay, Sparkles, Plus, Trash2, BookMarked, FlaskConical, Link2, Copy, Smartphone, Monitor } from "lucide-react";
+import { phoneMode, PHONE_MODE_LABEL } from "../lib/device";
 import { getTabUrl } from "../lib/seoConfig";
 import { AppSettings, ModuleOverride, AssistantKnowledgeItem } from "../types";
 import { saveDefaultSettingsToSupabase } from "../lib/data";
@@ -610,7 +611,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
               <span>Cài đặt chức năng hệ thống</span>
             </h2>
             <p className="text-[13px] text-slate-500">
-              Đổi ảnh icon, tên và mô tả của từng chức năng. Gạt tắt để ẩn một chức năng, khi ẩn thì mọi tài khoản đều không thấy và không truy cập được kể cả khi mở bằng đường dẫn trực tiếp. Bật nhãn thử nghiệm để hiện nhãn nhỏ ở góc nút chức năng, báo cho người dùng biết chức năng đang trong giai đoạn thử nghiệm.
+              Đổi ảnh icon, tên và mô tả của từng chức năng. Gạt tắt để ẩn một chức năng, khi ẩn thì mọi tài khoản đều không thấy và không truy cập được kể cả khi mở bằng đường dẫn trực tiếp. Bật nhãn thử nghiệm để hiện nhãn nhỏ ở góc nút chức năng, báo cho người dùng biết chức năng đang trong giai đoạn thử nghiệm. Nút Điện thoại chọn cách dùng chức năng trên điện thoại, bấm để đổi lần lượt giữa dùng đầy đủ, chỉ dùng trên máy tính (làm mờ, đề nghị gửi link sang máy tính) và ẩn trên điện thoại.
             </p>
           </div>
 
@@ -683,6 +684,19 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
                     >
                       <FlaskConical className="w-3.5 h-3.5" /> {ov.beta ? 'Nhãn thử nghiệm: bật' : 'Nhãn thử nghiệm: tắt'}
                     </button>
+                    {(() => {
+                      // Bấm để đổi lần lượt: dùng đầy đủ, chỉ dùng trên máy tính, ẩn trên điện thoại.
+                      const pm = phoneMode(mod.id, formState);
+                      const next = pm === 'full' ? 'laptop' : pm === 'laptop' ? 'hidden' : 'full';
+                      const cls = pm === 'full' ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : pm === 'laptop' ? 'bg-slate-100 text-slate-600 hover:bg-slate-200' : 'bg-rose-50 text-rose-500 hover:bg-rose-100';
+                      return (
+                        <button type="button" onClick={() => updateOverride(mod.id, { phone: next })}
+                          title="Cách dùng trên điện thoại. Bấm để đổi: dùng đầy đủ, chỉ dùng trên máy tính (làm mờ, gửi link sang máy tính), ẩn trên điện thoại"
+                          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-bold transition-colors ${cls}`}>
+                          {pm === 'laptop' ? <Monitor className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />} {PHONE_MODE_LABEL[pm]}
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               );

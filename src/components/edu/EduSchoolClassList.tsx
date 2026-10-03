@@ -29,6 +29,7 @@ import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import { eduCan } from '../../lib/eduPermissions';
 import { usePhoneMaybe, PhoneActionGrid } from '../phone/PhoneShell';
+import { phoneMode } from '../../lib/device';
 import ShareDialog from '../ui/ShareDialog';
 import type { CollabType } from '../../lib/collab';
 import { collaboratorsByResource } from '../../lib/collab';
@@ -296,7 +297,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
                 ...(canCreate ? [{ key: 'school', label: 'Thêm trường', icon: Plus, onClick: () => { setIsCreatingSchool(true); setNewForm({ name: '', description: '' }); } }] : []),
                 ...(onOpenBank && canUseModule(currentUser, 'edu_bank') ? [{ key: 'bank', label: 'Ngân hàng bài tập', icon: BookMarked, onClick: onOpenBank }] : []),
                 ...(onOpenExams && canUseModule(currentUser, 'edu_exam') ? [{ key: 'exam', label: 'Kiểm tra', icon: FileCheck2, onClick: onOpenExams }] : []),
-                ...(onOpenGrades && canUseModule(currentUser, 'edu_grade') ? [{ key: 'grade', label: 'Nhập điểm', icon: ClipboardList, onClick: () => phone.open('edu_grade'), laptop: true }] : []),
+                ...(onOpenGrades && canUseModule(currentUser, 'edu_grade') ? [{ key: 'grade', label: 'Nhập điểm', icon: ClipboardList, onClick: () => phone.open('edu_grade'), laptop: phoneMode('edu_grade', phone.settings) === 'laptop' }] : []),
               ]} />
             </div>
           )}

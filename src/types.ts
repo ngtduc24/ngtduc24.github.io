@@ -205,6 +205,7 @@ export interface ModuleOverride {
   icon?: string; // URL ảnh thay cho biểu tượng mặc định
   hidden?: boolean;
   beta?: boolean; // gắn nhãn Thử nghiệm ở góc nút chức năng
+  phone?: 'full' | 'laptop' | 'hidden'; // cách dùng trên điện thoại, chưa đặt thì theo mặc định của hệ thống
 }
 
 export interface TaskCompletionReport {

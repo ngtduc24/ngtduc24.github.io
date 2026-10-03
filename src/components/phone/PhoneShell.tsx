@@ -3,7 +3,7 @@ import { Home, Bell, Plus, LayoutGrid, User, Monitor, Send, CheckCircle2, Loader
 import type { AppSettings, UserAccount } from '../../types';
 import { MODULE_REGISTRY, isModuleHidden, resolveModuleMeta, ModuleDef } from '../../lib/modules';
 import { canUseModule } from '../../lib/moduleAccess';
-import { LAPTOP_ONLY } from '../../lib/device';
+import { phoneMode } from '../../lib/device';
 import { setCreateIntent, sendToComputer } from '../../lib/phone';
 import { writeSubRoute } from '../../lib/seoConfig';
 import { useSidebarTools } from '../../lib/sidebarTools';
@@ -16,7 +16,7 @@ export type PhoneModule = ModuleDef & { iconUrl?: string; hidden: boolean; beta:
 // Danh sách chức năng tài khoản này được dùng, đã áp tên, mô tả, ảnh icon do admin tuỳ chỉnh.
 export function usePhoneModules(user: UserAccount, settings?: AppSettings): PhoneModule[] {
   return useMemo(() => MODULE_REGISTRY
-    .filter(m => canUseModule(user, m.id) && !isModuleHidden(m.id, settings))
+    .filter(m => canUseModule(user, m.id) && !isModuleHidden(m.id, settings) && phoneMode(m.id, settings) !== 'hidden')
     .map(m => resolveModuleMeta(m, settings)), [user, settings]);
 }
 
@@ -105,7 +105,7 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
   };
   const api: PhoneApi = {
     user, settings, tab, unread,
-    open: (id, sub) => { if (LAPTOP_ONLY.has(id)) setSheet({ id, sub }); else go(id, sub); },
+    open: (id, sub) => { if (phoneMode(id, settings) === 'laptop') setSheet({ id, sub }); else go(id, sub); },
     openCreate: () => setSheet('create'),
     openScan: () => setScan(true),
   };

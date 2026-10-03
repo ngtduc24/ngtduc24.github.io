@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Bell, Eye, TrendingUp, ChevronRight, ClipboardList, CircleCheck, ScanLine, GraduationCap, Library, LayoutGrid, X, Sparkles, CalendarDays, Clock, Presentation, Plus, Hourglass, BellRing } from 'lucide-react';
 import { usePhone, usePhoneModules, ModIcon, PhoneModule, phoneLabel } from './PhoneShell';
 import { useTasks } from '../TaskContext';
-import { LAPTOP_ONLY } from '../../lib/device';
+import { phoneMode } from '../../lib/device';
 import { setCreateIntent } from '../../lib/phone';
 import { todayTasks, loadPendingGrading, loadReminders, PendingGrading, Reminder, dismissedReminders, dismissReminder } from '../../lib/phoneHome';
 import { useUsage, useScores, personalOrder, MIN_EVENTS, featuredPicks, noteShown, forgetDoc, isNewModule, DocVisit } from '../../lib/personalize';
@@ -61,7 +61,7 @@ export default function PhoneHome() {
   const usage = useUsage(user.id);
   const scores = useScores(usage);
   const enough = usage.ev.length >= MIN_EVENTS && usage.autoSort !== false;
-  const gridBase = mods.filter(m => !SKIP_GRID.has(m.id) && !LAPTOP_ONLY.has(m.id) && !(user.dashboardIconHidden || []).includes(m.id));
+  const gridBase = mods.filter(m => !SKIP_GRID.has(m.id) && phoneMode(m.id, settings) !== 'laptop' && !(user.dashboardIconHidden || []).includes(m.id));
   const order = useMemo(() => {
     const ids = gridBase.map(m => m.id);
     if (enough) return personalOrder(ids, scores, usage.order, usage.pins || {});
@@ -73,7 +73,7 @@ export default function PhoneHome() {
 
   // ===== Tính năng nổi bật =====
   const picks = useMemo(() => {
-    const cands = mods.filter(m => !SKIP_GRID.has(m.id) && !LAPTOP_ONLY.has(m.id)).map(m => ({ id: m.id, label: m.label, group: MODULE_REGISTRY.find(r => r.id === m.id)?.group }));
+    const cands = mods.filter(m => !SKIP_GRID.has(m.id) && phoneMode(m.id, settings) !== 'laptop').map(m => ({ id: m.id, label: m.label, group: MODULE_REGISTRY.find(r => r.id === m.id)?.group }));
     if (enough) return featuredPicks({ candidates: cands, rowIds: grid.map(m => m.id), scores, data: usage }).slice(0, 6);
     return cands.filter(c => !grid.some(g => g.id === c.id)).slice(0, 5).map(c => ({ id: c.id, reason: isNewModule(c.id) ? 'Chức năng mới trên EduGo' : 'Bạn có thể thử', kind: 'discover' as const }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
