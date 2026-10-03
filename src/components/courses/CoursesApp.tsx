@@ -10,6 +10,8 @@ import { PortfolioCollectionPage, PortfolioDetailPage, CollectionCard, DetailIte
 import ProjectsCoursesCMS from '../cms/ProjectsCoursesCMS';
 import { PageHeader } from '../ui';
 import { notice } from '../ui/Dialogs';
+import { usePhoneMaybe } from '../phone/PhoneShell';
+import PhoneCourses from './PhoneCourses';
 
 // Ứng dụng Khoá học: admin tạo và quản lý khoá học, mọi tài khoản vào học các khoá admin đã phát hành.
 // Không có công tắc trong trang Phân quyền: ai đăng nhập cũng học được, chỉ admin thấy mục Quản lý.
@@ -21,6 +23,7 @@ const META_MINE = { label: 'Khoá học của tôi', eyebrow: 'EduGo', title: 'K
 
 export default function CoursesApp({ currentUser }: { currentUser: UserAccount }) {
   const isAdmin = currentUser.role === 'admin';
+  const phone = usePhoneMaybe();
   const [tab, setTab] = useState<Tab>('all');
   const [loading, setLoading] = useState(true);
   const [courses, setCourses] = useState<PortfolioCourse[]>([]);
@@ -56,7 +59,7 @@ export default function CoursesApp({ currentUser }: { currentUser: UserAccount }
   // Mở thẳng một khoá từ link chia sẻ (?course=<mã>).
   const [pendingCourse, setPendingCourse] = useState<string | null>(() => new URLSearchParams(window.location.search).get('course'));
   useEffect(() => {
-    if (!pendingCourse || !courses.length) return;
+    if (phone || !pendingCourse || !courses.length) return;
     const c = courses.find(x => x.id === pendingCourse);
     if (c) setDetail({ type: 'course', data: c });
     setPendingCourse(null);
@@ -102,6 +105,11 @@ export default function CoursesApp({ currentUser }: { currentUser: UserAccount }
     { id: 'mine', label: 'Khoá học của tôi', icon: BookOpen },
     ...(isAdmin ? [{ id: 'manage' as Tab, label: 'Quản lý khoá học', icon: Settings2 }] : []),
   ];
+
+  // Điện thoại: giao diện riêng (danh sách, trang khoá học, màn học bài) theo bản mẫu đã duyệt.
+  if (phone) {
+    return <PhoneCourses user={currentUser} courses={courses} loading={loading} onEnroll={enroll} registering={registering} onUpdateCourse={updateCourse} />;
+  }
 
   // Đang mở một khoá học: trang học bài toàn khung.
   if (detail) {

@@ -23,6 +23,7 @@ export interface UsageData {
   fpins?: string[];                     // thẻ Tính năng nổi bật người dùng ghim (theo thứ tự)
   fdis?: Record<string, number>;        // thẻ người dùng bỏ đi, không gợi ý lại trong 30 ngày
   shown?: Record<string, { n: number; d: number }>; // số ngày đã gợi ý mà chưa mở, để luân phiên gợi ý
+  favCourses?: string[];                // khoá học người dùng bấm tim để lưu lại
 }
 
 const DAY = 86400;
@@ -123,6 +124,10 @@ export function trackDoc(doc: { kind: string; id: string; title: string; tab: st
   const key = `${doc.kind}:${doc.id}`;
   const at = nowSec();
   update(uid, x => ({ ...x, docs: [{ ...doc, key, title: (doc.title || '').slice(0, 120) || 'Không tên', at }, ...x.docs.filter(d => d.key !== key)].slice(0, MAX_DOCS) }));
+}
+// Lưu hoặc bỏ lưu 1 khoá học (nút tim ở trang khoá học), đồng bộ theo tài khoản như các dữ liệu thói quen khác.
+export function toggleFavCourse(uid: string, id: string) {
+  update(uid, x => { const f = x.favCourses || []; return { ...x, favCourses: f.includes(id) ? f.filter(v => v !== id) : [id, ...f] }; });
 }
 export function forgetDoc(uid: string, key: string) { update(uid, x => ({ ...x, docs: x.docs.filter(d => d.key !== key) })); }
 export function setAutoSort(uid: string, on: boolean) { update(uid, x => ({ ...x, autoSort: on })); }

@@ -196,6 +196,8 @@ export interface CourseStudent {
   isLocked?: boolean;
   lessonNotes?: Record<string, any[]>;
   lessonHighlights?: Record<string, string[]>;
+  lastLessonId?: string;   // bài học đang học dở, để mở đúng bài khi bấm Học tiếp
+  lastAt?: string;         // lần học gần nhất, dùng xếp thẻ Học tiếp
 }
 
 export interface PortfolioResearch {

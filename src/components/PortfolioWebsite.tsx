@@ -266,7 +266,7 @@ function scrollToLink(link: string) {
 }
 
 // Tách mã video YouTube ra khỏi mọi dạng đường dẫn mà người soạn bài hay dán vào.
-const getYouTubeVideoId = (url: string): string | null => {
+export const getYouTubeVideoId = (url: string): string | null => {
   if (!url) return null;
   const trimmed = url.trim();
 
@@ -328,13 +328,15 @@ const loadYouTubeIframeApi = (): Promise<any> => {
 // Trình phát bài giảng YouTube có theo dõi tiến độ xem.
 // Khi video chạy hết, hoặc khi học viên đã xem qua chín mươi lăm phần trăm thời lượng,
 // hàm onFinish được gọi đúng một lần để hệ thống ghi nhận bài học đã hoàn thành.
-const YouTubeLessonPlayer: React.FC<{ videoId: string; onFinish?: () => void }> = ({ videoId, onFinish }) => {
+export const YouTubeLessonPlayer: React.FC<{ videoId: string; onFinish?: () => void; onPlayer?: (p: any) => void }> = ({ videoId, onFinish, onPlayer }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const finishedRef = useRef(false);
   const finishHandlerRef = useRef(onFinish);
+  const playerHandlerRef = useRef(onPlayer);
   const [usePlainFrame, setUsePlainFrame] = useState(false);
   finishHandlerRef.current = onFinish;
+  playerHandlerRef.current = onPlayer;
 
   useEffect(() => {
     finishedRef.current = false;
@@ -368,6 +370,8 @@ const YouTubeLessonPlayer: React.FC<{ videoId: string; onFinish?: () => void }> 
           height: '100%',
           playerVars: { rel: 0, playsinline: 1, modestbranding: 1 },
           events: {
+            // Trả trình phát ra ngoài để lấy mốc thời gian (ghi chú theo thời điểm video) và tua tới mốc đó.
+            onReady: () => { playerHandlerRef.current?.(playerRef.current); },
             onStateChange: (event: any) => {
               if (event.data === YT.PlayerState.ENDED) markFinished();
             }
@@ -389,6 +393,7 @@ const YouTubeLessonPlayer: React.FC<{ videoId: string; onFinish?: () => void }> 
     return () => {
       cancelled = true;
       if (watchTimer) window.clearInterval(watchTimer);
+      playerHandlerRef.current?.(null);
       try { playerRef.current?.destroy?.(); } catch { /* trình phát đã bị gỡ khỏi cây DOM */ }
       playerRef.current = null;
       if (containerRef.current) containerRef.current.innerHTML = '';
