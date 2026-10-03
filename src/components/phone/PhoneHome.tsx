@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Search, Bell, Eye, TrendingUp, ChevronRight, ClipboardList, CircleCheck, ScanLine, GraduationCap, Library, LayoutGrid, X, Sparkles, CalendarDays, Clock, Presentation, Plus, Hourglass, BellRing } from 'lucide-react';
+import { Search, Bell, ClipboardList, CircleCheck, GraduationCap, Library, X, Sparkles, CalendarDays, Clock, Presentation, Hourglass, BookOpen, MoreHorizontal, ChevronDown, Hand } from 'lucide-react';
 import { usePhone, usePhoneModules, ModIcon, PhoneModule, phoneLabel } from './PhoneShell';
 import { useTasks } from '../TaskContext';
 import { phoneMode, phoneUi, PhoneUi, CTA_TARGETS } from '../../lib/device';
@@ -71,7 +71,7 @@ export default function PhoneHome() {
     return [...ids].sort((a, b) => { const ia = saved.indexOf(a), ib = saved.indexOf(b); return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gridBase.map(m => m.id).join('|'), enough, scores, JSON.stringify(usage.pins || {})]);
-  const grid = order.slice(0, 7).map(find).filter(Boolean) as PhoneModule[];
+  const grid = order.slice(0, 8).map(find).filter(Boolean) as PhoneModule[];
 
   // ===== Tính năng nổi bật =====
   const picks = useMemo(() => {
@@ -86,87 +86,45 @@ export default function PhoneHome() {
   const docs = (usage.docs || []).filter(d => find(d.tab)).slice(0, 5);
   const openDoc = (d: DocVisit) => open(d.tab, d.sub);
 
-  // ===== Lối tắt nhanh (4 ô) =====
-  const quick: { label: string; icon: any; run: () => void }[] = [];
-  if (can('edu_exam')) quick.push({ label: 'Giao đề', icon: CircleCheck, run: () => open('edu_exam') });
-  quick.push({ label: 'Quét QR', icon: ScanLine, run: openScan });
-  if (can('edu')) quick.push({ label: 'Lớp học', icon: GraduationCap, run: () => open('edu') });
-  if (can('edu_question_bank')) quick.push({ label: 'Thư viện', icon: Library, run: () => open('edu_question_bank') });
-  if (can('tasks')) quick.push({ label: 'Công việc', icon: CalendarDays, run: () => open('tasks') });
-  if (can('slides')) quick.push({ label: 'Bài giảng', icon: Presentation, run: () => open('slides') });
-  if (can('courses')) quick.push({ label: 'Khoá học', icon: GraduationCap, run: () => open('courses') });
-
-  const showGrading = canUseModule(user, 'edu');
-  const firstPending = pending?.classes[0];
+  // ===== 4 nút tròn trên đầu trang: Lớp học, Giáo trình, Bài tập, Khác (thiếu quyền thì lấy chức năng khác) =====
+  const ACT_CANDIDATES: { id: string; label: string; icon: any }[] = [
+    { id: 'edu', label: 'Lớp học', icon: GraduationCap }, { id: 'elearning', label: 'Giáo trình', icon: BookOpen },
+    { id: 'edu_bank', label: 'Bài tập', icon: Library }, { id: 'slides', label: 'Bài giảng', icon: Presentation },
+    { id: 'edu_exam', label: 'Trắc nghiệm', icon: CircleCheck }, { id: 'tasks', label: 'Công việc', icon: CalendarDays },
+    { id: 'courses', label: 'Khoá học', icon: GraduationCap },
+  ];
+  const actMods = ACT_CANDIDATES.filter(a => can(a.id) && phoneMode(a.id, settings) !== 'laptop').slice(0, 3);
+  const acts: TopAct[] = [
+    ...actMods.map(a => ({ key: a.id, label: a.label, icon: a.icon, run: () => open(a.id) })),
+    { key: 'more', label: 'Khác', icon: MoreHorizontal, run: () => open('all_features') },
+  ];
+  const actIds = new Set(actMods.map(a => a.id));
+  const [expand, setExpand] = useState(false);
+  const gridAll = (order.map(find).filter(Boolean) as PhoneModule[]).filter(m => !actIds.has(m.id));
+  const gridShown = gridAll.slice(0, expand ? 16 : 8);
 
   return (
     <div>
-      {/* Băng chào đầu trang, admin chỉnh trong Cấu hình hệ thống, mục Điện thoại */}
-      <PhoneHero settings={settings} can={can} onTap={() => openProfile(user.id)} onCta={(target) => {
-        const [kind, id] = target.split(':');
-        if (kind === 'create') setCreateIntent(id);
-        open(id);
-      }} />
+      {/* Đầu trang: nền màu hệ thống hoặc ảnh admin chọn (đổi theo mùa), lời chào, tiêu đề, mô tả, 4 nút tròn */}
+      <PhoneTop settings={settings} name={user.fullName || user.username} avatar={user.avatarUrl} unread={unread}
+        acts={acts} onProfile={() => openProfile(user.id)} onBell={() => open('notifications')}
+        onSearch={() => { try { sessionStorage.setItem('open_hint:phone_search', '1'); } catch { /* bỏ qua */ } open('all_features'); }} />
 
-      {/* Lời chào, tìm kiếm, chuông */}
-      <div className="ph-hello">
-        {/* Bấm ảnh đại diện hoặc tên để mở Trang cá nhân */}
-        <button type="button" className="me" aria-label="Mở trang cá nhân" onClick={() => openProfile(user.id)}>
-          <span className="ph-avatar">{user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : initials(user.fullName)}</span>
-          <span className="txt">{greet()}<b>{user.fullName || user.username}</b></span>
-        </button>
-        <button type="button" className="ph-round" aria-label="Tìm chức năng" onClick={() => { try { sessionStorage.setItem('open_hint:phone_search', '1'); } catch { /* bỏ qua */ } open('all_features'); }}><Search /></button>
-        <button type="button" className="ph-round" aria-label="Thông báo" onClick={() => open('notifications')}><Bell />{unread > 0 && <span className="ph-badge">{unread > 9 ? '9+' : unread}</span>}</button>
-      </div>
-
-      {/* 2 thẻ tóm tắt */}
-      <div className="ph-sum">
-        <button type="button" className="ph-sumc a" onClick={() => open(can('tasks') ? 'tasks' : 'all_features')}>
-          <div className="top">
-            <div className="lb">Việc hôm nay <Eye size={15} /></div>
-            <div className="val">{t.today}<small>việc</small></div>
-            <div className="sub">{t.overdue ? `${t.overdue} việc đã quá hạn` : `${t.open} việc đang làm`}</div>
-            <svg className="spark" viewBox="0 0 120 52"><path d="M0 46 18 40 34 42 52 30 68 34 84 18 102 22 120 4" stroke="rgba(255,255,255,.55)" strokeWidth="2.5" fill="none" /><path d="M0 46 18 40 34 42 52 30 68 34 84 18 102 22 120 4V52H0Z" fill="rgba(255,255,255,.12)" /></svg>
-          </div>
-          <div className="bot"><span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><TrendingUp />Xem công việc</span><ChevronRight /></div>
-        </button>
-        {showGrading ? (
-          <button type="button" className="ph-sumc b" onClick={() => firstPending ? open('edu', { sv: 'grading', cid: firstPending.classId, aid: firstPending.assignmentId, gcol: firstPending.gradeColumnId }) : open('edu')}>
-            <div className="top">
-              <div className="lb">Bài nộp mới</div>
-              <div className="val">{pending ? pending.total : '…'}</div>
-              <div className="sub">{firstPending ? firstPending.className : 'Chưa có bài chờ chấm'}</div>
-              <div className="coin"><ClipboardList /></div>
-            </div>
-            <div className="bot"><span>Chờ chấm</span><ChevronRight /></div>
-          </button>
-        ) : (
-          <button type="button" className="ph-sumc b" onClick={() => open('notifications')}>
-            <div className="top">
-              <div className="lb">Thông báo mới</div>
-              <div className="val">{unread}</div>
-              <div className="coin"><BellRing /></div>
-            </div>
-            <div className="bot"><span>Chưa đọc</span><ChevronRight /></div>
+      {/* Lưới chức năng màu, thẻ trắng đè lên đầu trang */}
+      <div className="ph-grid">
+        <div className="ph-apps">
+          {gridShown.map(m => { const c = tone(m.color); return (
+            <button key={m.id} type="button" className="ph-app" onClick={() => open(m.id)}>
+              {isNewModule(m.id) ? <span className="tag hot">Mới</span> : m.beta ? <span className="tag">Thử</span> : null}
+              <span className="ph-ico" style={{ background: c.bg, color: c.fg }}><ModIcon m={m} /></span><span>{phoneLabel(m)}</span>
+            </button>
+          ); })}
+        </div>
+        {gridAll.length > 8 && (
+          <button type="button" className="more" aria-label={expand ? 'Thu gọn' : 'Xem thêm chức năng'} onClick={() => setExpand(v => !v)}>
+            <ChevronDown style={{ transform: expand ? 'rotate(180deg)' : undefined }} />
           </button>
         )}
-      </div>
-
-      {/* Dải lối tắt */}
-      <div className="ph-card ph-quick">
-        {quick.slice(0, 4).map(q => { const I = q.icon; return <button key={q.label} type="button" className="q" onClick={q.run}><I />{q.label}</button>; })}
-      </div>
-
-      {/* Chức năng của bạn */}
-      <div className="ph-sec"><h3>Chức năng của bạn</h3><button type="button" className="lnk" onClick={() => open('all_features')}>Tất cả</button></div>
-      <div className="ph-apps" style={{ padding: '0 12px' }}>
-        {grid.map(m => (
-          <button key={m.id} type="button" className="ph-app" onClick={() => open(m.id)}>
-            {isNewModule(m.id) ? <span className="tag">Mới</span> : m.beta ? <span className="tag">Thử</span> : null}
-            <span className="ph-tile"><ModIcon m={m} /></span><span>{phoneLabel(m)}</span>
-          </button>
-        ))}
-        <button type="button" className="ph-app" onClick={() => open('all_features')}><span className="ph-tile"><LayoutGrid /></span><span>Tất cả</span></button>
       </div>
 
       {/* Tiếp tục */}
@@ -215,47 +173,48 @@ export default function PhoneHome() {
   );
 }
 
-// Băng chào đầu Trang chủ điện thoại. Dùng chung cho Trang chủ và khung xem trước trong Cấu hình hệ thống.
-export function PhoneHero({ settings, can, onCta, onTap, ui: uiOverride }: { settings?: AppSettings; can: (id: string) => boolean; onCta: (target: string) => void; onTap?: () => void; ui?: PhoneUi }) {
+// Màu biểu tượng theo màu của từng chức năng (giống Trang chủ máy tính).
+const TONES: Record<string, { bg: string; fg: string }> = {
+  rose: { bg: '#fff1f2', fg: '#e11d48' }, orange: { bg: '#fff7ed', fg: '#ea580c' }, violet: { bg: '#f5f3ff', fg: '#7c3aed' },
+  emerald: { bg: '#ecfdf5', fg: '#059669' }, blue: { bg: '#eff6ff', fg: '#2563eb' }, purple: { bg: '#faf5ff', fg: '#9333ea' },
+  red: { bg: '#fef2f2', fg: '#dc2626' }, teal: { bg: '#f0fdfa', fg: '#0d9488' }, amber: { bg: '#fefce8', fg: '#ca8a04' }, indigo: { bg: '#eef2ff', fg: '#4f46e5' },
+};
+export const tone = (c?: string) => TONES[c || ''] || TONES.emerald;
+
+export interface TopAct { key: string; label: string; icon: any; run: () => void }
+
+// Đầu Trang chủ điện thoại. Dùng chung cho Trang chủ và khung xem trước trong Cấu hình hệ thống.
+export function PhoneTop({ settings, ui: uiOverride, name, avatar, unread, acts, onProfile, onSearch, onBell }: {
+  settings?: AppSettings; ui?: PhoneUi; name: string; avatar?: string; unread: number; acts: TopAct[];
+  onProfile?: () => void; onSearch?: () => void; onBell?: () => void;
+}) {
   const ui = uiOverride || phoneUi(settings);
-  if (ui.bannerOn === false) return <div style={{ height: 'calc(8px + env(safe-area-inset-top))' }} />;
+  const show = ui.bannerOn !== false;
   const mode = ui.imageMode || 'desktop';
-  const img = mode === 'custom' ? ui.image : mode === 'desktop' ? settings?.dashboardBannerImage : '';
+  const img = !show ? '' : mode === 'custom' ? ui.image : mode === 'desktop' ? settings?.dashboardBannerImage : '';
   const pos = mode === 'custom' ? ui.position : settings?.dashboardBannerPosition;
-  const target = ui.ctaTarget || 'create:slides';
-  const t = CTA_TARGETS.find(x => x.value === target);
-  const ok = !t || t.need === 'all_features' || can(t.need);
-  const label = ui.ctaLabel?.trim() || t?.label || 'Soạn bài giảng mới';
+  const title = ui.title?.trim() || settings?.dashboardBannerTitle || 'Hôm nay bạn muốn làm gì?';
+  const desc = ui.desc?.trim() || settings?.systemDescription || 'Bài giảng, lớp học, đề trắc nghiệm của bạn ở ngay đây';
   return (
-    <div className={`ph-hero ${img ? '' : 'plain'}`} style={{ ...(img ? { backgroundImage: `url(${img})`, backgroundPosition: pos || 'center' } : {}), cursor: onTap ? 'pointer' : undefined }}
-      onClick={onTap} role={onTap ? 'button' : undefined} aria-label={onTap ? 'Mở trang cá nhân' : undefined}>
+    <div className={`ph-top ${img ? 'has-img' : ''}`} style={img ? { backgroundImage: `url(${img})`, backgroundPosition: pos || 'center' } : undefined}>
       {img && <div className="shade" />}
-      {!img && <HeroArt />}
-      <div className="in">
-        {ui.titleOn !== false && <div className="t1">{ui.title?.trim() || settings?.dashboardBannerTitle || 'Hôm nay bạn muốn làm gì?'}</div>}
-        {ui.descOn !== false && <div className="t2">{ui.desc?.trim() || settings?.systemDescription || 'Bài giảng, lớp học, đề trắc nghiệm của bạn ở ngay đây.'}</div>}
-        {ui.ctaOn !== false && (ok
-          ? <button type="button" className="cta" onClick={e => { e.stopPropagation(); onCta(target); }}>{target.startsWith('create:') && <Plus size={15} />}{label}</button>
-          : <button type="button" className="cta" onClick={e => { e.stopPropagation(); onCta('open:all_features'); }}>Xem tất cả chức năng</button>)}
+      <div className="hi">
+        <button type="button" className="me" onClick={onProfile} aria-label="Mở trang cá nhân">
+          <span className="lg">{avatar ? <img src={avatar} alt="" /> : initials(name)}</span>
+          <span className="t"><span>Xin chào <Hand /></span><b>{name}</b></span>
+        </button>
+        <button type="button" className="ib" onClick={onSearch} aria-label="Tìm chức năng"><Search /></button>
+        <button type="button" className="ib" onClick={onBell} aria-label="Thông báo"><Bell />{unread > 0 && <span className="d" />}</button>
+      </div>
+      {show && (ui.titleOn !== false || ui.descOn !== false) && (
+        <div className="ht">
+          {ui.titleOn !== false && <b>{title}</b>}
+          {ui.descOn !== false && <p>{desc}</p>}
+        </div>
+      )}
+      <div className={`acts ${show ? '' : 'tight'}`}>
+        {acts.map(a => { const I = a.icon; return <button key={a.key} type="button" className="act" onClick={a.run}><span className="c"><I /></span>{a.label}</button>; })}
       </div>
     </div>
-  );
-}
-
-function HeroArt() {
-  return (
-    <svg className="art" viewBox="0 0 200 200" aria-hidden>
-      <circle cx="120" cy="100" r="78" fill="var(--ph-brand)" opacity=".18" />
-      <rect x="58" y="62" width="112" height="78" rx="10" fill="#fff" />
-      <rect x="68" y="74" width="60" height="8" rx="4" fill="var(--ph-brand)" />
-      <rect x="68" y="90" width="88" height="6" rx="3" fill="var(--ph-brand-soft)" />
-      <rect x="68" y="102" width="74" height="6" rx="3" fill="var(--ph-brand-soft)" />
-      <rect x="68" y="116" width="40" height="14" rx="7" fill="var(--ph-brand-hover)" />
-      <path d="M150 40 182 54 150 68 118 54Z" fill="var(--ph-brand-deep)" />
-      <path d="M132 62v14c10 6 26 6 36 0V62" fill="var(--ph-brand-deep)" opacity=".85" />
-      <path d="M182 54v20" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="182" cy="77" r="4" fill="#f59e0b" />
-      <circle cx="46" cy="150" r="12" fill="#fff" /><path d="m41 150 4 4 7-8" stroke="var(--ph-brand)" strokeWidth="3" fill="none" strokeLinecap="round" />
-    </svg>
   );
 }

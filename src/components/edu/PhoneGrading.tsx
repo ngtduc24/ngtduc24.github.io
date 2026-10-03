@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, List, MoreHorizontal, Minus, Plus, Keyboard, ArrowRight, MessageSquare, Maximize2, X, Download, FileText, Film, Search, Check, RotateCcw, ScanSearch, AlertTriangle, Loader2, CloudOff, CheckCircle2, Type } from 'lucide-react';
 import type { EduUser, EduSubmission, EduAssignment, EduSubmissionFile } from '../../types/edu';
 import type { SimilarityMap } from './SimilarityCheck';
@@ -89,7 +90,13 @@ export default function PhoneGrading(p: Props) {
   );
   const iconBtn = 'grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700 active:scale-95';
 
-  return (
+  // Màn chấm chiếm trọn màn hình: ẩn thanh dưới để bàn phím và ô nhận xét không bị che.
+  useEffect(() => {
+    document.documentElement.classList.add('ph-immersive');
+    return () => { document.documentElement.classList.remove('ph-immersive'); };
+  }, []);
+
+  return createPortal(
     <div className="fixed inset-0 z-[45] flex flex-col bg-[#f3f6f9] text-slate-800">
       {mode === 'list' && (
         <>
@@ -191,7 +198,8 @@ export default function PhoneGrading(p: Props) {
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }
 

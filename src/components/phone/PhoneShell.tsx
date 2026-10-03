@@ -128,12 +128,13 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
             {tools.map(t => { const I = t.icon; return <button key={t.id} type="button" className={t.active ? 'on' : ''} onClick={t.onClick}><I />{t.label}</button>; })}
           </nav>
         ) : (
-          <nav className="ph-nav">
+          <nav className="ph-nav2">
+            <span className="bg"><span className="l" /><svg viewBox="0 0 110 70" aria-hidden><path d="M0 0H10C18 0 20 4 22 10A36 36 0 0 0 88 10C90 4 92 0 100 0H110V70H0Z" /></svg><span className="r" /></span>
             {item('dashboard', 'Trang chủ', Home, tab === 'dashboard')}
-            {item('notifications', 'Thông báo', Bell, tab === 'notifications', unread)}
-            <button type="button" className="fab" onClick={() => setSheet('create')}><span className="b"><Plus /></span>Tạo mới</button>
             {item('all_features', 'Chức năng', LayoutGrid, tab === 'all_features')}
-            {item('me', 'Tài khoản', User, tab === 'me' || tab === 'profile' || tab === 'user_profile')}
+            <button type="button" className="mid" onClick={() => setSheet('create')}><span className="b"><Plus /></span>Tạo mới</button>
+            {item('notifications', 'Thông báo', Bell, tab === 'notifications', unread)}
+            {item('me', 'Cá nhân', User, tab === 'me' || tab === 'profile' || tab === 'user_profile')}
           </nav>
         )}
 

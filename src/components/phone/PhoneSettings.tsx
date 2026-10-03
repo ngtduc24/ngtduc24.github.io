@@ -1,11 +1,11 @@
 import React from 'react';
-import { Smartphone, Monitor, EyeOff, Image as ImageIcon, RotateCcw } from 'lucide-react';
+import { Smartphone, Monitor, EyeOff, Image as ImageIcon, RotateCcw, GraduationCap, BookOpen, Library, MoreHorizontal } from 'lucide-react';
 import type { AppSettings, ModuleOverride } from '../../types';
 import { MODULE_REGISTRY } from '../../lib/modules';
 import { phoneMode, phoneUi, PhoneUi, PhoneMode, PHONE_UI_KEY, CTA_TARGETS, NOTI_DEFAULT } from '../../lib/device';
 import { NotiBanner } from './PhoneNotifications';
 import MediaSourcePicker from '../MediaSourcePicker';
-import { PhoneHero } from './PhoneHome';
+import { PhoneTop } from './PhoneHome';
 import './phone.css';
 
 // Cấu hình hệ thống, mục Điện thoại (chỉ admin, chỉ trên máy tính): băng chào đầu Trang chủ điện thoại
@@ -40,19 +40,19 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
         <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2"><Smartphone className="w-4 h-4 text-brand" /> Giao diện trên điện thoại</h2>
-        <p className="text-[13px] text-slate-500 mt-1">Chỉnh băng chào đầu Trang chủ, băng giới thiệu ở trang Thông báo và cách dùng từng chức năng khi mọi người mở EduGo bằng điện thoại. Mục này chỉ hiện với quản trị viên trên máy tính. Thay đổi được lưu tự động như các mục khác.</p>
+        <p className="text-[13px] text-slate-500 mt-1">Chỉnh đầu Trang chủ, băng giới thiệu ở trang Thông báo và cách dùng từng chức năng khi mọi người mở EduGo bằng điện thoại. Mục này chỉ hiện với quản trị viên trên máy tính. Thay đổi được lưu tự động như các mục khác.</p>
       </div>
 
-      {/* Băng chào đầu Trang chủ */}
+      {/* Đầu Trang chủ điện thoại */}
       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
         <div className="flex flex-col gap-6 lg:flex-row">
           <div className="flex-1 space-y-4">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-sm font-bold text-slate-800">Băng chào đầu Trang chủ</h3>
-                <p className="text-[12px] text-slate-500">Tắt thì Trang chủ điện thoại bắt đầu ngay từ lời chào và 2 thẻ tóm tắt.</p>
+                <h3 className="text-sm font-bold text-slate-800">Đầu Trang chủ (ảnh nền theo mùa, tiêu đề, mô tả)</h3>
+                <p className="text-[12px] text-slate-500">Vùng màu phía sau lời chào và 4 nút tròn. Tắt thì đầu trang thu gọn, chỉ còn lời chào và 4 nút tròn trên nền màu hệ thống.</p>
               </div>
-              {sw(ui.bannerOn !== false, () => setUi({ bannerOn: ui.bannerOn === false }), 'Bật tắt băng chào')}
+              {sw(ui.bannerOn !== false, () => setUi({ bannerOn: ui.bannerOn === false }), 'Bật tắt ảnh nền, tiêu đề, mô tả')}
             </div>
             <div className={`space-y-4 ${ui.bannerOn === false ? 'pointer-events-none opacity-40' : ''}`}>
               <div className="space-y-1.5">
@@ -73,7 +73,7 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-slate-500">Ảnh nền</label>
                 <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 p-1 w-max">
-                  {([['desktop', 'Như Trang chủ máy tính'], ['custom', 'Ảnh riêng'], ['art', 'Hình minh hoạ']] as const).map(([v, l]) => (
+                  {([['custom', 'Ảnh riêng (theo mùa)'], ['desktop', 'Như Trang chủ máy tính'], ['art', 'Màu hệ thống']] as const).map(([v, l]) => (
                     <button key={v} type="button" onClick={() => setUi({ imageMode: v })}
                       className={`rounded-lg px-3 py-1.5 text-[11px] font-bold ${mode === v ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}>{l}</button>
                   ))}
@@ -90,25 +90,6 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
                   </div>
                 )}
               </div>
-              <div className="flex items-start justify-between gap-4 border-t border-slate-100 pt-4">
-                <div>
-                  <h4 className="text-[13px] font-bold text-slate-800">Nút trên băng chào</h4>
-                  <p className="text-[11px] text-slate-500">Người không có quyền dùng chức năng đã chọn sẽ thấy nút Xem tất cả chức năng.</p>
-                </div>
-                {sw(ui.ctaOn !== false, () => setUi({ ctaOn: ui.ctaOn === false }), 'Bật tắt nút trên băng chào')}
-              </div>
-              <div className={`grid gap-3 sm:grid-cols-2 ${ui.ctaOn === false ? 'pointer-events-none opacity-40' : ''}`}>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-500">Bấm nút sẽ</label>
-                  <select className={field} value={ui.ctaTarget || 'create:slides'} onChange={e => setUi({ ctaTarget: e.target.value })}>
-                    {CTA_TARGETS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-500">Chữ trên nút</label>
-                  <input className={field} value={ui.ctaLabel ?? ''} onChange={e => setUi({ ctaLabel: e.target.value })} placeholder={CTA_TARGETS.find(t => t.value === (ui.ctaTarget || 'create:slides'))?.label} />
-                </div>
-              </div>
             </div>
           </div>
 
@@ -116,11 +97,11 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
           <div className="shrink-0">
             <p className="mb-2 text-[11px] font-bold text-slate-500">Xem trước</p>
             <div className="ph w-[320px] overflow-hidden rounded-[28px] border-[6px] border-slate-900 bg-[#f3f6f9] shadow-xl">
-              <PhoneHero settings={formState} ui={ui} can={() => true} onCta={() => {}} />
-              <div className="ph-hello" style={{ paddingBottom: 14 }}>
-                <span className="ph-avatar">A</span>
-                <div className="txt">Chào buổi sáng<b>Tên người dùng</b></div>
-              </div>
+              <PhoneTop settings={formState} ui={ui} name="Tên người dùng" unread={1} acts={[
+                { key: 'a', label: 'Lớp học', icon: GraduationCap, run: () => {} }, { key: 'b', label: 'Giáo trình', icon: BookOpen, run: () => {} },
+                { key: 'c', label: 'Bài tập', icon: Library, run: () => {} }, { key: 'd', label: 'Khác', icon: MoreHorizontal, run: () => {} },
+              ]} />
+              <div className="ph-grid" style={{ marginBottom: 14 }}><p className="pb-4 text-center text-[11px] text-slate-400">Lưới chức năng</p></div>
             </div>
           </div>
         </div>
