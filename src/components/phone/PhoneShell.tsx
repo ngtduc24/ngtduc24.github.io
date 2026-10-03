@@ -40,16 +40,6 @@ export const usePhoneMaybe = () => useContext(Ctx);
 // Màn con trong một chức năng (ví dụ trang chi tiết lớp) đăng ký việc nút quay lại trên thanh trên
 // đưa về màn trước trong chức năng đó, thay vì rời hẳn chức năng.
 let backOverride: (() => void) | null = null;
-export function isStandalone(): boolean {
-  try { return !!(navigator as any).standalone || !!window.matchMedia?.('(display-mode: standalone)').matches; } catch { return false; }
-}
-// Vùng đáy màn hình dưới khung trang được iPhone tô bằng màu nền trang: khi mở từ màn hình chính, và ở Safari 26 trở lên
-// (thanh công cụ nổi ở đáy, phần đầu trang đã trong suốt nên không cần màu hệ thống ở nền).
-export function bottomTintMode(): boolean {
-  if (isStandalone()) return true;
-  const m = /Version\/(\d+)/.exec(navigator.userAgent || '');
-  return !!m && Number(m[1]) >= 26 && /iPhone|iPad/.test(navigator.userAgent || '');
-}
 
 export function usePhoneBack(fn?: (() => void) | null) {
   const ref = useRef(fn); ref.current = fn;
@@ -178,16 +168,7 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
     const before = m?.getAttribute('content') ?? null;
     if (!m) { m = document.createElement('meta'); m.setAttribute('name', 'theme-color'); document.head.appendChild(m); }
     m.setAttribute('content', c);
-    // Safari trên iPhone chỉ đo lại màu vùng tai thỏ khi trang đổi nền hoặc cuộn: vào ứng dụng từ màn chào
-    // thì gán lại nền trang và nhích cuộn 1 điểm để thanh trạng thái lấy đúng màu hệ thống, không giữ màu tối cũ.
-    const h = document.documentElement;
-    // Mở từ màn hình chính iPhone (thanh trạng thái trong suốt, nội dung tự tô vùng tai thỏ): iPhone để hở 1 khoảng ở đáy
-    // và tô bằng màu nền trang, nên dùng màu nền nội dung để khoảng đó liền với trang. Mở bằng Safari thì giữ màu hệ thống
-    // cho vùng tai thỏ như cũ.
-    const bg = bottomTintMode() ? '#f3f6f9' : c;
-    h.style.backgroundColor = bg; document.body.style.backgroundColor = bg;
-    const t = window.setTimeout(() => { try { window.scrollTo(0, 1); window.scrollTo(0, 0); } catch { /* bỏ qua */ } }, 60);
-    return () => { window.clearTimeout(t); h.style.backgroundColor = ''; document.body.style.backgroundColor = ''; if (before === null) m?.remove(); else m?.setAttribute('content', before); };
+    return () => { if (before === null) m?.remove(); else m?.setAttribute('content', before); };
   }, [settings]);
 
   const go = (id: string, sub?: Record<string, string>) => {

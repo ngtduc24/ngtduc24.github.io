@@ -4,7 +4,6 @@ import type { AppSettings, UserAccount } from '../../types';
 import { getCachedLanding, getLandingConfig, PhoneWelcomeConfig, PhoneWelcomeBanner } from '../../lib/landing';
 import { setDefaultApps } from '../../lib/moduleAccess';
 import { loginWithPassword, registerAccount, sendResetMail } from '../../lib/authActions';
-import { bottomTintMode } from './PhoneShell';
 import './phoneWelcome.css';
 
 // Màn chào EduGo trên điện thoại khi chưa đăng nhập: nền minh hoạ phủ kín màn hình, lời chào, banner quảng cáo,
@@ -124,11 +123,7 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
   useEffect(() => {
     if (preview) return;
     const html = document.documentElement; const before = html.style.backgroundColor;
-    // Mở từ màn hình chính iPhone: khoảng hở ở đáy màn hình được tô bằng màu nền trang, nên dùng màu phần đáy của hình nền.
-    const stops = artKey === 'image' ? [] : Array.from(PW_ART[artKey].svg(color).matchAll(/stop-color="([^"]+)"/g)).map(x => x[1]);
-    const bottom = stops.length ? `color-mix(in srgb, ${stops[stops.length - 1]} 80%, #ffffff)` : topColor;
-    const bg = bottomTintMode() ? bottom : topColor;
-    html.style.backgroundColor = bg; document.body.style.backgroundColor = bg;
+    html.style.backgroundColor = topColor; document.body.style.backgroundColor = topColor;
     let m = document.querySelector('meta[name="theme-color"]'); const prev = m?.getAttribute('content') ?? null;
     if (!m) { m = document.createElement('meta'); m.setAttribute('name', 'theme-color'); document.head.appendChild(m); }
     m.setAttribute('content', topColor);
