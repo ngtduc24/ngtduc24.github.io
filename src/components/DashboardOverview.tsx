@@ -15,9 +15,9 @@ import {
 import { isModuleHidden, resolveModuleMeta } from '../lib/modules';
 import { UserAccount, AppSettings } from '../types';
 import { useNotifications } from './NotificationContext';
-import { useUsage, useScores, personalOrder, suggestNow, rememberOrder, setPins, setAutoSort, forgetDoc, MIN_EVENTS, DocVisit } from '../lib/personalize';
+import { useUsage, useScores, personalOrder, rememberOrder, setPins, setAutoSort, forgetDoc, MIN_EVENTS, DocVisit } from '../lib/personalize';
 import { writeSubRoute } from '../lib/seoConfig';
-import { Pin, PinOff, History, Clock as ClockIcon } from 'lucide-react';
+import { Pin, PinOff, History } from 'lucide-react';
 
 interface DashboardProps {
   onSwitchTab: (tab: string) => void;
@@ -564,71 +564,36 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
         </div>
       )}
 
-      {/* ===== Dành cho bạn: Tiếp tục tài liệu đang làm và Gợi ý lúc này ===== */}
+      {/* ===== Tiếp tục: tài liệu đang làm dở, chưa có thì ẩn hẳn ===== */}
       {!q && (() => {
         const findMod = (id: string) => baseIcons.find(m => m.id === id);
         const docs = (usage.docs || []).filter(d => findMod(d.tab)).slice(0, 4);
-        const sugg = enoughData ? suggestNow(baseIcons.filter(m => !hiddenIds.includes(m.id)).map(m => m.id), scores) : [];
+        if (!docs.length) return null;
         const openDoc = (d: DocVisit) => { writeSubRoute(d.sub); onSwitchTab(d.tab); };
-        if (!docs.length && !sugg.length) {
-          return (
-            <div className="flex items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-white/60 px-5 py-4 text-[12px] text-slate-500">
-              <Sparkles className="h-4 w-4 shrink-0 text-brand" />
-              EduGo đang học thói quen sử dụng của bạn. Sau vài lần dùng, nơi đây sẽ hiện tài liệu đang làm dở và chức năng hợp với thời điểm trong ngày.
-            </div>
-          );
-        }
         return (
-          <div className={`grid gap-4 ${docs.length && sugg.length ? 'lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]' : ''}`}>
-            {docs.length > 0 && (
-              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
-                <div className="mb-3 flex items-center gap-2">
-                  <History className="h-4 w-4 text-brand" />
-                  <h2 className="text-sm font-black text-slate-800">Tiếp tục</h2>
-                  <span className="text-[11px] text-slate-400">Tài liệu bạn mở gần đây</span>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {docs.map(d => {
-                    const m = findMod(d.tab)!; const Icon = m.icon; const c = COLORS[m.color];
-                    return (
-                      <div key={d.key} className="group relative">
-                        <button onClick={() => openDoc(d)} className="flex w-full items-center gap-3 rounded-xl border border-slate-100 px-3 py-2.5 text-left transition-colors hover:border-brand/30 hover:bg-brand-light/40">
-                          <span className={`grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-xl ${c.bg} ${c.text}`}>{(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="h-full w-full object-cover" /> : <Icon className="h-[18px] w-[18px]" />}</span>
-                          <span className="min-w-0 flex-1 pr-5">
-                            <span className="block truncate text-[13px] font-bold text-slate-800 group-hover:text-brand">{d.title}</span>
-                            <span className="block truncate text-[11px] text-slate-400">{m.label} · {ago(d.at)}</span>
-                          </span>
-                        </button>
-                        <button type="button" title="Bỏ khỏi danh sách" onClick={() => currentUser?.id && forgetDoc(currentUser.id, d.key)} className="absolute right-2 top-1/2 hidden h-6 w-6 -translate-y-1/2 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 group-hover:grid"><X className="h-3.5 w-3.5" /></button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            {sugg.length > 0 && (
-              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
-                <div className="mb-3 flex items-center gap-2">
-                  <ClockIcon className="h-4 w-4 text-brand" />
-                  <h2 className="text-sm font-black text-slate-800">Gợi ý lúc này</h2>
-                </div>
-                <div className="space-y-2">
-                  {sugg.map(sg => {
-                    const m = findMod(sg.id); if (!m) return null; const Icon = m.icon; const c = COLORS[m.color];
-                    return (
-                      <button key={sg.id} onClick={() => go(sg.id)} className="group flex w-full items-center gap-3 rounded-xl border border-slate-100 px-3 py-2.5 text-left transition-colors hover:border-brand/30 hover:bg-brand-light/40">
-                        <span className={`grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-xl ${c.bg} ${c.text}`}>{(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="h-full w-full object-cover" /> : <Icon className="h-[18px] w-[18px]" />}</span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[13px] font-bold text-slate-800 group-hover:text-brand">{m.label}</span>
-                          <span className="block truncate text-[11px] text-slate-400">{sg.reason}</span>
-                        </span>
-                        <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 group-hover:text-brand" />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
+            <div className="mb-3 flex items-center gap-2">
+              <History className="h-4 w-4 text-brand" />
+              <h2 className="text-sm font-black text-slate-800">Tiếp tục</h2>
+              <span className="text-[11px] text-slate-400">Tài liệu bạn mở gần đây</span>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              {docs.map(d => {
+                const m = findMod(d.tab)!; const Icon = m.icon; const c = COLORS[m.color];
+                return (
+                  <div key={d.key} className="group relative">
+                    <button onClick={() => openDoc(d)} className="flex w-full items-center gap-3 rounded-xl border border-slate-100 px-3 py-2.5 text-left transition-colors hover:border-brand/30 hover:bg-brand-light/40">
+                      <span className={`grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-xl ${c.bg} ${c.text}`}>{(m as any).iconUrl ? <img src={(m as any).iconUrl} alt="" className="h-full w-full object-cover" /> : <Icon className="h-[18px] w-[18px]" />}</span>
+                      <span className="min-w-0 flex-1 pr-5">
+                        <span className="block truncate text-[13px] font-bold text-slate-800 group-hover:text-brand">{d.title}</span>
+                        <span className="block truncate text-[11px] text-slate-400">{m.label} · {ago(d.at)}</span>
+                      </span>
+                    </button>
+                    <button type="button" title="Bỏ khỏi danh sách" onClick={() => currentUser?.id && forgetDoc(currentUser.id, d.key)} className="absolute right-2 top-1/2 hidden h-6 w-6 -translate-y-1/2 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 group-hover:grid"><X className="h-3.5 w-3.5" /></button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         );
       })()}

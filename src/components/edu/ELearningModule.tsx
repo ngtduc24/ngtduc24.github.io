@@ -6,8 +6,10 @@ import { copyText, askChoice } from '../ui/Dialogs';
 import {
   Plus, Search, LayoutGrid, List as ListIcon, Edit2, Eye, Copy, Send, Trash2, Globe, Lock,
   ArrowLeft, ArrowUp, ArrowDown, Loader2, X, Check, BookOpen, Users, Link2, QrCode, FileText,
-  Upload, RotateCcw, FileSpreadsheet, ChevronRight, GraduationCap, Image as ImageIconEl, FolderInput, Rocket
+  Upload, RotateCcw, FileSpreadsheet, ChevronRight, GraduationCap, Image as ImageIconEl, FolderInput, Rocket, UserPlus, Share2, AlertTriangle
 } from 'lucide-react';
+import LessonSharePanel from './LessonSharePanel';
+import { usePresence } from '../../lib/deckPresence';
 import * as XLSX from 'xlsx';
 import { UserAccount } from '../../types';
 import { EduSubject, EduClass } from '../../types/edu';
@@ -25,7 +27,7 @@ import {
 } from '../../lib/elearning';
 import QuizRichText from './QuizRichText';
 import ShareDialog from '../ui/ShareDialog';
-import { CollabRole, ROLE_LABELS, collaboratorsByResource } from '../../lib/collab';
+import { CollabRole, ROLE_LABELS, collaboratorsByResource, Collaborator, listCollaborators, getMyRole, MyRole } from '../../lib/collab';
 import MediaSourcePicker from '../MediaSourcePicker';
 import { fold, usePaging, Pager } from './ListPager';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
@@ -493,11 +495,18 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
   const dirty = useRef<Record<string, { title: string; content: string }>>({});
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  // Cộng tác: quyền của mình, danh sách người được thêm, bảng Chia sẻ
+  const [myRole, setMyRole] = useState<MyRole>(null);
+  const [collabs, setCollabs] = useState<Collaborator[]>([]);
+  const [collabTick, setCollabTick] = useState(0);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const load = useCallback(async () => {
     const [l, secs, res] = await Promise.all([getLesson(lessonId), getSections(lessonId), getResources(lessonId)]);
-    // Chỉ chủ giáo trình mới mở được trang soạn.
-    if (l.owner_id !== currentUser.id) { addNotification('Không tìm thấy giáo trình.', 'error'); onBack(); return; }
+    // Chủ giáo trình và người được thêm với quyền chỉnh sửa hoặc quản lý mới mở được trang soạn.
+    const role = await getMyRole('el_lesson', lessonId, l.owner_id);
+    if (role !== 'owner' && role !== 'edit' && role !== 'manage') { addNotification(role === 'view' ? 'Bạn chỉ có quyền xem giáo trình này.' : 'Không tìm thấy giáo trình.', role === 'view' ? 'warning' : 'error'); onBack(); return; }
+    setMyRole(role);
     setLesson(l); setSections(secs); setResources(res);
     trackDoc({ kind: 'lesson', id: lessonId, title: l.title, tab: 'elearning', sub: { sv: 'editor', lid: lessonId } });
     setActiveSection(prev => prev && secs.some(s => s.id === prev) ? prev : (secs[0]?.id ?? null));
@@ -520,12 +529,38 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
   }, [addNotification]);
 
   const autoTimer = useRef<number | null>(null);
+  // Ai đang cùng mở giáo trình này và đang ở phần nào
+  const present = usePresence(lessonId ? `el:${lessonId}` : null, currentUser, activeSection);
+  const presentRef = useRef(0); presentRef.current = present.length;
+  useEffect(() => { listCollaborators('el_lesson', lessonId).then(setCollabs).catch(() => {}); }, [lessonId, collabTick]);
+  // Đồng bộ nội dung người khác vừa lưu: phần nào mình chưa sửa dở thì nạp bản mới trên máy chủ
+  useEffect(() => {
+    if (!lesson) return;
+    let stop = false;
+    const pull = async () => {
+      if (stop || document.hidden) return;
+      try {
+        const remote = await getSections(lessonId);
+        if (stop) return;
+        setSections(prev => {
+          const changed = remote.length !== prev.length || remote.some((r, i) => { const p = prev[i]; return !p || p.id !== r.id || (!dirty.current[r.id] && (p.title !== r.title || p.content !== r.content)); });
+          if (!changed) return prev;
+          return remote.map(r => (dirty.current[r.id] ? { ...r, ...dirty.current[r.id] } : r));
+        });
+        setActiveSection(a => (a && remote.some(r => r.id === a) ? a : remote[0]?.id ?? null));
+      } catch { /* bỏ qua */ }
+    };
+    const t = window.setInterval(pull, present.length ? 6000 : 30000);
+    return () => { stop = true; window.clearInterval(t); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson?.id, present.length]);
   const markDirty = (id: string, patch: Partial<{ title: string; content: string }>) => {
     const cur = dirty.current[id] || { title: sections.find(s => s.id === id)?.title || '', content: sections.find(s => s.id === id)?.content || '' };
     dirty.current[id] = { ...cur, ...patch };
     setSections(prev => prev.map(s => s.id === id ? { ...s, ...patch } as ELSection : s));
     if (autoTimer.current) window.clearTimeout(autoTimer.current);
-    autoTimer.current = window.setTimeout(() => flush(true), 20000);
+    // Có người khác cùng soạn thì lưu sớm (4 giây) để hai bên thấy nội dung của nhau nhanh hơn
+    autoTimer.current = window.setTimeout(() => flush(true), presentRef.current ? 4000 : 20000);
   };
   useEffect(() => () => { if (autoTimer.current) window.clearTimeout(autoTimer.current); }, []);
 
@@ -574,9 +609,11 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
   const removeResource = async (id: string) => { await deleteResource(id); setResources(resources.filter(r => r.id !== id)); };
   const renameResource = async (id: string, title: string) => { setResources(resources.map(r => r.id === id ? { ...r, title } : r)); await updateResource(id, { title }); };
 
+  const isOwner = myRole === 'owner';
+  const canManage = myRole === 'owner' || myRole === 'manage';
   const isAdmin = currentUser.role === 'admin';
-  const mayPublic = isAdmin || !!currentUser.canElearningPublic;
-  const mayAssign = isAdmin || !!currentUser.canElearningAssign;
+  const mayPublic = (isAdmin || !!currentUser.canElearningPublic) && isOwner;
+  const mayAssign = (isAdmin || !!currentUser.canElearningAssign) && isOwner;
   const canPublic = !!lesson && lesson.status === 'published' && sections.length > 0 && mayPublic;
   const sectionResources = resources.filter(r => r.section_id === activeSection);
   const sec = sections.find(s => s.id === activeSection) || null;
@@ -595,7 +632,21 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
         </div>
         <div className="flex items-center gap-2">
           {saving && <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-400"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Đang lưu</span>}
+          {present.length > 0 && <span title="Đang cùng mở giáo trình này" className="hidden md:inline-flex"><AvatarStack people={present.map(p => ({ id: p.id, name: p.name }))} size="md" max={5} singleWithName={false} /></span>}
+          {canManage && <button data-share-toggle onClick={() => setShareOpen(true)} title="Thêm người cùng xem, cùng chỉnh sửa" className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-100"><UserPlus className="h-4 w-4" /><span className="hidden sm:inline">Cộng tác</span></button>}
           <button onClick={() => flush(false)} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-200"><Check className="h-4 w-4" /> Lưu</button>
+          <div className="relative">
+            <button data-share-toggle onClick={() => setShareOpen(v => !v)} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-[11px] font-bold text-white hover:bg-brand-hover"><Share2 className="h-4 w-4" /> Chia sẻ</button>
+            {shareOpen && (
+              <LessonSharePanel lesson={lesson} title={lesson.title} currentUser={currentUser} canManage={canManage} isOwner={isOwner}
+                canGoPublic={canPublic} publicHint={!mayPublic ? 'Tài khoản chưa được cấp quyền công khai lên Thư viện.' : 'Cần bật Xuất bản và có ít nhất 1 phần nội dung.'}
+                collabs={collabs} onCollabsChange={() => setCollabTick(v => v + 1)}
+                onTogglePublic={async on => { try { const saved = await updateLesson(lesson.id, { is_public: on }); setLesson(saved); return true; } catch (e: any) { addNotification('Chưa đổi được: ' + (e?.message || e), 'error'); return false; } }}
+                onPdf={async () => { setShareOpen(false); await flush(true); const { exportLessonToPdf } = await import('../../lib/lessonPdf'); exportLessonToPdf(lesson, sections, resources); }}
+                onPreview={() => { flush(true); window.open(`${window.location.origin}/?elview=${lesson.id}`, '_blank', 'noopener'); }}
+                onClose={() => setShareOpen(false)} notify={(m, t) => addNotification(m, t)} />
+            )}
+          </div>
         </div>
       </div>
 
@@ -613,6 +664,7 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
                 <button onClick={() => setActiveSection(s.id)} className="min-w-0 flex-1 text-left">
                   <span className={`block truncate text-[12px] font-bold ${activeSection === s.id ? 'text-brand' : 'text-slate-700'}`}>{i + 1}. {s.title || 'Không tên'}</span>
                 </button>
+                {present.some(p => p.spot === s.id) && <span title={`${present.filter(p => p.spot === s.id).map(p => p.name).join(', ')} đang ở phần này`}><AvatarStack people={present.filter(p => p.spot === s.id).map(p => ({ id: p.id, name: p.name }))} max={2} singleWithName={false} size={18} /></span>}
                 <button onClick={() => moveSection(i, -1)} className="text-slate-300 hover:text-slate-600"><ArrowUp className="h-3.5 w-3.5" /></button>
                 <button onClick={() => moveSection(i, 1)} className="text-slate-300 hover:text-slate-600"><ArrowDown className="h-3.5 w-3.5" /></button>
                 <button onClick={() => removeSection(s.id)} className="text-slate-300 hover:text-rose-500"><Trash2 className="h-3.5 w-3.5" /></button>
@@ -627,6 +679,12 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
             <div className="py-16 text-center text-sm text-slate-400">Thêm hoặc chọn một phần để bắt đầu soạn.</div>
           ) : (
             <>
+              {present.some(p => p.spot === sec.id) && (
+                <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-800">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  {present.filter(p => p.spot === sec.id).map(p => p.name || 'Một người').join(', ')} cũng đang mở phần này. Nội dung tự lưu sau 4 giây, nên chia nhau soạn các phần khác nhau để không ghi đè lên nhau.
+                </div>
+              )}
               <input value={sec.title} onChange={e => markDirty(sec.id, { title: e.target.value })} placeholder="Tiêu đề phần" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold outline-none focus:border-brand" />
               <QuizRichText allowVideo value={sec.content} onChange={html => markDirty(sec.id, { content: html })} placeholder="Soạn nội dung giáo trình..." />
 
@@ -686,7 +744,8 @@ function LessonEditor({ lessonId, subjects, currentUser, onBack, onAssign }: { l
             }} />
             {mayPublic && !canPublic && <p className="text-[10px] text-amber-600">Cần xuất bản và có ít nhất 1 phần nội dung mới công khai được.</p>}
             {!mayPublic && <p className="text-[10px] text-slate-400">Tài khoản chưa được cấp quyền công khai lên thư viện.</p>}
-            <ToggleRow label="Cho phép sao chép" on={lesson.allow_copy} onChange={b => patchLesson({ allow_copy: b })} />
+            {isOwner && <ToggleRow label="Cho phép sao chép" on={lesson.allow_copy} onChange={b => patchLesson({ allow_copy: b })} />}
+            {!isOwner && <p className="text-[10px] text-slate-400">Bạn là người cộng tác: sửa được nội dung, còn công khai, cho sao chép và giao lớp do chủ giáo trình quyết định.</p>}
             {mayAssign && <ToggleRow label="Giao cho lớp (link + QR)" on={lesson.share_enabled} onChange={b => patchLesson({ share_enabled: b })} />}
           </div>
           {mayAssign && lesson.share_enabled && <button onClick={onAssign} className="w-full rounded-xl bg-brand px-4 py-2.5 text-[11px] font-bold text-white hover:bg-brand-hover">Chọn lớp và lấy liên kết</button>}
