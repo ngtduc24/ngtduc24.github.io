@@ -32,6 +32,8 @@ import SwfPlayer from '../SwfPlayer';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import Model3DViewer from './Model3DViewer';
+import PhoneGrading from './PhoneGrading';
+import { usePhoneMaybe } from '../phone/PhoneShell';
 
 interface EduGradingProps {
   classId: string;
@@ -75,6 +77,7 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
   const [simMap, setSimMap] = useState<SimilarityMap>({});
 
   const { confirm } = useConfirmation();
+  const phone = usePhoneMaybe();
 
   // Xác định bài nộp trễ: so thời điểm nộp lần đầu với hạn nộp, hoặc hạn được gia hạn riêng nếu có.
   const lateInfo = (submission: EduSubmission) => {
@@ -311,6 +314,18 @@ export default function EduGrading({ classId, assignmentId, gradeColumnId, onSuc
       </div>
       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Đang tải dữ liệu chấm bài...</p>
     </div>
+  );
+
+  // Điện thoại: giao diện chấm riêng (danh sách, chấm từng bài, nhập điểm nhanh), dùng chung cơ chế tự lưu ở trên.
+  if (phone) return (
+    <>
+      <PhoneGrading users={users} submissions={submissions} assignment={assignment} gradingData={gradingData}
+        saveState={saveState} savedAt={savedAt} invalidIds={invalidIds} simMap={simMap} lateInfo={lateInfo as any}
+        onScore={handleScoreChange} onNote={handleNoteChange} flush={flush} onReopen={handleResetSubmission}
+        onSimilarity={() => setSimOpen(true)} onBack={onSuccess}
+        resolveFile={async (sub, file, idx) => { const full = await resolveSubmissionFile(sub.id, file, idx); file.url = full.url; return full; }} />
+      {simOpen && <SimilarityCheck users={users} submissions={submissions} onClose={() => setSimOpen(false)} onResults={setSimMap} />}
+    </>
   );
 
   return (
