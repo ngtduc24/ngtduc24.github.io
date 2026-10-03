@@ -1,10 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { UserCircle, ShieldCheck, Bell as BellIcon, Camera, Check, X, Loader2, ArrowLeft, Move, Trash2 } from 'lucide-react';
+import { UserCircle, ShieldCheck, Bell as BellIcon, Camera, Check, X, Loader2, ArrowLeft, Move, Trash2, Crop } from 'lucide-react';
 import TrashPanel from './TrashPanel';
 import { UserAccount } from '../types';
 import { auth } from '../lib/firebase';
 import { updatePassword } from 'firebase/auth';
 import MediaSourcePicker from './MediaSourcePicker';
+import ImageCropper from './ui/ImageCropper';
+import { uploadImageToCloudinary } from '../lib/upload';
 
 interface ProfilePageProps {
   user: UserAccount;
@@ -64,9 +66,14 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
     const ok = await persist({ email: draftEmail.trim() });
     if (ok) { setEmail(draftEmail.trim()); setEditing(null); flash('Đã cập nhật email.'); }
   };
-  const changeAvatar = async (url: string) => {
-    setAvatarUrl(url);
-    const ok = await persist({ avatarUrl: url });
+  // Chọn ảnh mới hoặc bấm Chỉnh ảnh: mở cửa sổ cắt (xoay, lật, phóng to, kéo vào đúng ô tròn).
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const changeAvatar = async (url: string) => { setCropSrc(url); };
+  const saveCroppedAvatar = async (dataUrl: string) => {
+    const url = await uploadImageToCloudinary(dataUrl, 'Ảnh đại diện & bìa cá nhân');
+    setAvatarUrl(url); setAvatarPos('50% 50%');
+    const ok = await persist({ avatarUrl: url, avatarPosition: '50% 50%' });
+    setCropSrc(null);
     if (ok) flash('Đã cập nhật ảnh hồ sơ.');
   };
   const removeAvatar = async () => {
@@ -228,28 +235,25 @@ export default function ProfilePage({ user, onSaveProfile, onBack }: ProfilePage
                 <div className="flex flex-wrap items-center justify-between gap-4 p-6">
                   <div className="flex items-center gap-4">
                     {avatarUrl ? (
-                      <div className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-full ${adjustAvatar ? 'cursor-move ring-2 ring-brand touch-none' : ''}`}
-                        onPointerDown={adjustAvatar ? (e) => startDrag(e, avatarPos) : undefined}
-                        onPointerMove={adjustAvatar ? (e) => moveDrag(e, setAvatarPos) : undefined}
-                        onPointerUp={adjustAvatar ? endAvatarDrag : undefined}>
+                      <button type="button" onClick={() => setCropSrc(avatarUrl)} title="Chỉnh ảnh" className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full">
                         <img src={avatarUrl} alt={fullName} style={{ objectPosition: avatarPos }} className="h-full w-full object-cover" />
-                      </div>
+                      </button>
                     ) : (
                       <div className="grid h-16 w-16 place-items-center rounded-full bg-slate-700 text-xl font-black text-white">{fullName?.slice(0, 1).toUpperCase()}</div>
                     )}
                     <div>
                       <span className="block text-sm font-bold text-slate-800">Ảnh hồ sơ</span>
-                      {adjustAvatar && <span className="block text-[11px] font-semibold text-brand">Kéo trong khung tròn để chọn vùng</span>}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     {avatarUrl && (
-                      <button onClick={() => setAdjustAvatar(v => !v)} className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold ${adjustAvatar ? 'bg-brand text-white' : 'border border-slate-200 bg-white text-slate-700 hover:border-brand hover:text-brand'}`}>{adjustAvatar ? <><Check className="h-4 w-4" /> Xong</> : <><Move className="h-4 w-4" /> Chỉnh vị trí</>}</button>
+                      <button onClick={() => setCropSrc(avatarUrl)} className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:border-brand hover:text-brand"><Crop className="h-4 w-4" /> Chỉnh ảnh</button>
                     )}
-                    {avatarUrl && !adjustAvatar && (
+                    {cropSrc && <ImageCropper src={cropSrc} onCancel={() => setCropSrc(null)} onDone={saveCroppedAvatar} />}
+                    {avatarUrl && (
                       <button onClick={removeAvatar} disabled={saving} className="text-sm font-semibold text-slate-500 hover:text-rose-600 disabled:opacity-50">Xóa ảnh</button>
                     )}
-                    {!adjustAvatar && (
+                    {(
                     <MediaSourcePicker
                       onSelect={changeAvatar}
                       accept="image/*"
