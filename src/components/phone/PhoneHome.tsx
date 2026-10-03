@@ -59,18 +59,10 @@ export default function PhoneHome() {
   }, [user.id, taskKey, pending?.total]);
   const shownReminders = reminders.filter(r => !off.has(r.id)).slice(0, 3);
 
-  // ===== 4 nút tròn trên đầu trang: Lớp học, Giáo trình, Bài tập, Khác (thiếu quyền thì lấy chức năng khác) =====
-  const ACT_CANDIDATES: { id: string; label: string; icon: any }[] = [
-    { id: 'edu', label: 'Lớp học', icon: GraduationCap }, { id: 'elearning', label: 'Giáo trình', icon: BookOpen },
-    { id: 'edu_bank', label: 'Bài tập', icon: Library }, { id: 'slides', label: 'Bài giảng', icon: Presentation },
-    { id: 'edu_exam', label: 'Trắc nghiệm', icon: CircleCheck }, { id: 'tasks', label: 'Công việc', icon: CalendarDays },
-    { id: 'courses', label: 'Khoá học', icon: GraduationCap },
-  ];
-  const actMods = ACT_CANDIDATES.filter(a => can(a.id) && phoneMode(a.id, settings) !== 'laptop').slice(0, 3);
-  const acts: TopAct[] = [
-    ...actMods.map(a => ({ key: a.id, label: a.label, icon: a.icon, run: () => open(a.id) })),
-    { key: 'more', label: 'Khác', icon: MoreHorizontal, run: () => open('all_features') },
-  ];
+  // ===== 4 nút tròn trên đầu trang: admin chọn trong Cấu hình hệ thống, thiếu quyền thì lấy chức năng khác =====
+  const actList = resolveActs(phoneUi(settings), id => can(id) && phoneMode(id, settings) !== 'laptop', id => { const m = find(id); return m ? phoneLabel(m) : undefined; });
+  const actMods = actList.filter(a => a.id !== 'all_features');
+  const acts: TopAct[] = actList.map(a => ({ key: a.id, label: a.label, icon: a.icon, run: () => open(a.id) }));
   const actIds = new Set(actMods.map(a => a.id));
 
   // ===== Lưới chức năng =====
@@ -232,4 +224,32 @@ export function PhoneTop({ settings, ui: uiOverride, name, avatar, unread, acts,
       </div>
     </div>
   );
+}
+
+// Danh sách nút tròn đầu Trang chủ: các ô admin chọn trước, sau đó tới danh sách mặc định để bù khi người dùng không có quyền.
+const ACT_DEFAULTS: { id: string; label: string; icon: any }[] = [
+  { id: 'edu', label: 'Lớp học', icon: GraduationCap }, { id: 'elearning', label: 'Giáo trình', icon: BookOpen },
+  { id: 'edu_bank', label: 'Bài tập', icon: Library }, { id: 'slides', label: 'Bài giảng', icon: Presentation },
+  { id: 'edu_exam', label: 'Trắc nghiệm', icon: CircleCheck }, { id: 'tasks', label: 'Công việc', icon: CalendarDays },
+  { id: 'courses', label: 'Khoá học', icon: GraduationCap },
+];
+export function resolveActs(ui: PhoneUi, allowed: (id: string) => boolean, labelOf: (id: string) => string | undefined) {
+  const n = ui.moreOn === false ? 4 : 3;
+  const reg = (id: string) => MODULE_REGISTRY.find(m => m.id === id);
+  const mk = (id: string, label?: string) => {
+    const d = ACT_DEFAULTS.find(x => x.id === id);
+    return { id, label: label?.trim() || d?.label || labelOf(id) || reg(id)?.label || id, icon: d?.icon || reg(id)?.icon || MoreHorizontal };
+  };
+  // Giữ đúng vị trí admin chọn. Ô để trống hoặc người dùng không có quyền thì lấy chức năng mặc định kế tiếp.
+  const seen = new Set<string>();
+  const slots: Array<{ id: string; label: string; icon: any } | null> = Array.from({ length: n }, (_, i) => {
+    const a = ui.acts?.[i];
+    if (a?.id && allowed(a.id) && !seen.has(a.id)) { seen.add(a.id); return mk(a.id, a.label); }
+    return null;
+  });
+  const chosenIds = new Set((ui.acts || []).map(a => a?.id).filter(Boolean));
+  const pool = ACT_DEFAULTS.filter(d => !chosenIds.has(d.id) && allowed(d.id) && !seen.has(d.id));
+  const out = slots.map(x => x || (() => { const d = pool.shift(); if (!d) return null; seen.add(d.id); return mk(d.id); })()).filter(Boolean) as Array<{ id: string; label: string; icon: any }>;
+  if (ui.moreOn !== false) out.push({ id: 'all_features', label: ui.moreLabel?.trim() || 'Khác', icon: MoreHorizontal });
+  return out;
 }

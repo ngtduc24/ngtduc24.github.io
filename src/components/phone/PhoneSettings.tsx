@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Smartphone, Monitor, EyeOff, Image as ImageIcon, RotateCcw, GraduationCap, BookOpen, Library, MoreHorizontal, GripVertical, ArrowUp, ArrowDown, Lock, Unlock, Sparkles } from 'lucide-react';
 import type { AppSettings, ModuleOverride } from '../../types';
 import { MODULE_REGISTRY } from '../../lib/modules';
-import { phoneMode, phoneUi, PhoneUi, PhoneMode, PHONE_UI_KEY, CTA_TARGETS, NOTI_DEFAULT, PHONE_GRID_SKIP, PHONE_ACT_IDS } from '../../lib/device';
+import { phoneMode, phoneUi, PhoneUi, PhoneMode, PHONE_UI_KEY, CTA_TARGETS, NOTI_DEFAULT, PHONE_GRID_SKIP, phoneActIds } from '../../lib/device';
 import { NotiBanner } from './PhoneNotifications';
 import MediaSourcePicker from '../MediaSourcePicker';
-import { PhoneTop } from './PhoneHome';
+import { PhoneTop, resolveActs } from './PhoneHome';
 import './phone.css';
 
 // Cấu hình hệ thống, mục Điện thoại (chỉ admin, chỉ trên máy tính): băng chào đầu Trang chủ điện thoại
@@ -97,10 +97,8 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
           <div className="shrink-0">
             <p className="mb-2 text-[11px] font-bold text-slate-500">Xem trước</p>
             <div className="ph w-[320px] overflow-hidden rounded-[28px] border-[6px] border-slate-900 bg-[#f3f6f9] shadow-xl">
-              <PhoneTop settings={formState} ui={ui} name="Tên người dùng" unread={1} acts={[
-                { key: 'a', label: 'Lớp học', icon: GraduationCap, run: () => {} }, { key: 'b', label: 'Giáo trình', icon: BookOpen, run: () => {} },
-                { key: 'c', label: 'Bài tập', icon: Library, run: () => {} }, { key: 'd', label: 'Khác', icon: MoreHorizontal, run: () => {} },
-              ]} />
+              <PhoneTop settings={formState} ui={ui} name="Tên người dùng" unread={1}
+                acts={resolveActs(ui, () => true, id => formState.moduleOverrides?.[id]?.label?.trim() || undefined).map(a => ({ key: a.id, label: a.label, icon: a.icon, run: () => {} }))} />
               <div className="ph-grid" style={{ marginBottom: 14 }}><p className="pb-4 text-center text-[11px] text-slate-400">Lưới chức năng</p></div>
             </div>
           </div>
@@ -156,6 +154,9 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
         </div>
       </div>
 
+      {/* 4 nút tròn đầu Trang chủ */}
+      <ActsCard formState={formState} ui={ui} setUi={setUi} sw={sw} field={field} />
+
       {/* Lưới chức năng ở Trang chủ điện thoại */}
       <GridOrderCard formState={formState} ui={ui} setUi={setUi} sw={sw} />
 
@@ -202,7 +203,8 @@ function GridOrderCard({ formState, ui, setUi, sw }: {
   sw: (on: boolean, fn: () => void, label: string) => React.ReactNode;
 }) {
   const ov = formState.moduleOverrides || {};
-  const avail = MODULE_REGISTRY.filter(m => !PHONE_GRID_SKIP.has(m.id) && !PHONE_ACT_IDS.includes(m.id) && !ov[m.id]?.hidden && phoneMode(m.id, formState) === 'full');
+  const actIds = phoneActIds(ui);
+  const avail = MODULE_REGISTRY.filter(m => !PHONE_GRID_SKIP.has(m.id) && !actIds.includes(m.id) && !ov[m.id]?.hidden && phoneMode(m.id, formState) === 'full');
   const saved = ui.gridOrder || [];
   const ids = avail.map(m => m.id).sort((a, b) => {
     const ia = saved.indexOf(a), ib = saved.indexOf(b);
@@ -228,7 +230,7 @@ function GridOrderCard({ formState, ui, setUi, sw }: {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-sm font-bold text-slate-800">Lưới chức năng ở Trang chủ</h3>
-          <p className="text-[12px] text-slate-500">Kéo thả hoặc bấm mũi tên để xếp thứ tự cho mọi người. 8 chức năng đầu hiện ngay dưới đầu trang, phần còn lại hiện khi bấm mũi tên xem thêm. Lớp học, Giáo trình, Bài tập đã nằm ở 3 nút tròn nên không lặp lại trong lưới. Ai không có quyền dùng chức năng nào thì chức năng đó tự bỏ qua.</p>
+          <p className="text-[12px] text-slate-500">Kéo thả hoặc bấm mũi tên để xếp thứ tự cho mọi người. 8 chức năng đầu hiện ngay dưới đầu trang, phần còn lại hiện khi bấm mũi tên xem thêm. Chức năng đã nằm ở các nút tròn đầu trang thì không lặp lại trong lưới. Ai không có quyền dùng chức năng nào thì chức năng đó tự bỏ qua.</p>
         </div>
         {(saved.length > 0 || locks.size > 0) && (
           <button type="button" onClick={() => setUi({ gridOrder: [], gridLock: [] })} className="inline-flex shrink-0 items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-rose-500"><RotateCcw className="h-3 w-3" /> Về mặc định</button>
@@ -273,6 +275,58 @@ function GridOrderCard({ formState, ui, setUi, sw }: {
             </React.Fragment>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+// Admin chọn chức năng và tên cho các nút tròn đầu Trang chủ điện thoại. Người dùng không có quyền chức năng nào
+// thì ô đó tự lấy chức năng mặc định kế tiếp (Lớp học, Giáo trình, Bài tập, Bài giảng...).
+function ActsCard({ formState, ui, setUi, sw, field }: {
+  formState: AppSettings; ui: PhoneUi; setUi: (p: Partial<PhoneUi>) => void;
+  sw: (on: boolean, fn: () => void, label: string) => React.ReactNode; field: string;
+}) {
+  const moreOn = ui.moreOn !== false;
+  const n = moreOn ? 3 : 4;
+  const def = resolveActs({ moreOn: ui.moreOn, acts: ui.acts }, () => true, () => undefined).filter(a => a.id !== 'all_features');
+  const cur = Array.from({ length: n }, (_, i) => ui.acts?.[i] || { id: '' });
+  const ov = formState.moduleOverrides || {};
+  const opts = MODULE_REGISTRY.filter(m => !PHONE_GRID_SKIP.has(m.id) && !ov[m.id]?.hidden);
+  const setSlot = (i: number, patch: { id?: string; label?: string }) => {
+    const next = Array.from({ length: n }, (_, k) => ({ ...(ui.acts?.[k] || { id: '' }) }));
+    next[i] = { ...next[i], ...patch };
+    setUi({ acts: next });
+  };
+  return (
+    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="text-sm font-bold text-slate-800">Nút tròn đầu Trang chủ</h3>
+          <p className="text-[12px] text-slate-500">Chọn chức năng và đặt tên ngắn cho từng nút. Để trống ô nào thì dùng mặc định. Ai không có quyền dùng chức năng đã chọn thì nút đó tự đổi sang chức năng khác người đó dùng được.</p>
+        </div>
+        {(ui.acts?.some(a => a?.id) || ui.moreOn === false || ui.moreLabel) && (
+          <button type="button" onClick={() => setUi({ acts: [], moreOn: true, moreLabel: '' })} className="inline-flex shrink-0 items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-rose-500"><RotateCcw className="h-3 w-3" /> Về mặc định</button>
+        )}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {cur.map((a, i) => (
+          <div key={i} className="space-y-1.5 rounded-xl border border-slate-100 p-3">
+            <label className="text-[11px] font-bold text-slate-500">Nút {i + 1}</label>
+            <select className={field} value={a.id || ''} onChange={e => setSlot(i, { id: e.target.value })}>
+              <option value="">Mặc định ({def[i]?.label || 'tự chọn'})</option>
+              {opts.map(m => <option key={m.id} value={m.id}>{ov[m.id]?.label?.trim() || m.label}</option>)}
+            </select>
+            <input className={field} value={a.label || ''} disabled={!a.id} onChange={e => setSlot(i, { label: e.target.value })} placeholder={a.id ? 'Tên hiện dưới nút, để trống thì dùng tên chức năng' : 'Chọn chức năng trước'} maxLength={14} />
+          </div>
+        ))}
+      </div>
+      <div className="flex items-start justify-between gap-4 rounded-xl bg-slate-50 px-4 py-3">
+        <div className="min-w-0 flex-1 space-y-2">
+          <p className="text-[13px] font-bold text-slate-700">Nút cuối là Khác (mở Tất cả chức năng)</p>
+          <p className="text-[12px] text-slate-500">{moreOn ? 'Bật. Có 3 nút chức năng và nút cuối mở danh sách tất cả chức năng.' : 'Tắt. Cả 4 nút đều là chức năng bạn chọn.'}</p>
+          {moreOn && <input className={field} value={ui.moreLabel || ''} onChange={e => setUi({ moreLabel: e.target.value })} placeholder="Tên nút, mặc định là Khác" maxLength={14} />}
+        </div>
+        {sw(moreOn, () => setUi({ moreOn: !moreOn }), 'Bật tắt nút Khác')}
       </div>
     </div>
   );

@@ -90,11 +90,22 @@ export interface PhoneUi {
   gridOrder?: string[];        // thứ tự admin xếp sẵn, 8 ô đầu hiện ngay
   gridLock?: string[];         // chức năng giữ cố định đúng vị trí admin xếp, không bị thói quen đẩy đi
   gridAuto?: boolean;          // tự xếp theo thói quen sử dụng, mặc định bật
+  // Nút tròn trên đầu Trang chủ: admin chọn chức năng và tên cho từng ô
+  acts?: Array<{ id: string; label?: string }>;
+  moreOn?: boolean;            // ô cuối là nút Khác mở Tất cả chức năng, mặc định bật
+  moreLabel?: string;
 }
 // Chức năng không đưa vào lưới Trang chủ điện thoại (đã có chỗ riêng hoặc chỉ dành cho quản trị).
 export const PHONE_GRID_SKIP = new Set(['notifications', 'notifications_admin', 'users', 'permissions', 'settings']);
 // 3 nút tròn trên đầu Trang chủ ưu tiên các chức năng này, nên lưới không lặp lại chúng.
 export const PHONE_ACT_IDS = ['edu', 'elearning', 'edu_bank'];
+// Chức năng đang nằm ở các nút tròn theo cấu hình admin (chưa chọn thì dùng mặc định).
+export function phoneActIds(ui: PhoneUi): string[] {
+  const n = ui.moreOn === false ? 4 : 3;
+  const chosen = new Set((ui.acts || []).map(a => a?.id).filter(Boolean) as string[]);
+  const pool = [...PHONE_ACT_IDS, 'slides', 'edu_exam', 'tasks'].filter(id => !chosen.has(id));
+  return Array.from({ length: n }, (_, i) => ui.acts?.[i]?.id || pool.shift() || '').filter(Boolean);
+}
 export const NOTI_DEFAULT = { title: 'Thử Automatic: tự gửi nhắc việc sắp đến hạn mỗi sáng', btn: 'Dùng mẫu có sẵn', target: 'automatic' };
 export const PHONE_UI_KEY = '__phone_ui';
 export function phoneUi(settings?: AppSettings): PhoneUi {
