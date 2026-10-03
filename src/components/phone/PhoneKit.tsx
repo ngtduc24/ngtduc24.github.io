@@ -150,35 +150,36 @@ export type TagTone = 'g' | 'a' | 'r' | 'b' | 'p' | 'n';
 export interface CardTag { text: string; tone?: TagTone }
 
 // Thẻ chung cho Bài giảng, Giáo trình, Bài tập: dải màu theo môn, tên, nhãn, người cùng soạn, thời gian sửa.
-export function PhoneLibCard({ seed, kicker, icon: I, cover, title, tags, people, time, onClick, menu, menuTitle, footer, selected }: {
-  seed: string; kicker: string; icon: any; cover?: React.ReactNode; title: string; tags: CardTag[];
+// Dòng chung cho Bài giảng, Giáo trình, Bài tập: cùng kiểu danh sách lớp học (thẻ trắng, biểu tượng màu hệ thống,
+// tên, thông tin phụ, nút ba chấm). Có ảnh bìa thì hiện ảnh nhỏ thay biểu tượng.
+export function PhoneLibCard({ kicker, icon: I, cover, title, tags, people, time, onClick, menu, menuTitle, selected }: {
+  seed?: string; kicker: string; icon: any; cover?: React.ReactNode; title: string; tags: CardTag[];
   people?: Array<{ id: string; name?: string | null }>; time?: string; onClick: () => void;
   menu?: () => void; menuTitle?: string; footer?: React.ReactNode; selected?: boolean;
 }) {
+  const owner = people?.[0]?.name;
+  const [first, ...rest] = tags;
   return (
-    <div className={`pk-card ${selected ? 'sel' : ''}`} onClick={onClick} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter') onClick(); }}>
-      <div className="band" style={{ background: bandOf(seed) }}>
-        {cover}
-        <span className="k">{kicker}</span>
-        {!cover && <I className="bi" />}
-        {menu && <button type="button" className="mn" aria-label={menuTitle || 'Thao tác'} onClick={e => { e.stopPropagation(); menu(); }}><MoreHorizontal /></button>}
-      </div>
-      <div className="bd">
+    <div className={`pk-li ${selected ? 'sel' : ''}`} onClick={onClick} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter') onClick(); }}>
+      {cover ? <span className="thm">{cover}</span> : <span className="ic"><I /></span>}
+      <span className="m">
         <b>{title}</b>
-        {tags.length > 0 && <div className="tags">{tags.map((t, i) => <span key={i} className={`tag ${t.tone || 'n'}`}>{t.text}</span>)}</div>}
-        {footer ?? ((people?.length || time) ? (
-          <div className="ft">
-            {people && people.length ? <span onClick={e => e.stopPropagation()}><AvatarStack people={people} size="sm" /></span> : <span />}
-            {time && <span className="tm">{time}</span>}
-          </div>
-        ) : null)}
-      </div>
+        <small>{kicker}{rest.length ? ` · ${rest.map(t => t.text).join(' · ')}` : ''}</small>
+        <small className="as">
+          {first && <span className={`st ${first.tone || 'n'}`}>{first.text}</span>}
+          <span className="t">{[owner, time].filter(Boolean).join(' · ')}</span>
+        </small>
+      </span>
+      {menu ? <button type="button" className="mn2" aria-label={menuTitle || 'Thao tác'} onClick={e => { e.stopPropagation(); menu(); }}><MoreHorizontal /></button> : <ChevronRightIcon />}
     </div>
   );
 }
+function ChevronRightIcon() {
+  return <svg className="cv" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg>;
+}
 
 export function PhoneList({ children }: { children: React.ReactNode }) {
-  return <div className="pk-list">{children}</div>;
+  return <div className="pk-list"><div className="pk-grp">{children}</div></div>;
 }
 
 export function PhoneEmpty({ icon: I, title, sub, action }: { icon: any; title: string; sub?: string; action?: React.ReactNode }) {

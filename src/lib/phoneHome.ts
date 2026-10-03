@@ -110,11 +110,13 @@ export async function loadReminders(user: UserAccount, tasks: Task[], pending: P
       [...by.entries()].slice(0, 2).forEach(([cid, n]) => out.push({
         id: `ext:${cid}:${n}`, kind: 'extension',
         title: `${n} yêu cầu gia hạn chờ duyệt`, detail: classes.find((c: any) => c.id === cid)?.name || 'Lớp học',
-        tab: 'edu', sub: { sv: 'class_detail', cid },
+        tab: 'edu', sub: { sv: 'class_detail', cid, ext: '1' },
       }));
     }
   }
-  return out;
+  // Yêu cầu chờ duyệt (gia hạn nộp bài) lên đầu danh sách, sau đó tới bài chờ chấm, việc sắp hạn, đề trắc nghiệm.
+  const rank: Record<Reminder['kind'], number> = { extension: 0, grading: 1, task: 2, quiz: 3 };
+  return out.map((r, i) => ({ r, i })).sort((a, b) => rank[a.r.kind] - rank[b.r.kind] || a.i - b.i).map(x => x.r);
 }
 
 // Lời nhắc đã ẩn, lưu theo tài khoản trên máy này. Lời nhắc có số liệu mới (mã khác) sẽ hiện lại.

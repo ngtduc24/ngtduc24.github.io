@@ -115,7 +115,8 @@ export default function LibraryHero(p: LibraryHeroProps) {
 
 // Điện thoại: nền màu nối liền thanh trên, ô tìm, nhóm Của tôi, Được chia sẻ, Thư viện, dải chip lọc cuộn ngang.
 const shortTab = (l: string) => (/của tôi/i.test(l) ? 'Của tôi' : /^được chia sẻ/i.test(l) ? 'Được chia sẻ' : l);
-const tabRank = (l: string) => (/của tôi/i.test(l) ? 0 : /chia sẻ/i.test(l) ? 1 : 2);
+// Thứ tự: Thư viện, Được chia sẻ, Của tôi
+const tabRank = (l: string) => (/của tôi/i.test(l) ? 2 : /chia sẻ/i.test(l) ? 1 : 0);
 function LibraryHeroPhone(p: LibraryHeroProps) {
   const [subjOpen, setSubjOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);

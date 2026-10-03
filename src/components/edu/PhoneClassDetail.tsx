@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Users, UserPlus, Link2, Eye, ClipboardCheck, Clock, Plus, Download, MoreHorizontal, Pencil, Trash2, Lock, Unlock, FileSpreadsheet, ChevronLeft, ChevronRight, Check, Search, X, FileText, BarChart3, Send } from 'lucide-react';
 import type { EduUser, EduGradeColumn, EduAssignment, EduGrade, EduExtensionRequest } from '../../types/edu';
+import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
 import { PhoneExt, PhoneSeg, PhoneChips, PhoneChip, PhoneSheet, PhoneMenuSheet, PhoneFab, PhoneEmpty, PhonePickSheet } from '../phone/PhoneKit';
 
 // Trang chi tiết lớp trên điện thoại: đầu trang màu có tên lớp và 4 số liệu, 3 thẻ Bài tập, Sinh viên, Bảng điểm.
@@ -50,7 +51,9 @@ const when = (iso?: string) => { if (!iso) return ''; const d = new Date(iso); r
 export default function PhoneClassDetail(p: PhoneClassProps) {
   const [tab, setTab] = useState<Tab>('students');
   const [menu, setMenu] = useState(false);
-  const [extOpen, setExtOpen] = useState(false);
+  // Mở từ lời nhắc "yêu cầu gia hạn chờ duyệt": vào thẳng thẻ Bài tập và mở bảng duyệt gia hạn.
+  const [extOpen, setExtOpen] = useState(() => readSubRoute().ext === '1');
+  React.useEffect(() => { if (readSubRoute().ext === '1') { setTab('assignments'); writeSubRoute({ ext: null }); } }, []);
   const [asgMenu, setAsgMenu] = useState<EduAssignment | null>(null);
   const [profile, setProfile] = useState<EduUser | null>(null);
   const [stuForm, setStuForm] = useState<null | { id?: string; stt: string; fullName: string; mssv: string }>(null);

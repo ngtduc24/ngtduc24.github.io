@@ -141,10 +141,10 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
         : <PhoneList>
             {list.slice(0, shown).map(d => (
               <PhoneLibCard key={d.id} seed={d.ownerId + d.id} icon={Presentation}
-                kicker={scope === 'library' ? (d.ownerName || 'Thư viện') : scope === 'shared' ? `Chia sẻ · ${ROLE_TEXT[d.role || 'view'] || 'Xem'}` : 'Bài giảng của tôi'}
+                kicker={scope === 'library' ? 'Thư viện' : scope === 'shared' ? `Chia sẻ · ${ROLE_TEXT[d.role || 'view'] || 'Xem'}` : 'Của tôi'}
                 title={d.title}
                 tags={[
-                  ...(d.inLibrary ? [{ text: 'Thư viện', tone: 'g' as const }] : []),
+                  d.inLibrary ? { text: 'Thư viện', tone: 'g' as const } : { text: 'Riêng tư', tone: 'n' as const },
                   { text: `${d.count} trang` },
                 ]}
                 people={[{ id: d.ownerId, name: d.ownerName || (d.ownerId === currentUser.id ? currentUser.fullName : undefined) }, ...(collabMap[d.id] || [])]}
