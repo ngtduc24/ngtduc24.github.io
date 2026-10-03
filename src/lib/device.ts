@@ -65,3 +65,30 @@ export function phoneMode(id: string, settings?: AppSettings): PhoneMode {
   return LAPTOP_ONLY.has(id) ? 'laptop' : 'full';
 }
 export const PHONE_MODE_LABEL: Record<PhoneMode, string> = { full: 'Điện thoại: dùng đầy đủ', laptop: 'Điện thoại: chỉ dùng trên máy tính', hidden: 'Điện thoại: ẩn' };
+
+// ===== Cài đặt giao diện điện thoại do admin chỉnh (Cấu hình hệ thống, mục Điện thoại) =====
+// Lưu chung trong cột module_overrides dưới khoá riêng __phone_ui nên không cần thêm cột mới.
+export interface PhoneUi {
+  bannerOn?: boolean;          // hiện băng chào đầu Trang chủ, mặc định bật
+  title?: string;
+  desc?: string;
+  imageMode?: 'desktop' | 'custom' | 'art'; // ảnh nền Trang chủ máy tính, ảnh riêng, hay hình minh hoạ
+  image?: string;
+  position?: string;
+  ctaOn?: boolean;             // hiện nút trên băng chào, mặc định bật
+  ctaLabel?: string;
+  ctaTarget?: string;          // create:<chức năng> mở thẳng màn tạo mới, open:<chức năng> mở chức năng
+}
+export const PHONE_UI_KEY = '__phone_ui';
+export function phoneUi(settings?: AppSettings): PhoneUi {
+  return ((settings?.moduleOverrides as any)?.[PHONE_UI_KEY] || {}) as PhoneUi;
+}
+export const CTA_TARGETS: { value: string; label: string; need: string }[] = [
+  { value: 'create:slides', label: 'Soạn bài giảng mới', need: 'slides' },
+  { value: 'create:elearning', label: 'Tạo giáo trình mới', need: 'elearning' },
+  { value: 'create:edu_exam', label: 'Tạo đề trắc nghiệm', need: 'edu_exam' },
+  { value: 'create:tasks', label: 'Tạo công việc', need: 'tasks' },
+  { value: 'open:edu', label: 'Mở Lớp học', need: 'edu' },
+  { value: 'open:courses', label: 'Mở Khoá học', need: 'courses' },
+  { value: 'open:all_features', label: 'Xem tất cả chức năng', need: 'all_features' },
+];

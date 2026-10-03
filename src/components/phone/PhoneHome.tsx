@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Bell, Eye, TrendingUp, ChevronRight, ClipboardList, CircleCheck, ScanLine, GraduationCap, Library, LayoutGrid, X, Sparkles, CalendarDays, Clock, Presentation, Plus, Hourglass, BellRing } from 'lucide-react';
 import { usePhone, usePhoneModules, ModIcon, PhoneModule, phoneLabel } from './PhoneShell';
 import { useTasks } from '../TaskContext';
-import { phoneMode } from '../../lib/device';
+import { phoneMode, phoneUi, PhoneUi, CTA_TARGETS } from '../../lib/device';
+import type { AppSettings } from '../../types';
 import { setCreateIntent } from '../../lib/phone';
 import { todayTasks, loadPendingGrading, loadReminders, PendingGrading, Reminder, dismissedReminders, dismissReminder } from '../../lib/phoneHome';
 import { useUsage, useScores, personalOrder, MIN_EVENTS, featuredPicks, noteShown, forgetDoc, isNewModule, DocVisit } from '../../lib/personalize';
@@ -94,24 +95,17 @@ export default function PhoneHome() {
   if (can('slides')) quick.push({ label: 'Bài giảng', icon: Presentation, run: () => open('slides') });
   if (can('courses')) quick.push({ label: 'Khoá học', icon: GraduationCap, run: () => open('courses') });
 
-  const hasBg = !!settings?.dashboardBannerImage;
   const showGrading = canUseModule(user, 'edu');
   const firstPending = pending?.classes[0];
 
   return (
     <div>
-      {/* Băng chào đầu trang */}
-      <div className={`ph-hero ${hasBg ? '' : 'plain'}`} style={hasBg ? { backgroundImage: `url(${settings!.dashboardBannerImage})`, backgroundPosition: settings!.dashboardBannerPosition || 'center' } : undefined}>
-        {hasBg && <div className="shade" />}
-        {!hasBg && <HeroArt />}
-        <div className="in">
-          <div className="t1">{settings?.dashboardBannerTitle || 'Hôm nay bạn muốn làm gì?'}</div>
-          <div className="t2">{settings?.systemDescription || 'Bài giảng, lớp học, đề trắc nghiệm của bạn ở ngay đây.'}</div>
-          {can('slides')
-            ? <button type="button" className="cta" onClick={() => { setCreateIntent('slides'); open('slides'); }}><Plus size={15} />Soạn bài giảng mới</button>
-            : <button type="button" className="cta" onClick={() => open('all_features')}>Xem tất cả chức năng</button>}
-        </div>
-      </div>
+      {/* Băng chào đầu trang, admin chỉnh trong Cấu hình hệ thống, mục Điện thoại */}
+      <PhoneHero settings={settings} can={can} onCta={(target) => {
+        const [kind, id] = target.split(':');
+        if (kind === 'create') setCreateIntent(id);
+        open(id);
+      }} />
 
       {/* Lời chào, tìm kiếm, chuông */}
       <div className="ph-hello">
@@ -213,6 +207,32 @@ export default function PhoneHome() {
           ); })}
         </div>
       </>}
+    </div>
+  );
+}
+
+// Băng chào đầu Trang chủ điện thoại. Dùng chung cho Trang chủ và khung xem trước trong Cấu hình hệ thống.
+export function PhoneHero({ settings, can, onCta, ui: uiOverride }: { settings?: AppSettings; can: (id: string) => boolean; onCta: (target: string) => void; ui?: PhoneUi }) {
+  const ui = uiOverride || phoneUi(settings);
+  if (ui.bannerOn === false) return <div style={{ height: 'calc(8px + env(safe-area-inset-top))' }} />;
+  const mode = ui.imageMode || 'desktop';
+  const img = mode === 'custom' ? ui.image : mode === 'desktop' ? settings?.dashboardBannerImage : '';
+  const pos = mode === 'custom' ? ui.position : settings?.dashboardBannerPosition;
+  const target = ui.ctaTarget || 'create:slides';
+  const t = CTA_TARGETS.find(x => x.value === target);
+  const ok = !t || t.need === 'all_features' || can(t.need);
+  const label = ui.ctaLabel?.trim() || t?.label || 'Soạn bài giảng mới';
+  return (
+    <div className={`ph-hero ${img ? '' : 'plain'}`} style={img ? { backgroundImage: `url(${img})`, backgroundPosition: pos || 'center' } : undefined}>
+      {img && <div className="shade" />}
+      {!img && <HeroArt />}
+      <div className="in">
+        <div className="t1">{ui.title?.trim() || settings?.dashboardBannerTitle || 'Hôm nay bạn muốn làm gì?'}</div>
+        <div className="t2">{ui.desc?.trim() || settings?.systemDescription || 'Bài giảng, lớp học, đề trắc nghiệm của bạn ở ngay đây.'}</div>
+        {ui.ctaOn !== false && (ok
+          ? <button type="button" className="cta" onClick={() => onCta(target)}>{target.startsWith('create:') && <Plus size={15} />}{label}</button>
+          : <button type="button" className="cta" onClick={() => onCta('open:all_features')}>Xem tất cả chức năng</button>)}
+      </div>
     </div>
   );
 }
