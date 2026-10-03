@@ -4,7 +4,9 @@
 /* ===== Điện thoại: băng đầu trang như Trang chủ ===== */
 .up-top { position: relative; overflow: hidden; color: #fff; margin: -12px -12px 0; padding: calc(10px + env(safe-area-inset-top)) 16px 64px;
   background: linear-gradient(160deg, color-mix(in srgb, var(--uc) 80%, #022c22), var(--uc) 55%, var(--ub)); background-size: cover; background-position: center; }
-.up-top.img::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--uc) 72%, rgba(2,44,34,.45)) 0%, color-mix(in srgb, var(--uc) 45%, transparent) 50%, color-mix(in srgb, var(--ub) 88%, transparent) 100%); }
+/* Ảnh bìa riêng giữ đúng màu ảnh: chỉ phủ lớp tối trung tính mờ dần để chữ trắng đọc rõ, không ám màu hệ thống */
+.up-top.img::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,.55) 0%, rgba(15,23,42,.28) 45%, rgba(15,23,42,.12) 75%, rgba(15,23,42,.05) 100%); }
+.up-top.img .up-me .m b, .up-top.img .up-nv b { text-shadow: 0 1px 10px rgba(0,0,0,.35); }
 .up-top:not(.img)::after { content: ""; position: absolute; right: -70px; top: -50px; width: 240px; height: 240px; border-radius: 50%; background: rgba(255,255,255,.09); }
 .up-top > * { position: relative; z-index: 1; }
 .up-nv { display: flex; align-items: center; gap: 4px; }

@@ -45,6 +45,28 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
   const [sec, setSec] = useState<PsSec>(() => { try { return (sessionStorage.getItem('ps_sec') as PsSec) || 'welcome'; } catch { return 'welcome'; } });
   const pickSec = (s2: PsSec) => { setSec(s2); try { sessionStorage.setItem('ps_sec', s2); } catch { /* bỏ qua */ } };
   const w = useWelcomeConfig();
+  // Màn rộng: khung cài đặt vừa khít chiều cao còn lại của màn hình, đầu trang và các thanh chọn mục đứng yên,
+  // chỉ phần cài đặt bên trái cuộn, điện thoại xem trước bên phải luôn thấy đủ.
+  const boxRef = React.useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState<{ h: number; k: number } | null>(null);
+  React.useEffect(() => {
+    const calc = () => {
+      const el = boxRef.current; if (!el) return;
+      if (!window.matchMedia('(min-width: 1280px)').matches) { setFit(null); return; }
+      let sc: HTMLElement | null = el.parentElement;
+      while (sc && !/(auto|scroll)/.test(getComputedStyle(sc).overflowY)) sc = sc.parentElement;
+      const scTop = sc ? sc.getBoundingClientRect().top + sc.scrollTop : 0;
+      const top = el.getBoundingClientRect().top + (sc ? sc.scrollTop : window.scrollY) - scTop;
+      const viewH = sc ? sc.clientHeight : window.innerHeight;
+      const h = Math.max(420, viewH - top - 12);
+      setFit({ h, k: Math.min(1, Math.max(0.6, (h - 26) / 720)) });
+      if (sc) sc.scrollTop = 0; else window.scrollTo(0, 0);
+    };
+    calc();
+    const t = window.setTimeout(calc, 300);
+    window.addEventListener('resize', calc);
+    return () => { window.clearTimeout(t); window.removeEventListener('resize', calc); };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -53,9 +75,9 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
         <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2"><Smartphone className="w-4 h-4 text-brand" /> Giao diện trên điện thoại</h2>
         <p className="text-[13px] text-slate-500 mt-1">Chọn từng phần ở bên trái, điện thoại bên phải hiện ngay mọi thay đổi. Tất cả tự lưu, không cần bấm nút. Mục này chỉ hiện với quản trị viên trên máy tính.</p>
       </div>
-      <div className="flex flex-col gap-5 xl:flex-row xl:items-start">
-        <div className="min-w-0 flex-1 space-y-4">
-          <div className="flex flex-wrap gap-1.5 rounded-2xl bg-slate-100 p-1.5">
+      <div ref={boxRef} className="flex flex-col gap-5 xl:flex-row xl:items-stretch" style={fit ? { height: fit.h } : undefined}>
+        <div className={`min-w-0 flex-1 ${fit ? 'flex flex-col gap-4 overflow-hidden' : 'space-y-4'}`}>
+          <div className="flex shrink-0 flex-wrap gap-1.5 rounded-2xl bg-slate-100 p-1.5">
             {PS_SECS.map(x => { const I = x.icon; const on = sec === x.id; return (
               <button key={x.id} type="button" onClick={() => pickSec(x.id)}
                 className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[12.5px] font-semibold transition-all ${on ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
@@ -63,6 +85,8 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
               </button>
             ); })}
           </div>
+          {/* Phần cài đặt cuộn riêng (cuộn chuột hoặc kéo), thanh chọn mục và đầu trang đứng yên */}
+          <div className={fit ? 'min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pb-6 pr-1' : 'space-y-4'} style={fit ? { scrollbarWidth: 'thin' } : undefined}>
           {sec === 'welcome' && <PhoneWelcomeSettingsBox w={w} />}
       {/* Đầu Trang chủ điện thoại */}
       {sec === 'banner' && <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
@@ -213,12 +237,15 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
           </div>
         ))}
       </div>}
+          </div>
         </div>
 
-        {/* Điện thoại xem trước, đứng yên bên phải khi cuộn */}
-        <div className="shrink-0 xl:sticky xl:top-4">
+        {/* Điện thoại xem trước, đứng yên bên phải, tự thu nhỏ cho vừa chiều cao màn hình */}
+        <div className="shrink-0" style={fit ? { width: Math.round(350 * fit.k) } : undefined}>
           <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Xem trước · {PS_SECS.find(x => x.id === sec)?.label}</p>
-          <PsPreview sec={sec} formState={formState} ui={ui} welcome={w.cfg?.phone} />
+          <div style={fit ? { transform: `scale(${fit.k})`, transformOrigin: 'top left', width: 350, height: 720 } : undefined}>
+            <PsPreview sec={sec} formState={formState} ui={ui} welcome={w.cfg?.phone} />
+          </div>
         </div>
       </div>
     </div>

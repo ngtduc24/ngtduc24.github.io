@@ -727,7 +727,6 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
       ) : activeTab === 'phone' && currentUser?.role === 'admin' && !isPhone ? (
         <form onSubmit={handleFormSubmit} className="space-y-6">
           <PhoneSettings formState={formState} setFormState={setFormState} updateOverride={updateOverride} />
-          {saveBar}
         </form>
       ) : activeTab === 'assistant' ? (
         <form onSubmit={handleFormSubmit} className="space-y-6">
