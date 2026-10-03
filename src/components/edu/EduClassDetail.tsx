@@ -81,6 +81,12 @@ const EXT_UNIT_MS: Record<ExtUnit, number> = { second: 1000, minute: 60 * 1000, 
 export default function EduClassDetail({ classId, currentUser, onEditAssignment, onViewAssignment, onGrading, onBack, onOpenQuiz, onNewQuiz }: EduClassDetailProps) {
   const [quizPicker, setQuizPicker] = useState(false);
   const [quizReload, setQuizReload] = useState(0);
+  // Đề vừa tạo (hoặc bấm Giao) trong Quizz khi đi từ lớp này: quay lại thì mở thẳng bước giao cho lớp.
+  const [quizPick, setQuizPick] = useState<string | null>(() => {
+    try { const v = sessionStorage.getItem('quiz_class_pick'); if (v) sessionStorage.removeItem('quiz_class_pick'); return v; } catch { return null; }
+  });
+  useEffect(() => { if (quizPick) setQuizPicker(true); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const closeQuizPicker = () => { setQuizPicker(false); setQuizPick(null); };
   const [clazz, setClazz] = useState<(EduClass & { edu_schools: EduSchool }) | null>(null);
   const [users, setUsers] = useState<EduUser[]>([]);
   const [gradeColumns, setGradeColumns] = useState<EduGradeColumn[]>([]);
@@ -91,7 +97,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
   // Số lượng và đơn vị thời gian gia hạn cho từng yêu cầu, do người duyệt chọn.
   const [extDuration, setExtDuration] = useState<Record<string, { amount: string; unit: ExtUnit }>>({});
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'users' | 'assignments'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'assignments' | 'quizzes'>(() => (quizPick ? 'quizzes' : 'users'));
   const phone = usePhoneMaybe();
   usePhoneBack(phone ? onBack : null);
   const [newColumnName, setNewColumnName] = useState('');
@@ -446,7 +452,7 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
             ownerId={isOwner ? (clazz.ownerId || currentUser.id) : (clazz.ownerId || '')}
             currentUser={currentUser} canManage={canShare} onClose={() => setShareOpen(false)} />
         )}
-        {quizPicker && <ClassQuizPicker classId={clazz.id} className={clazz.name} currentUser={currentUser} onClose={() => setQuizPicker(false)} onDone={() => setQuizReload(v => v + 1)} onCreateNew={onNewQuiz} />}
+        {quizPicker && <ClassQuizPicker classId={clazz.id} className={clazz.name} currentUser={currentUser} initialQuizId={quizPick} onClose={closeQuizPicker} onDone={() => setQuizReload(v => v + 1)} onCreateNew={onNewQuiz} />}
         <PhoneClassDetail
           onAssignQuiz={() => setQuizPicker(true)}
           quizSlot={<ClassQuizList classId={clazz.id} reloadKey={quizReload} canAssign={canAssign} onOpenQuiz={onOpenQuiz} />}
@@ -557,33 +563,6 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
               <span>Cộng tác</span>
             </button>
           )}
-          {canAssign && (
-          <button
-            onClick={() => {
-              if (gradeColumns.length === 0) {
-                addNotification("Cần thêm ít nhất một cột điểm trước khi tạo bài tập", "warning");
-              } else {
-                onEditAssignment();
-              }
-            }}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md ${
-              gradeColumns.length > 0 
-                ? 'bg-brand hover:bg-brand-hover text-white shadow-brand/20' 
-                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-            }`}
-          >
-            <Plus className="w-4 h-4" />
-            <span>Bài tập</span>
-            {gradeColumns.length === 0 && <Lock className="w-3 h-3 ml-1" />}
-          </button>
-          )}
-          {canAssign && (
-            <button onClick={() => setQuizPicker(true)} title="Chọn đề Quizz và giao cho lớp này"
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md bg-brand hover:bg-brand-hover text-white shadow-brand/20">
-              <ListChecks className="w-4 h-4" />
-              <span>Quizz</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -600,6 +579,12 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
           className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'assignments' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
         >
           Quản lý Bài tập
+        </button>
+        <button 
+          onClick={() => setActiveTab('quizzes')}
+          className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'quizzes' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+        >
+          Quản lý Quizz
         </button>
       </div>
 
@@ -947,10 +932,24 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
         </div>
       )}
 
-      {activeTab === 'assignments' && <ClassQuizList classId={clazz.id} reloadKey={quizReload} canAssign={canAssign} onOpenQuiz={onOpenQuiz} />}
-      {quizPicker && !phone && <ClassQuizPicker classId={clazz.id} className={clazz.name} currentUser={currentUser} onClose={() => setQuizPicker(false)} onDone={() => setQuizReload(v => v + 1)} onCreateNew={onNewQuiz} />}
+      {activeTab === 'quizzes' && <ClassQuizList classId={clazz.id} reloadKey={quizReload} canAssign={canAssign} onOpenQuiz={onOpenQuiz} onAssign={() => setQuizPicker(true)} onCreate={onNewQuiz} />}
+      {quizPicker && !phone && <ClassQuizPicker classId={clazz.id} className={clazz.name} currentUser={currentUser} initialQuizId={quizPick} onClose={closeQuizPicker} onDone={() => setQuizReload(v => v + 1)} onCreateNew={onNewQuiz} />}
       {activeTab === 'assignments' && (
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden animate-fadeIn">
+          <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-5 py-4">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-slate-800">Bài tập của lớp ({assignments.length})</p>
+              <p className="text-xs text-slate-500">Lấy từ kho Bài tập hoặc soạn mới, sinh viên nộp tệp và giảng viên chấm vào cột điểm</p>
+            </div>
+            {canAssign && (
+              <button
+                onClick={() => { if (gradeColumns.length === 0) addNotification('Cần thêm ít nhất một cột điểm trước khi tạo bài tập', 'warning'); else onEditAssignment(); }}
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${gradeColumns.length > 0 ? 'bg-brand text-white shadow-md shadow-brand/20 hover:bg-brand-hover' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
+              >
+                <Plus className="h-4 w-4" /> Giao bài tập {gradeColumns.length === 0 && <Lock className="ml-1 h-3 w-3" />}
+              </button>
+            )}
+          </div>
           {(() => {
             const info = (assignment: EduAssignment) => {
               const column = gradeColumns.find(c => c.id === (assignment as any).grade_column_id || c.id === assignment.gradeColumnId);

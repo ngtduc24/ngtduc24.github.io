@@ -230,7 +230,7 @@ export default function EduModule({ currentUser, settings, initialView }: EduMod
         )}
 
         {view === 'exam_bank' && (
-          <QuizModule currentUser={currentUser} onExit={handleBack} />
+          <QuizModule currentUser={currentUser} onExit={handleBack} fromClass={quizFromClass.current} />
         )}
 
         {view === 'question_bank' && (

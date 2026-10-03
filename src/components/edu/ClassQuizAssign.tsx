@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Search, Loader2, CheckCircle2, Plus, ChevronLeft, Link2, BarChart3, Trash2, ListChecks, MoreHorizontal } from 'lucide-react';
-import { Quiz, getQuizzes, getSharedQuizzes, getCollabQuizzes, copyQuizToMine, saveQuiz, publishQuiz, assignQuizToClass, unassignQuizFromClass, getClassQuizzes, getQuizItems } from '../../lib/quiz';
+import { Quiz, getQuizzes, getSharedQuizzes, getCollabQuizzes, copyQuizToMine, saveQuiz, publishQuiz, assignQuizToClass, unassignQuizFromClass, getClassQuizzes, getQuizItems, getQuizById } from '../../lib/quiz';
 import { getGradeColumns, saveGradeColumn, setEduAuthContext } from '../../lib/edu';
 import type { EduGradeColumn } from '../../types/edu';
 import { prettyShareUrl } from '../../lib/shareLinks';
@@ -28,8 +28,9 @@ const fmt = (iso?: string | null) => {
 };
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
 
-export function ClassQuizPicker({ classId, className, currentUser, onClose, onDone, onCreateNew }: {
+export function ClassQuizPicker({ classId, className, currentUser, onClose, onDone, onCreateNew, initialQuizId }: {
   classId: string; className: string; currentUser: any; onClose: () => void; onDone: () => void; onCreateNew?: () => void;
+  initialQuizId?: string | null; // đề vừa tạo từ lớp: mở thẳng bước đặt giờ và giao
 }) {
   const { addNotification } = useNotifications();
   const [tab, setTab] = useState<'library' | 'shared' | 'mine'>('mine');
@@ -51,6 +52,7 @@ export function ClassQuizPicker({ classId, className, currentUser, onClose, onDo
     setEduAuthContext(currentUser.id, currentUser.role === 'admin');
     Promise.all([getQuizzes().catch(() => []), getSharedQuizzes().catch(() => []), getCollabQuizzes().then(r => r.quizzes).catch(() => [])])
       .then(([a, b, c]) => { setMine(a); setLib(b); setShared(c); if (!a.length) setTab(b.length ? 'library' : c.length ? 'shared' : 'mine'); });
+    if (initialQuizId) getQuizById(initialQuizId).then(x => { if (x) choose(x); }).catch(() => {});
     getGradeColumns(classId).then(cs => {
       setCols(cs);
       setNewCol('QUIZZ ' + String(cs.filter(c => /^QUIZZ /i.test(c.name)).length + 1).padStart(2, '0'));
@@ -74,6 +76,7 @@ export function ClassQuizPicker({ classId, className, currentUser, onClose, onDo
 
   const confirm = async () => {
     if (!pick) return;
+    if (count === 0) { addNotification('Đề chưa có câu hỏi nào, thêm câu hỏi vào đề trước khi giao.', 'warning'); return; }
     if (closeAt && openAt && new Date(closeAt) <= new Date(openAt)) { addNotification('Giờ đóng phải sau giờ mở.', 'warning'); return; }
     setBusy(true);
     try {
@@ -177,8 +180,9 @@ export function ClassQuizPicker({ classId, className, currentUser, onClose, onDo
 }
 
 // Danh sách Quizz đã giao cho lớp: tên đề, giờ mở, giờ đóng, chép link, xem kết quả, bỏ giao.
-export function ClassQuizList({ classId, reloadKey, canAssign, onOpenQuiz }: {
+export function ClassQuizList({ classId, reloadKey, canAssign, onOpenQuiz, onAssign, onCreate }: {
   classId: string; reloadKey: number; canAssign: boolean; onOpenQuiz?: (quizId: string) => void;
+  onAssign?: () => void; onCreate?: () => void; // có thì hiện thanh thao tác và ô trống (thẻ Quản lý Quizz trên máy tính)
 }) {
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
@@ -187,7 +191,8 @@ export function ClassQuizList({ classId, reloadKey, canAssign, onOpenQuiz }: {
   const [menu, setMenu] = useState<Quiz | null>(null);
   const load = () => getClassQuizzes(classId).then(setRows).catch(() => setRows([]));
   useEffect(() => { load(); }, [classId, reloadKey]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!rows || !rows.length) return null;
+  const manage = !phone && !!(onAssign || onCreate);
+  if (!manage && (!rows || !rows.length)) return null;
   const state = (x: Quiz) => {
     const now = Date.now();
     if (x.status !== 'published') return { t: 'Bản nháp', c: 'text-slate-500' };
@@ -221,9 +226,32 @@ export function ClassQuizList({ classId, reloadKey, canAssign, onOpenQuiz }: {
     </div>
   );
 
+  const bar = manage && (
+    <div className="mb-4 flex flex-wrap items-center gap-3">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-bold text-slate-800">Quizz của lớp{rows ? ` (${rows.length})` : ''}</p>
+        <p className="text-xs text-slate-500">Mỗi đề giao riêng cho lớp này, có giờ mở, giờ đóng và cột điểm riêng</p>
+      </div>
+      {canAssign && onAssign && <button type="button" onClick={onAssign} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:border-brand hover:text-brand"><Link2 className="h-4 w-4" /> Gắn Quizz có sẵn</button>}
+      {canAssign && onCreate && <button type="button" onClick={onCreate} className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-brand/20 hover:bg-brand-hover"><Plus className="h-4 w-4" /> Tạo Quizz mới</button>}
+    </div>
+  );
+  if (manage && (!rows || !rows.length)) return (
+    <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm animate-fadeIn">
+      {bar}
+      <div className="py-14 text-center">
+        {!rows ? <Loader2 className="mx-auto h-6 w-6 animate-spin text-slate-300" /> : <>
+          <ListChecks className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Lớp chưa có Quizz nào</p>
+          {canAssign && <p className="mt-2 text-xs text-slate-400">Tạo đề mới hoặc gắn đề có sẵn trong Thư viện, Được chia sẻ, Của tôi</p>}
+        </>}
+      </div>
+    </div>
+  );
+  if (!rows) return null;
   return (
-    <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
-      <p className="mb-3 text-sm font-bold text-slate-800">Quizz đã giao cho lớp ({rows.length})</p>
+    <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm animate-fadeIn">
+      {bar || <p className="mb-3 text-sm font-bold text-slate-800">Quizz đã giao cho lớp ({rows.length})</p>}
       <div className="divide-y divide-slate-100">
         {rows.map(({ quiz: x }) => { const s = state(x); return (
           <div key={x.id} className="flex flex-wrap items-center gap-3 py-3">

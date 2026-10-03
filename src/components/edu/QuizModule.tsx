@@ -32,7 +32,7 @@ import { exportExamToPdf, ExamHeader } from '../../lib/quizPdf';
 import { FileDown } from 'lucide-react';
 import LibraryHero from '../ui/LibraryHero';
 
-interface QuizModuleProps { currentUser: UserAccount; standaloneBank?: boolean; onExit?: () => void }
+interface QuizModuleProps { currentUser: UserAccount; standaloneBank?: boolean; onExit?: () => void; fromClass?: boolean }
 type View = 'list' | 'editor' | 'bank' | 'assign' | 'detail';
 
 const emptyOptions = (): QuizOption[] => [
@@ -42,7 +42,13 @@ const emptyOptions = (): QuizOption[] => [
   { content: '', is_correct: false, order_index: 3 },
 ];
 
-export default function QuizModule({ currentUser, standaloneBank, onExit }: QuizModuleProps) {
+export default function QuizModule({ currentUser, standaloneBank, onExit, fromClass }: QuizModuleProps) {
+  // Mở từ trong một lớp: đề vừa tạo hoặc bấm Giao thì quay lại lớp và mở bảng giao cho đúng lớp đó.
+  const newFromClass = React.useRef(false);
+  const backToClass = (quizId?: string) => {
+    if (quizId) { try { sessionStorage.setItem('quiz_class_pick', quizId); } catch { /* bỏ qua */ } }
+    onExit?.();
+  };
   const { addNotification } = useNotifications();
   const { confirm } = useConfirmation();
 
@@ -138,7 +144,7 @@ export default function QuizModule({ currentUser, standaloneBank, onExit }: Quiz
       setActiveQuiz(q); setView('editor');
     } catch (e: any) { addNotification('Không tạo được đề: ' + e.message, 'error'); }
   };
-  useEffect(() => { if (takeCreateIntent('edu_exam')) openNewQuiz(); /* eslint-disable-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => { if (takeCreateIntent('edu_exam')) { newFromClass.current = !!fromClass; openNewQuiz(); } /* eslint-disable-line react-hooks/exhaustive-deps */ }, []);
 
   const removeQuiz = (q: Quiz, onDone?: () => void) => {
     confirm('Xóa đề Quizz', `Xóa đề "${q.title}"? Đề cùng kết quả làm bài sẽ nằm ở mục Đã xoá trong trang Cá nhân 30 ngày, khôi phục được.`, async () => {
@@ -268,16 +274,16 @@ export default function QuizModule({ currentUser, standaloneBank, onExit }: Quiz
     return <QuizDetail quiz={activeQuiz} subjects={subjects} currentUser={currentUser}
       onQuizChange={setActiveQuiz}
       onEdit={() => setView('editor')}
-      onAssign={() => setView('assign')}
-      onDelete={() => { removeQuiz(activeQuiz, () => setView('list')); }}
-      onBack={() => setView('list')} />;
+      onAssign={() => (fromClass ? backToClass(activeQuiz.id) : setView('assign'))}
+      onDelete={() => { removeQuiz(activeQuiz, () => (fromClass ? onExit?.() : setView('list'))); }}
+      onBack={() => (fromClass ? onExit?.() : setView('list'))} />;
   }
 
   if (view === 'editor' && activeQuiz) {
     return <QuizEditor quiz={activeQuiz} subjects={subjects} currentUser={currentUser}
       onQuizChange={setActiveQuiz}
       onOpenBankSelect={() => { setBankSelectMode(true); setView('bank'); }}
-      onBack={() => { setView('detail'); }} />;
+      onBack={() => { if (newFromClass.current) { newFromClass.current = false; backToClass(activeQuiz.id); } else setView('detail'); }} />;
   }
 
   if (view === 'assign' && activeQuiz) {
