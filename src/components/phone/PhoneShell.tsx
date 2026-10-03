@@ -32,6 +32,28 @@ interface PhoneApi {
 }
 const Ctx = createContext<PhoneApi | null>(null);
 export const usePhone = () => useContext(Ctx)!;
+// Dùng trong các chức năng: có giá trị khi đang ở giao diện điện thoại, ngoài ra là null.
+export const usePhoneMaybe = () => useContext(Ctx);
+
+// Lưới nút biểu tượng cho các chức năng trên điện thoại (thay dãy nút chữ dài), giống thẻ nhóm ở Tất cả chức năng.
+export interface PhoneAction { key: string; label: string; icon: any; onClick: () => void; laptop?: boolean; primary?: boolean }
+export function PhoneActionGrid({ title, items }: { title?: string; items: PhoneAction[] }) {
+  if (!items.length) return null;
+  return (
+    <div className="ph-box" style={{ margin: 0 }}>
+      {title && <h4>{title}</h4>}
+      <div className="ph-apps">
+        {items.map(a => { const I = a.icon; return (
+          <button key={a.key} type="button" className={`ph-app ${a.laptop ? 'dim' : ''}`} onClick={a.onClick}>
+            {a.laptop && <span className="lap"><Monitor /></span>}
+            <span className="ph-tile" style={a.primary ? { background: 'var(--ph-brand)', color: '#fff', borderColor: 'transparent' } : undefined}><I /></span>
+            <span>{a.label}</span>
+          </button>
+        ); })}
+      </div>
+    </div>
+  );
+}
 
 // Tên ngắn cho ô chức năng trên điện thoại (admin đã đổi tên thì giữ tên admin đặt).
 const SHORT_LABEL: Record<string, string> = {

@@ -28,6 +28,7 @@ import { getClasses, getSchools, getSharedEdu, deleteSchool, deleteClass, saveSc
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import { eduCan } from '../../lib/eduPermissions';
+import { usePhoneMaybe, PhoneActionGrid } from '../phone/PhoneShell';
 import ShareDialog from '../ui/ShareDialog';
 import type { CollabType } from '../../lib/collab';
 import { collaboratorsByResource } from '../../lib/collab';
@@ -54,6 +55,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
   const [classes, setClasses] = useState<(EduClass & { edu_schools: { name: string } })[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const phone = usePhoneMaybe();
   // Mục của mình (không có access) hoặc mục người khác chia sẻ mà mình là chủ.
   const mine = (x: { access?: EduSchool['access'] }) => !x.access || x.access.owner;
   const [classCollabs, setClassCollabs] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
@@ -287,7 +289,18 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
             />
           </div>
           
-          {canCreate && (
+          {phone && (
+            <div className="w-full">
+              <PhoneActionGrid items={[
+                ...(onImport && canImportEdu ? [{ key: 'import', label: 'Import tạo lớp', icon: Upload, onClick: onImport, primary: true }] : []),
+                ...(canCreate ? [{ key: 'school', label: 'Thêm trường', icon: Plus, onClick: () => { setIsCreatingSchool(true); setNewForm({ name: '', description: '' }); } }] : []),
+                ...(onOpenBank && canUseModule(currentUser, 'edu_bank') ? [{ key: 'bank', label: 'Ngân hàng bài tập', icon: BookMarked, onClick: onOpenBank }] : []),
+                ...(onOpenExams && canUseModule(currentUser, 'edu_exam') ? [{ key: 'exam', label: 'Kiểm tra', icon: FileCheck2, onClick: onOpenExams }] : []),
+                ...(onOpenGrades && canUseModule(currentUser, 'edu_grade') ? [{ key: 'grade', label: 'Nhập điểm', icon: ClipboardList, onClick: () => phone.open('edu_grade'), laptop: true }] : []),
+              ]} />
+            </div>
+          )}
+          {!phone && canCreate && (
             <button
               onClick={() => {
                 setIsCreatingSchool(true);
@@ -300,7 +313,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
             </button>
           )}
 
-          {onOpenBank && canUseModule(currentUser, 'edu_bank') && (
+          {!phone && onOpenBank && canUseModule(currentUser, 'edu_bank') && (
             <button
               onClick={onOpenBank}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider"
@@ -310,7 +323,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
             </button>
           )}
 
-          {onOpenGrades && canUseModule(currentUser, 'edu_grade') && (
+          {!phone && onOpenGrades && canUseModule(currentUser, 'edu_grade') && (
             <button
               onClick={onOpenGrades}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider"
@@ -320,7 +333,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
             </button>
           )}
 
-          {onOpenExams && canUseModule(currentUser, 'edu_exam') && (
+          {!phone && onOpenExams && canUseModule(currentUser, 'edu_exam') && (
             <button
               onClick={onOpenExams}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-50 transition-all uppercase tracking-wider"
@@ -330,7 +343,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
             </button>
           )}
 
-          {onImport && canImportEdu && (
+          {!phone && onImport && canImportEdu && (
             <button
               onClick={onImport}
               className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white px-6 py-3 rounded-2xl text-[11px] font-bold transition-all shadow-lg shadow-brand/20 uppercase tracking-wider"
@@ -453,7 +466,7 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
         <div className="space-y-12">
           {groupedBySchool.map(school => (
             <div key={school.id} className="space-y-6">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-brand-light text-brand rounded-lg flex items-center justify-center">
                     <School className="w-4 h-4" />
