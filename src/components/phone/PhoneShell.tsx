@@ -167,7 +167,12 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
     const before = m?.getAttribute('content') ?? null;
     if (!m) { m = document.createElement('meta'); m.setAttribute('name', 'theme-color'); document.head.appendChild(m); }
     m.setAttribute('content', c);
-    return () => { if (before === null) m?.remove(); else m?.setAttribute('content', before); };
+    // Safari trên iPhone chỉ đo lại màu vùng tai thỏ khi trang đổi nền hoặc cuộn: vào ứng dụng từ màn chào
+    // thì gán lại nền trang và nhích cuộn 1 điểm để thanh trạng thái lấy đúng màu hệ thống, không giữ màu tối cũ.
+    const h = document.documentElement;
+    h.style.backgroundColor = c; document.body.style.backgroundColor = c;
+    const t = window.setTimeout(() => { try { window.scrollTo(0, 1); window.scrollTo(0, 0); } catch { /* bỏ qua */ } }, 60);
+    return () => { window.clearTimeout(t); h.style.backgroundColor = ''; document.body.style.backgroundColor = ''; if (before === null) m?.remove(); else m?.setAttribute('content', before); };
   }, [settings]);
 
   const go = (id: string, sub?: Record<string, string>) => {

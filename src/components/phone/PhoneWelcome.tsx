@@ -186,7 +186,8 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
   };
 
   const eyeBtn = <button type="button" className="eye" onClick={() => setShow(v => !v)} aria-label={show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}>{show ? Ic.eyeOff : Ic.eye}</button>;
-  const style = { '--pw-c': color, '--pw-b': shadeHex(color, 18) } as React.CSSProperties;
+  // Nền khung trùng màu phần trên của ảnh nền: Safari trên iPhone lấy màu nền này tô vùng tai thỏ.
+  const style = { '--pw-c': color, '--pw-b': shadeHex(color, 18), backgroundColor: topColor } as React.CSSProperties;
 
   return (
     <div className={`pw ${preview ? 'pv' : ''}`} style={style}>
