@@ -6,7 +6,7 @@ import {
 import { PortfolioCourse } from '../portfolioTypes';
 import { toggleFavCourse } from '../../lib/personalize';
 import { PhoneSeg, PhoneChips, PhoneChip, PhoneEmpty } from '../phone/PhoneKit';
-import { Ctx, Slide, FlatLesson, Cover, Instructor, Chapters, LEVEL, money, priceOf, flatLessons, tone } from './PhoneCourses';
+import { Ctx, Slide, FlatLesson, Cover, Instructor, InstructorName, Chapters, LEVEL, money, priceOf, flatLessons, tone } from './PhoneCourses';
 import { PROMO_TONES } from './CoursePromoSettings';
 import './desktopCourses.css';
 
@@ -126,7 +126,7 @@ function DeskCard({ c, ctx }: { c: PortfolioCourse; ctx: Ctx }) {
       <span className="bd">
         <span className="cat">{c.category || 'Khoá học'}</span>
         <b>{c.title}</b>
-        <span className="ins">{c.creatorName || c.instructor}</span>
+        <span className="ins"><InstructorName c={c} /></span>
         <span className="mt"><span><List />{n} bài</span>{c.duration && <span><Clock />{c.duration}</span>}<span><Users />{c.studentsCount || 0}</span></span>
         <span className="ft">
           {pr === 100 ? <span className="ok"><CheckCircle2 />Đã học xong</span>

@@ -34,7 +34,7 @@ const createEmptyProject = (sortOrder: number): PortfolioProject => ({
 });
 
 const createEmptyCourse = (): PortfolioCourse => ({
-  id: `course_${Date.now()}`, title: '', coverImage: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800', introVideo: '', briefDescription: '', detailedDescription: '', objectives: [], targetStudents: [], requirements: [], learningOutcomes: [], duration: '10 giờ', level: 'basic', format: 'Online', price: 0, salePrice: 0, hasCertificate: false, documents: [], instructor: 'Alex Nguyễn', category: 'Motion Graphics', status: 'draft', publishDate: new Date().toISOString().slice(0, 10), viewCount: 0, lessonsCount: 0, studentsCount: 0, chapters: [], students: []
+  id: `course_${Date.now()}`, title: '', coverImage: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800', introVideo: '', briefDescription: '', detailedDescription: '', objectives: [], targetStudents: [], requirements: [], learningOutcomes: [], duration: '10 giờ', level: 'basic', format: 'Online', price: 0, salePrice: 0, hasCertificate: false, documents: [], instructor: '', category: 'Motion Graphics', status: 'draft', publishDate: new Date().toISOString().slice(0, 10), viewCount: 0, lessonsCount: 0, studentsCount: 0, chapters: [], students: []
 } as PortfolioCourse);
 
 export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createOnMount = false, showSubTabs = true }: { initialSubTab?: 'projects' | 'courses'; createOnMount?: boolean; showSubTabs?: boolean }) {

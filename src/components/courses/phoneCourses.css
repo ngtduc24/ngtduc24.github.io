@@ -307,3 +307,4 @@
 .cx-ltab .pk-ftabs .ft:not(.on) span { display: none; }
 .cx-ltab .pk-ftabs .ft.on { flex: 2.2 1 0; }
 .cx-panel .cx-pad > .cx-box:first-child { padding-top: 6px; }
+.cx-row .cx-ins2 { font-size: 11.5px; color: var(--ph-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

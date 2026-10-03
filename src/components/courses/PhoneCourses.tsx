@@ -308,6 +308,7 @@ function CourseRow({ c, ctx }: { c: PortfolioCourse; ctx: Ctx }) {
         <span className="cat">{c.category || 'Khoá học'}</span>
         <b>{c.title}</b>
         <span className="cx-meta"><span><List />{flatLessons(c).length || c.lessonsCount || 0} bài</span>{c.duration && <span><Clock />{c.duration}</span>}</span>
+        <span className="cx-ins2"><InstructorName c={c} /></span>
         <span className="ft">
           {pr === 100 ? <span className="okb"><CheckCircle2 />Đã học xong</span>
             : pr !== null ? <span className="cx-pg"><span className="t"><span>Đã học</span><b>{pr}%</b></span><span className="bar"><i style={{ width: `${pr}%` }} /></span></span>
@@ -457,10 +458,20 @@ function CourseDetail({ c, ctx }: { c: PortfolioCourse; ctx: Ctx }) {
 }
 
 // Giảng viên: tên và ảnh theo tài khoản tạo khoá (khoá cũ chưa ghi người tạo thì lấy chủ trang), không có thì dùng tên nhập tay.
+// Tên giảng viên theo tài khoản tạo khoá (dùng cho thẻ khoá học ở danh sách).
+export function useInstructorName(c: PortfolioCourse) {
+  const uid = c.creatorId || (c as any).ownerId || LEGACY_OWNER;
+  const typed = c.instructor === 'Alex Nguyễn' ? '' : c.instructor; // tên mẫu cũ của khung soạn, không phải giảng viên thật
+  const p = usePerson(uid, c.creatorName || typed);
+  return (p?.name && p.name !== 'Người dùng' ? p.name : '') || c.creatorName || typed || '';
+}
+export function InstructorName({ c }: { c: PortfolioCourse }) { return <>{useInstructorName(c)}</>; }
+
 export function Instructor({ c }: { c: PortfolioCourse }) {
   const uid = c.creatorId || (c as any).ownerId || LEGACY_OWNER;
-  const p = usePerson(uid, c.creatorName || c.instructor);
-  const name = (p?.name && p.name !== 'Người dùng' ? p.name : '') || c.creatorName || c.instructor;
+  const typed = c.instructor === 'Alex Nguyễn' ? '' : c.instructor;
+  const p = usePerson(uid, c.creatorName || typed);
+  const name = (p?.name && p.name !== 'Người dùng' ? p.name : '') || c.creatorName || typed;
   if (!name) return null;
   return (
     <div className="cx-ins">
