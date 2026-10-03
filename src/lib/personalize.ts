@@ -20,6 +20,9 @@ export interface UsageData {
   autoSort: boolean;                    // tự sắp xếp hàng phím tắt theo thói quen
   pins: Record<string, number>;         // chức năng ghim cố định ở vị trí thứ n trên hàng phím tắt
   order?: string[];                     // thứ tự lần trước, dùng để giữ ổn định
+  fpins?: string[];                     // thẻ Tính năng nổi bật người dùng ghim (theo thứ tự)
+  fdis?: Record<string, number>;        // thẻ người dùng bỏ đi, không gợi ý lại trong 30 ngày
+  shown?: Record<string, { n: number; d: number }>; // số ngày đã gợi ý mà chưa mở, để luân phiên gợi ý
 }
 
 const DAY = 86400;
@@ -104,7 +107,10 @@ export function trackModule(uid: string | undefined | null, moduleId: string) {
   const d = load(uid);
   const last = [...d.ev].reverse().find(e => e[0] === moduleId);
   if (last && t - last[1] < DEDUPE_SEC) return;
-  update(uid, x => ({ ...x, ev: [...x.ev, [moduleId, t]] }));
+  update(uid, x => {
+    const shown = { ...(x.shown || {}) }; delete shown[moduleId];
+    return { ...x, ev: [...x.ev, [moduleId, t]], shown };
+  });
 }
 
 let currentUid = '';
@@ -219,3 +225,95 @@ export function useScores(data: UsageData) {
   // Tính lại khi nhật ký thay đổi, còn trong lúc đang xem trang thì giữ nguyên
   return useMemo(() => scoreModules(data.ev), [data.ev.length, data.ev[data.ev.length - 1]?.[1]]);
 }
+
+// ===== Tính năng nổi bật =====
+// Hàng phím tắt đã lo các chức năng dùng nhiều nhất, nên Tính năng nổi bật bổ sung chứ không lặp lại:
+// 1. Ghim: thẻ người dùng tự thêm hoặc kéo vào vị trí, luôn đứng đầu.
+// 2. Khám phá: chức năng chưa từng mở. Điểm = 0,2 + mức yêu thích nhóm chức năng (tỉ lệ điểm thói quen của
+//    các chức năng cùng nhóm) + 0,5 nếu là chức năng mới. Gợi ý nhiều ngày mà không mở thì điểm giảm
+//    còn 70% mỗi ngày để nhường chỗ chức năng khác.
+// 3. Hay dùng: điểm thói quen cao nhưng không nằm trên hàng phím tắt (vì hàng chỉ có 12 ô hoặc đã ẩn).
+// Chức năng đã có trên hàng phím tắt không lặp lại ở đây, trừ khi không đủ thẻ.
+// 4. Quay lại: từng mở từ 3 lần nhưng hơn 14 ngày nay chưa mở.
+// Bốn nhóm được xếp xen kẽ để vừa tiện vừa giúp biết thêm chức năng. Thẻ bị bỏ thì 30 ngày không gợi ý lại.
+const NEW_MODULES: Record<string, string> = { automatic: '2026-10-03' };
+const isNewModule = (id: string) => { const d = NEW_MODULES[id]; return !!d && Date.now() - new Date(d).getTime() < 60 * DAY * 1000; };
+
+export interface FeaturedPick { id: string; reason: string; kind: 'pin' | 'discover' | 'frequent' | 'return' }
+
+export function featuredPicks(o: {
+  candidates: Array<{ id: string; group?: string; label: string }>;
+  rowIds: string[];
+  scores: Record<string, ModuleScore>;
+  data: UsageData;
+  n?: number;
+}): FeaturedPick[] {
+  const n = o.n ?? 10;
+  const now = nowSec();
+  const ids = new Set(o.candidates.map(c => c.id));
+  const byId = new Map(o.candidates.map(c => [c.id, c]));
+  const dis = o.data.fdis || {};
+  const dismissed = (id: string) => !!dis[id] && now - dis[id] < 30 * DAY;
+  const count: Record<string, number> = {}, last: Record<string, number> = {};
+  for (const [m, t] of o.data.ev) { count[m] = (count[m] || 0) + 1; last[m] = Math.max(last[m] || 0, t); }
+  const habit = (id: string) => o.scores[id]?.habit || 0;
+  // Mức yêu thích theo nhóm chức năng
+  const groupHabit: Record<string, number> = {}; let totalHabit = 0;
+  const topInGroup: Record<string, { id: string; h: number }> = {};
+  for (const c of o.candidates) {
+    const h = habit(c.id); if (!h) continue;
+    const g = c.group || ''; groupHabit[g] = (groupHabit[g] || 0) + h; totalHabit += h;
+    if (!topInGroup[g] || topInGroup[g].h < h) topInGroup[g] = { id: c.id, h };
+  }
+  const pins = (o.data.fpins || []).filter(id => ids.has(id));
+  const taken = new Set(pins);
+  const row = new Set(o.rowIds);
+
+  const discover = o.candidates.filter(c => !count[c.id] && !row.has(c.id) && !taken.has(c.id) && !dismissed(c.id)).map(c => {
+    const aff = totalHabit ? (groupHabit[c.group || ''] || 0) / totalHabit : 0;
+    const fresh = isNewModule(c.id);
+    const fatigue = Math.pow(0.7, o.data.shown?.[c.id]?.n || 0);
+    const top = topInGroup[c.group || ''];
+    const reason = fresh ? 'Chức năng mới' : top ? `Gần với ${byId.get(top.id)?.label || 'chức năng'} bạn hay dùng` : 'Bạn chưa thử';
+    return { id: c.id, s: (0.2 + aff + (fresh ? 0.5 : 0)) * fatigue, reason };
+  }).sort((a, b) => b.s - a.s);
+  const frequent = o.candidates.filter(c => !row.has(c.id) && habit(c.id) >= 0.5 && !taken.has(c.id) && !dismissed(c.id))
+    .map(c => ({ id: c.id, s: o.scores[c.id]?.score || 0, reason: 'Bạn hay dùng' })).sort((a, b) => b.s - a.s);
+  const back = o.candidates.filter(c => !row.has(c.id) && (count[c.id] || 0) >= 3 && now - (last[c.id] || 0) > 14 * DAY && !taken.has(c.id) && !dismissed(c.id))
+    .map(c => ({ id: c.id, s: count[c.id], reason: `Lâu chưa mở, từng dùng ${count[c.id]} lần` })).sort((a, b) => b.s - a.s);
+
+  const out: FeaturedPick[] = pins.map(id => ({ id, reason: 'Bạn đã ghim', kind: 'pin' as const }));
+  const queues: Array<[FeaturedPick['kind'], Array<{ id: string; reason: string }>]> = [['discover', discover], ['frequent', frequent], ['return', back]];
+  let progressed = true;
+  while (out.length < n && progressed) {
+    progressed = false;
+    for (const [kind, q] of queues) {
+      while (q.length && taken.has(q[0].id)) q.shift();
+      const it = q.shift();
+      if (!it || out.length >= n) continue;
+      taken.add(it.id); out.push({ id: it.id, reason: it.reason, kind }); progressed = true;
+    }
+  }
+  // Còn thiếu thì lấy thêm theo điểm thói quen rồi theo thứ tự mặc định
+  for (const c of [...o.candidates].sort((a, b) => Number(row.has(a.id)) - Number(row.has(b.id)) || habit(b.id) - habit(a.id))) {
+    if (out.length >= n) break;
+    if (!taken.has(c.id) && !dismissed(c.id)) { taken.add(c.id); out.push({ id: c.id, reason: habit(c.id) ? 'Bạn hay dùng' : 'Bạn chưa thử', kind: habit(c.id) ? 'frequent' : 'discover' }); }
+  }
+  return out;
+}
+
+// Ghi nhận các thẻ khám phá đã gợi ý hôm nay (mỗi thẻ tính 1 lần mỗi ngày)
+export function noteShown(uid: string, ids: string[]) {
+  const d = load(uid);
+  const today = Math.floor(nowSec() / DAY);
+  const need = ids.filter(id => (d.shown?.[id]?.d ?? -1) !== today);
+  if (!need.length) return;
+  update(uid, x => {
+    const shown = { ...(x.shown || {}) };
+    for (const id of need) shown[id] = { n: (shown[id]?.n || 0) + 1, d: today };
+    return { ...x, shown };
+  });
+}
+export function setFeaturedPins(uid: string, pins: string[]) { update(uid, x => ({ ...x, fpins: pins })); }
+export function dismissFeatured(uid: string, id: string) { update(uid, x => ({ ...x, fpins: (x.fpins || []).filter(p => p !== id), fdis: { ...(x.fdis || {}), [id]: nowSec() } })); }
+export function undismissFeatured(uid: string, id: string) { update(uid, x => { const f = { ...(x.fdis || {}) }; delete f[id]; return { ...x, fdis: f }; }); }

@@ -15,7 +15,8 @@ import {
 import { isModuleHidden, resolveModuleMeta } from '../lib/modules';
 import { UserAccount, AppSettings } from '../types';
 import { useNotifications } from './NotificationContext';
-import { useUsage, useScores, personalOrder, rememberOrder, setPins, setAutoSort, forgetDoc, MIN_EVENTS, DocVisit } from '../lib/personalize';
+import { useUsage, useScores, personalOrder, rememberOrder, setPins, setAutoSort, forgetDoc, MIN_EVENTS, DocVisit, featuredPicks, noteShown, setFeaturedPins, dismissFeatured, undismissFeatured } from '../lib/personalize';
+import { MODULE_REGISTRY } from '../lib/modules';
 import { writeSubRoute } from '../lib/seoConfig';
 import { Pin, PinOff, History } from 'lucide-react';
 
@@ -299,20 +300,40 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
   // Hàng phím tắt đầu trang chỉ hiện tối đa 12 nút. Khi tìm kiếm thì hiện đủ kết quả khớp.
   const rowIcons = q ? filteredIcons : filteredIcons.slice(0, 12);
   // Thẻ nổi bật: người dùng tự chọn (featuredIds), chưa chọn thì lấy 10 chức năng đầu.
-  const defaultFeatured = cardModules.slice(0, 10).map(m => m.id); // khi bật tự sắp xếp, cardModules đã theo thói quen
-  const currentFeatured = featuredIds ?? defaultFeatured;
+  const defaultFeatured = cardModules.slice(0, 10).map(m => m.id);
+  // Bật tự sắp xếp và đủ dữ liệu: Tính năng nổi bật chọn theo thuật toán (ghim, khám phá, hay dùng ngoài hàng
+  // phím tắt, quay lại), mỗi thẻ kèm lý do. Chưa đủ dữ liệu thì dùng danh sách người dùng tự chọn như cũ.
+  const rowKey = rowIcons.map(m => m.id).join('|');
+  const fKey = JSON.stringify([usage.fpins || [], usage.fdis || {}]);
+  const picks = React.useMemo(() => (personal ? featuredPicks({
+    candidates: cardModules.map(m => ({ id: m.id, label: m.label, group: MODULE_REGISTRY.find(r => r.id === m.id)?.group })),
+    rowIds: rowIcons.map(m => m.id), scores, data: usage,
+  }) : null),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [personal, rowKey, fKey, scores]);
+  useEffect(() => { if (picks && currentUser?.id) noteShown(currentUser.id, picks.filter(p => p.kind === 'discover').map(p => p.id)); }, [picks, currentUser?.id]);
+  const pickReason = new Map((picks || []).map(p => [p.id, p]));
+  const currentFeatured = picks ? picks.map(p => p.id) : (featuredIds ?? defaultFeatured);
   const featuredCards = currentFeatured.map(id => cardModules.find(m => m.id === id)).filter(Boolean) as typeof cardModules;
   const filteredCards = q ? cardModules.filter(m => m.label.toLowerCase().includes(q)) : featuredCards;
-  const addFeatured = (id: string) => { if (!currentFeatured.includes(id)) persistFeatured([...currentFeatured, id]); };
-  const removeFeatured = (id: string) => persistFeatured(currentFeatured.filter(x => x !== id));
+  const addFeatured = (id: string) => {
+    if (picks && currentUser?.id) { undismissFeatured(currentUser.id, id); setFeaturedPins(currentUser.id, [...(usage.fpins || []).filter(x => x !== id), id]); return; }
+    if (!currentFeatured.includes(id)) persistFeatured([...currentFeatured, id]);
+  };
+  const removeFeatured = (id: string) => {
+    if (picks && currentUser?.id) { dismissFeatured(currentUser.id, id); return; }
+    persistFeatured(currentFeatured.filter(x => x !== id));
+  };
   const toggleFeatured = (id: string) => { if (currentFeatured.includes(id)) removeFeatured(id); else addFeatured(id); };
   // Đổi vị trí 2 thẻ nổi bật, chỉ ảnh hưởng danh sách thẻ, không đụng hàng phím tắt.
+  // Đang dùng thuật toán thì các thẻ từ đầu tới vị trí vừa thả được ghim theo đúng thứ tự đó.
   const reorderFeatured = (sourceId: string, targetId: string) => {
     if (!sourceId || sourceId === targetId) return;
     const ids = [...currentFeatured];
     const from = ids.indexOf(sourceId); const to = ids.indexOf(targetId);
     if (from === -1 || to === -1) return;
     ids.splice(to, 0, ids.splice(from, 1)[0]);
+    if (picks && currentUser?.id) { setFeaturedPins(currentUser.id, ids.slice(0, Math.max((usage.fpins || []).length, to + 1))); return; }
     persistFeatured(ids);
   };
 
@@ -640,7 +661,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
               <div className="w-9 h-9 rounded-xl bg-brand/10 text-brand grid place-items-center"><LayoutGrid className="w-5 h-5" /></div>
               <div>
                 <h2 className="text-lg font-black text-slate-900 font-display">Tính năng nổi bật</h2>
-                <p className="text-[11px] text-slate-400 font-medium">Truy cập nhanh các chức năng thường dùng</p>
+                <p className="text-[11px] text-slate-400 font-medium">{picks ? 'Chọn theo thói quen của bạn: chức năng nên thử, hay dùng nhưng chưa có trên hàng phím tắt, lâu chưa mở' : 'Truy cập nhanh các chức năng thường dùng'}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -648,7 +669,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
               <button onClick={() => onSwitchTab('all_features')} className="text-xs font-bold text-brand hover:underline">Xem tất cả</button>
             </div>
           </div>
-          {cardSortMode && <p className="text-[11px] font-semibold text-brand">Đang chỉnh sửa. Kéo thả để đổi vị trí, bấm dấu trừ để bỏ thẻ, bấm ô dấu cộng để thêm chức năng khác, bấm Xong khi hoàn tất.</p>}
+          {cardSortMode && <p className="text-[11px] font-semibold text-brand">{picks ? 'Đang chỉnh sửa. Kéo thả để ghim thẻ ở vị trí đó, bấm dấu trừ để không gợi ý thẻ này trong 30 ngày, bấm ô dấu cộng để ghim thêm chức năng, bấm Xong khi hoàn tất.' : 'Đang chỉnh sửa. Kéo thả để đổi vị trí, bấm dấu trừ để bỏ thẻ, bấm ô dấu cộng để thêm chức năng khác, bấm Xong khi hoàn tất.'}</p>}
           <div ref={cardsRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {filteredCards.map(m => {
               const Icon = m.icon; const c = COLORS[m.color];
@@ -680,6 +701,7 @@ export default function DashboardOverview({ onSwitchTab, settings, users, curren
                   <div className="min-w-0 flex-1 pointer-events-none">
                     <h3 className="text-[13px] font-black text-slate-800 leading-tight group-hover:text-brand transition-colors pr-6">{m.label}</h3>
                     <p className="text-[10.5px] text-slate-400 font-medium leading-snug mt-1 line-clamp-2">{m.desc}</p>
+                    {pickReason.get(m.id) && <p className={`mt-1.5 line-clamp-2 text-[10.5px] font-semibold leading-snug ${pickReason.get(m.id)!.kind === 'discover' ? 'text-amber-600' : 'text-brand'}`}>{pickReason.get(m.id)!.reason}</p>}
                   </div>
                   <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-brand group-hover:translate-x-0.5 transition-all shrink-0 pointer-events-none" />
                 </button>
