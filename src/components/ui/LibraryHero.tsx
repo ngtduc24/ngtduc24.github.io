@@ -3,6 +3,9 @@ import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, Edit3, Loader2, Plus, RotateCcw, Search, Settings2, Trash2, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import CloudinaryUploadField from '../cms/CloudinaryUploadField';
+import { usePhoneMaybe } from '../phone/PhoneShell';
+import { PhoneExt, PhoneSearch, PhoneSeg, PhoneChips, PhoneChip, PhoneSheet, PhoneMenuSheet, PhoneMenuItem } from '../phone/PhoneKit';
+import { askText } from './Dialogs';
 
 // Nội dung đầu trang do quản trị chỉnh (tiêu đề, mô tả, ảnh nền), lưu chung trên máy chủ để mọi tài khoản đều thấy.
 export interface HeroConfig { title?: string; subtitle?: string; image?: string; position?: string }
@@ -40,6 +43,9 @@ interface LibraryHeroProps {
   // Khoá lưu nội dung đầu trang dùng chung (ví dụ 'assignment_bank', 'elearning') và quyền chỉnh (quản trị).
   configKey?: string;
   canEditBanner?: boolean;
+  // Chỉ dùng trên điện thoại: chip trạng thái (Đang soạn, Đã xuất bản...) và các thao tác phụ gom vào nút ba chấm.
+  phoneStatus?: { chips: Array<{ id: string; label: string }>; active: string; onChange: (id: string) => void };
+  phoneMenu?: PhoneMenuItem[];
 }
 
 export function HeroEditor({ cfg, defaults, onClose, onSave }: { cfg: HeroConfig; defaults: { title: string; subtitle?: string }; onClose: () => void; onSave: (c: HeroConfig) => Promise<boolean> }) {
@@ -102,6 +108,66 @@ export function useHeroConfig(configKey?: string): [HeroConfig, (c: HeroConfig) 
 }
 
 export default function LibraryHero(p: LibraryHeroProps) {
+  const phone = usePhoneMaybe();
+  if (phone) return <LibraryHeroPhone {...p} />;
+  return <LibraryHeroDesktop {...p} />;
+}
+
+// Điện thoại: nền màu nối liền thanh trên, ô tìm, nhóm Của tôi, Được chia sẻ, Thư viện, dải chip lọc cuộn ngang.
+const shortTab = (l: string) => (/của tôi/i.test(l) ? 'Của tôi' : /^được chia sẻ/i.test(l) ? 'Được chia sẻ' : l);
+const tabRank = (l: string) => (/của tôi/i.test(l) ? 0 : /chia sẻ/i.test(l) ? 1 : 2);
+function LibraryHeroPhone(p: LibraryHeroProps) {
+  const [subjOpen, setSubjOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const tabs = (p.tabs || []).slice().sort((a, b) => tabRank(a.label) - tabRank(b.label)).map(t => ({ id: t.id, label: shortTab(t.label) }));
+  const menu = (p.phoneMenu || []).filter(i => !i.hidden);
+  const subj = p.chips.find(c => c.id === p.activeChip && c.id);
+  const addSubject = async () => {
+    if (!p.onAddChip) return;
+    const v = await askText({ title: 'Thêm môn học', placeholder: 'Tên môn mới' } as any);
+    if (v && v.trim()) await p.onAddChip(v.trim());
+  };
+  return (
+    <>
+      <PhoneExt>
+        <PhoneSearch value={p.search} onChange={p.onSearch} placeholder={p.placeholder}
+          right={menu.length ? <button type="button" className="rb" aria-label="Thêm thao tác" onClick={() => setMenuOpen(true)}><MoreHorizontalIcon /></button> : undefined} />
+        {tabs.length > 1 && <PhoneSeg tabs={tabs} active={p.activeTab || ''} onTab={id => p.onTab?.(id)} />}
+      </PhoneExt>
+      {(p.phoneStatus || p.chips.length > 0 || p.onAddChip) && <PhoneChips>
+        {p.phoneStatus ? (
+          <>
+            {p.chips.length > 0 && <PhoneChip caret on={!!subj} onClick={() => setSubjOpen(true)}>{subj ? subj.label : 'Môn học'}</PhoneChip>}
+            {p.phoneStatus.chips.map(c => <PhoneChip key={c.id || 'all'} on={p.phoneStatus!.active === c.id} onClick={() => p.phoneStatus!.onChange(c.id)}>{c.label}</PhoneChip>)}
+          </>
+        ) : (
+          <>
+            {p.chips.map(c => <PhoneChip key={c.id || 'all'} on={p.activeChip === c.id} count={c.count} onClick={() => p.onChip(c.id)}>{c.label}</PhoneChip>)}
+            {p.onAddChip && <PhoneChip onClick={addSubject}>+ Môn mới</PhoneChip>}
+          </>
+        )}
+      </PhoneChips>}
+      {subjOpen && (
+        <PhoneSheet title="Lọc theo môn học" onClose={() => setSubjOpen(false)}
+          footer={p.onAddChip ? <button type="button" className="ph-btn ghost" onClick={() => { setSubjOpen(false); addSubject(); }}><Plus size={18} />Thêm môn học</button> : undefined}>
+          <div className="pk-pick">
+            {p.chips.map(c => (
+              <button key={c.id || 'all'} type="button" className={c.id === p.activeChip ? 'on' : ''} onClick={() => { p.onChip(c.id); setSubjOpen(false); }}>
+                <span>{c.label}</span>{typeof c.count === 'number' && <em>{c.count}</em>}
+              </button>
+            ))}
+          </div>
+        </PhoneSheet>
+      )}
+      {menuOpen && <PhoneMenuSheet title="Thao tác" items={menu} onClose={() => setMenuOpen(false)} />}
+    </>
+  );
+}
+function MoreHorizontalIcon() {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></svg>;
+}
+
+function LibraryHeroDesktop(p: LibraryHeroProps) {
   const [cfg, saveCfg] = useHeroConfig(p.configKey);
   const [editingHero, setEditingHero] = useState(false);
   const title = cfg.title || p.title;

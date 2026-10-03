@@ -76,6 +76,8 @@ import JournalTools from "./JournalTools";
 import JournalAIImport from "./JournalAIImport";
 import { useConfirmation } from './ConfirmationContext';
 import { useNotifications } from './NotificationContext';
+import { usePhoneMaybe } from './phone/PhoneShell';
+import PhoneJournals from './phone/PhoneJournals';
 
 interface ScientificJournalsProps {
   currentUser: UserAccount;
@@ -112,6 +114,7 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
   const hasImportPermission = isAdmin || !!currentUser?.canImportJournal;
   const hasManageCatsPermission = isAdmin || !!currentUser?.canManageJournalCats;
   const hasManageSettingsPermission = isAdmin || !!currentUser?.canManageJournalSettings;
+  const phone = usePhoneMaybe();
 
   const handleToggleJournalPermission = async (
     user: UserAccount, 
@@ -1461,6 +1464,25 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
   };
 
   // Helper checkbox state
+  const startManual = () => {
+    setActiveSubTab("manual");
+    if (!isEditing) {
+      setFormState({
+        name: "",
+        issn: "",
+        type: "Tạp chí",
+        publisher: "",
+        field: "",
+        score: "0 – 0,75",
+        establishedDate: "",
+        paperCount: 100,
+        rating: 3,
+        description: "",
+        coverImage: ""
+      });
+    }
+  };
+
   const handleSelectId = (id: string) => {
     setSelectedIds(prev => 
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
@@ -1565,7 +1587,7 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
       {/* Tiêu đề chức năng, giao diện trắng gọn đồng bộ với E-Learning */}
-      {isBannerVisible && (
+      {isBannerVisible && !phone && (
         <div className="flex flex-col gap-3 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand">
@@ -1639,7 +1661,7 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
       )}
 
       {/* Sub-Tabs Navigation */}
-      <div ref={tabContainerRef} className="flex border-b border-slate-200 overflow-x-auto scrollbar-none gap-2 bg-slate-50 p-1.5 rounded-2xl">
+      <div ref={tabContainerRef} style={phone && activeSubTab === "list" ? { display: 'none' } : undefined} className="flex border-b border-slate-200 overflow-x-auto scrollbar-none gap-2 bg-slate-50 p-1.5 rounded-2xl">
         <button
           onClick={() => { setActiveSubTab("list"); setIsEditing(false); }}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
@@ -1654,24 +1676,7 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
 
         {(hasCreatePermission || isEditing) && (
           <button
-            onClick={() => {
-              setActiveSubTab("manual");
-              if (!isEditing) {
-                setFormState({
-                  name: "",
-                  issn: "",
-                  type: "Tạp chí",
-                  publisher: "",
-                  field: "",
-                  score: "0 – 0,75",
-                  establishedDate: "",
-                  paperCount: 100,
-                  rating: 3,
-                  description: "",
-                  coverImage: ""
-                });
-              }
-            }}
+            onClick={startManual}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
               activeSubTab === "manual" 
                 ? "bg-white text-brand shadow-xs border border-slate-200/60" 
@@ -1797,7 +1802,27 @@ export default function ScientificJournals({ currentUser, users = [], onUpdateUs
       </div>
 
       {/* Render sub-tabs */}
-      {activeSubTab === "list" && (
+      {activeSubTab === "list" && phone && (
+        <PhoneJournals journals={filteredJournals} search={searchQuery} onSearch={setSearchQuery} defaultCover={settings.defaultCoverImage}
+          filters={[
+            { key: 'type', label: 'Phân loại', value: selectedType, onChange: setSelectedType, options: types.map(t => ({ id: t, label: t === 'all' ? 'Tất cả loại' : t })) },
+            { key: 'field', label: 'Ngành', value: selectedField, onChange: setSelectedField, options: fields.map(f => ({ id: f, label: f === 'all' ? 'Tất cả ngành' : f })) },
+            { key: 'score', label: 'Điểm', value: selectedScore, onChange: setSelectedScore, options: scoreFilters.map(x => ({ id: x, label: x === 'all' ? 'Tất cả điểm' : x })) },
+            { key: 'time', label: 'Thời gian nhập', value: selectedTime, onChange: setSelectedTime, options: [{ id: 'all', label: 'Tất cả thời gian' }, { id: 'today', label: 'Hôm nay' }, { id: '3days', label: '3 ngày gần đây' }, { id: '7days', label: '7 ngày gần đây' }, { id: '30days', label: '30 ngày gần đây' }, { id: 'thismonth', label: 'Tháng này' }, { id: 'thisyear', label: 'Năm nay' }] },
+          ]}
+          onOpen={j => setSelectedJournal(j)} canDelete={hasDeletePermission} selectedIds={selectedIds} setSelectedIds={setSelectedIds} onDeleteBulk={handleDeleteBulk}
+          onCreate={hasCreatePermission ? startManual : undefined}
+          menu={[
+            { key: 'excel', label: 'Nhập từ Excel', sub: 'Nên làm trên máy tính cho dễ đối chiếu', icon: Upload, hidden: !(hasImportPermission || hasCreatePermission), onClick: () => { setActiveSubTab("excel"); setIsEditing(false); } },
+            { key: 'pending', label: `Chờ duyệt (${pendingCount})`, icon: Clock, hidden: !(isAdmin || pendingCount > 0), onClick: () => { setActiveSubTab("pending"); setIsEditing(false); } },
+            { key: 'tools', label: 'Công cụ và AI', icon: Cpu, hidden: !(hasImportPermission || hasCreatePermission), onClick: () => { setActiveSubTab("tools"); setIsEditing(false); } },
+            { key: 'history', label: 'Lịch sử nhập', icon: History, hidden: !isAdmin, onClick: () => { setActiveSubTab("history"); setIsEditing(false); } },
+            { key: 'cats', label: 'Quản lý ngành và loại', icon: Layers, hidden: !hasManageCatsPermission, onClick: () => { setActiveSubTab("categories"); setIsEditing(false); } },
+            { key: 'trash', label: `Thùng rác (${deletedJournals.length})`, icon: Trash, hidden: !hasDeletePermission, onClick: () => { setActiveSubTab("trash"); setIsEditing(false); } },
+            { key: 'settings', label: 'Cài đặt', icon: Settings, hidden: !hasManageSettingsPermission, onClick: () => { setActiveSubTab("settings"); setIsEditing(false); } },
+          ]} />
+      )}
+      {activeSubTab === "list" && !phone && (
         <div className="space-y-4">
           {/* Filters card */}
           <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs space-y-4">

@@ -33,6 +33,8 @@ import MediaSourcePicker from '../MediaSourcePicker';
 import { fold, usePaging, Pager } from './ListPager';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
 import { AvatarStack, UserChip } from '../ui/People';
+import { usePhoneMaybe } from '../phone/PhoneShell';
+import { PhoneList, PhoneLibCard, PhoneFab, PhoneMenuSheet, PhoneEmpty, ago, useMoreOnScroll, CardTag } from '../phone/PhoneKit';
 
 interface Props { currentUser: UserAccount; onExit?: () => void; }
 type View = 'list' | 'editor' | 'assign' | 'progress' | 'trash';
@@ -131,6 +133,8 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
   const isAdmin = currentUser.role === 'admin';
   const mayPublic = isAdmin || !!currentUser.canElearningPublic;
   const mayAssign = isAdmin || !!currentUser.canElearningAssign;
+  const phone = usePhoneMaybe();
+  const [menuFor, setMenuFor] = useState<(ELLesson & { my_role?: CollabRole }) | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -156,6 +160,7 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
   }, [all]);
   const pg = usePaging(lessons.length, 'el_mine_size', 12, [search, subjectId, status]);
   const pageLessons = lessons.slice(pg.from, pg.to);
+  const shownN = useMoreOnScroll(lessons.length, 20, [search, subjectId, status, shareScope]);
   // Danh sách thay đổi (lọc, tải lại) thì bỏ các mục chọn không còn hiển thị
   useEffect(() => { setSelected(prev => { const ids = new Set(lessons.map(l => l.id)); const next = new Set([...prev].filter(id => ids.has(id))); return next.size === prev.size ? prev : next; }); }, [lessons]);
 
@@ -294,12 +299,27 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
           try { const saved = await saveSubject({ name }); hero.onSubjectAdded?.(saved); setSubjectId(saved.id); addNotification('Đã thêm môn học.', 'success'); }
           catch { addNotification('Lỗi thêm môn học.', 'error'); }
         }}
+        phoneStatus={{ chips: [{ id: '', label: 'Tất cả' }, { id: 'draft', label: 'Đang soạn' }, { id: 'published', label: 'Đã xuất bản' }, { id: 'public', label: 'Công khai' }], active: status, onChange: setStatus }}
+        phoneMenu={hero.onTrash ? [{ key: 'trash', label: 'Thùng rác', sub: 'Giáo trình đã xoá trong 30 ngày', icon: Trash2, onClick: hero.onTrash }] : []}
         actions={<>
           {hero.onTrash && <button onClick={hero.onTrash} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 hover:border-brand/30 hover:text-brand"><Trash2 className="h-4 w-4" /> Thùng rác</button>}
           <button onClick={() => setCreating(true)} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-brand px-4 text-sm font-semibold text-white shadow-lg shadow-brand/20 hover:bg-brand-hover"><Plus className="h-4 w-4" /> Tạo giáo trình mới</button>
         </>}
       />
 
+      {phone ? (
+        loading ? <div className="py-20 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" /> Đang tải...</div>
+        : lessons.length === 0 ? <PhoneEmpty icon={BookOpen} title={all.length ? 'Không tìm thấy giáo trình phù hợp' : shareScope === 'shared' ? 'Chưa ai chia sẻ giáo trình với bạn' : 'Chưa có giáo trình nào'} sub={!all.length && shareScope === 'mine' ? 'Bấm Giáo trình mới để bắt đầu.' : undefined} />
+        : <PhoneList>
+            {lessons.slice(0, shownN).map(l => (
+              <PhoneLibCard key={l.id} seed={l.subject_id || 'none'} kicker={subjName(l.subject_id)} icon={BookOpen}
+                cover={l.cover_url ? <span className="cv" style={{ backgroundImage: `url(${l.cover_url})` }} /> : undefined}
+                title={l.title} tags={lessonTags(l, currentUser.id)}
+                people={[{ id: l.owner_id, name: l.owner_name }, ...(collabMap[l.id] || [])]}
+                time={`Sửa ${ago(l.updated_at)}`} onClick={() => openLessonView(l.id)} menu={() => setMenuFor(l)} />
+            ))}
+          </PhoneList>
+      ) : <>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{lessons.length}</span> giáo trình</p>
         <div className="flex flex-wrap items-center gap-2">
@@ -406,6 +426,20 @@ function MyLessons({ subjects, currentUser, onEdit, onAssign, hero }: { subjects
         </div>
       )}
       {!loading && lessons.length > 0 && <Pager pg={pg} total={lessons.length} unit="giáo trình" sizes={[12, 24, 48, 96]} />}
+      </>}
+      {phone && shareScope === 'mine' && <PhoneFab label="Giáo trình mới" icon={Plus} onClick={() => setCreating(true)} />}
+      {menuFor && (() => { const l = menuFor; const mine = l.owner_id === currentUser.id; const r = l.my_role; return (
+        <PhoneMenuSheet title={l.title} sub={`${subjName(l.subject_id)} · ${l.sectionCount ?? 0} phần`} onClose={() => setMenuFor(null)} items={[
+          { key: 'view', label: 'Xem giáo trình', icon: Eye, onClick: () => openLessonView(l.id) },
+          { key: 'edit', label: 'Sửa', icon: Edit2, hidden: !(mine || r === 'edit' || r === 'manage'), onClick: () => onEdit(l.id) },
+          { key: 'assign', label: 'Giao cho lớp', icon: Send, hidden: !(mine && mayAssign), onClick: () => onAssign(l.id) },
+          { key: 'collab', label: mine || r === 'manage' ? 'Cộng tác, thêm người cùng sửa' : 'Người cộng tác', icon: Users, onClick: () => setSharing(l) },
+          { key: 'public', label: l.is_public ? 'Tắt công khai' : 'Công khai lên thư viện', icon: l.is_public ? Lock : Globe, hidden: !(mine && mayPublic), onClick: () => togglePublic(l) },
+          { key: 'link', label: 'Sao chép liên kết', icon: Link2, hidden: !mine, onClick: () => copyLink(l) },
+          { key: 'dup', label: 'Nhân bản', icon: Copy, hidden: !mine, onClick: () => duplicate(l) },
+          { key: 'del', label: 'Xoá', icon: Trash2, danger: true, hidden: !mine, onClick: () => remove(l) },
+        ]} />
+      ); })()}
 
       {sharing && <ShareDialog type="el_lesson" resourceId={sharing.id} resourceTitle={sharing.title} ownerId={sharing.owner_id || currentUser.id} ownerName={sharing.owner_name || undefined}
         currentUser={currentUser} canManage={sharing.owner_id === currentUser.id || (sharing as any).my_role === 'manage'} onClose={() => { setSharing(null); load(); }} />}
@@ -820,6 +854,9 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
   }, [all, search, subjects]);
   const pg = usePaging(lessons.length, 'el_pub_size', 12, [search, subjectId, sort]);
   const pageLessons = lessons.slice(pg.from, pg.to);
+  const phone = usePhoneMaybe();
+  const shownN = useMoreOnScroll(lessons.length, 20, [search, subjectId, sort]);
+  const [menuFor, setMenuFor] = useState<ELLesson | null>(null);
 
   return (
     <div className="space-y-4">
@@ -839,7 +876,22 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
         chips={[{ id: '', label: 'Tất cả', count: Object.values(counts).reduce((a, b) => a + b, 0) }, ...subjects.map(su => ({ id: su.id, label: su.name, count: counts[su.id] || 0 }))]}
         activeChip={subjectId}
         onChip={setSubjectId}
+        phoneStatus={{ chips: [{ id: 'new', label: 'Mới nhất' }, { id: 'views', label: 'Xem nhiều' }, { id: 'copies', label: 'Sao chép nhiều' }], active: sort, onChange: v => setSort(v as any) }}
       />
+      {phone ? (
+        loading ? <div className="py-20 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" /> Đang tải...</div>
+        : lessons.length === 0 ? <PhoneEmpty icon={BookOpen} title={search ? 'Không tìm thấy giáo trình phù hợp' : 'Chưa có giáo trình công khai nào'} />
+        : <PhoneList>
+            {lessons.slice(0, shownN).map(l => (
+              <PhoneLibCard key={l.id} seed={l.subject_id || 'none'} kicker={subjName(l.subject_id)} icon={BookOpen}
+                cover={l.cover_url ? <span className="cv" style={{ backgroundImage: `url(${l.cover_url})` }} /> : undefined}
+                title={l.title}
+                tags={[{ text: 'Công khai', tone: 'g' }, ...(l.sectionCount != null ? [{ text: `${l.sectionCount} phần` }] : []), { text: `${l.view_count || 0} lượt xem` }, ...(l.copy_count ? [{ text: `${l.copy_count} lượt sao chép` }] : [])]}
+                people={[{ id: l.owner_id, name: l.author_label || l.owner_name }]}
+                time={`Sửa ${ago(l.updated_at)}`} onClick={() => openLessonView(l.id)} menu={() => setMenuFor(l)} />
+            ))}
+          </PhoneList>
+      ) : (
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-slate-500"><span className="font-semibold text-slate-800">{lessons.length}</span> giáo trình công khai</p>
@@ -908,6 +960,14 @@ function PublicLibrary({ currentUser, onCopied, hero }: { subjects?: EduSubject[
           </>
         )}
       </div>
+      )}
+      {menuFor && (
+        <PhoneMenuSheet title={menuFor.title} sub={subjName(menuFor.subject_id)} onClose={() => setMenuFor(null)} items={[
+          { key: 'view', label: 'Xem giáo trình', icon: Eye, onClick: () => openLessonView(menuFor.id) },
+          { key: 'copy', label: 'Sao chép về kho của tôi', icon: Copy, hidden: !menuFor.allow_copy, onClick: () => copy(menuFor) },
+          { key: 'move', label: 'Chuyển sang môn chung', icon: FolderInput, hidden: !isTopAdmin, onClick: () => move(menuFor) },
+        ]} />
+      )}
     </div>
   );
 }
@@ -1109,6 +1169,18 @@ function TrashScreen({ onBack }: { onBack: () => void; }) {
 }
 
 // ============================ Thành phần dùng chung ============================
+// Nhãn trên thẻ giáo trình ở điện thoại: trạng thái, số phần, quyền khi được chia sẻ.
+function lessonTags(l: ELLesson & { my_role?: CollabRole }, me: string): CardTag[] {
+  const t: CardTag[] = [];
+  if (l.is_public) t.push({ text: 'Công khai', tone: 'g' });
+  else if (l.status === 'published') t.push({ text: 'Đã xuất bản', tone: 'b' });
+  else t.push({ text: 'Bản nháp', tone: 'a' });
+  t.push({ text: `${l.sectionCount ?? 0} phần` });
+  if (l.my_role && l.owner_id !== me) t.push({ text: `Chia sẻ · ${ROLE_LABELS[l.my_role].label}`, tone: 'p' });
+  if (l.copy_count) t.push({ text: `${l.copy_count} lượt sao chép` });
+  return t;
+}
+
 function StatusTag({ lesson }: { lesson: ELLesson }) {
   if (lesson.is_public) return <span className="shrink-0 rounded-md bg-brand-light px-2 py-0.5 text-[9px] font-bold text-brand">Công khai</span>;
   if (lesson.status === 'published') return <span className="shrink-0 rounded-md bg-blue-50 px-2 py-0.5 text-[9px] font-bold text-blue-600">Đã xuất bản</span>;

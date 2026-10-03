@@ -17,6 +17,8 @@ import { askText } from '../ui/Dialogs';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import type { UserAccount } from '../../types';
+import { usePhoneMaybe } from '../phone/PhoneShell';
+import { PhoneList, PhoneLibCard, PhoneFab, PhoneMenuSheet, PhoneEmpty, ago, useMoreOnScroll } from '../phone/PhoneKit';
 
 // Ứng dụng Bài giảng: danh sách bài giảng trình chiếu và trang thiết kế giống Google Slides, Canva.
 const ROLE_TEXT: Record<string, string> = { view: 'Xem', edit: 'Chỉnh sửa', manage: 'Quản lý' };
@@ -36,6 +38,9 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
   const [busy, setBusy] = useState(false);
   const [importing, setImporting] = useState(false);
   const [collabMap, setCollabMap] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
+  const phone = usePhoneMaybe();
+  const [menuFor, setMenuFor] = useState<DeckSummary | null>(null);
+  const [pf, setPf] = useState('');
 
   useEffect(() => { setEduAuthContext(currentUser.id, currentUser.role === 'admin'); }, [currentUser]);
 
@@ -106,9 +111,11 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
   const list = useMemo(() => {
     const src = scope === 'mine' ? (mine || []) : scope === 'shared' ? shared : library;
     const k = q.trim().toLowerCase();
-    return k ? src.filter(d => d.title.toLowerCase().includes(k)) : src;
-  }, [scope, mine, shared, library, q]);
+    const byPf = pf === 'lib' ? src.filter(d => d.inLibrary) : pf === 'private' ? src.filter(d => !d.inLibrary) : pf === 'week' ? src.filter(d => Date.now() - new Date(d.updatedAt).getTime() < 7 * 864e5) : src;
+    return k ? byPf.filter(d => d.title.toLowerCase().includes(k)) : byPf;
+  }, [scope, mine, shared, library, q, pf]);
 
+  const shown = useMoreOnScroll(list.length, 20, [scope, q, pf]);
   if (open) return <SlideEditor initial={open.deck} role={open.role} currentUser={currentUser} onExit={() => { setOpen(null); load(); }} />;
 
   const fmt = (iso: string) => { try { return new Date(iso).toLocaleDateString('vi-VN'); } catch { return ''; } };
@@ -123,9 +130,29 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
         search={q} onSearch={setQ} placeholder="Tìm theo tên bài giảng..."
         chips={[]} activeChip="" onChip={() => {}}
         configKey="slides" canEditBanner={currentUser.role === 'admin'}
+        phoneStatus={{ chips: [{ id: '', label: 'Tất cả' }, { id: 'week', label: 'Sửa tuần này' }, ...(scope === 'mine' ? [{ id: 'lib', label: 'Trong Thư viện' }, { id: 'private', label: 'Chưa vào Thư viện' }] : [])], active: pf, onChange: setPf }}
+        phoneMenu={[{ key: 'pptx', label: 'Tải lên PowerPoint', sub: 'Chuyển tệp .pptx thành bài giảng sửa được', icon: FileUp, onClick: () => setImporting(true) }]}
         actions={<><button onClick={() => setImporting(true)} className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm hover:border-brand hover:text-brand"><FileUp className="h-4 w-4" /> Tải lên PowerPoint</button><button onClick={create} disabled={busy} className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-sm hover:bg-brand-hover disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Tạo bài giảng mới</button></>}
       />
 
+      {phone ? (
+        mine === null ? <div className="flex items-center justify-center gap-2 py-20 text-sm text-slate-400"><Loader2 className="h-5 w-5 animate-spin" /> Đang tải...</div>
+        : list.length === 0 ? <PhoneEmpty icon={Presentation} title={scope === 'mine' ? 'Chưa có bài giảng nào' : scope === 'shared' ? 'Chưa ai chia sẻ bài giảng với bạn' : 'Thư viện chưa có bài giảng nào'} sub={scope === 'mine' ? 'Bấm Bài giảng mới để bắt đầu.' : undefined} />
+        : <PhoneList>
+            {list.slice(0, shown).map(d => (
+              <PhoneLibCard key={d.id} seed={d.ownerId + d.id} icon={Presentation}
+                kicker={scope === 'library' ? (d.ownerName || 'Thư viện') : scope === 'shared' ? `Chia sẻ · ${ROLE_TEXT[d.role || 'view'] || 'Xem'}` : 'Bài giảng của tôi'}
+                title={d.title}
+                tags={[
+                  ...(d.inLibrary ? [{ text: 'Thư viện', tone: 'g' as const }] : []),
+                  { text: `${d.count} trang` },
+                ]}
+                people={[{ id: d.ownerId, name: d.ownerName || (d.ownerId === currentUser.id ? currentUser.fullName : undefined) }, ...(collabMap[d.id] || [])]}
+                time={`Sửa ${ago(d.updatedAt)}`}
+                onClick={() => openDeck(d)} menu={() => setMenuFor(d)} />
+            ))}
+          </PhoneList>
+      ) : <>
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-600"><b className="text-slate-800">{list.length}</b> bài giảng</p>
         <ViewToggle mode={view} onChange={setView} gridIcon={<LayoutGrid className="h-4 w-4" />} listIcon={<ListIcon className="h-4 w-4" />} />
@@ -189,6 +216,19 @@ export default function SlidesModule({ currentUser }: { currentUser: UserAccount
             </tbody>
           </table>
         </div>
+      )}
+      </>}
+      {phone && !open && <PhoneFab label="Bài giảng mới" icon={Plus} busy={busy} onClick={create} />}
+      {menuFor && (
+        <PhoneMenuSheet title={menuFor.title} sub={`${menuFor.count} trang · sửa ${ago(menuFor.updatedAt)}`} onClose={() => setMenuFor(null)} items={[
+          { key: 'play', label: 'Trình chiếu', icon: Play, onClick: () => present(menuFor) },
+          { key: 'open', label: menuFor.role === 'view' || scope === 'library' ? 'Xem bài giảng' : 'Mở để sửa', icon: menuFor.role === 'view' || scope === 'library' ? Eye : Pencil, onClick: () => openDeck(menuFor) },
+          { key: 'rename', label: 'Đổi tên', icon: Pencil, hidden: !(menuFor.role === 'owner' && scope !== 'library'), onClick: () => rename(menuFor) },
+          { key: 'dup', label: scope === 'library' ? 'Sao chép về bài giảng của tôi' : 'Tạo bản sao', icon: Copy, onClick: () => dup(menuFor) },
+          { key: 'lib', label: menuFor.inLibrary ? 'Gỡ khỏi Thư viện' : 'Đưa vào Thư viện', icon: Library, hidden: !(menuFor.role === 'owner' && scope === 'mine'), onClick: () => toggleLib(menuFor) },
+          { key: 'collab', label: 'Cộng tác, chia sẻ', icon: Users, hidden: !(menuFor.role === 'owner' && scope !== 'library'), onClick: () => openDeck(menuFor) },
+          { key: 'del', label: 'Xoá', icon: Trash2, danger: true, hidden: !(menuFor.role === 'owner' && scope !== 'library'), onClick: () => remove(menuFor) },
+        ]} />
       )}
       {importing && (
         <PptxImportDialog title="Tải lên PowerPoint thành bài giảng" onClose={() => setImporting(false)} onResult={async r => {

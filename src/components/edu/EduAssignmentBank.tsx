@@ -5,10 +5,12 @@ import type { Editor } from '@tiptap/react';
 import RichTextEditor from '../cms/RichTextEditor';
 import LibraryHero, { HeroChip, ViewToggle } from '../ui/LibraryHero';
 import { AvatarStack } from '../ui/People';
+import { usePhoneMaybe } from '../phone/PhoneShell';
+import { PhoneList, PhoneLibCard, PhoneFab, PhoneMenuSheet, PhoneEmpty, ago, useMoreOnScroll, CardTag } from '../phone/PhoneKit';
 import ShareDialog from '../ui/ShareDialog';
 import { CollabRole, ROLE_LABELS, collaboratorsByResource } from '../../lib/collab';
 import {
-  BookMarked, Plus, Trash2, Edit3, X, Save, FileText, Search, LayoutGrid, List as ListIcon, Globe, Lock,
+  BookMarked, ClipboardList, Plus, Trash2, Edit3, X, Save, FileText, Search, LayoutGrid, List as ListIcon, Globe, Lock,
   Bold, Italic, List, ListOrdered, Heading1, Heading2, FileDown, Eye, ArrowLeft, Loader2, FolderInput, Check,
   AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, Link as LinkIcon, Undo, Redo, ChevronDown, ChevronUp, Link2, Users
 } from 'lucide-react';
@@ -339,6 +341,10 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
     finally { setUploadingImage(false); }
   };
 
+  const phone = usePhoneMaybe();
+  const [menuFor, setMenuFor] = useState<EduAssignmentBankItem | null>(null);
+  const shownN = useMoreOnScroll(shown.length, 20, [search, subjectId, sort, scope]);
+
   if (loading) return <div className="bg-white rounded-3xl border border-slate-100 p-10 text-center text-slate-400"><Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" /> Đang tải...</div>;
 
   if (tablesMissing) {
@@ -497,6 +503,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
         activeChip={subjectId}
         onChip={setSubjectId}
         onAddChip={name => handleAddSubject(name)}
+        phoneStatus={{ chips: [{ id: 'new', label: 'Mới nhất' }, { id: 'name', label: 'Tên A đến Z' }], active: sort, onChange: v => setSort(v as any) }}
         actions={
           <button onClick={() => openEditor(emptyItem(subjectId && subjectId !== '__none' ? subjectId : undefined))} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-brand px-4 text-sm font-semibold text-white shadow-lg shadow-brand/20 hover:bg-brand-hover">
             <Plus className="h-4 w-4" /> Thêm bài tập
@@ -504,6 +511,27 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
         }
       />
 
+      {phone ? (
+        shown.length === 0 ? <PhoneEmpty icon={BookMarked} title={search ? 'Không tìm thấy bài tập phù hợp' : 'Chưa có bài tập nào trong mục này'} sub={!search ? 'Bấm Bài tập mới để tạo.' : undefined} />
+        : <PhoneList>
+            {shown.slice(0, shownN).map(it => {
+              const img = firstImage(it.content);
+              const tags: CardTag[] = [];
+              if (it.isPublic) tags.push({ text: 'Công khai', tone: 'g' });
+              else if (roles[it.id] && !isOwner(it)) tags.push({ text: `Chia sẻ · ${ROLE_LABELS[roles[it.id]].label}`, tone: 'p' });
+              else if (!canEdit(it)) tags.push({ text: 'Dùng chung' });
+              if ((it.allowedFileTypes || []).length) tags.push({ text: `Nộp ${formatsText(it.allowedFileTypes)}`, tone: 'b' });
+              if ((it.resources || []).length) tags.push({ text: `${(it.resources || []).length} tài nguyên` });
+              return (
+                <PhoneLibCard key={it.id} seed={it.subjectId || 'none'} kicker={subjName(it.subjectId) || 'Chưa chọn môn'} icon={ClipboardList}
+                  cover={img ? <span className="cv" style={{ backgroundImage: `url(${img})` }} /> : undefined}
+                  title={it.title} tags={tags}
+                  people={[{ id: it.ownerId, name: ownerName(it.ownerId) }, ...(collabMap[it.id] || [])]}
+                  time={`Sửa ${ago(it.updatedAt || it.createdAt)}`} onClick={() => setViewId(it.id)} menu={() => setMenuFor(it)} />
+              );
+            })}
+          </PhoneList>
+      ) : (
       <div className="min-w-0 space-y-4">
         {/* Thanh lọc phụ */}
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -627,9 +655,23 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
           </div>
         )}
         {shown.length > 0 && <Pager pg={pg} total={shown.length} unit="bài tập" sizes={[12, 24, 48, 96]} />}
-        {sharing && <ShareDialog type="bank_item" resourceId={sharing.id} resourceTitle={sharing.title} ownerId={sharing.ownerId || currentUser.id} ownerName={ownerName(sharing.ownerId) || undefined}
-          currentUser={currentUser} canManage={isOwner(sharing) || roles[sharing.id] === 'manage'} onClose={() => { setSharing(null); reloadItems(); }} />}
       </div>
+      )}
+      {sharing && <ShareDialog type="bank_item" resourceId={sharing.id} resourceTitle={sharing.title} ownerId={sharing.ownerId || currentUser.id} ownerName={ownerName(sharing.ownerId) || undefined}
+        currentUser={currentUser} canManage={isOwner(sharing) || roles[sharing.id] === 'manage'} onClose={() => { setSharing(null); reloadItems(); }} />}
+      {phone && <PhoneFab label="Bài tập mới" icon={Plus} onClick={() => openEditor(emptyItem(subjectId && subjectId !== '__none' ? subjectId : undefined))} />}
+      {menuFor && (() => { const it = menuFor; return (
+        <PhoneMenuSheet title={it.title} sub={subjName(it.subjectId) || 'Chưa chọn môn'} onClose={() => setMenuFor(null)} items={[
+          { key: 'view', label: 'Xem bài tập', icon: Eye, onClick: () => setViewId(it.id) },
+          { key: 'edit', label: 'Sửa', icon: Edit3, hidden: !canEdit(it), onClick: () => openEditor({ ...it }) },
+          { key: 'pdf', label: 'Tải PDF', icon: FileDown, onClick: () => downloadPdf(it) },
+          { key: 'link', label: 'Sao chép link xem bài', icon: Link2, hidden: !canShare(it), onClick: () => copyShareLink(it) },
+          { key: 'collab', label: isOwner(it) || roles[it.id] === 'manage' ? 'Cộng tác, thêm người cùng sửa' : 'Người cộng tác', icon: Users, onClick: () => setSharing(it) },
+          { key: 'public', label: it.isPublic ? 'Tắt công khai' : 'Chia sẻ công khai', icon: it.isPublic ? Lock : Globe, hidden: !isOwner(it), onClick: () => handleTogglePublic(it) },
+          { key: 'move', label: 'Chuyển sang môn chung', icon: FolderInput, hidden: !canAdminMove(it), onClick: () => adminMove([it]) },
+          { key: 'del', label: 'Xoá', icon: Trash2, danger: true, hidden: !isOwner(it), onClick: () => handleDeleteItem(it) },
+        ]} />
+      ); })()}
     </div>
   );
 }
