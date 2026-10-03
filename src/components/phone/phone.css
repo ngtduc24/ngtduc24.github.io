@@ -296,4 +296,13 @@ html.is-phone.ph-has-tools .left-20 { bottom: calc(64px + env(safe-area-inset-bo
 .ph-main { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
 
 /* Màn chiếm trọn (ví dụ chấm bài): ẩn thanh dưới */
-html.ph-immersive .ph-nav2, html.ph-immersive .ph-nav, html.ph-immersive .ph-toolbar { display: none; }
+html.ph-immersive .ph-nav2, html.ph-immersive .ph-nav, html.ph-immersive .ph-toolbar, html.ph-overlay .ph-nav2, html.ph-overlay .ph-nav { display: none; }
+
+/* Kéo xuống để tải lại */
+.ph-ptr { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; overflow: hidden; padding-bottom: 8px; color: var(--ph-brand-hover); }
+.ph-ptr .ic { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(15,23,42,.15); flex: none; }
+.ph-ptr .ic.spin { animation: ph-spin .8s linear infinite; }
+.ph-ptr small { font-size: 11.5px; font-weight: 600; color: var(--ph-muted); }
+@keyframes ph-spin { to { transform: rotate(360deg); } }
+/* Không phóng to khi chạm 2 lần, giữ màn hình cố định như ứng dụng */
+html.is-phone, html.is-phone body { touch-action: manipulation; overscroll-behavior: none; }

@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useMemo, useState, lazy, Suspense } from 'react';
-import { Home, Bell, Plus, LayoutGrid, User, Monitor, Send, CheckCircle2, Loader2, Presentation, BookOpen, CircleCheck, CalendarDays, QrCode, Workflow, ScanLine, Library } from 'lucide-react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
+import { RefreshCw, Home, Bell, Plus, LayoutGrid, User, Monitor, Send, CheckCircle2, Loader2, Presentation, BookOpen, CircleCheck, CalendarDays, QrCode, Workflow, ScanLine, Library } from 'lucide-react';
 import type { AppSettings, UserAccount } from '../../types';
 import { MODULE_REGISTRY, isModuleHidden, resolveModuleMeta, ModuleDef } from '../../lib/modules';
 import { canUseModule } from '../../lib/moduleAccess';
@@ -92,7 +92,31 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
 
   useEffect(() => {
     document.documentElement.classList.add('is-phone');
-    return () => { document.documentElement.classList.remove('is-phone'); };
+    // Cố định màn hình như ứng dụng: không phóng to khi bấm vào ô nhập, không chụm 2 ngón để thu phóng trang.
+    const meta = document.querySelector('meta[name="viewport"]');
+    const before = meta?.getAttribute('content') || '';
+    meta?.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+    const stop = (e: Event) => e.preventDefault();
+    document.addEventListener('gesturestart', stop);
+    document.addEventListener('gesturechange', stop);
+    return () => {
+      document.documentElement.classList.remove('is-phone');
+      if (meta) meta.setAttribute('content', before);
+      document.removeEventListener('gesturestart', stop);
+      document.removeEventListener('gesturechange', stop);
+    };
+  }, []);
+  // Chức năng mở hộp thoại hay cửa sổ phủ kín màn hình (cắt ảnh, xem tệp, xác nhận...) thì ẩn thanh dưới,
+  // tránh thanh dưới đè lên nút Xong, Lưu của hộp thoại.
+  useEffect(() => {
+    const check = () => {
+      const has = !!document.querySelector('#main-content .fixed.inset-0, body > .fixed.inset-0, body > div:not(#root) > .fixed.inset-0');
+      document.documentElement.classList.toggle('ph-overlay', has);
+    };
+    const mo = new MutationObserver(() => check());
+    mo.observe(document.body, { childList: true, subtree: true });
+    check();
+    return () => { mo.disconnect(); document.documentElement.classList.remove('ph-overlay'); };
   }, []);
   useEffect(() => {
     document.documentElement.classList.toggle('ph-has-tools', !!tools);
@@ -120,7 +144,7 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
   return (
     <Ctx.Provider value={api}>
       <div className="ph ph-root" id="app-root">
-        <main id="main-content" className={`ph-main ${bare ? '' : 'ph-mod'} ${tools ? 'ph-tools' : ''}`}>{children}</main>
+        <PullRefresh className={`ph-main ${bare ? '' : 'ph-mod'} ${tools ? 'ph-tools' : ''}`} disabled={!!tools}>{children}</PullRefresh>
 
         {tools ? (
           // Màn soạn có công cụ riêng (ví dụ khung thiết kế Bài giảng): thay thanh dưới bằng dải công cụ cuộn ngang.
@@ -216,5 +240,59 @@ function LaptopSheet({ user, mod, id, sub, onClose, onOpenAnyway }: { user: User
         <button type="button" className="ph-btn ghost" style={{ width: '100%', marginTop: 10 }} onClick={onOpenAnyway}>Vẫn mở trên điện thoại</button>
       </div>
     </div>
+  );
+}
+
+// Vuốt kéo trang xuống khi đang ở đầu trang để tải lại nội dung (tải lại màn đang mở, không tải lại cả trang web).
+function PullRefresh({ className, disabled, children }: { className: string; disabled?: boolean; children: React.ReactNode }) {
+  const ref = useRef<HTMLElement>(null);
+  const [pull, setPull] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [ver, setVer] = useState(0);
+  const st = useRef<{ y: number; active: boolean } | null>(null);
+  const pullRef = useRef(0);
+  const setP = (v: number) => { pullRef.current = v; setPull(v); };
+  const LIMIT = 70;
+  useEffect(() => {
+    const el = ref.current; if (!el || disabled) return;
+    const start = (e: TouchEvent) => {
+      if (busy || el.scrollTop > 0 || e.touches.length !== 1) { st.current = null; return; }
+      // Không bắt khi kéo trong vùng tự cuộn riêng (danh sách ngang, bảng trượt, ô nhập nhiều dòng).
+      const t = e.target as HTMLElement;
+      if (t.closest('textarea, input, select, [data-no-pull], .ph-hscroll')) { st.current = null; return; }
+      st.current = { y: e.touches[0].clientY, active: false };
+    };
+    const move = (e: TouchEvent) => {
+      if (!st.current) return;
+      const dy = e.touches[0].clientY - st.current.y;
+      if (dy <= 0 || el.scrollTop > 0) { if (st.current.active) setP(0); st.current.active = false; return; }
+      st.current.active = true;
+      e.preventDefault();
+      setP(Math.min(110, dy * 0.5));
+    };
+    const end = () => {
+      const s = st.current; st.current = null;
+      if (!s?.active) return;
+      if (pullRef.current >= LIMIT) {
+        setP(LIMIT); setBusy(true); setVer(v => v + 1);
+        window.dispatchEvent(new CustomEvent('edugo:refresh'));
+        window.setTimeout(() => { setBusy(false); setP(0); }, 700);
+      } else setP(0);
+    };
+    el.addEventListener('touchstart', start, { passive: true });
+    el.addEventListener('touchmove', move, { passive: false });
+    el.addEventListener('touchend', end);
+    el.addEventListener('touchcancel', end);
+    return () => { el.removeEventListener('touchstart', start); el.removeEventListener('touchmove', move); el.removeEventListener('touchend', end); el.removeEventListener('touchcancel', end); };
+  }, [busy, disabled]);
+  const ready = pull >= LIMIT;
+  return (
+    <main ref={ref as any} id="main-content" className={className} style={{ overscrollBehaviorY: 'contain' }}>
+      <div className="ph-ptr" style={{ height: pull, opacity: pull ? 1 : 0, transition: st.current?.active ? 'none' : 'height .25s, opacity .25s' }}>
+        <span className={`ic ${busy ? 'spin' : ''}`} style={{ transform: busy ? undefined : `rotate(${pull * 3}deg)` }}><RefreshCw size={18} /></span>
+        <small>{busy ? 'Đang tải lại...' : ready ? 'Thả tay để tải lại' : 'Kéo xuống để tải lại'}</small>
+      </div>
+      <React.Fragment key={ver}>{children}</React.Fragment>
+    </main>
   );
 }

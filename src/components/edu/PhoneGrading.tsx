@@ -236,6 +236,7 @@ function OneSubmission({ user, sub, row, pos, late, sim, invalid, saveText, save
   const [loadingF, setLoadingF] = useState(false);
   const [full, setFull] = useState(false);
   const [typing, setTyping] = useState(false);
+  const [zoom, setZoom] = useState(1);
   useEffect(() => {
     const f = files[fi]; if (!f) { setFile(null); return; }
     let on = true; setLoadingF(true);
@@ -341,11 +342,15 @@ function OneSubmission({ user, sub, row, pos, late, sim, invalid, saveText, save
       {full && file && (
         <div className="fixed inset-0 z-[60] flex flex-col bg-black">
           <div className="flex items-center gap-2.5 px-3.5 pb-2.5 pt-[calc(12px+env(safe-area-inset-top))] text-white">
-            <button onClick={() => setFull(false)} className="grid h-[38px] w-[38px] place-items-center rounded-xl bg-white/15" aria-label="Đóng"><X className="h-5 w-5" /></button>
+            <button onClick={() => { setFull(false); setZoom(1); }} className="grid h-[38px] w-[38px] place-items-center rounded-xl bg-white/15" aria-label="Đóng"><X className="h-5 w-5" /></button>
             <b className="min-w-0 flex-1 truncate text-sm">{file.name} · {fi + 1}/{files.length}</b>
             <a href={file.url} target="_blank" rel="noreferrer" className="grid h-[38px] w-[38px] place-items-center rounded-xl bg-white/15" aria-label="Tải về"><Download className="h-5 w-5" /></a>
           </div>
-          <div className="relative flex-1 overflow-auto" style={{ touchAction: 'pinch-zoom' }}>{viewer(true)}</div>
+          {/* Chạm vào ảnh để phóng to 2 lần, chạm lần nữa để thu lại; khi phóng to thì kéo để xem các phần */}
+          <div className="relative flex-1 overflow-auto" onClick={() => file && isImg(file) && setZoom(z => (z === 1 ? 2.2 : 1))}>
+            {file && isImg(file) ? <img src={file.url} alt={file.name} style={{ width: `${zoom * 100}%`, maxWidth: 'none', height: zoom === 1 ? '100%' : 'auto' }} className={zoom === 1 ? 'object-contain' : ''} /> : viewer(true)}
+            {file && isImg(file) && zoom === 1 && <span className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-lg bg-white/15 px-2.5 py-1 text-[11px] text-white/80">Chạm để phóng to</span>}
+          </div>
           <div className="mx-3 mb-[calc(14px+env(safe-area-inset-bottom))] mt-2 flex items-center gap-1.5 rounded-[20px] bg-white/95 p-2">
             {files.length > 1 && <button onClick={() => setFi(i => (i - 1 + files.length) % files.length)} className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100"><ChevronLeft className="h-5 w-5" /></button>}
             <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto scrollbar-none">
