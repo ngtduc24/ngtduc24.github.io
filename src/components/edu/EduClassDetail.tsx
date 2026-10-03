@@ -3,6 +3,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { trackDoc } from '../../lib/personalize';
 import { prettyShareUrl } from '../../lib/shareLinks';
 import { copyText } from '../ui/Dialogs';
+import { usePhoneMaybe, usePhoneBack } from '../phone/PhoneShell';
+import PhoneClassDetail from './PhoneClassDetail';
+import { exportAllGrades, exportGradeColumn } from './EduExport';
 import { 
   Users, 
   BookOpen, 
@@ -47,7 +50,8 @@ import {
   saveGrades,
   deleteAssignment,
   getPendingExtensions,
-  respondExtension
+  respondExtension,
+  deleteGradeForUser
 } from '../../lib/edu';
 import { EduExtensionRequest } from '../../types/edu';
 import { useNotifications } from '../NotificationContext';
@@ -81,6 +85,8 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
   const [extDuration, setExtDuration] = useState<Record<string, { amount: string; unit: ExtUnit }>>({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'users' | 'assignments'>('users');
+  const phone = usePhoneMaybe();
+  usePhoneBack(phone ? onBack : null);
   const [newColumnName, setNewColumnName] = useState('');
   const [newColumnWeight, setNewColumnWeight] = useState('');
   const [dragUserId, setDragUserId] = useState<string | null>(null);
@@ -421,6 +427,68 @@ export default function EduClassDetail({ classId, currentUser, onEditAssignment,
     }
     return sw > 0 ? Math.round((sv / sw) * 100) / 100 : null;
   };
+
+
+  // Điện thoại: giao diện riêng dạng danh sách, dùng chung dữ liệu và quyền của trang này.
+  if (phone) {
+    const exportProps = { clazz: clazz as any, users, gradeColumns, grades };
+    return (
+      <>
+        {shareOpen && (
+          <ShareDialog type="edu_class" resourceId={clazz.id} resourceTitle={clazz.name}
+            ownerId={isOwner ? (clazz.ownerId || currentUser.id) : (clazz.ownerId || '')}
+            currentUser={currentUser} canManage={canShare} onClose={() => setShareOpen(false)} />
+        )}
+        <PhoneClassDetail
+          clazz={clazz as any} isOwner={isOwner} users={users} gradeColumns={gradeColumns} assignments={assignments} grades={grades} submissions={submissions} extRequests={extRequests}
+          can={{ share: canShare, assign: canAssign, editAssign: canEditAssign, deleteAssign: canDeleteAssign, grade: canGrade, addStudent: canAddStudent, editStudent: canEditStudent, deleteStudent: canDeleteStudent, addColumn: canAddColumn, editColumn: canEditColumn, deleteColumn: canDeleteColumn, exportGrades: canExportEdu, viewSubs: canViewSubs }}
+          avgOf={avgOf}
+          onShare={() => setShareOpen(true)}
+          onNewAssignment={() => { if (gradeColumns.length === 0) addNotification('Cần thêm ít nhất một cột điểm trước khi tạo bài tập', 'warning'); else onEditAssignment(); }}
+          onEditAssignment={id => onEditAssignment(id)}
+          onDeleteAssignment={handleDeleteAssignment}
+          onViewAssignment={onViewAssignment}
+          onGrading={onGrading}
+          onCopyLink={copyShareLink}
+          onApproveExt={async (req, ms) => {
+            const extendUntil = new Date(Date.now() + ms).toISOString();
+            try {
+              await respondExtension(req.id, { status: 'approved', extendUntil, respondedBy: currentUser?.fullName || currentUser?.email || 'Giảng viên' });
+              addNotification(`Đã duyệt gia hạn cho ${req.studentName || req.mssv} tới ${new Date(extendUntil).toLocaleString('vi-VN')}`, 'success');
+              loadData();
+            } catch (err) { addNotification('Lỗi khi duyệt gia hạn: ' + (err as Error).message, 'error'); }
+          }}
+          onRejectExt={handleRejectExtension}
+          onSaveStudent={async st => {
+            try { await saveUser({ id: st.id, classId, stt: st.stt, fullName: st.fullName, mssv: st.mssv }); addNotification(st.id ? 'Đã cập nhật thông tin sinh viên' : 'Đã thêm sinh viên mới', 'success'); loadData(); }
+            catch { addNotification('Lỗi khi lưu thông tin sinh viên', 'error'); }
+          }}
+          onDeleteStudent={handleDeleteUser}
+          onSaveColumn={async c => {
+            const old = gradeColumns.find(x => x.id === c.id);
+            try {
+              await saveGradeColumn({ id: c.id, classId, name: c.name, weight: c.weight, order: old ? old.order : gradeColumns.length, isConfirmed: old ? old.isConfirmed : false });
+              addNotification(c.id ? 'Đã cập nhật cột điểm' : 'Đã thêm cột điểm mới', 'success'); loadData();
+            } catch { addNotification('Lỗi khi lưu cột điểm', 'error'); }
+          }}
+          onDeleteColumn={handleDeleteColumn}
+          onToggleConfirm={handleToggleConfirm}
+          onSaveGrade={async (colId, userId, score) => {
+            try {
+              if (score == null) { await deleteGradeForUser(colId, userId); setGrades(gs => gs.filter(g => !(g.gradeColumnId === colId && g.userId === userId))); }
+              else {
+                const old = grades.find(g => g.gradeColumnId === colId && g.userId === userId);
+                await saveGrades([{ gradeColumnId: colId, userId, score, note: old?.note }]);
+                setGrades(gs => old ? gs.map(g => (g === old ? { ...g, score } : g)) : [...gs, { id: `tmp_${colId}_${userId}`, gradeColumnId: colId, userId, score, createdAt: '', updatedAt: '' } as EduGrade]);
+              }
+            } catch (err) { addNotification('Lỗi lưu điểm: ' + ((err as Error).message || err), 'error'); throw err; }
+          }}
+          onExportAll={() => exportAllGrades(exportProps)}
+          onExportColumn={id => exportGradeColumn(exportProps, id)}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="space-y-6">

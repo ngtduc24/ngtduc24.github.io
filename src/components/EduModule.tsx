@@ -200,6 +200,7 @@ export default function EduModule({ currentUser, settings, initialView }: EduMod
         {view === 'list' && (
           <EduSchoolClassList
             onSelectClass={handleClassSelect}
+            onGrade={(cid, aid, gcol) => handleGrading(cid, aid, gcol)}
             onImport={() => setView('import')}
             onOpenBank={() => setView('assignment_bank')}
             onOpenGrades={() => setView('grade_entry')}

@@ -34,6 +34,18 @@ const Ctx = createContext<PhoneApi | null>(null);
 export const usePhone = () => useContext(Ctx)!;
 // Dùng trong các chức năng: có giá trị khi đang ở giao diện điện thoại, ngoài ra là null.
 export const usePhoneMaybe = () => useContext(Ctx);
+// Màn con trong một chức năng (ví dụ trang chi tiết lớp) đăng ký việc nút quay lại trên thanh trên
+// đưa về màn trước trong chức năng đó, thay vì rời hẳn chức năng.
+let backOverride: (() => void) | null = null;
+export function usePhoneBack(fn?: (() => void) | null) {
+  const ref = useRef(fn); ref.current = fn;
+  useEffect(() => {
+    if (!fn) return;
+    const h = () => ref.current?.();
+    backOverride = h;
+    return () => { if (backOverride === h) backOverride = null; };
+  }, [!!fn]); // eslint-disable-line react-hooks/exhaustive-deps
+}
 
 // Lưới nút biểu tượng cho các chức năng trên điện thoại (thay dãy nút chữ dài), giống thẻ nhóm ở Tất cả chức năng.
 export interface PhoneAction { key: string; label: string; icon: any; onClick: () => void; laptop?: boolean; primary?: boolean }
@@ -131,6 +143,7 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
     else if (st[st.length - 1] !== tab) st.push(tab);
   }, [tab]);
   const back = () => {
+    if (backOverride) { backOverride(); return; }
     if (stack.current.length > 1) window.history.back();
     else go('dashboard');
   };

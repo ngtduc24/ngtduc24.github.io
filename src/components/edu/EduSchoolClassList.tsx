@@ -29,6 +29,9 @@ import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import { eduCan } from '../../lib/eduPermissions';
 import { usePhoneMaybe, PhoneActionGrid } from '../phone/PhoneShell';
+import { PhoneExt, PhoneSearch, PhoneSeg, PhoneChips, PhoneChip, PhoneSheet, PhoneMenuSheet, PhoneFab, PhoneEmpty, bandOf } from '../phone/PhoneKit';
+import { askText } from '../ui/Dialogs';
+import { getGrades } from '../../lib/edu';
 import { phoneMode } from '../../lib/device';
 import ShareDialog from '../ui/ShareDialog';
 import type { CollabType } from '../../lib/collab';
@@ -37,6 +40,7 @@ import { AvatarStack } from '../ui/People';
 
 interface EduSchoolClassListProps {
   onSelectClass: (classId: string) => void;
+  onGrade?: (classId: string, assignmentId: string, gradeColumnId: string) => void;
   onImport?: () => void;
   onOpenBank?: () => void;
   onOpenGrades?: () => void;
@@ -45,7 +49,7 @@ interface EduSchoolClassListProps {
   currentUser?: any;
 }
 
-export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank, onOpenGrades, onOpenExams, isAdmin, currentUser }: EduSchoolClassListProps) {
+export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, onOpenBank, onOpenGrades, onOpenExams, isAdmin, currentUser }: EduSchoolClassListProps) {
   const canCreate = eduCan(currentUser, 'create');
   const canEdit = eduCan(currentUser, 'edit');
   const canDelete = eduCan(currentUser, 'delete');
@@ -74,9 +78,15 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
   const { confirm } = useConfirmation();
 
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+  // Điện thoại
+  const [pScope, setPScope] = useState<'mine' | 'shared'>('mine');
+  const [pSchool, setPSchool] = useState('');
+  const [pQuick, setPQuick] = useState<'' | 'pending' | 'soon'>('');
+  const [pSheet, setPSheet] = useState<null | 'school' | 'menu' | 'new' | { cls: EduClass } | { school: EduSchool }>(null);
+  const [newCls, setNewCls] = useState({ schoolId: '', name: '' });
 
   // Thống kê nhanh cho mỗi lớp: tổng sinh viên, bài tập đang có hạn nộp gần nhất, số đã nộp.
-  type ClassStat = { students: number; assignmentTitle?: string; deadline?: string; submitted: number };
+  type ClassStat = { students: number; assignmentTitle?: string; deadline?: string; submitted: number; pending?: number; assignmentId?: string; gradeColumnId?: string; assignments?: number };
   const [classStats, setClassStats] = useState<Record<string, ClassStat>>({});
 
   // Chạy tuần tự có thử lại 1 lần cho từng lớp để tránh lỗi tạm thời khi gọi nhiều
@@ -94,9 +104,19 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
     const chosen = upcoming[0]
       || withDeadline.sort((a, b) => new Date(b.deadline as string).getTime() - new Date(a.deadline as string).getTime())[0]
       || assignments[0];
-    let submitted = 0;
-    if (chosen) { const subs = await getSubmissions(chosen.id); submitted = new Set(subs.map(s => s.userId || s.mssv)).size; }
-    return { students: users.length, assignmentTitle: chosen?.title, deadline: chosen?.deadline, submitted };
+    let submitted = 0, pending = 0;
+    if (chosen) {
+      const subs = await getSubmissions(chosen.id);
+      const who = new Set(subs.map(s => s.userId || s.mssv));
+      submitted = who.size;
+      // Số bài đã nộp mà chưa có điểm, để hiện nút Chấm bài ngay trên thẻ lớp ở điện thoại.
+      if (phone && chosen.gradeColumnId && submitted) {
+        const gs = await getGrades(chosen.gradeColumnId).catch(() => []);
+        const done = new Set((gs as any[]).map(g => g.userId || g.user_id));
+        pending = [...who].filter(u => !done.has(u as string)).length;
+      }
+    }
+    return { students: users.length, assignmentTitle: chosen?.title, deadline: chosen?.deadline, submitted, pending, assignmentId: chosen?.id, gradeColumnId: chosen?.gradeColumnId, assignments: assignments.length };
   };
 
   // Tải thống kê từng lớp song song nhưng giới hạn số truy vấn cùng lúc để nhanh mà
@@ -255,6 +275,144 @@ export default function EduSchoolClassList({ onSelectClass, onImport, onOpenBank
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <div className="w-10 h-10 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Đang tải danh sách...</p>
+      </div>
+    );
+  }
+
+  if (phone) {
+    const scoped = classes.filter(c => (pScope === 'mine' ? mine(c) : !mine(c)));
+    const q = searchTerm.trim().toLowerCase();
+    const list = scoped
+      .filter(c => !pSchool || c.schoolId === pSchool)
+      .filter(c => !q || c.name.toLowerCase().includes(q) || (c.edu_schools?.name || '').toLowerCase().includes(q))
+      .filter(c => { const st = classStats[c.id]; if (pQuick === 'pending') return !!st?.pending; if (pQuick === 'soon') return !!st?.deadline && new Date(st.deadline).getTime() > Date.now() && new Date(st.deadline).getTime() - Date.now() < 72 * 3600e3; return true; });
+    const schoolName = (id: string) => schools.find(x => x.id === id)?.name || '';
+    const left = (iso?: string) => {
+      if (!iso) return null;
+      const ms = new Date(iso).getTime() - Date.now();
+      if (ms < 0) return { t: 'Đã hết hạn', c: 'mu' };
+      const h = ms / 3600e3;
+      return h < 24 ? { t: `Còn ${Math.max(1, Math.floor(h))} giờ`, c: 'r' } : { t: `Còn ${Math.floor(h / 24)} ngày`, c: h < 72 ? 'a' : 'g' };
+    };
+    const mySchools = schools.filter(x => mine(x));
+    const createClass = async () => {
+      if (!newCls.name.trim() || !newCls.schoolId) return;
+      try { await saveClass({ schoolId: newCls.schoolId, name: newCls.name.trim(), description: '' }); setPSheet(null); setNewCls({ schoolId: '', name: '' }); loadData(); addNotification('Đã tạo lớp học mới', 'success'); }
+      catch { addNotification('Lỗi khi tạo lớp học', 'error'); }
+    };
+    const newSchool = async (): Promise<string | null> => {
+      const name = await askText({ title: 'Thêm trường', placeholder: 'Tên trường' });
+      if (!name || !name.trim()) return null;
+      try { const sc: any = await saveSchool({ name: name.trim(), description: '' }); loadData(); addNotification('Đã tạo trường học mới', 'success'); return sc?.id || null; }
+      catch { addNotification('Lỗi khi tạo trường học', 'error'); return null; }
+    };
+    const rename = async (kind: 'class' | 'school', x: any) => {
+      const name = await askText({ title: kind === 'class' ? 'Đổi tên lớp' : 'Đổi tên trường', defaultValue: x.name });
+      if (!name || !name.trim() || name.trim() === x.name) return;
+      try { if (kind === 'class') await saveClass({ ...x, name: name.trim() }); else await saveSchool({ ...x, name: name.trim() }); loadData(); addNotification('Đã đổi tên', 'success'); }
+      catch { addNotification('Lỗi khi đổi tên', 'error'); }
+    };
+    const sel = pSheet && typeof pSheet === 'object' ? pSheet : null;
+    return (
+      <div>
+        {sharing && currentUser && (
+          <ShareDialog type={sharing.type} resourceId={sharing.id} resourceTitle={sharing.title} ownerId={sharing.ownerId}
+            currentUser={currentUser} canManage={sharing.canManage} onClose={() => setSharing(null)} />
+        )}
+        <PhoneExt>
+          <PhoneSearch value={searchTerm} onChange={setSearchTerm} placeholder="Tìm lớp, trường..."
+            right={<button type="button" className="rb" aria-label="Thao tác khác" onClick={() => setPSheet('menu')}><MoreVertical /></button>} />
+          <PhoneSeg tabs={[{ id: 'mine', label: 'Lớp của tôi' }, { id: 'shared', label: `Được chia sẻ${classes.some(c => !mine(c)) ? ` (${classes.filter(c => !mine(c)).length})` : ''}` }]} active={pScope} onTab={t => { setPScope(t as any); setPSchool(''); }} />
+        </PhoneExt>
+        <PhoneChips>
+          <PhoneChip caret on={!!pSchool} onClick={() => setPSheet('school')}>{pSchool ? schoolName(pSchool) : 'Mọi trường'}</PhoneChip>
+          <PhoneChip on={pQuick === ''} onClick={() => setPQuick('')}>Tất cả</PhoneChip>
+          <PhoneChip on={pQuick === 'pending'} onClick={() => setPQuick('pending')}>Có bài chờ chấm</PhoneChip>
+          <PhoneChip on={pQuick === 'soon'} onClick={() => setPQuick('soon')}>Sắp hết hạn</PhoneChip>
+        </PhoneChips>
+        {pSchool && (() => { const sc = schools.find(x => x.id === pSchool); return sc ? (
+          <div className="pk-school-h"><School className="h-5 w-5 text-brand" /><b>{sc.name}</b><span>{list.length} lớp</span>
+            {(mine(sc) || sc.access?.perms.manageMembers) && <button type="button" onClick={() => setPSheet({ school: sc })}><MoreVertical />Trường</button>}
+          </div>) : null; })()}
+        {list.length === 0 ? <PhoneEmpty icon={GraduationCap} title={classes.length ? 'Không có lớp nào khớp' : 'Chưa có lớp học nào'} sub={!classes.length && canCreate ? 'Bấm Lớp mới để tạo lớp đầu tiên, hoặc Import từ Excel ở nút ba chấm.' : undefined} /> : (
+          <div className="pk-list">
+            {list.map(c => { const st = classStats[c.id]; const l = left(st?.deadline); const n = st?.students || 0; return (
+              <div key={c.id} className="pk-card pk-cl" onClick={() => onSelectClass(c.id)} role="button" tabIndex={0}>
+                <div className="band" style={{ background: bandOf(c.schoolId || c.id), height: 64 }}>
+                  <span className="k">{c.edu_schools?.name || schoolName(c.schoolId)}</span>
+                  <GraduationCap className="bi" />
+                  {(mine(c) || !!c.access?.perms.manageMembers) && <button type="button" className="mn" aria-label="Thao tác với lớp" onClick={e => { e.stopPropagation(); setPSheet({ cls: c }); }}><MoreVertical /></button>}
+                </div>
+                <div className="bd">
+                  <b>{c.name}</b>
+                  <div className="tags">
+                    <span className="tag">{st ? `${n} sinh viên` : 'Đang tải...'}</span>
+                    {st?.assignments != null && <span className="tag">{st.assignments} bài tập</span>}
+                    {!mine(c) && <span className="tag p">Được chia sẻ</span>}
+                  </div>
+                  {st?.assignmentTitle && (
+                    <div className="asg">
+                      <div className="t"><b>{st.assignmentTitle}</b>{l && <span className={`pk-bd ${l.c}`}>{l.t}</span>}</div>
+                      <div className="pk-prog"><i style={{ width: `${n ? Math.min(100, st.submitted / n * 100) : 0}%` }} /></div>
+                      <div className="p2"><span>{st.submitted} trên {n} đã nộp</span>{st.pending ? <em>{st.pending} bài chờ chấm</em> : st.submitted ? <span>Đã chấm hết</span> : null}</div>
+                    </div>
+                  )}
+                  <div className="ft3">
+                    <span className="sp" onClick={e => e.stopPropagation()}>{(classCollabs[c.id] || []).length > 0 && <AvatarStack people={[{ id: c.ownerId }, ...(classCollabs[c.id] || [])]} size="sm" singleWithName={false} />}</span>
+                    <button type="button" className="b gr" onClick={e => { e.stopPropagation(); onSelectClass(c.id); }}>Mở lớp</button>
+                    {!!st?.pending && canGrade && st.assignmentId && st.gradeColumnId && onGrade && (
+                      <button type="button" className="b" onClick={e => { e.stopPropagation(); onGrade(c.id, st.assignmentId!, st.gradeColumnId!); }}><ClipboardList />Chấm {st.pending} bài</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ); })}
+          </div>
+        )}
+        {canCreate && <PhoneFab label="Lớp mới" icon={Plus} onClick={() => { setNewCls({ schoolId: pSchool || mySchools[0]?.id || '', name: '' }); setPSheet('new'); }} />}
+
+        {pSheet === 'school' && (
+          <PhoneSheet title="Chọn trường" onClose={() => setPSheet(null)}>
+            <div className="pk-pick">
+              <button type="button" className={!pSchool ? 'on' : ''} onClick={() => { setPSchool(''); setPSheet(null); }}><span>Mọi trường</span><em>{scoped.length}</em></button>
+              {schools.filter(x => scoped.some(c => c.schoolId === x.id) || (pScope === 'mine' && mine(x))).map(x => (
+                <button key={x.id} type="button" className={pSchool === x.id ? 'on' : ''} onClick={() => { setPSchool(x.id); setPSheet(null); }}><span>{x.name}</span><em>{scoped.filter(c => c.schoolId === x.id).length}</em></button>
+              ))}
+            </div>
+          </PhoneSheet>
+        )}
+        {pSheet === 'menu' && <PhoneMenuSheet title="Thao tác" onClose={() => setPSheet(null)} items={[
+          { key: 'import', label: 'Import tạo lớp', sub: 'Từ tệp Excel danh sách sinh viên', icon: Upload, hidden: !(onImport && canImportEdu), onClick: () => onImport?.() },
+          { key: 'school', label: 'Thêm trường', icon: School, hidden: !canCreate, onClick: () => { newSchool(); } },
+          { key: 'bank', label: 'Ngân hàng bài tập', icon: BookMarked, hidden: !(onOpenBank && canUseModule(currentUser, 'edu_bank')), onClick: () => onOpenBank?.() },
+          { key: 'exam', label: 'Kiểm tra trắc nghiệm', icon: FileCheck2, hidden: !(onOpenExams && canUseModule(currentUser, 'edu_exam')), onClick: () => onOpenExams?.() },
+          { key: 'grade', label: 'Nhập điểm hàng loạt', sub: phoneMode('edu_grade', phone.settings) === 'laptop' ? 'Nên làm trên máy tính' : undefined, icon: ClipboardList, hidden: !(onOpenGrades && canUseModule(currentUser, 'edu_grade')), onClick: () => phone.open('edu_grade') },
+        ]} />}
+        {sel && 'cls' in sel && (() => { const c = sel.cls; return <PhoneMenuSheet title={c.name} sub={schoolName(c.schoolId)} onClose={() => setPSheet(null)} items={[
+          { key: 'open', label: 'Mở lớp', icon: ChevronRight, onClick: () => onSelectClass(c.id) },
+          { key: 'share', label: 'Cộng tác', sub: 'Thêm người cùng chấm, giao bài', icon: UserPlus, hidden: !(mine(c) || c.access?.perms.manageMembers), onClick: () => setSharing({ type: 'edu_class', id: c.id, title: c.name, ownerId: c.ownerId || currentUser?.id, canManage: true }) },
+          { key: 'rename', label: 'Đổi tên lớp', icon: Edit2, hidden: !(canEdit && mine(c)), onClick: () => rename('class', c) },
+          { key: 'del', label: 'Xoá lớp', icon: Trash2, danger: true, hidden: !(canDelete && mine(c)), onClick: () => handleDeleteClass(c) },
+        ]} />; })()}
+        {sel && 'school' in sel && (() => { const sc = sel.school; return <PhoneMenuSheet title={sc.name} onClose={() => setPSheet(null)} items={[
+          { key: 'add', label: 'Thêm lớp vào trường này', icon: Plus, hidden: !(canCreate && mine(sc)), onClick: () => { setNewCls({ schoolId: sc.id, name: '' }); setPSheet('new'); } },
+          { key: 'share', label: 'Cộng tác', icon: UserPlus, onClick: () => setSharing({ type: 'edu_school', id: sc.id, title: sc.name, ownerId: sc.ownerId || currentUser?.id, canManage: true }) },
+          { key: 'rename', label: 'Đổi tên trường', icon: Edit2, hidden: !(canEdit && mine(sc)), onClick: () => rename('school', sc) },
+          { key: 'del', label: 'Xoá trường', icon: Trash2, danger: true, hidden: !(canDelete && mine(sc)), onClick: () => handleDeleteSchool(sc) },
+        ]} />; })()}
+        {pSheet === 'new' && (
+          <PhoneSheet title="Lớp mới" sub="Tạo lớp trống, sau đó thêm sinh viên trong lớp. Muốn nhập cả danh sách thì dùng Import tạo lớp." onClose={() => setPSheet(null)}
+            footer={<><button type="button" className="ph-btn ghost" onClick={() => setPSheet(null)}>Huỷ</button><button type="button" className="ph-btn" style={{ flex: 2 }} disabled={!newCls.name.trim() || !newCls.schoolId} onClick={createClass}>Tạo lớp</button></>}>
+            <div className="pk-form">
+              <label>Trường</label>
+              <div className="pk-chips" style={{ margin: '-4px 0 0', padding: 0, flexWrap: 'wrap' }}>
+                {mySchools.map(x => <PhoneChip key={x.id} on={newCls.schoolId === x.id} onClick={() => setNewCls(v => ({ ...v, schoolId: x.id }))}>{x.name}</PhoneChip>)}
+                <PhoneChip onClick={async () => { const id = await newSchool(); if (id) setNewCls(v => ({ ...v, schoolId: id })); }}>+ Trường mới</PhoneChip>
+              </div>
+              <label>Tên lớp<input value={newCls.name} onChange={e => setNewCls(v => ({ ...v, name: e.target.value }))} placeholder="Ví dụ Thiết kế đồ hoạ K24" onKeyDown={e => { if (e.key === 'Enter') createClass(); }} /></label>
+            </div>
+          </PhoneSheet>
+        )}
       </div>
     );
   }
