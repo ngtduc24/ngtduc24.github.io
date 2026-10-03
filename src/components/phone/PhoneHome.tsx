@@ -9,6 +9,7 @@ import { todayTasks, loadPendingGrading, loadReminders, PendingGrading, Reminder
 import { useUsage, useScores, personalOrder, MIN_EVENTS, featuredPicks, noteShown, forgetDoc, isNewModule, DocVisit } from '../../lib/personalize';
 import { MODULE_REGISTRY } from '../../lib/modules';
 import { canUseModule } from '../../lib/moduleAccess';
+import { openProfile } from '../../lib/people';
 
 const greet = () => { const h = new Date().getHours(); return h < 11 ? 'Chào buổi sáng' : h < 14 ? 'Chào buổi trưa' : h < 18 ? 'Chào buổi chiều' : 'Chào buổi tối'; };
 const ago = (sec: number) => {
@@ -101,7 +102,7 @@ export default function PhoneHome() {
   return (
     <div>
       {/* Băng chào đầu trang, admin chỉnh trong Cấu hình hệ thống, mục Điện thoại */}
-      <PhoneHero settings={settings} can={can} onCta={(target) => {
+      <PhoneHero settings={settings} can={can} onTap={() => openProfile(user.id)} onCta={(target) => {
         const [kind, id] = target.split(':');
         if (kind === 'create') setCreateIntent(id);
         open(id);
@@ -109,8 +110,11 @@ export default function PhoneHome() {
 
       {/* Lời chào, tìm kiếm, chuông */}
       <div className="ph-hello">
-        <span className="ph-avatar">{user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : initials(user.fullName)}</span>
-        <div className="txt">{greet()}<b>{user.fullName || user.username}</b></div>
+        {/* Bấm ảnh đại diện hoặc tên để mở Trang cá nhân */}
+        <button type="button" className="me" aria-label="Mở trang cá nhân" onClick={() => openProfile(user.id)}>
+          <span className="ph-avatar">{user.avatarUrl ? <img src={user.avatarUrl} alt="" /> : initials(user.fullName)}</span>
+          <span className="txt">{greet()}<b>{user.fullName || user.username}</b></span>
+        </button>
         <button type="button" className="ph-round" aria-label="Tìm chức năng" onClick={() => { try { sessionStorage.setItem('open_hint:phone_search', '1'); } catch { /* bỏ qua */ } open('all_features'); }}><Search /></button>
         <button type="button" className="ph-round" aria-label="Thông báo" onClick={() => open('notifications')}><Bell />{unread > 0 && <span className="ph-badge">{unread > 9 ? '9+' : unread}</span>}</button>
       </div>
@@ -212,7 +216,7 @@ export default function PhoneHome() {
 }
 
 // Băng chào đầu Trang chủ điện thoại. Dùng chung cho Trang chủ và khung xem trước trong Cấu hình hệ thống.
-export function PhoneHero({ settings, can, onCta, ui: uiOverride }: { settings?: AppSettings; can: (id: string) => boolean; onCta: (target: string) => void; ui?: PhoneUi }) {
+export function PhoneHero({ settings, can, onCta, onTap, ui: uiOverride }: { settings?: AppSettings; can: (id: string) => boolean; onCta: (target: string) => void; onTap?: () => void; ui?: PhoneUi }) {
   const ui = uiOverride || phoneUi(settings);
   if (ui.bannerOn === false) return <div style={{ height: 'calc(8px + env(safe-area-inset-top))' }} />;
   const mode = ui.imageMode || 'desktop';
@@ -223,15 +227,16 @@ export function PhoneHero({ settings, can, onCta, ui: uiOverride }: { settings?:
   const ok = !t || t.need === 'all_features' || can(t.need);
   const label = ui.ctaLabel?.trim() || t?.label || 'Soạn bài giảng mới';
   return (
-    <div className={`ph-hero ${img ? '' : 'plain'}`} style={img ? { backgroundImage: `url(${img})`, backgroundPosition: pos || 'center' } : undefined}>
+    <div className={`ph-hero ${img ? '' : 'plain'}`} style={{ ...(img ? { backgroundImage: `url(${img})`, backgroundPosition: pos || 'center' } : {}), cursor: onTap ? 'pointer' : undefined }}
+      onClick={onTap} role={onTap ? 'button' : undefined} aria-label={onTap ? 'Mở trang cá nhân' : undefined}>
       {img && <div className="shade" />}
       {!img && <HeroArt />}
       <div className="in">
         <div className="t1">{ui.title?.trim() || settings?.dashboardBannerTitle || 'Hôm nay bạn muốn làm gì?'}</div>
         <div className="t2">{ui.desc?.trim() || settings?.systemDescription || 'Bài giảng, lớp học, đề trắc nghiệm của bạn ở ngay đây.'}</div>
         {ui.ctaOn !== false && (ok
-          ? <button type="button" className="cta" onClick={() => onCta(target)}>{target.startsWith('create:') && <Plus size={15} />}{label}</button>
-          : <button type="button" className="cta" onClick={() => onCta('open:all_features')}>Xem tất cả chức năng</button>)}
+          ? <button type="button" className="cta" onClick={e => { e.stopPropagation(); onCta(target); }}>{target.startsWith('create:') && <Plus size={15} />}{label}</button>
+          : <button type="button" className="cta" onClick={e => { e.stopPropagation(); onCta('open:all_features'); }}>Xem tất cả chức năng</button>)}
       </div>
     </div>
   );
