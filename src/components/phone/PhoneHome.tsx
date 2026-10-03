@@ -199,7 +199,8 @@ export function PhoneTop({ settings, ui: uiOverride, name, avatar, unread, acts,
 }) {
   const ui = uiOverride || phoneUi(settings);
   const show = ui.bannerOn !== false;
-  const mode = ui.imageMode || 'desktop';
+  // Mặc định dùng màu hệ thống: ảnh banner máy tính thường sáng và nằm ngang nên lên điện thoại bị mờ chữ, lệch màu.
+  const mode = ui.imageMode || 'art';
   const img = !show ? '' : mode === 'custom' ? ui.image : mode === 'desktop' ? settings?.dashboardBannerImage : '';
   const pos = mode === 'custom' ? ui.position : settings?.dashboardBannerPosition;
   const title = ui.title?.trim() || settings?.dashboardBannerTitle || 'Hôm nay bạn muốn làm gì?';

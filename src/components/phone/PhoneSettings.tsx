@@ -21,7 +21,7 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
     ov[PHONE_UI_KEY] = { ...(ov[PHONE_UI_KEY] || {}), ...patch };
     return { ...prev, moduleOverrides: ov };
   });
-  const mode = ui.imageMode || 'desktop';
+  const mode = ui.imageMode || 'art';
   const sw = (on: boolean, fn: () => void, label: string) => (
     <button type="button" onClick={fn} aria-label={label} aria-pressed={on}
       className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${on ? 'bg-brand' : 'bg-slate-300'}`}>

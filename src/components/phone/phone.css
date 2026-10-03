@@ -245,7 +245,8 @@ html.is-phone.ph-has-tools .left-20 { bottom: calc(64px + env(safe-area-inset-bo
   background: linear-gradient(165deg, var(--ph-brand-deep) 0%, var(--ph-brand-hover) 45%, var(--ph-brand) 100%); background-size: cover; }
 .ph-top:not(.has-img)::before { content: ""; position: absolute; right: -60px; top: -40px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,.08); }
 .ph-top:not(.has-img)::after { content: ""; position: absolute; left: -40px; bottom: -80px; width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,.06); }
-.ph-top .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.08) 40%, rgba(0,0,0,.08) 60%, rgba(0,0,0,.45) 100%); }
+.ph-top .shade { position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--ph-brand-deep) 78%, transparent) 0%, color-mix(in srgb, var(--ph-brand-hover) 52%, transparent) 45%, color-mix(in srgb, var(--ph-brand-hover) 62%, transparent) 75%, color-mix(in srgb, var(--ph-brand) 92%, transparent) 100%); }
+/* Ảnh nền nào cũng được phủ lớp màu hệ thống: chữ trắng luôn đọc rõ, phần dưới liền màu với lưới chức năng. */
 .ph-top > * { position: relative; z-index: 1; }
 .ph-top .hi { display: flex; align-items: center; gap: 4px; }
 .ph-top .me { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; text-align: left; color: #fff; }
