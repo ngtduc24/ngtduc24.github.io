@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Home as HomeIcon, LayoutGrid, Plus, Bell, User, Presentation as PresIcon, QrCode as QrIcon, ImageIcon as ImgIcon, FileArchive } from 'lucide-react';
-import { Eye } from 'lucide-react';
+import { Eye, LogIn, CircleDot, PanelBottom } from 'lucide-react';
 import { Smartphone, Monitor, EyeOff, Image as ImageIcon, RotateCcw, GraduationCap, BookOpen, Library, MoreHorizontal, GripVertical, ArrowUp, ArrowDown, Lock, Unlock, Sparkles } from 'lucide-react';
 import type { AppSettings, ModuleOverride } from '../../types';
 import { MODULE_REGISTRY } from '../../lib/modules';
 import { phoneMode, phoneUi, PhoneUi, PhoneMode, PHONE_UI_KEY, CTA_TARGETS, NOTI_DEFAULT, PHONE_GRID_SKIP, phoneActIds, navGlassStyle, gridGlassVars } from '../../lib/device';
 import { NotiBanner } from './PhoneNotifications';
-import { PhoneWelcomeSettingsBox } from './PhoneWelcomeSettings';
+import { PhoneWelcomeSettingsBox, useWelcomeConfig } from './PhoneWelcomeSettings';
+import PhoneWelcome from './PhoneWelcome';
 import MediaSourcePicker from '../MediaSourcePicker';
 import { PhoneTop, resolveActs } from './PhoneHome';
 import './phone.css';
@@ -39,18 +40,32 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
   ];
   const groups = [...new Set(MODULE_REGISTRY.map(m => m.group))];
 
+  // Chia mục: bên trái chọn từng phần cài đặt, bên phải 1 điện thoại xem trước cố định, đổi theo phần đang chọn
+  // và theo mọi thay đổi. Mọi thay đổi tự lưu (cấu hình hệ thống tự lưu sau khi ngừng thao tác, màn chào tự lưu riêng).
+  const [sec, setSec] = useState<PsSec>(() => { try { return (sessionStorage.getItem('ps_sec') as PsSec) || 'welcome'; } catch { return 'welcome'; } });
+  const pickSec = (s2: PsSec) => { setSec(s2); try { sessionStorage.setItem('ps_sec', s2); } catch { /* bỏ qua */ } };
+  const w = useWelcomeConfig();
+
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
+    <div className="space-y-4">
+      <style>{'.ps-pv{display:none!important}'}</style>
+      <div className="bg-white px-6 py-5 rounded-2xl border border-slate-100 shadow-sm text-left">
         <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2"><Smartphone className="w-4 h-4 text-brand" /> Giao diện trên điện thoại</h2>
-        <p className="text-[13px] text-slate-500 mt-1">Chỉnh màn chào khi chưa đăng nhập, đầu Trang chủ, băng giới thiệu ở trang Thông báo và cách dùng từng chức năng khi mọi người mở EduGo bằng điện thoại. Mục này chỉ hiện với quản trị viên trên máy tính. Thay đổi được lưu tự động như các mục khác.</p>
+        <p className="text-[13px] text-slate-500 mt-1">Chọn từng phần ở bên trái, điện thoại bên phải hiện ngay mọi thay đổi. Tất cả tự lưu, không cần bấm nút. Mục này chỉ hiện với quản trị viên trên máy tính.</p>
       </div>
-
-      {/* Màn chào khi chưa đăng nhập (ô đăng nhập, đăng ký ngay trên màn hình) */}
-      <PhoneWelcomeSettingsBox />
-
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-start">
+        <div className="min-w-0 flex-1 space-y-4">
+          <div className="flex flex-wrap gap-1.5 rounded-2xl bg-slate-100 p-1.5">
+            {PS_SECS.map(x => { const I = x.icon; const on = sec === x.id; return (
+              <button key={x.id} type="button" onClick={() => pickSec(x.id)}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[12.5px] font-semibold transition-all ${on ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                <I className={`h-4 w-4 ${on ? 'text-brand' : ''}`} />{x.label}
+              </button>
+            ); })}
+          </div>
+          {sec === 'welcome' && <PhoneWelcomeSettingsBox w={w} />}
       {/* Đầu Trang chủ điện thoại */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
+      {sec === 'banner' && <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
         <div className="flex flex-col gap-6 lg:flex-row">
           <div className="flex-1 space-y-4">
             <div className="flex items-start justify-between gap-4">
@@ -100,7 +115,7 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
           </div>
 
           {/* Xem trước trên khung điện thoại */}
-          <div className="shrink-0">
+          <div className="ps-pv shrink-0">
             <p className="mb-2 text-[11px] font-bold text-slate-500">Xem trước</p>
             <div className="ph w-[320px] overflow-hidden rounded-[28px] border-[6px] border-slate-900 bg-[#f3f6f9] shadow-xl">
               <PhoneTop settings={formState} ui={ui} name="Tên người dùng" unread={1}
@@ -109,10 +124,10 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
             </div>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Băng giới thiệu ở trang Thông báo */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
+      {sec === 'noti' && <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
         <div className="flex flex-col gap-6 lg:flex-row">
           <div className="flex-1 space-y-4">
             <div className="flex items-start justify-between gap-4">
@@ -150,7 +165,7 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
               </div>
             </div>
           </div>
-          <div className="shrink-0">
+          <div className="ps-pv shrink-0">
             <p className="mb-2 text-[11px] font-bold text-slate-500">Xem trước</p>
             <div className="ph w-[320px] overflow-hidden rounded-[28px] border-[6px] border-slate-900 bg-[#f3f6f9] shadow-xl">
               <div className="ph-head" style={{ paddingTop: 16 }}><h2>Thông báo</h2></div>
@@ -158,20 +173,15 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
             </div>
           </div>
         </div>
-      </div>
+      </div>}
 
-      {/* 4 nút tròn đầu Trang chủ */}
-      <ActsCard formState={formState} ui={ui} setUi={setUi} sw={sw} field={field} />
-
-      {/* Thanh menu dưới kiểu kính mờ */}
-      <GridGlassCard ui={ui} setUi={setUi} sw={sw} />
-      <NavGlassCard ui={ui} setUi={setUi} sw={sw} />
-
-      {/* Lưới chức năng ở Trang chủ điện thoại */}
-      <GridOrderCard formState={formState} ui={ui} setUi={setUi} sw={sw} />
+      {sec === 'acts' && <ActsCard formState={formState} ui={ui} setUi={setUi} sw={sw} field={field} />}
+      {sec === 'glass' && <GridGlassCard ui={ui} setUi={setUi} sw={sw} />}
+      {sec === 'nav' && <NavGlassCard ui={ui} setUi={setUi} sw={sw} />}
+      {sec === 'grid' && <GridOrderCard formState={formState} ui={ui} setUi={setUi} sw={sw} />}
 
       {/* Cách dùng từng chức năng */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left space-y-4">
+      {sec === 'modes' && <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left space-y-4">
         <div>
           <h3 className="text-sm font-bold text-slate-800">Chức năng trên điện thoại</h3>
           <p className="text-[12px] text-slate-500">Dùng đầy đủ là mở bình thường. Chỉ trên máy tính là làm mờ trong danh sách, bấm vào sẽ đề nghị gửi đường link sang máy tính, người dùng vẫn chọn mở trên điện thoại được. Ẩn trên điện thoại là không hiện ở Trang chủ, Tất cả chức năng và nút Tạo mới khi dùng điện thoại.</p>
@@ -202,7 +212,79 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
             })}
           </div>
         ))}
+      </div>}
+        </div>
+
+        {/* Điện thoại xem trước, đứng yên bên phải khi cuộn */}
+        <div className="shrink-0 xl:sticky xl:top-4">
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Xem trước · {PS_SECS.find(x => x.id === sec)?.label}</p>
+          <PsPreview sec={sec} formState={formState} ui={ui} welcome={w.cfg?.phone} />
+        </div>
       </div>
+    </div>
+  );
+}
+
+type PsSec = 'welcome' | 'banner' | 'acts' | 'grid' | 'glass' | 'nav' | 'noti' | 'modes';
+const PS_SECS: { id: PsSec; label: string; icon: any }[] = [
+  { id: 'welcome', label: 'Màn chào', icon: LogIn },
+  { id: 'banner', label: 'Đầu Trang chủ', icon: ImageIcon },
+  { id: 'acts', label: 'Nút tròn', icon: CircleDot },
+  { id: 'grid', label: 'Lưới chức năng', icon: LayoutGrid },
+  { id: 'glass', label: 'Kính lỏng', icon: Sparkles },
+  { id: 'nav', label: 'Thanh menu dưới', icon: PanelBottom },
+  { id: 'noti', label: 'Băng Thông báo', icon: Bell },
+  { id: 'modes', label: 'Chức năng trên điện thoại', icon: Smartphone },
+];
+
+// Điện thoại xem trước dùng chung: dựng đúng các phần thật (màn chào, đầu Trang chủ, lưới, thanh menu, Thông báo)
+// theo cấu hình đang sửa, nên thấy ngay mọi thay đổi.
+function PsPreview({ sec, formState, ui, welcome }: { sec: PsSec; formState: AppSettings; ui: PhoneUi; welcome?: any }) {
+  const ov = formState.moduleOverrides || {};
+  const acts = resolveActs(ui, id => phoneMode(id, formState) === 'full' && !ov[id]?.hidden, id => ov[id]?.label?.trim() || undefined);
+  const actIds = new Set(acts.map(a => a.id));
+  const hide = new Set(ui.gridHide || []);
+  const order = ui.gridOrder || [];
+  const mods = MODULE_REGISTRY.filter(m => !PHONE_GRID_SKIP.has(m.id) && !actIds.has(m.id) && !hide.has(m.id) && !ov[m.id]?.hidden && phoneMode(m.id, formState) === 'full')
+    .sort((a, b) => { const ia = order.indexOf(a.id), ib = order.indexOf(b.id); return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib); }).slice(0, 8);
+  const gv = gridGlassVars(ui);
+  const g = navGlassStyle(ui);
+  const frame = 'ph relative h-[720px] w-[350px] overflow-hidden rounded-[44px] border-[9px] border-slate-900 bg-[#f3f6f9] shadow-2xl';
+  if (sec === 'welcome') return <div className={frame}><PhoneWelcome preview={welcome || {}} /></div>;
+  if (sec === 'noti') return (
+    <div className={frame}>
+      <div className="ph-head" style={{ paddingTop: 34 }}><h2>Thông báo</h2></div>
+      {ui.notiOn === false ? <p className="bg-white p-4 text-center text-[11px] text-slate-400">Đang tắt băng giới thiệu</p> : <NotiBanner ui={ui} canOpen={() => true} onOpen={() => {}} />}
+      <div className="space-y-2 p-3">
+        {['Trần Minh Anh thêm bạn vào giáo trình', 'Bạn được thêm vào lớp K23', 'Hạn chót công việc sắp tới'].map(t => <div key={t} className="rounded-2xl bg-white px-3 py-3 text-[12px] font-semibold text-slate-600">{t}</div>)}
+      </div>
+    </div>
+  );
+  return (
+    <div className={`${frame} ${gv.on ? 'ph-lg-demo' : ''}`} style={{ '--lg-a': gv.a, '--lg-b': gv.b } as React.CSSProperties}>
+      <div className="h-full overflow-y-auto pb-24" style={{ scrollbarWidth: 'none' }}>
+        <PhoneTop settings={formState} ui={ui} name="Tên người dùng" unread={1}
+          acts={acts.map(a => ({ key: a.id, label: a.label, icon: a.icon, run: () => {} }))} />
+        <div className="ph-grid">
+          <div className="ph-apps">
+            {mods.map(m => { const I = m.icon; return (
+              <span key={m.id} className="ph-app"><span className="ph-ico" style={{ background: 'var(--ph-brand-light)', color: 'var(--ph-brand-hover)' }}><I className="h-6 w-6" /></span><span>{ov[m.id]?.label?.trim() || m.label}</span></span>
+            ); })}
+          </div>
+        </div>
+        <div className="space-y-2 px-3 pt-4">
+          {['Tiếp tục: Bài 5. Nhóm brush tạo khối', '38 bài nộp chờ chấm', 'Lời nhắc: họp khoa 14:00'].map(t => <div key={t} className="rounded-2xl bg-white px-3 py-3 text-[12px] font-semibold text-slate-600">{t}</div>)}
+        </div>
+      </div>
+      <nav className={`ph-nav2 ${g.cls}`} style={{ ...(g.style as React.CSSProperties), position: 'absolute', left: 8, right: 8, bottom: 12, height: 70 }}>
+        <span className="gl" aria-hidden />
+        <span className="bg"><span className="l" /><svg viewBox="0 0 110 70" aria-hidden><path d="M0 0H10C18 0 20 4 22 10A36 36 0 0 0 88 10C90 4 92 0 100 0H110V70H0Z" /></svg><span className="r" /></span>
+        <span className="it on"><HomeIcon />Trang chủ</span>
+        <span className="it"><LayoutGrid />Chức năng</span>
+        <span className="mid"><span className="b"><Plus /></span>Tạo mới</span>
+        <span className="it"><Bell />Thông báo</span>
+        <span className="it"><User />Cá nhân</span>
+      </nav>
     </div>
   );
 }
@@ -400,7 +482,7 @@ function NavGlassCard({ ui, setUi, sw }: { ui: PhoneUi; setUi: (p: Partial<Phone
             <button type="button" onClick={() => setUi({ navAlpha: undefined, navBlur: undefined })} className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-brand"><RotateCcw className="h-3 w-3" /> Về mức mặc định</button>
           </div>
         </div>
-        <div className="shrink-0">
+        <div className="ps-pv shrink-0">
           <p className="mb-2 text-[11px] font-bold text-slate-500">Xem trước</p>
           <div className="ph relative h-[230px] w-[372px] overflow-hidden rounded-[28px] border-[6px] border-slate-900 shadow-xl"
             style={{ background: 'linear-gradient(160deg,#f1f5f9 0%,#f1f5f9 30%,#fde68a 30%,#fb7185 55%,#818cf8 80%,#34d399 100%)' }}>
@@ -459,7 +541,7 @@ function GridGlassCard({ ui, setUi, sw }: { ui: PhoneUi; setUi: (p: Partial<Phon
             <button type="button" onClick={() => setUi({ gridAlpha: undefined, gridBlur: undefined })} className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-brand"><RotateCcw className="h-3 w-3" /> Về mức mặc định</button>
           </div>
         </div>
-        <div className="shrink-0">
+        <div className="ps-pv shrink-0">
           <p className="mb-2 text-[11px] font-bold text-slate-500">Lưới mẫu</p>
           <div className={`ph relative h-[230px] w-[372px] overflow-hidden rounded-[28px] border-[6px] border-slate-900 shadow-xl ${v.on ? 'ph-lg-demo' : ''}`}
             style={{ '--lg-a': v.a, '--lg-b': v.b, background: 'linear-gradient(180deg,var(--color-brand-hover,#059669) 0%,var(--color-brand,#10b981) 52%,#f1f5f9 52%)' } as React.CSSProperties}>

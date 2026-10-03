@@ -176,7 +176,7 @@ export default function PhoneWelcomeSettings({ value, onChange }: { value: Phone
         </div>
 
         {/* Xem trước */}
-        <div className="shrink-0 xl:sticky xl:top-4 xl:self-start">
+        <div className="ps-pv shrink-0 xl:sticky xl:top-4 xl:self-start">
           <p className="mb-2 text-[11px] font-bold text-slate-500">Xem trước</p>
           <div className="relative h-[700px] w-[340px] overflow-hidden rounded-[40px] border-[8px] border-slate-900 bg-slate-900 shadow-xl">
             <PhoneWelcome preview={c} />
@@ -189,18 +189,25 @@ export default function PhoneWelcomeSettings({ value, onChange }: { value: Phone
 
 // Dùng trong Cấu hình hệ thống, mục Giao diện trên điện thoại: tự tải cấu hình trang đầu, sửa phần màn chào, tự lưu sau 1 giây.
 // Lưu cùng chỗ với trang đầu (bảng portfolio_settings) vì khách chưa đăng nhập cũng phải đọc được.
-export function PhoneWelcomeSettingsBox() {
+// Cấu hình màn chào (lưu cùng chỗ với trang đầu vì khách chưa đăng nhập cũng phải đọc được), tự lưu sau 1 giây.
+export function useWelcomeConfig() {
   const [cfg, setCfg] = useState<LandingConfig | null>(null);
   const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => { getLandingConfig().then(setCfg).catch(() => setCfg({ banners: [], defaultApps: [] })); }, []);
+  const latest = useRef<LandingConfig | null>(null);
+  useEffect(() => { getLandingConfig().then(c => { latest.current = c; setCfg(c); }).catch(() => setCfg({ banners: [], defaultApps: [] })); }, []);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
-  if (!cfg) return <div className="rounded-2xl border border-slate-100 bg-white p-8 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" /> Đang tải màn chào...</div>;
   const onChange = (phone: PhoneWelcomeConfig) => {
-    const next = { ...cfg, phone }; setCfg(next); setState('saving');
+    const next = { ...(latest.current || cfg || { banners: [], defaultApps: [] }), phone }; latest.current = next; setCfg(next); setState('saving');
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(async () => { try { await saveLandingConfig(next); setState('saved'); } catch { setState('error'); } }, 900);
   };
+  return { cfg, state, onChange };
+}
+
+export function PhoneWelcomeSettingsBox({ w }: { w: ReturnType<typeof useWelcomeConfig> }) {
+  const { cfg, state, onChange } = w;
+  if (!cfg) return <div className="rounded-2xl border border-slate-100 bg-white p-8 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" /> Đang tải màn chào...</div>;
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center justify-end gap-2">
