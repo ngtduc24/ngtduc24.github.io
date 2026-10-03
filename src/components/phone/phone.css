@@ -712,3 +712,8 @@ html.ph-lg .ph-grid .ph-ico, .ph-lg-demo .ph-grid .ph-ico { box-shadow: inset 0 
 .ph-tabs button.on { height: 50px; background: var(--on); color: var(--ph-brand-hover); font-weight: 800; border-bottom-color: transparent !important; }
 .ph-tabs button.on:first-child { border-top-left-radius: 22px; }
 .pk-hd:has(> .pk-ftabs:last-child) { box-shadow: none; }
+/* Danh sách lớp: mỗi lớp là 1 thẻ riêng */
+.pk-grp.pk-cards { background: none; padding: 0; border-radius: 0; box-shadow: none; display: flex; flex-direction: column; gap: 10px; }
+.pk-cards .pk-li { background: #fff; border-radius: 20px; padding: 14px 14px 14px 12px; border-bottom: 0; box-shadow: 0 1px 2px rgba(15,23,42,.05), 0 6px 16px -12px rgba(15,23,42,.18); gap: 12px; }
+.pk-cards .pk-li .ic { width: 42px; height: 42px; border-radius: 14px; background: var(--ph-brand-light); align-self: flex-start; }
+.pk-cards .pk-li .ic svg { width: 22px; height: 22px; }

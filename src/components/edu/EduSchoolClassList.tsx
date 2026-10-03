@@ -400,7 +400,7 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
                     <span>{sc?.name || schoolName(sid) || 'Chưa có trường'}</span><em>{rows.length} lớp</em>
                     {sc && (mine(sc) || sc.access?.perms.manageMembers) && <button type="button" aria-label="Thao tác với trường" onClick={() => setPSheet({ school: sc })}><MoreVertical /></button>}
                   </div>
-                  <div className="pk-grp">
+                  <div className="pk-grp pk-cards">
                     {rows.map(c => { const st = classStats[c.id]; const l = left(st?.deadline); const n = st?.students || 0; const canMenu = mine(c) || !!c.access?.perms.manageMembers; return (
                       <div key={c.id} className="pk-li" role="button" tabIndex={0}
                         onClick={() => { if (lpFired.current) { lpFired.current = false; return; } onSelectClass(c.id); }}
