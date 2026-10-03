@@ -109,3 +109,5 @@
 .pw.kb .card { margin-top: 10px; }
 .pw.kb .foot { height: 12px; }
 .pw { touch-action: pan-y; overscroll-behavior: none; }
+.pw.kb .view > .grow { display: none; }
+.pw.kb .view { justify-content: flex-start; }

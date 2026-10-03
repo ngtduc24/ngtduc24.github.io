@@ -192,6 +192,9 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
   // Bàn phím iPhone mở: thu khung về đúng phần màn hình còn thấy (visualViewport) để thẻ đăng nhập tự đẩy lên trên bàn phím,
   // ẩn lời chào lớn và banner cho đủ chỗ, cuộn ô đang nhập vào giữa. Khoá thu phóng và cuộn trang khi đang ở màn chào.
   const [kb, setKb] = useState<{ h: number; top: number } | null>(null);
+  // Đang gõ: dựa vào ô nhập đang được chọn (không chờ đo bàn phím, vì iPhone có lúc không báo đổi kích thước),
+  // thẻ đăng nhập dời lên sát đầu màn hình nên bàn phím không che được.
+  const [typing, setTyping] = useState(false);
   const viewRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (preview) return;
@@ -209,9 +212,13 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
     const focusIn = (e: FocusEvent) => {
       const el = e.target as HTMLElement;
       if (!el || el.tagName !== 'INPUT') return;
+      setTyping(true);
       window.setTimeout(() => { on(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 320);
     };
-    const focusOut = () => window.setTimeout(() => { on(); if (!document.activeElement || document.activeElement.tagName !== 'INPUT') window.scrollTo(0, 0); }, 120);
+    const focusOut = () => window.setTimeout(() => {
+      on();
+      if (!document.activeElement || document.activeElement.tagName !== 'INPUT') { setTyping(false); window.scrollTo(0, 0); }
+    }, 120);
     document.addEventListener('focusin', focusIn); document.addEventListener('focusout', focusOut);
     return () => {
       vv?.removeEventListener('resize', on); vv?.removeEventListener('scroll', on);
@@ -225,7 +232,7 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
     ...(kb ? { top: kb.top, height: kb.h, bottom: 'auto' } : {}) } as React.CSSProperties;
 
   return (
-    <div className={`pw ${preview ? 'pv' : ''} ${kb ? 'kb' : ''}`} style={style}>
+    <div className={`pw ${preview ? 'pv' : ''} ${kb || typing ? 'kb' : ''}`} style={style}>
       <div className="art" aria-hidden>
         {artKey === 'image'
           ? <div className="photo" style={{ backgroundImage: `url(${cfg.bgImage})`, backgroundPosition: cfg.bgPosition || 'center' }} />
