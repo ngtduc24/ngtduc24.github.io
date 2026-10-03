@@ -126,8 +126,8 @@ export default function PhoneHome() {
         acts={acts} onProfile={() => openProfile(user.id)} onBell={() => open('notifications')}
         onSearch={() => { try { sessionStorage.setItem('open_hint:phone_search', '1'); } catch { /* bỏ qua */ } open('all_features'); }} />
 
-      {/* Lưới chức năng màu, thẻ trắng đè lên đầu trang */}
-      <div className="ph-grid">
+      {/* Lưới chức năng màu, thẻ trắng đè lên đầu trang. Tài khoản ít chức năng (đã nằm hết ở cụm nút tròn) thì không hiện khung trống. */}
+      {gridShown.length > 0 && <div className="ph-grid">
         <div className="ph-apps">
           {gridShown.map(m => { const c = tone(m.color); return (
             <button key={m.id} type="button" className="ph-app" onClick={() => open(m.id)}>
@@ -141,7 +141,7 @@ export default function PhoneHome() {
             <ChevronDown style={{ transform: expand ? 'rotate(180deg)' : undefined }} />
           </button>
         )}
-      </div>
+      </div>}
 
       {/* Tiếp tục */}
       {docs.length > 0 && <>
