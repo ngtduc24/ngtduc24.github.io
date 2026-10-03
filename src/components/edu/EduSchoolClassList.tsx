@@ -34,7 +34,7 @@ import { PhoneExt, PhoneSearch, PhoneSeg, PhoneChips, PhoneChip, PhoneSheet, Pho
 import { askText } from '../ui/Dialogs';
 import { getGrades } from '../../lib/edu';
 import { phoneMode, phoneUi } from '../../lib/device';
-import { PhoneTop, tone } from '../phone/PhoneHome';
+import { PhoneTop } from '../phone/PhoneHome';
 import { MODULE_REGISTRY } from '../../lib/modules';
 import ShareDialog from '../ui/ShareDialog';
 import type { CollabType } from '../../lib/collab';
@@ -64,6 +64,8 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const phone = usePhoneMaybe();
+  const lpTimer = React.useRef<number | undefined>(undefined);
+  const lpFired = React.useRef(false);
   // Điện thoại: đầu trang Lớp học có nút quay lại và về Trang chủ riêng, nên ẩn thanh trên của ứng dụng.
   useEffect(() => {
     if (!phone) return;
@@ -359,10 +361,10 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
               {tiles.length > 0 && (
                 <div className="ph-grid">
                   <div className="ph-apps">
-                    {tiles.map(t => { const c = tone(meta(t.id)?.color); const I = t.icon; return (
+                    {tiles.map(t => { const I = t.icon; return (
                       <button key={t.key} type="button" className="ph-app" onClick={t.run}>
                         {t.lap && <span className="lap"><Monitor /></span>}
-                        <span className="ph-ico" style={{ background: c.bg, color: c.fg }}><I /></span><span>{t.label}</span>
+                        <span className="ph-ico" style={{ background: 'var(--ph-brand-light)', color: 'var(--ph-brand-hover)' }}><I /></span><span>{t.label}</span>
                       </button>
                     ); })}
                   </div>
@@ -384,43 +386,48 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
           <PhoneChip on={pQuick === 'pending'} onClick={() => setPQuick('pending')}>Có bài chờ chấm</PhoneChip>
           <PhoneChip on={pQuick === 'soon'} onClick={() => setPQuick('soon')}>Sắp hết hạn</PhoneChip>
         </PhoneChips>
-        {pSchool && (() => { const sc = schools.find(x => x.id === pSchool); return sc ? (
-          <div className="pk-school-h"><School className="h-5 w-5 text-brand" /><b>{sc.name}</b><span>{list.length} lớp</span>
-            {(mine(sc) || sc.access?.perms.manageMembers) && <button type="button" onClick={() => setPSheet({ school: sc })}><MoreVertical />Trường</button>}
-          </div>) : null; })()}
-        {list.length === 0 ? <PhoneEmpty icon={GraduationCap} title={classes.length ? 'Không có lớp nào khớp' : 'Chưa có lớp học nào'} sub={!classes.length && canCreate ? 'Bấm Lớp mới để tạo lớp đầu tiên, hoặc Import từ Excel ở nút ba chấm.' : undefined} /> : (
-          <div className="pk-list">
-            {list.map(c => { const st = classStats[c.id]; const l = left(st?.deadline); const n = st?.students || 0; return (
-              <div key={c.id} className="pk-card pk-cl" onClick={() => onSelectClass(c.id)} role="button" tabIndex={0}>
-                <div className="band" style={{ background: bandOf(c.schoolId || c.id), height: 64 }}>
-                  <span className="k">{c.edu_schools?.name || schoolName(c.schoolId)}</span>
-                  <GraduationCap className="bi" />
-                  {(mine(c) || !!c.access?.perms.manageMembers) && <button type="button" className="mn" aria-label="Thao tác với lớp" onClick={e => { e.stopPropagation(); setPSheet({ cls: c }); }}><MoreVertical /></button>}
-                </div>
-                <div className="bd">
-                  <b>{c.name}</b>
-                  <div className="tags">
-                    <span className="tag">{st ? `${n} sinh viên` : 'Đang tải...'}</span>
-                    {st?.assignments != null && <span className="tag">{st.assignments} bài tập</span>}
-                    {!mine(c) && <span className="tag p">Được chia sẻ</span>}
+        {list.length === 0 ? <PhoneEmpty icon={GraduationCap} title={classes.length ? 'Không có lớp nào khớp' : 'Chưa có lớp học nào'} sub={!classes.length && canCreate ? 'Bấm Lớp mới để tạo lớp đầu tiên, hoặc Import từ Excel ở nút Khác.' : undefined} /> : (
+          // Danh sách gọn theo từng trường: thẻ trắng bo tròn, mỗi lớp 1 dòng có biểu tượng, tên, thông tin phụ, mũi tên.
+          // Giữ tay trên 1 dòng để mở thao tác với lớp (cộng tác, đổi tên, xoá).
+          <div className="pk-list" style={{ gap: 16 }}>
+            {Array.from(new Set(list.map(c => c.schoolId))).map(sid => {
+              const sc = schools.find(x => x.id === sid);
+              const rows = list.filter(c => c.schoolId === sid);
+              return (
+                <div key={sid || 'none'}>
+                  <div className="pk-grp-h">
+                    <span>{sc?.name || schoolName(sid) || 'Chưa có trường'}</span><em>{rows.length} lớp</em>
+                    {sc && (mine(sc) || sc.access?.perms.manageMembers) && <button type="button" aria-label="Thao tác với trường" onClick={() => setPSheet({ school: sc })}><MoreVertical /></button>}
                   </div>
-                  {st?.assignmentTitle && (
-                    <div className="asg">
-                      <div className="t"><b>{st.assignmentTitle}</b>{l && <span className={`pk-bd ${l.c}`}>{l.t}</span>}</div>
-                      <div className="pk-prog"><i style={{ width: `${n ? Math.min(100, st.submitted / n * 100) : 0}%` }} /></div>
-                      <div className="p2"><span>{st.submitted} trên {n} đã nộp</span>{st.pending ? <em>{st.pending} bài chờ chấm</em> : st.submitted ? <span>Đã chấm hết</span> : null}</div>
-                    </div>
-                  )}
-                  <div className="ft3">
-                    <span className="sp" onClick={e => e.stopPropagation()}>{(classCollabs[c.id] || []).length > 0 && <AvatarStack people={[{ id: c.ownerId }, ...(classCollabs[c.id] || [])]} size="sm" singleWithName={false} />}</span>
-                    <button type="button" className="b gr" onClick={e => { e.stopPropagation(); onSelectClass(c.id); }}>Mở lớp</button>
-                    {!!st?.pending && canGrade && st.assignmentId && st.gradeColumnId && onGrade && (
-                      <button type="button" className="b" onClick={e => { e.stopPropagation(); onGrade(c.id, st.assignmentId!, st.gradeColumnId!); }}><ClipboardList />Chấm {st.pending} bài</button>
-                    )}
+                  <div className="pk-grp">
+                    {rows.map(c => { const st = classStats[c.id]; const l = left(st?.deadline); const n = st?.students || 0; const canMenu = mine(c) || !!c.access?.perms.manageMembers; return (
+                      <div key={c.id} className="pk-li" role="button" tabIndex={0}
+                        onClick={() => { if (lpFired.current) { lpFired.current = false; return; } onSelectClass(c.id); }}
+                        onContextMenu={e => { if (!canMenu) return; e.preventDefault(); setPSheet({ cls: c }); }}
+                        onTouchStart={() => { if (!canMenu) return; lpFired.current = false; lpTimer.current = window.setTimeout(() => { lpFired.current = true; setPSheet({ cls: c }); }, 550); }}
+                        onTouchMove={() => window.clearTimeout(lpTimer.current)} onTouchEnd={() => window.clearTimeout(lpTimer.current)}>
+                        <span className="ic"><GraduationCap /></span>
+                        <span className="m">
+                          <b>{c.name}</b>
+                          <small>{st ? `${n} sinh viên${st.assignments != null ? ` · ${st.assignments} bài tập` : ''}` : 'Đang tải...'}{!mine(c) ? ' · Được chia sẻ' : ''}</small>
+                          {st?.assignmentTitle && (
+                            <small className="as">
+                              <span className="t">{st.assignmentTitle}</span>
+                              <span>{st.submitted}/{n} đã nộp{l ? ` · ${l.t.toLowerCase()}` : ''}</span>
+                            </small>
+                          )}
+                        </span>
+                        {!!st?.pending && canGrade && st.assignmentId && st.gradeColumnId && onGrade ? (
+                          <button type="button" className="pd" onClick={e => { e.stopPropagation(); onGrade(c.id, st.assignmentId!, st.gradeColumnId!); }}>Chấm {st.pending}</button>
+                        ) : null}
+                        <ChevronRight className="cv" />
+                      </div>
+                    ); })}
                   </div>
                 </div>
-              </div>
-            ); })}
+              );
+            })}
+            <p className="pk-hint2">Giữ tay trên 1 lớp để mở thao tác cộng tác, đổi tên, xoá.</p>
           </div>
         )}
 
