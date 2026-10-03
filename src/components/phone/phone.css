@@ -439,3 +439,4 @@ html.ph-overlay .pk-fab, html.ph-immersive .pk-fab { display: none; }
 .pk-pickbar .del:disabled { opacity: .45; }
 .pk-more { display: block; width: 100%; margin-top: 4px; padding: 12px; text-align: center; font-size: 13px; font-weight: 700; color: var(--ph-brand-hover); }
 .pk-row .m { display: block; }
+html.ph-own-head .ph-appbar { display: none; }

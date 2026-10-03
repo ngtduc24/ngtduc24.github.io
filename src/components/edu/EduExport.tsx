@@ -4,57 +4,52 @@ import { Download, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { EduUser, EduClass, EduGradeColumn, EduGrade } from '../../types/edu';
 
-interface EduExportProps {
+export interface EduExportProps {
   clazz: EduClass & { edu_schools: { name: string } };
   users: EduUser[];
   gradeColumns: EduGradeColumn[];
   grades: EduGrade[];
 }
 
-export default function EduExport({ clazz, users, gradeColumns, grades }: EduExportProps) {
-  
-  const exportColumn = (columnId: string) => {
-    const column = gradeColumns.find(c => c.id === columnId);
-    if (!column) return;
+// Xuất bảng điểm ra Excel, dùng chung cho nút trên máy tính và bảng thao tác trên điện thoại.
+export function exportGradeColumn({ clazz, users, gradeColumns, grades }: EduExportProps, columnId: string) {
+  const column = gradeColumns.find(c => c.id === columnId);
+  if (!column) return;
+  const data = users.map(user => {
+    const grade = grades.find(g => g.gradeColumnId === columnId && g.userId === user.id);
+    return {
+      'STT': user.stt,
+      'MSSV': user.mssv,
+      'Họ và Tên': user.fullName,
+      'Điểm': grade && grade.score !== undefined ? grade.score : 0,
+      'Ghi chú': grade && grade.score !== undefined ? (grade.note || '') : 'Không nộp bài'
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Bảng điểm");
+  XLSX.writeFile(wb, `Bang_diem_${clazz.name}_${column.name}.xlsx`);
+}
 
-    const data = users.map(user => {
-      const grade = grades.find(g => g.gradeColumnId === columnId && g.userId === user.id);
-      return {
-        'STT': user.stt,
-        'MSSV': user.mssv,
-        'Họ và Tên': user.fullName,
-        'Điểm': grade && grade.score !== undefined ? grade.score : 0,
-        'Ghi chú': grade && grade.score !== undefined ? (grade.note || '') : 'Không nộp bài'
-      };
+export function exportAllGrades({ clazz, users, gradeColumns, grades }: EduExportProps) {
+  const data = users.map(user => {
+    const row: any = { 'STT': user.stt, 'MSSV': user.mssv, 'Họ và Tên': user.fullName };
+    gradeColumns.forEach(col => {
+      const grade = grades.find(g => g.gradeColumnId === col.id && g.userId === user.id);
+      row[col.name] = grade && grade.score !== undefined ? grade.score : 0;
     });
+    return row;
+  });
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Tổng hợp");
+  XLSX.writeFile(wb, `Bang_diem_Tong_hop_${clazz.name}.xlsx`);
+}
 
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Bảng điểm");
-    XLSX.writeFile(wb, `Bang_diem_${clazz.name}_${column.name}.xlsx`);
-  };
-
-  const exportAll = () => {
-    const data = users.map(user => {
-      const row: any = {
-        'STT': user.stt,
-        'MSSV': user.mssv,
-        'Họ và Tên': user.fullName,
-      };
-
-      gradeColumns.forEach(col => {
-        const grade = grades.find(g => g.gradeColumnId === col.id && g.userId === user.id);
-        row[col.name] = grade && grade.score !== undefined ? grade.score : 0;
-      });
-
-      return row;
-    });
-
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Tổng hợp");
-    XLSX.writeFile(wb, `Bang_diem_Tong_hop_${clazz.name}.xlsx`);
-  };
+export default function EduExport(props: EduExportProps) {
+  const { gradeColumns } = props;
+  const exportColumn = (columnId: string) => exportGradeColumn(props, columnId);
+  const exportAll = () => exportAllGrades(props);
 
   return (
     <div className="flex gap-2">

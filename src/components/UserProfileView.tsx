@@ -3,6 +3,7 @@ import { ArrowLeft, BookOpen, Globe, Library, ListChecks, Loader2, Pencil, Prese
 import { supabase } from '../lib/supabase';
 import { usePerson, loadPeople } from '../lib/people';
 import { AvatarImg } from './ui/People';
+import { usePhoneMaybe } from './phone/PhoneShell';
 import { prettyShareUrl } from '../lib/shareLinks';
 
 type Kind = 'lesson' | 'bank' | 'deck' | 'quiz';
@@ -67,10 +68,12 @@ export default function UserProfileView({ uid, isMe, onBack, onEditMine }: { uid
     return c;
   }, [posts]);
   const shown = (posts || []).filter(p => filter === 'all' || p.kind === filter);
+  const phone = usePhoneMaybe();
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 animate-fadeIn">
-      <button onClick={onBack} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-brand"><ArrowLeft className="h-4 w-4" /> Quay lại</button>
+      {/* Điện thoại đã có nút quay lại trên thanh trên nên không lặp lại */}
+      {!phone && <button onClick={onBack} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-brand"><ArrowLeft className="h-4 w-4" /> Quay lại</button>}
 
       {/* Ảnh bìa, ảnh đại diện, tên */}
       <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
