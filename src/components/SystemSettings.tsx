@@ -79,8 +79,13 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
   const skipNextSync = useRef(false);
   const saveTimer = useRef<any>(null);
 
+  // Đếm số lần người dùng sửa và số lần đã lưu xong. Còn thay đổi chưa lưu (ví dụ vừa chọn ảnh xong
+  // trong lúc lần lưu trước đang tải lại cấu hình) thì không lấy cấu hình từ máy chủ đè lên, tránh mất thay đổi.
+  const editVer = useRef(0);
+  const savedVer = useRef(0);
   useEffect(() => {
     if (skipNextSync.current) { skipNextSync.current = false; return; }
+    if (editVer.current !== savedVer.current) return;
     isProgrammatic.current = true;
     setFormState({ ...settings });
   }, [settings]);
@@ -89,11 +94,13 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
   useEffect(() => {
     if (!isAdmin) return;
     if (isProgrammatic.current) { isProgrammatic.current = false; return; }
+    editVer.current += 1;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     setError(null);
     setSaving(true);
     setSuccess(false);
     saveTimer.current = setTimeout(async () => {
+      const ver = editVer.current;
       try {
         const dataToSave = { ...formState };
         Object.keys(dataToSave).forEach(key => {
@@ -101,6 +108,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
         });
         const res = await saveDefaultSettingsToSupabase(dataToSave as AppSettings);
         const failed = res?.failedCols || [];
+        savedVer.current = Math.max(savedVer.current, ver);
         if (failed.length > 0) {
           const names: Record<string, string> = {
             module_overrides: 'Cài đặt chức năng', loading_gif_url: 'Ảnh tải trang', maintenance_mode: 'Tạm tắt hệ thống',
@@ -111,6 +119,7 @@ export default function SystemSettings({ settings, onRefreshSettings, isAdmin, c
         } else {
           setSuccess(true);
           setTimeout(() => setSuccess(false), 2000);
+          savedVer.current = Math.max(savedVer.current, ver);
           skipNextSync.current = true;
           onRefreshSettings();
         }
