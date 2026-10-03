@@ -1,4 +1,5 @@
 
+import StickyHead from '../ui/StickyHead';
 import React, { useState, useEffect } from 'react';
 import { prettyShareUrl } from '../../lib/shareLinks';
 import { copyText } from '../ui/Dialogs';
@@ -78,19 +79,16 @@ export default function EduAssignmentDetail({ classId, assignmentId, onBack }: E
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      <PageHeader
-        icon={<IconButton label="Quay lại danh sách" variant="ghost" onClick={onBack} className="text-brand hover:bg-brand-light"><ArrowLeft size={20} /></IconButton>}
-        title={assignment.title}
-        description="Chi tiết bài tập và thống kê nộp bài"
-        actions={<>
-          <Button variant="outline" icon={<FileDown size={16} />} onClick={async () => exportAssignmentToPdf({
+      <StickyHead onBack={onBack} backTitle="Quay lại danh sách" icon={<FileText className="h-6 w-6" />}
+        title={assignment.title} subtitle="Chi tiết bài tập và thống kê nộp bài"
+        actions={[
+          { key: 'pdf', label: 'Tải PDF', icon: <FileDown className="h-4 w-4 sm:h-3.5 sm:w-3.5" />, onClick: async () => exportAssignmentToPdf({
             title: assignment.title, content: assignment.content, subjectName: await subjectNameById(assignment.subjectId),
             deadline: assignment.deadline, allowedFileTypes: assignment.allowedFileTypes, resources: assignment.resources,
-          })}>Tải PDF</Button>
-          <Button variant="outline" icon={<Copy size={16} />} onClick={copyShareLink}>Sao chép link</Button>
-          <Button icon={<ExternalLink size={16} />} onClick={() => window.open(`/tracuu.html?edu=${assignment.shareLinkId}`, '_blank', 'noreferrer')}>Mở link nộp bài</Button>
-        </>}
-      />
+          }) },
+          { key: 'copy', label: 'Sao chép link', icon: <Copy className="h-4 w-4 sm:h-3.5 sm:w-3.5" />, onClick: copyShareLink },
+          { key: 'open', label: 'Mở link nộp bài', primary: true, icon: <ExternalLink className="h-4 w-4 sm:h-3.5 sm:w-3.5" />, onClick: () => window.open(`/tracuu.html?edu=${assignment.shareLinkId}`, '_blank', 'noreferrer') },
+        ]} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Nội dung */}

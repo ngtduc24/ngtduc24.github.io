@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { UserAccount, SocialTemplate, SocialTemplateLayer, SocialPreset } from '../../types';
 import { db } from '../../lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
@@ -408,13 +409,8 @@ export default function DesignMode({ currentUser }: DesignModeProps) {
       setExportResult(result);
       setShowExportModal(true);
 
-      // Auto trigger download without browser alerts
-      const link = document.createElement('a');
-      link.href = result.dataUrl;
-      link.download = result.fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Máy tính: tự tải về ngay. Điện thoại: chờ người dùng bấm Lưu ảnh (trình duyệt điện thoại chỉ cho lưu khi có thao tác bấm).
+      if (!isTouchDevice()) saveImageFile(result.blob, result.fileName, false);
     } catch (err: any) {
       console.error('Lỗi khi kết xuất ảnh canvas:', err);
       setExportError(
@@ -429,35 +425,14 @@ export default function DesignMode({ currentUser }: DesignModeProps) {
 
   const handleDownloadAgain = () => {
     if (!exportResult) return;
-    const link = document.createElement('a');
-    link.href = exportResult.dataUrl;
-    link.download = exportResult.fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    saveImageFile(exportResult.blob, exportResult.fileName, isTouchDevice());
   };
 
   const handleOpenInNewTab = () => {
     if (!exportResult) return;
-    const w = window.open('');
-    if (w) {
-      w.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>${exportResult.fileName}</title>
-            <style>
-              body { margin: 0; background: #0f172a; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: system-ui; }
-              img { max-width: 92vw; max-height: 92vh; object-fit: contain; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border-radius: 12px; }
-            </style>
-          </head>
-          <body>
-            <img src="${exportResult.dataUrl}" alt="${exportResult.fileName}" />
-          </body>
-        </html>
-      `);
-      w.document.close();
-    }
+    const url = URL.createObjectURL(exportResult.blob);
+    window.open(url, '_blank', 'noopener');
+    window.setTimeout(() => URL.revokeObjectURL(url), 120000);
   };
 
   useEffect(() => {
@@ -1192,9 +1167,9 @@ export default function DesignMode({ currentUser }: DesignModeProps) {
       </div>
 
       {/* Save Preset Modal */}
-      {showSavePresetModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-md overflow-hidden animate-fadeIn">
+      {showSavePresetModal && createPortal(
+        <div className="fixed inset-0 z-[300] bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-md max-h-[calc(100dvh-32px)] overflow-y-auto animate-fadeIn">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-2">
                 <Bookmark className="w-4 h-4 text-brand" />
@@ -1284,12 +1259,12 @@ export default function DesignMode({ currentUser }: DesignModeProps) {
             </form>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Export Result Modal (Synchronized custom UI, no browser alert) */}
-      {showExportModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 w-full max-w-md overflow-hidden animate-fadeIn">
+      {showExportModal && createPortal(
+        <div className="fixed inset-0 z-[300] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4" onClick={() => setShowExportModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 w-full max-w-md max-h-[calc(100dvh-32px)] flex flex-col overflow-hidden animate-fadeIn" onClick={e => e.stopPropagation()}>
             
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50">
@@ -1322,7 +1297,7 @@ export default function DesignMode({ currentUser }: DesignModeProps) {
             </div>
 
             {/* Modal Body */}
-            <div className="p-4 sm:p-5">
+            <div className="p-4 sm:p-5 min-h-0 flex-1 overflow-y-auto">
               {exportResult ? (
                 <div className="space-y-4">
                   {/* Thumbnail Image Box */}
@@ -1330,7 +1305,7 @@ export default function DesignMode({ currentUser }: DesignModeProps) {
                     <img 
                       src={exportResult.dataUrl} 
                       alt="Bản xem trước ảnh xuất" 
-                      className="max-h-52 w-auto object-contain rounded-lg shadow-sm border border-slate-200/60"
+                      className="max-h-52 max-w-full w-auto object-contain rounded-lg shadow-sm border border-slate-200/60"
                     />
                     <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
                       <button
@@ -1367,7 +1342,9 @@ export default function DesignMode({ currentUser }: DesignModeProps) {
                   <div className="flex items-start gap-2 bg-brand-light/80 border border-brand/80 rounded-xl p-2.5 text-xs text-brand-hover">
                     <Check className="w-4 h-4 text-brand shrink-0 mt-0.5" />
                     <span>
-                      Tệp ảnh đã được tự động lưu về máy của bạn. Nếu trình duyệt chặn tải tự động, bạn có thể bấm nút <b>Tải lại ảnh</b> bên dưới.
+                      {isTouchDevice()
+                        ? <>Bấm nút <b>Lưu ảnh</b> bên dưới, chọn Lưu hình ảnh để cất vào thư viện ảnh của điện thoại.</>
+                        : <>Ảnh đã được tải về thư mục Tải xuống của máy. Nếu không thấy, bấm nút <b>Tải lại ảnh</b> bên dưới.</>}
                     </span>
                   </div>
                 </div>
@@ -1385,7 +1362,7 @@ export default function DesignMode({ currentUser }: DesignModeProps) {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-end gap-2 p-4 sm:p-5 border-t border-slate-100 bg-slate-50/40">
+            <div className="flex shrink-0 items-center justify-end gap-2 p-4 sm:p-5 border-t border-slate-100 bg-slate-50/40">
               {exportResult && (
                 <>
                   <button
@@ -1402,7 +1379,7 @@ export default function DesignMode({ currentUser }: DesignModeProps) {
                     className="px-4 py-2 text-xs font-bold text-white bg-brand hover:bg-brand-hover rounded-xl shadow-xs transition flex items-center gap-1.5"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Tải lại ảnh</span>
+                    <span>{isTouchDevice() ? 'Lưu ảnh' : 'Tải lại ảnh'}</span>
                   </button>
                 </>
               )}
@@ -1422,7 +1399,7 @@ export default function DesignMode({ currentUser }: DesignModeProps) {
 
           </div>
         </div>
-      )}
+      , document.body)}
       
       <style>{`
         .editor-dots-bg {
@@ -1439,4 +1416,24 @@ export default function DesignMode({ currentUser }: DesignModeProps) {
       `}</style>
     </div>
   );
+}
+
+// Lưu ảnh: điện thoại mở bảng chia sẻ để chọn Lưu hình ảnh, máy tính tải tệp về bằng đường dẫn blob
+// (đường dẫn data: quá dài thường bị trình duyệt chặn nên không thấy ảnh tải về).
+function isTouchDevice() {
+  try { return window.matchMedia('(pointer: coarse)').matches; } catch { return false; }
+}
+async function saveImageFile(blob: Blob, fileName: string, preferShare: boolean) {
+  if (preferShare) {
+    try {
+      const file = new File([blob], fileName, { type: blob.type || 'image/png' });
+      const nav: any = navigator;
+      if (nav.canShare && nav.canShare({ files: [file] })) { await nav.share({ files: [file], title: fileName }); return; }
+    } catch (e: any) { if (e?.name === 'AbortError') return; }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 60000);
 }

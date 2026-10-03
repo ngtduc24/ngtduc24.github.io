@@ -1,3 +1,4 @@
+import StickyHead from '../ui/StickyHead';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { takeOpenHint } from '../../lib/notifications';
 import type { Editor } from '@tiptap/react';
@@ -415,13 +416,13 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
     const it = viewing;
     return (
       <div className="space-y-5 animate-fadeIn">
-        <Banner onBack={() => setViewId('')} backTitle="Quay lại ngân hàng bài tập" icon={<FileText className="h-6 w-6" />}
+        <StickyHead onBack={() => setViewId('')} backTitle="Quay lại ngân hàng bài tập" icon={<FileText className="h-6 w-6" />}
           title={it.title} subtitle={[subjName(it.subjectId) || 'Chưa chọn môn', ownerName(it.ownerId)].filter(Boolean).join(' · ')}
-          actions={<>
-            {canShare(it) && <HeadBtn onClick={() => copyShareLink(it)} icon={<Link2 className="h-3.5 w-3.5" />}>Sao chép link</HeadBtn>}
-            <HeadBtn onClick={() => downloadPdf(it)} icon={<FileDown className="h-3.5 w-3.5" />}>Tải PDF</HeadBtn>
-            {canEdit(it) && <HeadBtn primary onClick={() => openEditor({ ...it })} icon={<Edit3 className="h-3.5 w-3.5" />}>Sửa</HeadBtn>}
-          </>} />
+          actions={[
+            ...(canShare(it) ? [{ key: 'link', label: 'Sao chép link', icon: <Link2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />, onClick: () => copyShareLink(it) }] : []),
+            { key: 'pdf', label: 'Tải PDF', icon: <FileDown className="h-4 w-4 sm:h-3.5 sm:w-3.5" />, onClick: () => downloadPdf(it) },
+            ...(canEdit(it) ? [{ key: 'edit', label: 'Sửa', primary: true, icon: <Edit3 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />, onClick: () => openEditor({ ...it }) }] : []),
+          ]} />
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_260px]">
           <div className="min-w-0 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7">
             {plain(it.content) || /<(img|video|iframe)/i.test(it.content || '')
@@ -429,7 +430,7 @@ export default function EduAssignmentBank({ currentUser, onExit }: { currentUser
               : <p className="text-sm italic text-slate-400">Bài tập này chưa có phần yêu cầu và hướng dẫn.</p>}
             <EduResourceList resources={it.resources} className="mt-6 border-t border-slate-100 pt-5" />
           </div>
-          <div className="h-fit rounded-3xl border border-slate-100 bg-white p-4 text-[12px] shadow-sm lg:sticky lg:top-6">
+          <div className="h-fit rounded-3xl border border-slate-100 bg-white p-4 text-[12px] shadow-sm lg:sticky lg:top-24">
             <div className="space-y-2.5 px-1">
               <Info k="Môn học" v={subjName(it.subjectId) || 'Chưa chọn môn'} />
               <Info k="Định dạng nộp" v={formatsText(it.allowedFileTypes) || 'Chưa chọn'} />
