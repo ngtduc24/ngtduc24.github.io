@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { GraduationCap, Loader2, BookOpen, Settings2, Library } from 'lucide-react';
+import { GraduationCap, Loader2, BookOpen, Settings2, Library, ChevronLeft } from 'lucide-react';
 import { UserAccount } from '../../types';
 import { PortfolioCourse, PortfolioCoursesSettings, PortfolioGlobalSettings, CourseStudent } from '../portfolioTypes';
 import {
@@ -110,69 +110,24 @@ export default function CoursesApp({ currentUser }: { currentUser: UserAccount }
   if (phone) {
     return <PhoneCourses user={currentUser} courses={courses} loading={loading} onEnroll={enroll} registering={registering} onUpdateCourse={updateCourse} settings={coursesSettings} />;
   }
-
-  // Đang mở một khoá học: trang học bài toàn khung.
-  if (detail) {
-    const related = allCards.filter(c => c.id !== detail.data.id);
+  // Máy tính: cùng giao diện mới (bố cục rộng), riêng admin bấm Quản lý khoá học thì mở trang quản lý cũ.
+  if (tab !== 'manage') {
+    return <PhoneCourses desktop user={currentUser} courses={courses} loading={loading} onEnroll={enroll} registering={registering} onUpdateCourse={updateCourse} settings={coursesSettings}
+      onManage={isAdmin ? () => setTab('manage') : undefined} />;
+  }
+  if (isAdmin) {
     return (
-      <div className="-m-4 sm:-m-6 md:-m-8">
-        <PortfolioDetailPage
-          item={detail}
-          viewer={currentUser}
-          related={related}
-          onOpen={setDetail}
-          onBack={() => setDetail(null)}
-          globalSettings={globalSettings}
-          onUpdateCourse={updateCourse}
-          onEnroll={enroll}
-          registering={registering}
-        />
+      <div className="space-y-5 animate-fadeIn">
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={() => setTab('all')} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-slate-100 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-200">
+            <ChevronLeft className="h-4 w-4" /> Về trang Khoá học
+          </button>
+          <h1 className="text-xl font-bold text-slate-900">Quản lý khoá học</h1>
+        </div>
+        <ProjectsCoursesCMS initialSubTab="courses" showSubTabs={false} />
       </div>
     );
   }
 
-  return (
-    <div className="space-y-5 animate-fadeIn">
-      <PageHeader icon={<GraduationCap size={22} />} title="Khoá học" description="Học các khoá do EduGo biên soạn, theo dõi tiến độ và làm bài kiểm tra ngay trong khoá." />
-
-      <div className="overflow-x-auto scrollbar-thin">
-        <div className="flex w-max gap-1 rounded-2xl bg-slate-100 p-1">
-          {tabs.map(t => {
-            const Icon = t.icon; const on = tab === t.id;
-            return (
-              <button key={t.id} type="button" onClick={() => setTab(t.id)}
-                className={`inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-[13px] font-semibold transition-all ${on ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                <Icon className={`h-4 w-4 ${on ? 'text-brand' : ''}`} /> {t.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {tab === 'manage' && isAdmin ? (
-        <ProjectsCoursesCMS initialSubTab="courses" showSubTabs={false} />
-      ) : loading ? (
-        <div className="rounded-2xl border border-slate-100 bg-white p-12 text-center text-sm text-slate-400"><Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" /> Đang tải khoá học...</div>
-      ) : (tab === 'mine' ? myCards : allCards).length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center">
-          <GraduationCap className="mx-auto mb-3 h-10 w-10 text-slate-300" />
-          <p className="text-sm font-semibold text-slate-700">{tab === 'mine' ? 'Bạn chưa ghi danh khoá học nào' : 'Chưa có khoá học nào được phát hành'}</p>
-          {tab === 'mine' && <button onClick={() => setTab('all')} className="mt-3 text-[13px] font-semibold text-brand hover:underline">Xem tất cả khoá học</button>}
-        </div>
-      ) : (
-        <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white">
-          <PortfolioCollectionPage
-            page={tab === 'mine' ? 'my-courses' : 'courses'}
-            cards={tab === 'mine' ? myCards : allCards}
-            onOpen={setDetail}
-            metaOverride={tab === 'mine' ? META_MINE : META_ALL}
-            coursesSettings={coursesSettings}
-            onEnroll={enroll}
-            registering={registering}
-            viewer={currentUser}
-          />
-        </div>
-      )}
-    </div>
-  );
+  return null;
 }

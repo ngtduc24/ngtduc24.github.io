@@ -18,6 +18,7 @@ import { usePhoneMaybe, usePhoneBack } from '../phone/PhoneShell';
 import { PhoneTop } from '../phone/PhoneHome';
 import { PhoneSeg, PhoneChips, PhoneChip, PhoneEmpty } from '../phone/PhoneKit';
 import CoursePlayer, { PlayerApi } from './CoursePlayer';
+import { DeskList, DeskDetail, DeskLearn } from './DesktopCourses';
 import { useConfirmation } from '../ConfirmationContext';
 import { notice, copyText } from '../ui/Dialogs';
 import './phoneCourses.css';
@@ -26,23 +27,23 @@ import './phoneCourses.css';
 // trang khoá học (ảnh bìa, thông số, Tổng quan, Nội dung, Tài liệu, nút Ghi danh cố định ở đáy)
 // và màn học bài (video, Bài giảng, Nội dung khoá, Tài liệu, Ghi chú theo mốc thời gian, nút Hoàn thành ở đáy).
 
-type View = { k: 'list' } | { k: 'detail'; id: string } | { k: 'learn'; id: string; lesson?: string };
-type FlatLesson = CourseLesson & { chapterTitle: string; chapterIndex: number; index: number };
+export type View = { k: 'list' } | { k: 'detail'; id: string } | { k: 'learn'; id: string; lesson?: string };
+export type FlatLesson = CourseLesson & { chapterTitle: string; chapterIndex: number; index: number };
 
-const LEVEL: Record<string, string> = { basic: 'Cơ bản', intermediate: 'Trung cấp', advanced: 'Nâng cao' };
+export const LEVEL: Record<string, string> = { basic: 'Cơ bản', intermediate: 'Trung cấp', advanced: 'Nâng cao' };
 const TONES = [
   'linear-gradient(135deg,#7c3aed,#c026d3)', 'linear-gradient(135deg,#ea580c,#f59e0b)', 'linear-gradient(135deg,#0ea5e9,#6366f1)',
   'linear-gradient(135deg,#059669,#14b8a6)', 'linear-gradient(135deg,#2563eb,#0ea5e9)', 'linear-gradient(135deg,#e11d48,#f97316)',
 ];
-const tone = (id: string) => TONES[Array.from(id).reduce((n, ch) => n + ch.charCodeAt(0), 0) % TONES.length];
-const money = (v: number) => (v > 0 ? `${v.toLocaleString('vi-VN')}đ` : 'Miễn phí');
+export const tone = (id: string) => TONES[Array.from(id).reduce((n, ch) => n + ch.charCodeAt(0), 0) % TONES.length];
+export const money = (v: number) => (v > 0 ? `${v.toLocaleString('vi-VN')}đ` : 'Miễn phí');
 
 export function flatLessons(c: PortfolioCourse): FlatLesson[] {
   const out: FlatLesson[] = [];
   (c.chapters || []).forEach((ch, ci) => (ch.lessons || []).forEach(l => out.push({ ...l, chapterId: l.chapterId || ch.id, chapterTitle: ch.title, chapterIndex: ci, index: out.length })));
   return out;
 }
-function priceOf(c: PortfolioCourse) {
+export function priceOf(c: PortfolioCourse) {
   const now = Date.now();
   const saleOn = c.salePrice > 0 && c.salePrice < c.price
     && (!c.saleStartDate || new Date(c.saleStartDate).getTime() <= now)
@@ -56,7 +57,7 @@ const lessonLen = (l: CourseLesson) => {
 };
 const lessonKind = (l: CourseLesson) => (l.videoUrl ? 'v' : l.elLessonId ? 'e' : 'd');
 
-function Cover({ c, className, children }: { c: PortfolioCourse; className: string; children?: React.ReactNode }) {
+export function Cover({ c, className, children }: { c: PortfolioCourse; className: string; children?: React.ReactNode }) {
   return (
     <span className={className} style={{ background: tone(c.id) }}>
       {c.coverImage ? <img src={c.coverImage} alt="" loading="lazy" /> : <GraduationCap className="art" />}
@@ -65,8 +66,8 @@ function Cover({ c, className, children }: { c: PortfolioCourse; className: stri
   );
 }
 
-export default function PhoneCourses({ user, courses, loading, onEnroll, registering, onUpdateCourse, settings }: {
-  user: UserAccount; courses: PortfolioCourse[]; loading: boolean; settings?: PortfolioCoursesSettings | null;
+export default function PhoneCourses({ user, courses, loading, onEnroll, registering, onUpdateCourse, settings, desktop, onManage }: {
+  user: UserAccount; courses: PortfolioCourse[]; loading: boolean; settings?: PortfolioCoursesSettings | null; desktop?: boolean; onManage?: () => void;
   onEnroll: (c: PortfolioCourse) => Promise<void> | void; registering: boolean; onUpdateCourse: (c: PortfolioCourse) => void;
 }) {
   const isAdmin = user.role === 'admin';
@@ -86,11 +87,12 @@ export default function PhoneCourses({ user, courses, loading, onEnroll, registe
   }, [view]);
   useEffect(() => () => { writeSubRoute({ crs: null, crl: null }); }, []);
   useEffect(() => {
+    if (desktop) return;
     document.documentElement.classList.add('ph-own-head');
     return () => document.documentElement.classList.remove('ph-own-head');
-  }, []);
-  usePhoneBack(view.k === 'list' ? null : () => setView(v => (v.k === 'learn' ? { k: 'detail', id: v.id } : { k: 'list' })));
-  useEffect(() => { document.querySelector('.ph-main')?.scrollTo({ top: 0 }); window.scrollTo({ top: 0 }); }, [view.k, view.k !== 'list' ? view.id : '']);
+  }, [desktop]);
+  usePhoneBack(desktop || view.k === 'list' ? null : () => setView(v => (v.k === 'learn' ? { k: 'detail', id: v.id } : { k: 'list' })));
+  useEffect(() => { document.querySelector('.ph-main, #main-content')?.scrollTo({ top: 0 }); window.scrollTo({ top: 0 }); }, [view.k, view.k !== 'list' ? view.id : '']);
 
   const enrOf = (c: PortfolioCourse) => (c.students || []).find(s => s.accountId === user.id || (!!user.email && (s.studentEmail === user.email || s.email === user.email)));
   const canLearn = (c: PortfolioCourse) => isAdmin || enrOf(c)?.paymentStatus === 'paid';
@@ -113,22 +115,22 @@ export default function PhoneCourses({ user, courses, loading, onEnroll, registe
       : <div className="cx-load"><PhoneEmpty icon={GraduationCap} title="Không tìm thấy khoá học" sub="Khoá học có thể đã bị ẩn hoặc xoá." action={<button type="button" className="cx-btn" onClick={() => setView({ k: 'list' })}>Về danh sách khoá học</button>} /></div>;
   }
 
-  const ctx = { user, isAdmin, enrOf, canLearn, progressOf, favs, onEnroll, registering, onUpdateCourse, setView, settings };
+  const ctx: Ctx = { user, isAdmin, enrOf, canLearn, progressOf, favs, onEnroll, registering, onUpdateCourse, setView, settings, desktop, onManage };
   if (view.k === 'detail' && course) return <CourseDetail c={course} ctx={ctx} />;
   if (view.k === 'learn' && course) return <CourseLearn key={course.id} c={course} startLesson={view.lesson} ctx={ctx} />;
   return <CourseList courses={courses} ctx={ctx} />;
 }
 
-type Ctx = {
+export type Ctx = {
   user: UserAccount; isAdmin: boolean; favs: string[];
   enrOf: (c: PortfolioCourse) => CourseStudent | undefined; canLearn: (c: PortfolioCourse) => boolean; progressOf: (c: PortfolioCourse) => number | null;
   onEnroll: (c: PortfolioCourse) => Promise<void> | void; registering: boolean; onUpdateCourse: (c: PortfolioCourse) => void;
-  setView: (v: View) => void; settings?: PortfolioCoursesSettings | null;
+  setView: (v: View) => void; settings?: PortfolioCoursesSettings | null; desktop?: boolean; onManage?: () => void;
 };
 
 /* ======================= Danh sách ======================= */
 function CourseList({ courses, ctx }: { courses: PortfolioCourse[]; ctx: Ctx }) {
-  const phone = usePhoneMaybe()!;
+  const phone = usePhoneMaybe();
   const [tab, setTab] = useState<'all' | 'mine' | 'saved'>('all');
   const [cat, setCat] = useState('');
   const [q, setQ] = useState('');
@@ -161,6 +163,7 @@ function CourseList({ courses, ctx }: { courses: PortfolioCourse[]; ctx: Ctx }) 
     .filter(c => !cat || c.category === cat)
     .filter(c => !kw || [c.title, c.category, c.instructor, c.briefDescription].some(x => (x || '').toLowerCase().includes(kw)));
 
+  if (ctx.desktop || !phone) return <DeskList {...{ ctx, published, mine, saved, cats, cont, contLesson, featured, doneN, slides, tab, setTab, cat, setCat, q, setQ, list, kw }} />;
   const ui = { ...phoneUi(phone.settings), title: 'Học kỹ năng mới, theo nhịp của bạn', desc: `${published.length} khoá đang mở · bạn đang học ${mine.length} khoá`, titleOn: true, descOn: true };
   return (
     <div className="cx">
@@ -241,7 +244,7 @@ function CourseList({ courses, ctx }: { courses: PortfolioCourse[]; ctx: Ctx }) 
   );
 }
 
-type Slide = { p: import('../portfolioTypes').CoursePromo; c: PortfolioCourse };
+export type Slide = { p: import('../portfolioTypes').CoursePromo; c: PortfolioCourse };
 
 // Banner quảng cáo khoá học: vuốt ngang, tự chuyển sau 5 giây, nút Đăng ký ghi danh ngay, đã ghi danh thì thành Vào học.
 function PromoBanner({ slides, ctx }: { slides: Slide[]; ctx: Ctx }) {
@@ -354,6 +357,47 @@ function CourseDetail({ c, ctx }: { c: PortfolioCourse; ctx: Ctx }) {
     notice('Đã huỷ ghi danh khoá học.', 'info');
   };
 
+  const tabsEl = (
+        <PhoneSeg tabs={[
+          { id: 'over', label: 'Tổng quan', icon: Info },
+          { id: 'cont', label: 'Nội dung', icon: List, count: lessons.length || undefined },
+          { id: 'doc', label: 'Tài liệu', icon: FileText, count: (c.documents || []).filter(d => d.url).length || undefined },
+        ]} active={tab} onTab={t => setTab(t as any)} />
+  );
+  const panel = (<>
+        {tab === 'over' && <>
+          {(c.detailedDescription || c.briefDescription) && <div className="cx-box"><h4>Giới thiệu</h4><div className="cx-html" dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.detailedDescription || c.briefDescription) }} /></div>}
+          {outcomes.length > 0 && <div className="cx-box"><h4>Bạn sẽ học được</h4><div className="cx-learn">{outcomes.map((x, i) => <div key={i}><CheckCircle2 />{x}</div>)}</div></div>}
+          {(c.targetStudents || []).filter(Boolean).length > 0 && <div className="cx-box"><h4>Khoá học dành cho</h4><ul className="cx-dots">{c.targetStudents.filter(Boolean).map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
+          {(c.requirements || []).filter(Boolean).length > 0 && <div className="cx-box"><h4>Yêu cầu</h4><ul className="cx-dots">{c.requirements.filter(Boolean).map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
+        </>}
+        {tab === 'cont' && (
+          <div className="cx-box"><h4>{(c.chapters || []).length} chương · {lessons.length} bài</h4>
+            {lessons.length === 0 ? <p className="cx-mut">Khoá học chưa có bài học.</p> : <Chapters c={c} lessons={lessons} learn={learn} done={done} onOpen={openLesson} />}
+          </div>
+        )}
+        {tab === 'doc' && (
+          <div className="cx-box"><h4>Tài liệu khoá học</h4>
+            {(c.documents || []).filter(d => d.url).length === 0 ? <p className="cx-mut">Khoá học chưa có tài liệu đính kèm.</p>
+              : c.documents.filter(d => d.url).map((d, i) => <ResRow key={i} title={d.name || 'Tài liệu'} url={d.url} locked={!learn} />)}
+          </div>
+        )}
+  </>);
+  const introEl = intro && (
+    <div className="cx-intro" data-no-pull onClick={() => setIntro(false)}>
+      <button type="button" className="x" aria-label="Đóng"><X /></button>
+      <div className="fr" onClick={e => e.stopPropagation()}>
+        <CoursePlayer src={c.introVideo} poster={c.coverImage || undefined} autoPlay />
+      </div>
+    </div>
+  );
+  const startBtn = (cls: string) => (
+    <button type="button" className={cls} onClick={() => ctx.setView({ k: 'learn', id: c.id, lesson: next?.id })} disabled={!lessons.length}>
+      <Play />{!done.length ? 'Bắt đầu học' : pr === 100 ? 'Xem lại khoá học' : `Học tiếp bài ${(next?.index ?? 0) + 1}`}
+    </button>
+  );
+  if (ctx.desktop) return <DeskDetail {...{ c, ctx, lessons, enr, learn, pr, p, fav, done, share, leave, leaving, tabsEl, panel, introEl, startBtn, setIntro }} />;
+
   return (
     <div className="cx cx-d">
       <div className="cx-hero" style={{ background: tone(c.id) }}>
@@ -386,30 +430,9 @@ function CourseDetail({ c, ctx }: { c: PortfolioCourse; ctx: Ctx }) {
         )}
 
         <div className="pk-cls-sec cx-tabs">
-        <PhoneSeg tabs={[
-          { id: 'over', label: 'Tổng quan', icon: Info },
-          { id: 'cont', label: 'Nội dung', icon: List, count: lessons.length || undefined },
-          { id: 'doc', label: 'Tài liệu', icon: FileText, count: (c.documents || []).filter(d => d.url).length || undefined },
-        ]} active={tab} onTab={t => setTab(t as any)} />
+        {tabsEl}
         <div className="pk-cls-panel cx-panel">
-
-        {tab === 'over' && <>
-          {(c.detailedDescription || c.briefDescription) && <div className="cx-box"><h4>Giới thiệu</h4><div className="cx-html" dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.detailedDescription || c.briefDescription) }} /></div>}
-          {outcomes.length > 0 && <div className="cx-box"><h4>Bạn sẽ học được</h4><div className="cx-learn">{outcomes.map((x, i) => <div key={i}><CheckCircle2 />{x}</div>)}</div></div>}
-          {(c.targetStudents || []).filter(Boolean).length > 0 && <div className="cx-box"><h4>Khoá học dành cho</h4><ul className="cx-dots">{c.targetStudents.filter(Boolean).map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
-          {(c.requirements || []).filter(Boolean).length > 0 && <div className="cx-box"><h4>Yêu cầu</h4><ul className="cx-dots">{c.requirements.filter(Boolean).map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
-        </>}
-        {tab === 'cont' && (
-          <div className="cx-box"><h4>{(c.chapters || []).length} chương · {lessons.length} bài</h4>
-            {lessons.length === 0 ? <p className="cx-mut">Khoá học chưa có bài học.</p> : <Chapters c={c} lessons={lessons} learn={learn} done={done} onOpen={openLesson} />}
-          </div>
-        )}
-        {tab === 'doc' && (
-          <div className="cx-box"><h4>Tài liệu khoá học</h4>
-            {(c.documents || []).filter(d => d.url).length === 0 ? <p className="cx-mut">Khoá học chưa có tài liệu đính kèm.</p>
-              : c.documents.filter(d => d.url).map((d, i) => <ResRow key={i} title={d.name || 'Tài liệu'} url={d.url} locked={!learn} />)}
-          </div>
-        )}
+        {panel}
         </div></div>
       </div>
 
@@ -428,20 +451,13 @@ function CourseDetail({ c, ctx }: { c: PortfolioCourse; ctx: Ctx }) {
         </>}
       </div>
 
-      {intro && (
-        <div className="cx-intro" data-no-pull onClick={() => setIntro(false)}>
-          <button type="button" className="x" aria-label="Đóng"><X /></button>
-          <div className="fr" onClick={e => e.stopPropagation()}>
-            <CoursePlayer src={c.introVideo} poster={c.coverImage || undefined} autoPlay />
-          </div>
-        </div>
-      )}
+      {introEl}
     </div>
   );
 }
 
 // Giảng viên: tên và ảnh theo tài khoản tạo khoá (khoá cũ chưa ghi người tạo thì lấy chủ trang), không có thì dùng tên nhập tay.
-function Instructor({ c }: { c: PortfolioCourse }) {
+export function Instructor({ c }: { c: PortfolioCourse }) {
   const uid = c.creatorId || (c as any).ownerId || LEGACY_OWNER;
   const p = usePerson(uid, c.creatorName || c.instructor);
   const name = (p?.name && p.name !== 'Người dùng' ? p.name : '') || c.creatorName || c.instructor;
@@ -454,7 +470,7 @@ function Instructor({ c }: { c: PortfolioCourse }) {
   );
 }
 
-function Chapters({ c, lessons, learn, done, onOpen, current }: { c: PortfolioCourse; lessons: FlatLesson[]; learn: boolean; done: string[]; onOpen: (l: FlatLesson) => void; current?: string }) {
+export function Chapters({ c, lessons, learn, done, onOpen, current }: { c: PortfolioCourse; lessons: FlatLesson[]; learn: boolean; done: string[]; onOpen: (l: FlatLesson) => void; current?: string }) {
   const curCh = lessons.find(l => l.id === current)?.chapterIndex ?? 0;
   const [open, setOpen] = useState<number[]>([curCh]);
   return <>{(c.chapters || []).map((ch, ci) => {
@@ -483,7 +499,7 @@ function Chapters({ c, lessons, learn, done, onOpen, current }: { c: PortfolioCo
   })}</>;
 }
 
-function ResRow({ title, url, sub, locked }: { title: string; url: string; sub?: string; locked?: boolean }) {
+export function ResRow({ title, url, sub, locked }: { title: string; url: string; sub?: string; locked?: boolean }) {
   const safe = isSafeUrl(url);
   return (
     <div className="cx-res">
@@ -509,7 +525,7 @@ function CourseLearn({ c, startLesson, ctx }: { c: PortfolioCourse; startLesson?
   const first = lessons.find(l => l.id === startLesson) || lessons.find(l => l.id === enr?.lastLessonId) || lessons.find(l => !done.includes(l.id)) || lessons[0];
   const [curId, setCurId] = useState(first?.id || '');
   const cur = lessons.find(l => l.id === curId) || lessons[0];
-  const [tab, setTab] = useState<'list' | 'doc' | 'quiz' | 'note'>('list');
+  const [tab, setTab] = useState<'list' | 'doc' | 'quiz' | 'note'>(ctx.desktop ? 'doc' : 'list');
   const bodyRef = useRef<HTMLDivElement>(null);
   const player = useRef<PlayerApi>(null);
   const locked = !!cur && !learn && !(cur.allowPreview || cur.isFreePreview);
@@ -591,10 +607,7 @@ function CourseLearn({ c, startLesson, ctx }: { c: PortfolioCourse; startLesson?
       <div className="cx-lp-body"><PhoneEmpty icon={BookOpen} title="Khoá học chưa có bài học" /></div></div>
   );
 
-  return (
-    <div className="cx-lp" data-no-pull>
-      <div className="cx-lp-top">
-        <div className="pl">
+  const playerEl = (<>
           {locked ? (
             <div className="lock"><Lock /><b>Bài học đã khoá</b><span>Đăng ký khoá học để học bài này</span>
               <button type="button" disabled={ctx.registering} onClick={() => ctx.onEnroll(c)}>{ctx.registering ? <Loader2 className="spin" /> : <BookMarked />}Đăng ký khoá học</button></div>
@@ -602,29 +615,16 @@ function CourseLearn({ c, startLesson, ctx }: { c: PortfolioCourse; startLesson?
             : (
               <div className="read"><BookOpen /><b>Bài đọc</b><span>Bài này không có video, xem nội dung ở thẻ Bài giảng bên dưới.</span></div>
             )}
-        </div>
-        <button type="button" className="bk" aria-label="Quay lại trang khoá học" onClick={() => ctx.setView({ k: 'detail', id: c.id })}><ChevronLeft /></button>
-      </div>
-
-      <div className="cx-lp-body" ref={bodyRef}>
-        {!enr && (
-          <div className="cx-prev"><span><b>Bạn đang xem trước</b>Đăng ký khoá học để lưu tiến độ, ghi chú và mở toàn bộ bài học.</span>
-            <button type="button" disabled={ctx.registering} onClick={() => ctx.onEnroll(c)}>{ctx.registering ? <Loader2 className="spin" /> : 'Đăng ký'}</button></div>
-        )}
-        <div className="cx-lt">
-          <small>Bài {cur.index + 1} · Chương {cur.chapterIndex + 1}</small>
-          <h3>{cur.title}</h3>
-          <span className="cx-pg"><span className="t"><span>Khoá học · {done.filter(id => lessons.some(l => l.id === id)).length} trên {lessons.length} bài</span><b>{progress}%</b></span><span className="bar"><i style={{ width: `${progress}%` }} /></span></span>
-        </div>
-        <div className="pk-cls-sec cx-tabs cx-ltab">
+  </>);
+  const tabsEl = (
         <PhoneSeg tabs={[
-          { id: 'list', label: 'Nội dung', icon: List },
+          ...(ctx.desktop ? [] : [{ id: 'list', label: 'Nội dung', icon: List }]),
           { id: 'doc', label: 'Tài liệu', icon: FileText, count: docN || undefined },
           { id: 'quiz', label: 'Quizz', icon: ClipboardCheck, count: cur.quizSlug ? 1 : undefined },
           ...(enr ? [{ id: 'note', label: 'Ghi chú', icon: PenLine, count: notes.length || undefined }] : []),
         ]} active={tab} onTab={t => setTab(t as any)} />
-        <div className="pk-cls-panel cx-panel">
-
+  );
+  const panel = (<>
         {tab === 'list' && <div className="cx-pad"><div className="cx-box"><Chapters c={c} lessons={lessons} learn={learn} done={done} current={cur.id} onOpen={go} /></div></div>}
         {tab === 'doc' && <div className="cx-pad">
           {locked ? <div className="cx-box"><p className="cx-mut">Đăng ký khoá học để xem tài liệu của bài này.</p></div> : <>
@@ -670,12 +670,8 @@ function CourseLearn({ c, startLesson, ctx }: { c: PortfolioCourse; startLesson?
             </div>
           ))}
         </div>}
-        </div></div>
-        <div style={{ height: 110 }} />
-      </div>
-
-      <div className="cx-lbot">
-        <button type="button" className="pv" aria-label="Bài trước" disabled={!prevL} onClick={() => go(prevL)}><ChevronLeft /></button>
+  </>);
+  const finishEl = (<>
         {learn ? (
           <button type="button" className="nx" onClick={finish}>
             <CheckCircle2 />{done.includes(cur.id) ? (nextL ? `Sang bài ${nextL.index + 1}` : 'Về trang khoá học') : nextL ? `Hoàn thành, sang bài ${nextL.index + 1}` : 'Hoàn thành khoá học'}
@@ -683,6 +679,40 @@ function CourseLearn({ c, startLesson, ctx }: { c: PortfolioCourse; startLesson?
         ) : (
           <button type="button" className="nx" disabled={ctx.registering} onClick={() => ctx.onEnroll(c)}>{ctx.registering ? <Loader2 className="spin" /> : <BookMarked />}Đăng ký khoá học</button>
         )}
+  </>);
+  if (ctx.desktop) return <DeskLearn {...{ c, ctx, cur, lessons, learn, done, progress, enr, prevL, nextL, go, playerEl, tabsEl, panel, finishEl, bodyRef }} />;
+
+  return (
+    <div className="cx-lp" data-no-pull>
+      <div className="cx-lp-top">
+        <div className="pl">
+          {playerEl}
+        </div>
+        <button type="button" className="bk" aria-label="Quay lại trang khoá học" onClick={() => ctx.setView({ k: 'detail', id: c.id })}><ChevronLeft /></button>
+      </div>
+
+      <div className="cx-lp-body" ref={bodyRef}>
+        {!enr && (
+          <div className="cx-prev"><span><b>Bạn đang xem trước</b>Đăng ký khoá học để lưu tiến độ, ghi chú và mở toàn bộ bài học.</span>
+            <button type="button" disabled={ctx.registering} onClick={() => ctx.onEnroll(c)}>{ctx.registering ? <Loader2 className="spin" /> : 'Đăng ký'}</button></div>
+        )}
+        <div className="cx-lt">
+          <small>Bài {cur.index + 1} · Chương {cur.chapterIndex + 1}</small>
+          <h3>{cur.title}</h3>
+          <span className="cx-pg"><span className="t"><span>Khoá học · {done.filter(id => lessons.some(l => l.id === id)).length} trên {lessons.length} bài</span><b>{progress}%</b></span><span className="bar"><i style={{ width: `${progress}%` }} /></span></span>
+        </div>
+        <div className="pk-cls-sec cx-tabs cx-ltab">
+        {tabsEl}
+        <div className="pk-cls-panel cx-panel">
+
+        {panel}
+        </div></div>
+        <div style={{ height: 110 }} />
+      </div>
+
+      <div className="cx-lbot">
+        <button type="button" className="pv" aria-label="Bài trước" disabled={!prevL} onClick={() => go(prevL)}><ChevronLeft /></button>
+        {finishEl}
       </div>
     </div>
   );
