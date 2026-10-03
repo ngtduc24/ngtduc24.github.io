@@ -91,6 +91,7 @@
 .pw .who { display: flex; align-items: center; gap: 12px; text-align: left; }
 .pw .who .av { width: 46px; height: 46px; border-radius: 50%; background: rgba(241,245,249,.9); display: grid; place-items: center; color: #64748b; flex: none; }
 .pw .who .av svg { width: 24px; height: 24px; }
+.pw .who .av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .pw .who b { display: block; font-size: 16.5px; }
 .pw .who span span { display: block; font-size: 12.5px; color: var(--pw-mut); margin-top: 2px; }
 .pw .card.glass .who span span { color: #334155; }

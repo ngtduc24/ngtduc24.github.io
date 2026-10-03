@@ -967,6 +967,11 @@ export default function App() {
     );
   }
 
+  // Điện thoại đã đăng nhập mà mở trang đầu: vẫn dùng màn chào, nút Đăng nhập đổi thành Vào EduGo.
+  if (isPhone && currentUser && entryView === 'landing') {
+    return <PhoneWelcome settings={settings} users={users} user={currentUser} onEnter={() => { setCurrentTab('dashboard'); setEntryView('admin'); }} />;
+  }
+
   // Trang đầu EduGo cho khách: giới thiệu, đăng nhập, đăng ký.
   if (entryView === 'landing') {
     return (

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ScanSearch, Loader2, AlertTriangle, ArrowLeftRight, FileWarning } from 'lucide-react';
 import { EduSubmission, EduUser } from '../../types/edu';
 import { resolveSubmissionFile } from '../../lib/edu';
@@ -125,8 +126,9 @@ export default function SimilarityCheck({ users, submissions, onClose, onResults
 
   const tone = (pct: number) => pct >= 95 ? 'bg-rose-600 text-white' : pct >= 90 ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700';
 
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm sm:p-6">
+  // Gắn thẳng vào body để luôn nằm trên màn chấm bài của điện thoại (màn đó cũng gắn vào body).
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 p-3 pb-[calc(12px+env(safe-area-inset-bottom))] pt-[calc(12px+env(safe-area-inset-top))] backdrop-blur-sm sm:p-6">
       <div className="flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
         <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-light text-brand"><ScanSearch className="h-5 w-5" /></span>
@@ -204,6 +206,7 @@ export default function SimilarityCheck({ users, submissions, onClose, onResults
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

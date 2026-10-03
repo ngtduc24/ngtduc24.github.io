@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, LogIn, UserPlus } from 'lucide-react';
+import { ArrowRight, Loader2, LogIn, UserPlus } from 'lucide-react';
 import type { AppSettings, UserAccount } from '../../types';
 import { getCachedLanding, getLandingConfig, PhoneWelcomeConfig, PhoneWelcomeBanner } from '../../lib/landing';
 import { setDefaultApps } from '../../lib/moduleAccess';
@@ -88,10 +88,11 @@ const Ic = {
 
 const isExternal = (link: string) => /^https?:\/\//i.test(link) && !link.startsWith(window.location.origin);
 
-export default function PhoneWelcome({ settings, users = [], onLoginSuccess, initialMode = 'login', preview, onClosePreview }: {
+export default function PhoneWelcome({ settings, users = [], onLoginSuccess, initialMode = 'login', preview, onClosePreview, user, onEnter }: {
   settings?: AppSettings; users?: UserAccount[]; onLoginSuccess?: (u: UserAccount) => void;
   initialMode?: 'login' | 'register';
   onClosePreview?: () => void; // đang đăng nhập mà mở xem thử bằng link ?chao=1: hiện thanh nhắc và nút đóng, không đăng nhập thật
+  user?: UserAccount | null; onEnter?: () => void; // đã đăng nhập mà mở trang đầu: nút Đăng nhập thành Vào EduGo
   preview?: PhoneWelcomeConfig; // xem trước trong cài đặt admin: dùng cấu hình đang sửa, không đăng nhập thật
 }) {
   const [loaded, setLoaded] = useState<PhoneWelcomeConfig>(() => getCachedLanding().phone || {});
@@ -101,6 +102,7 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
   }, [!!preview]); // eslint-disable-line react-hooks/exhaustive-deps
   const cfg = preview || loaded;
   const allowReg = cfg.allowRegister !== false;
+  const signed = !!(user && onEnter);
   // 3 bước trên cùng 1 màn: màn chào (nút Đăng nhập), bấm Đăng nhập thì thẻ mở ô tài khoản, mật khẩu, bấm đăng ký thì mở ô đăng ký.
   const [mode, setMode] = useState<'home' | 'login' | 'register'>(initialMode === 'register' && allowReg ? 'register' : 'home');
   useEffect(() => { if (!allowReg && mode === 'register') setMode('home'); }, [allowReg, mode]);
@@ -247,7 +249,7 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
             <button type="button" className="lang" onClick={() => setLang(l => (l === 'vi' ? 'en' : 'vi'))} aria-label="Đổi ngôn ngữ">
               <i className={lang === 'en' ? 'en' : ''}>{lang === 'vi' ? '★' : 'EN'}</i><span>{lang === 'vi' ? 'VI' : 'EN'}</span>
             </button>
-            <button type="button" className="ib" aria-label="Thông báo" onClick={() => { setMode('home'); setMsg({ text: t.bell }); }}>{Ic.bell}</button>
+            <button type="button" className="ib" aria-label="Thông báo" onClick={() => { if (signed) { onEnter!(); return; } setMode('home'); setMsg({ text: t.bell }); }}>{Ic.bell}</button>
           </div>
         </div>
         <div className="hello"><small>{greet}</small><h2>{hiBig}</h2></div>
@@ -282,10 +284,16 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
         <div className={`card ${glass ? 'glass' : ''}`} style={{ '--ga': ga, '--gb': `${gb}px` } as React.CSSProperties}>
           {mode === 'home' ? (
             <div key="h" className="anim">
-              <div className="who"><span className="av">{Ic.user}</span><span><b>{cardTitle}</b><span>{cardSub}</span></span></div>
+              {signed ? (
+                <div className="who"><span className="av">{user!.avatarUrl ? <img src={user!.avatarUrl} alt="" /> : Ic.user}</span><span><b>{lang === 'vi' ? 'Xin chào' : 'Hello'} {user!.fullName || user!.username}</b><span>{lang === 'vi' ? 'Bạn đã đăng nhập, bấm Vào EduGo để tiếp tục' : 'You are signed in, tap Open EduGo to continue'}</span></span></div>
+              ) : (
+                <div className="who"><span className="av">{Ic.user}</span><span><b>{cardTitle}</b><span>{cardSub}</span></span></div>
+              )}
               {msg && <div className={`msg ${msg.ok ? 'ok' : 'err'}`} role="alert">{msg.text}</div>}
-              <button type="button" className="go2" onClick={() => switchMode('login')}><LogIn />{t.login}</button>
-              {allowReg && <p className="regl">{t.toReg2}<button type="button" onClick={() => switchMode('register')}>{t.regWord}</button></p>}
+              {signed
+                ? <button type="button" className="go2" onClick={onEnter}>{lang === 'vi' ? 'Vào EduGo' : 'Open EduGo'}<ArrowRight /></button>
+                : <button type="button" className="go2" onClick={() => switchMode('login')}><LogIn />{t.login}</button>}
+              {allowReg && !signed && <p className="regl">{t.toReg2}<button type="button" onClick={() => switchMode('register')}>{t.regWord}</button></p>}
             </div>
           ) : mode === 'login' ? (
             <form key="l" className="anim" onSubmit={doLogin} noValidate>
