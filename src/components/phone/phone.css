@@ -637,3 +637,20 @@ html:not(.ph-own-head) .ph-in > .ph-sbar { display: none; }
 /* Thanh trạng thái iPhone (Safari và ứng dụng thêm ra màn hình chính) lấy màu nền trang: tô nền trang theo màu hệ thống
    để vùng tai thỏ liền màu với đầu trang, không còn dải trắng. Nội dung vẫn nằm trong .ph-root phủ kín màn. */
 html.is-phone, html.is-phone body { background-color: var(--color-brand-hover, #059669); }
+
+/* Thanh menu dưới kiểu kính mờ iOS (admin bật tắt, chỉnh độ đục và độ nhoè trong Cài đặt giao diện điện thoại).
+   Lớp .gl làm nhoè nền phía sau theo đúng hình thanh (2 khối bo tròn và phần khuyết ôm nút Tạo mới),
+   lớp .bg phủ màu trắng trong suốt và đổ bóng. Bóng đặt ở .bg chứ không đặt ở cả thanh để không chặn hiệu ứng nhoè. */
+.ph-nav2 .gl { display: none; }
+.ph-nav2.glass { filter: none; }
+.ph-nav2.glass .gl { display: block; position: absolute; inset: 0; z-index: -2; pointer-events: none; border-radius: 28px;
+  -webkit-backdrop-filter: blur(var(--gl-b, 20px)) saturate(180%); backdrop-filter: blur(var(--gl-b, 20px)) saturate(180%);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 110 70'%3E%3Cpath d='M0 0H10C18 0 20 4 22 10A36 36 0 0 0 88 10C90 4 92 0 100 0H110V70H0Z'/%3E%3C/svg%3E") center / 110px 70px no-repeat,
+    linear-gradient(#000, #000) left / calc(50% - 54px) 100% no-repeat, linear-gradient(#000, #000) right / calc(50% - 54px) 100% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 110 70'%3E%3Cpath d='M0 0H10C18 0 20 4 22 10A36 36 0 0 0 88 10C90 4 92 0 100 0H110V70H0Z'/%3E%3C/svg%3E") center / 110px 70px no-repeat,
+    linear-gradient(#000, #000) left / calc(50% - 54px) 100% no-repeat, linear-gradient(#000, #000) right / calc(50% - 54px) 100% no-repeat; }
+.ph-nav2.glass .bg { filter: drop-shadow(0 8px 18px rgba(15,23,42,.16)) drop-shadow(0 0 1px rgba(15,23,42,.12)); }
+.ph-nav2.glass .bg .l, .ph-nav2.glass .bg .r { background: rgba(255,255,255,var(--gl-a, .62)); box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }
+.ph-nav2.glass .bg svg path { fill: rgba(255,255,255,var(--gl-a, .62)); }
+.ph-nav2.glass .it.on { background: color-mix(in srgb, var(--ph-brand-light) 70%, transparent); }
+.ph-nav2.glass .it { color: #475569; }

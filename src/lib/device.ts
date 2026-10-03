@@ -70,6 +70,10 @@ export const PHONE_MODE_LABEL: Record<PhoneMode, string> = { full: 'Điện tho�
 // Lưu chung trong cột module_overrides dưới khoá riêng __phone_ui nên không cần thêm cột mới.
 export interface PhoneUi {
   bannerOn?: boolean;          // hiện băng chào đầu Trang chủ, mặc định bật
+  // Thanh menu dưới kiểu kính mờ như iOS: bật tắt, độ đục của lớp trắng (0 đến 100), độ nhoè nền phía sau (px)
+  navGlass?: boolean;          // mặc định bật
+  navAlpha?: number;           // mặc định 62
+  navBlur?: number;            // mặc định 20
   title?: string;
   desc?: string;
   titleOn?: boolean;           // hiện tiêu đề, mặc định bật
@@ -119,3 +123,11 @@ export const CTA_TARGETS: { value: string; label: string; need: string }[] = [
   { value: 'open:courses', label: 'Mở Khoá học', need: 'courses' },
   { value: 'open:all_features', label: 'Xem tất cả chức năng', need: 'all_features' },
 ];
+
+// Giá trị kính mờ của thanh menu dưới, gom 1 chỗ để Thanh dưới và phần Xem trước trong cài đặt dùng chung.
+export function navGlassStyle(ui: PhoneUi): { cls: string; style: Record<string, string> } {
+  if (ui.navGlass === false) return { cls: '', style: {} };
+  const a = Math.min(100, Math.max(0, ui.navAlpha ?? 62));
+  const b = Math.min(40, Math.max(0, ui.navBlur ?? 20));
+  return { cls: 'glass', style: { '--gl-a': String(a / 100), '--gl-b': `${b}px` } };
+}

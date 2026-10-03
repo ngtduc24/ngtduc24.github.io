@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { Home as HomeIcon, LayoutGrid, Plus, Bell, User } from 'lucide-react';
 import { Smartphone, Monitor, EyeOff, Image as ImageIcon, RotateCcw, GraduationCap, BookOpen, Library, MoreHorizontal, GripVertical, ArrowUp, ArrowDown, Lock, Unlock, Sparkles } from 'lucide-react';
 import type { AppSettings, ModuleOverride } from '../../types';
 import { MODULE_REGISTRY } from '../../lib/modules';
-import { phoneMode, phoneUi, PhoneUi, PhoneMode, PHONE_UI_KEY, CTA_TARGETS, NOTI_DEFAULT, PHONE_GRID_SKIP, phoneActIds } from '../../lib/device';
+import { phoneMode, phoneUi, PhoneUi, PhoneMode, PHONE_UI_KEY, CTA_TARGETS, NOTI_DEFAULT, PHONE_GRID_SKIP, phoneActIds, navGlassStyle } from '../../lib/device';
 import { NotiBanner } from './PhoneNotifications';
 import MediaSourcePicker from '../MediaSourcePicker';
 import { PhoneTop, resolveActs } from './PhoneHome';
@@ -156,6 +157,9 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
 
       {/* 4 nút tròn đầu Trang chủ */}
       <ActsCard formState={formState} ui={ui} setUi={setUi} sw={sw} field={field} />
+
+      {/* Thanh menu dưới kiểu kính mờ */}
+      <NavGlassCard ui={ui} setUi={setUi} sw={sw} />
 
       {/* Lưới chức năng ở Trang chủ điện thoại */}
       <GridOrderCard formState={formState} ui={ui} setUi={setUi} sw={sw} />
@@ -327,6 +331,63 @@ function ActsCard({ formState, ui, setUi, sw, field }: {
           {moreOn && <input className={field} value={ui.moreLabel || ''} onChange={e => setUi({ moreLabel: e.target.value })} placeholder="Tên nút, mặc định là Khác" maxLength={14} />}
         </div>
         {sw(moreOn, () => setUi({ moreOn: !moreOn }), 'Bật tắt nút Khác')}
+      </div>
+    </div>
+  );
+}
+
+// Thanh menu dưới ở 4 màn chính trên điện thoại: kiểu kính mờ như iOS, admin chỉnh độ đục và độ nhoè, xem trước ngay.
+function NavGlassCard({ ui, setUi, sw }: { ui: PhoneUi; setUi: (p: Partial<PhoneUi>) => void; sw: (on: boolean, fn: () => void, label: string) => React.ReactNode }) {
+  const on = ui.navGlass !== false;
+  const alpha = ui.navAlpha ?? 62;
+  const blur = ui.navBlur ?? 20;
+  const g = navGlassStyle(ui);
+  const range = 'w-full accent-[var(--color-brand,#10b981)]';
+  return (
+    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left">
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="flex-1 space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-800">Thanh menu dưới (kính mờ)</h3>
+              <p className="text-[12px] text-slate-500">Thanh Trang chủ, Chức năng, Tạo mới, Thông báo, Cá nhân. Bật kính mờ thì nội dung cuộn phía sau hiện mờ qua thanh như trên iPhone. Tắt thì thanh trắng đặc như trước.</p>
+            </div>
+            {sw(on, () => setUi({ navGlass: !on }), 'Bật tắt kính mờ')}
+          </div>
+          <div className={`space-y-4 ${on ? '' : 'pointer-events-none opacity-40'}`}>
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-[11px] font-bold text-slate-500"><span>Độ đục của lớp kính</span><span className="text-slate-800">{alpha}%</span></div>
+              <input type="range" min={10} max={95} value={alpha} onChange={e => setUi({ navAlpha: Number(e.target.value) })} className={range} />
+              <p className="text-[10px] text-slate-400">Thấp thì thanh trong hơn, cao thì gần như trắng đặc.</p>
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-[11px] font-bold text-slate-500"><span>Độ nhoè nền phía sau</span><span className="text-slate-800">{blur}px</span></div>
+              <input type="range" min={0} max={40} value={blur} onChange={e => setUi({ navBlur: Number(e.target.value) })} className={range} />
+              <p className="text-[10px] text-slate-400">Cao thì nội dung phía sau nhoè mạnh, chữ trên thanh dễ đọc hơn.</p>
+            </div>
+            <button type="button" onClick={() => setUi({ navAlpha: undefined, navBlur: undefined })} className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-brand"><RotateCcw className="h-3 w-3" /> Về mức mặc định</button>
+          </div>
+        </div>
+        <div className="shrink-0">
+          <p className="mb-2 text-[11px] font-bold text-slate-500">Xem trước</p>
+          <div className="ph relative h-[230px] w-[372px] overflow-hidden rounded-[28px] border-[6px] border-slate-900 shadow-xl"
+            style={{ background: 'linear-gradient(160deg,#f1f5f9 0%,#f1f5f9 30%,#fde68a 30%,#fb7185 55%,#818cf8 80%,#34d399 100%)' }}>
+            <div className="space-y-2 p-3">
+              {['Lời nhắc cho bạn', '38 bài nộp chờ chấm', 'Thiết kế đa truyền thông'].map((t, i) => (
+                <div key={t} className="rounded-2xl bg-white/90 px-3 py-2 text-[12px] font-bold text-slate-700" style={{ marginLeft: i * 18 }}>{t}</div>
+              ))}
+            </div>
+            <nav className={`ph-nav2 ${g.cls}`} style={{ ...(g.style as React.CSSProperties), position: 'absolute', left: 8, right: 8, bottom: 10, height: 70 }}>
+              <span className="gl" aria-hidden />
+              <span className="bg"><span className="l" /><svg viewBox="0 0 110 70" aria-hidden><path d="M0 0H10C18 0 20 4 22 10A36 36 0 0 0 88 10C90 4 92 0 100 0H110V70H0Z" /></svg><span className="r" /></span>
+              <span className="it on"><HomeIcon />Trang chủ</span>
+              <span className="it"><LayoutGrid />Chức năng</span>
+              <span className="mid"><span className="b"><Plus /></span>Tạo mới</span>
+              <span className="it"><Bell />Thông báo</span>
+              <span className="it"><User />Cá nhân</span>
+            </nav>
+          </div>
+        </div>
       </div>
     </div>
   );

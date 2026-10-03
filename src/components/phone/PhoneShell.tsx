@@ -3,7 +3,7 @@ import { RefreshCw, ChevronLeft, Home, Bell, Plus, LayoutGrid, User, Monitor, Se
 import type { AppSettings, UserAccount } from '../../types';
 import { MODULE_REGISTRY, isModuleHidden, resolveModuleMeta, ModuleDef } from '../../lib/modules';
 import { canUseModule } from '../../lib/moduleAccess';
-import { phoneMode } from '../../lib/device';
+import { phoneMode, phoneUi, navGlassStyle } from '../../lib/device';
 import { setCreateIntent, sendToComputer } from '../../lib/phone';
 import { writeSubRoute } from '../../lib/seoConfig';
 import { useSidebarTools } from '../../lib/sidebarTools';
@@ -174,6 +174,7 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
     if (sub) writeSubRoute(sub);
     setTab(id);
   };
+  const glass = navGlassStyle(phoneUi(settings));
   const curMod = mods.find(m => m.id === tab);
   const title = curMod ? phoneLabel(curMod) : (tab === 'profile' || tab === 'user_profile') ? 'Trang cá nhân' : (tab === 'edu_exam' ? 'Quizz' : MODULE_REGISTRY.find(m => m.id === tab)?.label || 'EduGo');
   const api: PhoneApi = {
@@ -211,7 +212,8 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
             {tools.map(t => { const I = t.icon; return <button key={t.id} type="button" className={t.active ? 'on' : ''} onClick={t.onClick}><I />{t.label}</button>; })}
           </nav>
         ) : bare && (
-          <nav className="ph-nav2">
+          <nav className={`ph-nav2 ${glass.cls}`} style={glass.style as React.CSSProperties}>
+            <span className="gl" aria-hidden />
             <span className="bg"><span className="l" /><svg viewBox="0 0 110 70" aria-hidden><path d="M0 0H10C18 0 20 4 22 10A36 36 0 0 0 88 10C90 4 92 0 100 0H110V70H0Z" /></svg><span className="r" /></span>
             {item('dashboard', 'Trang chủ', Home, tab === 'dashboard')}
             {item('all_features', 'Chức năng', LayoutGrid, tab === 'all_features')}
