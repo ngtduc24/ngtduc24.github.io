@@ -185,7 +185,7 @@ async function reloadApprovals(s: Store) {
     const [own, shared] = await Promise.all([edu.getClasses().catch(() => [] as any[]), edu.getSharedEdu().catch(() => ({ schools: [], classes: [] as any[] }))]);
     const classes = [...own, ...shared.classes.filter((c: any) => c.access?.perms?.grade)];
     if (!classes.length) { s.approvals = []; if (store === s) emit(s); return; }
-    const { data } = await supabase.from(edu.EXTENSION_TABLE).select('id,class_id,assignment_id,student_name,mssv,reason,created_at')
+    const { data } = await supabase.from(edu.EXTENSION_TABLE).select('id,class_id,assignment_id,student_name,mssv,created_at')
       .eq('status', 'pending').in('class_id', classes.map((c: any) => c.id)).order('created_at', { ascending: false }).limit(60);
     const rows = data || [];
     const aIds = [...new Set(rows.map((r: any) => r.assignment_id).filter(Boolean))];
@@ -200,7 +200,7 @@ async function reloadApprovals(s: Store) {
       const t = titles.get(r.assignment_id);
       return {
         id: `approve-ext-${r.id}`, title: `${who} xin gia hạn nộp bài`,
-        description: `${t ? `Bài "${t}"` : 'Bài tập'} · Lớp ${cls?.name || ''}${r.reason ? `. Lý do: ${String(r.reason).slice(0, 160)}` : ''}. Bấm để mở lớp và duyệt hoặc từ chối.`,
+        description: `${t ? `Bài "${t}"` : 'Bài tập'} · Lớp ${cls?.name || ''}. Bấm để mở lớp và duyệt hoặc từ chối.`,
         timestamp: r.created_at || new Date().toISOString(), type: 'approval', priority: 'high', actionUrl: 'edu',
         metadata: { approval: 'extension', classId: r.class_id, requestId: r.id, assignmentId: r.assignment_id },
       };
