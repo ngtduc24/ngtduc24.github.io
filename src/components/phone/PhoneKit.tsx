@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, X, ChevronDown, MoreHorizontal, Loader2, ChevronLeft, Home } from 'lucide-react';
+import { Search, X, ChevronDown, MoreHorizontal, Loader2, ChevronLeft, Home, Library, Users, FolderOpen, Table2, FileText, ListChecks } from 'lucide-react';
 import { usePhoneMaybe } from './PhoneShell';
 import { AvatarStack } from '../ui/People';
 
@@ -42,10 +42,25 @@ export function PhoneSearch({ value, onChange, placeholder, right }: { value: st
   );
 }
 
-export function PhoneSeg({ tabs, active, onTab }: { tabs: Array<{ id: string; label: string }>; active: string; onTab: (id: string) => void }) {
+// Thẻ phân trang kiểu bìa hồ sơ: thẻ đang chọn nổi lên, liền khối với phần nội dung bên dưới, 2 bên uốn cong như tab trình duyệt.
+// Thẻ chưa chọn nằm trên dải nền nhạt, có biểu tượng và số đếm. Số trong ngoặc ở cuối nhãn, ví dụ "Được chia sẻ (2)", tự tách thành số đếm.
+const TAB_ICONS: Record<string, any> = {
+  library: Library, shared: Users, mine: FolderOpen, students: Users, grades: Table2, assignments: FileText, quizzes: ListChecks,
+};
+export function PhoneSeg({ tabs, active, onTab }: { tabs: Array<{ id: string; label: string; icon?: any; count?: number }>; active: string; onTab: (id: string) => void }) {
   return (
-    <div className="pk-seg">
-      {tabs.map(t => <button key={t.id} type="button" className={t.id === active ? 'on' : ''} onClick={() => onTab(t.id)}>{t.label}</button>)}
+    <div className={`pk-ftabs n${tabs.length}`} role="tablist">
+      {tabs.map(t => {
+        const m = /^(.*?)\s*\((\d+\+?)\)\s*$/.exec(t.label);
+        const label = m ? m[1] : t.label;
+        const count = t.count ?? (m ? m[2] : undefined);
+        const I = t.icon || TAB_ICONS[t.id];
+        return (
+          <button key={t.id} type="button" role="tab" aria-selected={t.id === active} className={`ft ${t.id === active ? 'on' : ''}`} onClick={() => onTab(t.id)}>
+            {I && <I />}<span>{label}</span>{count !== undefined && count !== 0 && <em>{count}</em>}
+          </button>
+        );
+      })}
     </div>
   );
 }

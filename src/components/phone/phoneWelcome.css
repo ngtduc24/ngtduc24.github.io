@@ -86,3 +86,18 @@
 .pw .pvbar { position: absolute; left: 50%; top: calc(env(safe-area-inset-top) + 8px); transform: translateX(-50%); z-index: 5; display: flex; align-items: center; gap: 8px;
   padding: 6px 6px 6px 12px; border-radius: 999px; background: rgba(15,23,42,.72); color: #fff; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .pw .pvbar button { background: #fff; color: #0f172a; border-radius: 999px; padding: 4px 10px; font-weight: 700; }
+
+/* Màn chào: thẻ chỉ có lời chào, nút Đăng nhập và dòng mời đăng ký */
+.pw .who { display: flex; align-items: center; gap: 12px; text-align: left; }
+.pw .who .av { width: 46px; height: 46px; border-radius: 50%; background: rgba(241,245,249,.9); display: grid; place-items: center; color: #64748b; flex: none; }
+.pw .who .av svg { width: 24px; height: 24px; }
+.pw .who b { display: block; font-size: 16.5px; }
+.pw .who span span { display: block; font-size: 12.5px; color: var(--pw-mut); margin-top: 2px; }
+.pw .card.glass .who span span { color: #334155; }
+.pw .regl { text-align: center; font-size: 13px; color: var(--pw-mut); margin: 12px 0 0; }
+.pw .card.glass .regl { color: #334155; }
+.pw .regl button { color: var(--pw-c); font-weight: 800; }
+/* Ô đăng nhập, đăng ký: nút quay lại màn chào ở góc trái tiêu đề thẻ */
+.pw .hi2 { position: relative; padding: 0 34px; }
+.pw .hi2 .bk { position: absolute; left: -6px; top: -4px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: #334155; background: rgba(255,255,255,.5); }
+.pw .hi2 .bk svg { width: 20px; height: 20px; }

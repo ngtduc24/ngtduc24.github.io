@@ -374,17 +374,19 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
         })()}
         <div id="pk-cls-list" className="pk-cls-sec">
           <PhoneSeg tabs={[{ id: 'mine', label: 'Lớp của tôi' }, { id: 'shared', label: `Được chia sẻ${classes.some(c => !mine(c)) ? ` (${classes.filter(c => !mine(c)).length})` : ''}` }]} active={pScope} onTab={t => { setPScope(t as any); setPSchool(''); }} />
+          <div className="pk-cls-panel">
           <div className="pk-srch" style={{ marginTop: 10 }}>
             <Search /><input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Tìm lớp, trường..." enterKeyHint="search" />
             {searchTerm && <button type="button" className="clr" aria-label="Xoá tìm kiếm" onClick={() => setSearchTerm('')}><X /></button>}
           </div>
+          <PhoneChips>
+            <PhoneChip caret on={!!pSchool} onClick={() => setPSheet('school')}>{pSchool ? schoolName(pSchool) : 'Mọi trường'}</PhoneChip>
+            <PhoneChip on={pQuick === ''} onClick={() => setPQuick('')}>Tất cả</PhoneChip>
+            <PhoneChip on={pQuick === 'pending'} onClick={() => setPQuick('pending')}>Có bài chờ chấm</PhoneChip>
+            <PhoneChip on={pQuick === 'soon'} onClick={() => setPQuick('soon')}>Sắp hết hạn</PhoneChip>
+          </PhoneChips>
+          </div>
         </div>
-        <PhoneChips>
-          <PhoneChip caret on={!!pSchool} onClick={() => setPSheet('school')}>{pSchool ? schoolName(pSchool) : 'Mọi trường'}</PhoneChip>
-          <PhoneChip on={pQuick === ''} onClick={() => setPQuick('')}>Tất cả</PhoneChip>
-          <PhoneChip on={pQuick === 'pending'} onClick={() => setPQuick('pending')}>Có bài chờ chấm</PhoneChip>
-          <PhoneChip on={pQuick === 'soon'} onClick={() => setPQuick('soon')}>Sắp hết hạn</PhoneChip>
-        </PhoneChips>
         {list.length === 0 ? <PhoneEmpty icon={GraduationCap} title={classes.length ? 'Không có lớp nào khớp' : 'Chưa có lớp học nào'} sub={!classes.length && canCreate ? 'Bấm Lớp mới để tạo lớp đầu tiên, hoặc Import từ Excel ở nút Khác.' : undefined} /> : (
           // Danh sách gọn theo từng trường: thẻ trắng bo tròn, mỗi lớp 1 dòng có biểu tượng, tên, thông tin phụ, mũi tên.
           // Giữ tay trên 1 dòng để mở thao tác với lớp (cộng tác, đổi tên, xoá).

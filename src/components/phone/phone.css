@@ -664,3 +664,48 @@ html.ph-lg .ph-grid, html.ph-lg .ph-box:not(.lap), .ph-lg-demo .ph-grid {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.35), inset 0 0 0 .5px rgba(255,255,255,.4), 0 12px 30px -14px rgba(15,23,42,.32), 0 2px 6px -3px rgba(15,23,42,.12);
 }
 html.ph-lg .ph-grid .ph-ico, .ph-lg-demo .ph-grid .ph-ico { box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }
+
+/* ===== Thẻ phân trang kiểu bìa hồ sơ (dùng cho mọi thẻ phân trang trên điện thoại) =====
+   --on: màu thẻ đang chọn, trùng màu phần nội dung bên dưới để liền khối. --strip: màu dải nền của thẻ chưa chọn. */
+.pk-ftabs { --on: #fff; --strip: #e3e8ef; position: relative; display: flex; align-items: flex-end; height: 52px; margin-top: 12px; border-radius: 22px 22px 0 0; background: var(--strip); }
+.pk-ftabs .ft { position: relative; flex: 1 1 0; min-width: 0; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 6px;
+  font-size: 13.5px; font-weight: 600; color: #64748b; border-radius: 18px 18px 0 0; transition: color .2s; }
+.pk-ftabs .ft svg { width: 18px; height: 18px; flex: none; }
+.pk-ftabs .ft span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pk-ftabs .ft em { font-style: normal; font-size: 11px; font-weight: 800; background: rgba(100,116,139,.15); color: #64748b; border-radius: 999px; padding: 1px 7px; flex: none; }
+.pk-ftabs .ft.on { height: 52px; background: var(--on); color: var(--ph-brand-hover); font-weight: 800; font-size: 15px; z-index: 2; }
+.pk-ftabs .ft.on em { background: color-mix(in srgb, var(--ph-brand-hover) 14%, transparent); color: var(--ph-brand-hover); }
+.pk-ftabs .ft.on::before, .pk-ftabs .ft.on::after { content: ""; position: absolute; bottom: 0; width: 22px; height: 22px; pointer-events: none; }
+.pk-ftabs .ft.on::before { left: -22px; background: radial-gradient(circle at 0 0, transparent 21.5px, var(--on) 22px); }
+.pk-ftabs .ft.on::after { right: -22px; background: radial-gradient(circle at 100% 0, transparent 21.5px, var(--on) 22px); }
+.pk-ftabs .ft.on:first-child::before, .pk-ftabs .ft.on:last-child::after { display: none; }
+.pk-ftabs .ft.on:first-child { border-radius: 22px 18px 0 0; }
+.pk-ftabs .ft.on:last-child { border-radius: 18px 22px 0 0; }
+.pk-ftabs.n3 .ft { font-size: 12.5px; gap: 5px; padding: 0 4px; }
+.pk-ftabs.n3 .ft.on { font-size: 14px; }
+.pk-ftabs.n3 .ft svg { width: 16px; height: 16px; }
+/* Thẻ nằm ở mép dưới khối màu đầu trang: dải là kính mờ trắng, thẻ đang chọn cùng màu nền trang, khối màu không còn khoảng đệm dưới */
+.pk-ext:has(> .pk-ftabs:last-child), .pk-hd:has(> .pk-ftabs:last-child) { padding-bottom: 0 !important; }
+.pk-ext > .pk-ftabs { --on: var(--ph-bg); --strip: rgba(255,255,255,.16); margin: 14px -12px 0; border-radius: 0; }
+.pk-ext > .pk-ftabs .ft { color: rgba(255,255,255,.9); }
+.pk-ext > .pk-ftabs .ft em { background: rgba(255,255,255,.22); color: #fff; }
+.pk-ext > .pk-ftabs .ft.on { color: var(--ph-brand-hover); }
+.pk-ext > .pk-ftabs .ft.on em { background: color-mix(in srgb, var(--ph-brand-hover) 14%, transparent); color: var(--ph-brand-hover); }
+.pk-ext > .pk-ftabs .ft.on:first-child { border-radius: 0 18px 0 0; }
+.pk-ext > .pk-ftabs .ft.on:last-child { border-radius: 18px 0 0 0; }
+.pk-ext > .pk-ftabs + * , .pk-ext:has(> .pk-ftabs:last-child) + * { margin-top: 10px; }
+/* Danh sách lớp: thẻ nằm trên nền trang, thẻ đang chọn trắng nối với khung trắng chứa ô tìm và bộ lọc */
+.pk-cls-sec .pk-ftabs { margin-top: 0; }
+.pk-cls-panel { background: #fff; border-radius: 0 0 22px 22px; padding: 12px 12px 4px; }
+.pk-cls-panel:has(+ *) { }
+.pk-cls-sec:has(.ft.on:last-child) .pk-cls-panel { border-top-left-radius: 22px; }
+.pk-cls-sec:has(.ft.on:first-child) .pk-cls-panel { border-top-right-radius: 22px; }
+.pk-cls-panel .pk-srch { margin-top: 0 !important; background: var(--ph-bg); border: 0 !important; }
+.pk-cls-panel .pk-chips { margin: 10px -12px 0; padding-left: 12px; padding-right: 12px; }
+
+/* Thẻ Thông báo (Tất cả, Công việc, Cộng tác...) cùng kiểu bìa hồ sơ, cuộn ngang khi nhiều thẻ */
+.ph-tabs { --on: #fff; display: flex; align-items: flex-end; gap: 0; height: 50px; padding: 0 0; border-bottom: 0; background: #e3e8ef; border-radius: 22px 22px 0 0; margin: 12px 12px 0; overflow-x: auto; overflow-y: hidden; }
+.ph-tabs button { position: relative; flex: none; height: 42px; padding: 0 14px; font-size: 13.5px; font-weight: 600; color: #64748b; border-bottom: 0 !important; border-radius: 16px 16px 0 0; display: flex; align-items: center; }
+.ph-tabs button.on { height: 50px; background: var(--on); color: var(--ph-brand-hover); font-weight: 800; border-bottom-color: transparent !important; }
+.ph-tabs button.on:first-child { border-top-left-radius: 22px; }
+.pk-hd:has(> .pk-ftabs:last-child) { box-shadow: none; }

@@ -68,10 +68,10 @@ export const PW_ART: Record<string, { name: string; top: (c: string) => string; 
 
 const TXT = {
   vi: { m: 'Chào buổi sáng', a: 'Chào buổi chiều', e: 'Chào buổi tối', login: 'Đăng nhập', reg: 'Đăng ký', user: 'Email hoặc tên đăng nhập', pass: 'Mật khẩu', forgot: 'Quên mật khẩu?',
-    toReg: <>Nếu bạn chưa có tài khoản hãy <b>đăng ký</b></>, regTitle: 'Tạo tài khoản EduGo', regSub: 'Giảng viên và sinh viên đăng ký miễn phí', name: 'Họ và tên', mail: 'Email', newPass: 'Mật khẩu, ít nhất 6 ký tự',
+    toReg: <>Nếu bạn chưa có tài khoản hãy <b>đăng ký</b></>, toReg2: 'Nếu bạn chưa có tài khoản hãy ', regWord: 'đăng ký', regTitle: 'Tạo tài khoản EduGo', regSub: 'Giảng viên và sinh viên đăng ký miễn phí', name: 'Họ và tên', mail: 'Email', newPass: 'Mật khẩu, ít nhất 6 ký tự',
     toLogin: <>Đã có tài khoản? <b>Đăng nhập</b></>, bell: 'Đăng nhập để xem thông báo của bạn.', busy: 'Đang xử lý...' },
   en: { m: 'Good morning', a: 'Good afternoon', e: 'Good evening', login: 'Sign in', reg: 'Sign up', user: 'Email or username', pass: 'Password', forgot: 'Forgot password?',
-    toReg: <>No account yet? <b>Sign up</b></>, regTitle: 'Create your EduGo account', regSub: 'Free for lecturers and students', name: 'Full name', mail: 'Email', newPass: 'Password, at least 6 characters',
+    toReg: <>No account yet? <b>Sign up</b></>, toReg2: 'No account yet? ', regWord: 'Sign up', regTitle: 'Create your EduGo account', regSub: 'Free for lecturers and students', name: 'Full name', mail: 'Email', newPass: 'Password, at least 6 characters',
     toLogin: <>Already have an account? <b>Sign in</b></>, bell: 'Sign in to see your notifications.', busy: 'Please wait...' },
 };
 
@@ -82,6 +82,7 @@ const Ic = {
   lock: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>,
   mail: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-10 6L2 7" /></svg>,
   eye: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>,
+  back: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>,
   eyeOff: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9.9 4.2A10 10 0 0 1 12 4c6.4 0 10 8 10 8a17 17 0 0 1-2.2 3.3M6.6 6.6A17 17 0 0 0 2 12s3.6 8 10 8a9.7 9.7 0 0 0 5.4-1.6" /><path d="m2 2 20 20" /><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" /></svg>,
 };
 
@@ -100,8 +101,9 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
   }, [!!preview]); // eslint-disable-line react-hooks/exhaustive-deps
   const cfg = preview || loaded;
   const allowReg = cfg.allowRegister !== false;
-  const [mode, setMode] = useState<'login' | 'register'>(initialMode === 'register' && allowReg ? 'register' : 'login');
-  useEffect(() => { if (!allowReg && mode === 'register') setMode('login'); }, [allowReg, mode]);
+  // 3 bước trên cùng 1 màn: màn chào (nút Đăng nhập), bấm Đăng nhập thì thẻ mở ô tài khoản, mật khẩu, bấm đăng ký thì mở ô đăng ký.
+  const [mode, setMode] = useState<'home' | 'login' | 'register'>(initialMode === 'register' && allowReg ? 'register' : 'home');
+  useEffect(() => { if (!allowReg && mode === 'register') setMode('home'); }, [allowReg, mode]);
   const [lang, setLang] = useState<'vi' | 'en'>('vi');
   const t = TXT[lang];
 
@@ -159,7 +161,7 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok?: boolean; text: string } | null>(null);
-  const switchMode = (m: 'login' | 'register') => { setMode(m); setMsg(null); setShow(false); };
+  const switchMode = (m: 'home' | 'login' | 'register') => { setMode(m); setMsg(null); setShow(false); };
   const doLogin = async (e: React.FormEvent) => {
     e.preventDefault(); if (preview || busy) return;
     if (onClosePreview) { setMsg({ ok: true, text: 'Đây là bản xem thử khi bạn đang đăng nhập, nút Đăng nhập không đổi tài khoản.' }); return; }
@@ -205,13 +207,13 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
             <button type="button" className="lang" onClick={() => setLang(l => (l === 'vi' ? 'en' : 'vi'))} aria-label="Đổi ngôn ngữ">
               <i className={lang === 'en' ? 'en' : ''}>{lang === 'vi' ? '★' : 'EN'}</i><span>{lang === 'vi' ? 'VI' : 'EN'}</span>
             </button>
-            <button type="button" className="ib" aria-label="Thông báo" onClick={() => { setMode('login'); setMsg({ text: t.bell }); }}>{Ic.bell}</button>
+            <button type="button" className="ib" aria-label="Thông báo" onClick={() => { setMode('home'); setMsg({ text: t.bell }); }}>{Ic.bell}</button>
           </div>
         </div>
         <div className="hello"><small>{greet}</small><h2>{hiBig}</h2></div>
         <div className="grow" />
 
-        {mode === 'login' && banners.length > 0 && (
+        {mode === 'home' && banners.length > 0 && (
           <div className="ban">
             <div className="win">
             <div className="trk" style={{ transform: `translateX(-${bi * 100}%)` }}
@@ -238,10 +240,17 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
         )}
 
         <div className={`card ${glass ? 'glass' : ''}`} style={{ '--ga': ga, '--gb': `${gb}px` } as React.CSSProperties}>
-          {mode === 'login' ? (
+          {mode === 'home' ? (
+            <div key="h" className="anim">
+              <div className="who"><span className="av">{Ic.user}</span><span><b>{cardTitle}</b><span>{cardSub}</span></span></div>
+              {msg && <div className={`msg ${msg.ok ? 'ok' : 'err'}`} role="alert">{msg.text}</div>}
+              <button type="button" className="go2" onClick={() => switchMode('login')}><LogIn />{t.login}</button>
+              {allowReg && <p className="regl">{t.toReg2}<button type="button" onClick={() => switchMode('register')}>{t.regWord}</button></p>}
+            </div>
+          ) : mode === 'login' ? (
             <form key="l" className="anim" onSubmit={doLogin} noValidate>
-              <div className="hi2"><b>{cardTitle}</b><span>{cardSub}</span></div>
-              <label className="ipt">{Ic.user}<input value={u} onChange={e => setU(e.target.value)} placeholder={t.user} autoComplete="username" autoCapitalize="none" inputMode="email" enterKeyHint="next" /></label>
+              <div className="hi2"><button type="button" className="bk" onClick={() => switchMode('home')} aria-label="Quay lại">{Ic.back}</button><b>{t.login}</b><span>{cardSub}</span></div>
+              <label className="ipt">{Ic.user}<input autoFocus={!preview} value={u} onChange={e => setU(e.target.value)} placeholder={t.user} autoComplete="username" autoCapitalize="none" inputMode="email" enterKeyHint="next" /></label>
               <label className="ipt">{Ic.lock}<input type={show ? 'text' : 'password'} value={p} onChange={e => setP(e.target.value)} placeholder={t.pass} autoComplete="current-password" enterKeyHint="go" />{eyeBtn}</label>
               {msg && <div className={`msg ${msg.ok ? 'ok' : 'err'}`} role="alert">{msg.text}</div>}
               <button type="button" className="fg" onClick={doForgot}>{t.forgot}</button>
@@ -250,8 +259,8 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
             </form>
           ) : (
             <form key="r" className="anim" onSubmit={doRegister} noValidate>
-              <div className="hi2"><b>{t.regTitle}</b><span>{t.regSub}</span></div>
-              <label className="ipt">{Ic.user}<input value={name} onChange={e => setName(e.target.value)} placeholder={t.name} autoComplete="name" enterKeyHint="next" /></label>
+              <div className="hi2"><button type="button" className="bk" onClick={() => switchMode('home')} aria-label="Quay lại">{Ic.back}</button><b>{t.regTitle}</b><span>{t.regSub}</span></div>
+              <label className="ipt">{Ic.user}<input autoFocus={!preview} value={name} onChange={e => setName(e.target.value)} placeholder={t.name} autoComplete="name" enterKeyHint="next" /></label>
               <label className="ipt">{Ic.mail}<input type="email" value={mail} onChange={e => setMail(e.target.value)} placeholder={t.mail} autoComplete="email" autoCapitalize="none" inputMode="email" enterKeyHint="next" /></label>
               <label className="ipt">{Ic.lock}<input type={show ? 'text' : 'password'} value={np} onChange={e => setNp(e.target.value)} placeholder={t.newPass} autoComplete="new-password" enterKeyHint="go" />{eyeBtn}</label>
               {msg && <div className={`msg ${msg.ok ? 'ok' : 'err'}`} role="alert">{msg.text}</div>}
