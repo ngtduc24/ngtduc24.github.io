@@ -32,6 +32,8 @@ import { eduCan } from '../../lib/eduPermissions';
 import { usePhoneMaybe, PhoneActionGrid } from '../phone/PhoneShell';
 import { PhoneExt, PhoneSearch, PhoneSeg, PhoneChips, PhoneChip, PhoneSheet, PhoneMenuSheet, PhoneFab, PhoneEmpty, bandOf } from '../phone/PhoneKit';
 import { askText } from '../ui/Dialogs';
+import { supabase } from '../../lib/supabase';
+import { writeSubRoute } from '../../lib/seoConfig';
 import { getGrades } from '../../lib/edu';
 import { phoneMode, phoneUi } from '../../lib/device';
 import { PhoneTop } from '../phone/PhoneHome';
@@ -93,12 +95,14 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
   const [pScope, setPScope] = useState<'mine' | 'shared'>('mine');
   const [pSchool, setPSchool] = useState('');
   const [pQuick, setPQuick] = useState<'' | 'pending' | 'soon'>('');
-  const [pSheet, setPSheet] = useState<null | 'school' | 'menu' | 'new' | { cls: EduClass } | { school: EduSchool }>(null);
+  const [pSheet, setPSheet] = useState<null | 'school' | 'menu' | 'new' | 'ext' | { cls: EduClass } | { school: EduSchool }>(null);
   const [newCls, setNewCls] = useState({ schoolId: '', name: '' });
 
   // Thống kê nhanh cho mỗi lớp: tổng sinh viên, bài tập đang có hạn nộp gần nhất, số đã nộp.
   type ClassStat = { students: number; assignmentTitle?: string; deadline?: string; submitted: number; pending?: number; assignmentId?: string; gradeColumnId?: string; assignments?: number };
   const [classStats, setClassStats] = useState<Record<string, ClassStat>>({});
+  // Số yêu cầu gia hạn đang chờ duyệt của từng lớp (dùng cho ô Phê duyệt yêu cầu trên điện thoại)
+  const [extCount, setExtCount] = useState<Record<string, number>>({});
 
   // Chạy tuần tự có thử lại 1 lần cho từng lớp để tránh lỗi tạm thời khi gọi nhiều
   // truy vấn cùng lúc. Khi một lớp lỗi thì giữ nguyên chỉ số cũ, không ghi đè số 0.
@@ -167,6 +171,10 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
       setSchools(allSchools);
       setClasses(allClasses);
       loadClassStats(allClasses);
+      if (allClasses.length) {
+        supabase.from('edu_extension_requests').select('class_id').eq('status', 'pending').in('class_id', allClasses.map(c => c.id))
+          .then(({ data }) => { const m: Record<string, number> = {}; (data || []).forEach((r: any) => { m[r.class_id] = (m[r.class_id] || 0) + 1; }); setExtCount(m); }, () => {});
+      }
       collaboratorsByResource('edu_class', allClasses.map(c => c.id)).then(setClassCollabs).catch(() => {});
     } catch (err) {
       console.error(err);
@@ -334,35 +342,27 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
           // Đầu trang giống Trang chủ: ảnh nền theo mùa của admin, tên chức năng, số liệu nhanh, 4 nút tròn.
           const totalSt = scoped.reduce((n, c) => n + (classStats[c.id]?.students || 0), 0);
           const totalPending = scoped.reduce((n, c) => n + (classStats[c.id]?.pending || 0), 0);
-          const ui = { ...phoneUi(phone.settings), title: `${scoped.length} lớp · ${totalSt} sinh viên`, desc: totalPending ? `${totalPending} bài đang chờ chấm, bấm Chờ chấm để xem lớp cần chấm.` : 'Bài đã nộp đều được chấm hết.', titleOn: true, descOn: true };
-          const acts = [
-            ...(canCreate ? [{ key: 'new', label: 'Lớp mới', icon: Plus, run: () => { setNewCls({ schoolId: pSchool || mySchools[0]?.id || '', name: '' }); setPSheet('new'); } }] : []),
-            ...(onImport && canImportEdu ? [{ key: 'import', label: 'Import', icon: Upload, run: () => onImport() }] : []),
-            { key: 'pending', label: 'Chờ chấm', icon: ClipboardList, run: () => { setPQuick(pQuick === 'pending' ? '' : 'pending'); document.getElementById('pk-cls-list')?.scrollIntoView({ behavior: 'smooth' }); } },
-            { key: 'more', label: 'Khác', icon: MoreVertical, run: () => setPSheet('menu') },
-          ].slice(0, 4);
-          // Lưới chức năng liên quan đến lớp học
-          const can = (id: string) => canUseModule(currentUser, id) && phoneMode(id, phone.settings) !== 'hidden';
-          const meta = (id: string) => MODULE_REGISTRY.find(m => m.id === id);
+          const ui = { ...phoneUi(phone.settings), title: `${scoped.length} lớp · ${totalSt} sinh viên`, desc: totalPending ? `${totalPending} bài đang chờ chấm, bấm Chấm bài để xem lớp cần chấm.` : 'Bài đã nộp đều được chấm hết.', titleOn: true, descOn: true };
+          // Lưới chức năng của Lớp học: chỉ 4 việc chính, không còn hàng nút tròn.
+          const totalExt = Object.values(extCount).reduce((a, b) => a + b, 0);
+          const extClasses = classes.filter(c => (extCount[c.id] || 0) > 0);
+          const openExt = (cid: string) => { writeSubRoute({ ext: '1' }); onSelectClass(cid); };
           const tiles = [
-            { key: 'bank', id: 'edu_bank', label: 'Bài tập', icon: BookMarked, on: !!onOpenBank && can('edu_bank'), run: () => onOpenBank?.() },
-            { key: 'exam', id: 'edu_exam', label: 'Trắc nghiệm', icon: FileCheck2, on: !!onOpenExams && can('edu_exam'), run: () => onOpenExams?.() },
-            { key: 'grade', id: 'edu_grade', label: 'Nhập điểm', icon: ClipboardList, on: !!onOpenGrades && can('edu_grade'), run: () => phone.open('edu_grade'), lap: phoneMode('edu_grade', phone.settings) === 'laptop' },
-            { key: 'el', id: 'elearning', label: 'Giáo trình', icon: BookOpen, on: can('elearning'), run: () => phone.open('elearning') },
-            { key: 'sl', id: 'slides', label: 'Bài giảng', icon: meta('slides')?.icon || BookOpen, on: can('slides'), run: () => phone.open('slides') },
-            { key: 'school', id: '', label: 'Thêm trường', icon: School, on: canCreate, run: () => { newSchool(); } },
-            { key: 'qr', id: 'qr_codes', label: 'Mã QR', icon: meta('qr_codes')?.icon || School, on: can('qr_codes'), run: () => phone.open('qr_codes') },
-          ].filter(t => t.on).slice(0, 8);
+            { key: 'school', label: 'Thêm trường', icon: School, on: canCreate, badge: 0, run: () => { newSchool(); } },
+            { key: 'new', label: 'Thêm lớp', icon: Plus, on: canCreate, badge: 0, run: () => { setNewCls({ schoolId: pSchool || mySchools[0]?.id || '', name: '' }); setPSheet('new'); } },
+            { key: 'grade', label: 'Chấm bài', icon: ClipboardList, on: canGrade, badge: totalPending, run: () => { setPQuick('pending'); document.getElementById('pk-cls-list')?.scrollIntoView({ behavior: 'smooth' }); } },
+            { key: 'ext', label: 'Phê duyệt yêu cầu', icon: CheckCircle2, on: canGrade, badge: totalExt, run: () => { if (extClasses.length === 1) openExt(extClasses[0].id); else setPSheet('ext'); } },
+          ].filter(t => t.on);
           return (
             <div style={{ margin: '-12px -12px 0' }}>
-              <PhoneTop settings={phone.settings} ui={ui} acts={acts}
+              <PhoneTop settings={phone.settings} ui={ui} acts={[]}
                 nav={{ title: 'Lớp học', onBack: () => phone.open('dashboard'), onHome: () => phone.open('dashboard') }} />
               {tiles.length > 0 && (
                 <div className="ph-grid">
                   <div className="ph-apps">
                     {tiles.map(t => { const I = t.icon; return (
                       <button key={t.key} type="button" className="ph-app" onClick={t.run}>
-                        {t.lap && <span className="lap"><Monitor /></span>}
+                        {t.badge > 0 && <span className="tag hot">{t.badge > 99 ? '99+' : t.badge}</span>}
                         <span className="ph-ico" style={{ background: 'var(--ph-brand-light)', color: 'var(--ph-brand-hover)' }}><I /></span><span>{t.label}</span>
                       </button>
                     ); })}
@@ -433,6 +433,15 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
           </div>
         )}
 
+        {pSheet === 'ext' && (
+          <PhoneSheet title="Phê duyệt yêu cầu" sub={classes.some(c => (extCount[c.id] || 0) > 0) ? 'Chọn lớp để xem và duyệt yêu cầu gia hạn nộp bài.' : 'Hiện chưa có yêu cầu nào đang chờ duyệt.'} onClose={() => setPSheet(null)}>
+            <div className="pk-pick">
+              {classes.filter(c => (extCount[c.id] || 0) > 0).map(c => (
+                <button key={c.id} type="button" onClick={() => { setPSheet(null); writeSubRoute({ ext: '1' }); onSelectClass(c.id); }}><span>{c.name}</span><em>{extCount[c.id]} yêu cầu</em></button>
+              ))}
+            </div>
+          </PhoneSheet>
+        )}
         {pSheet === 'school' && (
           <PhoneSheet title="Chọn trường" onClose={() => setPSheet(null)}>
             <div className="pk-pick">
@@ -463,8 +472,8 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
           { key: 'del', label: 'Xoá trường', icon: Trash2, danger: true, hidden: !(canDelete && mine(sc)), onClick: () => handleDeleteSchool(sc) },
         ]} />; })()}
         {pSheet === 'new' && (
-          <PhoneSheet title="Lớp mới" sub="Tạo lớp trống, sau đó thêm sinh viên trong lớp. Muốn nhập cả danh sách thì dùng Import tạo lớp." onClose={() => setPSheet(null)}
-            footer={<><button type="button" className="ph-btn ghost" onClick={() => setPSheet(null)}>Huỷ</button><button type="button" className="ph-btn" style={{ flex: 2 }} disabled={!newCls.name.trim() || !newCls.schoolId} onClick={createClass}>Tạo lớp</button></>}>
+          <PhoneSheet title="Lớp mới" sub="Tạo lớp trống, sau đó thêm sinh viên trong lớp. Muốn nhập cả danh sách sinh viên từ tệp Excel thì bấm nút Excel bên dưới." onClose={() => setPSheet(null)}
+            footer={<>{onImport && canImportEdu ? <button type="button" className="ph-btn ghost" onClick={() => { setPSheet(null); onImport(); }}><Upload size={18} />Excel</button> : <button type="button" className="ph-btn ghost" onClick={() => setPSheet(null)}>Huỷ</button>}<button type="button" className="ph-btn" style={{ flex: 2 }} disabled={!newCls.name.trim() || !newCls.schoolId} onClick={createClass}>Tạo lớp</button></>}>
             <div className="pk-form">
               <label>Trường</label>
               <div className="pk-chips" style={{ margin: '-4px 0 0', padding: 0, flexWrap: 'wrap' }}>

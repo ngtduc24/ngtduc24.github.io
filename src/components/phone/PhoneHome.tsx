@@ -230,9 +230,11 @@ export function PhoneTop({ settings, ui: uiOverride, name, avatar, unread, acts,
           {ui.descOn !== false && <p>{desc}</p>}
         </div>
       )}
-      <div className={`acts ${show ? '' : 'tight'}`}>
-        {acts.map(a => { const I = a.icon; return <button key={a.key} type="button" className="act" onClick={a.run}><span className="c"><I /></span>{a.label}</button>; })}
-      </div>
+      {acts.length > 0 && (
+        <div className={`acts ${show ? '' : 'tight'}`}>
+          {acts.map(a => { const I = a.icon; return <button key={a.key} type="button" className="act" onClick={a.run}><span className="c"><I /></span>{a.label}</button>; })}
+        </div>
+      )}
     </div>
   );
 }
