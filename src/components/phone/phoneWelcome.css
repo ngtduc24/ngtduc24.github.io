@@ -101,3 +101,11 @@
 .pw .hi2 { position: relative; padding: 0 34px; }
 .pw .hi2 .bk { position: absolute; left: -6px; top: -4px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: #334155; background: rgba(255,255,255,.5); }
 .pw .hi2 .bk svg { width: 20px; height: 20px; }
+
+/* Đang gõ (bàn phím mở): ẩn lời chào lớn và banner, thẻ đăng nhập nằm ngay trên bàn phím */
+.pw.kb .hello, .pw.kb .ban { display: none; }
+.pw.kb .view { padding-top: 0; }
+.pw.kb .top { padding-top: 10px; }
+.pw.kb .card { margin-top: 10px; }
+.pw.kb .foot { height: 12px; }
+.pw { touch-action: pan-y; overscroll-behavior: none; }

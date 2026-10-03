@@ -189,10 +189,43 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
 
   const eyeBtn = <button type="button" className="eye" onClick={() => setShow(v => !v)} aria-label={show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}>{show ? Ic.eyeOff : Ic.eye}</button>;
   // Nền khung trùng màu phần trên của ảnh nền: Safari trên iPhone lấy màu nền này tô vùng tai thỏ.
-  const style = { '--pw-c': color, '--pw-b': shadeHex(color, 18), backgroundColor: topColor } as React.CSSProperties;
+  // Bàn phím iPhone mở: thu khung về đúng phần màn hình còn thấy (visualViewport) để thẻ đăng nhập tự đẩy lên trên bàn phím,
+  // ẩn lời chào lớn và banner cho đủ chỗ, cuộn ô đang nhập vào giữa. Khoá thu phóng và cuộn trang khi đang ở màn chào.
+  const [kb, setKb] = useState<{ h: number; top: number } | null>(null);
+  const viewRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (preview) return;
+    const vv = window.visualViewport;
+    const on = () => {
+      if (!vv) return;
+      const open = window.innerHeight - vv.height > 120;
+      setKb(open ? { h: Math.round(vv.height), top: Math.round(vv.offsetTop) } : null);
+    };
+    vv?.addEventListener('resize', on); vv?.addEventListener('scroll', on);
+    const meta = document.querySelector('meta[name="viewport"]'); const prevMeta = meta?.getAttribute('content') || '';
+    meta?.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+    const h = document.documentElement; const prevOv = h.style.overflow;
+    h.style.overflow = 'hidden'; document.body.style.overflow = 'hidden';
+    const focusIn = (e: FocusEvent) => {
+      const el = e.target as HTMLElement;
+      if (!el || el.tagName !== 'INPUT') return;
+      window.setTimeout(() => { on(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 320);
+    };
+    const focusOut = () => window.setTimeout(() => { on(); if (!document.activeElement || document.activeElement.tagName !== 'INPUT') window.scrollTo(0, 0); }, 120);
+    document.addEventListener('focusin', focusIn); document.addEventListener('focusout', focusOut);
+    return () => {
+      vv?.removeEventListener('resize', on); vv?.removeEventListener('scroll', on);
+      if (meta) meta.setAttribute('content', prevMeta);
+      h.style.overflow = prevOv; document.body.style.overflow = '';
+      document.removeEventListener('focusin', focusIn); document.removeEventListener('focusout', focusOut);
+    };
+  }, [!!preview]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const style = { '--pw-c': color, '--pw-b': shadeHex(color, 18), backgroundColor: topColor,
+    ...(kb ? { top: kb.top, height: kb.h, bottom: 'auto' } : {}) } as React.CSSProperties;
 
   return (
-    <div className={`pw ${preview ? 'pv' : ''}`} style={style}>
+    <div className={`pw ${preview ? 'pv' : ''} ${kb ? 'kb' : ''}`} style={style}>
       <div className="art" aria-hidden>
         {artKey === 'image'
           ? <div className="photo" style={{ backgroundImage: `url(${cfg.bgImage})`, backgroundPosition: cfg.bgPosition || 'center' }} />
@@ -200,7 +233,7 @@ export default function PhoneWelcome({ settings, users = [], onLoginSuccess, ini
         <div className="shade" style={{ background: `linear-gradient(180deg,rgba(0,0,0,${shade}) 0%,rgba(0,0,0,${shade / 2}) 60%,transparent 100%)` }} />
       </div>
       {onClosePreview && <div className="pvbar">Xem thử màn chào khi chưa đăng nhập<button type="button" onClick={onClosePreview}>Đóng</button></div>}
-      <div className="view">
+      <div className="view" ref={viewRef}>
         <div className="top">
           <div className="logo"><span className="mk">{settings?.webAppIcon ? <img src={settings.webAppIcon} alt="" /> : Ic.cap}</span><span>EduGo</span></div>
           <div className="tr">
