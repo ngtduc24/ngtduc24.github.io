@@ -108,7 +108,7 @@ export default function CoursesApp({ currentUser }: { currentUser: UserAccount }
 
   // Điện thoại: giao diện riêng (danh sách, trang khoá học, màn học bài) theo bản mẫu đã duyệt.
   if (phone) {
-    return <PhoneCourses user={currentUser} courses={courses} loading={loading} onEnroll={enroll} registering={registering} onUpdateCourse={updateCourse} />;
+    return <PhoneCourses user={currentUser} courses={courses} loading={loading} onEnroll={enroll} registering={registering} onUpdateCourse={updateCourse} settings={coursesSettings} />;
   }
 
   // Đang mở một khoá học: trang học bài toàn khung.

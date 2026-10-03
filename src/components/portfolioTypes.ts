@@ -138,11 +138,26 @@ export interface PortfolioProjectsSettings {
   layoutStyle?: 'grid' | 'list';
 }
 
+// Banner quảng cáo khoá học ở đầu trang Khoá học trên điện thoại, admin đặt ở Quản lý khoá học, Cài đặt trang Khoá học.
+export interface CoursePromo {
+  id: string;
+  courseId: string;
+  image?: string;   // ảnh riêng của banner, để trống thì dùng ảnh bìa khoá học
+  tag?: string;     // nhãn nhỏ, ví dụ Mới, Ưu đãi
+  title?: string;   // để trống thì dùng tên khoá
+  sub?: string;     // để trống thì dùng mô tả ngắn
+  btn?: string;     // chữ trên nút, mặc định Đăng ký ngay
+  tone?: number;    // màu nền khi không có ảnh
+  hidden?: boolean;
+}
+export interface CoursePromoSettings { on?: boolean; auto?: boolean; items?: CoursePromo[] }
+
 export interface PortfolioCoursesSettings {
   banner: PortfolioBanner;
   pageTitle: string;
   postsPerCategory: number;
   layoutStyle?: 'grid' | 'list';
+  promo?: CoursePromoSettings;
 }
 
 export interface PortfolioCourse {
@@ -175,6 +190,8 @@ export interface PortfolioCourse {
   studentsCount: number;
   students?: CourseStudent[];
   chapters?: CourseChapter[];
+  creatorId?: string;     // tài khoản tạo khoá, tên giảng viên hiện theo tài khoản này
+  creatorName?: string;
 }
 
 export interface CourseStudent {

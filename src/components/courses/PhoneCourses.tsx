@@ -5,8 +5,10 @@ import {
   Loader2, Bookmark, BookMarked, LogOut,
 } from 'lucide-react';
 import { UserAccount } from '../../types';
-import { PortfolioCourse, CourseLesson, CourseStudent } from '../portfolioTypes';
-import { saveCourseStudent, deleteCourseStudentDoc } from '../../lib/portfolioData';
+import { PortfolioCourse, CourseLesson, CourseStudent, PortfolioCoursesSettings } from '../portfolioTypes';
+import { PROMO_TONES } from './CoursePromoSettings';
+import { saveCourseStudent, deleteCourseStudentDoc, LEGACY_OWNER } from '../../lib/portfolioData';
+import { usePerson } from '../../lib/people';
 import { getSections as getELSections, getResources as getELResources, ELSection, ELResource } from '../../lib/elearning';
 import { sanitizeHtml, isSafeUrl } from '../../lib/sanitizeHtml';
 import { readSubRoute, writeSubRoute } from '../../lib/seoConfig';
@@ -63,8 +65,8 @@ function Cover({ c, className, children }: { c: PortfolioCourse; className: stri
   );
 }
 
-export default function PhoneCourses({ user, courses, loading, onEnroll, registering, onUpdateCourse }: {
-  user: UserAccount; courses: PortfolioCourse[]; loading: boolean;
+export default function PhoneCourses({ user, courses, loading, onEnroll, registering, onUpdateCourse, settings }: {
+  user: UserAccount; courses: PortfolioCourse[]; loading: boolean; settings?: PortfolioCoursesSettings | null;
   onEnroll: (c: PortfolioCourse) => Promise<void> | void; registering: boolean; onUpdateCourse: (c: PortfolioCourse) => void;
 }) {
   const isAdmin = user.role === 'admin';
@@ -111,7 +113,7 @@ export default function PhoneCourses({ user, courses, loading, onEnroll, registe
       : <div className="cx-load"><PhoneEmpty icon={GraduationCap} title="Không tìm thấy khoá học" sub="Khoá học có thể đã bị ẩn hoặc xoá." action={<button type="button" className="cx-btn" onClick={() => setView({ k: 'list' })}>Về danh sách khoá học</button>} /></div>;
   }
 
-  const ctx = { user, isAdmin, enrOf, canLearn, progressOf, favs, onEnroll, registering, onUpdateCourse, setView };
+  const ctx = { user, isAdmin, enrOf, canLearn, progressOf, favs, onEnroll, registering, onUpdateCourse, setView, settings };
   if (view.k === 'detail' && course) return <CourseDetail c={course} ctx={ctx} />;
   if (view.k === 'learn' && course) return <CourseLearn key={course.id} c={course} startLesson={view.lesson} ctx={ctx} />;
   return <CourseList courses={courses} ctx={ctx} />;
@@ -121,7 +123,7 @@ type Ctx = {
   user: UserAccount; isAdmin: boolean; favs: string[];
   enrOf: (c: PortfolioCourse) => CourseStudent | undefined; canLearn: (c: PortfolioCourse) => boolean; progressOf: (c: PortfolioCourse) => number | null;
   onEnroll: (c: PortfolioCourse) => Promise<void> | void; registering: boolean; onUpdateCourse: (c: PortfolioCourse) => void;
-  setView: (v: View) => void;
+  setView: (v: View) => void; settings?: PortfolioCoursesSettings | null;
 };
 
 /* ======================= Danh sách ======================= */
@@ -145,6 +147,13 @@ function CourseList({ courses, ctx }: { courses: PortfolioCourse[]; ctx: Ctx }) 
   })() : undefined;
   const featured = published.filter(c => !ctx.enrOf(c)).sort((a, b) => (b.studentsCount || 0) - (a.studentsCount || 0)).slice(0, 6);
   const doneN = mine.filter(c => ctx.progressOf(c) === 100).length;
+  // Banner quảng cáo: banner admin đặt (bỏ banner ẩn, khoá chưa phát hành), chưa đặt thì tự lấy khoá nổi bật nếu admin cho phép.
+  const promo = ctx.settings?.promo;
+  const slides: Slide[] = promo?.on === false ? [] : (() => {
+    const set = (promo?.items || []).filter(x => !x.hidden).map(x => ({ p: x, c: published.find(c => c.id === x.courseId) })).filter(x => !!x.c) as Slide[];
+    if (set.length || promo?.auto === false) return set;
+    return featured.slice(0, 3).map((c, i) => ({ p: { id: `auto_${c.id}`, courseId: c.id, tone: i, tag: 'Nổi bật' }, c }));
+  })();
 
   const base = tab === 'mine' ? mine : tab === 'saved' ? saved : published;
   const kw = q.trim().toLowerCase();
@@ -157,26 +166,36 @@ function CourseList({ courses, ctx }: { courses: PortfolioCourse[]; ctx: Ctx }) 
     <div className="cx">
       <div style={{ margin: '-12px -12px 0' }}>
         <PhoneTop settings={phone.settings} ui={ui} acts={[]} nav={{ title: 'Khoá học', onBack: () => phone.open('dashboard'), onHome: () => phone.open('dashboard') }} />
-        <div className="ph-grid cx-cont">
-          {cont ? (
-            <button type="button" className="cx-contc" onClick={() => ctx.setView({ k: 'learn', id: cont.id, lesson: contLesson?.id })}>
-              <Cover c={cont} className="cv"><i><Play /></i></Cover>
+        {slides.length > 0 ? <PromoBanner slides={slides} ctx={ctx} /> : (
+          <div className="ph-grid cx-cont">
+            {cont ? <button type="button" className="cx-contc" onClick={() => ctx.setView({ k: 'learn', id: cont!.id, lesson: contLesson?.id })}>
+              <Cover c={cont!} className="cv"><i><Play /></i></Cover>
               <span className="m">
                 <small>Học tiếp</small>
-                <b>{cont.title}</b>
+                <b>{cont!.title}</b>
                 <span className="s">{contLesson?.title || 'Bắt đầu bài đầu tiên'}</span>
-                <span className="bar"><i style={{ width: `${ctx.progressOf(cont) || 0}%` }} /></span>
+                <span className="bar"><i style={{ width: `${ctx.progressOf(cont!) || 0}%` }} /></span>
               </span>
-            </button>
-          ) : (
-            <div className="cx-stats">
-              <div><b>{published.length}</b><span>khoá đang mở</span></div>
-              <div><b>{mine.length}</b><span>khoá đang học</span></div>
-              <div><b>{doneN}</b><span>đã học xong</span></div>
-            </div>
-          )}
-        </div>
+            </button> : (
+              <div className="cx-stats">
+                <div><b>{published.length}</b><span>khoá đang mở</span></div>
+                <div><b>{mine.length}</b><span>khoá đang học</span></div>
+                <div><b>{doneN}</b><span>đã học xong</span></div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {slides.length > 0 && cont && <div className="cx-contbox"><button type="button" className="cx-contc" onClick={() => ctx.setView({ k: 'learn', id: cont!.id, lesson: contLesson?.id })}>
+              <Cover c={cont!} className="cv"><i><Play /></i></Cover>
+              <span className="m">
+                <small>Học tiếp</small>
+                <b>{cont!.title}</b>
+                <span className="s">{contLesson?.title || 'Bắt đầu bài đầu tiên'}</span>
+                <span className="bar"><i style={{ width: `${ctx.progressOf(cont!) || 0}%` }} /></span>
+              </span>
+            </button></div>}
 
       {featured.length > 0 && tab === 'all' && !kw && !cat && <>
         <div className="ph-sec"><h3>Nổi bật</h3></div>
@@ -218,6 +237,60 @@ function CourseList({ courses, ctx }: { courses: PortfolioCourse[]; ctx: Ctx }) 
         </div>
       </div>
       <div style={{ height: 24 }} />
+    </div>
+  );
+}
+
+type Slide = { p: import('../portfolioTypes').CoursePromo; c: PortfolioCourse };
+
+// Banner quảng cáo khoá học: vuốt ngang, tự chuyển sau 5 giây, nút Đăng ký ghi danh ngay, đã ghi danh thì thành Vào học.
+function PromoBanner({ slides, ctx }: { slides: Slide[]; ctx: Ctx }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [i, setI] = useState(0);
+  const hold = useRef(0);
+  useEffect(() => {
+    if (slides.length < 2) return;
+    const t = window.setInterval(() => {
+      if (Date.now() - hold.current < 6000) return;
+      const el = ref.current; if (!el) return;
+      const n = (Math.round(el.scrollLeft / el.clientWidth) + 1) % slides.length;
+      el.scrollTo({ left: n * el.clientWidth, behavior: 'smooth' });
+    }, 5000);
+    return () => window.clearInterval(t);
+  }, [slides.length]);
+  const [busy, setBusy] = useState('');
+  return (
+    <div className="cx-promo">
+      <div className="trk ph-hscroll" data-no-pull ref={ref}
+        onScroll={e => { const el = e.currentTarget; setI(Math.round(el.scrollLeft / Math.max(1, el.clientWidth))); }}
+        onTouchStart={() => { hold.current = Date.now(); }}>
+        {slides.map(({ p, c }) => {
+          const enr = !!ctx.enrOf(c);
+          const pr = priceOf(c);
+          const img = p.image || c.coverImage;
+          return (
+            <div key={p.id} className="sl" role="button" tabIndex={0} style={{ background: PROMO_TONES[(p.tone ?? 0) % PROMO_TONES.length] }}
+              onClick={() => ctx.setView({ k: 'detail', id: c.id })}>
+              {img && <img src={img} alt="" />}
+              <span className="sh" />
+              <span className="tx">
+                {p.tag && <em>{p.tag}</em>}
+                <b>{p.title?.trim() || c.title}</b>
+                {(p.sub?.trim() || c.briefDescription) && <span className="s">{p.sub?.trim() || c.briefDescription}</span>}
+                <span className="ft">
+                  <button type="button" disabled={!!busy} onClick={async e => {
+                    e.stopPropagation();
+                    if (enr) { ctx.setView({ k: 'learn', id: c.id }); return; }
+                    setBusy(c.id); try { await ctx.onEnroll(c); } finally { setBusy(''); }
+                  }}>{busy === c.id ? <Loader2 className="spin" /> : enr ? <Play /> : <BookMarked />}{enr ? 'Vào học' : (p.btn?.trim() || 'Đăng ký ngay')}</button>
+                  {!enr && <span className="pr">{money(pr.now)}{pr.old > 0 && <s>{money(pr.old)}</s>}</span>}
+                </span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      {slides.length > 1 && <div className="dots">{slides.map((s2, k) => <i key={s2.p.id} className={k === i ? 'on' : ''} />)}</div>}
     </div>
   );
 }
@@ -304,7 +377,7 @@ function CourseDetail({ c, ctx }: { c: PortfolioCourse; ctx: Ctx }) {
           <div><Users /><b>{c.studentsCount || 0}</b><span>học viên</span></div>
           <div><Award /><b>{c.hasCertificate ? 'Có' : 'Không'}</b><span>chứng chỉ</span></div>
         </div>
-        {c.instructor && <div className="cx-ins"><i>{c.instructor.trim().split(/\s+/).pop()?.[0] || 'G'}</i><span><b>{c.instructor}</b><span>Giảng viên khoá học</span></span></div>}
+        <Instructor c={c} />
         {pr !== null && (
           <div className="cx-box"><span className="cx-pg"><span className="t"><span>Tiến độ của bạn · {done.filter(id => lessons.some(l => l.id === id)).length} trên {lessons.length} bài</span><b>{pr}%</b></span><span className="bar"><i style={{ width: `${pr}%` }} /></span></span>
             <div className="cx-enr"><span><CheckCircle2 />Đã ghi danh{enr?.registrationDate ? ` từ ${new Date(enr.registrationDate).toLocaleDateString('vi-VN')}` : ''}</span>
@@ -364,6 +437,20 @@ function CourseDetail({ c, ctx }: { c: PortfolioCourse; ctx: Ctx }) {
   );
 }
 
+// Giảng viên: tên và ảnh theo tài khoản tạo khoá (khoá cũ chưa ghi người tạo thì lấy chủ trang), không có thì dùng tên nhập tay.
+function Instructor({ c }: { c: PortfolioCourse }) {
+  const uid = c.creatorId || (c as any).ownerId || LEGACY_OWNER;
+  const p = usePerson(uid, c.creatorName || c.instructor);
+  const name = (p?.name && p.name !== 'Người dùng' ? p.name : '') || c.creatorName || c.instructor;
+  if (!name) return null;
+  return (
+    <div className="cx-ins">
+      <i>{p?.avatar ? <img src={p.avatar} alt="" /> : name.trim().split(/\s+/).pop()?.[0] || 'G'}</i>
+      <span><b>{name}</b><span>{p?.username ? `@${p.username} · ` : ''}Giảng viên khoá học</span></span>
+    </div>
+  );
+}
+
 function Chapters({ c, lessons, learn, done, onOpen, current }: { c: PortfolioCourse; lessons: FlatLesson[]; learn: boolean; done: string[]; onOpen: (l: FlatLesson) => void; current?: string }) {
   const curCh = lessons.find(l => l.id === current)?.chapterIndex ?? 0;
   const [open, setOpen] = useState<number[]>([curCh]);
@@ -419,7 +506,7 @@ function CourseLearn({ c, startLesson, ctx }: { c: PortfolioCourse; startLesson?
   const first = lessons.find(l => l.id === startLesson) || lessons.find(l => l.id === enr?.lastLessonId) || lessons.find(l => !done.includes(l.id)) || lessons[0];
   const [curId, setCurId] = useState(first?.id || '');
   const cur = lessons.find(l => l.id === curId) || lessons[0];
-  const [tab, setTab] = useState<'lec' | 'list' | 'doc' | 'note'>('lec');
+  const [tab, setTab] = useState<'list' | 'doc' | 'quiz' | 'note'>('list');
   const bodyRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   // Đổi thẻ thì kéo thẻ đang chọn vào giữa hàng thẻ (hàng thẻ cuộn ngang).
@@ -451,7 +538,7 @@ function CourseLearn({ c, startLesson, ctx }: { c: PortfolioCourse; startLesson?
     const pr = pct(ids);
     persist({ ...enr, completedLessons: ids, progress: pr, ...(pr === 100 && !enr.completionDate ? { completionDate: new Date().toISOString() } : {}), lastLessonId: id, lastAt: new Date().toISOString() });
   };
-  const go = (l?: FlatLesson) => { if (!l) return; if (!learn && !(l.allowPreview || l.isFreePreview)) { notice('Đăng ký khoá học để mở bài này.', 'info'); return; } setCurId(l.id); setTab('lec'); };
+  const go = (l?: FlatLesson) => { if (!l) return; if (!learn && !(l.allowPreview || l.isFreePreview)) { notice('Đăng ký khoá học để mở bài này.', 'info'); return; } setCurId(l.id); };
   const nextL = cur ? lessons[cur.index + 1] : undefined;
   const prevL = cur ? lessons[cur.index - 1] : undefined;
   const finish = () => {
@@ -495,8 +582,9 @@ function CourseLearn({ c, startLesson, ctx }: { c: PortfolioCourse; startLesson?
   const docs: Array<{ title: string; url: string; sub?: string }> = cur ? [
     ...(cur.resources || []).filter(r => r.url).map(r => ({ title: r.name || 'Tài liệu', url: r.url })),
     ...(cur.practiceFileUrl ? [{ title: 'File thực hành', url: cur.practiceFileUrl, sub: 'Tải về để làm theo bài' }] : []),
-    ...elRes.filter(r => r.url).map(r => ({ title: r.title || 'Tài nguyên bài giảng', url: r.url as string, sub: 'Tài nguyên bài giảng' })),
+    ...elRes.filter(r => r.url).map(r => ({ title: r.title || 'Tài nguyên giáo án', url: r.url as string, sub: 'Tài nguyên của giáo án' })),
   ] : [];
+  const docN = docs.length + (cur?.elLessonId ? 1 : 0);
 
   if (!cur) return (
     <div className="cx-lp" data-no-pull><div className="cx-lp-top"><button type="button" className="bk" onClick={() => ctx.setView({ k: 'detail', id: c.id })}><ChevronLeft /></button></div>
@@ -529,29 +617,41 @@ function CourseLearn({ c, startLesson, ctx }: { c: PortfolioCourse; startLesson?
           <span className="cx-pg"><span className="t"><span>Khoá học · {done.filter(id => lessons.some(l => l.id === id)).length} trên {lessons.length} bài</span><b>{progress}%</b></span><span className="bar"><i style={{ width: `${progress}%` }} /></span></span>
         </div>
         <div className="cx-ltabs" data-no-pull ref={tabsRef}>
-          <button type="button" className={tab === 'lec' ? 'on' : ''} onClick={() => setTab('lec')}><Presentation />Bài giảng</button>
           <button type="button" className={tab === 'list' ? 'on' : ''} onClick={() => setTab('list')}><List />Nội dung khoá</button>
-          <button type="button" className={tab === 'doc' ? 'on' : ''} onClick={() => setTab('doc')}><FileText />Tài liệu{docs.length ? ` (${docs.length})` : ''}</button>
+          <button type="button" className={tab === 'doc' ? 'on' : ''} onClick={() => setTab('doc')}><FileText />Tài liệu{docN ? ` (${docN})` : ''}</button>
+          <button type="button" className={tab === 'quiz' ? 'on' : ''} onClick={() => setTab('quiz')}><ClipboardCheck />Quizz{cur.quizSlug ? ' (1)' : ''}</button>
           {enr && <button type="button" className={tab === 'note' ? 'on' : ''} onClick={() => setTab('note')}><PenLine />Ghi chú{notes.length ? ` (${notes.length})` : ''}</button>}
         </div>
 
-        {tab === 'lec' && <div className="cx-pad">
-          {locked ? <div className="cx-box"><p className="cx-mut">Đăng ký khoá học để xem nội dung bài này.</p></div> : <>
-            {elLoading ? <div className="cx-box"><p className="cx-mut"><Loader2 className="spin" /> Đang tải bài giảng...</p></div>
-              : secs.length > 0 ? secs.map((s, i) => (
-                <div key={s.id} className="cx-box"><h4><span className="no">{i + 1}</span>{s.title || `Phần ${i + 1}`}</h4><div className="cx-html" dangerouslySetInnerHTML={{ __html: sanitizeHtml(s.content || '') || '<p>(Chưa có nội dung)</p>' }} /></div>
-              ))
-              : (cur.textContent || cur.content || cur.description) ? <div className="cx-box"><h4>{cur.title}</h4><div className="cx-html" dangerouslySetInnerHTML={{ __html: sanitizeHtml(cur.textContent || cur.content || cur.description || '') }} /></div>
-              : <div className="cx-box"><p className="cx-mut">Bài học này chưa có nội dung đọc thêm.</p></div>}
-            {cur.quizSlug && (
-              <div className="cx-quiz"><span className="ic"><ClipboardCheck /></span><span className="m"><b>{cur.quizTitle || 'Kiểm tra sau bài học'}</b><span>Làm bài Quizz để ôn lại kiến thức của bài</span></span>
-                {learn && quizUrl ? <a href={quizUrl} target="_blank" rel="noreferrer">Làm bài</a> : <Lock className="lk" />}</div>
+        {tab === 'list' && <div className="cx-pad"><div className="cx-box"><Chapters c={c} lessons={lessons} learn={learn} done={done} current={cur.id} onOpen={go} /></div></div>}
+        {tab === 'doc' && <div className="cx-pad">
+          {locked ? <div className="cx-box"><p className="cx-mut">Đăng ký khoá học để xem tài liệu của bài này.</p></div> : <>
+            {/* Giáo án gắn từ kho Giáo trình (E-Learning): đọc ngay trong bài, hoặc mở toàn màn hình */}
+            {cur.elLessonId && (
+              <div className="cx-box cx-ga">
+                <div className="hd"><span className="ic"><BookOpen /></span><span className="m"><small>Giáo án</small><b>{cur.elLessonTitle || 'Giáo án của bài'}</b></span>
+                  <a href={`/?elview=${encodeURIComponent(cur.elLessonId)}`} target="_blank" rel="noreferrer">Mở</a></div>
+                {elLoading ? <p className="cx-mut"><Loader2 className="spin" /> Đang tải giáo án...</p>
+                  : secs.length === 0 ? <p className="cx-mut">Giáo án chưa có nội dung.</p>
+                  : secs.map((sec, i) => (
+                    <details key={sec.id} className="cx-sec" open={i === 0}>
+                      <summary><span className="no">{i + 1}</span>{sec.title || `Phần ${i + 1}`}</summary>
+                      <div className="cx-html" dangerouslySetInnerHTML={{ __html: sanitizeHtml(sec.content || '') || '<p>(Chưa có nội dung)</p>' }} />
+                    </details>
+                  ))}
+              </div>
             )}
+            {(cur.textContent || cur.content || cur.description) && <div className="cx-box"><h4>Nội dung bài học</h4><div className="cx-html" dangerouslySetInnerHTML={{ __html: sanitizeHtml(cur.textContent || cur.content || cur.description || '') }} /></div>}
+            <div className="cx-box"><h4>Tệp đính kèm</h4>
+              {docs.length === 0 ? <p className="cx-mut">Bài này chưa có tệp đính kèm.</p> : docs.map((d, i) => <ResRow key={i} title={d.title} url={d.url} sub={d.sub} />)}</div>
           </>}
         </div>}
-        {tab === 'list' && <div className="cx-pad"><div className="cx-box"><Chapters c={c} lessons={lessons} learn={learn} done={done} current={cur.id} onOpen={go} /></div></div>}
-        {tab === 'doc' && <div className="cx-pad"><div className="cx-box"><h4>Tài liệu của bài</h4>
-          {docs.length === 0 ? <p className="cx-mut">Bài này chưa có tài liệu đính kèm.</p> : docs.map((d, i) => <ResRow key={i} title={d.title} url={d.url} sub={d.sub} locked={locked} />)}</div></div>}
+        {tab === 'quiz' && <div className="cx-pad">
+          {cur.quizSlug ? (
+            <div className="cx-quiz"><span className="ic"><ClipboardCheck /></span><span className="m"><b>{cur.quizTitle || 'Kiểm tra sau bài học'}</b><span>Quizz gắn từ kho Quizz, làm bài để ôn lại kiến thức của bài</span></span>
+              {learn && quizUrl ? <a href={quizUrl} target="_blank" rel="noreferrer">Làm bài</a> : <Lock className="lk" />}</div>
+          ) : <div className="cx-box"><p className="cx-mut">Bài này chưa gắn Quizz.</p></div>}
+        </div>}
         {tab === 'note' && enr && <div className="cx-pad">
           <div className="cx-box"><h4>Ghi chú của bạn</h4>
             <p className="cx-mut">Ghi chú gắn với mốc thời gian của video lúc bạn bấm Lưu, chỉ mình bạn xem được.</p>

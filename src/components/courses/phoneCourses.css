@@ -199,6 +199,10 @@
 /* ---------- Trình phát riêng (ẩn nút của YouTube) ---------- */
 .cxp { position: relative; width: 100%; height: 100%; background: #000; overflow: hidden; color: #fff; user-select: none; -webkit-user-select: none; }
 .cxp .media, .cxp .media .yt, .cxp .media video { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* Khung YouTube cao gấp 3 lần và đặt lệch lên trên: video vẫn vừa khít bề ngang ở giữa, còn thanh tiêu đề, kênh, nút chia sẻ
+   ở mép trên và logo YouTube, video gợi ý ở mép dưới của khung nằm ngoài vùng nhìn thấy. */
+.cxp .media .yt { top: -100%; height: 300%; bottom: auto; }
+.cxp .media .yt > div { width: 100%; height: 100%; }
 .cxp .media iframe { width: 100%; height: 100%; border: 0; display: block; pointer-events: none; }
 .cxp .media video { object-fit: contain; background: #000; }
 .cxp .tap { position: absolute; inset: 0; z-index: 2; }
@@ -246,3 +250,47 @@
 .cx-prev b { display: block; font-size: 13px; color: #78350f; }
 .cx-prev button { flex: none; height: 34px; padding: 0 14px; border-radius: 11px; background: var(--ph-brand); color: #fff; font-weight: 800; font-size: 13px; border: 0; }
 .cx-prev .spin { width: 16px; height: 16px; }
+
+/* ---------- Banner quảng cáo khoá học ---------- */
+.cx-promo { position: relative; z-index: 2; margin: -44px 14px 0; }
+.cx-promo .trk { display: flex; gap: 0 !important; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 0 !important; margin: 0 !important; border-radius: 22px; box-shadow: 0 14px 30px -16px rgba(15,23,42,.45); }
+.cx-promo .trk::-webkit-scrollbar { display: none; }
+.cx-promo .sl { position: relative; flex: 0 0 100%; aspect-ratio: 2 / 1; min-height: 176px; scroll-snap-align: start; overflow: hidden; color: #fff; cursor: pointer; }
+.cx-promo .sl > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cx-promo .sh { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,.72), rgba(0,0,0,.38) 55%, rgba(0,0,0,.05)); }
+.cx-promo .tx { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px; max-width: 92%; }
+.cx-promo em { align-self: flex-start; font-style: normal; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; background: rgba(255,255,255,.92); color: var(--ph-ink); border-radius: 999px; padding: 3px 9px; margin-bottom: 6px; }
+.cx-promo b { font-size: 18px; line-height: 1.25; font-weight: 800; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 2px 10px rgba(0,0,0,.35); }
+.cx-promo .s { font-size: 12.5px; opacity: .92; margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.cx-promo .ft { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.cx-promo .ft button { white-space: nowrap; flex: none; height: 36px; padding: 0 14px; border-radius: 12px; background: #fff !important; color: var(--ph-brand-hover) !important; font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 6px 16px -8px rgba(0,0,0,.5); }
+.cx-promo .ft button svg { width: 15px; height: 15px; }
+.cx-promo .ft .pr { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.cx-promo .ft .pr s { font-weight: 600; opacity: .75; margin-left: 5px; font-size: 11.5px; }
+.cx-promo .dots { display: flex; justify-content: center; gap: 5px; margin-top: 8px; }
+.cx-promo .dots i { width: 6px; height: 6px; border-radius: 999px; background: #cbd5e1; transition: width .2s; }
+.cx-promo .dots i.on { width: 18px; background: var(--ph-brand); }
+.cx-contbox { margin: 12px 2px 0; background: #fff; border-radius: 20px; padding: 10px; box-shadow: 0 1px 2px rgba(15,23,42,.05); }
+.cx-contbox .cx-contc .cv { width: 64px; height: 64px; border-radius: 14px; }
+.cx-ga .hd { display: flex; align-items: center; gap: 10px; }
+.cx-ga .hd .ic { width: 40px; height: 40px; border-radius: 12px; background: #f5f3ff; color: #7c3aed; display: grid; place-items: center; flex: none; }
+.cx-ga .hd .ic svg { width: 19px; height: 19px; }
+.cx-ga .hd .m { flex: 1; min-width: 0; }
+.cx-ga .hd small { display: block; font-size: 10.5px; font-weight: 800; color: #7c3aed; text-transform: uppercase; letter-spacing: .3px; }
+.cx-ga .hd b { display: block; font-size: 14px; color: var(--ph-ink); line-height: 1.3; }
+.cx-ga .hd a { height: 34px; padding: 0 14px; border-radius: 11px; background: var(--ph-brand-light); color: var(--ph-brand-hover); font-weight: 800; font-size: 13px; display: inline-flex; align-items: center; flex: none; }
+.cx-sec { border-top: 1px solid #f1f5f9; margin-top: 10px; padding-top: 10px; }
+.cx-sec summary { list-style: none; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; color: var(--ph-ink); cursor: pointer; }
+.cx-sec summary::-webkit-details-marker { display: none; }
+.cx-sec summary .no { width: 24px; height: 24px; border-radius: 50%; background: var(--ph-brand-light); color: var(--ph-brand-hover); font-size: 12px; display: grid; place-items: center; flex: none; }
+.cx-ins > i { overflow: hidden; }
+.cx-ins > i img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cxp .bar .vw { position: relative; flex: none; display: flex; }
+.cxp .vp { position: absolute; bottom: 34px; left: 50%; transform: translateX(-50%); width: 44px; padding: 8px 0 4px; border-radius: 16px; background: rgba(15,23,42,.82); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; gap: 4px; z-index: 6; }
+.cxp .vp b { font-size: 11px; font-weight: 800; }
+.cxp .vp .vs { position: relative; width: 28px; height: 84px; }
+.cxp .vp .vs input[type=range] { position: absolute; left: 50%; top: 50%; width: 80px; height: 28px; margin: 0; transform: translate(-50%, -50%) rotate(-90deg); -webkit-appearance: none; appearance: none; background: transparent; }
+.cxp .vp .vs input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: rgba(255,255,255,.35); }
+.cxp .vp .vs input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px var(--ph-brand, #10b981); }
+.cxp .vp .vs input[type=range]::-moz-range-track { height: 4px; background: rgba(255,255,255,.35); }
+.cxp .vp button { width: 32px; height: 32px; }

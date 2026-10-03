@@ -1,5 +1,5 @@
 import React, { useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react';
-import { Play, Pause, RotateCcw, RotateCw, Volume2, VolumeX, Maximize, Minimize, Loader2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, RotateCw, Volume1, Volume2, VolumeX, Maximize, Minimize, Loader2 } from 'lucide-react';
 import { getYouTubeVideoId, loadYouTubeIframeApi } from '../PortfolioWebsite';
 
 // Trình phát video của khoá học: ẩn hết nút và chữ của YouTube, dùng bộ điều khiển riêng của EduGo
@@ -29,6 +29,8 @@ const CoursePlayer = forwardRef<PlayerApi, { src: string; poster?: string; onFin
   const [cur, setCur] = useState(0);
   const [dur, setDur] = useState(0);
   const [muted, setMuted] = useState(false);
+  const [vol, setVol] = useState(100);
+  const [volOpen, setVolOpen] = useState(false);
   const [rate, setRate] = useState(1);
   const [show, setShow] = useState(true);
   const [fs, setFs] = useState<'' | 'native' | 'css'>('');
@@ -92,8 +94,15 @@ const CoursePlayer = forwardRef<PlayerApi, { src: string; poster?: string; onFin
   const toggle = () => { if (playing) pause(); else play(); };
   const skip = (d: number) => { seek(cur + d); poke(); };
   const nextRate = () => { const r = RATES[(RATES.indexOf(rate) + 1) % RATES.length]; setRate(r); if (yt) ytp.current?.setPlaybackRate?.(r); else if (vid.current) vid.current.playbackRate = r; poke(); };
+  // Âm lượng 0 đến 100. iPhone không cho trang web đổi âm lượng của video (chỉ nút cứng của máy), khi đó vẫn tắt, bật tiếng được.
+  const applyVol = (n: number) => {
+    setVol(n); const m = n === 0; setMuted(m);
+    if (yt) { ytp.current?.setVolume?.(n); if (m) ytp.current?.mute?.(); else ytp.current?.unMute?.(); }
+    else if (vid.current) { vid.current.volume = n / 100; vid.current.muted = m; }
+    poke();
+  };
   const toggleMute = () => {
-    const m = !muted; setMuted(m);
+    const m = !muted; setMuted(m); if (!m && vol === 0) setVol(60);
     if (yt) { if (m) ytp.current?.mute?.(); else ytp.current?.unMute?.(); } else if (vid.current) vid.current.muted = m;
     poke();
   };
@@ -121,7 +130,8 @@ const CoursePlayer = forwardRef<PlayerApi, { src: string; poster?: string; onFin
   // Tự ẩn bộ điều khiển sau 2,5 giây khi đang phát, chạm vào video thì hiện lại.
   const hideT = useRef(0);
   const poke = () => { setShow(true); window.clearTimeout(hideT.current); hideT.current = window.setTimeout(() => setShow(false), 2600); };
-  useEffect(() => { if (!playing) { setShow(true); window.clearTimeout(hideT.current); } else poke(); }, [playing]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!playing) { setShow(true); window.clearTimeout(hideT.current); } else poke(); }, [playing]);
+  useEffect(() => { if (!show) setVolOpen(false); }, [show]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => window.clearTimeout(hideT.current), []);
 
   useImperativeHandle(ref, () => ({
@@ -169,7 +179,16 @@ const CoursePlayer = forwardRef<PlayerApi, { src: string; poster?: string; onFin
           </span>
           <span className="tm">{fmt(dur)}</span>
           <button type="button" className="rt" onClick={nextRate} aria-label="Tốc độ phát">{rate}x</button>
-          <button type="button" onClick={toggleMute} aria-label={muted ? 'Bật tiếng' : 'Tắt tiếng'}>{muted ? <VolumeX /> : <Volume2 />}</button>
+          <span className="vw">
+            <button type="button" onClick={() => { setVolOpen(o => !o); poke(); }} aria-label="Âm lượng">{muted || vol === 0 ? <VolumeX /> : vol < 50 ? <Volume1 /> : <Volume2 />}</button>
+            {volOpen && (
+              <span className="vp" onClick={e => e.stopPropagation()}>
+                <b>{muted ? 0 : vol}</b>
+                <span className="vs"><input type="range" min={0} max={100} step={5} value={muted ? 0 : vol} aria-label="Âm lượng" onChange={e => applyVol(Number(e.target.value))} /></span>
+                <button type="button" onClick={() => (muted || vol === 0 ? applyVol(vol || 60) : toggleMute())} aria-label={muted ? 'Bật tiếng' : 'Tắt tiếng'}>{muted || vol === 0 ? <VolumeX /> : <Volume2 />}</button>
+              </span>
+            )}
+          </span>
           <button type="button" onClick={() => (fs ? exitFs() : enterFs())} aria-label={fs ? 'Thoát toàn màn hình' : 'Toàn màn hình'}>{fs ? <Minimize /> : <Maximize />}</button>
         </div>
       </>}

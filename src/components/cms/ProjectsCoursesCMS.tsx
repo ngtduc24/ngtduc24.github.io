@@ -6,6 +6,7 @@ import { GraduationCap, ArrowLeft,
   Plus, Trash2, Edit3, Eye, Copy, Pin, Star, Folder, BookOpen,
   ArrowUp, ArrowDown, ChevronDown, ChevronRight, Play, Users, Mail, ShieldAlert, FileText, Sparkles, LayoutGrid, Award, Lock, DollarSign, Calendar, Settings
 , Image, Type, PlayCircle, Code, Box, PenTool, Film, Link as LinkIcon, X, ChevronLeft} from 'lucide-react';
+import CoursePromoSettingsBox from '../courses/CoursePromoSettings';
 import { PortfolioProject, PortfolioCourse, CourseChapter, CourseLesson, CourseStudent, PortfolioCoursesSettings } from '../portfolioTypes';
 import { UserAccount } from '../../types';
 import { 
@@ -26,6 +27,7 @@ import { useNotifications } from '../NotificationContext';
 import { getMyLessons, getPublicLessons, ELLesson } from '../../lib/elearning';
 import { getQuizzesForCourse, setQuizOpenAccess } from '../../lib/quiz';
 import { getEduCtx } from '../../lib/edu';
+import { getPerson } from '../../lib/people';
 
 const createEmptyProject = (sortOrder: number): PortfolioProject => ({
   id: `proj_${Date.now()}`, title: '', slug: '', coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800', gallery: [], introVideo: '', briefDescription: '', detailedContent: '', context: '', problem: '', goal: '', targetAudience: '', process: '', designIdea: '', solution: '', result: '', role: 'Multimedia Designer', client: '', members: [], timeline: '', tools: [], category: 'Graphic Design', tags: [], relatedProjects: [], status: 'draft', publishDate: new Date().toISOString().slice(0, 10), isFeatured: false, isPinned: false, viewCount: 0, sortOrder, showViews: true, showShare: true, isPrivate: false
@@ -470,6 +472,13 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
     e.preventDefault();
     
     if (!editingCourse) return;
+    // Ghi tài khoản tạo khoá (lần lưu đầu), tên giảng viên trên trang khoá học lấy theo tài khoản này.
+    if (!editingCourse.creatorId) {
+      const uid = getEduCtx().userId;
+      if (uid) editingCourse.creatorId = uid;
+      const nm = uid ? getPerson(uid)?.name : '';
+      if (nm && nm !== 'Người dùng') editingCourse.creatorName = nm;
+    }
 
     let updated = [...courses];
     const idx = updated.findIndex(c => c.id === editingCourse.id);
@@ -1031,6 +1040,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
             </div>
 
             <div className="grid grid-cols-1 gap-8">
+              <CoursePromoSettingsBox value={coursesSettings.promo} courses={courses} onChange={promo => setCoursesSettings({ ...coursesSettings, promo })} />
               <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-slate-100">
                 <div className="space-y-8">
                   {/* Basic Settings */}
