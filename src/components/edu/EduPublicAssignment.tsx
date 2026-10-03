@@ -324,7 +324,8 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
   const deadlineDate = assignment.deadline ? new Date(assignment.deadline) : null;
   const isOverdue = deadlineDate ? new Date() > deadlineDate : false;
   
-  // Edit window logic: min(first_submission + 24h, deadline)
+  // Thời gian được sửa bài sau khi nộp: tới hết hạn nộp, hoặc 24 giờ kể từ lần nộp đầu nếu thời điểm đó muộn hơn
+  // (nộp sát hạn, nộp trễ khi được phép, bài không có hạn nộp).
   let canEdit = true;
   let lockReason = '';
 
@@ -366,14 +367,14 @@ export default function EduPublicAssignment({ shareLinkId }: EduPublicAssignment
     const lastSub = new Date(submission.submittedAt).getTime();
     // Giáo viên bấm Cho nộp lại sẽ đặt firstSubmittedAt mới hơn lần nộp cuối.
     const reopened = firstSub > lastSub + 1000;
-    const windowEnd = firstSub + 24 * 60 * 60 * 1000;
+    const windowEnd = Math.max(firstSub + 24 * 60 * 60 * 1000, deadlineDate ? deadlineDate.getTime() : 0);
     const allowSupplement = assignment.allowSupplement !== false;
     if (!allowSupplement && !reopened) {
       canEdit = false;
       lockReason = 'Đã nộp bài, giáo viên không cho nộp bổ sung';
     } else if (Date.now() > windowEnd) {
       canEdit = false;
-      lockReason = 'Đã hết thời gian 24h chỉnh sửa sau khi nộp lần đầu';
+      lockReason = deadlineDate && windowEnd === deadlineDate.getTime() ? 'Đã hết hạn nộp bài, không thể sửa thêm' : 'Đã hết thời gian 24h chỉnh sửa sau khi nộp lần đầu';
     }
   }
 
