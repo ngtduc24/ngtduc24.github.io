@@ -72,7 +72,7 @@ export default function ELessonView({ token }: Props) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="sticky top-0 z-30 border-b border-slate-100 bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur supports-[backdrop-filter]:bg-white/85">
+      <div className="sticky top-0 z-30 border-b border-slate-100 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85" style={{ borderTop: 'env(safe-area-inset-top) solid var(--color-brand-hover, #059669)' }}>
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-3 py-2.5 sm:px-4 sm:py-3">
           <div className="hidden h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand sm:grid"><BookOpen className="h-5 w-5" /></div>
           <div className="min-w-0 flex-1">

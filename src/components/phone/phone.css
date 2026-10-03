@@ -12,9 +12,9 @@
 }
 /* Chỉ đặt lại nút trong các màn riêng của điện thoại. Nội dung các chức năng (khung .ph-mod) giữ nguyên kiểu nút của chức năng đó. */
 :where(.ph-root > nav, .ph-scrim, .ph-scan, .ph-main:not(.ph-mod)) button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
-.ph-root { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--ph-bg); }
-.ph-main { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
-.ph-main.ph-mod { padding: 12px 12px calc(112px + env(safe-area-inset-bottom)); }
+.ph-root { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--ph-brand-hover); }
+.ph-main { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; background: var(--ph-bg); padding-bottom: calc(90px + max(8px, calc(env(safe-area-inset-bottom) - 12px))); }
+.ph-main.ph-mod { padding: 12px 12px calc(24px + env(safe-area-inset-bottom)); }
 .ph-main.ph-tools { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
 
 /* ===== Thanh điều hướng dưới ===== */
@@ -277,7 +277,7 @@ html.is-phone.ph-has-tools .left-20 { bottom: calc(64px + env(safe-area-inset-bo
 .ph-app .tag.hot { background: #e11d48; color: #fff; border-color: #e11d48; margin-left: 6px; }
 
 /* ===== Thanh dưới nổi: nền 3 phần (trái, khuyết giữa, phải), phần khuyết tròn ôm nút Tạo mới ===== */
-.ph-nav2 { position: fixed; left: 12px; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); height: 70px; z-index: 40; display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); padding: 6px;
+.ph-nav2 { position: fixed; left: 12px; right: 12px; bottom: max(8px, calc(env(safe-area-inset-bottom) - 12px)); height: 70px; z-index: 40; display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); padding: 6px;
   filter: drop-shadow(0 8px 16px rgba(15,23,42,.18)) drop-shadow(0 0 1px rgba(15,23,42,.14)); }
 .ph-nav2 .bg { position: absolute; inset: 0; display: flex; z-index: -1; pointer-events: none; }
 .ph-nav2 .bg .l { flex: 1; background: #fff; border-radius: 28px 0 0 28px; }
@@ -299,10 +299,40 @@ html.is-phone.ph-has-tools .left-20 { bottom: calc(64px + env(safe-area-inset-bo
 html.ph-immersive .ph-nav2, html.ph-immersive .ph-nav, html.ph-immersive .ph-toolbar, html.ph-overlay .ph-nav2, html.ph-overlay .ph-nav { display: none; }
 
 /* Kéo xuống để tải lại */
-.ph-ptr { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; overflow: hidden; padding-bottom: 8px; color: var(--ph-brand-hover); }
+.ph-ptr { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; overflow: hidden; color: var(--ph-brand-hover); }
 .ph-ptr .ic { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(15,23,42,.15); flex: none; }
 .ph-ptr .ic.spin { animation: ph-spin .8s linear infinite; }
 .ph-ptr small { font-size: 11.5px; font-weight: 600; color: var(--ph-muted); }
 @keyframes ph-spin { to { transform: rotate(360deg); } }
 /* Không phóng to khi chạm 2 lần, giữ màn hình cố định như ứng dụng */
 html.is-phone, html.is-phone body { touch-action: manipulation; overscroll-behavior: none; }
+
+/* Vùng tai thỏ và thanh trên trong chức năng */
+.ph-sbar { position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: var(--ph-brand-hover); z-index: 45; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.ph-sbar.on { opacity: 1; }
+.ph-appbar { flex: none; display: flex; align-items: center; gap: 4px; padding: env(safe-area-inset-top) 6px 0; height: calc(54px + env(safe-area-inset-top)); color: #fff;
+  background: linear-gradient(180deg, var(--ph-brand-hover), var(--ph-brand)); box-shadow: 0 2px 10px -4px rgba(15,23,42,.25); position: relative; z-index: 30; }
+.ph-appbar h1 { flex: 1; min-width: 0; font-size: 16.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+.ph-appbar button { width: 42px; height: 42px; flex: none; display: grid; place-items: center; border-radius: 50%; color: #fff; background: none; border: 0; cursor: pointer; }
+.ph-appbar button:active { background: rgba(255,255,255,.18); }
+.ph-appbar .bk svg { width: 27px; height: 27px; stroke-width: 2.2; }
+.ph-appbar .hm svg { width: 21px; height: 21px; stroke-width: 2; }
+
+/* Xoá thông báo: vuốt sang trái, chọn nhiều, hoàn tác */
+.ph-day .acts { display: flex; gap: 14px; }
+.ph-swipe { position: relative; overflow: hidden; background: var(--ph-rose); }
+.ph-swipe > .del { position: absolute; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #fff; font-size: 12px; font-weight: 700; background: var(--ph-rose); border: 0; }
+.ph-swipe > .del svg { width: 20px; height: 20px; }
+.ph-swipe > .fg { position: relative; background: #fff; touch-action: pan-y; }
+.ph-noti.pk { background: var(--ph-brand-light); }
+.ph-noti .ck { flex: none; align-self: center; color: var(--ph-faint); display: grid; place-items: center; }
+.ph-noti .ck.on { color: var(--ph-brand-hover); }
+.ph-noti .ck svg { width: 22px; height: 22px; }
+.ph-hint { text-align: center; font-size: 12px; color: var(--ph-faint); padding: 14px 16px 0; }
+.ph-pickbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; align-items: center; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: #fff; box-shadow: 0 -8px 24px rgba(15,23,42,.1); border-radius: 20px 20px 0 0; }
+.ph-pickbar button { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 12px; border-radius: 14px; font-size: 13px; font-weight: 700; color: var(--ph-text); background: #f1f5f9; border: 0; }
+.ph-pickbar button svg { width: 18px; height: 18px; }
+.ph-pickbar .del { margin-left: auto; background: var(--ph-rose); color: #fff; }
+.ph-pickbar .del:disabled { opacity: .4; }
+.ph-toast { position: fixed; left: 16px; right: 16px; bottom: calc(96px + max(8px, calc(env(safe-area-inset-bottom) - 12px))); z-index: 46; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-radius: 16px; background: #1e293b; color: #fff; font-size: 13.5px; box-shadow: 0 10px 30px -10px rgba(15,23,42,.5); animation: ph-up .2s ease-out; }
+.ph-toast button { color: #6ee7b7; font-weight: 800; font-size: 13.5px; background: none; border: 0; }

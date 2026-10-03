@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
-import { RefreshCw, Home, Bell, Plus, LayoutGrid, User, Monitor, Send, CheckCircle2, Loader2, Presentation, BookOpen, CircleCheck, CalendarDays, QrCode, Workflow, ScanLine, Library } from 'lucide-react';
+import { RefreshCw, ChevronLeft, Home, Bell, Plus, LayoutGrid, User, Monitor, Send, CheckCircle2, Loader2, Presentation, BookOpen, CircleCheck, CalendarDays, QrCode, Workflow, ScanLine, Library } from 'lucide-react';
 import type { AppSettings, UserAccount } from '../../types';
 import { MODULE_REGISTRY, isModuleHidden, resolveModuleMeta, ModuleDef } from '../../lib/modules';
 import { canUseModule } from '../../lib/moduleAccess';
@@ -123,6 +123,37 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
     return () => { document.documentElement.classList.remove('ph-has-tools'); };
   }, [tools]);
 
+  // Ngăn xếp các màn đã mở trong phiên này, để nút quay lại ở góc trên trái biết có màn trước hay không.
+  const stack = useRef<string[]>([]);
+  useEffect(() => {
+    const st = stack.current;
+    if (st.length > 1 && st[st.length - 2] === tab) st.pop();
+    else if (st[st.length - 1] !== tab) st.push(tab);
+  }, [tab]);
+  const back = () => {
+    if (stack.current.length > 1) window.history.back();
+    else go('dashboard');
+  };
+
+  // Vùng tai thỏ (thanh trạng thái): tô màu hệ thống cho liền với đầu trang. Màn có đầu trang màu thì để trong suốt,
+  // cuộn xuống mới hiện dải màu để chữ giờ, pin không đè lên nội dung.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = (e: Event) => { const t = e.target as HTMLElement; if (t && t.id === 'main-content') setScrolled(t.scrollTop > 8); };
+    document.addEventListener('scroll', onScroll, true);
+    setScrolled(false);
+    return () => document.removeEventListener('scroll', onScroll, true);
+  }, [tab]);
+  useEffect(() => {
+    const css = getComputedStyle(document.documentElement);
+    const c = (css.getPropertyValue('--color-brand-hover') || '').trim() || '#059669';
+    let m = document.querySelector('meta[name="theme-color"]');
+    const before = m?.getAttribute('content') ?? null;
+    if (!m) { m = document.createElement('meta'); m.setAttribute('name', 'theme-color'); document.head.appendChild(m); }
+    m.setAttribute('content', c);
+    return () => { if (before === null) m?.remove(); else m?.setAttribute('content', before); };
+  }, [settings]);
+
   const go = (id: string, sub?: Record<string, string>) => {
     if (sub) writeSubRoute(sub);
     setTab(id);
@@ -134,6 +165,9 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
     openScan: () => setScan(true),
   };
 
+  const curMod = mods.find(m => m.id === tab);
+  const title = curMod ? phoneLabel(curMod) : (tab === 'profile' || tab === 'user_profile') ? 'Trang cá nhân' : (MODULE_REGISTRY.find(m => m.id === tab)?.label || 'EduGo');
+
   const item = (id: string, label: string, Icon: any, on: boolean, badge?: number) => (
     <button type="button" className={`it ${on ? 'on' : ''}`} onClick={() => go(id)} aria-current={on ? 'page' : undefined}>
       <Icon />{label}
@@ -143,7 +177,17 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
 
   return (
     <Ctx.Provider value={api}>
-      <div className="ph ph-root" id="app-root">
+      <div className={`ph ph-root ${bare ? '' : 'ph-in'}`} id="app-root">
+        {bare
+          ? <div className={`ph-sbar ${scrolled || tab === 'all_features' ? 'on' : ''}`} aria-hidden />
+          : (
+            // Trong chức năng: thanh trên có nút quay lại màn trước, ẩn thanh menu dưới cho rộng chỗ thao tác.
+            <header className="ph-appbar">
+              <button type="button" className="bk" onClick={back} aria-label="Quay lại màn trước"><ChevronLeft /></button>
+              <h1>{title}</h1>
+              <button type="button" className="hm" onClick={() => go('dashboard')} aria-label="Về Trang chủ"><Home /></button>
+            </header>
+          )}
         <PullRefresh className={`ph-main ${bare ? '' : 'ph-mod'} ${tools ? 'ph-tools' : ''}`} disabled={!!tools}>{children}</PullRefresh>
 
         {tools ? (
@@ -151,7 +195,7 @@ export default function PhoneShell({ user, settings, tab, setTab, unread, childr
           <nav className="ph-toolbar">
             {tools.map(t => { const I = t.icon; return <button key={t.id} type="button" className={t.active ? 'on' : ''} onClick={t.onClick}><I />{t.label}</button>; })}
           </nav>
-        ) : (
+        ) : bare && (
           <nav className="ph-nav2">
             <span className="bg"><span className="l" /><svg viewBox="0 0 110 70" aria-hidden><path d="M0 0H10C18 0 20 4 22 10A36 36 0 0 0 88 10C90 4 92 0 100 0H110V70H0Z" /></svg><span className="r" /></span>
             {item('dashboard', 'Trang chủ', Home, tab === 'dashboard')}
@@ -288,7 +332,7 @@ function PullRefresh({ className, disabled, children }: { className: string; dis
   const ready = pull >= LIMIT;
   return (
     <main ref={ref as any} id="main-content" className={className} style={{ overscrollBehaviorY: 'contain' }}>
-      <div className="ph-ptr" style={{ height: pull, opacity: pull ? 1 : 0, transition: st.current?.active ? 'none' : 'height .25s, opacity .25s' }}>
+      <div className="ph-ptr" style={{ height: pull, paddingBottom: pull ? 8 : 0, opacity: pull ? 1 : 0, transition: st.current?.active ? 'none' : 'height .25s, opacity .25s' }}>
         <span className={`ic ${busy ? 'spin' : ''}`} style={{ transform: busy ? undefined : `rotate(${pull * 3}deg)` }}><RefreshCw size={18} /></span>
         <small>{busy ? 'Đang tải lại...' : ready ? 'Thả tay để tải lại' : 'Kéo xuống để tải lại'}</small>
       </div>

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Bell, ClipboardList, CircleCheck, GraduationCap, Library, X, Sparkles, CalendarDays, Clock, Presentation, Hourglass, BookOpen, MoreHorizontal, ChevronDown, Hand } from 'lucide-react';
 import { usePhone, usePhoneModules, ModIcon, PhoneModule, phoneLabel } from './PhoneShell';
 import { useTasks } from '../TaskContext';
-import { phoneMode, phoneUi, PhoneUi, CTA_TARGETS } from '../../lib/device';
+import { phoneMode, phoneUi, PhoneUi, CTA_TARGETS, PHONE_GRID_SKIP } from '../../lib/device';
 import type { AppSettings } from '../../types';
 import { setCreateIntent } from '../../lib/phone';
 import { todayTasks, loadPendingGrading, loadReminders, PendingGrading, Reminder, dismissedReminders, dismissReminder } from '../../lib/phoneHome';
@@ -19,7 +19,7 @@ const ago = (sec: number) => {
   return new Date(sec * 1000).toLocaleDateString('vi-VN');
 };
 const initials = (name: string) => (name || '?').trim().split(/\s+/).pop()!.charAt(0).toUpperCase();
-const SKIP_GRID = new Set(['notifications', 'notifications_admin', 'users', 'permissions', 'settings']);
+const SKIP_GRID = PHONE_GRID_SKIP;
 const FEAT_BG = [
   'linear-gradient(135deg, var(--ph-brand-hover), color-mix(in srgb, var(--ph-brand) 70%, white))',
   'linear-gradient(135deg, var(--ph-brand-deep), var(--ph-brand))',
@@ -59,18 +59,46 @@ export default function PhoneHome() {
   }, [user.id, taskKey, pending?.total]);
   const shownReminders = reminders.filter(r => !off.has(r.id)).slice(0, 3);
 
-  // ===== Chức năng của bạn: theo thói quen, giống Trang chủ máy tính =====
+  // ===== 4 nút tròn trên đầu trang: Lớp học, Giáo trình, Bài tập, Khác (thiếu quyền thì lấy chức năng khác) =====
+  const ACT_CANDIDATES: { id: string; label: string; icon: any }[] = [
+    { id: 'edu', label: 'Lớp học', icon: GraduationCap }, { id: 'elearning', label: 'Giáo trình', icon: BookOpen },
+    { id: 'edu_bank', label: 'Bài tập', icon: Library }, { id: 'slides', label: 'Bài giảng', icon: Presentation },
+    { id: 'edu_exam', label: 'Trắc nghiệm', icon: CircleCheck }, { id: 'tasks', label: 'Công việc', icon: CalendarDays },
+    { id: 'courses', label: 'Khoá học', icon: GraduationCap },
+  ];
+  const actMods = ACT_CANDIDATES.filter(a => can(a.id) && phoneMode(a.id, settings) !== 'laptop').slice(0, 3);
+  const acts: TopAct[] = [
+    ...actMods.map(a => ({ key: a.id, label: a.label, icon: a.icon, run: () => open(a.id) })),
+    { key: 'more', label: 'Khác', icon: MoreHorizontal, run: () => open('all_features') },
+  ];
+  const actIds = new Set(actMods.map(a => a.id));
+
+  // ===== Lưới chức năng =====
+  // 1. Thứ tự gốc do admin xếp ở Cấu hình hệ thống, mục Điện thoại (chưa xếp thì theo thứ tự người dùng đặt ở máy tính).
+  // 2. Khi người dùng đã mở chức năng đủ nhiều lần, chức năng hay dùng được đẩy dần lên trước theo điểm thói quen
+  //    (tần suất mở, lần mở càng gần điểm càng cao, cộng thêm nếu hay mở vào đúng khung giờ này).
+  // 3. Chức năng admin khoá thì luôn đứng đúng vị trí admin xếp. Admin tắt tự xếp thì giữ nguyên thứ tự gốc.
+  const ui = phoneUi(settings);
   const usage = useUsage(user.id);
   const scores = useScores(usage);
-  const enough = usage.ev.length >= MIN_EVENTS && usage.autoSort !== false;
-  const gridBase = mods.filter(m => !SKIP_GRID.has(m.id) && phoneMode(m.id, settings) !== 'laptop' && !(user.dashboardIconHidden || []).includes(m.id));
+  const autoOn = ui.gridAuto !== false && usage.autoSort !== false;
+  const enough = usage.ev.length >= MIN_EVENTS && autoOn;
+  const gridBase = mods.filter(m => !SKIP_GRID.has(m.id) && !actIds.has(m.id) && phoneMode(m.id, settings) !== 'laptop' && !(user.dashboardIconHidden || []).includes(m.id));
+  const adminOrder = ui.gridOrder || [];
+  const lockKey = (ui.gridLock || []).join('|');
   const order = useMemo(() => {
     const ids = gridBase.map(m => m.id);
-    if (enough) return personalOrder(ids, scores, usage.order, usage.pins || {});
-    const saved = (user.dashboardIconOrder || []) as string[];
-    return [...ids].sort((a, b) => { const ia = saved.indexOf(a), ib = saved.indexOf(b); return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib); });
+    const ref = adminOrder.length ? adminOrder : ((user.dashboardIconOrder || []) as string[]);
+    const base = [...ids].sort((a, b) => { const ia = ref.indexOf(a), ib = ref.indexOf(b); return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || ids.indexOf(a) - ids.indexOf(b); });
+    if (!enough) return base;
+    // Vị trí khoá tính theo thứ tự gốc sau khi đã bỏ chức năng người dùng không có quyền
+    const locks: Record<string, number> = {};
+    for (const id of ui.gridLock || []) { const i = base.indexOf(id); if (i >= 0) locks[id] = i; }
+    const userPins: Record<string, number> = {};
+    for (const [id, i] of Object.entries(usage.pins || {})) if (locks[id] === undefined && base.includes(id)) userPins[id] = i;
+    return personalOrder(base, scores, adminOrder.length ? undefined : usage.order, { ...userPins, ...locks });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gridBase.map(m => m.id).join('|'), enough, scores, JSON.stringify(usage.pins || {})]);
+  }, [gridBase.map(m => m.id).join('|'), adminOrder.join('|'), lockKey, enough, scores, JSON.stringify(usage.pins || {})]);
   const grid = order.slice(0, 8).map(find).filter(Boolean) as PhoneModule[];
 
   // ===== Tính năng nổi bật =====
@@ -86,21 +114,8 @@ export default function PhoneHome() {
   const docs = (usage.docs || []).filter(d => find(d.tab)).slice(0, 5);
   const openDoc = (d: DocVisit) => open(d.tab, d.sub);
 
-  // ===== 4 nút tròn trên đầu trang: Lớp học, Giáo trình, Bài tập, Khác (thiếu quyền thì lấy chức năng khác) =====
-  const ACT_CANDIDATES: { id: string; label: string; icon: any }[] = [
-    { id: 'edu', label: 'Lớp học', icon: GraduationCap }, { id: 'elearning', label: 'Giáo trình', icon: BookOpen },
-    { id: 'edu_bank', label: 'Bài tập', icon: Library }, { id: 'slides', label: 'Bài giảng', icon: Presentation },
-    { id: 'edu_exam', label: 'Trắc nghiệm', icon: CircleCheck }, { id: 'tasks', label: 'Công việc', icon: CalendarDays },
-    { id: 'courses', label: 'Khoá học', icon: GraduationCap },
-  ];
-  const actMods = ACT_CANDIDATES.filter(a => can(a.id) && phoneMode(a.id, settings) !== 'laptop').slice(0, 3);
-  const acts: TopAct[] = [
-    ...actMods.map(a => ({ key: a.id, label: a.label, icon: a.icon, run: () => open(a.id) })),
-    { key: 'more', label: 'Khác', icon: MoreHorizontal, run: () => open('all_features') },
-  ];
-  const actIds = new Set(actMods.map(a => a.id));
   const [expand, setExpand] = useState(false);
-  const gridAll = (order.map(find).filter(Boolean) as PhoneModule[]).filter(m => !actIds.has(m.id));
+  const gridAll = order.map(find).filter(Boolean) as PhoneModule[];
   const gridShown = gridAll.slice(0, expand ? 16 : 8);
 
   return (

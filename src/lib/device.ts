@@ -86,7 +86,15 @@ export interface PhoneUi {
   notiBtn?: string;
   notiTarget?: string;         // id chức năng mở khi bấm, mặc định automatic
   notiImage?: string;          // ảnh nhỏ bên phải thay cho biểu tượng chức năng
+  // Lưới chức năng ở Trang chủ điện thoại
+  gridOrder?: string[];        // thứ tự admin xếp sẵn, 8 ô đầu hiện ngay
+  gridLock?: string[];         // chức năng giữ cố định đúng vị trí admin xếp, không bị thói quen đẩy đi
+  gridAuto?: boolean;          // tự xếp theo thói quen sử dụng, mặc định bật
 }
+// Chức năng không đưa vào lưới Trang chủ điện thoại (đã có chỗ riêng hoặc chỉ dành cho quản trị).
+export const PHONE_GRID_SKIP = new Set(['notifications', 'notifications_admin', 'users', 'permissions', 'settings']);
+// 3 nút tròn trên đầu Trang chủ ưu tiên các chức năng này, nên lưới không lặp lại chúng.
+export const PHONE_ACT_IDS = ['edu', 'elearning', 'edu_bank'];
 export const NOTI_DEFAULT = { title: 'Thử Automatic: tự gửi nhắc việc sắp đến hạn mỗi sáng', btn: 'Dùng mẫu có sẵn', target: 'automatic' };
 export const PHONE_UI_KEY = '__phone_ui';
 export function phoneUi(settings?: AppSettings): PhoneUi {

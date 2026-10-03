@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from 'react';
-import { Search, SlidersHorizontal, CheckCheck, ClipboardList, Users, GraduationCap, Info, AlertTriangle, Shield, Workflow, BookOpen, Bell, Trash2, Monitor } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Search, SlidersHorizontal, CheckCheck, ClipboardList, Users, GraduationCap, Info, AlertTriangle, Shield, Workflow, BookOpen, Bell, Trash2, Monitor, CheckSquare, Square, CheckCircle2, X } from 'lucide-react';
 import { usePhone, usePhoneModules } from './PhoneShell';
 import { phoneUi, NOTI_DEFAULT, PhoneUi } from '../../lib/device';
 import { MODULE_REGISTRY } from '../../lib/modules';
 import type { AppSettings } from '../../types';
-import { useMyNotifications, openNotificationTarget } from '../../lib/notifications';
+import { useMyNotifications, openNotificationTarget, deleteNotificationsForMe } from '../../lib/notifications';
 import { isTaskRelevantToUser } from '../../lib/tasks';
 import { notifCategory, NotifCategory, NOTIF_CATEGORY_LABEL } from '../../lib/phone';
 import type { AppNotification } from '../../types';
@@ -41,7 +41,38 @@ export default function PhoneNotifications() {
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [detail, setDetail] = useState<AppNotification | null>(null);
 
-  const items = useMemo(() => Array.from(new Map(notif.items.map(n => [n.id, n])).values()), [notif.items]);
+  // ===== Xoá thông báo =====
+  // Vuốt sang trái để xoá 1 thông báo, hoặc bấm Chọn để xoá nhiều thông báo cùng lúc.
+  // Xoá xong có 5 giây để Hoàn tác, hết 5 giây mới xoá hẳn khỏi danh sách của mình (người khác không bị ảnh hưởng).
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [undo, setUndo] = useState<{ ids: string[]; timer: number } | null>(null);
+  const undoRef = useRef(undo); undoRef.current = undo;
+  const commit = (ids: string[]) => { if (ids.length) deleteNotificationsForMe(ids); };
+  const removeIds = (ids: string[]) => {
+    if (!ids.length) return;
+    if (undoRef.current) { window.clearTimeout(undoRef.current.timer); commit(undoRef.current.ids); }
+    setHidden(h => { const n = new Set(h); ids.forEach(id => n.add(id)); return n; });
+    const timer = window.setTimeout(() => { commit(ids); setUndo(u => (u && u.timer === timer ? null : u)); }, 5000);
+    setUndo({ ids, timer });
+  };
+  const doUndo = () => {
+    if (!undo) return;
+    window.clearTimeout(undo.timer);
+    setHidden(h => { const n = new Set(h); undo.ids.forEach(id => n.delete(id)); return n; });
+    setUndo(null);
+  };
+  // Rời trang Thông báo khi còn đang chờ Hoàn tác thì xoá luôn.
+  useEffect(() => () => { const u = undoRef.current; if (u) { window.clearTimeout(u.timer); commit(u.ids); } }, []);
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const togglePick = (id: string) => setPicked(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const stopPick = () => { setPicking(false); setPicked(new Set()); };
+  useEffect(() => {
+    document.documentElement.classList.toggle('ph-immersive', picking);
+    return () => document.documentElement.classList.remove('ph-immersive');
+  }, [picking]);
+
+  const items = useMemo(() => Array.from(new Map(notif.items.map(n => [n.id, n])).values()).filter(n => !hidden.has(n.id)), [notif.items, hidden]);
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: 0, task: 0, collab: 0, class: 0, system: 0 };
     items.forEach(n => { if (n.unread) { c.all++; c[notifCategory(n)]++; } });
@@ -112,14 +143,22 @@ export default function PhoneNotifications() {
           <div key={g.k}>
             <div className="ph-day">
               <div><b>{g.k}</b><p>{unread ? `${unread} chưa đọc · ` : ''}{g.items.length} thông báo</p></div>
-              {gi === 0 && counts.all > 0 && <button type="button" className="lnk" onClick={() => notif.markAllRead()}><CheckCheck />Đọc hết</button>}
+              {gi === 0 && (
+                <span className="acts">
+                  {counts.all > 0 && !picking && <button type="button" className="lnk" onClick={() => notif.markAllRead()}><CheckCheck />Đọc hết</button>}
+                  <button type="button" className="lnk" onClick={() => (picking ? stopPick() : setPicking(true))}>{picking ? <><X />Xong</> : <><CheckSquare />Chọn</>}</button>
+                </span>
+              )}
             </div>
-            {g.items.map(n => { const I = iconFor(n); const a = action(n); return (
-              <button key={n.id} type="button" className="ph-noti" onClick={() => tap(n)}>
-                <span className="ic"><I />{n.unread && <span className="u" />}</span>
-                <span className="m"><b className={n.unread ? '' : 'read'}>{n.title}</b><p>{n.description}</p><em>{when(n.timestamp)}{n.senderName && n.senderId !== user.id ? ` · ${n.senderName}` : ''}</em></span>
-                {a && <span className={`r ${a.w ? 'w' : ''}`}>{a.t}</span>}
-              </button>
+            {g.items.map(n => { const I = iconFor(n); const a = action(n); const on = picked.has(n.id); return (
+              <SwipeRow key={n.id} disabled={picking} onDelete={() => removeIds([n.id])}>
+                <button type="button" className={`ph-noti ${on ? 'pk' : ''}`} onClick={() => (picking ? togglePick(n.id) : tap(n))}>
+                  {picking && <span className={`ck ${on ? 'on' : ''}`}>{on ? <CheckCircle2 /> : <Square />}</span>}
+                  <span className="ic"><I />{n.unread && <span className="u" />}</span>
+                  <span className="m"><b className={n.unread ? '' : 'read'}>{n.title}</b><p>{n.description}</p><em>{when(n.timestamp)}{n.senderName && n.senderId !== user.id ? ` · ${n.senderName}` : ''}</em></span>
+                  {a && !picking && <span className={`r ${a.w ? 'w' : ''}`}>{a.t}</span>}
+                </button>
+              </SwipeRow>
             ); })}
           </div>
         );
@@ -133,8 +172,27 @@ export default function PhoneNotifications() {
             <p className="s">{when(detail.timestamp)}{detail.senderName ? ` · ${detail.senderName}` : ''}</p>
             <div style={{ marginTop: 14, background: '#f8fafc', borderRadius: 16, padding: 14, fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap', color: 'var(--ph-text)' }}>{detail.description}</div>
             <button type="button" className="ph-btn" style={{ width: '100%', marginTop: 16 }} onClick={() => setDetail(null)}>Đóng</button>
-            <button type="button" className="ph-btn ghost" style={{ width: '100%', marginTop: 10, color: 'var(--ph-rose)', borderColor: '#fecdd3' }} onClick={() => { notif.remove(detail.id); setDetail(null); }}><Trash2 size={18} />Xoá thông báo</button>
+            <button type="button" className="ph-btn ghost" style={{ width: '100%', marginTop: 10, color: 'var(--ph-rose)', borderColor: '#fecdd3' }} onClick={() => { removeIds([detail.id]); setDetail(null); }}><Trash2 size={18} />Xoá thông báo</button>
           </div>
+        </div>
+      )}
+
+      {!picking && items.length > 0 && !undo && <p className="ph-hint">Vuốt thông báo sang trái để xoá</p>}
+
+      {picking && (
+        <div className="ph-pickbar">
+          <button type="button" className="all" onClick={() => setPicked(p => (p.size === list.length ? new Set() : new Set(list.map(n => n.id))))}>
+            {picked.size === list.length && list.length > 0 ? <CheckSquare /> : <Square />}{picked.size === list.length && list.length > 0 ? 'Bỏ chọn' : 'Chọn tất cả'}
+          </button>
+          <button type="button" className="rd" onClick={() => setPicked(new Set(list.filter(n => !n.unread).map(n => n.id)))}>Chọn đã đọc</button>
+          <button type="button" className="del" disabled={!picked.size} onClick={() => { removeIds([...picked]); stopPick(); }}><Trash2 />Xoá{picked.size ? ` (${picked.size})` : ''}</button>
+        </div>
+      )}
+
+      {undo && (
+        <div className="ph-toast">
+          <span>Đã xoá {undo.ids.length} thông báo</span>
+          <button type="button" onClick={doUndo}>Hoàn tác</button>
         </div>
       )}
     </div>
@@ -155,6 +213,49 @@ export function NotiBanner({ settings, ui: uiOverride, canOpen, onOpen }: { sett
         {(ui.notiBtn ?? NOTI_DEFAULT.btn).trim() && <span>{(ui.notiBtn ?? NOTI_DEFAULT.btn).trim()}</span>}
         {ui.notiImage ? <img src={ui.notiImage} alt="" className="pic" /> : <Icon />}
       </button>
+    </div>
+  );
+}
+
+// Vuốt sang trái để hiện nút Xoá, vuốt hẳn quá nửa hàng thì xoá luôn. Chỉ bắt khi kéo ngang rõ ràng,
+// kéo dọc vẫn cuộn danh sách và kéo xuống tải lại như thường.
+function SwipeRow({ children, onDelete, disabled }: { children: React.ReactNode; onDelete: () => void; disabled?: boolean }) {
+  const [dx, setDx] = useState(0);
+  const [anim, setAnim] = useState(false);
+  const st = useRef<{ x: number; y: number; base: number; dir: 'h' | 'v' | null } | null>(null);
+  const wrap = useRef<HTMLDivElement>(null);
+  const OPEN = -88;
+  useEffect(() => { if (disabled) setDx(0); }, [disabled]);
+  // Chạm ra ngoài hàng đang mở thì đóng lại
+  useEffect(() => {
+    if (dx === 0) return;
+    const close = (e: Event) => { if (wrap.current && !wrap.current.contains(e.target as Node)) { setAnim(true); setDx(0); } };
+    document.addEventListener('touchstart', close, { passive: true });
+    return () => document.removeEventListener('touchstart', close);
+  }, [dx === 0]);
+  const start = (e: React.TouchEvent) => {
+    if (disabled || e.touches.length !== 1) return;
+    st.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, base: dx, dir: null }; setAnim(false);
+  };
+  const move = (e: React.TouchEvent) => {
+    const s = st.current; if (!s) return;
+    const mx = e.touches[0].clientX - s.x, my = e.touches[0].clientY - s.y;
+    if (!s.dir) { if (Math.abs(mx) < 8 && Math.abs(my) < 8) return; s.dir = Math.abs(mx) > Math.abs(my) ? 'h' : 'v'; }
+    if (s.dir !== 'h') return;
+    setDx(Math.min(0, s.base + mx));
+  };
+  const end = () => {
+    const s = st.current; st.current = null; if (!s || s.dir !== 'h') return;
+    const w = wrap.current?.offsetWidth || 360;
+    setAnim(true);
+    if (dx < -w * 0.5) { setDx(-w); window.setTimeout(onDelete, 180); }
+    else setDx(dx < OPEN / 2 ? OPEN : 0);
+  };
+  return (
+    <div ref={wrap} className="ph-swipe" onTouchStart={start} onTouchMove={move} onTouchEnd={end} onTouchCancel={end}
+      onClickCapture={e => { if (dx !== 0 && !(e.target as HTMLElement).closest('.del')) { e.stopPropagation(); e.preventDefault(); setAnim(true); setDx(0); } }}>
+      <button type="button" className="del" style={{ width: Math.max(88, -dx) }} onClick={e => { e.stopPropagation(); setAnim(true); setDx(-(wrap.current?.offsetWidth || 360)); window.setTimeout(onDelete, 180); }}><Trash2 />Xoá</button>
+      <div className="fg" style={{ transform: `translateX(${dx}px)`, transition: anim ? 'transform .2s ease-out' : 'none' }}>{children}</div>
     </div>
   );
 }

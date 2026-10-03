@@ -1,8 +1,8 @@
-import React from 'react';
-import { Smartphone, Monitor, EyeOff, Image as ImageIcon, RotateCcw, GraduationCap, BookOpen, Library, MoreHorizontal } from 'lucide-react';
+import React, { useState } from 'react';
+import { Smartphone, Monitor, EyeOff, Image as ImageIcon, RotateCcw, GraduationCap, BookOpen, Library, MoreHorizontal, GripVertical, ArrowUp, ArrowDown, Lock, Unlock, Sparkles } from 'lucide-react';
 import type { AppSettings, ModuleOverride } from '../../types';
 import { MODULE_REGISTRY } from '../../lib/modules';
-import { phoneMode, phoneUi, PhoneUi, PhoneMode, PHONE_UI_KEY, CTA_TARGETS, NOTI_DEFAULT } from '../../lib/device';
+import { phoneMode, phoneUi, PhoneUi, PhoneMode, PHONE_UI_KEY, CTA_TARGETS, NOTI_DEFAULT, PHONE_GRID_SKIP, PHONE_ACT_IDS } from '../../lib/device';
 import { NotiBanner } from './PhoneNotifications';
 import MediaSourcePicker from '../MediaSourcePicker';
 import { PhoneTop } from './PhoneHome';
@@ -156,6 +156,9 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
         </div>
       </div>
 
+      {/* Lưới chức năng ở Trang chủ điện thoại */}
+      <GridOrderCard formState={formState} ui={ui} setUi={setUi} sw={sw} />
+
       {/* Cách dùng từng chức năng */}
       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left space-y-4">
         <div>
@@ -188,6 +191,88 @@ export default function PhoneSettings({ formState, setFormState, updateOverride 
             })}
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// Admin xếp thứ tự lưới chức năng ở Trang chủ điện thoại, khoá vị trí, bật tắt tự xếp theo thói quen.
+function GridOrderCard({ formState, ui, setUi, sw }: {
+  formState: AppSettings; ui: PhoneUi; setUi: (p: Partial<PhoneUi>) => void;
+  sw: (on: boolean, fn: () => void, label: string) => React.ReactNode;
+}) {
+  const ov = formState.moduleOverrides || {};
+  const avail = MODULE_REGISTRY.filter(m => !PHONE_GRID_SKIP.has(m.id) && !PHONE_ACT_IDS.includes(m.id) && !ov[m.id]?.hidden && phoneMode(m.id, formState) === 'full');
+  const saved = ui.gridOrder || [];
+  const ids = avail.map(m => m.id).sort((a, b) => {
+    const ia = saved.indexOf(a), ib = saved.indexOf(b);
+    return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || avail.findIndex(m => m.id === a) - avail.findIndex(m => m.id === b);
+  });
+  const locks = new Set(ui.gridLock || []);
+  const auto = ui.gridAuto !== false;
+  const [drag, setDrag] = useState<string | null>(null);
+  const [over, setOver] = useState<number | null>(null);
+  const move = (from: number, to: number) => {
+    if (to < 0 || to >= ids.length || from === to) return;
+    const next = [...ids]; const [x] = next.splice(from, 1); next.splice(to, 0, x);
+    setUi({ gridOrder: next });
+  };
+  const toggleLock = (id: string) => {
+    const next = new Set(locks); if (next.has(id)) next.delete(id); else next.add(id);
+    setUi({ gridOrder: ids, gridLock: [...next] });
+  };
+  const name = (id: string) => ov[id]?.label?.trim() || MODULE_REGISTRY.find(m => m.id === id)?.label || id;
+
+  return (
+    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-left space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="text-sm font-bold text-slate-800">Lưới chức năng ở Trang chủ</h3>
+          <p className="text-[12px] text-slate-500">Kéo thả hoặc bấm mũi tên để xếp thứ tự cho mọi người. 8 chức năng đầu hiện ngay dưới đầu trang, phần còn lại hiện khi bấm mũi tên xem thêm. Lớp học, Giáo trình, Bài tập đã nằm ở 3 nút tròn nên không lặp lại trong lưới. Ai không có quyền dùng chức năng nào thì chức năng đó tự bỏ qua.</p>
+        </div>
+        {(saved.length > 0 || locks.size > 0) && (
+          <button type="button" onClick={() => setUi({ gridOrder: [], gridLock: [] })} className="inline-flex shrink-0 items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-rose-500"><RotateCcw className="h-3 w-3" /> Về mặc định</button>
+        )}
+      </div>
+
+      <div className="flex items-start justify-between gap-4 rounded-xl bg-slate-50 px-4 py-3">
+        <div className="flex gap-3">
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+          <div>
+            <p className="text-[13px] font-bold text-slate-700">Tự xếp theo thói quen của từng người</p>
+            <p className="text-[12px] text-slate-500">{auto
+              ? 'Bật. Lúc đầu ai cũng thấy thứ tự bên dưới. Khi một người đã mở các chức năng từ 8 lần trở lên, hệ thống đưa chức năng người đó hay dùng lên trước, dựa vào số lần mở, lần mở gần đây và khung giờ hay dùng. Chức năng có khoá luôn đứng đúng vị trí bạn xếp.'
+              : 'Tắt. Mọi người luôn thấy đúng thứ tự bên dưới, không thay đổi theo thói quen.'}</p>
+          </div>
+        </div>
+        {sw(auto, () => setUi({ gridAuto: !auto }), 'Bật tắt tự xếp theo thói quen')}
+      </div>
+
+      <div className="space-y-1.5">
+        {ids.map((id, i) => {
+          const m = MODULE_REGISTRY.find(x => x.id === id)!; const Icon = m.icon; const locked = locks.has(id);
+          return (
+            <React.Fragment key={id}>
+              {i === 8 && <div className="flex items-center gap-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400"><span className="h-px flex-1 bg-slate-200" />Hiện khi bấm xem thêm<span className="h-px flex-1 bg-slate-200" /></div>}
+              <div draggable onDragStart={e => { setDrag(id); e.dataTransfer.effectAllowed = 'move'; }}
+                onDragOver={e => { e.preventDefault(); setOver(i); }} onDragLeave={() => setOver(o => (o === i ? null : o))}
+                onDrop={e => { e.preventDefault(); if (drag) move(ids.indexOf(drag), i); setDrag(null); setOver(null); }}
+                onDragEnd={() => { setDrag(null); setOver(null); }}
+                className={`flex items-center gap-3 rounded-xl border px-2 py-2 transition-colors ${over === i && drag && drag !== id ? 'border-brand bg-brand-light' : 'border-slate-100 bg-white'} ${drag === id ? 'opacity-40' : ''}`}>
+                <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-slate-300" />
+                <span className={`w-5 shrink-0 text-center text-[11px] font-black ${i < 8 ? 'text-brand' : 'text-slate-400'}`}>{i + 1}</span>
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand/10 text-brand"><Icon className="h-4 w-4" /></span>
+                <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-slate-700">{name(id)}</span>
+                <button type="button" onClick={() => toggleLock(id)} title={locked ? 'Đang khoá vị trí, bấm để mở khoá' : 'Khoá vị trí này, thói quen không đẩy đi'}
+                  className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold ${locked ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}`}>
+                  {locked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}<span className="hidden sm:inline">{locked ? 'Cố định' : 'Khoá'}</span>
+                </button>
+                <button type="button" disabled={i === 0} onClick={() => move(i, i - 1)} title="Lên trên" className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"><ArrowUp className="h-3.5 w-3.5" /></button>
+                <button type="button" disabled={i === ids.length - 1} onClick={() => move(i, i + 1)} title="Xuống dưới" className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"><ArrowDown className="h-3.5 w-3.5" /></button>
+              </div>
+            </React.Fragment>
+          );
+        })}
       </div>
     </div>
   );
