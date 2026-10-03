@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Loader2, GraduationCap, BookOpen, FileText, ChevronRight, CheckCircle2, ExternalLink, FileDown } from 'lucide-react';
 import { elPublicLesson, elLogView } from '../../lib/elearning';
 import { exportLessonToPdf } from '../../lib/lessonPdf';
+import SectionBar from './LessonSectionBar';
 
 interface Props { token: string; }
 
@@ -34,6 +35,12 @@ export default function ELessonView({ token }: Props) {
   const sections: any[] = data?.sections || [];
   const cur = sections[active];
 
+  // Đổi sang phần khác thì cuộn về đầu trang để đọc từ đầu (header vẫn cố định ở trên).
+  useEffect(() => {
+    if (phase !== 'view') return;
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { window.scrollTo(0, 0); }
+  }, [active, phase]);
+
   // Ghi nhận lượt xem phần đang mở.
   useEffect(() => {
     if (phase !== 'view' || !cur) return;
@@ -65,11 +72,11 @@ export default function ELessonView({ token }: Props) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="border-b border-slate-100 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-4">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-brand/10 text-brand"><BookOpen className="h-5 w-5" /></div>
+      <div className="sticky top-0 z-30 border-b border-slate-100 bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur supports-[backdrop-filter]:bg-white/85">
+        <div className="mx-auto flex max-w-5xl items-center gap-3 px-3 py-2.5 sm:px-4 sm:py-3">
+          <div className="hidden h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand sm:grid"><BookOpen className="h-5 w-5" /></div>
           <div className="min-w-0 flex-1">
-            <h1 className="font-display text-base font-bold text-slate-900 truncate">{data?.title}</h1>
+            <h1 title={data?.title} className="line-clamp-2 font-display text-[14px] font-bold leading-snug text-slate-900 sm:text-base">{data?.title}</h1>
             <p className="text-[11px] text-slate-400">{data?.student_name} · {sections.length} phần</p>
           </div>
           <button
@@ -79,11 +86,12 @@ export default function ELessonView({ token }: Props) {
               sections.flatMap((s: any) => (s.resources || []).map((r: any) => ({ section_id: s.id, url: r.url, title: r.title }))) as any
             )}
             title="Tải toàn bộ bài giảng ra PDF"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand sm:px-3"
           >
-            <FileDown className="h-3.5 w-3.5" /> Tải PDF
+            <FileDown className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> <span className="hidden sm:inline">Tải PDF</span>
           </button>
         </div>
+        {sections.length > 1 && <SectionBar sections={sections} active={active} onPick={setActive} />}
       </div>
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-5 px-4 py-6 lg:grid-cols-[1fr_260px]">
         <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
@@ -111,7 +119,7 @@ export default function ELessonView({ token }: Props) {
           ) : <p className="py-16 text-center text-sm text-slate-400">Bài giảng chưa có nội dung.</p>}
         </div>
 
-        <div className="h-fit rounded-3xl border border-slate-100 bg-white p-3 shadow-sm lg:sticky lg:top-6">
+        <div className="h-fit rounded-3xl border border-slate-100 bg-white p-3 shadow-sm lg:sticky lg:top-[92px]">
           <p className="mb-2 px-2 text-[10px] font-black uppercase text-slate-400">Nội dung</p>
           <div className="space-y-1">
             {sections.map((s, i) => (

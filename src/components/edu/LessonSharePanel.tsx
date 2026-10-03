@@ -89,7 +89,7 @@ export default function LessonSharePanel({ lesson, title, currentUser, canManage
   const ownerName = lesson.owner_name || undefined;
 
   return (
-    <div ref={boxRef} className="absolute right-0 top-12 z-50 w-[360px] max-w-[calc(100vw-16px)] rounded-2xl border border-slate-200 bg-white p-4 text-left text-slate-700 shadow-2xl">
+    <div ref={boxRef} className="absolute right-0 top-12 z-50 w-[360px] max-w-[calc(100vw-16px)] max-sm:fixed max-sm:inset-x-2 max-sm:top-[calc(env(safe-area-inset-top)+60px)] max-sm:w-auto max-sm:max-w-none max-sm:max-h-[78dvh] max-sm:overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 text-left text-slate-700 shadow-2xl">
       {view !== 'main' ? (
         <div>
           <div className="mb-3 flex items-center gap-2">

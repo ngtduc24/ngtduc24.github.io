@@ -8,6 +8,7 @@ import LessonSharePanel from './LessonSharePanel';
 import { ELLesson, ELSection, ELResource, getLesson, getSections, getResources, copyPublicLesson } from '../../lib/elearning';
 import { exportLessonToPdf } from '../../lib/lessonPdf';
 import { UserChip } from '../ui/People';
+import SectionBar from './LessonSectionBar';
 
 interface Props { lessonId: string; }
 
@@ -89,21 +90,19 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="border-b border-slate-100 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4">
-          <div className="flex items-center gap-3">
-            <button onClick={goBack} className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200"><ArrowLeft className="h-4 w-4" /></button>
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-brand/10 text-brand"><BookOpen className="h-5 w-5" /></div>
-            <div>
-              <h1 className="font-display text-base font-bold text-slate-900">{lesson.title}</h1>
-              <p className="flex min-w-0 items-center gap-1.5 text-[11px] text-slate-400">{lesson.owner_id ? <UserChip id={lesson.owner_id} name={lesson.author_label || lesson.owner_name} size={20} nameClass="text-xs font-semibold text-slate-600" /> : <span>{lesson.author_label || lesson.owner_name || 'Ẩn danh'}</span>}<span>· {sections.length} phần{lesson.is_public ? '' : ' · Bản nháp'}</span></p>
-            </div>
+      <div className="sticky top-0 z-30 border-b border-slate-100 bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur supports-[backdrop-filter]:bg-white/85">
+        <div className="mx-auto flex max-w-5xl items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
+          <button onClick={goBack} title="Quay lại" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200"><ArrowLeft className="h-4 w-4" /></button>
+          <div className="hidden h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand sm:grid"><BookOpen className="h-5 w-5" /></div>
+          <div className="min-w-0 flex-1">
+            <h1 title={lesson.title} className="line-clamp-2 font-display text-[14px] font-bold leading-snug text-slate-900 sm:text-base">{lesson.title}</h1>
+            <p className="flex min-w-0 items-center gap-1.5 text-[11px] text-slate-400"><span className="min-w-0 truncate">{lesson.owner_id ? <UserChip id={lesson.owner_id} name={lesson.author_label || lesson.owner_name} size={18} nameClass="text-xs font-semibold text-slate-600" /> : <span>{lesson.author_label || lesson.owner_name || 'Ẩn danh'}</span>}</span><span className="shrink-0"><span className={sections.length > 1 ? 'max-lg:hidden' : ''}>· {sections.length} phần</span>{lesson.is_public ? '' : ' · Bản nháp'}</span></p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             {(role === 'owner' || role === 'manage') && (
               <div className="relative">
-                <button data-share-toggle onClick={() => setShareOpen(v => !v)} title="Thêm người cùng xem, cùng chỉnh sửa" className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand">
-                  <UserPlus className="h-3.5 w-3.5" /> Thêm người
+                <button data-share-toggle onClick={() => setShareOpen(v => !v)} title="Thêm người cùng xem, cùng chỉnh sửa" className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-2.5 text-[11px] font-bold sm:px-4 border border-slate-200 bg-white text-slate-600 hover:border-brand/30 hover:text-brand">
+                  <UserPlus className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> <span className="hidden sm:inline">Thêm người</span>
                 </button>
                 {shareOpen && (
                   <LessonSharePanel lesson={lesson} title={lesson.title} currentUser={me} canManage isOwner={role === 'owner'}
@@ -117,16 +116,17 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
               </div>
             )}
             {(role === 'owner' || role === 'manage' || role === 'edit') && (
-              <a href={`${window.location.origin}/?tab=${getSeoMeta('elearning').slug}&sv=editor&lid=${encodeURIComponent(lesson.id)}`} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-[11px] font-bold text-white hover:bg-brand-hover">
-                <Pencil className="h-3.5 w-3.5" /> Sửa
+              <a href={`${window.location.origin}/?tab=${getSeoMeta('elearning').slug}&sv=editor&lid=${encodeURIComponent(lesson.id)}`} title="Sửa giáo trình" className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-2.5 text-[11px] font-bold sm:px-4 bg-brand text-white hover:bg-brand-hover">
+                <Pencil className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> <span className="hidden sm:inline">Sửa</span>
               </a>
             )}
-            <button onClick={() => exportLessonToPdf(lesson, sections, resources)} title="Tải toàn bộ giáo trình ra PDF" className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-[11px] font-bold text-slate-600 hover:border-brand/30 hover:text-brand">
-              <FileDown className="h-3.5 w-3.5" /> Tải PDF
+            <button onClick={() => exportLessonToPdf(lesson, sections, resources)} title="Tải toàn bộ giáo trình ra PDF" className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-2.5 text-[11px] font-bold sm:px-4 border border-slate-200 bg-white text-slate-600 hover:border-brand/30 hover:text-brand">
+              <FileDown className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> <span className="hidden sm:inline">Tải PDF</span>
             </button>
-            {canCopy && <button onClick={doCopy} disabled={copying || copied} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-[11px] font-bold text-white hover:bg-brand-hover disabled:opacity-60">{copying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : copied ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} {copied ? 'Đã sao chép' : 'Sao chép về kho của tôi'}</button>}
+            {canCopy && <button onClick={doCopy} disabled={copying || copied} title="Sao chép về kho của tôi" className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-2.5 text-[11px] font-bold sm:px-4 bg-brand text-white hover:bg-brand-hover disabled:opacity-60">{copying ? <Loader2 className="h-4 w-4 animate-spin sm:h-3.5 sm:w-3.5" /> : copied ? <CheckCircle2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> : <Copy className="h-4 w-4 sm:h-3.5 sm:w-3.5" />} <span className="hidden sm:inline">{copied ? 'Đã sao chép' : 'Sao chép về kho của tôi'}</span></button>}
           </div>
         </div>
+        {sections.length > 1 && <SectionBar sections={sections} active={active} onPick={setActive} />}
       </div>
 
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-5 px-4 py-6 lg:grid-cols-[1fr_260px]">
@@ -156,7 +156,7 @@ export default function ELessonPreviewPage({ lessonId }: Props) {
           ) : <p className="py-16 text-center text-sm text-slate-400">Giáo trình chưa có nội dung.</p>}
         </div>
 
-        <div className="h-fit rounded-3xl border border-slate-100 bg-white p-3 shadow-sm lg:sticky lg:top-6">
+        <div className="h-fit rounded-3xl border border-slate-100 bg-white p-3 shadow-sm lg:sticky lg:top-[92px]">
           <p className="mb-2 px-2 text-[10px] font-black uppercase text-slate-400">Nội dung</p>
           <div className="space-y-1">
             {sections.map((s, i) => (
