@@ -31,7 +31,7 @@ import EduAssignmentBank from './edu/EduAssignmentBank';
 import EduGradeEntry from './edu/EduGradeEntry';
 import QuizModule from './edu/QuizModule';
 import { EduClass, EduSchool } from '../types/edu';
-import { getClasses, getSchools, getClassAccess } from '../lib/edu';
+import { getClasses, getSchools, getClassAccess, getAssignmentById } from '../lib/edu';
 import { readSubRoute, writeSubRoute } from '../lib/seoConfig';
 
 interface EduModuleProps {
@@ -92,6 +92,18 @@ export default function EduModule({ currentUser, settings, initialView }: EduMod
     }).catch(() => {});
     return () => { alive = false; };
   }, [view, selectedClassId]);
+
+  // Mở thẳng màn chấm bằng đường dẫn thiếu cột điểm (gcol): lấy cột điểm của bài tập để không ra màn trống.
+  useEffect(() => {
+    if (view !== 'grading' || !selectedAssignmentId || selectedGradeColumnId) return;
+    let alive = true;
+    getAssignmentById(selectedAssignmentId).then(a => {
+      if (!alive) return;
+      if (a?.gradeColumnId) setSelectedGradeColumnId(a.gradeColumnId);
+      else { addNotification('Bài tập chưa gán cột điểm nên chưa chấm được.', 'warning'); setView(selectedClassId ? 'class_detail' : 'list'); }
+    }).catch(() => { if (alive) setView(selectedClassId ? 'class_detail' : 'list'); });
+    return () => { alive = false; };
+  }, [view, selectedAssignmentId, selectedGradeColumnId]);
 
   useEffect(() => {
     const handleStartGrading = (e: any) => {

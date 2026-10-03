@@ -18,7 +18,7 @@ export function todayTasks(tasks: Task[], user: UserAccount) {
   return { today: today.length, open: mine.length, overdue: today.filter(t => (dueOf(t) || 0) < Date.now()).length };
 }
 
-export interface PendingClass { classId: string; className: string; assignmentId: string; assignmentTitle: string; count: number }
+export interface PendingClass { classId: string; className: string; assignmentId: string; assignmentTitle: string; gradeColumnId: string; count: number }
 export interface PendingGrading { total: number; classes: PendingClass[] }
 
 // Bài nộp chưa có điểm ở cột điểm của bài tập, gộp theo từng bài tập.
@@ -45,7 +45,7 @@ export async function loadPendingGrading(): Promise<PendingGrading> {
   }
   const list: PendingClass[] = [...counts.entries()].map(([aid, count]) => {
     const a: any = byA.get(aid);
-    return { classId: a.class_id, className: nameOf.get(a.class_id) || 'Lớp học', assignmentId: aid, assignmentTitle: a.title || 'Bài tập', count };
+    return { classId: a.class_id, className: nameOf.get(a.class_id) || 'Lớp học', assignmentId: aid, assignmentTitle: a.title || 'Bài tập', gradeColumnId: a.grade_column_id, count };
   }).sort((x, y) => y.count - x.count);
   return { total: list.reduce((n, x) => n + x.count, 0), classes: list };
 }
@@ -78,7 +78,7 @@ export async function loadReminders(user: UserAccount, tasks: Task[], pending: P
     pending.classes.slice(0, 2).forEach(p => out.push({
       id: `grade:${p.assignmentId}:${p.count}`, kind: 'grading',
       title: `${p.count} bài nộp chờ chấm`, detail: `${p.assignmentTitle} · ${p.className}`,
-      tab: 'edu', sub: { sv: 'grading', cid: p.classId, aid: p.assignmentId },
+      tab: 'edu', sub: { sv: 'grading', cid: p.classId, aid: p.assignmentId, gcol: p.gradeColumnId },
     }));
   }
   if (can('tasks')) {

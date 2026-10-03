@@ -131,7 +131,7 @@ export default function PhoneHome() {
           <div className="bot"><span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><TrendingUp />Xem công việc</span><ChevronRight /></div>
         </button>
         {showGrading ? (
-          <button type="button" className="ph-sumc b" onClick={() => firstPending ? open('edu', { sv: 'grading', cid: firstPending.classId, aid: firstPending.assignmentId }) : open('edu')}>
+          <button type="button" className="ph-sumc b" onClick={() => firstPending ? open('edu', { sv: 'grading', cid: firstPending.classId, aid: firstPending.assignmentId, gcol: firstPending.gradeColumnId }) : open('edu')}>
             <div className="top">
               <div className="lb">Bài nộp mới</div>
               <div className="val">{pending ? pending.total : '…'}</div>
