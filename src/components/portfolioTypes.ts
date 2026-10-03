@@ -151,6 +151,8 @@ export interface CoursePromo {
   hidden?: boolean;
 }
 export interface CoursePromoSettings { on?: boolean; auto?: boolean; items?: CoursePromo[] }
+// Hàng Nổi bật ở trang Khoá học trên điện thoại: bật tắt, admin tự chọn khoá hoặc để hệ thống đề xuất theo lượt đăng ký, lượt xem.
+export interface CourseFeaturedSettings { on?: boolean; mode?: 'auto' | 'manual'; ids?: string[]; max?: number }
 
 export interface PortfolioCoursesSettings {
   banner: PortfolioBanner;
@@ -158,6 +160,7 @@ export interface PortfolioCoursesSettings {
   postsPerCategory: number;
   layoutStyle?: 'grid' | 'list';
   promo?: CoursePromoSettings;
+  featured?: CourseFeaturedSettings;
 }
 
 export interface PortfolioCourse {

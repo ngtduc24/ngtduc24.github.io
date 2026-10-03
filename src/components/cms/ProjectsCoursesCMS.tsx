@@ -6,7 +6,7 @@ import { GraduationCap, ArrowLeft,
   Plus, Trash2, Edit3, Eye, Copy, Pin, Star, Folder, BookOpen,
   ArrowUp, ArrowDown, ChevronDown, ChevronRight, Play, Users, Mail, ShieldAlert, FileText, Sparkles, LayoutGrid, Award, Lock, DollarSign, Calendar, Settings
 , Image, Type, PlayCircle, Code, Box, PenTool, Film, Link as LinkIcon, X, ChevronLeft} from 'lucide-react';
-import CoursePromoSettingsBox from '../courses/CoursePromoSettings';
+import CoursePromoSettingsBox, { CourseFeaturedSettingsBox } from '../courses/CoursePromoSettings';
 import { PortfolioProject, PortfolioCourse, CourseChapter, CourseLesson, CourseStudent, PortfolioCoursesSettings } from '../portfolioTypes';
 import { UserAccount } from '../../types';
 import { 
@@ -1041,6 +1041,7 @@ export default function ProjectsCoursesCMS({ initialSubTab = 'projects', createO
 
             <div className="grid grid-cols-1 gap-8">
               <CoursePromoSettingsBox value={coursesSettings.promo} courses={courses} onChange={promo => setCoursesSettings({ ...coursesSettings, promo })} />
+              <CourseFeaturedSettingsBox value={coursesSettings.featured} courses={courses} onChange={featured => setCoursesSettings({ ...coursesSettings, featured })} />
               <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm border border-slate-100">
                 <div className="space-y-8">
                   {/* Basic Settings */}

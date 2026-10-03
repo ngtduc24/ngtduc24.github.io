@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, ArrowUp, ArrowDown, Eye, EyeOff, Image as ImageIcon, Loader2, Smartphone } from 'lucide-react';
-import { PortfolioCourse, CoursePromo, CoursePromoSettings } from '../portfolioTypes';
+import { Plus, Trash2, ArrowUp, ArrowDown, Eye, EyeOff, Image as ImageIcon, Loader2, Smartphone, Sparkles } from 'lucide-react';
+import { PortfolioCourse, CoursePromo, CoursePromoSettings, CourseFeaturedSettings } from '../portfolioTypes';
 import { uploadImageToCloudinary } from '../../lib/upload';
 
 export const PROMO_TONES = [
@@ -53,7 +53,7 @@ export default function CoursePromoSettingsBox({ value, courses, onChange }: {
       {v.on !== false && <>
         <label className="mt-5 flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-4 py-3">
           <span><span className="block text-sm font-bold text-slate-700">Tự chọn khoá nổi bật khi chưa thêm banner</span>
-            <span className="block text-xs text-slate-500">Lấy 3 khoá nhiều học viên nhất mà người xem chưa đăng ký.</span></span>
+            <span className="block text-xs text-slate-500">Lấy 3 khoá có lượt đăng ký và lượt xem cao nhất mà người xem chưa đăng ký.</span></span>
           {sw(v.auto !== false, () => set({ auto: v.auto === false }))}
         </label>
 
@@ -110,6 +110,71 @@ export default function CoursePromoSettingsBox({ value, courses, onChange }: {
             <Plus className="h-4 w-4" /> Thêm banner
           </button>
         </div>
+      </>}
+    </div>
+  );
+}
+
+
+// Cài đặt hàng Nổi bật ở trang Khoá học trên điện thoại: bật tắt, tự đề xuất hoặc admin tự chọn khoá.
+export function CourseFeaturedSettingsBox({ value, courses, onChange }: {
+  value?: CourseFeaturedSettings; courses: PortfolioCourse[]; onChange: (v: CourseFeaturedSettings) => void;
+}) {
+  const v: CourseFeaturedSettings = { on: true, mode: 'auto', ids: [], max: 6, ...(value || {}) };
+  const set = (patch: Partial<CourseFeaturedSettings>) => onChange({ ...v, ...patch });
+  const ids = (v.ids || []).filter(id => courses.some(c => c.id === id));
+  const left = courses.filter(c => !ids.includes(c.id));
+  const move = (i: number, d: number) => { const a = [...ids]; const j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; set({ ids: a }); };
+  const sw = (on: boolean, flip: () => void) => (
+    <button type="button" onClick={flip} className="relative inline-flex h-6 w-11 flex-none items-center rounded-full transition-colors" style={{ backgroundColor: on ? '#10b981' : '#cbd5e1' }}>
+      <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${on ? 'translate-x-6' : 'translate-x-1'}`} />
+    </button>
+  );
+  const input = 'rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20';
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h4 className="flex items-center gap-2 text-sm font-black text-slate-900"><Sparkles className="h-4 w-4 text-brand" /> Hàng khoá học Nổi bật trên điện thoại</h4>
+          <p className="mt-1 text-xs font-medium text-slate-500">Dải thẻ khoá học trượt ngang nằm dưới banner ở trang Khoá học.</p>
+        </div>
+        <label className="flex items-center gap-3 text-sm font-bold text-slate-700">Hiện hàng Nổi bật {sw(v.on !== false, () => set({ on: v.on === false }))}</label>
+      </div>
+      {v.on !== false && <>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          {([['auto', 'Hệ thống tự đề xuất', 'Xếp theo lượt đăng ký học (nhân 3) cộng lượt xem khoá, bỏ khoá người xem đã đăng ký.'], ['manual', 'Admin tự chọn khoá', 'Chỉ hiện các khoá bạn chọn, theo thứ tự bạn xếp.']] as const).map(([k, t, d]) => (
+            <button key={k} type="button" onClick={() => set({ mode: k })} className={`rounded-2xl border p-4 text-left transition ${v.mode === k ? 'border-brand bg-brand-light/50 ring-2 ring-brand/20' : 'border-slate-200 hover:border-slate-300'}`}>
+              <span className="block text-sm font-bold text-slate-800">{t}</span>
+              <span className="mt-1 block text-xs text-slate-500">{d}</span>
+            </button>
+          ))}
+        </div>
+        <label className="mt-4 flex items-center gap-3 text-sm font-semibold text-slate-700">Số khoá hiện tối đa
+          <select value={v.max || 6} onChange={e => set({ max: Number(e.target.value) })} className={input}>
+            {[3, 4, 5, 6, 8, 10].map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </label>
+        {v.mode === 'manual' && (
+          <div className="mt-4 space-y-2">
+            {ids.length === 0 && <p className="text-xs text-slate-400">Chưa chọn khoá nào, hàng Nổi bật sẽ trống.</p>}
+            {ids.map((id, i) => { const c = courses.find(x => x.id === id)!; return (
+              <div key={id} className="flex items-center gap-3 rounded-xl border border-slate-100 px-3 py-2">
+                <span className="grid h-7 w-7 flex-none place-items-center rounded-lg bg-brand-light text-xs font-black text-brand-hover">{i + 1}</span>
+                {c.coverImage ? <img src={c.coverImage} alt="" className="h-9 w-14 flex-none rounded-lg object-cover" /> : <span className="h-9 w-14 flex-none rounded-lg bg-slate-100" />}
+                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-700">{c.title}{c.status !== 'published' ? ' (chưa phát hành)' : ''}</span>
+                <button type="button" title="Lên" onClick={() => move(i, -1)} className="grid h-8 w-8 place-items-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200"><ArrowUp className="h-4 w-4" /></button>
+                <button type="button" title="Xuống" onClick={() => move(i, 1)} className="grid h-8 w-8 place-items-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200"><ArrowDown className="h-4 w-4" /></button>
+                <button type="button" title="Bỏ khỏi Nổi bật" onClick={() => set({ ids: ids.filter(x => x !== id) })} className="grid h-8 w-8 place-items-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100"><Trash2 className="h-4 w-4" /></button>
+              </div>
+            ); })}
+            {left.length > 0 && (
+              <select value="" onChange={e => { if (e.target.value) set({ ids: [...ids, e.target.value] }); }} className={`${input} w-full`}>
+                <option value="">Thêm khoá vào hàng Nổi bật...</option>
+                {left.map(c => <option key={c.id} value={c.id}>{c.title}{c.status !== 'published' ? ' (chưa phát hành)' : ''}</option>)}
+              </select>
+            )}
+          </div>
+        )}
       </>}
     </div>
   );

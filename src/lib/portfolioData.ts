@@ -1081,3 +1081,23 @@ export const getPortfolioCourseCategories = async () => {
 };
 
 export const savePortfolioCourseCategories = (items: PortfolioCategory[]) => saveSetting('course_categories', 'course_categories', items);
+
+
+// Lượt xem khoá học (mỗi tài khoản tính 1 lượt mỗi ngày cho 1 khoá), lưu chung 1 dòng ở bảng app_stats (id course_views)
+// để hệ thống đề xuất khoá Nổi bật theo lượt đăng ký và lượt xem.
+export const getCourseViewCounts = async (): Promise<Record<string, number>> => {
+  try {
+    const { data } = await supabase.from('app_stats').select('stats').eq('id', 'course_views').maybeSingle();
+    return ((data as any)?.stats || {}) as Record<string, number>;
+  } catch { return {}; }
+};
+export const bumpCourseView = async (courseId: string, uid: string) => {
+  try {
+    const key = `edugo_cv_${uid}_${courseId}`;
+    const today = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem(key) === today) return;
+    localStorage.setItem(key, today);
+    const cur = await getCourseViewCounts();
+    await supabase.from('app_stats').upsert({ id: 'course_views', stats: { ...cur, [courseId]: (cur[courseId] || 0) + 1 } });
+  } catch { /* bỏ qua */ }
+};

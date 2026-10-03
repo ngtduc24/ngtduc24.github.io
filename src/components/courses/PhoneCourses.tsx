@@ -7,7 +7,7 @@ import {
 import { UserAccount } from '../../types';
 import { PortfolioCourse, CourseLesson, CourseStudent, PortfolioCoursesSettings } from '../portfolioTypes';
 import { PROMO_TONES } from './CoursePromoSettings';
-import { saveCourseStudent, deleteCourseStudentDoc, LEGACY_OWNER } from '../../lib/portfolioData';
+import { saveCourseStudent, deleteCourseStudentDoc, LEGACY_OWNER, getCourseViewCounts, bumpCourseView } from '../../lib/portfolioData';
 import { usePerson } from '../../lib/people';
 import { getSections as getELSections, getResources as getELResources, ELSection, ELResource } from '../../lib/elearning';
 import { sanitizeHtml, isSafeUrl } from '../../lib/sanitizeHtml';
@@ -105,6 +105,9 @@ export default function PhoneCourses({ user, courses, loading, onEnroll, registe
   };
 
   const course = view.k !== 'list' ? courses.find(c => c.id === view.id) : undefined;
+  const [views, setViews] = useState<Record<string, number>>({});
+  useEffect(() => { getCourseViewCounts().then(setViews).catch(() => {}); }, []);
+  useEffect(() => { if (course) bumpCourseView(course.id, user.id); }, [course?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (course) trackDoc({ kind: 'course', id: course.id, title: course.title, tab: 'courses', sub: { crs: course.id } });
   }, [course?.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -115,7 +118,7 @@ export default function PhoneCourses({ user, courses, loading, onEnroll, registe
       : <div className="cx-load"><PhoneEmpty icon={GraduationCap} title="Không tìm thấy khoá học" sub="Khoá học có thể đã bị ẩn hoặc xoá." action={<button type="button" className="cx-btn" onClick={() => setView({ k: 'list' })}>Về danh sách khoá học</button>} /></div>;
   }
 
-  const ctx: Ctx = { user, isAdmin, enrOf, canLearn, progressOf, favs, onEnroll, registering, onUpdateCourse, setView, settings, desktop, onManage };
+  const ctx: Ctx = { user, isAdmin, enrOf, canLearn, progressOf, favs, onEnroll, registering, onUpdateCourse, setView, settings, desktop, onManage, views };
   if (view.k === 'detail' && course) return <CourseDetail c={course} ctx={ctx} />;
   if (view.k === 'learn' && course) return <CourseLearn key={course.id} c={course} startLesson={view.lesson} ctx={ctx} />;
   return <CourseList courses={courses} ctx={ctx} />;
@@ -125,7 +128,7 @@ export type Ctx = {
   user: UserAccount; isAdmin: boolean; favs: string[];
   enrOf: (c: PortfolioCourse) => CourseStudent | undefined; canLearn: (c: PortfolioCourse) => boolean; progressOf: (c: PortfolioCourse) => number | null;
   onEnroll: (c: PortfolioCourse) => Promise<void> | void; registering: boolean; onUpdateCourse: (c: PortfolioCourse) => void;
-  setView: (v: View) => void; settings?: PortfolioCoursesSettings | null; desktop?: boolean; onManage?: () => void;
+  setView: (v: View) => void; settings?: PortfolioCoursesSettings | null; desktop?: boolean; onManage?: () => void; views?: Record<string, number>;
 };
 
 /* ======================= Danh sách ======================= */
@@ -147,14 +150,20 @@ function CourseList({ courses, ctx }: { courses: PortfolioCourse[]; ctx: Ctx }) 
     const ls = flatLessons(cont); const e = ctx.enrOf(cont);
     return ls.find(l => l.id === e?.lastLessonId) || ls.find(l => !(e?.completedLessons || []).includes(l.id)) || ls[0];
   })() : undefined;
-  const featured = published.filter(c => !ctx.enrOf(c)).sort((a, b) => (b.studentsCount || 0) - (a.studentsCount || 0)).slice(0, 6);
+  // Đề xuất tự động: điểm = lượt đăng ký × 3 + lượt xem, bỏ khoá người xem đã đăng ký.
+  const score = (c: PortfolioCourse) => (c.studentsCount || 0) * 3 + (ctx.views?.[c.id] || 0);
+  const ranked = published.filter(c => !ctx.enrOf(c)).sort((a, b) => score(b) - score(a));
+  const fs = ctx.settings?.featured;
+  const featured = fs?.on === false ? []
+    : fs?.mode === 'manual' ? (fs.ids || []).map(id => published.find(c => c.id === id)).filter(Boolean).slice(0, fs.max || 6) as PortfolioCourse[]
+    : ranked.slice(0, fs?.max || 6);
   const doneN = mine.filter(c => ctx.progressOf(c) === 100).length;
   // Banner quảng cáo: banner admin đặt (bỏ banner ẩn, khoá chưa phát hành), chưa đặt thì tự lấy khoá nổi bật nếu admin cho phép.
   const promo = ctx.settings?.promo;
   const slides: Slide[] = promo?.on === false ? [] : (() => {
     const set = (promo?.items || []).filter(x => !x.hidden).map(x => ({ p: x, c: published.find(c => c.id === x.courseId) })).filter(x => !!x.c) as Slide[];
     if (set.length || promo?.auto === false) return set;
-    return featured.slice(0, 3).map((c, i) => ({ p: { id: `auto_${c.id}`, courseId: c.id, tone: i, tag: 'Nổi bật' }, c }));
+    return ranked.slice(0, 3).map((c, i) => ({ p: { id: `auto_${c.id}`, courseId: c.id, tone: i, tag: 'Nổi bật' }, c }));
   })();
 
   const base = tab === 'mine' ? mine : tab === 'saved' ? saved : published;
