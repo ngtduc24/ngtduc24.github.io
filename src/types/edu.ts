@@ -15,10 +15,17 @@ export interface EduAccess {
   ownerName?: string | null;
 }
 
+// Học kỳ thuộc từng trường (lưu trong cột semesters của edu_schools), lớp gắn vào học kỳ qua semester_id.
+export interface EduSemester {
+  id: string;
+  name: string;
+}
+
 export interface EduSchool {
   id: string;
   name: string;
   description?: string;
+  semesters?: EduSemester[];
   createdAt: string;
   updatedAt: string;
   ownerId?: string;
@@ -30,6 +37,7 @@ export interface EduClass {
   schoolId: string;
   name: string;
   description?: string;
+  semesterId?: string | null;
   createdAt: string;
   updatedAt: string;
   ownerId?: string;

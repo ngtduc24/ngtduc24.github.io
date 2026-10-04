@@ -3,6 +3,7 @@ import { supabase } from './supabase';
 import { auth } from './firebase';
 import { 
   EduSchool, 
+  EduSemester,
   EduClass, 
   EduUser, 
   EduGradeColumn, 
@@ -68,7 +69,9 @@ function mapSchool(s: any): EduSchool {
     description: s.description,
     createdAt: s.created_at,
     updatedAt: s.updated_at,
-    ownerId: s.owner_id
+    ownerId: s.owner_id,
+    // Chưa chạy SQL thêm cột thì để undefined, khi lưu trường không gửi cột này lên.
+    semesters: s.semesters === undefined ? undefined : (Array.isArray(s.semesters) ? s.semesters : [])
   };
 }
 
@@ -80,7 +83,8 @@ function mapClass(c: any): EduClass {
     description: c.description,
     createdAt: c.created_at,
     updatedAt: c.updated_at,
-    ownerId: c.owner_id
+    ownerId: c.owner_id,
+    semesterId: c.semester_id === undefined ? undefined : (c.semester_id || null)
   };
 }
 
@@ -198,6 +202,7 @@ export async function saveSchool(school: Partial<EduSchool>) {
     id: school.id,
     name: school.name,
     description: school.description,
+    semesters: school.semesters,
     // Gán chủ sở hữu là người đang đăng nhập nếu chưa có.
     owner_id: school.ownerId ?? getCtx().userId ?? undefined
   };
@@ -242,6 +247,7 @@ export async function saveClass(clazz: Partial<EduClass>) {
     school_id: clazz.schoolId,
     name: clazz.name,
     description: clazz.description,
+    semester_id: clazz.semesterId,
     owner_id: clazz.ownerId ?? getCtx().userId ?? undefined
   };
   Object.keys(dbData).forEach(key => (dbData as any)[key] === undefined && delete (dbData as any)[key]);
@@ -249,6 +255,19 @@ export async function saveClass(clazz: Partial<EduClass>) {
   const { data, error } = await supabase.from(CLASSES_TABLE).upsert(dbData).select().single();
   if (error) throw error;
   return mapClass(data);
+}
+
+// Học kỳ: lưu danh sách học kỳ của 1 trường, và gắn nhiều lớp vào 1 học kỳ (null là bỏ khỏi học kỳ).
+// Lỗi thiếu cột (chưa chạy SQL) trả về thông báo dễ hiểu.
+const semErr = (e: any) => /semester/i.test(String(e?.message || '')) ? new Error('Cơ sở dữ liệu chưa có cột học kỳ, cần chạy đoạn SQL thêm cột semesters và semester_id.') : e;
+export async function saveSchoolSemesters(schoolId: string, semesters: EduSemester[]) {
+  const { error } = await supabase.from(SCHOOLS_TABLE).update({ semesters }).eq('id', schoolId);
+  if (error) throw semErr(error);
+}
+export async function setClassesSemester(classIds: string[], semesterId: string | null) {
+  if (!classIds.length) return;
+  const { error } = await supabase.from(CLASSES_TABLE).update({ semester_id: semesterId }).in('id', classIds);
+  if (error) throw semErr(error);
 }
 
 // Xoá lớp: trước hết xoá hẳn tệp bài nộp của sinh viên trên Cloudinary (giải phóng dung lượng),

@@ -22,10 +22,13 @@ import {
   ClipboardList,
   FileCheck2,
   UserPlus,
-  Monitor
+  Monitor,
+  ChevronDown,
+  Check,
+  CalendarRange
 } from 'lucide-react';
-import { EduClass, EduSchool } from '../../types/edu';
-import { getClasses, getSchools, getSharedEdu, deleteSchool, deleteClass, saveSchool, saveClass, getClassUsers, getAssignments, getSubmissions } from '../../lib/edu';
+import { EduClass, EduSchool, EduSemester } from '../../types/edu';
+import { getClasses, getSchools, getSharedEdu, deleteSchool, deleteClass, saveSchool, saveClass, getClassUsers, getAssignments, getSubmissions, saveSchoolSemesters, setClassesSemester } from '../../lib/edu';
 import { useNotifications } from '../NotificationContext';
 import { useConfirmation } from '../ConfirmationContext';
 import { eduCan } from '../../lib/eduPermissions';
@@ -42,6 +45,7 @@ import ShareDialog from '../ui/ShareDialog';
 import type { CollabType } from '../../lib/collab';
 import { collaboratorsByResource } from '../../lib/collab';
 import { AvatarStack } from '../ui/People';
+import './semester.css';
 
 interface EduSchoolClassListProps {
   onSelectClass: (classId: string) => void;
@@ -251,7 +255,8 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
   const handleCreateClass = async (schoolId: string) => {
     if (!newForm.name.trim()) return;
     try {
-      await saveClass({ schoolId, name: newForm.name, description: newForm.description });
+      const sv = selOf(schoolId);
+      await saveClass({ schoolId, name: newForm.name, description: newForm.description, ...(sv && sv !== '__none' && semsOf(schoolId).some(x => x.id === sv) ? { semesterId: sv } : {}) });
       setIsCreatingClassForSchool(null);
       setNewForm({ name: '', description: '' });
       loadData();
@@ -279,6 +284,145 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
     );
   };
 
+  // ===== Học kỳ =====
+  // Mỗi trường có danh sách học kỳ riêng. Menu cạnh tên trường chọn học kỳ để lọc lớp, cuối menu có dòng Thêm học kỳ.
+  // Lớp chưa có học kỳ được chọn để thêm vào học kỳ đang xem. Lựa chọn học kỳ của từng trường nhớ trên máy.
+  const SEM_KEY = `edu_sem_sel_${currentUser?.id || ''}`;
+  const [semSel, setSemSel] = useState<Record<string, string>>(() => { try { return JSON.parse(localStorage.getItem(SEM_KEY) || '{}') || {}; } catch { return {}; } });
+  const pickSem = (schoolId: string, v: string) => setSemSel(prev => { const n = { ...prev, [schoolId]: v }; try { localStorage.setItem(SEM_KEY, JSON.stringify(n)); } catch { /* bỏ qua */ } return n; });
+  const [assign, setAssign] = useState<{ schoolId: string; semId: string; all?: boolean; picked: string[] } | null>(null);
+  const [semPick, setSemPick] = useState<EduClass | null>(null);
+  const [pSem, setPSem] = useState('');
+  const [pSemSheet, setPSemSheet] = useState(false);
+  const [pSemEdit, setPSemEdit] = useState<{ sc: EduSchool; sem: EduSemester } | null>(null);
+  const semsOf = (schoolId: string): EduSemester[] => schools.find(x => x.id === schoolId)?.semesters || [];
+  const semName = (schoolId: string, id?: string | null) => (id ? semsOf(schoolId).find(x => x.id === id)?.name : '') || '';
+  const canSem = (sc?: EduSchool) => !!sc && canEdit && mine(sc);
+  const canMoveCls = (c: EduClass) => canEdit && (mine(c) || canSem(schools.find(x => x.id === c.schoolId)));
+  const selOf = (schoolId: string) => { const v = semSel[schoolId] || ''; return v && v !== '__none' && !semsOf(schoolId).some(x => x.id === v) ? '' : v; };
+  const matchSem = (c: EduClass, v: string) => !v || (v === '__none' ? !c.semesterId || !semsOf(c.schoolId).some(x => x.id === c.semesterId) : c.semesterId === v);
+  const unassigned = (schoolId: string) => classes.filter(c => c.schoolId === schoolId && canMoveCls(c) && matchSem(c, '__none'));
+  const semErrMsg = (e: any) => addNotification(e?.message && /SQL/.test(e.message) ? e.message : 'Lỗi khi lưu học kỳ', 'error');
+  const updateSems = async (sc: EduSchool, list: EduSemester[]) => {
+    await saveSchoolSemesters(sc.id, list);
+    setSchools(prev => prev.map(x => (x.id === sc.id ? { ...x, semesters: list } : x)));
+  };
+  const addSemester = async (sc: EduSchool) => {
+    const name = (await askText({ title: `Thêm học kỳ cho ${sc.name}`, placeholder: 'Ví dụ: Học kỳ 1 năm 2025-2026', okText: 'Thêm' }))?.trim();
+    if (!name) return;
+    const sem: EduSemester = { id: `hk${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`, name };
+    try {
+      await updateSems(sc, [...semsOf(sc.id), sem]);
+      pickSem(sc.id, sem.id); if (phone) setPSem(sem.id);
+      addNotification(`Đã thêm ${name}`, 'success');
+      const free = unassigned(sc.id);
+      if (free.length) setAssign({ schoolId: sc.id, semId: sem.id, picked: free.map(c => c.id) });
+    } catch (e) { semErrMsg(e); }
+  };
+  const renameSemester = async (sc: EduSchool, sem: EduSemester) => {
+    const name = (await askText({ title: 'Đổi tên học kỳ', defaultValue: sem.name }))?.trim();
+    if (!name || name === sem.name) return;
+    try { await updateSems(sc, semsOf(sc.id).map(x => (x.id === sem.id ? { ...x, name } : x))); addNotification('Đã đổi tên học kỳ', 'success'); } catch (e) { semErrMsg(e); }
+  };
+  const deleteSemester = async (sc: EduSchool, sem: EduSemester) => {
+    const inSem = classes.filter(c => c.schoolId === sc.id && c.semesterId === sem.id);
+    const ok = await confirm({ title: 'Xoá học kỳ', message: `Xoá "${sem.name}"? ${inSem.length ? `${inSem.length} lớp trong học kỳ này vẫn giữ nguyên, chỉ chuyển về mục Chưa xếp học kỳ.` : 'Học kỳ này chưa có lớp nào.'}`, confirmText: 'Xoá học kỳ', cancelText: 'Giữ lại' });
+    if (!ok) return;
+    try {
+      if (inSem.length) await setClassesSemester(inSem.map(c => c.id), null);
+      await updateSems(sc, semsOf(sc.id).filter(x => x.id !== sem.id));
+      setClasses(prev => prev.map(c => (c.semesterId === sem.id ? { ...c, semesterId: null } : c)));
+      if (semSel[sc.id] === sem.id) pickSem(sc.id, '');
+      if (pSem === sem.id) setPSem('');
+      addNotification('Đã xoá học kỳ', 'success');
+    } catch (e) { semErrMsg(e); }
+  };
+  const moveClasses = async (ids: string[], semId: string | null) => {
+    try {
+      await setClassesSemester(ids, semId);
+      setClasses(prev => prev.map(c => (ids.includes(c.id) ? { ...c, semesterId: semId } : c)));
+      addNotification(semId ? `Đã thêm ${ids.length} lớp vào học kỳ` : 'Đã bỏ lớp khỏi học kỳ', 'success');
+      return true;
+    } catch (e) { semErrMsg(e); return false; }
+  };
+
+  // Hộp chọn lớp đưa vào học kỳ và hộp chọn học kỳ cho 1 lớp (điện thoại dùng bảng dưới, máy tính dùng hộp giữa màn).
+  const renderSemDialogs = () => {
+    const out: React.ReactNode[] = [];
+    if (assign) {
+      const sc = schools.find(x => x.id === assign.schoolId);
+      const semN = semName(assign.schoolId, assign.semId);
+      const pool = classes.filter(c => c.schoolId === assign.schoolId && canMoveCls(c) && c.semesterId !== assign.semId && (assign.all || matchSem(c, '__none')));
+      const others = classes.filter(c => c.schoolId === assign.schoolId && canMoveCls(c) && c.semesterId !== assign.semId && !matchSem(c, '__none')).length;
+      const toggle = (id: string) => setAssign(a => a && ({ ...a, picked: a.picked.includes(id) ? a.picked.filter(x => x !== id) : [...a.picked, id] }));
+      const allOn = pool.length > 0 && pool.every(c => assign.picked.includes(c.id));
+      const run = async () => { const ids = assign.picked.filter(id => pool.some(c => c.id === id)); if (!ids.length) return; if (await moveClasses(ids, assign.semId)) setAssign(null); };
+      const n = assign.picked.filter(id => pool.some(c => c.id === id)).length;
+      const items = (
+        <div className="sem-pool">
+          {pool.length === 0 ? <p className="sem-empty">Không còn lớp nào chưa xếp học kỳ.</p> : (
+            <>
+              <button type="button" className="sem-all" onClick={() => setAssign(a => a && ({ ...a, picked: allOn ? [] : pool.map(c => c.id) }))}>{allOn ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}</button>
+              {pool.map(c => { const on = assign.picked.includes(c.id); const cur = semName(c.schoolId, c.semesterId); return (
+                <button key={c.id} type="button" className={`sem-it ${on ? 'on' : ''}`} onClick={() => toggle(c.id)}>
+                  <span className="bx">{on && <Check />}</span>
+                  <span className="m"><b>{c.name}</b><small>{cur ? `Đang ở ${cur}` : 'Chưa xếp học kỳ'}{classStats[c.id] ? ` · ${classStats[c.id].students} sinh viên` : ''}</small></span>
+                </button>
+              ); })}
+            </>
+          )}
+          {others > 0 && <label className="sem-tg"><input type="checkbox" checked={!!assign.all} onChange={e => setAssign(a => a && ({ ...a, all: e.target.checked }))} />Hiện cả {others} lớp đang ở học kỳ khác</label>}
+        </div>
+      );
+      const title = `Thêm lớp vào ${semN}`;
+      const sub = sc ? `${sc.name}. Chọn các lớp rồi bấm Thêm.` : undefined;
+      if (phone) out.push(
+        <PhoneSheet key="as" title={title} sub={sub} onClose={() => setAssign(null)}
+          footer={<><button type="button" className="ph-btn ghost" onClick={() => setAssign(null)}>Để sau</button><button type="button" className="ph-btn" style={{ flex: 2 }} disabled={!n} onClick={run}>Thêm {n || ''} lớp</button></>}>{items}</PhoneSheet>);
+      else out.push(
+        <div key="as" className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setAssign(null)}>
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
+            <div className="p-5 border-b border-slate-100 flex items-start gap-3">
+              <span className="w-10 h-10 rounded-xl bg-brand-light text-brand flex items-center justify-center shrink-0"><CalendarRange className="w-5 h-5" /></span>
+              <div className="min-w-0"><h3 className="text-[15px] font-bold text-slate-800">{title}</h3>{sub && <p className="text-[12px] text-slate-500 mt-0.5">{sub}</p>}</div>
+              <button onClick={() => setAssign(null)} className="ml-auto p-1.5 rounded-lg text-slate-400 hover:bg-slate-100"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="p-4 overflow-y-auto">{items}</div>
+            <div className="p-4 border-t border-slate-100 flex justify-end gap-2">
+              <button onClick={() => setAssign(null)} className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-[12px] font-bold">Để sau</button>
+              <button onClick={run} disabled={!n} className="px-5 py-2 rounded-xl bg-brand text-white text-[12px] font-bold disabled:opacity-50">Thêm {n || ''} lớp</button>
+            </div>
+          </div>
+        </div>);
+    }
+    if (semPick) {
+      const c = semPick;
+      const sems = semsOf(c.schoolId);
+      const cur = matchSem(c, '__none') ? '' : (c.semesterId || '');
+      const choose = async (v: string) => { if (v === cur) { setSemPick(null); return; } if (await moveClasses([c.id], v || null)) setSemPick(null); };
+      const opts = [...sems.map(x => ({ id: x.id, label: x.name })), { id: '', label: 'Chưa xếp học kỳ' }];
+      if (phone) out.push(
+        <PhoneSheet key="sp" title={`Học kỳ của ${c.name}`} onClose={() => setSemPick(null)}>
+          <div className="pk-pick">{opts.map(o => <button key={o.id || 'none'} type="button" className={o.id === cur ? 'on' : ''} onClick={() => choose(o.id)}><span>{o.label}</span></button>)}</div>
+        </PhoneSheet>);
+      else out.push(
+        <div key="sp" className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setSemPick(null)}>
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-5" onClick={e => e.stopPropagation()}>
+            <h3 className="text-[15px] font-bold text-slate-800">Học kỳ của lớp</h3>
+            <p className="text-[12px] text-slate-500 mt-0.5 mb-3 truncate">{c.name}</p>
+            <div className="space-y-1">
+              {opts.map(o => (
+                <button key={o.id || 'none'} onClick={() => choose(o.id)} className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-left text-[13px] font-bold ${o.id === cur ? 'bg-brand-light text-brand' : 'text-slate-600 hover:bg-slate-50'}`}>
+                  <Check className={`w-4 h-4 ${o.id === cur ? '' : 'invisible'}`} />{o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>);
+    }
+    return out;
+  };
+
   const filteredClasses = classes.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     c.edu_schools?.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -286,8 +430,9 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
 
   const groupedBySchool = schools.map(school => ({
     ...school,
-    classes: filteredClasses.filter(c => c.schoolId === school.id)
-  })).filter(s => s.classes.length > 0 || searchTerm === '');
+    allCount: filteredClasses.filter(c => c.schoolId === school.id).length,
+    classes: filteredClasses.filter(c => c.schoolId === school.id && matchSem(c, selOf(school.id)))
+  })).filter(s => s.allCount > 0 || searchTerm === '');
 
   if (loading) {
     return (
@@ -303,6 +448,7 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
     const q = searchTerm.trim().toLowerCase();
     const list = scoped
       .filter(c => !pSchool || c.schoolId === pSchool)
+      .filter(c => matchSem(c, pSem))
       .filter(c => !q || c.name.toLowerCase().includes(q) || (c.edu_schools?.name || '').toLowerCase().includes(q))
       .filter(c => { const st = classStats[c.id]; if (pQuick === 'pending') return !!st?.pending; if (pQuick === 'soon') return !!st?.deadline && new Date(st.deadline).getTime() > Date.now() && new Date(st.deadline).getTime() - Date.now() < 72 * 3600e3; return true; });
     const schoolName = (id: string) => schools.find(x => x.id === id)?.name || '';
@@ -316,7 +462,7 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
     const mySchools = schools.filter(x => mine(x));
     const createClass = async () => {
       if (!newCls.name.trim() || !newCls.schoolId) return;
-      try { await saveClass({ schoolId: newCls.schoolId, name: newCls.name.trim(), description: '' }); setPSheet(null); setNewCls({ schoolId: '', name: '' }); loadData(); addNotification('Đã tạo lớp học mới', 'success'); }
+      try { await saveClass({ schoolId: newCls.schoolId, name: newCls.name.trim(), description: '', ...(pSem && pSem !== '__none' && semsOf(newCls.schoolId).some(x => x.id === pSem) ? { semesterId: pSem } : {}) }); setPSheet(null); setNewCls({ schoolId: '', name: '' }); loadData(); addNotification('Đã tạo lớp học mới', 'success'); }
       catch { addNotification('Lỗi khi tạo lớp học', 'error'); }
     };
     const newSchool = async (): Promise<string | null> => {
@@ -381,6 +527,9 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
           </div>
           <PhoneChips>
             <PhoneChip caret on={!!pSchool} onClick={() => setPSheet('school')}>{pSchool ? schoolName(pSchool) : 'Mọi trường'}</PhoneChip>
+            {(schools.some(x => (x.semesters || []).length) || schools.some(x => canSem(x))) && (
+              <PhoneChip caret on={!!pSem} onClick={() => setPSemSheet(true)}>{pSem === '__none' ? 'Chưa xếp học kỳ' : pSem ? (schools.map(x => semName(x.id, pSem)).find(Boolean) || 'Học kỳ') : 'Mọi học kỳ'}</PhoneChip>
+            )}
             <PhoneChip on={pQuick === ''} onClick={() => setPQuick('')}>Tất cả</PhoneChip>
             <PhoneChip on={pQuick === 'pending'} onClick={() => setPQuick('pending')}>Có bài chờ chấm</PhoneChip>
             <PhoneChip on={pQuick === 'soon'} onClick={() => setPQuick('soon')}>Sắp hết hạn</PhoneChip>
@@ -397,7 +546,7 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
               return (
                 <div key={sid || 'none'}>
                   <div className="pk-grp-h">
-                    <span>{sc?.name || schoolName(sid) || 'Chưa có trường'}</span><em>{rows.length} lớp</em>
+                    <span>{sc?.name || schoolName(sid) || 'Chưa có trường'}</span>{pSem && pSem !== '__none' && semName(sid, pSem) && <span className="sem">{semName(sid, pSem)}</span>}<em>{rows.length} lớp</em>
                     {sc && (mine(sc) || sc.access?.perms.manageMembers) && <button type="button" aria-label="Thao tác với trường" onClick={() => setPSheet({ school: sc })}><MoreVertical /></button>}
                   </div>
                   <div className="pk-grp pk-cards">
@@ -428,6 +577,9 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
                       </div>
                     ); })}
                   </div>
+                  {pSem && pSem !== '__none' && semName(sid, pSem) && unassigned(sid).length > 0 && (
+                    <button type="button" className="pk-sem-add" onClick={() => setAssign({ schoolId: sid, semId: pSem, picked: [] })}><Plus />Thêm lớp vào học kỳ này<small>{unassigned(sid).length} lớp chưa xếp</small></button>
+                  )}
                 </div>
               );
             })}
@@ -435,6 +587,39 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
           </div>
         )}
 
+        {pSemSheet && (() => {
+          const grpSchools = schools.filter(x => (!pSchool || x.id === pSchool) && ((x.semesters || []).length || canSem(x)) && (scoped.some(c => c.schoolId === x.id) || canSem(x)));
+          const noneN = scoped.filter(c => (!pSchool || c.schoolId === pSchool) && matchSem(c, '__none')).length;
+          const close = () => setPSemSheet(false);
+          return (
+            <PhoneSheet title="Chọn học kỳ" sub="Mỗi trường có học kỳ riêng, chọn 1 học kỳ để xem các lớp của học kỳ đó." onClose={close}>
+              <div className="pk-pick">
+                <button type="button" className={!pSem ? 'on' : ''} onClick={() => { setPSem(''); close(); }}><span>Mọi học kỳ</span><em>{scoped.filter(c => !pSchool || c.schoolId === pSchool).length}</em></button>
+                {noneN > 0 && <button type="button" className={pSem === '__none' ? 'on' : ''} onClick={() => { setPSem('__none'); close(); }}><span>Chưa xếp học kỳ</span><em>{noneN}</em></button>}
+              </div>
+              {grpSchools.map(x => (
+                <div key={x.id} className="sem-ph-grp">
+                  <h5><span>{x.name}</span>{canSem(x) && <button type="button" onClick={() => { close(); addSemester(x); }}><Plus />Thêm học kỳ</button>}</h5>
+                  <div className="pk-pick">
+                    {(x.semesters || []).length === 0 && <p style={{ fontSize: 13, color: '#94a3b8', padding: '4px 2px' }}>Chưa có học kỳ nào.</p>}
+                    {(x.semesters || []).map(m => (
+                      <div key={m.id} className="sem-ph-row">
+                        <button type="button" className={pSem === m.id ? 'on' : ''} onClick={() => { setPSem(m.id); if (!pSchool) setPSchool(x.id); close(); }}><span>{m.name}</span><em>{scoped.filter(c => c.semesterId === m.id).length}</em></button>
+                        {canSem(x) && <button type="button" className="ed" aria-label="Sửa học kỳ" onClick={() => { close(); setPSemEdit({ sc: x, sem: m }); }}><MoreVertical /></button>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </PhoneSheet>
+          );
+        })()}
+        {pSemEdit && <PhoneMenuSheet title={pSemEdit.sem.name} sub={pSemEdit.sc.name} onClose={() => setPSemEdit(null)} items={[
+          { key: 'add', label: 'Thêm lớp vào học kỳ này', icon: Plus, hidden: !unassigned(pSemEdit.sc.id).length, onClick: () => setAssign({ schoolId: pSemEdit.sc.id, semId: pSemEdit.sem.id, picked: [] }) },
+          { key: 'ren', label: 'Đổi tên học kỳ', icon: Edit2, onClick: () => renameSemester(pSemEdit.sc, pSemEdit.sem) },
+          { key: 'del', label: 'Xoá học kỳ', sub: 'Lớp trong học kỳ chuyển về Chưa xếp học kỳ', icon: Trash2, danger: true, onClick: () => deleteSemester(pSemEdit.sc, pSemEdit.sem) },
+        ]} />}
+        {renderSemDialogs()}
         {pSheet === 'ext' && (
           <PhoneSheet title="Phê duyệt yêu cầu" sub={classes.some(c => (extCount[c.id] || 0) > 0) ? 'Chọn lớp để xem và duyệt yêu cầu gia hạn nộp bài.' : 'Hiện chưa có yêu cầu nào đang chờ duyệt.'} onClose={() => setPSheet(null)}>
             <div className="pk-pick">
@@ -449,7 +634,7 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
             <div className="pk-pick">
               <button type="button" className={!pSchool ? 'on' : ''} onClick={() => { setPSchool(''); setPSheet(null); }}><span>Mọi trường</span><em>{scoped.length}</em></button>
               {schools.filter(x => scoped.some(c => c.schoolId === x.id) || (pScope === 'mine' && mine(x))).map(x => (
-                <button key={x.id} type="button" className={pSchool === x.id ? 'on' : ''} onClick={() => { setPSchool(x.id); setPSheet(null); }}><span>{x.name}</span><em>{scoped.filter(c => c.schoolId === x.id).length}</em></button>
+                <button key={x.id} type="button" className={pSchool === x.id ? 'on' : ''} onClick={() => { setPSchool(x.id); setPSem(''); setPSheet(null); }}><span>{x.name}</span><em>{scoped.filter(c => c.schoolId === x.id).length}</em></button>
               ))}
             </div>
           </PhoneSheet>
@@ -465,6 +650,7 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
           { key: 'open', label: 'Mở lớp', icon: ChevronRight, onClick: () => onSelectClass(c.id) },
           { key: 'share', label: 'Cộng tác', sub: 'Thêm người cùng chấm, giao bài', icon: UserPlus, hidden: !(mine(c) || c.access?.perms.manageMembers), onClick: () => setSharing({ type: 'edu_class', id: c.id, title: c.name, ownerId: c.ownerId || currentUser?.id, canManage: true }) },
           { key: 'rename', label: 'Đổi tên lớp', icon: Edit2, hidden: !(canEdit && mine(c)), onClick: () => rename('class', c) },
+          { key: 'sem', label: 'Chọn học kỳ', sub: semName(c.schoolId, c.semesterId) || 'Chưa xếp học kỳ', icon: CalendarRange, hidden: !(canMoveCls(c) && semsOf(c.schoolId).length > 0), onClick: () => setSemPick(c) },
           { key: 'del', label: 'Xoá lớp', icon: Trash2, danger: true, hidden: !(canDelete && mine(c)), onClick: () => handleDeleteClass(c) },
         ]} />; })()}
         {sel && 'school' in sel && (() => { const sc = sel.school; return <PhoneMenuSheet title={sc.name} onClose={() => setPSheet(null)} items={[
@@ -726,6 +912,54 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
                     )}
                   </div>
                   ) : null}
+                  {(() => {
+                    const sems = school.semesters || [];
+                    const sv = selOf(school.id);
+                    const all = filteredClasses.filter(c => c.schoolId === school.id);
+                    const noneN = all.filter(c => matchSem(c, '__none')).length;
+                    if (!sems.length && !canSem(school)) return null;
+                    const label = sv === '__none' ? 'Chưa xếp học kỳ' : sv ? semName(school.id, sv) : 'Tất cả học kỳ';
+                    const key = `sem-${school.id}`;
+                    const row = (v: string, text: string, n: number, sem?: EduSemester) => (
+                      <div key={v || 'all'} className={`group/sem flex items-center gap-1 rounded-lg ${sv === v ? 'bg-brand-light' : 'hover:bg-slate-50'}`}>
+                        <button onClick={() => { pickSem(school.id, v); setActiveDropdownId(null); }} className={`flex-1 min-w-0 flex items-center gap-2 px-3 py-2 text-left text-[12px] font-bold ${sv === v ? 'text-brand' : 'text-slate-600'}`}>
+                          <Check className={`w-3.5 h-3.5 shrink-0 ${sv === v ? '' : 'invisible'}`} />
+                          <span className="truncate">{text}</span>
+                          <span className="ml-auto pl-2 text-[11px] font-bold text-slate-400">{n}</span>
+                        </button>
+                        {sem && canSem(school) && (
+                          <span className="hidden group-hover/sem:flex items-center pr-1">
+                            <button title="Đổi tên học kỳ" onClick={() => { setActiveDropdownId(null); renameSemester(school, sem); }} className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-white"><Edit2 className="w-3.5 h-3.5" /></button>
+                            <button title="Xoá học kỳ" onClick={() => { setActiveDropdownId(null); deleteSemester(school, sem); }} className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-white"><Trash2 className="w-3.5 h-3.5" /></button>
+                          </span>
+                        )}
+                      </div>
+                    );
+                    return (
+                      <div className="relative">
+                        <button onClick={e => { e.stopPropagation(); setActiveDropdownId(activeDropdownId === key ? null : key); }}
+                          className={`flex items-center gap-1.5 pl-2.5 pr-2 py-1.5 rounded-lg border text-[11px] font-bold transition-all ${sv ? 'bg-brand-light border-brand/20 text-brand' : 'bg-white border-slate-200 text-slate-600 hover:border-brand/30'}`}>
+                          <CalendarRange className="w-3.5 h-3.5" />
+                          <span className="max-w-[220px] truncate">{label}</span>
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                        {activeDropdownId === key && (
+                          <div className="absolute left-0 top-full mt-1 bg-white border border-slate-100 rounded-xl shadow-xl p-1 z-30 w-[290px]" onClick={e => e.stopPropagation()}>
+                            <p className="px-3 pt-2 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Học kỳ</p>
+                            {row('', 'Tất cả học kỳ', all.length)}
+                            {sems.map(x => row(x.id, x.name, all.filter(c => c.semesterId === x.id).length, x))}
+                            {sems.length > 0 && noneN > 0 && row('__none', 'Chưa xếp học kỳ', noneN)}
+                            {canSem(school) && (
+                              <>
+                                <div className="h-px bg-slate-100 my-1" />
+                                <button onClick={() => { setActiveDropdownId(null); addSemester(school); }} className="w-full flex items-center gap-2 px-3 py-2 text-left text-[12px] font-bold text-brand hover:bg-brand-light rounded-lg"><Plus className="w-3.5 h-3.5" />Thêm học kỳ</button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -754,7 +988,12 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
                   >
                     <div className="p-6 flex-1">
                       <div className="flex justify-end items-start mb-2">
-                        {!mine(clazz) && <span className="mr-auto rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">Được chia sẻ</span>}
+                        {(!mine(clazz) || (!selOf(school.id) && semName(school.id, clazz.semesterId))) && (
+                          <span className="mr-auto flex flex-wrap gap-1">
+                            {!selOf(school.id) && semName(school.id, clazz.semesterId) && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">{semName(school.id, clazz.semesterId)}</span>}
+                            {!mine(clazz) && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">Được chia sẻ</span>}
+                          </span>
+                        )}
                         {(mine(clazz) || !!clazz.access?.perms.manageMembers) && (
                         <button
                           onClick={(e) => {
@@ -770,6 +1009,7 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
                           <div className="absolute right-4 top-9 bg-white border border-slate-100 rounded-xl shadow-xl p-1 z-30 min-w-[140px]" onClick={e => e.stopPropagation()}>
                             <button onClick={() => { setActiveDropdownId(null); setSharing({ type: 'edu_class', id: clazz.id, title: clazz.name, ownerId: clazz.ownerId || currentUser?.id, canManage: true }); }} className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><UserPlus className="w-3.5 h-3.5" /> Cộng tác</button>
                             {canEdit && mine(clazz) && <button onClick={() => { setEditingClass(clazz); setEditForm({ name: clazz.name, description: clazz.description || '' }); }} className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Edit2 className="w-3.5 h-3.5" /> Sửa</button>}
+                            {canMoveCls(clazz) && (school.semesters || []).length > 0 && <button onClick={() => { setActiveDropdownId(null); setSemPick(clazz); }} className="w-full text-left px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><CalendarRange className="w-3.5 h-3.5" /> Học kỳ</button>}
                             {canDelete && mine(clazz) && <button onClick={() => handleDeleteClass(clazz)} className="w-full text-left px-3 py-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center gap-2 uppercase tracking-wider"><Trash2 className="w-3.5 h-3.5" /> Xóa</button>}
                           </div>
                         )}
@@ -818,11 +1058,29 @@ export default function EduSchoolClassList({ onSelectClass, onGrade, onImport, o
                     </div>
                   </div>
                 ))}
+                {(() => {
+                  const sv = selOf(school.id);
+                  if (!sv || sv === '__none') return null;
+                  const free = unassigned(school.id);
+                  if (!free.length) return null;
+                  return (
+                    <button onClick={() => setAssign({ schoolId: school.id, semId: sv, picked: [] })}
+                      className="min-h-[180px] rounded-2xl border-2 border-dashed border-slate-200 hover:border-brand/50 hover:bg-brand-light/40 text-slate-500 hover:text-brand flex flex-col items-center justify-center gap-2 p-6 transition-all">
+                      <span className="w-11 h-11 rounded-xl bg-white border border-slate-100 flex items-center justify-center"><Plus className="w-5 h-5" /></span>
+                      <span className="text-[13px] font-bold">Thêm lớp vào học kỳ này</span>
+                      <span className="text-[11px] font-semibold text-slate-400">{free.length} lớp chưa xếp học kỳ</span>
+                    </button>
+                  );
+                })()}
               </div>
+              {school.classes.length === 0 && selOf(school.id) && (
+                <p className="text-[12px] text-slate-400 font-medium -mt-2">Học kỳ này chưa có lớp nào.</p>
+              )}
             </div>
           ))}
         </div>
       )}
+      {renderSemDialogs()}
     </div>
   );
 
