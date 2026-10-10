@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // Trang tra cứu tạp chí chỉ dành cho tra cứu. Link cũ của sinh viên (tracuu.html?edu=, ?nb=, ?dd=, ?sv=)
+      // được chuyển sang trang riêng sinhvien.html.
+      (function(){
+        var q = new URLSearchParams(location.search);
+        if (q.has('edu') || q.has('nb') || q.has('dd') || q.has('sv')) location.replace('/sinhvien.html' + location.search + location.hash);
+      })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function(){
+        try {
+          var c = JSON.parse(localStorage.getItem('brandThemeCache') || 'null');
+          if (c && c.brand) {
+            var s = document.documentElement.style;
+            s.setProperty('--color-brand', c.brand);
+            if (c.hover) s.setProperty('--color-brand-hover', c.hover);
+            if (c.light) s.setProperty('--color-brand-light', c.light);
+          }
+        } catch(e){}
+      })();
+    </script>
+    <title>Tra Cứu Điểm Báo Khoa Học & Tạp Chí ISI/Scopus | EduGo</title>
+    <meta name="description" content="Cổng tra cứu điểm báo khoa học, định danh tạp chí uy tín ISI, Scopus, tính điểm công trình nghiên cứu và cơ sở dữ liệu học thuật toàn diện." />
+    <meta name="keywords" content="tra cứu điểm báo, tạp chí khoa học, isi, scopus, tính điểm bài báo, nghiên cứu khoa học, cơ sở dữ liệu y học" />
+    
+    <!-- OpenGraph Social Cards -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="EduGo" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:url" content="https://ngtduc24.github.io/tracuu.html" />
+    <meta property="og:title" content="Tra Cứu Điểm Báo Khoa Học & Tạp Chí ISI/Scopus | EduGo" />
+    <meta property="og:description" content="Cổng tra cứu điểm báo khoa học, định danh tạp chí uy tín ISI, Scopus, tính điểm công trình nghiên cứu và cơ sở dữ liệu học thuật toàn diện." />
+    
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Tra Cứu Điểm Báo Khoa Học & Tạp Chí ISI/Scopus | EduGo" />
+    <meta name="twitter:description" content="Cổng tra cứu điểm báo khoa học, định danh tạp chí uy tín ISI, Scopus, tính điểm công trình nghiên cứu và cơ sở dữ liệu học thuật toàn diện." />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://ngtduc24.github.io/tracuu.html" />
+
+    <!-- Schema.org Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://ngtduc24.github.io/tracuu.html#website",
+          "url": "https://ngtduc24.github.io/tracuu.html",
+          "name": "Cổng Tra Cứu Điểm Báo Khoa Học EduGo",
+          "description": "Hệ thống tra cứu cơ sở dữ liệu tạp chí khoa học, điểm số công trình nghiên cứu và chuẩn quốc tế ISI/Scopus.",
+          "inLanguage": "vi",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://ngtduc24.github.io/tracuu.html?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "WebApplication",
+          "@id": "https://ngtduc24.github.io/tracuu.html#app",
+          "name": "Tra Cứu Điểm Báo Khoa Học",
+          "applicationCategory": "EducationalApplication",
+          "operatingSystem": "All",
+          "browserRequirements": "Requires JavaScript. Requires HTML5."
+        }
+      ]
+    }
+    </script>
+    <script type="module" crossorigin src="/assets/tracuu-C_1Tk2mm.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/applyTheme-B6nCe_1x.js">
+    <link rel="modulepreload" crossorigin href="/assets/book-open-BTmBKRvF.js">
+    <link rel="modulepreload" crossorigin href="/assets/people-Dkd9mgZB.js">
+    <link rel="modulepreload" crossorigin href="/assets/social-C9i8W7t4.js">
+    <link rel="modulepreload" crossorigin href="/assets/send-Bm-Nn8h5.js">
+    <link rel="modulepreload" crossorigin href="/assets/personalize-CkX6ICG-.js">
+    <link rel="modulepreload" crossorigin href="/assets/square-CbY6-cmM.js">
+    <link rel="modulepreload" crossorigin href="/assets/bookmark-C1vfb9SW.js">
+    <link rel="modulepreload" crossorigin href="/assets/award-BwXZp3Ma.js">
+    <link rel="modulepreload" crossorigin href="/assets/tag-CjajhoVY.js">
+    <link rel="modulepreload" crossorigin href="/assets/hash-BV0uqpc1.js">
+    <link rel="modulepreload" crossorigin href="/assets/user-round-D-e-qURS.js">
+    <link rel="modulepreload" crossorigin href="/assets/share-2-BnhLkfKD.js">
+    <link rel="modulepreload" crossorigin href="/assets/link-2-BmuoDfcW.js">
+    <link rel="modulepreload" crossorigin href="/assets/JournalDetailView-DMwJEoa3.js">
+    <link rel="modulepreload" crossorigin href="/assets/PublicJournalSearch-CZdp2hVW.js">
+    <link rel="stylesheet" crossorigin href="/assets/applyTheme-C700CEof.css">
+    <link rel="stylesheet" crossorigin href="/assets/personalize-DQZ0ewAK.css">
+    <link rel="stylesheet" crossorigin href="/assets/JournalDetailView-0EIlO6Dh.css">
+  </head>
+  <body>
+    <div id="root">
+      <div style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:system-ui,sans-serif;color:#475569;background:#f8fafc">
+        <div style="width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#10b981;border-radius:50%;animation:sp 1s linear infinite"></div>
+        <div>Đang tải Cổng Tra Cứu Điểm Báo...</div>
+        <style>@keyframes sp{to{transform:rotate(360deg)}}</style>
+      </div>
+    </div>
+  </body>
+</html>

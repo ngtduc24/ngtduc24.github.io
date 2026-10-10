@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <!-- This product includes the XR Engine software developed by Niantic Spatial, Inc.
+         Copyright © 2026 Niantic Spatial, Inc. All rights reserved.
+         License: https://github.com/8thwall/8thwall/blob/main/LICENSE -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="EduGo" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <script>
+      (function(){
+        try {
+          var c = JSON.parse(localStorage.getItem('brandThemeCache') || 'null');
+          if (c && c.brand) {
+            var s = document.documentElement.style;
+            s.setProperty('--color-brand', c.brand);
+            if (c.hover) s.setProperty('--color-brand-hover', c.hover);
+            if (c.light) s.setProperty('--color-brand-light', c.light);
+          }
+        } catch(e){}
+        try {
+          var f = JSON.parse(localStorage.getItem('fontThemeCache') || 'null');
+          if (f && (f.heading || f.body)) {
+            var st = document.documentElement.style;
+            if (f.heading) st.setProperty('--font-display', '"' + f.heading + '", "Space Grotesk", ui-sans-serif, system-ui, sans-serif');
+            if (f.body) st.setProperty('--font-sans', '"' + f.body + '", "Inter", ui-sans-serif, system-ui, sans-serif');
+            [f.headingUrl, f.bodyUrl].forEach(function(u){
+              if (u && !document.querySelector('link[href="' + u + '"]')) {
+                var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = u; document.head.appendChild(l);
+              }
+            });
+          }
+        } catch(e){}
+      })();
+    </script>
+    <title>EduGo - Nền tảng học tập và làm việc trực tuyến</title>
+    <meta name="description" content="EduGo gom các công cụ giảng dạy, học tập và nghiên cứu vào một chỗ: quản lý lớp học, bài tập, Quizz, bài giảng E-Learning, dựng phim, AR, VR 360 và nhiều tiện ích khác." />
+
+    <!--
+      Thẻ mô tả dùng cho Zalo, Facebook, Messenger và các mạng xã hội khác.
+      Đây là các giá trị mặc định cho toàn trang. Riêng từng khóa học, dự án,
+      nghiên cứu và bài viết sẽ có trang chia sẻ riêng kèm đúng tiêu đề và ảnh bìa
+      của nội dung đó, do tập lệnh scripts/prerender-share.mjs sinh ra lúc build.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="EduGo" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:url" content="https://ngtduc24.github.io/" />
+    <meta property="og:title" content="EduGo - Nền tảng học tập và làm việc trực tuyến" />
+    <meta property="og:description" content="EduGo gom các công cụ giảng dạy, học tập và nghiên cứu vào một chỗ: quản lý lớp học, bài tập, Quizz, bài giảng E-Learning, dựng phim, AR, VR 360 và nhiều tiện ích khác." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="module" crossorigin src="/assets/main-DNaCkT2p.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/applyTheme-B6nCe_1x.js">
+    <link rel="modulepreload" crossorigin href="/assets/book-open-BTmBKRvF.js">
+    <link rel="modulepreload" crossorigin href="/assets/people-Dkd9mgZB.js">
+    <link rel="modulepreload" crossorigin href="/assets/social-C9i8W7t4.js">
+    <link rel="modulepreload" crossorigin href="/assets/send-Bm-Nn8h5.js">
+    <link rel="modulepreload" crossorigin href="/assets/personalize-CkX6ICG-.js">
+    <link rel="modulepreload" crossorigin href="/assets/tasks-CD6A30OR.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-DruSjcP_.js">
+    <link rel="modulepreload" crossorigin href="/assets/upload-D9UUcXhh.js">
+    <link rel="modulepreload" crossorigin href="/assets/index-C_AZGf4m.js">
+    <link rel="modulepreload" crossorigin href="/assets/presence-DZyz18oM.js">
+    <link rel="modulepreload" crossorigin href="/assets/square-CbY6-cmM.js">
+    <link rel="modulepreload" crossorigin href="/assets/ErrorBoundary-ym4h4BEJ.js">
+    <link rel="stylesheet" crossorigin href="/assets/applyTheme-C700CEof.css">
+    <link rel="stylesheet" crossorigin href="/assets/personalize-DQZ0ewAK.css">
+    <link rel="stylesheet" crossorigin href="/assets/presence-DwYx5EZ8.css">
+    <link rel="stylesheet" crossorigin href="/assets/main-SaZgcDMp.css">
+      <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=v45hc8" data-app-icon />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=v45hc8" data-app-icon />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=v45hc8" data-app-icon />
+  </head>
+  <body>
+    <div id="root"><div style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:system-ui,sans-serif;color:#475569;background:#f8fafc"><div style="width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#10b981;border-radius:50%;animation:sp 1s linear infinite"></div><div>Đang tải EduGo...</div><style>@keyframes sp{to{transform:rotate(360deg)}}</style></div></div>
+  </body>
+</html>
+

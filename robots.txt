@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://ngtduc24.github.io/sitemap.xml
