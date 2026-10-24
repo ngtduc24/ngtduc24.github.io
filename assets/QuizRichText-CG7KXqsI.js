@@ -1,0 +1,1 @@
+import{j as n}from"./applyTheme-BKm5ZYks.js";import{R as x}from"./presence-C6oJpaM5.js";function u({value:e,onChange:t,placeholder:r,allowVideo:i}){return n.jsx(x,{value:e||"",onChange:t,placeholder:r||"Nhập nội dung câu hỏi...",minHeight:i?"360px":"160px",maxHeight:i?"70vh":"420px",folder:i?"elearning-videos":"quiz-questions"})}export{u as Q};

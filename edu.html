@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function(){
+        try {
+          var c = JSON.parse(localStorage.getItem('brandThemeCache') || 'null');
+          if (c && c.brand) {
+            var s = document.documentElement.style;
+            s.setProperty('--color-brand', c.brand);
+            if (c.hover) s.setProperty('--color-brand-hover', c.hover);
+            if (c.light) s.setProperty('--color-brand-light', c.light);
+          }
+        } catch(e){}
+      })();
+    </script>
+    <title>Hệ thống Quản lý Giáo dục & Đào tạo | EduGo</title>
+    <meta name="description" content="Nền tảng quản lý trường học, lớp học, danh sách sinh viên, bài tập và bảng điểm học thuật chuyên nghiệp." />
+    <meta name="keywords" content="quản lý giáo dục, quản lý sinh viên, bảng điểm, bài tập trực tuyến, đào tạo khoa học" />
+    
+    <!-- OpenGraph Social Cards -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="EduGo" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:title" content="Hệ thống Quản lý Giáo dục & Đào tạo | EduGo" />
+    <meta property="og:description" content="Nền tảng quản lý trường học, lớp học, danh sách sinh viên, bài tập và bảng điểm học thuật chuyên nghiệp." />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://ngtduc24.github.io/edu.html" />
+    <script type="module" crossorigin src="/assets/edu-CEJzlK3C.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/applyTheme-BKm5ZYks.js">
+    <link rel="modulepreload" crossorigin href="/assets/xlsx-CkFp8p6R.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-DWsxqhKu.js">
+    <link rel="modulepreload" crossorigin href="/assets/book-open-BzoFcSzb.js">
+    <link rel="modulepreload" crossorigin href="/assets/send-ayJ4Erx6.js">
+    <link rel="modulepreload" crossorigin href="/assets/personalize-CWSooG9N.js">
+    <link rel="modulepreload" crossorigin href="/assets/tasks-DXk4LygS.js">
+    <link rel="modulepreload" crossorigin href="/assets/mediaItems-fnDCNwKN.js">
+    <link rel="modulepreload" crossorigin href="/assets/upload-Pn0uF5cR.js">
+    <link rel="modulepreload" crossorigin href="/assets/index-WUBhlWhM.js">
+    <link rel="modulepreload" crossorigin href="/assets/people-ukpfPwYi.js">
+    <link rel="modulepreload" crossorigin href="/assets/presence-C6oJpaM5.js">
+    <link rel="modulepreload" crossorigin href="/assets/file-spreadsheet-DJ2yT1KC.js">
+    <link rel="modulepreload" crossorigin href="/assets/collab-gNzvfc_x.js">
+    <link rel="modulepreload" crossorigin href="/assets/crown-CEewo5Eb.js">
+    <link rel="modulepreload" crossorigin href="/assets/ShareDialog-BD5EtWSq.js">
+    <link rel="modulepreload" crossorigin href="/assets/file-check-2-CS0s24bo.js">
+    <link rel="modulepreload" crossorigin href="/assets/pen-BBh9dmwE.js">
+    <link rel="modulepreload" crossorigin href="/assets/link-2-FQodBev_.js">
+    <link rel="modulepreload" crossorigin href="/assets/book-marked-DzQvD0mK.js">
+    <link rel="modulepreload" crossorigin href="/assets/quiz-BpCKKmqj.js">
+    <link rel="modulepreload" crossorigin href="/assets/elearning-LPP9f0JD.js">
+    <link rel="modulepreload" crossorigin href="/assets/three.module-BWASIFlK.js">
+    <link rel="modulepreload" crossorigin href="/assets/OrbitControls-CngYigDL.js">
+    <link rel="modulepreload" crossorigin href="/assets/OBJLoader-BAXidNnt.js">
+    <link rel="modulepreload" crossorigin href="/assets/RoomEnvironment-CaVazjAm.js">
+    <link rel="modulepreload" crossorigin href="/assets/slides-pBbia8B7.js">
+    <link rel="modulepreload" crossorigin href="/assets/SlideRenderer-D0tuPgxu.js">
+    <link rel="modulepreload" crossorigin href="/assets/download-Cyb6T0e9.js">
+    <link rel="modulepreload" crossorigin href="/assets/StreakKit-BpuzCLkh.js">
+    <link rel="modulepreload" crossorigin href="/assets/eduWallet-BIfpr6ZL.js">
+    <link rel="modulepreload" crossorigin href="/assets/eduCardThemes-DPZ413my.js">
+    <link rel="modulepreload" crossorigin href="/assets/lock-open-Cj_dqpGk.js">
+    <link rel="modulepreload" crossorigin href="/assets/assignmentPdf-BSbh-fnP.js">
+    <link rel="modulepreload" crossorigin href="/assets/sanitizeHtml-BVbWC0I4.js">
+    <link rel="modulepreload" crossorigin href="/assets/type-YEbtkO70.js">
+    <link rel="modulepreload" crossorigin href="/assets/message-square-C3IxYHUo.js">
+    <link rel="modulepreload" crossorigin href="/assets/award-BN0_dF7j.js">
+    <link rel="modulepreload" crossorigin href="/assets/jsQR-CXusBeyv.js">
+    <link rel="modulepreload" crossorigin href="/assets/flame-DN19QvLH.js">
+    <link rel="modulepreload" crossorigin href="/assets/calculator-DCbhKx_x.js">
+    <link rel="modulepreload" crossorigin href="/assets/useSubjectNames-wwrOQcpP.js">
+    <link rel="modulepreload" crossorigin href="/assets/QuizRichText-CG7KXqsI.js">
+    <link rel="modulepreload" crossorigin href="/assets/ListPager-Do9tnd_Y.js">
+    <link rel="modulepreload" crossorigin href="/assets/DateTime24-C4Wlfzzp.js">
+    <link rel="modulepreload" crossorigin href="/assets/copy-B-yYOXhW.js">
+    <link rel="modulepreload" crossorigin href="/assets/file-down-BXZqfh29.js">
+    <link rel="modulepreload" crossorigin href="/assets/share-2-D8E-7mzz.js">
+    <link rel="modulepreload" crossorigin href="/assets/arrow-up-Dj7YtJir.js">
+    <link rel="modulepreload" crossorigin href="/assets/QuizModule-DZWNnvJb.js">
+    <link rel="modulepreload" crossorigin href="/assets/scan-search-BKNOsEte.js">
+    <link rel="modulepreload" crossorigin href="/assets/paperclip-CKlUT6ip.js">
+    <link rel="modulepreload" crossorigin href="/assets/EduResources-Ca_mJLm7.js">
+    <link rel="modulepreload" crossorigin href="/assets/lightbulb-B2Cq18xS.js">
+    <link rel="modulepreload" crossorigin href="/assets/box-emQbsGRD.js">
+    <link rel="modulepreload" crossorigin href="/assets/cloud-off-C-LNaYB0.js">
+    <link rel="modulepreload" crossorigin href="/assets/keyboard-CD2u-kEj.js">
+    <link rel="modulepreload" crossorigin href="/assets/star-BIO6UaLT.js">
+    <link rel="modulepreload" crossorigin href="/assets/folder-input-BdNBKgMU.js">
+    <link rel="modulepreload" crossorigin href="/assets/EduModule-C94Zc9jT.js">
+    <link rel="stylesheet" crossorigin href="/assets/applyTheme-CWOvMXac.css">
+    <link rel="stylesheet" crossorigin href="/assets/personalize-BXbgwVTV.css">
+    <link rel="stylesheet" crossorigin href="/assets/presence-C9sfdF_I.css">
+    <link rel="stylesheet" crossorigin href="/assets/EduModule-C42RsWKA.css">
+  </head>
+  <body>
+    <div id="root">
+      <div style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:system-ui,sans-serif;color:#475569;background:#f8fafc">
+        <div style="width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#10b981;border-radius:50%;animation:sp 1s linear infinite"></div>
+        <div>Đang tải Hệ thống Giáo dục Edu...</div>
+        <style>@keyframes sp{to{transform:rotate(360deg)}}</style>
+      </div>
+    </div>
+  </body>
+</html>
