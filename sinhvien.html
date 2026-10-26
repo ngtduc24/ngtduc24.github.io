@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:manipulation;overscroll-behavior:none}</style>
+    <script>
+      (function(){
+        try {
+          var c = JSON.parse(localStorage.getItem('brandThemeCache') || 'null');
+          if (c && c.brand) {
+            var s = document.documentElement.style;
+            s.setProperty('--color-brand', c.brand);
+            if (c.hover) s.setProperty('--color-brand-hover', c.hover);
+            if (c.light) s.setProperty('--color-brand-light', c.light);
+          }
+        } catch(e){}
+      })();
+    </script>
+    <title>Cổng sinh viên | EduGo</title>
+    <meta name="description" content="Nộp bài tập, điểm danh và xem điểm dành cho sinh viên trên EduGo." />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="/icon-192.png" />
+    <script type="module" crossorigin src="/assets/sinhvien-uiv0ua7O.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/applyTheme-ROmQGRm_.js">
+    <link rel="modulepreload" crossorigin href="/assets/mediaItems-tOo6PhKK.js">
+    <link rel="modulepreload" crossorigin href="/assets/upload-D2ibPtim.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-D4DqwsYI.js">
+    <link rel="modulepreload" crossorigin href="/assets/sanitizeHtml-BVbWC0I4.js">
+    <link rel="modulepreload" crossorigin href="/assets/StreakKit-NndhoPSI.js">
+    <link rel="modulepreload" crossorigin href="/assets/assignmentPdf-DrAoGDnn.js">
+    <link rel="modulepreload" crossorigin href="/assets/eduCardThemes-1-dVoxqf.js">
+    <link rel="modulepreload" crossorigin href="/assets/eduWallet-suxjRnZG.js">
+    <link rel="modulepreload" crossorigin href="/assets/PortalCardV2-C_sMy2E6.js">
+    <link rel="modulepreload" crossorigin href="/assets/award-C83Z-W6Q.js">
+    <link rel="modulepreload" crossorigin href="/assets/ErrorBoundary-CSDfOabB.js">
+    <link rel="modulepreload" crossorigin href="/assets/file-down-Bl75TGsT.js">
+    <link rel="modulepreload" crossorigin href="/assets/file-check-n_jgiVLN.js">
+    <link rel="modulepreload" crossorigin href="/assets/paperclip-D44nLKA2.js">
+    <link rel="modulepreload" crossorigin href="/assets/download-zTB98oVz.js">
+    <link rel="modulepreload" crossorigin href="/assets/lightbulb-47xLzhpS.js">
+    <link rel="modulepreload" crossorigin href="/assets/link-2-lvH7gqxK.js">
+    <link rel="modulepreload" crossorigin href="/assets/inbox-wkoPkcf4.js">
+    <link rel="modulepreload" crossorigin href="/assets/EduPublicAssignment-C4GPeynL.js">
+    <link rel="stylesheet" crossorigin href="/assets/applyTheme-D7YXhrSc.css">
+  </head>
+  <body>
+    <div id="root">
+      <div style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:system-ui,sans-serif;color:#475569;background:#f8fafc">
+        <div style="width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#10b981;border-radius:50%;animation:sp 1s linear infinite"></div>
+        <div id="sv-loading-text">Đang mở...</div>
+        <script>
+          (function () {
+            var p = location.pathname, q = new URLSearchParams(location.search), t = 'Cổng sinh viên | EduGo', l = 'Đang mở cổng sinh viên...';
+            if (/^\/dd\//.test(p) || q.has('dd')) { t = 'Điểm danh | EduGo'; l = 'Đang mở trang điểm danh...'; }
+            else if (/^\/nb\//.test(p) || q.has('edu') || q.has('nb')) { t = 'Nộp bài tập sinh viên | EduGo'; l = 'Đang mở trang nộp bài...'; }
+            document.title = t; document.getElementById('sv-loading-text').textContent = l;
+          })();
+        </script>
+        <style>@keyframes sp{to{transform:rotate(360deg)}}</style>
+      </div>
+    </div>
+  </body>
+</html>

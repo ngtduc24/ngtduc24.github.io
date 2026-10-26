@@ -1,0 +1,23 @@
+{
+  "levels": [
+    {"n":1,"code":"A1","vi":"Hiểu và dùng câu rất đơn giản, giới thiệu bản thân"},
+    {"n":2,"code":"A2","vi":"Hiểu câu thường gặp về gia đình, mua sắm, công việc"},
+    {"n":3,"code":"B1","vi":"Hiểu ý chính bài viết quen thuộc, kể lại sự việc, nêu lý do"},
+    {"n":4,"code":"B2","vi":"Đọc được báo thường, tranh luận, viết bài rõ ràng"},
+    {"n":5,"code":"C1","vi":"Hiểu văn bản dài và hàm ý, diễn đạt trôi chảy trong học thuật, công việc"},
+    {"n":6,"code":"C2","vi":"Hiểu gần như mọi thứ, diễn đạt tinh tế"}
+  ],
+  "topics": [
+    {"id":"world","vi":"Thế giới"},{"id":"tech","vi":"Công nghệ"},{"id":"design","vi":"Thiết kế"},
+    {"id":"science","vi":"Khoa học"},{"id":"culture","vi":"Văn hoá"},{"id":"learning","vi":"Bài dễ cho người học"}
+  ],
+  "week": [
+    {"skill":"read","kind":"vocab","title":"Từ vựng theo chủ đề","minutes":10},
+    {"skill":"read","kind":"comprehension","title":"Đọc hiểu: trả lời câu hỏi","minutes":15},
+    {"skill":"read","kind":"translate","title":"Dịch bài báo","minutes":30},
+    {"skill":"read","kind":"review","title":"Ôn lại từ đã lưu","minutes":10},
+    {"skill":"listen","kind":"listen","title":"Nghe bản tin, điền từ","minutes":15},
+    {"skill":"write","kind":"write","title":"Viết đoạn ngắn theo đề","minutes":20},
+    {"skill":"speak","kind":"speak","title":"Nói theo mẫu","minutes":10}
+  ]
+}
