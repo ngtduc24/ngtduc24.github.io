@@ -1,0 +1,3082 @@
+{
+  "vietnam": {
+    "vi": "Việt Nam",
+    "pos": "n",
+    "ipa": "/ˌvjɛtˈnɑːm/"
+  },
+  "vietnamese": {
+    "vi": "người / tiếng Việt Nam",
+    "pos": "n, adj",
+    "ipa": "/ˌvjɛtnəˈmiːz/"
+  },
+  "hanoi": {
+    "vi": "Hà Nội",
+    "pos": "n",
+    "ipa": "/hæˈnɔɪ/"
+  },
+  "saigon": {
+    "vi": "Sài Gòn",
+    "pos": "n",
+    "ipa": "/saɪˈɡɒn/"
+  },
+  "china": {
+    "vi": "Trung Quốc",
+    "pos": "n",
+    "ipa": "/ˈtʃaɪ.nə/"
+  },
+  "chinese": {
+    "vi": "người / tiếng Trung Quốc",
+    "pos": "n, adj",
+    "ipa": "/tʃaɪˈniːz/"
+  },
+  "japan": {
+    "vi": "Nhật Bản",
+    "pos": "n",
+    "ipa": "/dʒəˈpæn/"
+  },
+  "japanese": {
+    "vi": "người / tiếng Nhật",
+    "pos": "n, adj",
+    "ipa": "/ˌdʒæp.əˈniːz/"
+  },
+  "korea": {
+    "vi": "Hàn Quốc / Triều Tiên",
+    "pos": "n",
+    "ipa": "/kəˈriː.ə/"
+  },
+  "korean": {
+    "vi": "người / tiếng Hàn",
+    "pos": "n, adj",
+    "ipa": "/kəˈriː.ən/"
+  },
+  "thailand": {
+    "vi": "Thái Lan",
+    "pos": "n",
+    "ipa": "/ˈtaɪ.lænd/"
+  },
+  "thai": {
+    "vi": "người / tiếng Thái",
+    "pos": "n, adj",
+    "ipa": "/taɪ/"
+  },
+  "asia": {
+    "vi": "châu Á",
+    "pos": "n",
+    "ipa": "/ˈeɪ.ʒə/"
+  },
+  "asian": {
+    "vi": "thuộc châu Á",
+    "pos": "adj, n",
+    "ipa": "/ˈeɪ.ʒən/"
+  },
+  "america": {
+    "vi": "nước Mỹ, châu Mỹ",
+    "pos": "n",
+    "ipa": "/əˈmer.ɪ.kə/"
+  },
+  "american": {
+    "vi": "người / thuộc nước Mỹ",
+    "pos": "n, adj",
+    "ipa": "/əˈmer.ɪ.kən/"
+  },
+  "england": {
+    "vi": "nước Anh",
+    "pos": "n",
+    "ipa": "/ˈɪŋ.ɡlənd/"
+  },
+  "english": {
+    "vi": "tiếng Anh, người Anh",
+    "pos": "n, adj",
+    "ipa": "/ˈɪŋ.ɡlɪʃ/"
+  },
+  "britain": {
+    "vi": "nước Anh (Vương quốc Anh)",
+    "pos": "n",
+    "ipa": "/ˈbrɪt.ən/"
+  },
+  "british": {
+    "vi": "thuộc Vương quốc Anh",
+    "pos": "adj, n",
+    "ipa": "/ˈbrɪt.ɪʃ/"
+  },
+  "europe": {
+    "vi": "châu Âu",
+    "pos": "n",
+    "ipa": "/ˈjʊə.rəp/"
+  },
+  "european": {
+    "vi": "thuộc châu Âu",
+    "pos": "adj, n",
+    "ipa": "/ˌjʊə.rəˈpiː.ən/"
+  },
+  "france": {
+    "vi": "nước Pháp",
+    "pos": "n",
+    "ipa": "/frɑːns/"
+  },
+  "french": {
+    "vi": "người / tiếng Pháp",
+    "pos": "n, adj",
+    "ipa": "/frentʃ/"
+  },
+  "germany": {
+    "vi": "nước Đức",
+    "pos": "n",
+    "ipa": "/ˈdʒɜː.mə.ni/"
+  },
+  "german": {
+    "vi": "người / tiếng Đức",
+    "pos": "n, adj",
+    "ipa": "/ˈdʒɜː.mən/"
+  },
+  "russia": {
+    "vi": "nước Nga",
+    "pos": "n",
+    "ipa": "/ˈrʌʃ.ə/"
+  },
+  "russian": {
+    "vi": "người / tiếng Nga",
+    "pos": "n, adj",
+    "ipa": "/ˈrʌʃ.ən/"
+  },
+  "australia": {
+    "vi": "nước Úc",
+    "pos": "n",
+    "ipa": "/ɒsˈtreɪ.li.ə/"
+  },
+  "canada": {
+    "vi": "nước Canada",
+    "pos": "n",
+    "ipa": "/ˈkæn.ə.də/"
+  },
+  "india": {
+    "vi": "nước Ấn Độ",
+    "pos": "n",
+    "ipa": "/ˈɪn.di.ə/"
+  },
+  "singapore": {
+    "vi": "Singapore",
+    "pos": "n",
+    "ipa": "/ˌsɪŋ.əˈpɔːr/"
+  },
+  "london": {
+    "vi": "thành phố London",
+    "pos": "n",
+    "ipa": "/ˈlʌn.dən/"
+  },
+  "paris": {
+    "vi": "thủ đô Paris",
+    "pos": "n",
+    "ipa": "/ˈpær.ɪs/"
+  },
+  "tokyo": {
+    "vi": "thủ đô Tokyo",
+    "pos": "n",
+    "ipa": "/ˈtəʊ.ki.əʊ/"
+  },
+  "washington": {
+    "vi": "thủ đô Washington",
+    "pos": "n",
+    "ipa": "/ˈwɒʃ.ɪŋ.tən/"
+  },
+  "new york": {
+    "vi": "thành phố New York",
+    "pos": "n",
+    "ipa": "/njuː jɔːk/"
+  },
+  "arrest": {
+    "vi": "bắt giữ",
+    "pos": "v, n",
+    "ipa": "/əˈrest/"
+  },
+  "arrested": {
+    "vi": "đã bị bắt giữ",
+    "pos": "v-ed",
+    "ipa": "/əˈrestɪd/"
+  },
+  "arresting": {
+    "vi": "đang bắt giữ",
+    "pos": "v-ing",
+    "ipa": "/əˈrestɪŋ/"
+  },
+  "confess": {
+    "vi": "thú nhận, nhận tội",
+    "pos": "v",
+    "ipa": "/kənˈfes/"
+  },
+  "confessed": {
+    "vi": "đã thú nhận",
+    "pos": "v-ed",
+    "ipa": "/kənˈfest/"
+  },
+  "confessing": {
+    "vi": "đang thú nhận",
+    "pos": "v-ing",
+    "ipa": "/kənˈfesɪŋ/"
+  },
+  "confession": {
+    "vi": "lời thú tội",
+    "pos": "n",
+    "ipa": "/kənˈfeʃ.ən/"
+  },
+  "allege": {
+    "vi": "cho là, cáo buộc",
+    "pos": "v",
+    "ipa": "/əˈledʒ/"
+  },
+  "alleged": {
+    "vi": "bị cáo buộc, được cho là",
+    "pos": "adj, v-ed",
+    "ipa": "/əˈledʒd/"
+  },
+  "allegedly": {
+    "vi": "được cho là, theo cáo buộc",
+    "pos": "adv",
+    "ipa": "/əˈledʒ.ɪd.li/"
+  },
+  "steal": {
+    "vi": "trộm cắp, ăn trộm",
+    "pos": "v",
+    "ipa": "/stiːl/"
+  },
+  "stealing": {
+    "vi": "hành vi trộm cắp",
+    "pos": "v-ing",
+    "ipa": "/ˈstiː.lɪŋ/"
+  },
+  "stole": {
+    "vi": "đã ăn trộm",
+    "pos": "v-past",
+    "ipa": "/stəʊl/"
+  },
+  "stolen": {
+    "vi": "bị đánh cắp",
+    "pos": "v-pp",
+    "ipa": "/ˈstəʊ.lən/"
+  },
+  "thief": {
+    "vi": "kẻ trộm",
+    "pos": "n",
+    "ipa": "/θiːf/"
+  },
+  "thieves": {
+    "vi": "những kẻ trộm",
+    "pos": "n-pl",
+    "ipa": "/θiːvz/"
+  },
+  "theft": {
+    "vi": "vụ trộm cắp",
+    "pos": "n",
+    "ipa": "/θeft/"
+  },
+  "trafficking": {
+    "vi": "buôn lậu, mua bán trái phép",
+    "pos": "n",
+    "ipa": "/ˈtræf.ɪ.kɪŋ/"
+  },
+  "traffic": {
+    "vi": "giao thông; buôn bán phi pháp",
+    "pos": "n, v",
+    "ipa": "/ˈtræf.ɪk/"
+  },
+  "ring": {
+    "vi": "đường dây (tội phạm); nhẫn; chuông",
+    "pos": "n",
+    "ipa": "/rɪŋ/"
+  },
+  "gang": {
+    "vi": "băng nhóm, băng đảng",
+    "pos": "n",
+    "ipa": "/ɡæŋ/"
+  },
+  "police": {
+    "vi": "cảnh sát, công an",
+    "pos": "n",
+    "ipa": "/pəˈliːs/"
+  },
+  "officer": {
+    "vi": "sĩ quan, viên chức, cán bộ",
+    "pos": "n",
+    "ipa": "/ˈɒf.ɪ.sər/"
+  },
+  "investigate": {
+    "vi": "điều tra",
+    "pos": "v",
+    "ipa": "/ɪnˈves.tɪ.ɡeɪt/"
+  },
+  "investigated": {
+    "vi": "đã điều tra",
+    "pos": "v-ed",
+    "ipa": "/ɪnˈves.tɪ.ɡeɪ.tɪd/"
+  },
+  "investigating": {
+    "vi": "đang điều tra",
+    "pos": "v-ing",
+    "ipa": "/ɪnˈves.tɪ.ɡeɪ.tɪŋ/"
+  },
+  "investigation": {
+    "vi": "cuộc điều tra",
+    "pos": "n",
+    "ipa": "/ɪnˌves.tɪˈɡeɪ.ʃən/"
+  },
+  "investigator": {
+    "vi": "điều tra viên",
+    "pos": "n",
+    "ipa": "/ɪnˈves.tɪ.ɡeɪ.tər/"
+  },
+  "suspect": {
+    "vi": "nghi phạm; nghi ngờ",
+    "pos": "n, v",
+    "ipa": "/ˈsʌs.pekt/"
+  },
+  "suspected": {
+    "vi": "bị nghi ngờ",
+    "pos": "v-ed, adj",
+    "ipa": "/səˈspek.tɪd/"
+  },
+  "suspects": {
+    "vi": "các nghi phạm",
+    "pos": "n-pl",
+    "ipa": "/ˈsʌs.pekts/"
+  },
+  "seize": {
+    "vi": "tịch thu, thu giữ, tóm lấy",
+    "pos": "v",
+    "ipa": "/siːz/"
+  },
+  "seized": {
+    "vi": "đã tịch thu, thu giữ",
+    "pos": "v-ed",
+    "ipa": "/siːzd/"
+  },
+  "seizure": {
+    "vi": "sự tịch thu, sự tịch biên",
+    "pos": "n",
+    "ipa": "/ˈsiː.ʒər/"
+  },
+  "cage": {
+    "vi": "lồng, chuồng",
+    "pos": "n",
+    "ipa": "/keɪdʒ/"
+  },
+  "cages": {
+    "vi": "những chiếc lồng, chuồng",
+    "pos": "n-pl",
+    "ipa": "/keɪ.dʒɪz/"
+  },
+  "trap": {
+    "vi": "bẫy, đặt bẫy",
+    "pos": "n, v",
+    "ipa": "/træp/"
+  },
+  "traps": {
+    "vi": "những cái bẫy",
+    "pos": "n-pl",
+    "ipa": "/træps/"
+  },
+  "fur": {
+    "vi": "lông thú",
+    "pos": "n",
+    "ipa": "/fɜːr/"
+  },
+  "removal": {
+    "vi": "việc loại bỏ, dỡ bỏ",
+    "pos": "n",
+    "ipa": "/rɪˈmuː.vəl/"
+  },
+  "slaughter": {
+    "vi": "giết mổ, tàn sát",
+    "pos": "v, n",
+    "ipa": "/ˈslɔː.tər/"
+  },
+  "slaughtered": {
+    "vi": "đã bị giết mổ",
+    "pos": "v-ed",
+    "ipa": "/ˈslɔː.təd/"
+  },
+  "slaughtering": {
+    "vi": "việc giết mổ",
+    "pos": "v-ing",
+    "ipa": "/ˈslɔː.tər.ɪŋ/"
+  },
+  "meat": {
+    "vi": "thịt",
+    "pos": "n",
+    "ipa": "/miːt/"
+  },
+  "animal": {
+    "vi": "động vật",
+    "pos": "n",
+    "ipa": "/ˈæn.ɪ.məl/"
+  },
+  "animals": {
+    "vi": "các loài động vật",
+    "pos": "n-pl",
+    "ipa": "/ˈæn.ɪ.məlz/"
+  },
+  "pet": {
+    "vi": "thú cưng",
+    "pos": "n",
+    "ipa": "/pet/"
+  },
+  "pets": {
+    "vi": "các thú cưng",
+    "pos": "n-pl",
+    "ipa": "/pets/"
+  },
+  "cat": {
+    "vi": "con mèo",
+    "pos": "n",
+    "ipa": "/kæt/"
+  },
+  "cats": {
+    "vi": "những con mèo",
+    "pos": "n-pl",
+    "ipa": "/kæts/"
+  },
+  "dog": {
+    "vi": "con chó",
+    "pos": "n",
+    "ipa": "/dɒɡ/"
+  },
+  "dogs": {
+    "vi": "những con chó",
+    "pos": "n-pl",
+    "ipa": "/dɒɡz/"
+  },
+  "protect": {
+    "vi": "bảo vệ",
+    "pos": "v",
+    "ipa": "/prəˈtekt/"
+  },
+  "protection": {
+    "vi": "sự bảo vệ",
+    "pos": "n",
+    "ipa": "/prəˈtek.ʃən/"
+  },
+  "crime": {
+    "vi": "tội phạm, tội ác",
+    "pos": "n",
+    "ipa": "/kraɪm/"
+  },
+  "criminal": {
+    "vi": "tội phạm, kẻ phạm tội",
+    "pos": "n, adj",
+    "ipa": "/ˈkrɪm.ɪ.nəl/"
+  },
+  "court": {
+    "vi": "tòa án",
+    "pos": "n",
+    "ipa": "/kɔːt/"
+  },
+  "judge": {
+    "vi": "thẩm phán; đánh giá",
+    "pos": "n, v",
+    "ipa": "/dʒʌdʒ/"
+  },
+  "law": {
+    "vi": "luật pháp",
+    "pos": "n",
+    "ipa": "/lɔː/"
+  },
+  "legal": {
+    "vi": "hợp pháp",
+    "pos": "adj",
+    "ipa": "/ˈliː.ɡəl/"
+  },
+  "illegal": {
+    "vi": "bất hợp pháp",
+    "pos": "adj",
+    "ipa": "/ɪˈliː.ɡəl/"
+  },
+  "prison": {
+    "vi": "nhà tù",
+    "pos": "n",
+    "ipa": "/ˈprɪz.ən/"
+  },
+  "jail": {
+    "vi": "nhà giam",
+    "pos": "n",
+    "ipa": "/dʒeɪl/"
+  },
+  "fine": {
+    "vi": "tiền phạt; tốt",
+    "pos": "n, adj",
+    "ipa": "/faɪn/"
+  },
+  "charge": {
+    "vi": "buộc tội; tính phí",
+    "pos": "v, n",
+    "ipa": "/tʃɑːdʒ/"
+  },
+  "charged": {
+    "vi": "bị cáo buộc / bị tính phí",
+    "pos": "v-ed",
+    "ipa": "/tʃɑːdʒd/"
+  },
+  "victim": {
+    "vi": "nạn nhân",
+    "pos": "n",
+    "ipa": "/ˈvɪk.tɪm/"
+  },
+  "witness": {
+    "vi": "nhân chứng; chứng kiến",
+    "pos": "n, v",
+    "ipa": "/ˈwɪt.nəs/"
+  },
+  "government": {
+    "vi": "chính phủ",
+    "pos": "n",
+    "ipa": "/ˈɡʌv.ən.mənt/"
+  },
+  "president": {
+    "vi": "chủ tịch, tổng thống",
+    "pos": "n",
+    "ipa": "/ˈprez.ɪ.dənt/"
+  },
+  "minister": {
+    "vi": "bộ trưởng",
+    "pos": "n",
+    "ipa": "/ˈmɪn.ɪ.stər/"
+  },
+  "official": {
+    "vi": "quan chức; chính thức",
+    "pos": "n, adj",
+    "ipa": "/əˈfɪʃ.əl/"
+  },
+  "officials": {
+    "vi": "các quan chức",
+    "pos": "n-pl",
+    "ipa": "/əˈfɪʃ.əlz/"
+  },
+  "leader": {
+    "vi": "nhà lãnh đạo",
+    "pos": "n",
+    "ipa": "/ˈliː.dər/"
+  },
+  "authority": {
+    "vi": "chính quyền, cơ quan chức năng",
+    "pos": "n",
+    "ipa": "/ɔːˈθɒr.ə.ti/"
+  },
+  "authorities": {
+    "vi": "nhà chức trách",
+    "pos": "n-pl",
+    "ipa": "/ɔːˈθɒr.ə.tiz/"
+  },
+  "policy": {
+    "vi": "chính sách",
+    "pos": "n",
+    "ipa": "/ˈpɒl.ə.si/"
+  },
+  "economy": {
+    "vi": "nền kinh tế",
+    "pos": "n",
+    "ipa": "/iˈkɒn.ə.mi/"
+  },
+  "economic": {
+    "vi": "thuộc kinh tế",
+    "pos": "adj",
+    "ipa": "/ˌiː.kəˈnɒm.ɪk/"
+  },
+  "market": {
+    "vi": "thị trường, chợ",
+    "pos": "n",
+    "ipa": "/ˈmɑː.kɪt/"
+  },
+  "company": {
+    "vi": "công ty",
+    "pos": "n",
+    "ipa": "/ˈkʌm.pə.ni/"
+  },
+  "business": {
+    "vi": "kinh doanh, doanh nghiệp",
+    "pos": "n",
+    "ipa": "/ˈbɪz.nɪs/"
+  },
+  "industry": {
+    "vi": "ngành công nghiệp",
+    "pos": "n",
+    "ipa": "/ˈɪn.də.stri/"
+  },
+  "price": {
+    "vi": "giá cả",
+    "pos": "n",
+    "ipa": "/praɪs/"
+  },
+  "cost": {
+    "vi": "chi phí, trị giá",
+    "pos": "n, v",
+    "ipa": "/kɒst/"
+  },
+  "money": {
+    "vi": "tiền bạc",
+    "pos": "n",
+    "ipa": "/ˈmʌn.i/"
+  },
+  "million": {
+    "vi": "triệu",
+    "pos": "num",
+    "ipa": "/ˈmɪl.jən/"
+  },
+  "billion": {
+    "vi": "tỷ",
+    "pos": "num",
+    "ipa": "/ˈbɪl.jən/"
+  },
+  "thousand": {
+    "vi": "nghìn, ngàn",
+    "pos": "num",
+    "ipa": "/ˈθaʊ.zənd/"
+  },
+  "hundred": {
+    "vi": "trăm",
+    "pos": "num",
+    "ipa": "/ˈhʌn.drəd/"
+  },
+  "people": {
+    "vi": "con người, người dân",
+    "pos": "n",
+    "ipa": "/ˈpiː.pəl/"
+  },
+  "public": {
+    "vi": "công chúng, công cộng",
+    "pos": "n, adj",
+    "ipa": "/ˈpʌb.lɪk/"
+  },
+  "country": {
+    "vi": "đất nước, quốc gia",
+    "pos": "n",
+    "ipa": "/ˈkʌn.tri/"
+  },
+  "nation": {
+    "vi": "quốc gia, dân tộc",
+    "pos": "n",
+    "ipa": "/ˈneɪ.ʃən/"
+  },
+  "national": {
+    "vi": "thuộc quốc gia",
+    "pos": "adj",
+    "ipa": "/ˈnæʃ.ən.əl/"
+  },
+  "international": {
+    "vi": "quốc tế",
+    "pos": "adj",
+    "ipa": "/ˌɪn.təˈnæʃ.ən.əl/"
+  },
+  "global": {
+    "vi": "toàn cầu",
+    "pos": "adj",
+    "ipa": "/ˈɡləʊ.bəl/"
+  },
+  "world": {
+    "vi": "thế giới",
+    "pos": "n",
+    "ipa": "/wɜːld/"
+  },
+  "society": {
+    "vi": "xã hội",
+    "pos": "n",
+    "ipa": "/səˈsaɪ.ə.ti/"
+  },
+  "social": {
+    "vi": "thuộc xã hội",
+    "pos": "adj",
+    "ipa": "/ˈsəʊ.ʃəl/"
+  },
+  "community": {
+    "vi": "cộng đồng",
+    "pos": "n",
+    "ipa": "/kəˈmjuː.nə.ti/"
+  },
+  "technology": {
+    "vi": "công nghệ",
+    "pos": "n",
+    "ipa": "/tekˈnɒl.ə.dʒi/"
+  },
+  "tech": {
+    "vi": "công nghệ (viết tắt)",
+    "pos": "n",
+    "ipa": "/tek/"
+  },
+  "science": {
+    "vi": "khoa học",
+    "pos": "n",
+    "ipa": "/ˈsaɪ.əns/"
+  },
+  "scientific": {
+    "vi": "thuộc khoa học",
+    "pos": "adj",
+    "ipa": "/ˌsaɪənˈtɪf.ɪk/"
+  },
+  "scientist": {
+    "vi": "nhà khoa học",
+    "pos": "n",
+    "ipa": "/ˈsaɪən.tɪst/"
+  },
+  "research": {
+    "vi": "nghiên cứu",
+    "pos": "n, v",
+    "ipa": "/rɪˈsɜːtʃ/"
+  },
+  "researcher": {
+    "vi": "nhà nghiên cứu",
+    "pos": "n",
+    "ipa": "/rɪˈsɜː.tʃər/"
+  },
+  "study": {
+    "vi": "nghiên cứu, học tập",
+    "pos": "n, v",
+    "ipa": "/ˈstʌd.i/"
+  },
+  "education": {
+    "vi": "giáo dục",
+    "pos": "n",
+    "ipa": "/ˌedʒ.uˈkeɪ.ʃən/"
+  },
+  "student": {
+    "vi": "học sinh, sinh viên",
+    "pos": "n",
+    "ipa": "/ˈstjuː.dənt/"
+  },
+  "teacher": {
+    "vi": "giáo viên, giảng viên",
+    "pos": "n",
+    "ipa": "/ˈtiː.tʃər/"
+  },
+  "university": {
+    "vi": "trường đại học",
+    "pos": "n",
+    "ipa": "/ˌjuː.nɪˈvɜː.sə.ti/"
+  },
+  "school": {
+    "vi": "trường học",
+    "pos": "n",
+    "ipa": "/skuːl/"
+  },
+  "course": {
+    "vi": "khóa học",
+    "pos": "n",
+    "ipa": "/kɔːs/"
+  },
+  "lesson": {
+    "vi": "bài học",
+    "pos": "n",
+    "ipa": "/ˈles.ən/"
+  },
+  "learn": {
+    "vi": "học tập",
+    "pos": "v",
+    "ipa": "/lɜːn/"
+  },
+  "system": {
+    "vi": "hệ thống",
+    "pos": "n",
+    "ipa": "/ˈsɪs.təm/"
+  },
+  "network": {
+    "vi": "mạng lưới",
+    "pos": "n",
+    "ipa": "/ˈnet.wɜːk/"
+  },
+  "internet": {
+    "vi": "mạng internet",
+    "pos": "n",
+    "ipa": "/ˈɪn.tə.net/"
+  },
+  "online": {
+    "vi": "trực tuyến",
+    "pos": "adj, adv",
+    "ipa": "/ˌɒnˈlaɪn/"
+  },
+  "data": {
+    "vi": "dữ liệu",
+    "pos": "n",
+    "ipa": "/ˈdeɪ.tə/"
+  },
+  "information": {
+    "vi": "thông tin",
+    "pos": "n",
+    "ipa": "/ˌɪn.fəˈmeɪ.ʃən/"
+  },
+  "digital": {
+    "vi": "kỹ thuật số",
+    "pos": "adj",
+    "ipa": "/ˈdɪdʒ.ɪ.təl/"
+  },
+  "device": {
+    "vi": "thiết bị",
+    "pos": "n",
+    "ipa": "/dɪˈvaɪs/"
+  },
+  "software": {
+    "vi": "phần mềm",
+    "pos": "n",
+    "ipa": "/ˈsɒft.weər/"
+  },
+  "security": {
+    "vi": "an ninh, bảo mật",
+    "pos": "n",
+    "ipa": "/sɪˈkjʊə.rə.ti/"
+  },
+  "health": {
+    "vi": "sức khỏe, y tế",
+    "pos": "n",
+    "ipa": "/helθ/"
+  },
+  "hospital": {
+    "vi": "bệnh viện",
+    "pos": "n",
+    "ipa": "/ˈhɒs.pɪ.təl/"
+  },
+  "doctor": {
+    "vi": "bác sĩ",
+    "pos": "n",
+    "ipa": "/ˈdɒk.tər/"
+  },
+  "disease": {
+    "vi": "bệnh tật",
+    "pos": "n",
+    "ipa": "/dɪˈziːz/"
+  },
+  "climate": {
+    "vi": "khí hậu",
+    "pos": "n",
+    "ipa": "/ˈklaɪ.mət/"
+  },
+  "environment": {
+    "vi": "môi trường",
+    "pos": "n",
+    "ipa": "/ɪnˈvaɪ.rən.mənt/"
+  },
+  "report": {
+    "vi": "báo cáo, đưa tin",
+    "pos": "v, n",
+    "ipa": "/rɪˈpɔːt/"
+  },
+  "reported": {
+    "vi": "đã đưa tin, đã báo cáo",
+    "pos": "v-ed",
+    "ipa": "/rɪˈpɔː.tɪd/"
+  },
+  "reportedly": {
+    "vi": "theo đưa tin, được cho là",
+    "pos": "adv",
+    "ipa": "/rɪˈpɔː.tɪd.li/"
+  },
+  "reporting": {
+    "vi": "việc đưa tin",
+    "pos": "v-ing",
+    "ipa": "/rɪˈpɔː.tɪŋ/"
+  },
+  "roam": {
+    "vi": "đi lang thang, lượn lờ",
+    "pos": "v",
+    "ipa": "/rəʊm/"
+  },
+  "roamed": {
+    "vi": "đã đi lang thang",
+    "pos": "v-ed",
+    "ipa": "/rəʊmd/"
+  },
+  "motorbike": {
+    "vi": "xe máy",
+    "pos": "n",
+    "ipa": "/ˈməʊ.tə.baɪk/"
+  },
+  "motorbikes": {
+    "vi": "những chiếc xe máy",
+    "pos": "n-pl",
+    "ipa": "/ˈməʊ.tə.baɪks/"
+  },
+  "night": {
+    "vi": "ban đêm",
+    "pos": "n",
+    "ipa": "/naɪt/"
+  },
+  "piece": {
+    "vi": "mảnh, miếng, mẩu",
+    "pos": "n",
+    "ipa": "/piːs/"
+  },
+  "pieces": {
+    "vi": "những mảnh, miếng",
+    "pos": "n-pl",
+    "ipa": "/ˈpiː.sɪz/"
+  },
+  "food": {
+    "vi": "thức ăn, thực phẩm",
+    "pos": "n",
+    "ipa": "/fuːd/"
+  },
+  "return": {
+    "vi": "trả lại, quay về",
+    "pos": "v, n",
+    "ipa": "/rɪˈtɜːn/"
+  },
+  "returned": {
+    "vi": "đã được trả lại / quay về",
+    "pos": "v-ed",
+    "ipa": "/rɪˈtɜːnd/"
+  },
+  "owner": {
+    "vi": "chủ nhân, người sở hữu",
+    "pos": "n",
+    "ipa": "/ˈəʊ.nər/"
+  },
+  "owners": {
+    "vi": "các chủ sở hữu",
+    "pos": "n-pl",
+    "ipa": "/ˈəʊ.nərz/"
+  },
+  "estimate": {
+    "vi": "ước tính",
+    "pos": "v, n",
+    "ipa": "/ˈes.tɪ.meɪt/"
+  },
+  "estimated": {
+    "vi": "ước tính là",
+    "pos": "v-ed, adj",
+    "ipa": "/ˈes.tɪ.meɪ.tɪd/"
+  },
+  "twelve": {
+    "vi": "mười hai (12)",
+    "pos": "num",
+    "ipa": "/twelv/"
+  },
+  "men": {
+    "vi": "những người đàn ông",
+    "pos": "n-pl",
+    "ipa": "/men/"
+  },
+  "man": {
+    "vi": "người đàn ông",
+    "pos": "n",
+    "ipa": "/mæn/"
+  },
+  "woman": {
+    "vi": "người phụ nữ",
+    "pos": "n",
+    "ipa": "/ˈwʊm.ən/"
+  },
+  "women": {
+    "vi": "những người phụ nữ",
+    "pos": "n-pl",
+    "ipa": "/ˈwɪm.ɪn/"
+  },
+  "child": {
+    "vi": "đứa trẻ",
+    "pos": "n",
+    "ipa": "/tʃaɪld/"
+  },
+  "children": {
+    "vi": "những đứa trẻ",
+    "pos": "n-pl",
+    "ipa": "/ˈtʃɪl.drən/"
+  },
+  "year": {
+    "vi": "năm",
+    "pos": "n",
+    "ipa": "/jɪər/"
+  },
+  "years": {
+    "vi": "nhiều năm",
+    "pos": "n-pl",
+    "ipa": "/jɪərz/"
+  },
+  "day": {
+    "vi": "ngày",
+    "pos": "n",
+    "ipa": "/deɪ/"
+  },
+  "days": {
+    "vi": "nhiều ngày",
+    "pos": "n-pl",
+    "ipa": "/deɪz/"
+  },
+  "week": {
+    "vi": "tuần",
+    "pos": "n",
+    "ipa": "/wiːk/"
+  },
+  "weeks": {
+    "vi": "nhiều tuần",
+    "pos": "n-pl",
+    "ipa": "/wiːks/"
+  },
+  "month": {
+    "vi": "tháng",
+    "pos": "n",
+    "ipa": "/mʌnθ/"
+  },
+  "months": {
+    "vi": "nhiều tháng",
+    "pos": "n-pl",
+    "ipa": "/mʌnθs/"
+  },
+  "time": {
+    "vi": "thời gian, lần",
+    "pos": "n",
+    "ipa": "/taɪm/"
+  },
+  "state": {
+    "vi": "tiểu bang; tình trạng; tuyên bố",
+    "pos": "n, v",
+    "ipa": "/steɪt/"
+  },
+  "place": {
+    "vi": "địa điểm, nơi chốn",
+    "pos": "n",
+    "ipa": "/pleɪs/"
+  },
+  "city": {
+    "vi": "thành phố",
+    "pos": "n",
+    "ipa": "/ˈsɪt.i/"
+  },
+  "group": {
+    "vi": "nhóm",
+    "pos": "n",
+    "ipa": "/ɡruːp/"
+  },
+  "member": {
+    "vi": "thành viên",
+    "pos": "n",
+    "ipa": "/ˈmem.bər/"
+  },
+  "members": {
+    "vi": "các thành viên",
+    "pos": "n-pl",
+    "ipa": "/ˈmem.bərz/"
+  },
+  "organization": {
+    "vi": "tổ chức",
+    "pos": "n",
+    "ipa": "/ˌɔː.ɡən.aɪˈzeɪ.ʃən/"
+  },
+  "local": {
+    "vi": "địa phương",
+    "pos": "adj, n",
+    "ipa": "/ˈləʊ.kəl/"
+  },
+  "news": {
+    "vi": "tin tức",
+    "pos": "n",
+    "ipa": "/njuːz/"
+  },
+  "media": {
+    "vi": "truyền thông",
+    "pos": "n",
+    "ipa": "/ˈmiː.di.ə/"
+  },
+  "article": {
+    "vi": "bài báo, điều khoản",
+    "pos": "n",
+    "ipa": "/ˈɑː.tɪ.kəl/"
+  },
+  "source": {
+    "vi": "nguồn",
+    "pos": "n",
+    "ipa": "/sɔːs/"
+  },
+  "title": {
+    "vi": "tiêu đề",
+    "pos": "n",
+    "ipa": "/ˈtaɪ.təl/"
+  },
+  "word": {
+    "vi": "từ ngữ",
+    "pos": "n",
+    "ipa": "/wɜːd/"
+  },
+  "words": {
+    "vi": "các từ ngữ",
+    "pos": "n-pl",
+    "ipa": "/wɜːdz/"
+  },
+  "sentence": {
+    "vi": "câu văn; bản án",
+    "pos": "n",
+    "ipa": "/ˈsen.təns/"
+  },
+  "paragraph": {
+    "vi": "đoạn văn",
+    "pos": "n",
+    "ipa": "/ˈpær.ə.ɡrɑːf/"
+  },
+  "translate": {
+    "vi": "dịch thuật",
+    "pos": "v",
+    "ipa": "/trænzˈleɪt/"
+  },
+  "translation": {
+    "vi": "bản dịch, việc dịch",
+    "pos": "n",
+    "ipa": "/trænzˈleɪ.ʃən/"
+  },
+  "vocabulary": {
+    "vi": "từ vựng",
+    "pos": "n",
+    "ipa": "/vəˈkæb.jə.lər.i/"
+  },
+  "grammar": {
+    "vi": "ngữ pháp",
+    "pos": "n",
+    "ipa": "/ˈɡræm.ər/"
+  },
+  "practice": {
+    "vi": "luyện tập, thực hành",
+    "pos": "n, v",
+    "ipa": "/ˈpræk.tɪs/"
+  },
+  "level": {
+    "vi": "trình độ, cấp độ",
+    "pos": "n",
+    "ipa": "/ˈlev.əl/"
+  },
+  "score": {
+    "vi": "điểm số",
+    "pos": "n, v",
+    "ipa": "/skɔːr/"
+  },
+  "feedback": {
+    "vi": "nhận xét, phản hồi",
+    "pos": "n",
+    "ipa": "/ˈfiːd.bæk/"
+  },
+  "submit": {
+    "vi": "nộp bài, đệ trình",
+    "pos": "v",
+    "ipa": "/səbˈmɪt/"
+  },
+  "save": {
+    "vi": "lưu lại, tiết kiệm",
+    "pos": "v",
+    "ipa": "/seɪv/"
+  },
+  "saved": {
+    "vi": "đã lưu",
+    "pos": "v-ed",
+    "ipa": "/seɪvd/"
+  },
+  "draft": {
+    "vi": "bản nháp",
+    "pos": "n",
+    "ipa": "/drɑːft/"
+  },
+  "listen": {
+    "vi": "nghe",
+    "pos": "v",
+    "ipa": "/ˈlɪs.ən/"
+  },
+  "speak": {
+    "vi": "nói, phát âm",
+    "pos": "v",
+    "ipa": "/spiːk/"
+  },
+  "read": {
+    "vi": "đọc",
+    "pos": "v",
+    "ipa": "/riːd/"
+  },
+  "write": {
+    "vi": "viết",
+    "pos": "v",
+    "ipa": "/raɪt/"
+  },
+  "the": {
+    "vi": "cái, người, sự (mạo từ xác định)",
+    "pos": "art",
+    "ipa": "/ðə/"
+  },
+  "a": {
+    "vi": "một (mạo từ)",
+    "pos": "art",
+    "ipa": "/ə/"
+  },
+  "an": {
+    "vi": "một (trước nguyên âm)",
+    "pos": "art",
+    "ipa": "/æn/"
+  },
+  "and": {
+    "vi": "và",
+    "pos": "conj",
+    "ipa": "/ænd/"
+  },
+  "or": {
+    "vi": "hoặc, hay là",
+    "pos": "conj",
+    "ipa": "/ɔːr/"
+  },
+  "but": {
+    "vi": "nhưng",
+    "pos": "conj",
+    "ipa": "/bʌt/"
+  },
+  "if": {
+    "vi": "nếu",
+    "pos": "conj",
+    "ipa": "/ɪf/"
+  },
+  "because": {
+    "vi": "bởi vì",
+    "pos": "conj",
+    "ipa": "/bɪˈkɒz/"
+  },
+  "so": {
+    "vi": "vì vậy, cho nên",
+    "pos": "conj, adv",
+    "ipa": "/səʊ/"
+  },
+  "that": {
+    "vi": "đó, kia, rằng, mà",
+    "pos": "pron, conj",
+    "ipa": "/ðæt/"
+  },
+  "this": {
+    "vi": "này, đây",
+    "pos": "pron",
+    "ipa": "/ðɪs/"
+  },
+  "these": {
+    "vi": "những cái này",
+    "pos": "pron",
+    "ipa": "/ðiːz/"
+  },
+  "those": {
+    "vi": "những cái kia",
+    "pos": "pron",
+    "ipa": "/ðəʊz/"
+  },
+  "it": {
+    "vi": "nó",
+    "pos": "pron",
+    "ipa": "/ɪt/"
+  },
+  "its": {
+    "vi": "của nó",
+    "pos": "det",
+    "ipa": "/ɪts/"
+  },
+  "he": {
+    "vi": "anh ấy, ông ấy",
+    "pos": "pron",
+    "ipa": "/hiː/"
+  },
+  "him": {
+    "vi": "anh ấy (tân ngữ)",
+    "pos": "pron",
+    "ipa": "/hɪm/"
+  },
+  "his": {
+    "vi": "của anh ấy",
+    "pos": "det",
+    "ipa": "/hɪz/"
+  },
+  "she": {
+    "vi": "cô ấy, bà ấy",
+    "pos": "pron",
+    "ipa": "/ʃiː/"
+  },
+  "her": {
+    "vi": "cô ấy, của cô ấy",
+    "pos": "pron, det",
+    "ipa": "/hɜːr/"
+  },
+  "they": {
+    "vi": "họ, chúng",
+    "pos": "pron",
+    "ipa": "/ðeɪ/"
+  },
+  "them": {
+    "vi": "họ (tân ngữ)",
+    "pos": "pron",
+    "ipa": "/ðem/"
+  },
+  "their": {
+    "vi": "của họ",
+    "pos": "det",
+    "ipa": "/ðeər/"
+  },
+  "we": {
+    "vi": "chúng ta, chúng tôi",
+    "pos": "pron",
+    "ipa": "/wiː/"
+  },
+  "us": {
+    "vi": "chúng tôi (tân ngữ)",
+    "pos": "pron",
+    "ipa": "/ʌs/"
+  },
+  "our": {
+    "vi": "của chúng tôi",
+    "pos": "det",
+    "ipa": "/aʊər/"
+  },
+  "you": {
+    "vi": "bạn, các bạn",
+    "pos": "pron",
+    "ipa": "/juː/"
+  },
+  "your": {
+    "vi": "của bạn",
+    "pos": "det",
+    "ipa": "/jɔːr/"
+  },
+  "i": {
+    "vi": "tôi",
+    "pos": "pron",
+    "ipa": "/aɪ/"
+  },
+  "me": {
+    "vi": "tôi (tân ngữ)",
+    "pos": "pron",
+    "ipa": "/miː/"
+  },
+  "my": {
+    "vi": "của tôi",
+    "pos": "det",
+    "ipa": "/maɪ/"
+  },
+  "in": {
+    "vi": "trong, ở trong",
+    "pos": "prep",
+    "ipa": "/ɪn/"
+  },
+  "on": {
+    "vi": "trên, ở trên",
+    "pos": "prep",
+    "ipa": "/ɒn/"
+  },
+  "at": {
+    "vi": "tại, ở",
+    "pos": "prep",
+    "ipa": "/æt/"
+  },
+  "to": {
+    "vi": "đến, để",
+    "pos": "prep",
+    "ipa": "/tuː/"
+  },
+  "for": {
+    "vi": "cho, vì, đối với",
+    "pos": "prep",
+    "ipa": "/fɔːr/"
+  },
+  "with": {
+    "vi": "với, cùng với",
+    "pos": "prep",
+    "ipa": "/wɪð/"
+  },
+  "from": {
+    "vi": "từ, đến từ",
+    "pos": "prep",
+    "ipa": "/frɒm/"
+  },
+  "by": {
+    "vi": "bởi, bằng cách",
+    "pos": "prep",
+    "ipa": "/baɪ/"
+  },
+  "about": {
+    "vi": "về, khoảng chừng",
+    "pos": "prep, adv",
+    "ipa": "/əˈbaʊt/"
+  },
+  "as": {
+    "vi": "như là, khi",
+    "pos": "prep, conj",
+    "ipa": "/æz/"
+  },
+  "into": {
+    "vi": "vào trong",
+    "pos": "prep",
+    "ipa": "/ˈɪn.tuː/"
+  },
+  "like": {
+    "vi": "như; thích",
+    "pos": "prep, v",
+    "ipa": "/laɪk/"
+  },
+  "through": {
+    "vi": "qua, thông qua",
+    "pos": "prep",
+    "ipa": "/θruː/"
+  },
+  "after": {
+    "vi": "sau, sau khi",
+    "pos": "prep, conj",
+    "ipa": "/ˈɑːf.tər/"
+  },
+  "over": {
+    "vi": "trên, qua, kết thúc",
+    "pos": "prep, adv",
+    "ipa": "/ˈəʊ.vər/"
+  },
+  "between": {
+    "vi": "ở giữa",
+    "pos": "prep",
+    "ipa": "/bɪˈtwiːn/"
+  },
+  "out": {
+    "vi": "ra ngoài, bên ngoài",
+    "pos": "prep, adv",
+    "ipa": "/aʊt/"
+  },
+  "against": {
+    "vi": "chống lại, phản đối",
+    "pos": "prep",
+    "ipa": "/əˈɡenst/"
+  },
+  "during": {
+    "vi": "trong suốt (thời gian)",
+    "pos": "prep",
+    "ipa": "/ˈdʒʊə.rɪŋ/"
+  },
+  "without": {
+    "vi": "không có",
+    "pos": "prep",
+    "ipa": "/wɪˈðaʊt/"
+  },
+  "before": {
+    "vi": "trước, trước khi",
+    "pos": "prep, conj",
+    "ipa": "/bɪˈfɔːr/"
+  },
+  "under": {
+    "vi": "dưới, ở dưới",
+    "pos": "prep",
+    "ipa": "/ˈʌn.dər/"
+  },
+  "around": {
+    "vi": "xung quanh, khoảng",
+    "pos": "prep, adv",
+    "ipa": "/əˈraʊnd/"
+  },
+  "among": {
+    "vi": "trong số",
+    "pos": "prep",
+    "ipa": "/əˈmʌŋ/"
+  },
+  "be": {
+    "vi": "thì, là, ở",
+    "pos": "v",
+    "ipa": "/biː/"
+  },
+  "is": {
+    "vi": "là, thì (ngôi 3 số ít)",
+    "pos": "v",
+    "ipa": "/ɪz/"
+  },
+  "are": {
+    "vi": "là, thì (số nhiều)",
+    "pos": "v",
+    "ipa": "/ɑːr/"
+  },
+  "was": {
+    "vi": "đã là, đã ở (quá khứ số ít)",
+    "pos": "v-past",
+    "ipa": "/wɒz/"
+  },
+  "were": {
+    "vi": "đã là, đã ở (quá khứ số nhiều)",
+    "pos": "v-past",
+    "ipa": "/wɜːr/"
+  },
+  "been": {
+    "vi": "từng ở, từng là (phân từ 2)",
+    "pos": "v-pp",
+    "ipa": "/biːn/"
+  },
+  "being": {
+    "vi": "đang là, bản chất",
+    "pos": "v-ing",
+    "ipa": "/ˈbiː.ɪŋ/"
+  },
+  "have": {
+    "vi": "có, phải",
+    "pos": "v",
+    "ipa": "/hæv/"
+  },
+  "has": {
+    "vi": "có (ngôi 3 số ít)",
+    "pos": "v",
+    "ipa": "/hæz/"
+  },
+  "had": {
+    "vi": "đã có",
+    "pos": "v-past",
+    "ipa": "/hæd/"
+  },
+  "having": {
+    "vi": "đang có",
+    "pos": "v-ing",
+    "ipa": "/ˈhæv.ɪŋ/"
+  },
+  "do": {
+    "vi": "làm",
+    "pos": "v",
+    "ipa": "/duː/"
+  },
+  "does": {
+    "vi": "làm (ngôi 3 số ít)",
+    "pos": "v",
+    "ipa": "/dʌz/"
+  },
+  "did": {
+    "vi": "đã làm",
+    "pos": "v-past",
+    "ipa": "/dɪd/"
+  },
+  "doing": {
+    "vi": "đang làm",
+    "pos": "v-ing",
+    "ipa": "/ˈduː.ɪŋ/"
+  },
+  "done": {
+    "vi": "đã hoàn thành",
+    "pos": "v-pp",
+    "ipa": "/dʌn/"
+  },
+  "will": {
+    "vi": "sẽ; ý chí",
+    "pos": "modal, n",
+    "ipa": "/wɪl/"
+  },
+  "would": {
+    "vi": "sẽ (quá khứ / giả định)",
+    "pos": "modal",
+    "ipa": "/wʊd/"
+  },
+  "can": {
+    "vi": "có thể; lon, hộp",
+    "pos": "modal, n",
+    "ipa": "/kæn/"
+  },
+  "could": {
+    "vi": "đã có thể",
+    "pos": "modal",
+    "ipa": "/kʊd/"
+  },
+  "should": {
+    "vi": "nên",
+    "pos": "modal",
+    "ipa": "/ʃʊd/"
+  },
+  "may": {
+    "vi": "có thể; tháng năm",
+    "pos": "modal, n",
+    "ipa": "/meɪ/"
+  },
+  "might": {
+    "vi": "có lẽ, có thể",
+    "pos": "modal",
+    "ipa": "/maɪt/"
+  },
+  "must": {
+    "vi": "phải",
+    "pos": "modal",
+    "ipa": "/mʌst/"
+  },
+  "say": {
+    "vi": "nói",
+    "pos": "v",
+    "ipa": "/seɪ/"
+  },
+  "said": {
+    "vi": "đã nói",
+    "pos": "v-past",
+    "ipa": "/sed/"
+  },
+  "saying": {
+    "vi": "lời nói, tục ngữ",
+    "pos": "v-ing, n",
+    "ipa": "/ˈseɪ.ɪŋ/"
+  },
+  "make": {
+    "vi": "làm, tạo ra",
+    "pos": "v",
+    "ipa": "/meɪk/"
+  },
+  "made": {
+    "vi": "đã làm, chế tạo",
+    "pos": "v-past",
+    "ipa": "/meɪd/"
+  },
+  "making": {
+    "vi": "việc chế tạo",
+    "pos": "v-ing",
+    "ipa": "/ˈmeɪ.kɪŋ/"
+  },
+  "go": {
+    "vi": "đi",
+    "pos": "v",
+    "ipa": "/ɡəʊ/"
+  },
+  "went": {
+    "vi": "đã đi",
+    "pos": "v-past",
+    "ipa": "/went/"
+  },
+  "gone": {
+    "vi": "đã đi mất",
+    "pos": "v-pp",
+    "ipa": "/ɡɒn/"
+  },
+  "going": {
+    "vi": "đang đi",
+    "pos": "v-ing",
+    "ipa": "/ˈɡəʊ.ɪŋ/"
+  },
+  "get": {
+    "vi": "lấy, nhận được, trở nên",
+    "pos": "v",
+    "ipa": "/ɡet/"
+  },
+  "got": {
+    "vi": "đã nhận được",
+    "pos": "v-past",
+    "ipa": "/ɡɒt/"
+  },
+  "getting": {
+    "vi": "đang nhận / trở nên",
+    "pos": "v-ing",
+    "ipa": "/ˈɡet.ɪŋ/"
+  },
+  "know": {
+    "vi": "biết",
+    "pos": "v",
+    "ipa": "/nəʊ/"
+  },
+  "knew": {
+    "vi": "đã biết",
+    "pos": "v-past",
+    "ipa": "/njuː/"
+  },
+  "known": {
+    "vi": "được biết đến",
+    "pos": "v-pp",
+    "ipa": "/nəʊn/"
+  },
+  "knowing": {
+    "vi": "sự hiểu biết",
+    "pos": "v-ing",
+    "ipa": "/ˈnəʊ.ɪŋ/"
+  },
+  "think": {
+    "vi": "nghĩ",
+    "pos": "v",
+    "ipa": "/θɪŋk/"
+  },
+  "thought": {
+    "vi": "đã nghĩ; suy nghĩ",
+    "pos": "v-past, n",
+    "ipa": "/θɔːt/"
+  },
+  "thinking": {
+    "vi": "tư duy, suy nghĩ",
+    "pos": "v-ing, n",
+    "ipa": "/ˈθɪŋ.kɪŋ/"
+  },
+  "take": {
+    "vi": "lấy, cầm, đem",
+    "pos": "v",
+    "ipa": "/teɪk/"
+  },
+  "took": {
+    "vi": "đã lấy",
+    "pos": "v-past",
+    "ipa": "/tʊk/"
+  },
+  "taken": {
+    "vi": "đã bị lấy",
+    "pos": "v-pp",
+    "ipa": "/ˈteɪ.kən/"
+  },
+  "taking": {
+    "vi": "đang lấy",
+    "pos": "v-ing",
+    "ipa": "/ˈteɪ.kɪŋ/"
+  },
+  "see": {
+    "vi": "nhìn thấy, hiểu",
+    "pos": "v",
+    "ipa": "/siː/"
+  },
+  "saw": {
+    "vi": "đã thấy; cái cưa",
+    "pos": "v-past, n",
+    "ipa": "/sɔː/"
+  },
+  "seen": {
+    "vi": "đã được nhìn thấy",
+    "pos": "v-pp",
+    "ipa": "/siːn/"
+  },
+  "seeing": {
+    "vi": "việc nhìn thấy",
+    "pos": "v-ing",
+    "ipa": "/ˈsiː.ɪŋ/"
+  },
+  "come": {
+    "vi": "đến",
+    "pos": "v",
+    "ipa": "/kʌm/"
+  },
+  "came": {
+    "vi": "đã đến",
+    "pos": "v-past",
+    "ipa": "/keɪm/"
+  },
+  "coming": {
+    "vi": "sắp đến, đang đến",
+    "pos": "v-ing, adj",
+    "ipa": "/ˈkʌm.ɪŋ/"
+  },
+  "find": {
+    "vi": "tìm thấy",
+    "pos": "v",
+    "ipa": "/faɪnd/"
+  },
+  "found": {
+    "vi": "đã tìm thấy; thành lập",
+    "pos": "v-past",
+    "ipa": "/faʊnd/"
+  },
+  "finding": {
+    "vi": "phát hiện, kết quả tìm",
+    "pos": "v-ing, n",
+    "ipa": "/ˈfaɪn.dɪŋ/"
+  },
+  "findings": {
+    "vi": "những kết quả tìm thấy",
+    "pos": "n-pl",
+    "ipa": "/ˈfaɪn.dɪŋz/"
+  },
+  "give": {
+    "vi": "cho, tặng",
+    "pos": "v",
+    "ipa": "/ɡɪv/"
+  },
+  "gave": {
+    "vi": "đã cho",
+    "pos": "v-past",
+    "ipa": "/ɡeɪv/"
+  },
+  "given": {
+    "vi": "cho trước, đã cho",
+    "pos": "v-pp, prep",
+    "ipa": "/ˈɡɪv.ən/"
+  },
+  "giving": {
+    "vi": "việc cho đi",
+    "pos": "v-ing",
+    "ipa": "/ˈɡɪv.ɪŋ/"
+  },
+  "tell": {
+    "vi": "nói, bảo, kể",
+    "pos": "v",
+    "ipa": "/tel/"
+  },
+  "told": {
+    "vi": "đã kể, đã bảo",
+    "pos": "v-past",
+    "ipa": "/təʊld/"
+  },
+  "telling": {
+    "vi": "việc kể",
+    "pos": "v-ing",
+    "ipa": "/ˈtel.ɪŋ/"
+  },
+  "feel": {
+    "vi": "cảm thấy",
+    "pos": "v",
+    "ipa": "/fiːl/"
+  },
+  "felt": {
+    "vi": "đã cảm thấy",
+    "pos": "v-past",
+    "ipa": "/felt/"
+  },
+  "feeling": {
+    "vi": "cảm xúc, cảm giác",
+    "pos": "n, v-ing",
+    "ipa": "/ˈfiː.lɪŋ/"
+  },
+  "feelings": {
+    "vi": "những cảm xúc",
+    "pos": "n-pl",
+    "ipa": "/ˈfiː.lɪŋz/"
+  },
+  "become": {
+    "vi": "trở thành",
+    "pos": "v",
+    "ipa": "/bɪˈkʌm/"
+  },
+  "became": {
+    "vi": "đã trở thành",
+    "pos": "v-past",
+    "ipa": "/bɪˈkeɪm/"
+  },
+  "becoming": {
+    "vi": "đang trở thành",
+    "pos": "v-ing",
+    "ipa": "/bɪˈkʌm.ɪŋ/"
+  },
+  "leave": {
+    "vi": "rời đi; để lại; nghỉ phép",
+    "pos": "v, n",
+    "ipa": "/liːv/"
+  },
+  "left": {
+    "vi": "đã rời đi; bên trái",
+    "pos": "v-past, adj",
+    "ipa": "/left/"
+  },
+  "leaving": {
+    "vi": "đang rời đi",
+    "pos": "v-ing",
+    "ipa": "/ˈliː.vɪŋ/"
+  },
+  "put": {
+    "vi": "đặt, để",
+    "pos": "v",
+    "ipa": "/pʊt/"
+  },
+  "putting": {
+    "vi": "đang đặt, để",
+    "pos": "v-ing",
+    "ipa": "/ˈpʊt.ɪŋ/"
+  },
+  "mean": {
+    "vi": "có nghĩa là; keo kiệt",
+    "pos": "v, adj",
+    "ipa": "/miːn/"
+  },
+  "meant": {
+    "vi": "đã có ý định / có nghĩa",
+    "pos": "v-past",
+    "ipa": "/ment/"
+  },
+  "meaning": {
+    "vi": "ý nghĩa",
+    "pos": "n",
+    "ipa": "/ˈmiː.nɪŋ/"
+  },
+  "keep": {
+    "vi": "giữ, tiếp tục",
+    "pos": "v",
+    "ipa": "/kiːp/"
+  },
+  "kept": {
+    "vi": "đã giữ",
+    "pos": "v-past",
+    "ipa": "/kept/"
+  },
+  "keeping": {
+    "vi": "việc giữ gìn",
+    "pos": "v-ing",
+    "ipa": "/ˈkiː.pɪŋ/"
+  },
+  "let": {
+    "vi": "để cho, cho phép",
+    "pos": "v",
+    "ipa": "/let/"
+  },
+  "begin": {
+    "vi": "bắt đầu",
+    "pos": "v",
+    "ipa": "/bɪˈɡɪn/"
+  },
+  "began": {
+    "vi": "đã bắt đầu",
+    "pos": "v-past",
+    "ipa": "/bɪˈɡæn/"
+  },
+  "begun": {
+    "vi": "đã bắt đầu (pp)",
+    "pos": "v-pp",
+    "ipa": "/bɪˈɡʌn/"
+  },
+  "beginning": {
+    "vi": "sự khởi đầu",
+    "pos": "n, v-ing",
+    "ipa": "/bɪˈɡɪn.ɪŋ/"
+  },
+  "seem": {
+    "vi": "dường như",
+    "pos": "v",
+    "ipa": "/siːm/"
+  },
+  "seemed": {
+    "vi": "đã dường như",
+    "pos": "v-ed",
+    "ipa": "/siːmd/"
+  },
+  "help": {
+    "vi": "giúp đỡ",
+    "pos": "v, n",
+    "ipa": "/help/"
+  },
+  "helped": {
+    "vi": "đã giúp đỡ",
+    "pos": "v-ed",
+    "ipa": "/helpt/"
+  },
+  "helpful": {
+    "vi": "có ích, hay giúp",
+    "pos": "adj",
+    "ipa": "/ˈhelp.fəl/"
+  },
+  "talk": {
+    "vi": "nói chuyện",
+    "pos": "v, n",
+    "ipa": "/tɔːk/"
+  },
+  "talked": {
+    "vi": "đã nói chuyện",
+    "pos": "v-ed",
+    "ipa": "/tɔːkt/"
+  },
+  "talking": {
+    "vi": "đang nói chuyện",
+    "pos": "v-ing",
+    "ipa": "/ˈtɔː.kɪŋ/"
+  },
+  "turn": {
+    "vi": "quay, rẽ, biến thành; lượt",
+    "pos": "v, n",
+    "ipa": "/tɜːn/"
+  },
+  "turned": {
+    "vi": "đã rẽ, đã biến thành",
+    "pos": "v-ed",
+    "ipa": "/tɜːnd/"
+  },
+  "start": {
+    "vi": "khởi đầu, bắt đầu",
+    "pos": "v, n",
+    "ipa": "/stɑːt/"
+  },
+  "started": {
+    "vi": "đã bắt đầu",
+    "pos": "v-ed",
+    "ipa": "/ˈstɑː.tɪd/"
+  },
+  "starting": {
+    "vi": "đang bắt đầu",
+    "pos": "v-ing",
+    "ipa": "/ˈstɑː.tɪŋ/"
+  },
+  "show": {
+    "vi": "cho thấy, buổi biểu diễn",
+    "pos": "v, n",
+    "ipa": "/ʃəʊ/"
+  },
+  "showed": {
+    "vi": "đã cho thấy",
+    "pos": "v-past",
+    "ipa": "/ʃəʊd/"
+  },
+  "shown": {
+    "vi": "được hiển thị",
+    "pos": "v-pp",
+    "ipa": "/ʃəʊn/"
+  },
+  "hear": {
+    "vi": "nghe thấy",
+    "pos": "v",
+    "ipa": "/hɪər/"
+  },
+  "heard": {
+    "vi": "đã nghe thấy",
+    "pos": "v-past",
+    "ipa": "/hɜːd/"
+  },
+  "hearing": {
+    "vi": "thính giác; phiên điều trần",
+    "pos": "n, v-ing",
+    "ipa": "/ˈhɪə.rɪŋ/"
+  },
+  "play": {
+    "vi": "chơi, vở kịch",
+    "pos": "v, n",
+    "ipa": "/pleɪ/"
+  },
+  "played": {
+    "vi": "đã chơi",
+    "pos": "v-ed",
+    "ipa": "/pleɪd/"
+  },
+  "player": {
+    "vi": "người chơi, cầu thủ",
+    "pos": "n",
+    "ipa": "/ˈpleɪ.ər/"
+  },
+  "players": {
+    "vi": "những người chơi",
+    "pos": "n-pl",
+    "ipa": "/ˈpleɪ.ərz/"
+  },
+  "run": {
+    "vi": "chạy, vận hành, quản lý",
+    "pos": "v",
+    "ipa": "/rʌn/"
+  },
+  "running": {
+    "vi": "việc điều hành / chạy",
+    "pos": "v-ing",
+    "ipa": "/ˈrʌn.ɪŋ/"
+  },
+  "ran": {
+    "vi": "đã chạy",
+    "pos": "v-past",
+    "ipa": "/ræn/"
+  },
+  "move": {
+    "vi": "di chuyển; bước đi",
+    "pos": "v, n",
+    "ipa": "/muːv/"
+  },
+  "moved": {
+    "vi": "đã di chuyển",
+    "pos": "v-ed",
+    "ipa": "/muːvd/"
+  },
+  "movement": {
+    "vi": "phong trào, sự chuyển động",
+    "pos": "n",
+    "ipa": "/ˈmuːv.mənt/"
+  },
+  "live": {
+    "vi": "sống, trực tiếp",
+    "pos": "v, adj",
+    "ipa": "/lɪv/"
+  },
+  "lived": {
+    "vi": "đã sống",
+    "pos": "v-ed",
+    "ipa": "/lɪvd/"
+  },
+  "living": {
+    "vi": "đang sống, cuộc sống",
+    "pos": "v-ing, n",
+    "ipa": "/ˈlɪv.ɪŋ/"
+  },
+  "life": {
+    "vi": "cuộc sống, sinh mạng",
+    "pos": "n",
+    "ipa": "/laɪf/"
+  },
+  "lives": {
+    "vi": "những mạng sống; sống",
+    "pos": "n-pl, v",
+    "ipa": "/laɪvz/"
+  },
+  "believe": {
+    "vi": "tin tưởng",
+    "pos": "v",
+    "ipa": "/bɪˈliːv/"
+  },
+  "believed": {
+    "vi": "đã tin",
+    "pos": "v-ed",
+    "ipa": "/bɪˈliːvd/"
+  },
+  "belief": {
+    "vi": "niềm tin",
+    "pos": "n",
+    "ipa": "/bɪˈliːf/"
+  },
+  "hold": {
+    "vi": "cầm, nắm, tổ chức",
+    "pos": "v",
+    "ipa": "/həʊld/"
+  },
+  "held": {
+    "vi": "đã tổ chức / nắm giữ",
+    "pos": "v-past",
+    "ipa": "/held/"
+  },
+  "holding": {
+    "vi": "đang giữ",
+    "pos": "v-ing",
+    "ipa": "/ˈhəʊl.dɪŋ/"
+  },
+  "bring": {
+    "vi": "mang lại, đem đến",
+    "pos": "v",
+    "ipa": "/brɪŋ/"
+  },
+  "brought": {
+    "vi": "đã đem lại",
+    "pos": "v-past",
+    "ipa": "/brɔːt/"
+  },
+  "bringing": {
+    "vi": "đang đem lại",
+    "pos": "v-ing",
+    "ipa": "/ˈbrɪŋ.ɪŋ/"
+  },
+  "happen": {
+    "vi": "xảy ra",
+    "pos": "v",
+    "ipa": "/ˈhæp.ən/"
+  },
+  "happened": {
+    "vi": "đã xảy ra",
+    "pos": "v-ed",
+    "ipa": "/ˈhæp.ənd/"
+  },
+  "happening": {
+    "vi": "đang xảy ra",
+    "pos": "v-ing",
+    "ipa": "/ˈhæp.ən.ɪŋ/"
+  },
+  "provide": {
+    "vi": "cung cấp",
+    "pos": "v",
+    "ipa": "/prəˈvaɪd/"
+  },
+  "provided": {
+    "vi": "đã cung cấp; với điều kiện",
+    "pos": "v-ed, conj",
+    "ipa": "/prəˈvaɪ.dɪd/"
+  },
+  "providing": {
+    "vi": "việc cung cấp",
+    "pos": "v-ing",
+    "ipa": "/prəˈvaɪ.dɪŋ/"
+  },
+  "lose": {
+    "vi": "mất, thua",
+    "pos": "v",
+    "ipa": "/luːz/"
+  },
+  "lost": {
+    "vi": "đã mất, bị lạc",
+    "pos": "v-past, adj",
+    "ipa": "/lɒst/"
+  },
+  "loss": {
+    "vi": "sự mất mát, tổn thất",
+    "pos": "n",
+    "ipa": "/lɒs/"
+  },
+  "pay": {
+    "vi": "trả tiền, thanh toán",
+    "pos": "v, n",
+    "ipa": "/peɪ/"
+  },
+  "paid": {
+    "vi": "đã thanh toán",
+    "pos": "v-past",
+    "ipa": "/peɪd/"
+  },
+  "payment": {
+    "vi": "sự thanh toán",
+    "pos": "n",
+    "ipa": "/ˈpeɪ.mənt/"
+  },
+  "meet": {
+    "vi": "gặp gỡ, đáp ứng",
+    "pos": "v",
+    "ipa": "/miːt/"
+  },
+  "met": {
+    "vi": "đã gặp",
+    "pos": "v-past",
+    "ipa": "/met/"
+  },
+  "meeting": {
+    "vi": "cuộc họp",
+    "pos": "n",
+    "ipa": "/ˈmiː.tɪŋ/"
+  },
+  "include": {
+    "vi": "bao gồm",
+    "pos": "v",
+    "ipa": "/ɪnˈkluːd/"
+  },
+  "included": {
+    "vi": "đã bao gồm",
+    "pos": "v-ed",
+    "ipa": "/ɪnˈkluː.dɪd/"
+  },
+  "including": {
+    "vi": "bao gồm (giới từ)",
+    "pos": "prep",
+    "ipa": "/ɪnˈkluː.dɪŋ/"
+  },
+  "continue": {
+    "vi": "tiếp tục",
+    "pos": "v",
+    "ipa": "/kənˈtɪn.juː/"
+  },
+  "continued": {
+    "vi": "đã tiếp tục",
+    "pos": "v-ed",
+    "ipa": "/kənˈtɪn.juːd/"
+  },
+  "set": {
+    "vi": "đặt, thiết lập; bộ",
+    "pos": "v, n",
+    "ipa": "/set/"
+  },
+  "setting": {
+    "vi": "cài đặt, bối cảnh",
+    "pos": "n, v-ing",
+    "ipa": "/ˈset.ɪŋ/"
+  },
+  "settings": {
+    "vi": "các cài đặt",
+    "pos": "n-pl",
+    "ipa": "/ˈset.ɪŋz/"
+  },
+  "change": {
+    "vi": "thay đổi; tiền thừa",
+    "pos": "v, n",
+    "ipa": "/tʃeɪndʒ/"
+  },
+  "changed": {
+    "vi": "đã thay đổi",
+    "pos": "v-ed",
+    "ipa": "/tʃeɪndʒd/"
+  },
+  "lead": {
+    "vi": "dẫn dắt, dẫn đến",
+    "pos": "v, n",
+    "ipa": "/liːd/"
+  },
+  "led": {
+    "vi": "đã dẫn đến",
+    "pos": "v-past",
+    "ipa": "/led/"
+  },
+  "leading": {
+    "vi": "dẫn đầu, hàng đầu",
+    "pos": "adj, v-ing",
+    "ipa": "/ˈliː.dɪŋ/"
+  },
+  "understand": {
+    "vi": "hiểu",
+    "pos": "v",
+    "ipa": "/ˌʌn.dəˈstænd/"
+  },
+  "understood": {
+    "vi": "đã hiểu",
+    "pos": "v-past",
+    "ipa": "/ˌʌn.dəˈstʊd/"
+  },
+  "understanding": {
+    "vi": "sự thấu hiểu",
+    "pos": "n, v-ing",
+    "ipa": "/ˌʌn.dəˈstæn.dɪŋ/"
+  },
+  "watch": {
+    "vi": "xem, theo dõi; đồng hồ",
+    "pos": "v, n",
+    "ipa": "/wɒtʃ/"
+  },
+  "watched": {
+    "vi": "đã theo dõi",
+    "pos": "v-ed",
+    "ipa": "/wɒtʃt/"
+  },
+  "follow": {
+    "vi": "theo sau, tuân thủ",
+    "pos": "v",
+    "ipa": "/ˈfɒl.əʊ/"
+  },
+  "followed": {
+    "vi": "đã theo dõi / làm theo",
+    "pos": "v-ed",
+    "ipa": "/ˈfɒl.əʊd/"
+  },
+  "following": {
+    "vi": "sau đây, tiếp theo",
+    "pos": "prep, adj",
+    "ipa": "/ˈfɒl.əʊ.ɪŋ/"
+  },
+  "stop": {
+    "vi": "dừng lại, điểm dừng",
+    "pos": "v, n",
+    "ipa": "/stɒp/"
+  },
+  "stopped": {
+    "vi": "đã dừng lại",
+    "pos": "v-ed",
+    "ipa": "/stɒpt/"
+  },
+  "create": {
+    "vi": "tạo ra",
+    "pos": "v",
+    "ipa": "/kriˈeɪt/"
+  },
+  "created": {
+    "vi": "đã tạo ra",
+    "pos": "v-ed",
+    "ipa": "/kriˈeɪ.tɪd/"
+  },
+  "creation": {
+    "vi": "sự sáng tạo, tác phẩm",
+    "pos": "n",
+    "ipa": "/kriˈeɪ.ʃən/"
+  },
+  "allow": {
+    "vi": "cho phép",
+    "pos": "v",
+    "ipa": "/əˈlaʊ/"
+  },
+  "allowed": {
+    "vi": "được phép",
+    "pos": "v-ed",
+    "ipa": "/əˈlaʊd/"
+  },
+  "add": {
+    "vi": "thêm vào",
+    "pos": "v",
+    "ipa": "/æd/"
+  },
+  "added": {
+    "vi": "đã thêm vào",
+    "pos": "v-ed",
+    "ipa": "/ˈæd.ɪd/"
+  },
+  "spend": {
+    "vi": "tiêu tốn, dành (thời gian)",
+    "pos": "v",
+    "ipa": "/spend/"
+  },
+  "spent": {
+    "vi": "đã tiêu, đã dùng",
+    "pos": "v-past",
+    "ipa": "/spent/"
+  },
+  "grow": {
+    "vi": "phát triển, lớn lên",
+    "pos": "v",
+    "ipa": "/ɡrəʊ/"
+  },
+  "grew": {
+    "vi": "đã lớn lên",
+    "pos": "v-past",
+    "ipa": "/ɡruː/"
+  },
+  "grown": {
+    "vi": "đã trưởng thành",
+    "pos": "v-pp",
+    "ipa": "/ɡrəʊn/"
+  },
+  "growth": {
+    "vi": "sự tăng trưởng",
+    "pos": "n",
+    "ipa": "/ɡrəʊθ/"
+  },
+  "open": {
+    "vi": "mở",
+    "pos": "adj, v",
+    "ipa": "/ˈəʊ.pən/"
+  },
+  "opened": {
+    "vi": "đã mở",
+    "pos": "v-ed",
+    "ipa": "/ˈəʊ.pənd/"
+  },
+  "win": {
+    "vi": "chiến thắng",
+    "pos": "v",
+    "ipa": "/wɪn/"
+  },
+  "won": {
+    "vi": "đã chiến thắng",
+    "pos": "v-past",
+    "ipa": "/wʌn/"
+  },
+  "winner": {
+    "vi": "người chiến thắng",
+    "pos": "n",
+    "ipa": "/ˈwɪn.ər/"
+  },
+  "offer": {
+    "vi": "đề nghị, cung cấp",
+    "pos": "v, n",
+    "ipa": "/ˈɒf.ər/"
+  },
+  "offered": {
+    "vi": "đã đề nghị",
+    "pos": "v-ed",
+    "ipa": "/ˈɒf.əd/"
+  },
+  "remember": {
+    "vi": "ghi nhớ",
+    "pos": "v",
+    "ipa": "/rɪˈmem.bər/"
+  },
+  "remembered": {
+    "vi": "đã nhớ",
+    "pos": "v-ed",
+    "ipa": "/rɪˈmem.bəd/"
+  },
+  "love": {
+    "vi": "yêu thích, tình yêu",
+    "pos": "v, n",
+    "ipa": "/lʌv/"
+  },
+  "loved": {
+    "vi": "đã yêu thích",
+    "pos": "v-ed",
+    "ipa": "/lʌvd/"
+  },
+  "consider": {
+    "vi": "cân nhắc, xem xét",
+    "pos": "v",
+    "ipa": "/kənˈsɪd.ər/"
+  },
+  "considered": {
+    "vi": "được coi là",
+    "pos": "v-ed",
+    "ipa": "/kənˈsɪd.əd/"
+  },
+  "appear": {
+    "vi": "xuất hiện, dường như",
+    "pos": "v",
+    "ipa": "/əˈpɪər/"
+  },
+  "appeared": {
+    "vi": "đã xuất hiện",
+    "pos": "v-ed",
+    "ipa": "/əˈpɪəd/"
+  },
+  "appearance": {
+    "vi": "sự xuất hiện, diện mạo",
+    "pos": "n",
+    "ipa": "/əˈpɪə.rəns/"
+  },
+  "buy": {
+    "vi": "mua",
+    "pos": "v",
+    "ipa": "/baɪ/"
+  },
+  "bought": {
+    "vi": "đã mua",
+    "pos": "v-past",
+    "ipa": "/bɔːt/"
+  },
+  "buying": {
+    "vi": "việc mua sắm",
+    "pos": "v-ing",
+    "ipa": "/ˈbaɪ.ɪŋ/"
+  },
+  "sell": {
+    "vi": "bán",
+    "pos": "v",
+    "ipa": "/sel/"
+  },
+  "sold": {
+    "vi": "đã bán",
+    "pos": "v-past",
+    "ipa": "/səʊld/"
+  },
+  "selling": {
+    "vi": "việc bán hàng",
+    "pos": "v-ing",
+    "ipa": "/ˈsel.ɪŋ/"
+  },
+  "wait": {
+    "vi": "chờ đợi",
+    "pos": "v, n",
+    "ipa": "/weɪt/"
+  },
+  "waited": {
+    "vi": "đã chờ",
+    "pos": "v-ed",
+    "ipa": "/ˈweɪ.tɪd/"
+  },
+  "waiting": {
+    "vi": "sự chờ đợi",
+    "pos": "v-ing",
+    "ipa": "/ˈweɪ.tɪŋ/"
+  },
+  "serve": {
+    "vi": "phục vụ",
+    "pos": "v",
+    "ipa": "/sɜːv/"
+  },
+  "served": {
+    "vi": "đã phục vụ",
+    "pos": "v-ed",
+    "ipa": "/sɜːvd/"
+  },
+  "service": {
+    "vi": "dịch vụ",
+    "pos": "n",
+    "ipa": "/ˈsɜː.vɪs/"
+  },
+  "services": {
+    "vi": "các dịch vụ",
+    "pos": "n-pl",
+    "ipa": "/ˈsɜː.vɪ.sɪz/"
+  },
+  "die": {
+    "vi": "chết, qua đời",
+    "pos": "v",
+    "ipa": "/daɪ/"
+  },
+  "died": {
+    "vi": "đã qua đời",
+    "pos": "v-ed",
+    "ipa": "/daɪd/"
+  },
+  "dead": {
+    "vi": "đã chết",
+    "pos": "adj",
+    "ipa": "/ded/"
+  },
+  "death": {
+    "vi": "cái chết",
+    "pos": "n",
+    "ipa": "/deθ/"
+  },
+  "deaths": {
+    "vi": "những trường hợp tử vong",
+    "pos": "n-pl",
+    "ipa": "/deθs/"
+  },
+  "send": {
+    "vi": "gửi",
+    "pos": "v",
+    "ipa": "/send/"
+  },
+  "sent": {
+    "vi": "đã gửi",
+    "pos": "v-past",
+    "ipa": "/sent/"
+  },
+  "sending": {
+    "vi": "đang gửi",
+    "pos": "v-ing",
+    "ipa": "/ˈsen.dɪŋ/"
+  },
+  "expect": {
+    "vi": "kỳ vọng, mong đợi",
+    "pos": "v",
+    "ipa": "/ɪkˈspekt/"
+  },
+  "expected": {
+    "vi": "được kỳ vọng",
+    "pos": "v-ed",
+    "ipa": "/ɪkˈspek.tɪd/"
+  },
+  "build": {
+    "vi": "xây dựng",
+    "pos": "v",
+    "ipa": "/bɪld/"
+  },
+  "built": {
+    "vi": "đã xây dựng",
+    "pos": "v-past",
+    "ipa": "/bɪlt/"
+  },
+  "building": {
+    "vi": "tòa nhà, việc xây dựng",
+    "pos": "n, v-ing",
+    "ipa": "/ˈbɪl.dɪŋ/"
+  },
+  "stay": {
+    "vi": "ở lại",
+    "pos": "v",
+    "ipa": "/steɪ/"
+  },
+  "stayed": {
+    "vi": "đã ở lại",
+    "pos": "v-ed",
+    "ipa": "/steɪd/"
+  },
+  "fall": {
+    "vi": "ngã, rơi, mùa thu",
+    "pos": "v, n",
+    "ipa": "/fɔːl/"
+  },
+  "fell": {
+    "vi": "đã ngã, đã giảm",
+    "pos": "v-past",
+    "ipa": "/fel/"
+  },
+  "fallen": {
+    "vi": "đã rơi",
+    "pos": "v-pp",
+    "ipa": "/ˈfɔː.lən/"
+  },
+  "cut": {
+    "vi": "cắt, giảm bớt",
+    "pos": "v, n",
+    "ipa": "/kʌt/"
+  },
+  "reach": {
+    "vi": "đạt tới, vươn tới",
+    "pos": "v",
+    "ipa": "/riːtʃ/"
+  },
+  "reached": {
+    "vi": "đã đạt đến",
+    "pos": "v-ed",
+    "ipa": "/riːtʃt/"
+  },
+  "kill": {
+    "vi": "giết hại",
+    "pos": "v",
+    "ipa": "/kɪl/"
+  },
+  "killed": {
+    "vi": "đã bị giết",
+    "pos": "v-ed",
+    "ipa": "/kɪld/"
+  },
+  "killing": {
+    "vi": "vụ sát hại",
+    "pos": "v-ing, n",
+    "ipa": "/ˈkɪl.ɪŋ/"
+  },
+  "remain": {
+    "vi": "vẫn còn, duy trì",
+    "pos": "v",
+    "ipa": "/rɪˈmeɪn/"
+  },
+  "remained": {
+    "vi": "đã duy trì",
+    "pos": "v-ed",
+    "ipa": "/rɪˈmeɪnd/"
+  },
+  "suggest": {
+    "vi": "gợi ý, đề xuất",
+    "pos": "v",
+    "ipa": "/səˈdʒest/"
+  },
+  "suggested": {
+    "vi": "đã gợi ý",
+    "pos": "v-ed",
+    "ipa": "/səˈdʒes.tɪd/"
+  },
+  "suggestion": {
+    "vi": "lời gợi ý",
+    "pos": "n",
+    "ipa": "/səˈdʒes.tʃən/"
+  },
+  "raise": {
+    "vi": "nâng lên, nuôi nấng; tăng",
+    "pos": "v, n",
+    "ipa": "/reɪz/"
+  },
+  "raised": {
+    "vi": "đã nâng cao",
+    "pos": "v-ed",
+    "ipa": "/reɪzd/"
+  },
+  "pass": {
+    "vi": "vượt qua, chuyền; thẻ",
+    "pos": "v, n",
+    "ipa": "/pɑːs/"
+  },
+  "passed": {
+    "vi": "đã thông qua / vượt qua",
+    "pos": "v-ed",
+    "ipa": "/pɑːst/"
+  },
+  "require": {
+    "vi": "yêu cầu",
+    "pos": "v",
+    "ipa": "/rɪˈkwaɪər/"
+  },
+  "required": {
+    "vi": "bắt buộc, được yêu cầu",
+    "pos": "v-ed, adj",
+    "ipa": "/rɪˈkwaɪəd/"
+  },
+  "requirement": {
+    "vi": "yêu cầu",
+    "pos": "n",
+    "ipa": "/rɪˈkwaɪə.mənt/"
+  },
+  "decide": {
+    "vi": "quyết định",
+    "pos": "v",
+    "ipa": "/dɪˈsaɪd/"
+  },
+  "decided": {
+    "vi": "đã quyết định",
+    "pos": "v-ed",
+    "ipa": "/dɪˈsaɪ.dɪd/"
+  },
+  "decision": {
+    "vi": "quyết định",
+    "pos": "n",
+    "ipa": "/dɪˈsɪʒ.ən/"
+  },
+  "good": {
+    "vi": "tốt, hay",
+    "pos": "adj",
+    "ipa": "/ɡʊd/"
+  },
+  "better": {
+    "vi": "tốt hơn",
+    "pos": "adj, adv",
+    "ipa": "/ˈbet.ər/"
+  },
+  "best": {
+    "vi": "tốt nhất",
+    "pos": "adj, adv",
+    "ipa": "/best/"
+  },
+  "bad": {
+    "vi": "xấu, tồi tệ",
+    "pos": "adj",
+    "ipa": "/bæd/"
+  },
+  "worse": {
+    "vi": "tệ hơn",
+    "pos": "adj, adv",
+    "ipa": "/wɜːs/"
+  },
+  "worst": {
+    "vi": "tệ nhất",
+    "pos": "adj, adv",
+    "ipa": "/wɜːst/"
+  },
+  "new": {
+    "vi": "mới",
+    "pos": "adj",
+    "ipa": "/njuː/"
+  },
+  "first": {
+    "vi": "đầu tiên, thứ nhất",
+    "pos": "adj, adv",
+    "ipa": "/fɜːst/"
+  },
+  "last": {
+    "vi": "cuối cùng; kéo dài",
+    "pos": "adj, v",
+    "ipa": "/lɑːst/"
+  },
+  "long": {
+    "vi": "dài, lâu",
+    "pos": "adj, adv",
+    "ipa": "/lɒŋ/"
+  },
+  "great": {
+    "vi": "tuyệt vời, to lớn",
+    "pos": "adj",
+    "ipa": "/ɡreɪt/"
+  },
+  "little": {
+    "vi": "ít, nhỏ bé",
+    "pos": "adj, adv",
+    "ipa": "/ˈlɪt.əl/"
+  },
+  "own": {
+    "vi": "riêng, sở hữu",
+    "pos": "adj, v",
+    "ipa": "/əʊn/"
+  },
+  "other": {
+    "vi": "khác",
+    "pos": "adj, pron",
+    "ipa": "/ˈʌð.ər/"
+  },
+  "others": {
+    "vi": "những người / cái khác",
+    "pos": "pron",
+    "ipa": "/ˈʌð.ərz/"
+  },
+  "old": {
+    "vi": "cũ, già",
+    "pos": "adj",
+    "ipa": "/əʊld/"
+  },
+  "right": {
+    "vi": "đúng, bên phải, quyền lợi",
+    "pos": "adj, adv, n",
+    "ipa": "/raɪt/"
+  },
+  "big": {
+    "vi": "to lớn",
+    "pos": "adj",
+    "ipa": "/bɪɡ/"
+  },
+  "high": {
+    "vi": "cao",
+    "pos": "adj, adv",
+    "ipa": "/haɪ/"
+  },
+  "different": {
+    "vi": "khác biệt",
+    "pos": "adj",
+    "ipa": "/ˈdɪf.ər.ənt/"
+  },
+  "small": {
+    "vi": "nhỏ bé",
+    "pos": "adj",
+    "ipa": "/smɔːl/"
+  },
+  "large": {
+    "vi": "rộng lớn",
+    "pos": "adj",
+    "ipa": "/lɑːdʒ/"
+  },
+  "next": {
+    "vi": "tiếp theo",
+    "pos": "adj, adv",
+    "ipa": "/nekst/"
+  },
+  "early": {
+    "vi": "sớm",
+    "pos": "adj, adv",
+    "ipa": "/ˈɜː.li/"
+  },
+  "young": {
+    "vi": "trẻ tuổi",
+    "pos": "adj",
+    "ipa": "/jʌŋ/"
+  },
+  "important": {
+    "vi": "quan trọng",
+    "pos": "adj",
+    "ipa": "/ɪmˈpɔː.tənt/"
+  },
+  "few": {
+    "vi": "ít, một vài",
+    "pos": "det, adj",
+    "ipa": "/fjuː/"
+  },
+  "same": {
+    "vi": "giống nhau, tương tự",
+    "pos": "adj, pron",
+    "ipa": "/seɪm/"
+  },
+  "able": {
+    "vi": "có khả năng",
+    "pos": "adj",
+    "ipa": "/ˈeɪ.bəl/"
+  },
+  "easy": {
+    "vi": "dễ dàng",
+    "pos": "adj",
+    "ipa": "/ˈiː.zi/"
+  },
+  "hard": {
+    "vi": "khó khăn, chăm chỉ; cứng",
+    "pos": "adj, adv",
+    "ipa": "/hɑːd/"
+  },
+  "clear": {
+    "vi": "rõ ràng, trong sáng",
+    "pos": "adj",
+    "ipa": "/klɪər/"
+  },
+  "recent": {
+    "vi": "gần đây",
+    "pos": "adj",
+    "ipa": "/ˈriː.sənt/"
+  },
+  "recently": {
+    "vi": "dạo gần đây",
+    "pos": "adv",
+    "ipa": "/ˈriː.sənt.li/"
+  },
+  "short": {
+    "vi": "ngắn, thấp",
+    "pos": "adj",
+    "ipa": "/ʃɔːt/"
+  },
+  "single": {
+    "vi": "đơn lẻ, độc thân",
+    "pos": "adj",
+    "ipa": "/ˈsɪŋ.ɡəl/"
+  },
+  "true": {
+    "vi": "đúng, thật",
+    "pos": "adj",
+    "ipa": "/truː/"
+  },
+  "free": {
+    "vi": "tự do, miễn phí",
+    "pos": "adj",
+    "ipa": "/friː/"
+  },
+  "full": {
+    "vi": "đầy đủ",
+    "pos": "adj",
+    "ipa": "/fʊl/"
+  },
+  "late": {
+    "vi": "muộn, trễ",
+    "pos": "adj, adv",
+    "ipa": "/leɪt/"
+  },
+  "sure": {
+    "vi": "chắc chắn",
+    "pos": "adj",
+    "ipa": "/ʃɔːr/"
+  },
+  "low": {
+    "vi": "thấp",
+    "pos": "adj, adv",
+    "ipa": "/ləʊ/"
+  },
+  "strong": {
+    "vi": "mạnh mẽ",
+    "pos": "adj",
+    "ipa": "/strɒŋ/"
+  },
+  "ready": {
+    "vi": "sẵn sàng",
+    "pos": "adj",
+    "ipa": "/ˈred.i/"
+  },
+  "main": {
+    "vi": "chính, chủ yếu",
+    "pos": "adj",
+    "ipa": "/meɪn/"
+  },
+  "major": {
+    "vi": "lớn, trọng đại; chuyên ngành",
+    "pos": "adj, n",
+    "ipa": "/ˈmeɪ.dʒər/"
+  },
+  "real": {
+    "vi": "thực tế, có thật",
+    "pos": "adj",
+    "ipa": "/rɪəl/"
+  },
+  "really": {
+    "vi": "thực sự",
+    "pos": "adv",
+    "ipa": "/ˈrɪə.li/"
+  },
+  "very": {
+    "vi": "rất",
+    "pos": "adv",
+    "ipa": "/ˈver.i/"
+  },
+  "also": {
+    "vi": "cũng, ngoài ra",
+    "pos": "adv",
+    "ipa": "/ˈɔːl.səʊ/"
+  },
+  "now": {
+    "vi": "bây giờ",
+    "pos": "adv",
+    "ipa": "/naʊ/"
+  },
+  "just": {
+    "vi": "vừa mới; chỉ là",
+    "pos": "adv",
+    "ipa": "/dʒʌst/"
+  },
+  "only": {
+    "vi": "duy nhất, chỉ",
+    "pos": "adv, adj",
+    "ipa": "/ˈəʊn.li/"
+  },
+  "even": {
+    "vi": "thậm chí, ngay cả",
+    "pos": "adv",
+    "ipa": "/ˈiː.vən/"
+  },
+  "still": {
+    "vi": "vẫn còn",
+    "pos": "adv",
+    "ipa": "/stɪl/"
+  },
+  "already": {
+    "vi": "đã... rồi",
+    "pos": "adv",
+    "ipa": "/ɔːlˈred.i/"
+  },
+  "almost": {
+    "vi": "gần như, hầu như",
+    "pos": "adv",
+    "ipa": "/ˈɔːl.məʊst/"
+  },
+  "often": {
+    "vi": "thường xuyên",
+    "pos": "adv",
+    "ipa": "/ˈɒf.ən/"
+  },
+  "always": {
+    "vi": "luôn luôn",
+    "pos": "adv",
+    "ipa": "/ˈɔːl.weɪz/"
+  },
+  "never": {
+    "vi": "không bao giờ",
+    "pos": "adv",
+    "ipa": "/ˈnev.ər/"
+  },
+  "sometimes": {
+    "vi": "thỉnh thoảng",
+    "pos": "adv",
+    "ipa": "/ˈsʌm.taɪmz/"
+  },
+  "again": {
+    "vi": "lại, một lần nữa",
+    "pos": "adv",
+    "ipa": "/əˈɡen/"
+  },
+  "together": {
+    "vi": "cùng nhau",
+    "pos": "adv",
+    "ipa": "/təˈɡeð.ər/"
+  },
+  "well": {
+    "vi": "tốt; giếng nước",
+    "pos": "adv, n",
+    "ipa": "/wel/"
+  },
+  "here": {
+    "vi": "ở đây",
+    "pos": "adv",
+    "ipa": "/hɪər/"
+  },
+  "there": {
+    "vi": "ở đó",
+    "pos": "adv",
+    "ipa": "/ðeər/"
+  },
+  "where": {
+    "vi": "ở đâu, nơi mà",
+    "pos": "adv, conj",
+    "ipa": "/weər/"
+  },
+  "when": {
+    "vi": "khi nào, khi",
+    "pos": "adv, conj",
+    "ipa": "/wen/"
+  },
+  "why": {
+    "vi": "tại sao",
+    "pos": "adv",
+    "ipa": "/waɪ/"
+  },
+  "how": {
+    "vi": "như thế nào, cách nào",
+    "pos": "adv",
+    "ipa": "/haʊ/"
+  },
+  "what": {
+    "vi": "cái gì",
+    "pos": "pron",
+    "ipa": "/wɒt/"
+  },
+  "who": {
+    "vi": "ai, người mà",
+    "pos": "pron",
+    "ipa": "/huː/"
+  },
+  "which": {
+    "vi": "cái nào, điều mà",
+    "pos": "pron",
+    "ipa": "/wɪtʃ/"
+  }
+}

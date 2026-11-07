@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduGo English - Bản Demo Đồng Bộ Giao Diện Khóa Học & Thẻ Nổi Bật (Web & Mobile)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-brand: #059669;
+      --color-brand-hover: #047857;
+      --color-brand-light: #ecfdf5;
+      --color-brand-dark: #064e3b;
+    }
+    * {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      box-sizing: border-box;
+    }
+    .font-serif-reading {
+      font-family: 'Merriweather', Georgia, serif;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* EduGo Phone Bottom Nav */
+    .ph-nav2 {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 8px;
+      height: 68px;
+      z-index: 40;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      padding: 4px;
+    }
+    .ph-nav2 .bg {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      z-index: -1;
+      pointer-events: none;
+      filter: drop-shadow(0 6px 14px rgba(15, 23, 42, 0.12));
+    }
+    .ph-nav2 .bg .l {
+      flex: 1;
+      background: #ffffff;
+      border-radius: 26px 0 0 26px;
+    }
+    .ph-nav2 .bg .r {
+      flex: 1;
+      background: #ffffff;
+      border-radius: 0 26px 26px 0;
+    }
+    .ph-nav2 .bg svg {
+      width: 110px;
+      height: 68px;
+      flex: none;
+      display: block;
+    }
+    .ph-nav2 .bg svg path {
+      fill: #ffffff;
+    }
+    .ph-nav2 .it {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 2px;
+      padding-bottom: 6px;
+      border-radius: 20px;
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #64748b;
+      cursor: pointer;
+    }
+    .ph-nav2 .it svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 1.8;
+    }
+    .ph-nav2 .it.on {
+      background: #ecfdf5;
+      color: #059669;
+    }
+    .ph-nav2 .it.on svg {
+      stroke-width: 2.2;
+    }
+    .ph-nav2 .mid {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 6px;
+      font-size: 9.5px;
+      font-weight: 800;
+      color: #059669;
+      cursor: pointer;
+    }
+    .ph-nav2 .mid .b {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 48px;
+      height: 48px;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #059669, #047857);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 18px rgba(5, 150, 105, 0.35);
+      border: 3px solid #ffffff;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeIn {
+      animation: fadeIn 0.22s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen">
+
+  <!-- ================= TOP DEMO HEADER & VIEW SWITCHER ================= -->
+  <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+    <div class="max-w-[1600px] mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-md shadow-emerald-600/20">
+          E
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold text-slate-900 text-sm">EduGo English</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+              Demo Đồng Bộ Khóa Học & Thẻ Nổi Bật
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-500 hidden sm:block">
+            Đồng bộ thẻ nổi bật (Từ vựng, Đọc hiểu & Dịch, Ôn tập) · Học theo Topic bài viết chọn trong kho
+          </p>
+        </div>
+      </div>
+
+      <!-- Center: Screen Mode Switcher -->
+      <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold gap-1">
+        <button id="btnModeCourse" onclick="switchScreenMode('course')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all bg-white text-emerald-800 shadow-xs">
+          <span>📘 1. Khoá học & Kho Topic (Ảnh mới duyệt)</span>
+        </button>
+        <button id="btnModeStudy" onclick="switchScreenMode('study')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900">
+          <span>📖 2. Không gian Học & Dịch (Chia đôi rộng)</span>
+        </button>
+      </div>
+
+      <!-- Right: Device Switcher -->
+      <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
+        <button id="btnViewDesktop" onclick="switchDeviceView('desktop')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all bg-white text-slate-900 shadow-xs font-bold">
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <span>Web (Máy tính)</span>
+        </button>
+        <button id="btnViewMobile" onclick="switchDeviceView('mobile')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          <span>Điện thoại (Mobile)</span>
+        </button>
+        <button id="btnViewBoth" onclick="switchDeviceView('both')" class="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+          <span>Xem song song</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= MAIN DEMO CONTAINER ================= -->
+  <main class="max-w-[1600px] mx-auto p-4 sm:p-6 transition-all duration-300">
+    <div id="viewsWrapper" class="flex flex-col lg:flex-row gap-8 items-start justify-center">
+
+      <!-- ========================================================================================= -->
+      <!-- 🖥️ DESKTOP VERSION -->
+      <!-- ========================================================================================= -->
+      <section id="desktopContainer" class="w-full bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden flex min-h-[920px]">
+        
+        <!-- EDUGO LEFT SIDEBAR -->
+        <aside class="w-20 bg-slate-50/90 border-r border-slate-200/80 flex flex-col items-center py-6 justify-between shrink-0 select-none">
+          <div class="flex flex-col items-center gap-7">
+            <div class="w-11 h-11 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-emerald-600/20">
+              E
+            </div>
+            <nav class="flex flex-col items-center gap-5">
+              <a href="#" class="flex flex-col items-center gap-1 text-slate-400 hover:text-emerald-600 transition-colors group">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center group-hover:bg-emerald-50">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                </div>
+                <span class="text-[11px] font-medium">Thư viện</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-slate-400 hover:text-emerald-600 transition-colors group">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center group-hover:bg-emerald-50">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
+                </div>
+                <span class="text-[11px] font-medium">Bảng tin</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-emerald-600 font-bold group">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100/70 flex items-center justify-center text-emerald-700">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                </div>
+                <span class="text-[11px]">Khoá học</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-slate-400 hover:text-emerald-600 transition-colors group">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center group-hover:bg-emerald-50">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                </div>
+                <span class="text-[11px] font-medium">Thống kê</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-slate-400 hover:text-emerald-600 transition-colors group">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center group-hover:bg-emerald-50">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </div>
+                <span class="text-[11px] font-medium">Cài đặt</span>
+              </a>
+            </nav>
+          </div>
+
+          <div class="flex flex-col items-center gap-4">
+            <button class="w-10 h-10 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors relative">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+              <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500"></span>
+            </button>
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-orange-400 p-0.5 shadow-sm cursor-pointer">
+              <div class="w-full h-full rounded-full bg-white flex items-center justify-center font-bold text-xs text-amber-700">
+                Đ
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- MAIN WEB WORKSPACE -->
+        <div class="flex-1 flex flex-col bg-slate-50/40 overflow-y-auto">
+
+          <!-- ================= SCREEN 1: KHOÁ HỌC & KHO TOPIC BÀI VIẾT (ĐỒNG BỘ ẢNH MỚI media_1791222873784.png) ================= -->
+          <div id="desktopScreen-course" class="p-8 max-w-7xl mx-auto w-full space-y-8 animate-fadeIn">
+            
+            <!-- Top Switcher Bar (Khóa học [ EN ] English) -->
+            <div class="flex items-center justify-between">
+              <div class="inline-flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200/90 shadow-2xs">
+                <span class="text-xs font-bold text-slate-500">Khoá học</span>
+                <div class="w-12 h-6 rounded-full bg-emerald-600 relative flex items-center cursor-pointer px-1 shadow-inner">
+                  <div class="w-4 h-4 rounded-full bg-white shadow-md flex items-center justify-center text-[8px] font-black text-emerald-700 ml-auto">EN</div>
+                </div>
+                <span class="text-xs font-black text-emerald-800">English</span>
+              </div>
+
+              <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Học theo Topic bài viết · Chuẩn 6 bậc CEFR</span>
+              </div>
+            </div>
+
+            <!-- 🌟 1. BANNER KHOÁ HỌC (ĐÃ ĐƯỢC BẠN DUYỆT ĐỒNG BỘ) -->
+            <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-[28px] p-8 text-white shadow-lg shadow-emerald-700/15 relative overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+              
+              <!-- Left Column: Title, Instructor, Meta -->
+              <div class="lg:col-span-8 space-y-4">
+                <div class="flex items-center gap-2">
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/20 text-white text-xs font-bold">
+                    <span>Khoá học</span>
+                  </span>
+                  <span class="text-xs text-emerald-200 font-semibold">Khoá học Tiếng Anh</span>
+                </div>
+
+                <div>
+                  <span class="text-[11px] font-black uppercase tracking-wider text-emerald-200 block">
+                    KHOÁ HỌC TIẾNG ANH · HỌC THEO TOPIC BÀI VIẾT (CEFR)
+                  </span>
+                  <h1 class="text-3xl lg:text-4xl font-extrabold text-white mt-1 leading-tight">
+                    Kho Topic Bài Viết & Luyện Dịch Báo Quốc Tế
+                  </h1>
+                  <p class="text-xs sm:text-sm text-emerald-100/90 mt-1 max-w-xl leading-relaxed">
+                    Không gò bó theo tuần cố định. Bạn tự do chọn bài viết yêu thích trong kho để rèn luyện trọn bộ 3 kỹ năng: Từ vựng, Đọc hiểu (tích hợp Dịch thuật) và Ôn tập.
+                  </p>
+                </div>
+
+                <!-- Meta Chips -->
+                <div class="flex flex-wrap items-center gap-2 text-xs pt-1">
+                  <span class="px-3 py-1 rounded-full bg-black/15 backdrop-blur-xs text-white font-medium flex items-center gap-1.5 border border-white/10">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
+                    12 bài viết thực tế
+                  </span>
+                  <span class="px-3 py-1 rounded-full bg-black/15 backdrop-blur-xs text-white font-medium flex items-center gap-1.5 border border-white/10">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    3 kỹ năng cốt lõi
+                  </span>
+                  <span class="px-3 py-1 rounded-full bg-black/15 backdrop-blur-xs text-white font-medium flex items-center gap-1.5 border border-white/10">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    Chấm điểm AI tức thì
+                  </span>
+                </div>
+
+                <!-- Instructor Box -->
+                <div class="bg-black/15 backdrop-blur-md rounded-2xl p-3 flex items-center gap-3 border border-white/10 max-w-sm mt-2">
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-orange-400 p-0.5 shrink-0 shadow-sm">
+                    <div class="w-full h-full rounded-full bg-white flex items-center justify-center font-black text-xs text-amber-700">
+                      Đ
+                    </div>
+                  </div>
+                  <div>
+                    <h4 class="font-extrabold text-xs text-white leading-tight">Nguyễn Trọng Đức</h4>
+                    <p class="text-[11px] text-emerald-100/80">@ngtduc24 · Giảng viên khoá học</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: Status & Quick Action Card -->
+              <div class="lg:col-span-4 bg-white/15 backdrop-blur-md rounded-2xl p-5 border border-white/20 text-white space-y-3 shadow-xs">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-300"></span>
+                    Chủ đề đang học dở
+                  </span>
+                  <span class="text-emerald-200 font-semibold">81%</span>
+                </div>
+
+                <div class="space-y-1">
+                  <h4 class="font-extrabold text-sm line-clamp-1">Twelve arrested for cat trafficking ring</h4>
+                  <p class="text-[11px] text-emerald-100/80">BBC News · Bậc B2 · Đang dịch 150/185 từ</p>
+                </div>
+
+                <div class="w-full h-2 bg-black/20 rounded-full overflow-hidden">
+                  <div class="w-[81%] h-full bg-white rounded-full"></div>
+                </div>
+
+                <button onclick="openTopicStudy('cat-trafficking', 'read-translate')" class="w-full py-2.5 rounded-xl bg-white text-emerald-800 font-extrabold text-xs shadow-sm hover:bg-emerald-50 active:scale-95 transition-all flex items-center justify-center gap-2">
+                  <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <span>Tiếp tục học chủ đề này</span>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- 🌟 2. 3 THẺ NỔI BẬT THEO CÁC KỸ NĂNG (ĐỒNG BỘ 100% CỤM THẺ NỔI BẬT Ở ẢNH MỚI media_1791222873784.png) -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h2 class="text-base font-extrabold text-slate-900">Các kỹ năng chính trong bài học</h2>
+                  <p class="text-xs text-slate-500">Mỗi chủ đề bạn chọn trong kho sẽ bao gồm trọn vẹn 3 kỹ năng này</p>
+                </div>
+                <span class="text-xs font-bold text-emerald-600">3 Kỹ năng cốt lõi</span>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                
+                <!-- THẺ NỔI BẬT 1: HỌC TỪ VỰNG -->
+                <div onclick="openTopicStudy('cat-trafficking', 'vocab')" class="bg-slate-900 rounded-3xl p-6 text-white relative overflow-hidden group cursor-pointer min-h-[190px] flex flex-col justify-between shadow-sm hover:shadow-lg transition-all border border-slate-800">
+                  <img src="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&auto=format&fit=crop&q=80" alt="" class="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:scale-105 transition-transform duration-500">
+                  <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/65 to-slate-900/40"></div>
+                  
+                  <div class="relative z-10 space-y-1.5">
+                    <span class="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white text-slate-900 shadow-xs">
+                      NỔI BẬT
+                    </span>
+                    <h3 class="text-xl font-extrabold text-white group-hover:text-emerald-300 transition-colors">
+                      Học từ vựng
+                    </h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                      Vốn từ theo chủ đề, phát âm IPA chuẩn & Flashcard ghi nhớ trước khi đọc.
+                    </p>
+                  </div>
+
+                  <div class="relative z-10 flex items-center gap-3 pt-3">
+                    <button class="px-4 py-2 rounded-xl bg-white text-slate-900 font-extrabold text-xs shadow-sm group-hover:bg-emerald-50 transition-colors flex items-center gap-1.5">
+                      <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                      <span>Học từ vựng ngay</span>
+                    </button>
+                    <span class="text-xs font-bold text-emerald-400">Miễn phí</span>
+                  </div>
+                </div>
+
+                <!-- THẺ NỔI BẬT 2: ĐỌC HIỂU (PHẦN DỊCH NẰM CHUNG TẠI ĐÂY) -->
+                <div onclick="openTopicStudy('cat-trafficking', 'read-translate')" class="bg-slate-900 rounded-3xl p-6 text-white relative overflow-hidden group cursor-pointer min-h-[190px] flex flex-col justify-between shadow-sm hover:shadow-lg transition-all border-2 border-emerald-500/80">
+                  <img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80" alt="" class="absolute inset-0 w-full h-full object-cover opacity-35 group-hover:scale-105 transition-transform duration-500">
+                  <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/65 to-slate-900/40"></div>
+                  
+                  <div class="relative z-10 space-y-1.5">
+                    <div class="flex items-center gap-2">
+                      <span class="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white text-slate-900 shadow-xs">
+                        NỔI BẬT
+                      </span>
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500 text-white">
+                        TRỌNG TÂM · CÓ DỊCH BÀI
+                      </span>
+                    </div>
+                    <h3 class="text-xl font-extrabold text-white group-hover:text-emerald-300 transition-colors">
+                      Đọc hiểu & Dịch bài
+                    </h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                      Đọc song ngữ, bấm tra nghĩa trực tiếp & tự viết bản dịch đoạn có AI chấm điểm.
+                    </p>
+                  </div>
+
+                  <div class="relative z-10 flex items-center gap-3 pt-3">
+                    <button class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-md shadow-emerald-500/20 transition-colors flex items-center gap-1.5">
+                      <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                      <span>Vào đọc & dịch bài</span>
+                    </button>
+                    <span class="text-xs font-bold text-emerald-400">Miễn phí</span>
+                  </div>
+                </div>
+
+                <!-- THẺ NỔI BẬT 3: ÔN TẬP -->
+                <div onclick="openTopicStudy('cat-trafficking', 'review')" class="bg-slate-900 rounded-3xl p-6 text-white relative overflow-hidden group cursor-pointer min-h-[190px] flex flex-col justify-between shadow-sm hover:shadow-lg transition-all border border-slate-800">
+                  <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600&auto=format&fit=crop&q=80" alt="" class="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:scale-105 transition-transform duration-500">
+                  <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/65 to-slate-900/40"></div>
+                  
+                  <div class="relative z-10 space-y-1.5">
+                    <span class="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white text-slate-900 shadow-xs">
+                      NỔI BẬT
+                    </span>
+                    <h3 class="text-xl font-extrabold text-white group-hover:text-emerald-300 transition-colors">
+                      Ôn tập củng cố
+                    </h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                      Trắc nghiệm bài học, ghép câu, phản xạ nhanh và ôn tập từ vựng đã ghim.
+                    </p>
+                  </div>
+
+                  <div class="relative z-10 flex items-center gap-3 pt-3">
+                    <button class="px-4 py-2 rounded-xl bg-white text-slate-900 font-extrabold text-xs shadow-sm group-hover:bg-emerald-50 transition-colors flex items-center gap-1.5">
+                      <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      <span>Ôn tập ngay</span>
+                    </button>
+                    <span class="text-xs font-bold text-emerald-400">Miễn phí</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- 🌟 3. CAPSULE TABS & FILTER PILLS (ĐỒNG BỘ 100% CỤM TAB & FILTER Ở ẢNH MỚI media_1791222873784.png) -->
+            <div class="space-y-4 pt-3">
+              
+              <!-- Capsule Tab Bar (Giống hệt cụm tab: Tất cả khoá học 4 | Khoá học của tôi 2 | Đã lưu | Quản lý khoá học) -->
+              <div class="bg-slate-200/70 p-1.5 rounded-2xl flex items-center gap-1 text-xs font-bold w-fit max-w-full overflow-x-auto">
+                
+                <!-- Active Tab: White rounded card with green vertical indicator bars -->
+                <button class="px-5 py-2.5 rounded-xl bg-white text-emerald-700 shadow-xs flex items-center gap-2 shrink-0">
+                  <span class="text-emerald-600 font-black tracking-tighter text-sm">|||\</span>
+                  <span>Tất cả bài viết</span>
+                  <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] flex items-center justify-center font-bold">12</span>
+                </button>
+
+                <!-- Inactive Tab 2 -->
+                <button class="px-5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5 shrink-0">
+                  <span>Bài đang học</span>
+                  <span class="w-5 h-5 rounded-full bg-slate-300/80 text-slate-700 text-[10px] flex items-center justify-center font-bold">2</span>
+                </button>
+
+                <!-- Inactive Tab 3 -->
+                <button class="px-5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 transition-colors shrink-0">
+                  <span>Đã lưu</span>
+                </button>
+
+                <!-- Inactive Tab 4 -->
+                <button class="px-5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 transition-colors shrink-0">
+                  <span>Quản lý kho bài</span>
+                </button>
+
+              </div>
+
+              <!-- Filter Pills (Đồng bộ kiểu pill viền xanh như "Khoá Học 3D" trong ảnh mới) -->
+              <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-bold">
+                <button onclick="filterCategory('all', this)" class="px-4 py-2 rounded-full bg-emerald-50 text-emerald-800 border-2 border-emerald-500 cursor-pointer shrink-0 transition-all">
+                  Tất cả
+                </button>
+                <button onclick="filterCategory('tech', this)" class="px-4 py-2 rounded-full bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 cursor-pointer shrink-0 transition-all">
+                  Khoa học - Công nghệ
+                </button>
+                <button onclick="filterCategory('world', this)" class="px-4 py-2 rounded-full bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 cursor-pointer shrink-0 transition-all">
+                  Thế giới & Xã hội
+                </button>
+                <button onclick="filterCategory('life', this)" class="px-4 py-2 rounded-full bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 cursor-pointer shrink-0 transition-all">
+                  Văn hóa - Đời sống
+                </button>
+                <button onclick="filterCategory('econ', this)" class="px-4 py-2 rounded-full bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 cursor-pointer shrink-0 transition-all">
+                  Kinh tế - Kinh doanh
+                </button>
+              </div>
+
+            </div>
+
+            <!-- 🌟 4. LƯỚI BÀI VIẾT / TOPIC TRONG KHO (ĐỒNG BỘ 100% CẤU TRÚC 3 CỘT Ở NỬA DƯỚI ẢNH MỚI media_1791222873784.png) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              
+              <!-- TOPIC CARD 1 (ĐANG HỌC DỞ 81%) -->
+              <div onclick="openTopicStudy('cat-trafficking', 'read-translate')" class="bg-white rounded-3xl border border-slate-200/90 overflow-hidden shadow-xs hover:shadow-lg transition-all group cursor-pointer flex flex-col justify-between">
+                <div>
+                  <!-- Card Image Header -->
+                  <div class="h-44 bg-slate-100 relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&auto=format&fit=crop&q=80" alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    <span class="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-white/95 text-slate-900 shadow-xs">
+                      Cơ bản · B2
+                    </span>
+                  </div>
+
+                  <!-- Card Body -->
+                  <div class="p-5 space-y-2">
+                    <span class="text-xs font-black uppercase tracking-wider text-emerald-700 block">
+                      THẾ GIỚI · BBC NEWS
+                    </span>
+                    <h3 class="font-extrabold text-base text-slate-900 group-hover:text-emerald-700 transition-colors leading-snug line-clamp-2">
+                      Twelve arrested for allegedly running cat trafficking ring
+                    </h3>
+                    <p class="text-xs text-slate-500 font-medium">Nguyễn Trọng Đức · EduGo biên soạn</p>
+                    
+                    <!-- Stats Icons Row (Chuẩn Ảnh mới: := 35 bài · clock 10 giờ · users 4) -->
+                    <div class="flex items-center gap-4 text-xs text-slate-400 pt-1">
+                      <span class="flex items-center gap-1.5 font-medium">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                        12 từ mới
+                      </span>
+                      <span class="flex items-center gap-1.5 font-medium">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        8 phút đọc
+                      </span>
+                      <span class="flex items-center gap-1.5 font-medium">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        158 học
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Bottom Progress & Button (Chuẩn Ảnh mới: Đã học 81% + vạch tiến độ) -->
+                <div class="p-5 pt-0 space-y-2">
+                  <div class="flex items-center justify-between text-xs font-bold">
+                    <span class="text-slate-600">Đã học</span>
+                    <span class="text-emerald-700 font-black">81%</span>
+                  </div>
+                  <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="w-[81%] h-full bg-emerald-600 rounded-full"></div>
+                  </div>
+                  <div class="pt-2 flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-400">150 / 185 từ dịch</span>
+                    <button class="px-5 py-2 rounded-xl bg-emerald-600 text-white font-extrabold text-xs shadow-sm group-hover:bg-emerald-700 transition-colors flex items-center gap-1.5">
+                      <span>Học tiếp</span>
+                      <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TOPIC CARD 2 (CHƯA HỌC: CÓ NÚT MIỄN PHÍ + ĐĂNG KÝ/VÀO HỌC NHƯ ẢNH MỚI) -->
+              <div onclick="openTopicStudy('renewable-energy', 'read-translate')" class="bg-white rounded-3xl border border-slate-200/90 overflow-hidden shadow-xs hover:shadow-lg transition-all group cursor-pointer flex flex-col justify-between">
+                <div>
+                  <div class="h-44 bg-slate-100 relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?w=600&auto=format&fit=crop&q=80" alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    <span class="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-white/95 text-slate-900 shadow-xs">
+                      Cơ bản · A2
+                    </span>
+                  </div>
+
+                  <div class="p-5 space-y-2">
+                    <span class="text-xs font-black uppercase tracking-wider text-emerald-700 block">
+                      NĂNG LƯỢNG · CNN
+                    </span>
+                    <h3 class="font-extrabold text-base text-slate-900 group-hover:text-emerald-700 transition-colors leading-snug line-clamp-2">
+                      Renewable Energy Trends and Solar Transition in 2026
+                    </h3>
+                    <p class="text-xs text-slate-500 font-medium">Nguyễn Trọng Đức · EduGo biên soạn</p>
+                    
+                    <div class="flex items-center gap-4 text-xs text-slate-400 pt-1">
+                      <span class="flex items-center gap-1.5 font-medium">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                        14 từ mới
+                      </span>
+                      <span class="flex items-center gap-1.5 font-medium">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        10 phút đọc
+                      </span>
+                      <span class="flex items-center gap-1.5 font-medium">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        240 học
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Bottom Row: Miễn phí & Nút Đăng ký màu xanh như hình Blender trong ảnh mới -->
+                <div class="p-5 pt-0 flex items-center justify-between">
+                  <span class="text-base font-extrabold text-emerald-600">Miễn phí</span>
+                  <button class="px-5 py-2 rounded-xl bg-emerald-600 text-white font-extrabold text-xs shadow-sm group-hover:bg-emerald-700 transition-colors">
+                    Vào học
+                  </button>
+                </div>
+              </div>
+
+              <!-- TOPIC CARD 3 (CÔNG NGHỆ TECHCRUNCH) -->
+              <div onclick="openTopicStudy('ai-discovery', 'read-translate')" class="bg-white rounded-3xl border border-slate-200/90 overflow-hidden shadow-xs hover:shadow-lg transition-all group cursor-pointer flex flex-col justify-between">
+                <div>
+                  <div class="h-44 bg-slate-100 relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80" alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    <span class="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-white/95 text-slate-900 shadow-xs">
+                      Trung cấp · B1
+                    </span>
+                  </div>
+
+                  <div class="p-5 space-y-2">
+                    <span class="text-xs font-black uppercase tracking-wider text-emerald-700 block">
+                      CÔNG NGHỆ · TECHCRUNCH
+                    </span>
+                    <h3 class="font-extrabold text-base text-slate-900 group-hover:text-emerald-700 transition-colors leading-snug line-clamp-2">
+                      DeepMind Unveils Next-Gen AI System for Scientific Discovery
+                    </h3>
+                    <p class="text-xs text-slate-500 font-medium">Nguyễn Trọng Đức · EduGo biên soạn</p>
+                    
+                    <div class="flex items-center gap-4 text-xs text-slate-400 pt-1">
+                      <span class="flex items-center gap-1.5 font-medium">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                        18 từ mới
+                      </span>
+                      <span class="flex items-center gap-1.5 font-medium">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        12 phút đọc
+                      </span>
+                      <span class="flex items-center gap-1.5 font-medium">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        312 học
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="p-5 pt-0 flex items-center justify-between">
+                  <span class="text-base font-extrabold text-emerald-600">Miễn phí</span>
+                  <button class="px-5 py-2 rounded-xl bg-emerald-600 text-white font-extrabold text-xs shadow-sm group-hover:bg-emerald-700 transition-colors">
+                    Vào học
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- ================= SCREEN 2: STUDY WORKSPACE (FULL MÀN HÌNH CHIA ĐÔI RỘNG RÃI: TỪ VỰNG · ĐỌC & DỊCH · ÔN TẬP) ================= -->
+          <div id="desktopScreen-study" class="flex-1 flex flex-col min-h-0 bg-slate-900 hidden animate-fadeIn">
+            
+            <!-- Dark Top Header Bar -->
+            <header class="h-16 bg-slate-900 border-b border-slate-800 px-6 flex items-center justify-between text-white shrink-0 z-20">
+              
+              <!-- Left: Back Button & Topic Title -->
+              <div class="flex items-center gap-4 min-w-0">
+                <button onclick="switchScreenMode('course')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-colors" title="Về kho bài viết">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                  <span>Kho Topic</span>
+                </button>
+
+                <div class="truncate">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-black uppercase tracking-wider text-emerald-400">BBC News · Bậc B2</span>
+                    <span class="text-slate-500">|</span>
+                    <h2 class="text-sm font-extrabold text-white truncate">Twelve arrested for cat trafficking ring</h2>
+                  </div>
+                  <p class="text-[11px] text-slate-400">Chủ đề: Đời sống & Pháp luật quốc tế</p>
+                </div>
+              </div>
+
+              <!-- Center: 3 Skills Segmented Navigation inside this Topic -->
+              <div class="hidden md:flex items-center bg-slate-800/80 p-1 rounded-xl border border-slate-700 text-xs font-bold">
+                <button id="wsSkillBtn-vocab" onclick="switchStudySkillTab('vocab')" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all flex items-center gap-1.5">
+                  <span>📚 1. Học từ vựng (12 từ)</span>
+                </button>
+                <button id="wsSkillBtn-readTranslate" onclick="switchStudySkillTab('readTranslate')" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white shadow-xs transition-all flex items-center gap-1.5">
+                  <span>📖 2. Đọc hiểu & Dịch bài</span>
+                </button>
+                <button id="wsSkillBtn-review" onclick="switchStudySkillTab('review')" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all flex items-center gap-1.5">
+                  <span>🧠 3. Ôn tập & Trắc nghiệm</span>
+                </button>
+              </div>
+
+              <!-- Right: Progress & Status -->
+              <div class="flex items-center gap-3">
+                <div class="text-right hidden sm:block">
+                  <span class="text-xs font-bold text-white block">150 trên 185 từ</span>
+                  <span class="text-[10px] text-slate-400">Tiến độ bài dịch</span>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-slate-800 border-2 border-emerald-500 flex items-center justify-center text-xs font-black text-emerald-400">
+                  81%
+                </div>
+              </div>
+
+            </header>
+
+            <!-- ================= SKILL TAB 2: ĐỌC HIỂU & DỊCH BÀI (FULL MÀN HÌNH CHIA ĐÔI RỘNG RÃI) ================= -->
+            <div id="wsSkillView-readTranslate" class="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0 overflow-hidden bg-slate-100">
+              
+              <!-- LEFT AREA (7 cols): English Article Reader with Serif Typography -->
+              <div class="lg:col-span-7 flex flex-col h-full overflow-y-auto p-6 lg:p-8 space-y-4 border-r border-slate-200 bg-white">
+                
+                <!-- Article Header Inside Reader -->
+                <div class="pb-4 border-b border-slate-100 space-y-2">
+                  <div class="flex items-center justify-between text-xs text-slate-400">
+                    <span class="font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md">BBC News · International</span>
+                    <span>185 từ gốc · Khoảng 3 phút đọc</span>
+                  </div>
+                  <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">
+                    Twelve arrested for allegedly running cat trafficking ring in Vietnam
+                  </h1>
+                  <p class="text-xs text-slate-500">
+                    Biên soạn từ nguồn BBC News · Cập nhật mới nhất
+                  </p>
+                </div>
+
+                <!-- Article Body with Comfortable Reading Typography -->
+                <div class="space-y-6 font-serif-reading text-slate-800 leading-[2.0] text-[18px] select-text">
+                  <p>
+                    Twelve men have been arrested in Vietnam <span onclick="lookupWord('after allegedly confessing', 'sau khi thú nhận hành vi')" class="bg-emerald-100/90 text-emerald-950 font-semibold px-2 py-0.5 rounded cursor-pointer hover:bg-emerald-200 transition-colors border-b-2 border-emerald-500" title="Bấm xem nghĩa">after allegedly confessing</span> to stealing thousands of domestic cats and selling them to restaurants.
+                  </p>
+
+                  <p>
+                    Police officers in the central province <span onclick="lookupWord('intercepted', 'chặn bắt, bắt giữ')" class="bg-emerald-100/90 text-emerald-950 font-semibold px-2 py-0.5 rounded cursor-pointer hover:bg-emerald-200 transition-colors border-b-2 border-emerald-500" title="Bấm xem nghĩa">intercepted</span> three transport vehicles loaded with wire cages containing over 300 feline animals earlier this week. Local authorities confirmed the animals were illegally transported across provincial borders without health certification.
+                  </p>
+
+                  <p>
+                    Animal welfare organizations have voiced growing concerns over pet security and called for stricter legislative measures to eliminate commercial consumption of <span onclick="lookupWord('companion animals', 'thú cưng đồng hành')" class="bg-emerald-100/90 text-emerald-950 font-semibold px-2 py-0.5 rounded cursor-pointer hover:bg-emerald-200 transition-colors border-b-2 border-emerald-500" title="Bấm xem nghĩa">companion animals</span>.
+                  </p>
+                </div>
+
+                <!-- Instant Lookup Popup Box -->
+                <div id="wordLookupBox" class="mt-4 p-4 rounded-2xl bg-slate-900 text-white shadow-xl border border-slate-700 hidden animate-fadeIn">
+                  <div class="flex items-center justify-between pb-2 border-b border-slate-700">
+                    <div class="flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                      <b id="lkTerm" class="text-sm font-extrabold text-emerald-300">intercepted</b>
+                      <span class="text-[11px] text-slate-400 italic">/ˌɪn.təˈsept.ɪd/ · verb</span>
+                    </div>
+                    <button onclick="document.getElementById('wordLookupBox').classList.add('hidden')" class="text-slate-400 hover:text-white text-xs">✕</button>
+                  </div>
+                  <div class="pt-2 text-xs text-slate-200">
+                    <span class="font-bold text-white">Nghĩa tiếng Việt:</span> <span id="lkDef">Chặn bắt, chặn lại trên đường đi</span>
+                  </div>
+                  <div class="pt-2 flex items-center gap-2">
+                    <button onclick="saveWordPrompt()" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px]">
+                      + Lưu vào sổ tay từ vựng
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Reader Audio Controls -->
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                  <button onclick="speakDemo()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold flex items-center gap-2 transition-colors">
+                    <svg class="w-4 h-4 text-emerald-600 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <span>Nghe audio bài báo (giọng chuẩn Anh - Mỹ)</span>
+                  </button>
+                  <span class="text-slate-400">Bấm từ nổi bật để tra nghĩa nhanh</span>
+                </div>
+
+              </div>
+
+              <!-- RIGHT AREA (5 cols): Integrated Translation Workspace & AI Scoring -->
+              <div class="lg:col-span-5 flex flex-col h-full overflow-y-auto p-6 lg:p-8 space-y-5 bg-slate-50/60">
+                
+                <!-- Workspace Header -->
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="text-base font-extrabold text-slate-900">Bản dịch tiếng Việt</h3>
+                    <p class="text-xs text-slate-500">Tự soạn bản dịch theo từng đoạn</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full text-[11px] flex items-center gap-1">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      Đã tự lưu nháp
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Translation Textarea with Word Count -->
+                <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 space-y-3 flex-1 flex flex-col">
+                  <div class="flex items-center justify-between text-xs text-slate-400 pb-2 border-b border-slate-100">
+                    <span class="font-bold text-slate-700">Khung viết dịch</span>
+                    <span>Số từ: <b id="desktopWc" class="text-emerald-700">82</b> từ</span>
+                  </div>
+
+                  <textarea id="desktopTextarea" oninput="updateDesktopWc(this.value)" class="w-full flex-1 min-h-[260px] p-2 outline-none text-slate-800 text-[16px] leading-relaxed resize-y font-sans border-0 focus:ring-0 placeholder-slate-400" placeholder="Nhập bản dịch tiếng Việt của bạn tại đây...">Mười hai đối tượng vừa bị bắt giữ tại Việt Nam sau khi thừa nhận hành vi trộm cắp hàng nghìn con mèo nuôi trong nhà và bán lại cho các nhà hàng.
+
+Lực lượng công an tại tỉnh miền Trung đã chặn bắt ba xe tải chở các lồng sắt chứa hơn 300 con mèo vào đầu tuần này. Chính quyền địa phương xác nhận số động vật này được vận chuyển trái phép qua các tỉnh mà không có giấy chứng nhận kiểm dịch y tế.
+
+Các tổ chức phúc lợi động vật đã bày tỏ mối quan ngại ngày càng lớn về an toàn thú cưng...</textarea>
+                </div>
+
+                <!-- Action CTA: Nộp bài & Nhận xét AI -->
+                <div class="space-y-3">
+                  <button onclick="submitDemoTranslation()" class="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-md shadow-emerald-600/25 active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    <span>Nộp bản dịch & Chấm điểm AI</span>
+                  </button>
+
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="toggleReferenceTranslation()" class="py-2.5 rounded-xl border border-slate-200 bg-white font-bold text-xs text-slate-700 hover:bg-slate-50 transition-colors">
+                      Xem gợi ý song ngữ
+                    </button>
+                    <button onclick="switchStudySkillTab('review')" class="py-2.5 rounded-xl border border-slate-200 bg-white font-bold text-xs text-slate-700 hover:bg-slate-50 transition-colors">
+                      Sang bước Ôn tập ›
+                    </button>
+                  </div>
+                </div>
+
+                <!-- AI Score Box Result (Pre-rendered for demo preview) -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-black uppercase text-slate-500">Đánh giá AI gần nhất</span>
+                    <span class="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">8.8 / 10 Điểm</span>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed">
+                    Bản dịch trôi chảy, chuyển tải tự nhiên cấu trúc <code class="bg-slate-100 text-slate-800 px-1 py-0.5 rounded text-[11px]">after allegedly confessing</code> thành "sau khi thừa nhận hành vi".
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
+
+            <!-- ================= SKILL TAB 1: HỌC TỪ VỰNG ================= -->
+            <div id="wsSkillView-vocab" class="flex-1 p-8 overflow-y-auto max-w-5xl mx-auto w-full space-y-6 hidden bg-slate-50">
+              <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+                <div>
+                  <h2 class="text-xl font-extrabold text-slate-900">Từ vựng cốt lõi của bài báo</h2>
+                  <p class="text-xs text-slate-500">Học trước 12 từ vựng quan trọng trước khi vào đọc và dịch bài</p>
+                </div>
+                <button onclick="switchStudySkillTab('readTranslate')" class="px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-xs">
+                  Vào đọc bài báo ngay ›
+                </button>
+              </div>
+
+              <!-- Vocab Flashcard Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-2">
+                  <div class="flex items-center justify-between">
+                    <b class="text-base font-extrabold text-slate-900">allegedly</b>
+                    <span class="text-xs bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded">adverb</span>
+                  </div>
+                  <div class="text-xs text-slate-400 italic">/əˈledʒ.ɪd.li/</div>
+                  <div class="text-sm font-bold text-emerald-800">bị cáo buộc, được cho là</div>
+                  <p class="text-xs text-slate-500 italic">"Twelve arrested for allegedly running cat trafficking ring"</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-2">
+                  <div class="flex items-center justify-between">
+                    <b class="text-base font-extrabold text-slate-900">trafficking</b>
+                    <span class="text-xs bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded">noun</span>
+                  </div>
+                  <div class="text-xs text-slate-400 italic">/ˈtræf.ɪ.kɪŋ/</div>
+                  <div class="text-sm font-bold text-emerald-800">buôn bán bất hợp pháp</div>
+                  <p class="text-xs text-slate-500 italic">"The suspects were accused of animal trafficking across borders"</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-2">
+                  <div class="flex items-center justify-between">
+                    <b class="text-base font-extrabold text-slate-900">intercept</b>
+                    <span class="text-xs bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded">verb</span>
+                  </div>
+                  <div class="text-xs text-slate-400 italic">/ˌɪn.təˈsept/</div>
+                  <div class="text-sm font-bold text-emerald-800">chặn bắt, đón chặn trên đường</div>
+                  <p class="text-xs text-slate-500 italic">"Police officers intercepted three transport vehicles earlier this week"</p>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-2">
+                  <div class="flex items-center justify-between">
+                    <b class="text-base font-extrabold text-slate-900">companion animals</b>
+                    <span class="text-xs bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded">noun phrase</span>
+                  </div>
+                  <div class="text-xs text-slate-400 italic">/kəmˈpæn.jən ˈæn.ɪ.məl/</div>
+                  <div class="text-sm font-bold text-emerald-800">thú cưng đồng hành, thú nuôi trong nhà</div>
+                  <p class="text-xs text-slate-500 italic">"Advocating for the welfare of companion animals"</p>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- ================= SKILL TAB 3: ÔN TẬP & TRẮC NGHIỆM ================= -->
+            <div id="wsSkillView-review" class="flex-1 p-8 overflow-y-auto max-w-4xl mx-auto w-full space-y-6 hidden bg-slate-50">
+              <div class="flex items-center justify-between pb-4 border-b border-slate-200">
+                <div>
+                  <h2 class="text-xl font-extrabold text-slate-900">Ôn tập & Kiểm tra củng cố</h2>
+                  <p class="text-xs text-slate-500">Trả lời các câu hỏi đọc hiểu và kiểm tra trí nhớ từ vựng bài báo</p>
+                </div>
+                <span class="text-xs font-bold text-emerald-600">Câu 1 / 5</span>
+              </div>
+
+              <!-- Quiz Question Card -->
+              <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-5">
+                <div class="space-y-1">
+                  <span class="text-[11px] font-black uppercase text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md">Câu hỏi đọc hiểu</span>
+                  <h3 class="text-base font-extrabold text-slate-900 pt-1">
+                    What was the reason the authorities intercepted the vehicles?
+                  </h3>
+                </div>
+
+                <div class="space-y-2.5">
+                  <label class="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 flex items-center gap-3 cursor-pointer transition-colors">
+                    <input type="radio" name="quiz1" class="text-emerald-600 focus:ring-emerald-500">
+                    <span class="text-xs font-semibold text-slate-700">They exceeded the highway speed limits in the central province.</span>
+                  </label>
+                  <label class="p-3.5 rounded-xl border-2 border-emerald-500 bg-emerald-50/40 flex items-center gap-3 cursor-pointer">
+                    <input type="radio" name="quiz1" checked class="text-emerald-600 focus:ring-emerald-500">
+                    <span class="text-xs font-bold text-emerald-900">Animals were illegally transported across provincial borders without health certification.</span>
+                  </label>
+                  <label class="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500 flex items-center gap-3 cursor-pointer transition-colors">
+                    <input type="radio" name="quiz1" class="text-emerald-600 focus:ring-emerald-500">
+                    <span class="text-xs font-semibold text-slate-700">The drivers failed to present driving licenses at the checkpoint.</span>
+                  </label>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <span class="text-xs font-bold text-emerald-700">✔ Chính xác! Thông tin nằm ở đoạn 2 của bài báo.</span>
+                  <button class="px-5 py-2 rounded-xl bg-emerald-600 text-white font-extrabold text-xs shadow-sm hover:bg-emerald-700 transition-colors">
+                    Câu tiếp theo ›
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ========================================================================================= -->
+      <!-- 📱 MOBILE PHONE VERSION - EDUGO DESIGN SYSTEM (ĐỒNG BỘ 100% CẢ 3 KỸ NĂNG VÀ KHO TOPIC) -->
+      <!-- ========================================================================================= -->
+      <section id="mobileContainer" class="w-full flex justify-center py-2 hidden">
+        
+        <div class="w-[390px] h-[844px] bg-slate-900 rounded-[50px] p-3 shadow-2xl border-4 border-slate-800 relative flex flex-col overflow-hidden">
+          
+          <!-- Dynamic Island Notch -->
+          <div class="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-full z-50 flex items-center justify-end px-3">
+            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500/80 animate-pulse"></div>
+          </div>
+
+          <div class="w-full h-full bg-slate-50 rounded-[38px] flex flex-col overflow-hidden relative border border-slate-200">
+            
+            <!-- Mobile Status Bar -->
+            <div class="h-10 bg-white px-7 flex items-center justify-between text-xs font-bold text-slate-800 select-none shrink-0 pt-1">
+              <span>09:41</span>
+              <div class="flex items-center gap-1.5 text-slate-700">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.28 19.67 10.58 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9z"/></svg>
+                <div class="w-5 h-2.5 border border-slate-700 rounded-sm p-0.5 flex items-center"><div class="w-3 h-full bg-slate-700 rounded-xs"></div></div>
+              </div>
+            </div>
+
+            <!-- ================= MOBILE SCREEN 1: KHO TOPIC & 3 KỸ NĂNG NỔI BẬT ================= -->
+            <div id="mScreen-course" class="flex-1 flex flex-col overflow-hidden relative">
+              
+              <!-- Top Mobile Bar with Switcher -->
+              <div class="bg-white px-4 py-2.5 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <div class="inline-flex items-center gap-1.5 bg-slate-100 p-1 rounded-full border border-slate-200 text-[11px] font-bold">
+                  <span class="text-slate-500 pl-1.5">Khoá học</span>
+                  <div class="w-9 h-5 rounded-full bg-emerald-600 flex items-center px-0.5">
+                    <div class="w-3.5 h-3.5 rounded-full bg-white ml-auto text-[7px] font-black text-emerald-700 flex items-center justify-center">EN</div>
+                  </div>
+                  <span class="text-emerald-800 font-extrabold pr-1.5">English</span>
+                </div>
+
+                <div class="flex items-center gap-1 text-slate-500">
+                  <button class="p-1.5 rounded-lg hover:bg-slate-100"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></button>
+                </div>
+              </div>
+
+              <!-- Scrollable Body on Mobile -->
+              <div class="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
+                
+                <!-- 🌟 Mobile Green Course Hero Banner -->
+                <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-3xl p-5 text-white shadow-sm space-y-3">
+                  <div>
+                    <span class="text-[9px] font-black uppercase tracking-wider text-emerald-200 block">KHOÁ HỌC TIẾNG ANH · CEFR</span>
+                    <h3 class="font-extrabold text-base leading-tight mt-0.5">Kho Topic Bài Viết & Luyện Dịch Báo</h3>
+                  </div>
+
+                  <!-- Quick Continue Card -->
+                  <div onclick="switchMobileScreen('study')" class="bg-white/15 backdrop-blur-md rounded-2xl p-3 border border-white/20 space-y-2 cursor-pointer">
+                    <div class="flex items-center justify-between text-[11px] font-bold">
+                      <span>▶ Đang học dở</span>
+                      <span class="text-emerald-200">81%</span>
+                    </div>
+                    <div class="text-xs font-bold truncate">Twelve arrested for cat ring in VN</div>
+                    <button class="w-full py-2 rounded-xl bg-white text-emerald-800 font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5">
+                      <span>Vào học tiếp bài này</span>
+                      <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 🌟 Mobile 3 Featured Skill Cards -->
+                <div class="space-y-2">
+                  <div class="text-xs font-bold text-slate-800">3 Kỹ năng trọng tâm</div>
+                  
+                  <div class="grid grid-cols-3 gap-2">
+                    <div onclick="switchMobileScreen('study')" class="bg-slate-900 rounded-2xl p-2.5 text-white flex flex-col justify-between min-h-[90px] cursor-pointer">
+                      <span class="text-[8px] font-black uppercase text-emerald-400">Kỹ năng 1</span>
+                      <h4 class="font-extrabold text-[11px] leading-tight mt-1">Học từ vựng</h4>
+                      <span class="text-[9px] text-slate-300">12 từ</span>
+                    </div>
+
+                    <div onclick="switchMobileScreen('study')" class="bg-slate-900 rounded-2xl p-2.5 text-white flex flex-col justify-between min-h-[90px] cursor-pointer border border-emerald-500">
+                      <span class="text-[8px] font-black uppercase text-emerald-400">Trọng tâm</span>
+                      <h4 class="font-extrabold text-[11px] leading-tight mt-1">Đọc & Dịch</h4>
+                      <span class="text-[9px] text-emerald-300">81%</span>
+                    </div>
+
+                    <div onclick="switchMobileScreen('study')" class="bg-slate-900 rounded-2xl p-2.5 text-white flex flex-col justify-between min-h-[90px] cursor-pointer">
+                      <span class="text-[8px] font-black uppercase text-emerald-400">Kỹ năng 3</span>
+                      <h4 class="font-extrabold text-[11px] leading-tight mt-1">Ôn tập</h4>
+                      <span class="text-[9px] text-slate-300">Quiz</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 🌟 Mobile Topic Library Cards -->
+                <div class="space-y-2.5 pt-1">
+                  <div class="flex items-center justify-between text-xs font-bold text-slate-800">
+                    <span>Kho bài viết trong kho</span>
+                    <span class="text-emerald-700">12 bài</span>
+                  </div>
+                  
+                  <!-- Mobile Topic Card 1 -->
+                  <div onclick="switchMobileScreen('study')" class="bg-white rounded-2xl border border-slate-200 p-3 shadow-xs flex items-center gap-3 cursor-pointer">
+                    <div class="w-16 h-16 rounded-xl bg-slate-800 overflow-hidden shrink-0">
+                      <img src="https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=200&auto=format&fit=crop&q=80" alt="" class="w-full h-full object-cover">
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] font-black uppercase text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">Bậc B2</span>
+                        <span class="text-[9px] text-slate-400">BBC News</span>
+                      </div>
+                      <h4 class="font-extrabold text-xs text-slate-900 truncate mt-0.5">Twelve arrested for cat ring...</h4>
+                      <div class="flex items-center justify-between mt-1 text-[10px] text-emerald-700 font-bold">
+                        <span>Tiến độ: 81%</span>
+                        <span class="text-slate-400 font-normal">8 phút đọc</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Mobile Topic Card 2 -->
+                  <div onclick="switchMobileScreen('study')" class="bg-white rounded-2xl border border-slate-200 p-3 shadow-xs flex items-center gap-3 cursor-pointer">
+                    <div class="w-16 h-16 rounded-xl bg-slate-800 overflow-hidden shrink-0">
+                      <img src="https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?w=200&auto=format&fit=crop&q=80" alt="" class="w-full h-full object-cover">
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] font-black uppercase text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">Bậc A2</span>
+                        <span class="text-[9px] text-slate-400">CNN News</span>
+                      </div>
+                      <h4 class="font-extrabold text-xs text-slate-900 truncate mt-0.5">Renewable Energy in 2026</h4>
+                      <div class="flex items-center justify-between mt-1 text-[10px]">
+                        <span class="text-emerald-600 font-bold">Miễn phí</span>
+                        <span class="text-slate-400">10 phút đọc</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Signature EduGo Curved Bottom Navbar -->
+              <nav class="ph-nav2">
+                <span class="bg">
+                  <span class="l"></span>
+                  <svg viewBox="0 0 110 70" aria-hidden="true"><path d="M0 0H10C18 0 20 4 22 10A36 36 0 0 0 88 10C90 4 92 0 100 0H110V70H0Z" /></svg>
+                  <span class="r"></span>
+                </span>
+                <div class="it">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                  <span>Trang chủ</span>
+                </div>
+                <div class="it on">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                  <span>Khoá học</span>
+                </div>
+                <button type="button" class="mid" onclick="switchMobileScreen('study')">
+                  <span class="b">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                  </span>
+                  Học tiếp
+                </button>
+                <div class="it">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
+                  <span>Tạp chí</span>
+                </div>
+                <div class="it">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                  <span>Cá nhân</span>
+                </div>
+              </nav>
+
+            </div>
+
+
+            <!-- ================= MOBILE SCREEN 2: STUDY TOPIC (ĐỒNG BỘ 3 KỸ NĂNG: TỪ VỰNG · ĐỌC · DỊCH · ÔN TẬP) ================= -->
+            <div id="mScreen-study" class="flex-1 flex flex-col overflow-hidden relative hidden">
+              
+              <!-- Dark Top Bar on Mobile -->
+              <div class="bg-slate-900 text-white px-3 py-2.5 flex items-center justify-between shrink-0">
+                <button onclick="switchMobileScreen('course')" class="p-1.5 rounded-lg bg-slate-800 text-slate-300">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <div class="text-center truncate px-2">
+                  <span class="text-[9px] font-black uppercase text-emerald-400">BBC News · B2</span>
+                  <h4 class="text-xs font-extrabold truncate">Twelve arrested for cat trafficking</h4>
+                </div>
+                <div class="w-7 h-7 rounded-full bg-slate-800 border border-emerald-500 text-emerald-400 font-black text-[9px] flex items-center justify-center">
+                  81%
+                </div>
+              </div>
+
+              <!-- Mobile Skill Segmented Switcher -->
+              <div class="p-2 bg-slate-100 shrink-0">
+                <div class="p-1 bg-slate-200/80 rounded-2xl flex items-center text-xs font-bold">
+                  <button id="mBtn-read" onclick="switchMobileStudyTab('read')" class="flex-1 py-1.5 rounded-xl bg-white text-slate-900 shadow-xs flex items-center justify-center gap-1">
+                    📖 Đọc bài
+                  </button>
+                  <button id="mBtn-write" onclick="switchMobileStudyTab('write')" class="flex-1 py-1.5 rounded-xl text-slate-600 flex items-center justify-center gap-1">
+                    ✍️ Dịch (<span id="mWc">82</span> từ)
+                  </button>
+                  <button id="mBtn-vocab" onclick="switchMobileStudyTab('vocab')" class="flex-1 py-1.5 rounded-xl text-slate-600 flex items-center justify-center gap-1">
+                    📚 Từ vựng
+                  </button>
+                </div>
+              </div>
+
+              <!-- Body View: Reading vs Writing vs Vocab -->
+              <div class="flex-1 overflow-y-auto p-4 pb-24">
+                
+                <!-- View 1: Đọc bài báo -->
+                <div id="mView-read" class="space-y-3 font-serif-reading text-slate-800 text-[15px] leading-relaxed">
+                  <h3 class="font-sans font-extrabold text-base text-slate-900 leading-snug">
+                    Twelve arrested for allegedly running cat trafficking ring in Vietnam
+                  </h3>
+                  <div class="font-sans text-[10px] text-slate-400 pb-2 border-b border-slate-200">
+                    BBC News · 2 giờ trước · Bậc B2
+                  </div>
+                  <p>
+                    Twelve men have been arrested in Vietnam <span class="bg-emerald-100 text-emerald-950 font-semibold px-1 rounded">after allegedly confessing</span> to stealing thousands of domestic cats and selling them to restaurants.
+                  </p>
+                  <p>
+                    Police officers in the central province intercepted three transport vehicles loaded with wire cages containing over 300 feline animals earlier this week.
+                  </p>
+                  <p>
+                    Animal welfare organizations have voiced growing concerns over pet security and called for stricter legislative measures to eliminate commercial consumption of companion animals.
+                  </p>
+                </div>
+
+                <!-- View 2: Soạn bản dịch -->
+                <div id="mView-write" class="space-y-3 hidden">
+                  <div class="bg-white rounded-2xl p-3 border border-slate-200 shadow-xs">
+                    <span class="text-[10px] font-black uppercase text-slate-400 block mb-1">Bản dịch tiếng Việt của bạn:</span>
+                    <textarea oninput="updateMobileWc(this.value)" class="w-full min-h-[220px] p-2 text-[14.5px] leading-relaxed outline-none border-0 text-slate-800 resize-none font-sans" placeholder="Nhập bản dịch tại đây...">Mười hai đối tượng vừa bị bắt giữ tại Việt Nam sau khi thừa nhận hành vi trộm cắp hàng nghìn con mèo nuôi trong nhà và bán lại cho các nhà hàng.
+
+Lực lượng công an tại tỉnh miền Trung đã chặn bắt ba xe tải chở các lồng sắt chứa hơn 300 con mèo vào đầu tuần này...</textarea>
+                  </div>
+                </div>
+
+                <!-- View 3: Từ vựng trên điện thoại -->
+                <div id="mView-vocab" class="space-y-2.5 hidden">
+                  <div class="bg-white p-3 rounded-2xl border border-slate-200 space-y-1">
+                    <div class="flex items-center justify-between text-xs">
+                      <b class="text-slate-900">allegedly</b>
+                      <span class="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold">adv</span>
+                    </div>
+                    <div class="text-xs font-bold text-emerald-800">bị cáo buộc, được cho là</div>
+                  </div>
+                  <div class="bg-white p-3 rounded-2xl border border-slate-200 space-y-1">
+                    <div class="flex items-center justify-between text-xs">
+                      <b class="text-slate-900">intercept</b>
+                      <span class="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold">verb</span>
+                    </div>
+                    <div class="text-xs font-bold text-emerald-800">chặn bắt, đón chặn trên đường</div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Fixed Bottom Action Bar on Mobile -->
+              <div class="absolute bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center gap-2.5 z-40">
+                <button onclick="toggleMobileStudyTab()" class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 shrink-0" title="Chuyển chế độ Đọc / Dịch">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                </button>
+                <button onclick="submitDemoTranslation()" class="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                  <span>Nộp bản dịch & Chấm AI</span>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- Home indicator bar -->
+            <div class="h-3 bg-white flex items-center justify-center pb-1 shrink-0">
+              <div class="w-32 h-1 bg-slate-300 rounded-full"></div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    /* 1. Device View Switcher */
+    function switchDeviceView(view) {
+      const desktop = document.getElementById('desktopContainer');
+      const mobile = document.getElementById('mobileContainer');
+      const btnD = document.getElementById('btnViewDesktop');
+      const btnM = document.getElementById('btnViewMobile');
+      const btnB = document.getElementById('btnViewBoth');
+
+      [btnD, btnM, btnB].forEach(btn => {
+        if (!btn) return;
+        btn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900";
+        const svg = btn.querySelector('svg');
+        if (svg) svg.className = "w-4 h-4 text-slate-500";
+      });
+
+      const setActive = (btn) => {
+        if (!btn) return;
+        btn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all bg-white text-slate-900 shadow-xs font-bold";
+        const svg = btn.querySelector('svg');
+        if (svg) svg.className = "w-4 h-4 text-emerald-600";
+      };
+
+      if (view === 'desktop') {
+        desktop.classList.remove('hidden');
+        mobile.classList.add('hidden');
+        desktop.className = "w-full bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden flex min-h-[920px]";
+        setActive(btnD);
+      } else if (view === 'mobile') {
+        desktop.classList.add('hidden');
+        mobile.classList.remove('hidden');
+        setActive(btnM);
+      } else {
+        desktop.classList.remove('hidden');
+        mobile.classList.remove('hidden');
+        desktop.className = "w-full xl:w-[65%] bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden flex min-h-[920px]";
+        setActive(btnB);
+      }
+    }
+
+    /* 2. Screen Mode Switcher (Course & Topic Catalog vs Study Workspace) */
+    function switchScreenMode(mode) {
+      const screenCourse = document.getElementById('desktopScreen-course');
+      const screenStudy = document.getElementById('desktopScreen-study');
+      const btnC = document.getElementById('btnModeCourse');
+      const btnS = document.getElementById('btnModeStudy');
+
+      [btnC, btnS].forEach(b => {
+        if (!b) return;
+        b.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900";
+      });
+
+      if (mode === 'course') {
+        if (screenCourse) screenCourse.classList.remove('hidden');
+        if (screenStudy) screenStudy.classList.add('hidden');
+        if (btnC) btnC.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all bg-white text-emerald-800 shadow-xs font-bold";
+        switchMobileScreen('course');
+      } else {
+        if (screenCourse) screenCourse.classList.add('hidden');
+        if (screenStudy) screenStudy.classList.remove('hidden');
+        if (btnS) btnS.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all bg-white text-emerald-800 shadow-xs font-bold";
+        switchMobileScreen('study');
+      }
+    }
+
+    /* 3. Open Topic Directly into specific skill */
+    function openTopicStudy(topicId, initialSkill) {
+      switchScreenMode('study');
+      if (initialSkill === 'vocab') {
+        switchStudySkillTab('vocab');
+      } else if (initialSkill === 'review') {
+        switchStudySkillTab('review');
+      } else {
+        switchStudySkillTab('readTranslate');
+      }
+    }
+
+    /* 4. Switch Skills Inside Study Workspace (Vocab vs Read&Translate vs Review) */
+    function switchStudySkillTab(skill) {
+      const skills = ['vocab', 'readTranslate', 'review'];
+      skills.forEach(s => {
+        const btn = document.getElementById('wsSkillBtn-' + s);
+        const view = document.getElementById('wsSkillView-' + s);
+        if (btn) {
+          if (s === skill) {
+            btn.className = "px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white shadow-xs transition-all flex items-center gap-1.5 font-bold";
+          } else {
+            btn.className = "px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all flex items-center gap-1.5";
+          }
+        }
+        if (view) {
+          if (s === skill) view.classList.remove('hidden');
+          else view.classList.add('hidden');
+        }
+      });
+    }
+
+    /* 5. Mobile Screen Switcher */
+    function switchMobileScreen(scr) {
+      const mCrs = document.getElementById('mScreen-course');
+      const mStd = document.getElementById('mScreen-study');
+      if (scr === 'course') {
+        if (mCrs) mCrs.classList.remove('hidden');
+        if (mStd) mStd.classList.add('hidden');
+      } else {
+        if (mCrs) mCrs.classList.add('hidden');
+        if (mStd) mStd.classList.remove('hidden');
+      }
+    }
+
+    /* 6. Mobile Study Tab Switcher (Read vs Write vs Vocab) */
+    let curMobileTab = 'read';
+    function switchMobileStudyTab(t) {
+      curMobileTab = t;
+      const tabs = ['read', 'write', 'vocab'];
+      tabs.forEach(item => {
+        const btn = document.getElementById('mBtn-' + item);
+        const view = document.getElementById('mView-' + item);
+        if (btn) {
+          if (item === t) {
+            btn.className = "flex-1 py-1.5 rounded-xl bg-white text-slate-900 shadow-xs flex items-center justify-center gap-1 font-bold";
+          } else {
+            btn.className = "flex-1 py-1.5 rounded-xl text-slate-600 flex items-center justify-center gap-1";
+          }
+        }
+        if (view) {
+          if (item === t) view.classList.remove('hidden');
+          else view.classList.add('hidden');
+        }
+      });
+    }
+
+    function toggleMobileStudyTab() {
+      switchMobileStudyTab(curMobileTab === 'read' ? 'write' : 'read');
+    }
+
+    /* 7. Live Word Counter */
+    function updateDesktopWc(val) {
+      const wc = val.trim() ? val.trim().split(/\s+/).length : 0;
+      const el = document.getElementById('desktopWc');
+      if (el) el.innerText = wc;
+    }
+
+    function updateMobileWc(val) {
+      const wc = val.trim() ? val.trim().split(/\s+/).length : 0;
+      const el = document.getElementById('mWc');
+      if (el) el.innerText = wc;
+    }
+
+    /* 8. Word Lookup Interactive Popup */
+    function lookupWord(term, definition) {
+      const box = document.getElementById('wordLookupBox');
+      const termEl = document.getElementById('lkTerm');
+      const defEl = document.getElementById('lkDef');
+      if (termEl) termEl.innerText = term;
+      if (defEl) defEl.innerText = definition;
+      if (box) box.classList.remove('hidden');
+    }
+
+    function saveWordPrompt() {
+      alert('Đã lưu từ vựng vào Sổ tay cá nhân của bạn!');
+    }
+
+    function speakDemo() {
+      alert('Đang phát âm thanh bài báo tiếng Anh (BBC News) với ngữ điệu chuẩn bản ngữ!');
+    }
+
+    function submitDemoTranslation() {
+      alert('Đã nộp bài thành công! AI đang phân tích mức độ chính xác ngữ nghĩa và độ tự nhiên của câu dịch. Điểm đạt: 8.8/10.');
+    }
+
+    function toggleReferenceTranslation() {
+      alert('Gợi ý câu dịch: "Mười hai đối tượng đã bị bắt giữ tại Việt Nam sau khi thừa nhận hành vi trộm cắp hàng nghìn con mèo nuôi..."');
+    }
+
+    function filterCategory(cat, btn) {
+      const parent = btn.parentElement;
+      const buttons = parent.querySelectorAll('button');
+      buttons.forEach(b => {
+        b.className = "px-4 py-2 rounded-full bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 cursor-pointer shrink-0 transition-all";
+      });
+      btn.className = "px-4 py-2 rounded-full bg-emerald-50 text-emerald-800 border-2 border-emerald-500 cursor-pointer shrink-0 transition-all font-bold";
+    }
+  </script>
+</body>
+</html>
