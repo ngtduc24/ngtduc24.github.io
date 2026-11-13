@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Đang mở...</title>
+<script>
+  // Link chia sẻ mới tạo (/bt/<mã>/, /bg/<mã>/...) chưa có trang tĩnh cho tới lần build kế tiếp,
+  // chuyển thẳng vào trang tương ứng để người mở link vẫn xem được ngay.
+  (function () {
+    var map = { bt: '/?bt=', bg: '/?elview=', hl: '/?elesson=', tn: '/?quiz=', vr: '/?vr=', ar: '/?ar=', nb: '/sinhvien.html?edu=', dd: '/sinhvien.html?dd=', tc: '/?tc=',
+                c: '/?tab=khoa-hoc&course=', p: '/?portfolio=true&page=projects&project=', r: '/?portfolio=true&page=research&research=', b: '/?portfolio=true&post=' };
+    var m = location.pathname.match(/^\/([a-z]{1,2})\/([A-Za-z0-9_-]{1,120})\/?$/);
+    if (m && map[m[1]]) { location.replace(map[m[1]] + m[2]); return; }
+    // Website của người dùng: ngtduc24.github.io/<địa chỉ> (có thể kèm #mục).
+    var s = location.pathname.match(/^\/([A-Za-z0-9][A-Za-z0-9-]{1,38}[A-Za-z0-9])\/?$/);
+    if (s) { location.replace('/?site=' + s[1].toLowerCase() + location.hash); return; }
+    location.replace('/');
+  })();
+</script>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=v45hc8" data-app-icon />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=v45hc8" data-app-icon />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=v45hc8" data-app-icon />
+  </head>
+<body style="font-family:system-ui,sans-serif;color:#475569;text-align:center;padding:48px">Đang mở trang, vui lòng chờ trong giây lát.</body>
+</html>
